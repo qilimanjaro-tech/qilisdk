@@ -31,10 +31,13 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 
-from qilisdk.experiments.experiment_functional import RabiExperiment, T1Experiment, T2Experiment, TwoTonesExperiment
+from qilisdk.experiments.experiment_functional import ExperimentFunctional
+from qilisdk.experiments.experiment_result import ExperimentResult
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_propagation import DigitalPropagation
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.readout import Readout
 
@@ -130,19 +133,17 @@ class FakeAnalogEvolution(AnalogEvolution):
     def __init__(self): ...
 
 
-class FakeRabiExperiment(RabiExperiment):
+class FakeQuantumReservoir(QuantumReservoir):
     def __init__(self): ...
 
 
-class FakeT1Experiment(T1Experiment):
-    def __init__(self): ...
+class FakeExperimentResult(ExperimentResult):
+    """Concrete result type so ``FakeExperiment.result_type`` resolves."""
 
 
-class FakeT2Experiment(T2Experiment):
-    def __init__(self): ...
+class FakeExperiment(ExperimentFunctional):
+    result_type = FakeExperimentResult
 
-
-class FakeTwoTonesExperiment(TwoTonesExperiment):
     def __init__(self): ...
 
 
@@ -168,7 +169,7 @@ def test_submit_dispatches_to_digital_propagation_handler(monkeypatch):
 def test_submit_dispatches_to_variational_program_handler(monkeypatch):
     monkeypatch.setattr(speqtrum, "DigitalPropagation", FakeDigitalPropagation)
     monkeypatch.setattr(speqtrum, "AnalogEvolution", FakeAnalogEvolution)
-    monkeypatch.setattr(speqtrum, "RabiExperiment", FakeRabiExperiment)
+    monkeypatch.setattr(speqtrum, "ExperimentFunctional", FakeExperiment)
     monkeypatch.setattr(speqtrum, "VariationalProgram", FakeVariationalProgram)
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
     monkeypatch.setattr(
@@ -187,9 +188,7 @@ def test_submit_dispatches_to_variational_program_handler(monkeypatch):
     q.submit(
         FakeVariationalProgram(FakeAnalogEvolution()), device="some_device", job_name="my_vp_job", readout=Readout()
     )
-    q.submit(
-        FakeVariationalProgram(FakeRabiExperiment()), device="some_device", job_name="my_vp_job", readout=Readout()
-    )
+    q.submit(FakeVariationalProgram(FakeExperiment()), device="some_device", job_name="my_vp_job", readout=Readout())
     assert handle.id == 88
 
 
@@ -207,8 +206,22 @@ def test_submit_dispatches_to_analog_evolution_handler(monkeypatch):
     assert handle.id == 77
 
 
-def test_submit_dispatches_to_rabi_handler(monkeypatch):
-    monkeypatch.setattr(speqtrum, "RabiExperiment", FakeRabiExperiment)
+def test_submit_dispatches_to_quantum_reservoir_handler(monkeypatch):
+    monkeypatch.setattr(speqtrum, "QuantumReservoir", FakeQuantumReservoir)
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    monkeypatch.setattr(
+        speqtrum.SpeQtrum,
+        "_create_client",
+        lambda self: DummyClient(post_payload={"id": 76}),
+        raising=True,
+    )
+    q = speqtrum.SpeQtrum()
+    handle = q.submit(FakeQuantumReservoir(), device="some_device", job_name="qr_job", readout=Readout())
+    assert handle.id == 76
+
+
+def test_submit_dispatches_to_experiment_handler(monkeypatch):
+    monkeypatch.setattr(speqtrum, "ExperimentFunctional", FakeExperiment)
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
     monkeypatch.setattr(
         speqtrum.SpeQtrum,
@@ -217,53 +230,9 @@ def test_submit_dispatches_to_rabi_handler(monkeypatch):
         raising=True,
     )
     q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeRabiExperiment(), device="some_device", job_name="rabi_job")
+    handle = q.submit(FakeExperiment(), device="some_device", job_name="experiment_job")
     assert handle.id == 66
-
-
-def test_submit_dispatches_to_t1_experiment_handler(monkeypatch):
-    monkeypatch.setattr(speqtrum, "T1Experiment", FakeT1Experiment)
-    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    monkeypatch.setattr(
-        speqtrum.SpeQtrum,
-        "_create_client",
-        lambda self: DummyClient(post_payload={"id": 55}),
-        raising=True,
-    )
-    q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeT1Experiment(), device="some_device", job_name="t1_job")
-    assert handle.id == 55
-
-
-def test_submit_dispatches_to_t2_experiment_handler(monkeypatch):
-    monkeypatch.setattr(speqtrum, "T2Experiment", FakeT2Experiment)
-    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    monkeypatch.setattr(
-        speqtrum.SpeQtrum,
-        "_create_client",
-        lambda self: DummyClient(post_payload={"id": 44}),
-        raising=True,
-    )
-    q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeT2Experiment(), device="some_device", job_name="t2_job")
-    assert handle.id == 44
-
-
-# for two tones
-
-
-def test_submit_dispatches_to_two_tone_handler(monkeypatch):
-    monkeypatch.setattr(speqtrum, "TwoTonesExperiment", FakeTwoTonesExperiment)
-    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    monkeypatch.setattr(
-        speqtrum.SpeQtrum,
-        "_create_client",
-        lambda self: DummyClient(post_payload={"id": 33}),
-        raising=True,
-    )
-    q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeTwoTonesExperiment(), device="some_device", job_name="two_tone_job")
-    assert handle.id == 33
+    assert handle.execute_type is speqtrum.ExecuteType.EXPERIMENT
 
 
 def test_submit_unknown_functional_raises(monkeypatch):
@@ -276,6 +245,70 @@ def test_submit_unknown_functional_raises(monkeypatch):
 
     with pytest.raises(NotImplementedError):
         client.submit(SomethingElse(), device="some_device", readout=Readout())
+
+
+def test_submit_functional_without_readout_raises(monkeypatch):
+    """A readout is mandatory for functionals; only experiments may omit it."""
+    monkeypatch.setattr(speqtrum, "DigitalPropagation", FakeDigitalPropagation)
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    client = speqtrum.SpeQtrum()
+    functional = FakeDigitalPropagation()
+    with pytest.raises(ValueError, match="Readout can't be none"):
+        client.submit(functional, device="some_device", readout=None)
+
+
+_API_MESSAGE = "Scheduled maintenance window: results may be delayed."
+
+
+def _make_variational_program():
+    return FakeVariationalProgram(FakeDigitalPropagation())
+
+
+_MESSAGE_CASES = [
+    (["DigitalPropagation"], FakeDigitalPropagation, 99, True),
+    (["AnalogEvolution"], FakeAnalogEvolution, 77, True),
+    (["QuantumReservoir"], FakeQuantumReservoir, 76, True),
+    (["DigitalPropagation", "AnalogEvolution"], _make_variational_program, 88, True),
+    (["ExperimentFunctional"], FakeExperiment, 66, False),
+]
+
+
+@pytest.mark.parametrize(
+    ("patches", "make_functional", "job_id", "needs_readout"),
+    _MESSAGE_CASES,
+    ids=["digital_propagation", "analog_evolution", "quantum_reservoir", "variational_program", "experiment"],
+)
+def test_submit_surfaces_api_message_as_warning(
+    monkeypatch,
+    caplog,  # ruff: ignore[redefined-while-unused]
+    patches,
+    make_functional,
+    job_id,
+    needs_readout,
+):
+    """Every submit handler must surface a ``message`` returned alongside the job id."""
+    fakes = {
+        "DigitalPropagation": FakeDigitalPropagation,
+        "AnalogEvolution": FakeAnalogEvolution,
+        "QuantumReservoir": FakeQuantumReservoir,
+        "ExperimentFunctional": FakeExperiment,
+    }
+    for name in patches:
+        monkeypatch.setattr(speqtrum, name, fakes[name])
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    monkeypatch.setattr(
+        speqtrum.SpeQtrum,
+        "_create_client",
+        lambda self: DummyClient(post_payload={"id": job_id, "message": _API_MESSAGE}),
+        raising=True,
+    )
+
+    q = speqtrum.SpeQtrum()
+    extra = {"readout": Readout()} if needs_readout else {}
+    handle = q.submit(make_functional(), device="some_device", job_name="msg_job", **extra)
+
+    assert handle.id == job_id
+    assert _API_MESSAGE in caplog.text
 
 
 def test_wait_for_job_completes(monkeypatch):
@@ -400,7 +433,7 @@ def test_create_client_registers_response_hook(monkeypatch) -> None:
     assert speqtrum._ensure_ok in captured["event_hooks"]["response"]
 
     # the helper returns a client instance; ensure the stub can be closed cleanly
-    assert http_client.__enter__() is http_client  # noqa: PLC2801
+    assert http_client.__enter__() is http_client  # ruff: ignore[unnecessary-dunder-call]
 
 
 def test_variational_program_handle_preserves_inner_result(monkeypatch):

@@ -65,9 +65,28 @@ SparseMatrix amp_damp_jump() {
     return to_sparse(j);
 }
 
+// A statevector whose first amplitude is NaN, used to feed an already-diverged state into an
+// integrator. Built with insert() rather than sparseView(), which would prune the NaN entry.
+SparseMatrix nan_statevector_sparse() {
+    SparseMatrix v(2, 1);
+    v.insert(0, 0) = std::numeric_limits<double>::quiet_NaN();
+    v.makeCompressed();
+    return v;
+}
+
+// An amplitude-damping jump operator with an enormous rate. Its dissipator (L rho L^dagger) pumps
+// the diagonal to +inf, overflowing the trace within a single step. A huge Hamiltonian would not
+// do this on its own: the trace of a commutator is zero, so unitary dynamics leaves the trace
+// finite even as individual entries diverge.
+SparseMatrix huge_amp_damp_jump() {
+    DenseMatrix j = DenseMatrix::Zero(2, 2);
+    j(0, 1) = 1e300;
+    return to_sparse(j);
+}
+
 MatrixFreeHamiltonian make_matrix_free_H(std::complex<double> coeff, int target_qubit, std::string name) {
     MatrixFreeOperator op(name, {}, {target_qubit}, DenseMatrix());
-    return MatrixFreeHamiltonian({{coeff, {op}}});
+    return MatrixFreeHamiltonian(1, op, coeff);
 }
 
 struct TimeEvolutionOutputs {
@@ -174,6 +193,53 @@ TEST_F(TimeEvolutionTest, BadMethodThrows) {
 TEST_F(TimeEvolutionMatrixFreeTest, DefaultConfigDoesNotThrow) {
     auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
     SUCCEED();
+}
+
+TEST_F(TimeEvolutionMatrixFreeTest, NonMatrixFreeMethodThrows) {
+    // A method that passes validation but is not one of the matrix-free branches
+    // must fall through to the invalid-method error.
+    config.set_time_evolution_method("direct");
+    EXPECT_ANY_THROW(run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config));
+}
+
+class TimeEvolutionArnoldiMatrixFreeTest : public ::testing::Test {
+   protected:
+    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");
+    std::vector<MatrixFreeHamiltonian> hamiltonians = {H_mf};
+    std::vector<std::vector<double>> params = {{1.0, 1.0, 1.0}};
+    std::vector<double> steps = {0.1, 0.2, 0.3};
+    NoiseModelCpp empty_noise;
+    QiliSimConfig config;
+    virtual void SetUp() override { config.set_time_evolution_method("arnoldi_matrix_free"); }
+};
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, DensityMatrixTracePreserved) {
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_NEAR(std::real(out.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, StatevectorInputEvolves) {
+    auto out = run_time_evolution_mf(statevector_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_EQ(out.rho_t.rows(), 2);
+}
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, WithJumpOperatorsTracePreserved) {
+    NoiseModelCpp noise;
+    noise.add_jump_operator(amp_damp_jump());
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
+    EXPECT_NEAR(std::real(out.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, StoreIntermediateFromPureDensityMatrix) {
+    config.set_store_intermediate_results(true);
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_EQ(int(out.intermediate_rhos.size()), int(steps.size()));
+}
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, StoreIntermediateFromStatevector) {
+    config.set_store_intermediate_results(true);
+    auto out = run_time_evolution_mf(statevector_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_EQ(int(out.intermediate_rhos.size()), int(steps.size()));
 }
 
 TEST_F(TimeEvolutionTest, FinalStateDimensionMatchesDensityMatrixInput) {
@@ -849,6 +915,184 @@ TEST_F(TimeEvolutionAdaptiveTest, TighterAdaptiveTolDoesNotThrow) {
     config.set_adaptive_tol(1e-6);
     auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
     EXPECT_NEAR(std::real(out.rho_t.trace()), 1.0, kTol);
+}
+
+class TimeEvolutionVariationalTest : public ::testing::Test {
+   protected:
+    MatrixFreeHamiltonian H_X = make_matrix_free_H(1.0, 0, "X");
+    MatrixFreeHamiltonian H_Z = make_matrix_free_H(1.0, 0, "Z");
+    std::vector<MatrixFreeHamiltonian> hamiltonians = {H_X, H_Z};
+    // Coefficients: linear interpolation from X to Z
+    std::vector<std::vector<double>> params = {{1.0, 0.0}, {0.0, 1.0}};
+    std::vector<double> step_list = {0.5, 1.0};
+    QiliSimConfig config;
+
+    void SetUp() override {
+        config.set_shots(50);
+        config.set_warmups(0);
+        config.set_order(1);
+    }
+};
+
+TEST_F(TimeEvolutionVariationalTest, DoesNotThrowForValidInput) {
+    ExponentialAnsatz rho_t(1, 1, 50, 0);
+    EXPECT_NO_THROW(time_evolution_variational_exponential(rho_t, hamiltonians, params, step_list, config));
+}
+
+TEST_F(TimeEvolutionVariationalTest, TermCountUnchangedAfterEvolution) {
+    ExponentialAnsatz rho_t(1, 1, 50, 0);
+    size_t initial_terms = rho_t.get_terms().size();
+    time_evolution_variational_exponential(rho_t, hamiltonians, params, step_list, config);
+    EXPECT_EQ(rho_t.get_terms().size(), initial_terms);
+}
+
+TEST_F(TimeEvolutionVariationalTest, EmptyHamiltonianListThrows) {
+    ExponentialAnsatz rho_t(1, 1, 50, 0);
+    EXPECT_ANY_THROW(time_evolution_variational_exponential(rho_t, {}, {}, {}, config));
+}
+
+TEST_F(TimeEvolutionTest, TimeDependentRateScalingDense) {
+    NoiseModelCpp noise;
+    // Mixed: a constant jump operator (empty series, scaled unchanged) and a time-dependent jump
+    // operator whose per-step sqrt(rate) series is applied at each step. Exercises both branches of
+    // the per-step rescaling loop in the dense evolution.
+    noise.add_jump_operator(amp_damp_jump());
+    noise.add_jump_operator(amp_damp_jump(), {0.0, 0.5, 1.0});
+    EXPECT_TRUE(noise.has_time_dependent_rates());
+    auto out = run_time_evolution(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
+    EXPECT_NEAR(std::real(out.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionMatrixFreeTest, TimeDependentRateScalingMatrixFree) {
+    NoiseModelCpp noise;
+    // Mixed: a constant jump (empty series, scaled unchanged) and a time-dependent jump. Exercises
+    // both branches of the per-step rescaling loop in the matrix-free fixed-step evolution.
+    noise.add_jump_operator(amp_damp_jump());
+    noise.add_jump_operator(amp_damp_jump(), {0.0, 0.5, 1.0});
+    EXPECT_TRUE(noise.has_time_dependent_rates());
+    auto out = run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config);
+    EXPECT_NEAR(std::real(out.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionMatrixFreeTest, TimeDependentRateAdaptiveThrows) {
+    config.set_time_evolution_method("integrate_rk45_matrix_free");
+    NoiseModelCpp noise;
+    noise.add_jump_operator(amp_damp_jump(), {0.0, 0.5, 1.0});
+    EXPECT_ANY_THROW(run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config));
+}
+
+TEST_F(TimeEvolutionVariationalTest, AnsatzParametersComeFromVariationalConfig) {
+    config.set_shots(37);
+    config.set_warmups(3);
+    config.set_order(1);
+    config.set_num_monte_carlo_trajectories(999);  // must NOT leak into the ansatz shots
+
+    ExponentialAnsatz rho_t(1, 1, 50, 0);
+    time_evolution_variational_exponential(rho_t, hamiltonians, params, step_list, config);
+
+    EXPECT_EQ(rho_t.get_shots(), 37);
+    EXPECT_EQ(rho_t.get_warmups(), 3);
+    EXPECT_EQ(rho_t.get_order(), 1);
+}
+
+// Divergence handling: when ||H||*dt exceeds an integrator's stability limit the state overflows
+// to a non-finite value. The integrators must detect this and raise (std::invalid_argument, which
+// pybind11 surfaces as a Python ValueError) rather than silently returning inf/garbage or a state
+// collapsed to zeros. A huge Hamiltonian coefficient forces the overflow within a single step for
+// the fixed-step and Krylov methods.
+
+// A Hamiltonian coefficient large enough that a single RK step overflows to +/-inf.
+static const std::vector<std::vector<double>> kHugeParams = {{1e300, 1e300, 1e300}};
+
+TEST_F(TimeEvolutionTest, DenseRK4StatevectorDivergenceThrows) {
+    // Unitary-on-statevector path: overflow is caught by the norm guard in iter_rk4_matrix.
+    EXPECT_THROW(run_time_evolution(statevector_zero_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config), std::invalid_argument);
+}
+
+TEST_F(TimeEvolutionTest, DenseRK4DensityMatrixDivergenceThrows) {
+    // Density-matrix path (jump operator forces non-unitary dynamics): a huge jump rate overflows
+    // the trace, which is caught by the trace guard in iter_rk4_matrix.
+    NoiseModelCpp noise;
+    noise.add_jump_operator(huge_amp_damp_jump());
+    EXPECT_THROW(run_time_evolution(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config), std::invalid_argument);
+}
+
+TEST_F(TimeEvolutionMatrixFreeTest, MatrixFreeRK4StatevectorDivergenceThrows) {
+    EXPECT_THROW(run_time_evolution_mf(statevector_zero_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config), std::invalid_argument);
+}
+
+TEST_F(TimeEvolutionMatrixFreeTest, MatrixFreeRK4DensityMatrixDivergenceThrows) {
+    // A huge jump rate overflows the trace, caught by the trace guard in the matrix-free iter_rk4.
+    NoiseModelCpp noise;
+    noise.add_jump_operator(huge_amp_damp_jump());
+    EXPECT_THROW(run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config), std::invalid_argument);
+}
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, ArnoldiMatrixFreeDivergenceThrows) {
+    EXPECT_THROW(run_time_evolution_mf(pure_plus_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config), std::invalid_argument);
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, AdaptiveRK45NonFiniteStateThrows) {
+    // The adaptive stepper shrinks dt in response to a huge Hamiltonian rather than overflowing, so
+    // feed it an already-non-finite state: the divergence guard must catch it and raise instead of
+    // iterating on garbage.
+    EXPECT_THROW(run_time_evolution_mf(nan_statevector_sparse(), hamiltonians, params, steps, empty_noise, {}, config), std::invalid_argument);
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, DivergenceErrorMentionsToleranceParameters) {
+    // The raised message must point the user at the knobs that can fix the divergence, since that is
+    // the only actionable information they get from a blown-up run.
+    try {
+        run_time_evolution_mf(nan_statevector_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+        FAIL() << "expected a divergence error";
+    } catch (const std::invalid_argument& e) {
+        const std::string message = e.what();
+        EXPECT_NE(message.find("State became invalid during evolution"), std::string::npos) << message;
+        EXPECT_NE(message.find("atol"), std::string::npos) << message;
+        EXPECT_NE(message.find("adaptive_tol"), std::string::npos) << message;
+    }
+}
+
+TEST_F(TimeEvolutionTest, ArnoldiDivergenceThrows) {
+    // Non-matrix-free Krylov path: a huge Hamiltonian coefficient overflows the reconstructed state
+    // within a substep, which the norm/trace guards in iter_arnoldi must catch.
+    config.set_time_evolution_method("arnoldi");
+    EXPECT_THROW(run_time_evolution(pure_plus_sparse(), hamiltonians, kHugeParams, steps, empty_noise, {}, config), std::invalid_argument);
+}
+
+TEST_F(TimeEvolutionTest, ArnoldiTracelessDensityMatrixThrows) {
+    // A finite but traceless density matrix stays traceless under unitary density-matrix Arnoldi
+    // evolution (H_z commutes with it), so the trace-normalization guard divides by zero. It must
+    // raise rather than dividing through. A mixed (non-pure) input keeps the evolution on the
+    // density-matrix branch instead of collapsing to a state vector.
+    config.set_time_evolution_method("arnoldi");
+    DenseMatrix traceless = DenseMatrix::Zero(2, 2);
+    traceless(0, 0) = 1.0;
+    traceless(1, 1) = -1.0;
+    EXPECT_THROW(run_time_evolution(to_sparse(traceless), hamiltonians, params, steps, empty_noise, {}, config), std::invalid_argument);
+}
+
+TEST_F(TimeEvolutionTest, ArnoldiLindbladTraceOverflowThrows) {
+    // Vectorized Lindblad Arnoldi path: a huge jump rate overflows the (vectorized) trace, which the
+    // trace guard in iter_arnoldi must catch.
+    config.set_time_evolution_method("arnoldi");
+    NoiseModelCpp noise;
+    noise.add_jump_operator(huge_amp_damp_jump());
+    EXPECT_THROW(run_time_evolution(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config), std::invalid_argument);
+}
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, NonFiniteInitialNormThrows) {
+    // An already-non-finite state makes the substep's initial norm non-finite; the matrix-free
+    // Arnoldi loop must detect this up front and raise.
+    EXPECT_THROW(run_time_evolution_mf(nan_statevector_sparse(), hamiltonians, params, steps, empty_noise, {}, config), std::invalid_argument);
+}
+
+TEST_F(TimeEvolutionArnoldiMatrixFreeTest, DensityMatrixTraceOverflowThrows) {
+    // Matrix-free Arnoldi density-matrix path: a huge jump rate overflows the trace, which the trace
+    // guard must catch.
+    NoiseModelCpp noise;
+    noise.add_jump_operator(huge_amp_damp_jump());
+    EXPECT_THROW(run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config), std::invalid_argument);
 }
 
 // GCOV_EXCL_BR_STOP

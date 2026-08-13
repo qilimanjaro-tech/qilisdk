@@ -16,6 +16,8 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING
 
+from loguru import logger
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
@@ -39,7 +41,7 @@ class Parameterizable(ABC):
 
     # Private Methods
 
-    def _iter_parameter_children(self) -> Iterable[Parameterizable]:  # noqa: PLR6301
+    def _iter_parameter_children(self) -> Iterable[Parameterizable]:  # ruff: ignore[no-self-use]
         """Yield child objects that compose this object's parameter interface.
 
         Override this method in subclasses that expose nested
@@ -55,7 +57,7 @@ class Parameterizable(ABC):
         local_params = self._parameters or {}
         yield from local_params.items()
         for child in self._iter_parameter_children():
-            yield from child._iter_parameter_items()  # noqa: SLF001
+            yield from child._iter_parameter_items()  # ruff: ignore[private-member-access]
 
     def _add_parameter(self, label: str, parameter: Parameter) -> None:
         """Add a parameter under the current prefix.
@@ -144,7 +146,7 @@ class Parameterizable(ABC):
             return self._parameters.pop(label)
         for child in self._iter_parameter_children():
             if label in child.get_parameter_names():
-                return child._pop(label)  # noqa: SLF001
+                return child._pop(label)  # ruff: ignore[private-member-access]
         raise ValueError(f"Parameter {label} is not defined in the current object or any of its children.")
 
     # Public Methods
@@ -169,6 +171,7 @@ class Parameterizable(ABC):
             The ``where`` predicate is applied to local parameters only. Child parameterizable
             objects always receive the same prefix operation recursively.
         """
+        logger.trace("[Parameterizable] Setting parameter prefix to {}", prefix)
         old_keys: list[str] = [label for label, param in self._parameters.items() if where is None or where(param)]
         for name in old_keys:
             if not name.startswith(prefix):
@@ -196,6 +199,7 @@ class Parameterizable(ABC):
                 "The constraint should only contain parameters and having generic variables is not allowed."
             )
 
+        logger.debug("[Parameterizable] Adding parameter constraint {}", constraint)
         self._parameter_constraints.append(constraint)
 
     def get_parameter_values(
@@ -246,6 +250,7 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If ``values`` does not match the number of parameters selected by ``where``.
         """
+        logger.opt(lazy=True).trace("[Parameterizable] Setting parameter values {}", lambda: values)
         param_names = self.get_parameter_names(where=where)
         if len(values) != len(param_names):
             raise ValueError(f"Provided {len(values)} but this object has {len(param_names)} parameters.")
@@ -262,6 +267,7 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If an unknown parameter label is provided or constraints are violated.
         """
+        logger.opt(lazy=True).trace("[Parameterizable] Setting parameters by label {}", lambda: parameters)
         available_parameters = self._filtered_parameter_map()
         if not self.check_constraints(parameters):
             raise ValueError(
@@ -293,6 +299,7 @@ class Parameterizable(ABC):
         Raises:
             ValueError: If an unknown parameter label is provided.
         """
+        logger.opt(lazy=True).trace("[Parameterizable] Setting bounds for parameters {}", lambda: ranges)
         available_parameters = self._filtered_parameter_map()
         for label, bound in ranges.items():
             if label not in available_parameters:

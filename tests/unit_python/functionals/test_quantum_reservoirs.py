@@ -132,6 +132,30 @@ def test_reservoir_layer_properties_and_parameter_interface():
     assert isinstance(steps[2], Circuit)
 
 
+def test_reservoir_layer_set_parameters_rejects_unknown_labels():
+    schedule, _ = _schedule_with_parameter(nqubits=2)
+    u = ReservoirInput("u", 0.2)
+
+    pre = Circuit(1)
+    pre.add(RX(0, theta=u))
+
+    reservoir_layer = ReservoirLayer(
+        evolution_dynamics=schedule,
+        input_encoding=pre,
+        qubits_to_reset=[0],
+    )
+
+    with pytest.raises(ValueError, match="unknown parameter"):
+        reservoir_layer.set_parameters({"does_not_exist": 9.9})
+
+    with pytest.raises(ValueError, match="unknown parameter"):
+        reservoir_layer.set_parameters({"u": 0.5, "phi": 9.9})
+    assert _isclose(reservoir_layer.get_parameters()["u"], 0.2)
+
+    reservoir_layer.set_parameters({"u": 0.5, "g": 0.7})
+    _assert_parameter_dict_close(reservoir_layer.get_parameters(), {"u": 0.5, "g": 0.7})
+
+
 def test_reservoir_layer_validation_errors():
     schedule, _ = _schedule_with_parameter(nqubits=2)
 

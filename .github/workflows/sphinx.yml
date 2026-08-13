@@ -13,22 +13,19 @@ jobs:
       HOME_REPO: /home/repo
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0
           fetch-tags: true
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
         with:
           enable-cache: true
           cache-dependency-glob: |
             **/pyproject.toml
             **/uv.lock
           python-version: "3.13"
-
-      - name: Install pandoc
-        run: sudo apt-get update && sudo apt-get install -y pandoc
 
       - name: Install the requirements
         run: |
@@ -53,6 +50,8 @@ jobs:
             echo "No tag found to redirect to" >&2
             exit 1
           fi
+          # filter any post-release suffixes (e.g. 0.2.0.post1 -> 0.2.0)
+          latest_tag="${latest_tag%%.post*}"
           if [ ! -d "docs/_build/en/${latest_tag}" ]; then
             echo "Built docs for tag ${latest_tag} not found" >&2
             ls docs/_build/en

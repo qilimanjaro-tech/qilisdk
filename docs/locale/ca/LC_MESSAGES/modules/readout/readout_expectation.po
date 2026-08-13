@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/readout/readout_expectation.rst:2
 msgid "Expectation Values"
-msgstr "Valors Esperats"
+msgstr "Valors esperats"
 
 #: ../../modules/readout/readout_expectation.rst:4
 msgid ""
@@ -63,7 +63,7 @@ msgstr ""
 
 #: ../../modules/readout/readout_expectation.rst:32
 msgid "**When to Use It**"
-msgstr "**Quan Utilitzar-lo**"
+msgstr "**Quan utilitzar-lo**"
 
 #: ../../modules/readout/readout_expectation.rst:34
 msgid ""

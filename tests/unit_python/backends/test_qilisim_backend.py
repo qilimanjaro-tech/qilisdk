@@ -24,10 +24,11 @@ from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
-from qilisdk.core import ket
+from qilisdk.core import QTensor, ket
+from qilisdk.digital import Circuit, H, X
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.noise import Dephasing, NoiseModel
+from qilisdk.noise import Dephasing, LindbladGenerator, NoiseModel
 from qilisdk.readout import Readout
 from qilisdk.readout.readout_result import ReadoutCompositeResults, StateTomographyReadoutResult
 
@@ -65,7 +66,7 @@ def test_qilisim_config_builders_and_validation():
     )
     config = backend.get_config()
 
-    assert config["evolution_method"] == "arnoldi"
+    assert config["evolution_method"] == "arnoldi_matrix_free"
     assert config["arnoldi_dim"] == 16
     assert config["num_arnoldi_substeps"] == 3
     assert config["monte_carlo"] is True
@@ -88,6 +89,23 @@ def test_qilisim_config_builders_and_validation():
         ExecutionConfig(1)
 
 
+def test_normalize_state_flag_defaults_and_propagates():
+    # Defaults to True and is exported to the backend config.
+    assert ExecutionConfig().normalize_state is True
+    backend = QiliSim()
+    assert backend.get_config()["normalize_state"] is True
+
+    # Can be disabled and is forwarded to the backend config.
+    backend_raw = QiliSim(execution_config=ExecutionConfig(normalize_state=False))
+    assert backend_raw.get_config()["normalize_state"] is False
+
+
+def test_stabilizer_method_creates_okay():
+    method = DigitalMethod.stabilizer(max_states=50)
+    assert method.digital_method == "stabilizer"
+    assert method.stabilizer_max_states == 50
+
+
 def test_adaptive_creates_okay():
     method = AnalogMethod.adaptive_integrator(tol=1e-2)
     assert method.evolution_method == "integrate_rk45_matrix_free"
@@ -96,11 +114,11 @@ def test_adaptive_creates_okay():
 
 def test_qilisim_invalid_config_types():
     with pytest.raises(ValueError, match="not a valid analog simulation method"):
-        QiliSim(analog_simulation_method=DigitalMethod())  # type:ignore[arg-type]
+        QiliSim(analog_simulation_method=DigitalMethod())  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="not a valid digital simulation method"):
-        QiliSim(digital_simulation_method=AnalogMethod.integrator())  # type:ignore[arg-type]
+        QiliSim(digital_simulation_method=AnalogMethod.integrator())  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="not a valid execution configuration"):
-        QiliSim(execution_config=AnalogMethod.integrator())  # type:ignore[arg-type]
+        QiliSim(execution_config=AnalogMethod.integrator())  # type: ignore[arg-type]
 
 
 class QiliSimMock:
@@ -124,7 +142,7 @@ def test_qilisim_sampling_dummy(monkeypatch):
 def test_qilisim_time_evolution_dummy(monkeypatch):
     monkeypatch.setattr(qilisdk.backends.qilisim, "QiliSimCpp", QiliSimMock)
     hamiltonian = pauli_z(0)
-    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1, total_time=1.0)
     initial_state = ket(0)
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
     backend = QiliSim()
@@ -183,6 +201,81 @@ def test_qilisim_dephasing_strength_changes_dynamics():
     assert strong_exp < weak_exp
 
 
+def test_qilisim_time_dependent_lindblad_rate_matches_analytic():
+    # H = Z commutes with the observable <Z>, so <Z> is driven purely by the bit-flip (X) jump
+    # operator. With a constant rate g, <Z>(T) = exp(-2 g T); with a ramp g(t) = c*t,
+    # <Z>(T) = exp(-2 * integral_0^T c*t dt) = exp(-c T^2). This checks rate(t) is evaluated per step.
+    T, steps, c = 1.0, 400, 1.3
+    x_op = QTensor(np.array([[0.0, 1.0], [1.0, 0.0]], dtype=complex))
+    # Interpolating Z -> Z keeps H = Z constant for all t.
+    schedule = Schedule.linear(pauli_z(0), pauli_z(0), T, T / steps)
+    functional = AnalogEvolution(schedule=schedule, initial_state=ket(0))
+    readout = Readout().with_expectation(observables=[pauli_z(0)])
+
+    # A constant rate expressed as a (trivial) callable must match the plain-float behaviour.
+    const_value = 0.7
+    const_float = NoiseModel()
+    const_float.add(LindbladGenerator(jump_operators=[x_op], rates=[const_value]))
+    const_lambda = NoiseModel()
+    const_lambda.add(LindbladGenerator(jump_operators=[x_op], rates=[lambda t: const_value]))
+    method = AnalogMethod.integrator()  # default matrix-free RK4
+    float_exp = float(
+        np.real(
+            QiliSim(noise_model=const_float, analog_simulation_method=method)
+            .execute(functional, readout)
+            .get_expectation_values()[0]
+        )
+    )
+    lambda_exp = float(
+        np.real(
+            QiliSim(noise_model=const_lambda, analog_simulation_method=method)
+            .execute(functional, readout)
+            .get_expectation_values()[0]
+        )
+    )
+    assert np.isclose(float_exp, lambda_exp, atol=1e-9)
+    assert np.isclose(float_exp, np.exp(-2 * const_value * T), atol=1e-3)
+
+    # A genuinely time-dependent ramp rate matches its analytic integral.
+    ramp = NoiseModel()
+    ramp.add(LindbladGenerator(jump_operators=[x_op], rates=[lambda t: c * t]))
+    ramp_exp = float(
+        np.real(
+            QiliSim(noise_model=ramp, analog_simulation_method=method)
+            .execute(functional, readout)
+            .get_expectation_values()[0]
+        )
+    )
+    assert np.isclose(ramp_exp, np.exp(-c * T**2), atol=2e-3)
+
+
+def test_qilisim_time_dependent_lindblad_rate_errors():
+    x_op = QTensor(np.array([[0.0, 1.0], [1.0, 0.0]], dtype=complex))
+    schedule = Schedule.linear(pauli_z(0), pauli_z(0), 1.0, 0.01)
+    functional = AnalogEvolution(schedule=schedule, initial_state=ket(0))
+    readout = Readout().with_expectation(observables=[pauli_z(0)])
+
+    # The adaptive matrix-free method cannot apply a per-step rate series.
+    adaptive = NoiseModel()
+    adaptive.add(LindbladGenerator(jump_operators=[x_op], rates=[lambda t: 0.1 * t]))
+    backend = QiliSim(noise_model=adaptive, analog_simulation_method=AnalogMethod.adaptive_integrator())
+    with pytest.raises(ValueError, match=r"adaptive"):
+        backend.execute(functional, readout)
+
+    # Negative and non-finite rates are rejected.
+    negative = NoiseModel()
+    negative.add(LindbladGenerator(jump_operators=[x_op], rates=[lambda t: -1.0]))
+    backend = QiliSim(noise_model=negative)
+    with pytest.raises(ValueError, match=r"negative"):
+        backend.execute(functional, readout)
+
+    nan_rate = NoiseModel()
+    nan_rate.add(LindbladGenerator(jump_operators=[x_op], rates=[lambda t: float("nan")]))
+    backend = QiliSim(noise_model=nan_rate)
+    with pytest.raises(ValueError, match=r"non-finite"):
+        backend.execute(functional, readout)
+
+
 def _build_quantum_reservoir_functional() -> QuantumReservoir:
     schedule = Schedule(
         dt=1,
@@ -221,8 +314,71 @@ def test_execute_quantum_reservoir_qilisim(monkeypatch):
     assert len(result.get_intermediate_states()) == 1
 
 
+@pytest.mark.parametrize(("qubit_to_reset", "expected"), [(0, [1.0, -1.0]), (1, [-1.0, 1.0])])
+def test_execute_quantum_reservoir_resets_requested_qubit(qubit_to_reset, expected):
+    # |11> is an eigenstate of the Hamiltonian, so only the reset can change <Z>
+    layer = ReservoirLayer(
+        evolution_dynamics=Schedule(hamiltonians={"h": pauli_z(0) + pauli_z(1)}, total_time=0.1, dt=0.05),
+        qubits_to_reset=[qubit_to_reset],
+    )
+    functional = QuantumReservoir(
+        initial_state=ket(1, 1),
+        reservoir_layer=layer,
+        input_per_layer=[{}, {}],
+    )
+    backend = QiliSim(execution_config=ExecutionConfig(seed=1, num_threads=1))
+
+    result = backend.execute(functional, Readout().with_expectation(observables=[pauli_z(0), pauli_z(1)]))
+
+    assert result.get_expectation_values() == pytest.approx(expected)
+
+
 def test_qilisim_repr():
     backend = QiliSim()
     repr_str = str(backend)
     assert "QiliSim" in repr_str
     assert "QiliSim" in repr_str
+
+
+def test_qilisim_variational_annealing_runs(monkeypatch):
+    backend = QiliSim(analog_simulation_method=AnalogMethod.variational_annealing(order=2, shots=1000, warmups=100))
+    hamiltonian = pauli_z(0)
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1, total_time=1.0)
+    initial_state = ket(0)
+    func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
+
+    mock_execute_analog_evolution = MagicMock(return_value=FunctionalResult(readout_results={}))
+
+    monkeypatch.setattr(
+        "qilisdk.backends.qilisim.QiliSim._execute_analog_evolution",
+        mock_execute_analog_evolution,
+    )
+
+    result = backend.execute(func, Readout().with_expectation(observables=[pauli_z(0)]))
+    assert result is not None
+    mock_execute_analog_evolution.assert_called_once()
+
+
+def test_simulator_rejects_out_of_range_qubit_from_unvalidated_gate():
+    """QSDK-05 (keystone): even when the Python guard is bypassed, as happens on
+    deserialization (ruamel reconstructs gates without re-running ``__init__``),
+    the C++ parser must reject an out-of-range target before it reaches the
+    matrix-free kernels, raising instead of reading out of bounds."""
+    circuit = Circuit(2)
+    circuit.add(H(0))
+    circuit.add(X(1))
+    backend = QiliSim()
+    readout = Readout().with_sampling(nshots=100)
+
+    # Sanity: the valid circuit runs.
+    backend.execute(DigitalPropagation(circuit), readout)
+
+    # Bypass validation the way deserialization does: an out-of-range target on
+    # an already-added gate, with no __init__ re-check.
+    gate = circuit.gates[1]
+    inner = getattr(gate, "_basic_gate", gate)
+    inner._target_qubits = (5,)
+
+    func = DigitalPropagation(circuit)
+    with pytest.raises(ValueError, match="out of range"):
+        backend.execute(func, readout)

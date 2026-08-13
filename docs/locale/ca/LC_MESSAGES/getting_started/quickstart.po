@@ -33,7 +33,7 @@ msgstr ""
 
 #: ../../getting_started/quickstart.rst:8
 msgid "Digital Circuit Example"
-msgstr "Exemple de Circuit Digital"
+msgstr "Exemple de circuit digital"
 
 #: ../../getting_started/quickstart.rst:10
 msgid "Build a 2-qubit circuit, sample it, and inspect measurement counts:"
@@ -43,7 +43,7 @@ msgstr ""
 
 #: ../../getting_started/quickstart.rst:36
 msgid "Analog Evolution Example"
-msgstr "Exemple d'Evolució Analògica"
+msgstr "Exemple d'evolució analògica"
 
 #: ../../getting_started/quickstart.rst:38
 msgid ""
@@ -108,13 +108,12 @@ msgstr ""
 " els temps d'execució de Qutip (CPU) i CUDA (CPU/GPU)."
 
 #: ../../getting_started/quickstart.rst:93
-#, fuzzy
 msgid ""
 "**Noise** (:doc:`/modules/noise/noise`) to simulate hardware effects in "
 "both digital and analog contexts."
 msgstr ""
-"**Models de soroll** (:doc:`/modules/noise_models/noise_models`) per "
-"simular efectes de maquinari en contextos tant digitals com analògics."
+"**Soroll** (:doc:`/modules/noise/noise`) per simular efectes de maquinari "
+"en contextos tant digitals com analògics."
 
 #: ../../getting_started/quickstart.rst:94
 msgid ""

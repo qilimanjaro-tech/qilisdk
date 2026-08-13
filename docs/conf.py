@@ -9,6 +9,7 @@
 import operator
 import os
 import posixpath
+import shutil
 import sys
 from dataclasses import asdict
 from pathlib import Path
@@ -22,6 +23,18 @@ from sphinxawesome_theme.postprocess import Icons
 
 # -- Path setup ---------------------------------------------------------------
 sys.path.insert(0, str((Path(__file__).resolve().parent / "../src").resolve()))
+
+# -- Pandoc setup -------------------------------------------------------------
+# nbsphinx converts notebooks with nbconvert, which finds pandoc through
+# shutil.which(). The `pypandoc-binary` wheel bundles the binary inside the
+# package rather than installing it system-wide, so fall back to that copy when
+# no pandoc is on PATH (a system pandoc, e.g. in CI, still takes precedence).
+if shutil.which("pandoc") is None:
+    import pypandoc
+
+    _bundled_pandoc = Path(pypandoc.__file__).parent / "files"
+    if shutil.which("pandoc", path=str(_bundled_pandoc)):
+        os.environ["PATH"] = f"{os.environ.get('PATH', '')}{os.pathsep}{_bundled_pandoc}"
 
 # -- Project information -----------------------------------------------------
 
@@ -111,7 +124,7 @@ smv_prefer_remote_refs = False
 
 html_title = project
 html_permalinks_icon = Icons.permalinks_icon
-html_favicon = "_static/q_trans.png"
+html_favicon = "_static/QiliSDK_q.png"
 # html_baseurl = "https://docs.qilimanjaro.tech/"
 html_theme = "sphinxawesome_theme"
 html_static_path = ["_static"]
@@ -123,8 +136,8 @@ html_sidebars = {
 }
 
 theme_options = ThemeOptions(
-    logo_light="_static/q_trans.png",
-    logo_dark="_static/q_trans.png",
+    logo_light="_static/QiliSDK_blk.svg",
+    logo_dark="_static/QiliSDK_wht.svg",
     awesome_external_links=True,
 )
 

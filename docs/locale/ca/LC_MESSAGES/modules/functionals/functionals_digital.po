@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_digital.rst:2
 msgid "Digital Propagation"
-msgstr "Propagació Digital"
+msgstr "Propagació digital"
 
 #: ../../modules/functionals/functionals_digital.rst:4
 msgid ""

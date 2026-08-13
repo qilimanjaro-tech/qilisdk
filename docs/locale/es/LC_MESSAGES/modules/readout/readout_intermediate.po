@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/readout/readout_intermediate.rst:2
 msgid "Intermediate Results"
-msgstr "Resultados Intermedios"
+msgstr "Resultados intermedios"
 
 #: ../../modules/readout/readout_intermediate.rst:4
 msgid ""

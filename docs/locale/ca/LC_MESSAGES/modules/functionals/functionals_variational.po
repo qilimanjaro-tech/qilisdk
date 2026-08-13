@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_variational.rst:2
 msgid "Variational Programs"
-msgstr "Programes Variacionals"
+msgstr "Programes variacionals"
 
 #: ../../modules/functionals/functionals_variational.rst:4
 msgid ""

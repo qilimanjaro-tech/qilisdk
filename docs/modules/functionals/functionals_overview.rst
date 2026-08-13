@@ -10,7 +10,7 @@ The :mod:`~qilisdk.functionals` module provides high-level quantum execution pro
 
 Moreover, it provides more complex functionals that are used to execute more complex algorithms:
 
-- :doc:`functionals_variational`: Builds parameterized program to be optimized in a hybrid quantum-classical environment.
+- :doc:`functionals_variational`: Builds a parameterized program to be optimized in a hybrid quantum-classical environment.
 
 Architecture Overview
 ---------------------

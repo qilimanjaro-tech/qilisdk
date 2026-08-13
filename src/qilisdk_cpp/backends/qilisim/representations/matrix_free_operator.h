@@ -43,6 +43,7 @@ class MatrixFreeOperator {
     std::vector<int> get_control_qubits() const { return control_qubits; }
     std::string get_name() const { return name; }
     std::string get_id() const;
+    const DenseMatrix& get_base_matrix() const { return base_matrix; }
 };
 
 // GCOV_EXCL_BR_STOP

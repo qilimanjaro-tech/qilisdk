@@ -24,6 +24,7 @@ from ruamel.yaml import YAML
 from qilisdk.core.exceptions import (
     EvaluationError,
     InvalidBoundsError,
+    NonPolynomialError,
     NotSupportedOperation,
     OutOfBoundsException,
 )
@@ -38,6 +39,7 @@ from qilisdk.core.variables import (
     MAX_INT,
     MIN_INT,
     NEQ,
+    Abs,
     Add,
     BaseVariable,
     BinaryVariable,
@@ -49,12 +51,15 @@ from qilisdk.core.variables import (
     Domain,
     DomainWall,
     Equal,
+    Exp,
     Expression,
     Function,
     GreaterThan,
     GreaterThanOrEqual,
+    Inv,
     LessThan,
     LessThanOrEqual,
+    Log,
     Mul,
     NotEqual,
     Number,
@@ -63,6 +68,8 @@ from qilisdk.core.variables import (
     Pow,
     Sin,
     SpinVariable,
+    Sqrt,
+    Tan,
     Variable,
     _check_output,
     _extract_number,
@@ -240,7 +247,7 @@ def test_arithmetic_and_comparisons():
 
     t = a + b
 
-    assert t * a == a.__rmul__(t)  # noqa: PLC2801
+    assert t * a == a.__rmul__(t)  # ruff: ignore[unnecessary-dunder-call]
 
     t = -a
 
@@ -262,7 +269,7 @@ def test_arithmetic_and_comparisons():
     assert val == 2 + 1 * 2 - 3
 
     # test division by zero
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         _ = a / 0
     # right division / floor division by a variable
     assert (3 / a) == Mul.build((Constant(3), Pow.build(a, Constant(-1))))
@@ -1099,6 +1106,223 @@ def test_cos_map():
     assert isinstance(copy(cos_map), Cos)
 
 
+def test_sqrt_map():
+    b = BinaryVariable("b")
+    p = Parameter("p", 1)
+    term = 2 * b + p
+
+    sqrt_map = Sqrt(b)
+    assert str(sqrt_map) == "sqrt(b)"
+    assert sqrt_map.evaluate({b: 0}) == np.sqrt(0)
+
+    sqrt_map = Sqrt(p)
+    assert str(sqrt_map) == "sqrt(p)"
+    assert sqrt_map.evaluate({}) == np.sqrt(1)
+
+    sqrt_map = Sqrt(term)
+    assert str(sqrt_map) == f"sqrt({term})"
+    assert sqrt_map.evaluate({b: 1}) == np.sqrt(3)
+
+    assert isinstance(copy(sqrt_map), Sqrt)
+
+
+def test_log_map():
+    b = BinaryVariable("b")
+    p = Parameter("p", 1)
+    term = 2 * b + p
+
+    log_map = Log(b)
+    assert str(log_map) == "log(b)"
+    assert log_map.evaluate({b: 1}) == np.log(1)
+
+    log_map = Log(p)
+    assert str(log_map) == "log(p)"
+    assert log_map.evaluate({}) == np.log(1)
+
+    log_map = Log(term)
+    assert str(log_map) == f"log({term})"
+    assert log_map.evaluate({b: 1}) == np.log(3)
+
+    assert isinstance(copy(log_map), Log)
+
+
+def test_inv_is_a_power_of_minus_one():
+    b = BinaryVariable("b")
+    p = Parameter("p", 1)
+    term = 2 * b + p
+
+    # Inv is a helper over Pow, not a node of its own, so 1/x and Inv(x) are the same expression.
+    assert Inv(p) == p**-1
+    assert Inv(p) == 1 / p
+    assert isinstance(Inv(p), Pow)
+
+    assert str(Inv(b)) == "b**-1"
+    assert Inv(b).evaluate({b: 1}) == 1
+
+    assert Inv(p).evaluate({}) == 1
+
+    inv_map = Inv(term)
+    assert str(inv_map) == f"({term})**-1"
+    assert inv_map.evaluate({b: 1}) == 1 / 3
+
+    assert isinstance(copy(inv_map), Pow)
+
+    # A constant argument is folded on construction.
+    assert Inv(4) == Constant(0.25)
+
+    with pytest.raises(TypeError, match=r"Inv expects an Expression or number"):
+        Inv("not a number")
+
+    with pytest.raises(ValueError, match=r"Division by zero is not allowed"):
+        Inv(b).evaluate({b: 0})
+
+
+def test_exp_map():
+    b = BinaryVariable("b")
+    p = Parameter("p", 1)
+    term = 2 * b + p
+
+    exp_map = Exp(b)
+    assert str(exp_map) == "exp(b)"
+    assert exp_map.evaluate({b: 1}) == np.exp(1)
+
+    exp_map = Exp(p)
+    assert str(exp_map) == "exp(p)"
+    assert exp_map.evaluate({}) == np.exp(1)
+
+    exp_map = Exp(term)
+    assert str(exp_map) == f"exp({term})"
+    assert exp_map.evaluate({b: 1}) == np.exp(3)
+
+    assert isinstance(copy(exp_map), Exp)
+
+
+def test_pow_node():
+    p = Parameter("p", 2)
+    term = 2 * p
+
+    pow_node = p**3
+    assert str(pow_node) == "p**3"
+    assert pow_node.evaluate({}) == 8
+
+    pow_node = term**3
+    assert str(pow_node) == f"({term})**3"
+    assert pow_node.evaluate({}) == 64
+
+    assert isinstance(copy(pow_node), Pow)
+
+    with pytest.raises(ValueError, match=r"Division by zero is not allowed"):
+        (p**-1).evaluate({p: 0})
+
+
+def test_symbolic_and_fractional_exponents():
+    x = Parameter("x", 4)
+    y = Parameter("y", 0.5)
+
+    # None of these were expressible with the old flattened polynomial.
+    assert np.isclose(_assert_real((x**y).evaluate({})), 2.0)
+    assert np.isclose(_assert_real((x**0.5).evaluate({})), 2.0)
+    assert np.isclose(_assert_real((2**y).evaluate({})), np.sqrt(2))
+
+    assert (x**y).free_symbols() == {x, y}
+    with pytest.raises(NonPolynomialError):
+        _ = (x**y).degree
+
+
+def test_different_mathematical_maps_of_same_argument_are_not_equal():
+    p = Parameter("p", 0.5)
+
+    sin_a, sin_b = Sin(p), Sin(p)
+    assert sin_a == sin_b
+    assert hash(sin_a) == hash(sin_b)
+
+    for lhs, rhs in [(Sin(p), Cos(p)), (Sin(p), Tan(p)), (Exp(p), Log(p)), (Sqrt(p), Inv(p)), (Inv(p), Abs(p))]:
+        assert lhs != rhs
+        assert hash(lhs) != hash(rhs)
+
+    assert Sin(p) != DummyMap(p)
+    assert hash(Sin(p)) != hash(DummyMap(p))
+
+    b = BinaryVariable("b")
+    term = 2 * b + p
+    assert Sin(term) != Cos(term)
+    assert Sin(b) != Cos(b)
+
+
+def test_powers_with_different_exponents_are_not_equal():
+    p = Parameter("p", 2)
+
+    squared_a, squared_b = p**2, p**2
+    assert squared_a == squared_b
+    assert hash(squared_a) == hash(squared_b)
+
+    assert p**2 != p**3
+    assert hash(p**2) != hash(p**3)
+
+
+def test_sum_of_different_mathematical_maps_is_not_merged():
+    p = Parameter("p", 0.5)
+
+    term = Sin(p) + Cos(p)
+    assert len(term.args) == 2
+    assert np.isclose(_assert_real(term.evaluate({})), np.sin(0.5) + np.cos(0.5))
+
+    # Maps of the same kind must still be merged.
+    same_kind = Sin(p) + Sin(p)
+    assert same_kind == 2 * Sin(p)
+    assert np.isclose(_assert_real(same_kind.evaluate({})), 2 * np.sin(0.5))
+
+    pow_term = p**2 + p**3
+    assert len(pow_term.args) == 2
+    assert np.isclose(_assert_real(pow_term.evaluate({})), 0.5**2 + 0.5**3)
+
+    # A product of the same map is a square, not a doubling. The flattened Term model got this wrong.
+    squared = Sin(p) * Sin(p)
+    assert squared == Sin(p) ** 2
+    assert np.isclose(_assert_real(squared.evaluate({})), np.sin(0.5) ** 2)
+
+
+def test_abs_map():
+    p = Parameter("p", -1)
+    term = 2 * p
+
+    abs_map = Abs(p)
+    assert str(abs_map) == "abs(p)"
+    assert abs_map.evaluate({}) == 1
+
+    abs_map = Abs(term)
+    assert str(abs_map) == f"abs({term})"
+    assert abs_map.evaluate({}) == 2
+
+    assert isinstance(copy(abs_map), Abs)
+
+    with pytest.raises(NotSupportedOperation, match=r"The derivative of abs is not supported."):
+        Abs(p).diff(p)
+
+
+def test_tan_map():
+    b = BinaryVariable("b")
+    p = Parameter("p", 1)
+    term = 2 * b + p
+
+    tan_map = Tan(b)
+    assert str(tan_map) == "tan(b)"
+    assert tan_map.evaluate({b: 0}) == np.tan(0)
+
+    tan_map = Tan(p)
+    assert str(tan_map) == "tan(p)"
+    assert tan_map.evaluate({}) == np.tan(1)
+
+    tan_map = Tan(term)
+    assert str(tan_map) == f"tan({term})"
+    assert tan_map.evaluate({b: 1}) == np.tan(3)
+
+    assert isinstance(copy(tan_map), Tan)
+
+    with pytest.raises(ValueError, match=r"Tangent is not defined for values where cosine is zero."):
+        Tan(p).evaluate({p: np.pi / 2})
+
+
 @pytest.mark.parametrize("domain", list(Domain))
 def test_domain_yaml(domain):
     yaml = YAML()
@@ -1145,21 +1369,21 @@ def test_base_variable():
     with pytest.raises(TypeError):
         _ = not_number + a
     assert (a + np_generic) == (a + 1.0)
-    assert (a.__radd__(np_generic)) == (1.0 + a)  # noqa: PLC2801
+    assert (a.__radd__(np_generic)) == (1.0 + a)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(TypeError):
         _ = a - not_number
     with pytest.raises(TypeError):
         _ = not_number - a
     assert (a - np_generic) == (a - 1.0)
-    assert (a.__rsub__(np_generic)) == (1.0 - a)  # noqa: PLC2801
+    assert (a.__rsub__(np_generic)) == (1.0 - a)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(TypeError):
         _ = a * not_number
     with pytest.raises(TypeError):
         _ = not_number * a
     assert (a * np_generic) == (1.0 * a)
-    assert (a.__rmul__(np_generic)) == (1.0 * a)  # noqa: PLC2801
+    assert (a.__rmul__(np_generic)) == (1.0 * a)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(TypeError):
         _ = a / not_number
@@ -1176,7 +1400,7 @@ def test_big_bounds(monkeypatch):
     # capture output of logger.warning
     out = []
 
-    def log_append(msg):
+    def log_append(msg, *args, **kwargs):
         out.append(msg)
 
     monkeypatch.setattr("loguru.logger.warning", log_append)
@@ -1283,21 +1507,21 @@ def test_term_arithmetic():
     with pytest.raises(TypeError):
         _ = not_number + t
     assert (t + np_generic) == (t + 1.0)
-    assert (t.__radd__(np_generic)) == (1.0 + t)  # noqa: PLC2801
+    assert (t.__radd__(np_generic)) == (1.0 + t)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(TypeError):
         _ = t - not_number
     with pytest.raises(TypeError):
         _ = not_number - t
     assert (t - np_generic) == (t - 1.0)
-    assert (t.__rsub__(np_generic)) == (1.0 - t)  # noqa: PLC2801
+    assert (t.__rsub__(np_generic)) == (1.0 - t)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(TypeError):
         _ = t * not_number
     with pytest.raises(TypeError):
         _ = not_number * t
     assert (t * np_generic) == (t * 1.0)
-    assert (t.__rmul__(np_generic)) == (1.0 * t)  # noqa: PLC2801
+    assert (t.__rmul__(np_generic)) == (1.0 * t)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(TypeError):
         _ = t / not_number

@@ -184,7 +184,7 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
             nqubits_samples = len(next(iter(samples_to_filter.keys())))
             nqubits_total = nqubits if nqubits is not None else nqubits_samples
             # Assuming 3 qubits, if asked for 0 and 1 and we have xxx, return xx_
-            if nqubits_samples >= nqubits_total:
+            if nqubits_samples > len(qubits_to_measure):
                 return cls._filter_samples(samples_to_filter, qubits_to_measure, expand_samples=expand_samples)
             # Assuming 3 qubits, if asked for 0 and 1 and we have xx, return xx_
             if nqubits_samples < nqubits_total and expand_samples:
@@ -339,10 +339,10 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
 
     @classmethod
     def from_state(cls, expectation_readout: ExpectationReadout, state: QTensor) -> Self:
-        expectation_readout.expand_observables(nqubits=state.nqubits)
         try:
             expectation_values: list[int | float] = [
-                _assert_real((expect_val(o, state))) for o in expectation_readout.qtensor_observables
+                _assert_real((expect_val(o, state, expectation_readout.nshots)))
+                for o in expectation_readout.expanded_observables(nqubits=state.nqubits)
             ]
         except ValueError:
             raise ValueError(
@@ -673,7 +673,7 @@ def _samples_from_probabilities(
     states = np.array(list(probabilities.keys()))
     probs = np.array(list(probabilities.values()), dtype=np.float64)
     if not np.isclose(probs.sum(), 1):
-        logger.warning("Renormalizing probabilities obtained as they don't sum up to 1.")
+        logger.warning("[ReadoutResult] Renormalizing probabilities obtained as they don't sum up to 1.")
         probs /= probs.sum()
 
     rng = np.random.default_rng(seed)

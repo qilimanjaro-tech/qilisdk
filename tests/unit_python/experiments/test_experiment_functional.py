@@ -14,48 +14,52 @@
 
 import numpy as np
 
-from qilisdk.experiments import ExperimentFunctional, RabiExperiment, T1Experiment, T2Experiment, TwoTonesExperiment
+from qilisdk.experiments import ExperimentFunctional, ExperimentResult
+from qilisdk.utils.serialization import deserialize, serialize
+
+
+class SweepExperimentResult(ExperimentResult):
+    plot_title = "Sweep Experiment"
+
+
+class SweepExperiment(ExperimentFunctional[SweepExperimentResult]):
+    """Minimal backend-defined experiment, used to exercise the extension point."""
+
+    result_type = SweepExperimentResult
+
+    def __init__(self, qubit: int, averages: int, sweep_values: np.ndarray) -> None:
+        super().__init__(qubit=qubit, averages=averages)
+        self.sweep_values = sweep_values
 
 
 def test_experiment_functional_initialization():
     qubit = 0
-    functional = ExperimentFunctional(qubit=qubit)
+    averages = 1000
+
+    functional = ExperimentFunctional(qubit=qubit, averages=averages)
+
     assert functional.qubit == qubit
+    assert functional.averages == averages
 
 
-def test_rabi_experiment_initialization():
-    qubit = 0
+def test_experiment_functional_subclass_initialization():
+    qubit = 3
+    averages = 1000
     values = np.array([0.1, 0.2, 0.3])
-    rabi_exp = RabiExperiment(qubit=qubit, drive_duration_values=values)
-    assert rabi_exp.qubit == qubit
-    assert np.array_equal(rabi_exp.drive_duration_values, values)
+
+    experiment = SweepExperiment(qubit=qubit, averages=averages, sweep_values=values)
+
+    assert experiment.qubit == qubit
+    assert experiment.averages == averages
+    assert np.array_equal(experiment.sweep_values, values)
+    assert experiment.result_type is SweepExperimentResult
 
 
-def test_t1_experiment_initialization():
-    qubit = 0
-    values = np.array([10, 20, 30])
-    t1_exp = T1Experiment(qubit=qubit, wait_duration_values=values)
-    assert t1_exp.qubit == qubit
-    assert np.array_equal(t1_exp.wait_duration_values, values)
+def test_experiment_functional_serialization_round_trip():
+    experiment = SweepExperiment(qubit=1, averages=500, sweep_values=np.array([10, 20, 30]))
 
+    deserialized = deserialize(serialize(experiment), SweepExperiment)
 
-def test_t2_experiment_initialization():
-    qubit = 0
-    values = np.array([5, 15, 25])
-    t2_exp = T2Experiment(qubit=qubit, wait_duration_values=values)
-    assert t2_exp.qubit == qubit
-    assert np.array_equal(t2_exp.wait_duration_values, values)
-
-
-def test_two_tones_experiment_initialization():
-    qubit = 0
-    freq_start = 4.0
-    freq_stop = 5.0
-    freq_step = 5.0
-    two_tones_exp = TwoTonesExperiment(
-        qubit=qubit, frequency_start=freq_start, frequency_stop=freq_stop, frequency_step=freq_step
-    )
-    assert two_tones_exp.qubit == qubit
-    assert np.isclose(two_tones_exp.frequency_start, freq_start)
-    assert np.isclose(two_tones_exp.frequency_stop, freq_stop)
-    assert np.isclose(two_tones_exp.frequency_step, freq_step)
+    assert deserialized.qubit == experiment.qubit
+    assert deserialized.averages == experiment.averages
+    assert np.array_equal(deserialized.sweep_values, experiment.sweep_values)

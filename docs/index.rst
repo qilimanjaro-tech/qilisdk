@@ -1,5 +1,16 @@
-QiliSDK
-=========================
+.. title:: QiliSDK
+
+.. image:: _static/QiliSDK_blk.svg
+   :alt: QiliSDK logo
+   :align: left
+   :width: 200px
+   :class: title-image only-light
+
+.. image:: _static/QiliSDK_wht.svg
+   :alt: QiliSDK logo
+   :align: left
+   :width: 200px
+   :class: title-image only-dark
 
 .. rst-class:: lead center
 

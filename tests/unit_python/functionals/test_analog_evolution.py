@@ -29,7 +29,7 @@ def _isclose(lhs: float, rhs: float) -> bool:
 
 def test_analog_evolution_initial_state_qubits_mismatch_raises():
     hamiltonian = Hamiltonian({(PauliZ(0),): 1.0})
-    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1, total_time=1.0)
     initial_state = tensor_prod([ket(0), ket(0)]).unit()
 
     with pytest.raises(ValueError, match=r"The initial state provided acts on 2 qubits"):
@@ -39,7 +39,7 @@ def test_analog_evolution_initial_state_qubits_mismatch_raises():
 def test_analog_evolution_properties():
     param = Parameter("theta", 0.5)
     hamiltonian = Hamiltonian({(PauliZ(0),): param})
-    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1, total_time=1.0)
     initial_state = ket(0).unit()
 
     functional = AnalogEvolution(schedule=schedule, initial_state=initial_state)
@@ -88,7 +88,7 @@ def test_analog_evolution_parameter_sync_with_schedule_child():
 def test_repr():
     param = Parameter("theta", 0.5)
     hamiltonian = Hamiltonian({(PauliZ(0),): param})
-    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1)
+    schedule = Schedule(hamiltonians={"h": hamiltonian}, dt=0.1, total_time=1.0)
     initial_state = ket(0).unit()
 
     functional = AnalogEvolution(schedule=schedule, initial_state=initial_state)

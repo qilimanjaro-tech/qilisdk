@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <cmath>
+
 #include "numpy.h"
 
 // GCOV_EXCL_BR_START
@@ -29,7 +31,18 @@ SparseMatrix from_numpy(const py::buffer& matrix_buffer, double atol) {
     Returns:
         SparseMatrix: The converted sparse matrix.
     */
-    py::buffer_info buf = matrix_buffer.request();
+    // QSDK-04 (CWE-843 / CWE-125): coerce to a C-contiguous complex128 array
+    // instead of reinterpreting the raw buffer. Without this, a non-complex128
+    // input (e.g. float64, or every gate matrix under
+    // QILISDK_COMPLEX_PRECISION=COMPLEX_64) or a non-contiguous view strides
+    // 16 bytes per element over a smaller/mismatched allocation, reading out of
+    // bounds. forcecast converts the dtype and c_style guarantees contiguity,
+    // so ptr[r * cols + c] is always in-bounds.
+    auto array = py::array_t<std::complex<double>, py::array::c_style | py::array::forcecast>::ensure(matrix_buffer);
+    if (!array) {
+        throw py::value_error("Input array must be convertible to a 2D complex128 array.");
+    }
+    py::buffer_info buf = array.request();
     if (buf.ndim != 2) {
         throw py::value_error("Input array must be 2D.");
     }
@@ -39,8 +52,8 @@ SparseMatrix from_numpy(const py::buffer& matrix_buffer, double atol) {
     Triplets entries;
     for (int r = 0; r < rows; ++r) {
         for (int c = 0; c < cols; ++c) {
-            std::complex<double> val = ptr[r * cols + c];
-            if (std::abs(val) > atol) {
+            Complex val(ptr[r * cols + c]);
+            if (std::abs(val) > atol || !std::isfinite(val.real()) || !std::isfinite(val.imag())) {
                 entries.emplace_back(Triplet(r, c, val));
             }
         }
@@ -166,8 +179,8 @@ SparseMatrix from_spmatrix(const py::object& matrix, double atol) {
     auto col_ptr = static_cast<int*>(col_buf.ptr);
     auto data_ptr = static_cast<std::complex<double>*>(data_buf.ptr);
     for (int i = 0; i < nnz; ++i) {
-        std::complex<double> val = data_ptr[i];
-        if (std::abs(val) > atol) {
+        Complex val(data_ptr[i]);
+        if (std::abs(val) > atol || !std::isfinite(val.real()) || !std::isfinite(val.imag())) {
             entries.emplace_back(Triplet(row_ptr[i], col_ptr[i], val));
         }
     }
@@ -194,7 +207,7 @@ py::object to_spmatrix(const SparseMatrix& matrix) {
     for (int r = 0; r < rows; ++r) {
         for (int c = 0; c < cols; ++c) {
             std::complex<double> val = matrix.coeff(r, c);
-            if (std::abs(val) > 0.0) {
+            if (std::abs(val) > 0.0 || !std::isfinite(val.real()) || !std::isfinite(val.imag())) {
                 row_indices.push_back(r);
                 col_indices.push_back(c);
                 data_values.push_back(val);

@@ -1,12 +1,14 @@
 Schedule
 --------
 
-The simplest way to construct a common schedule is to use of the helper functions:
+The simplest way to construct a common schedule is to use the helper functions:
 
 - :func:`linear <qilisdk.analog.schedule.Schedule.linear>`: Linear interpolation between two Hamiltonians.
 - :func:`quadratic <qilisdk.analog.schedule.Schedule.quadratic>`: Quadratic interpolation between two Hamiltonians.
 - :func:`polynomial <qilisdk.analog.schedule.Schedule.polynomial>`: Polynomial interpolation of arbitrary degree between two Hamiltonians.
 - :func:`sinusoidal <qilisdk.analog.schedule.Schedule.sinusoidal>`: Sinusoidal interpolation between two Hamiltonians.
+- :func:`constant <qilisdk.analog.schedule.Schedule.constant>`: Constant coefficient for a single Hamiltonian.
+- :func:`chained_linear <qilisdk.analog.schedule.Schedule.chained_linear>`: Linear chaining of multiple Hamiltonians.
 
 For example, to create a linear schedule that interpolates between a driver Hamiltonian and a problem Hamiltonian over a time of 10 units:
 
@@ -19,6 +21,16 @@ For example, to create a linear schedule that interpolates between a driver Hami
 
     schedule = Schedule.linear(H1, H2, 10.0)
     schedule.draw()
+
+.. image:: ../../_static/schedule_light.svg
+   :align: center
+   :class: only-light
+   :scale: 70%
+
+.. image:: ../../_static/schedule_dark.svg
+   :align: center
+   :class: only-dark
+   :scale: 70%
 
 For more complex schedules, you can use the :class:`~qilisdk.analog.schedule.Schedule` class directly, 
 which provides a flexible interface to fully define time-dependent Hamiltonian coefficients.
@@ -33,7 +45,7 @@ Key arguments
 - **hamiltonians** (dict[str, Hamiltonian]): Map of labels to :class:`~qilisdk.analog.hamiltonian.Hamiltonian` instances.
 - **coefficients** (dict[str, dict]): Mapping from Hamiltonian label to a time-definition dictionary. Each key is either a time point (float/parameter/expression) or a 2-tuple defining an interval; each value can be:
     - the coefficient of the hamiltonian at that time
-    - or callable returning a coefficient. This callable can take a parameter ``t`` that will be replaced by time. Moreover, any other parameters passed to this callable need to have a default value or have their value specified in the ``**kwargs``.
+    - or a callable returning a coefficient. This callable can take a parameter ``t`` that will be replaced by time. Moreover, any other parameters passed to this callable need to have a default value or have their value specified in the ``**kwargs``.
 - **interpolation** (:class:`~qilisdk.core.interpolator.Interpolation`): ``LINEAR`` (default) or ``STEP`` behavior between provided points.
 - **total_time** (float | Parameter | Expression | None): Optional max time that rescales all time points while preserving relative positions.
 
@@ -96,6 +108,7 @@ Example 2: Step interpolation and max-time rescaling
 
 Parameterized Schedules
 ^^^^^^^^^^^^^^^^^^^^^^^
+
 :class:`~qilisdk.analog.schedule.Schedule` coefficients can be symbolic, enabling classical optimization loops or
 experiments that scan over a family of time profiles. Coefficients can be
 instances of :class:`~qilisdk.core.variables.Parameter` or algebraic
@@ -128,3 +141,72 @@ later.
 
    For schedules, Hamiltonians, and interpolators, use ``get_parameters`` and
    related accessor methods to inspect parameter state.
+
+
+Visualizing Schedules
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Whilst :meth:`Schedule.draw()<qilisdk.analog.schedule.Schedule.draw>` is useful for visualizing the coefficients of the Hamiltonians over time,
+you can also use :meth:`Schedule.draw_eigenvalues()<qilisdk.analog.schedule.Schedule.draw_eigenvalues>` to visualize how the eigenvalues of the overall Hamiltonian
+change over time. This can only be done for smaller systems (say, 8 qubits or less) since
+it requires diagonalizing the Hamiltonian at every timestep, but it can be really useful to see how the gap between the ground state 
+and first excited state evolves. For example:
+
+.. code-block:: python
+
+    from qilisdk.analog import Schedule, X, Z
+
+    h_driver = -(X(0) + X(1))
+    h_problem = Z(0) * Z(1)
+
+    schedule = Schedule.linear(h_driver, h_problem, total_time=10.0, dt=0.1)
+    schedule.draw_eigenvalues()
+
+.. image:: ../../_static/schedule_eigenvalues.svg
+   :align: center
+   :class: only-light
+   :scale: 90%
+
+.. image:: ../../_static/schedule_eigenvalues_dark.svg
+   :align: center
+   :class: only-dark
+   :scale: 90%
+
+If we start in the ground state of the driver Hamiltonian (the bottom line, at the very left) and then evolve slowly,
+we should end up in the ground state of the problem Hamiltonian (at the very right). To test this, we can simulate the evolution
+and then include the intermediate states in the plot:
+
+.. code-block:: python
+
+    from qilisdk.functionals import AnalogEvolution
+    from qilisdk.backends import QiliSim
+    from qilisdk.readout import Readout
+    from qilisdk.core import InitialState
+
+    backend = QiliSim()
+    evolution = AnalogEvolution(
+        schedule=schedule, 
+        initial_state=InitialState.UNIFORM, 
+        store_intermediate_results=True
+    )
+    readout = Readout().with_state_tomography()
+    results = backend.execute(evolution, readout)
+
+    schedule.draw_eigenvalues(
+        intermediate_states=results.get_intermediate_states(), 
+        show_overlaps=True
+    )
+
+.. image:: ../../_static/schedule_eigenvalues_state.svg
+   :align: center
+   :class: only-light
+   :scale: 90%
+
+.. image:: ../../_static/schedule_eigenvalues_state_dark.svg
+   :align: center
+   :class: only-dark
+   :scale: 90%
+
+Here we can see that the state correctly started in the ground state of the initial Hamiltonian, 
+and then evolved to the ground state of the final Hamiltonian. The percentage overlap shows that some small amount of state leaked out
+into a higher order state, but this is just a result of the evolution time, a longer/slower evolution would reduce this.

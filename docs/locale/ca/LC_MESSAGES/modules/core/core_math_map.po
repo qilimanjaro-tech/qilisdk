@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/core/core_math_map.rst:2
 msgid "Mathematical Maps"
-msgstr "Mapes Matemàtics"
+msgstr "Mapes matemàtics"
 
 #: ../../modules/core/core_math_map.rst:8
 msgid "Go to a specific subheading of a page."

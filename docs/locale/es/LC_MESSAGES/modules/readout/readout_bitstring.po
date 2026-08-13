@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/readout/readout_bitstring.rst:2
 msgid "Bitstring Measurement"
-msgstr "Medición de Cadena de Bits"
+msgstr "Medición de cadena de bits"
 
 #: ../../modules/readout/readout_bitstring.rst:4
 msgid ""
@@ -63,7 +63,7 @@ msgstr ""
 
 #: ../../modules/readout/readout_bitstring.rst:35
 msgid "**When to Use It**"
-msgstr "**Cuándo Usarlo**"
+msgstr "**Cuándo usarlo**"
 
 #: ../../modules/readout/readout_bitstring.rst:37
 msgid ""
@@ -77,7 +77,7 @@ msgstr ""
 
 #: ../../modules/readout/readout_bitstring.rst:40
 msgid "**Expanded Samples**"
-msgstr "**Muestras Expandidas**"
+msgstr "**Muestras expandidas**"
 
 #: ../../modules/readout/readout_bitstring.rst:42
 msgid ""

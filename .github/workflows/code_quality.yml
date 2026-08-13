@@ -16,7 +16,7 @@ jobs:
     name: Code Quality for Python ${{ matrix.python-version }}
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     env:
       HOME_REPO: /home/repo
@@ -29,12 +29,12 @@ jobs:
           - "3.13"
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v8.1.0
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
         with:
           enable-cache: true
           cache-dependency-glob: |
@@ -44,7 +44,9 @@ jobs:
 
       - name: Install the project
         run: |
-          uv sync --frozen --group dev --extra all-cu13
+          uv sync --frozen --group dev --extra all-cu13 \
+            -Ccmake.build-type=Debug \
+            -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
@@ -54,11 +56,11 @@ jobs:
       - name: Format
         run: ruff format --diff --output-format=github .
 
-      - name: Mypy
+      - name: Type Checking
         run: ty check --output-format=github
 
       - name: Cpp Linter
-        uses: cpp-linter/cpp-linter-action@v2
+        uses: cpp-linter/cpp-linter-action@8e85cd02c8c3fe3ae527c94b5683fe2366b144ed  # v2.20.0
         id: linter
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

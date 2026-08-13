@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Callable
 
+from loguru import logger
 from scipy import optimize as scipy_optimize
 
 from qilisdk.yaml import yaml
@@ -50,8 +51,14 @@ class SciPyOptimizer(Optimizer):
                     - 'trust-constr
                     - 'dogleg'
                     - 'trust-ncg'
-                    - 'trust-exact
-                    - 'trust-krylov
+                    - 'trust-exact'
+                    - 'trust-krylov'
+                    - 'basinhopping' (global)
+                    - 'direct' (global)
+                    - 'dual_annealing' (global)
+                    - 'differential_evolution' (global)
+                    - 'shgo' (global)
+                    - 'brute' (global)
                     - custom - a callable object, see `scipy.optimize.minimize <https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html>`__ for description.
 
                     If not given, chosen to be one of ``BFGS``, ``L-BFGS-B``, ``SLSQP``,
@@ -68,6 +75,7 @@ class SciPyOptimizer(Optimizer):
         super().__init__()
         self.method = method
         self.extra_arguments = kwargs
+        logger.debug("[SciPyOptimizer] Created optimizer with method {}", method)
 
     def optimize(
         self,
@@ -86,10 +94,16 @@ class SciPyOptimizer(Optimizer):
         Returns:
             list[float]: the optimal set of parameters that minimize the cost function.
         """
+        logger.debug(
+            "[SciPyOptimizer] Starting optimization with method {} and {} parameters",
+            self.method,
+            len(init_parameters),
+        )
         intermediate_results: list[OptimizerIntermediateResult] = []
 
         def callback_fun(intermediate_result: OptimizeResult) -> None:
             # Create an OptimizerResult for this intermediate iteration.
+            logger.trace("[SciPyOptimizer] Intermediate iteration with cost {}", intermediate_result.fun)
             intermediate_results.append(
                 OptimizerIntermediateResult(cost=intermediate_result.fun, parameters=intermediate_result.x.tolist())
             )
@@ -97,20 +111,48 @@ class SciPyOptimizer(Optimizer):
         # Only pass the callback if we want to store intermediate results.
         callback = callback_fun if store_intermediate_results else None
 
-        res = scipy_optimize.minimize(
-            cost_function,
-            x0=init_parameters,
-            method=self.method,
-            bounds=bounds,
-            jac=self.extra_arguments.get("jac", None),
-            hess=self.extra_arguments.get("hess", None),
-            hessp=self.extra_arguments.get("hessp", None),
-            constraints=self.extra_arguments.get("constraints", ()),
-            tol=self.extra_arguments.get("tol", None),
-            options=self.extra_arguments.get("options", None),
-            callback=callback,
-        )
+        # Global optimizer have a different interface, like `scipy.optimize.shgo` rather than `scipy.optimize.minimize`
+        if self.method in {"direct", "dual_annealing", "differential_evolution", "shgo"} and isinstance(
+            self.method, str
+        ):
+            logger.debug("[SciPyOptimizer] Using global optimizer interface {}", self.method)
+            res = getattr(scipy_optimize, self.method)(
+                cost_function,
+                bounds=bounds,
+                callback=callback,
+                **self.extra_arguments,
+            )
+        # basinhopping doesn't allow bounds
+        elif self.method in {"basinhopping", "brute"}:
+            logger.debug("[SciPyOptimizer] Using global optimizer interface {}", self.method)
+            res = scipy_optimize.basinhopping(
+                cost_function,
+                x0=init_parameters,
+                callback=callback,
+                **self.extra_arguments,
+            )
+        # the more general local minimizer interface
+        else:
+            logger.debug("[SciPyOptimizer] Using local minimizer interface with method {}", self.method)
+            res = scipy_optimize.minimize(
+                cost_function,
+                x0=init_parameters,
+                method=self.method,
+                bounds=bounds,
+                jac=self.extra_arguments.get("jac", None),
+                hess=self.extra_arguments.get("hess", None),
+                hessp=self.extra_arguments.get("hessp", None),
+                constraints=self.extra_arguments.get("constraints", ()),
+                tol=self.extra_arguments.get("tol", None),
+                options=self.extra_arguments.get("options", None),
+                callback=callback,
+            )
 
+        logger.debug(
+            "[SciPyOptimizer] Optimization finished with optimal cost {} and {} intermediate results",
+            res.fun,
+            len(intermediate_results),
+        )
         return OptimizerResult(
             optimal_cost=res.fun,
             optimal_parameters=res.x.tolist(),

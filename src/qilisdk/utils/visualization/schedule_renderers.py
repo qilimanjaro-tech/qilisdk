@@ -15,9 +15,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib.pyplot as plt
+from loguru import logger
 from matplotlib.figure import Figure
 
 from qilisdk.analog.hamiltonian import Hamiltonian
@@ -65,7 +66,7 @@ class MatplotlibScheduleRenderer:
                 grid_style["color"] = theme.surface_muted
             self.ax.grid(**grid_style)
         leg = self.ax.legend(
-            loc=style.legend_loc,
+            loc=cast("Any", style.legend_loc),
             fontsize=style.legend_fontsize,
             frameon=style.legend_frame,
             facecolor=legend_facecolor,
@@ -130,6 +131,8 @@ class MatplotlibScheduleRenderer:
         style = self.style
         theme = style.theme
 
+        logger.debug("[ScheduleRenderer] Rendering schedule with {} Hamiltonians", len(self.schedule.hamiltonians))
+
         plots: dict[str, list[Number]] = {}
         hamiltonians = self.schedule.hamiltonians
         times = self.schedule.tlist
@@ -166,10 +169,11 @@ class MatplotlibScheduleRenderer:
         Args:
             filename: Path to save the figure (e.g., 'circuit.png').
         """
+        logger.debug("[ScheduleRenderer] Saving figure to {}", filename)
         if isinstance(self.ax.figure, Figure):
             self.ax.figure.savefig(filename, bbox_inches="tight")
 
-    def show(self) -> None:  # noqa: PLR6301
+    def show(self) -> None:  # ruff: ignore[no-self-use]
         """Show the current figure."""
 
         plt.show()
@@ -276,6 +280,8 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
         """
         style = self.style
         theme = style.theme
+
+        logger.debug("[ScheduleRenderer] Rendering eigenvalue schedule with {} levels", self.levels)
 
         plots: dict[str, list[Number]] = {}
         hamiltonians: dict[str, Hamiltonian] = self.schedule.hamiltonians

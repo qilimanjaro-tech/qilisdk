@@ -17,6 +17,7 @@ import random
 from typing import TYPE_CHECKING, Callable, Iterable
 
 import numpy as np
+from loguru import logger
 from typing_extensions import Self
 
 from qilisdk.core import Domain, Parameter, QTensor
@@ -74,6 +75,7 @@ class Circuit(Parameterizable):
         self._gates: list[Gate] = []
         self._init_state: np.ndarray = np.zeros(nqubits)
         self._parameters_link: dict[str, list[tuple[str, Gate]]] = {}
+        logger.debug("[Circuit] Initialized Circuit with {} qubits", nqubits)
 
     @property
     def nqubits(self) -> int:
@@ -114,6 +116,7 @@ class Circuit(Parameterizable):
         Raises:
             ValueError: if the label provided doesn't correspond to a parameter defined in this circuit.
         """
+        logger.trace("[Circuit] Setting parameters: {}", parameters)
         if not self.check_constraints(parameters):
             raise ValueError(
                 f"New assignation of the parameters breaks the parameter constraints: \n{self.get_constraints()}"
@@ -125,6 +128,7 @@ class Circuit(Parameterizable):
                 link[1].set_parameters({link[0]: param})
 
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
+        logger.trace("[Circuit] Setting parameter bounds: {}", ranges)
         for label, bound in ranges.items():
             if label not in self._parameters:
                 raise ValueError(
@@ -148,6 +152,7 @@ class Circuit(Parameterizable):
             The ``where`` predicate is applied to local parameters only. Child parameterizable
             objects always receive the same prefix operation recursively.
         """
+        logger.trace("[Circuit] Setting prefix '{}' for parameters with condition: {}", prefix, where)
         old_keys = list(self._filtered_parameter_map(where=where))
         for name in old_keys:
             if not name.startswith(prefix):
@@ -161,6 +166,7 @@ class Circuit(Parameterizable):
         Args:
             gate (Gate): The gate to be parsed.
         """
+        logger.trace("[Circuit] Parsing parameters for gate: {}", gate)
         if gate.is_parameterized:
             param_base_label = self.get_prefix() + f"{gate.name}({','.join(map(str, gate.qubits))})"
             for label in gate.get_parameter_names():
@@ -185,7 +191,8 @@ class Circuit(Parameterizable):
         Raises:
             QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit's qubit range.
         """
-        if any(qubit >= self.nqubits for qubit in gate.qubits):
+        logger.trace("[Circuit] Adding gate: {}", gate)
+        if any(qubit < 0 or qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
 
         self._parse_params(gate)
@@ -198,6 +205,7 @@ class Circuit(Parameterizable):
         Args:
             gates (Gate | list[Gate]): The quantum gate or a list of quantum gates to be added to the circuit.
         """
+        logger.trace("[Circuit] Adding gates: {}", gates)
         if isinstance(gates, Gate):
             self._add(gates)
             return
@@ -214,9 +222,10 @@ class Circuit(Parameterizable):
         Raises:
             QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit's qubit range.
         """
-        if any(qubit >= self.nqubits for qubit in gate.qubits):
+        if any(qubit < 0 or qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
 
+        logger.trace("[Circuit] Inserting gate: {} at index: {}", gate, index)
         self._parse_params(gate)
         self._gates.insert(index, gate)
 
@@ -227,6 +236,7 @@ class Circuit(Parameterizable):
             gates (Gate | list[Gate]): The gate or list of gates to be inserted.
             index (int, optional): The index at which the gate is inserted. Defaults to -1.
         """
+        logger.trace("[Circuit] Inserting gates: {} at index: {}", gates, index)
         if isinstance(gates, Gate):
             self._insert(gates, index)
             return
@@ -242,6 +252,7 @@ class Circuit(Parameterizable):
         Raises:
             QubitOutOfRangeError: If the appended circuit acts on more qubits than the current circuit.
         """
+        logger.trace("[Circuit] Appending circuit: {}", circuit)
         if circuit.nqubits != self.nqubits:
             raise QubitOutOfRangeError(
                 "the appended circuit contains different number of qubits than the current circuit."
@@ -259,6 +270,7 @@ class Circuit(Parameterizable):
         Raises:
             QubitOutOfRangeError: If the circuit to be prepended acts on more qubits than the current circuit.
         """
+        logger.trace("[Circuit] Prepending circuit: {}", circuit)
         if circuit.nqubits != self.nqubits:
             raise QubitOutOfRangeError(
                 "the prepended circuit contains different number of qubits than the current circuit."
@@ -274,15 +286,18 @@ class Circuit(Parameterizable):
             GateHasNoMatrixError: if any gate does not define a matrix (e.g., measurement).
         """
         dim = 1 << self.nqubits
+        logger.trace("[Circuit] Converting circuit to matrix with dimension: {}", dim)
         operator = np.eye(dim, dtype=_complex_dtype())
         for gate in self.gates:
             operator = _apply_gate_left(operator, gate, self.nqubits)
         return operator
 
     def to_qtensor(self) -> QTensor:
+        logger.trace("[Circuit] Converting circuit to QTensor.")
         return QTensor(self.to_matrix())
 
     def __add__(self, other: Circuit | Gate) -> Circuit | NotImplementedError:
+        logger.trace("[Circuit] Adding {} to circuit.", other)
         if not isinstance(other, (Circuit, Gate)):
             return NotImplementedError(
                 "Addition is only supported between Circuit objects or a Circuit and a Gate objects"
@@ -296,6 +311,7 @@ class Circuit(Parameterizable):
     __iadd__ = __add__
 
     def __radd__(self, other: Circuit | Gate) -> Circuit | NotImplementedError:
+        logger.trace("[Circuit] Right-adding {} to circuit.", other)
         if not isinstance(other, (Circuit, Gate)):
             return NotImplementedError(
                 "Addition is only supported between Circuit objects or a Circuit and a Gate objects"
@@ -307,6 +323,7 @@ class Circuit(Parameterizable):
         return self
 
     def __eq__(self, other: object) -> bool:
+        logger.trace("[Circuit] Checking equality of circuit with {}.", other)
         if not isinstance(other, Circuit):
             return NotImplemented
         if self.nqubits != other.nqubits:
@@ -316,7 +333,9 @@ class Circuit(Parameterizable):
         return all(g1 == g2 for g1, g2 in zip(self.gates, other.gates))
 
     def __hash__(self) -> int:
-        return qili_hash((self.nqubits, tuple(self.gates)))
+        h = qili_hash((self.nqubits, tuple(self.gates)))
+        logger.trace("[Circuit] Hashing circuit: {}", h)
+        return h
 
     def draw(self, style: CircuitStyle = CircuitStyle(), filepath: str | None = None) -> None:
         """
@@ -332,7 +351,10 @@ class Circuit(Parameterizable):
             filepath (str | None): Destination file path for the rendered figure.
                 If ``None``, the figure is not saved.
         """
-        from qilisdk.utils.visualization.circuit_renderers import MatplotlibCircuitRenderer  # noqa: PLC0415
+        logger.debug("[Circuit] Drawing circuit with style: {} and filepath: {}", style, filepath)
+        from qilisdk.utils.visualization.circuit_renderers import (  # ruff:ignore[import-outside-top-level]
+            MatplotlibCircuitRenderer,
+        )
 
         renderer = MatplotlibCircuitRenderer(self, style=style)
         renderer.plot()
@@ -341,7 +363,12 @@ class Circuit(Parameterizable):
 
     @classmethod
     def random(
-        cls, nqubits: int, single_qubit_gates: set[type[BasicGate]], two_qubit_gates: set[type[BasicGate]], ngates: int
+        cls,
+        nqubits: int,
+        single_qubit_gates: set[type[BasicGate]],
+        two_qubit_gates: set[type[BasicGate]],
+        ngates: int,
+        seed: int | None = None,
     ) -> Self:
         """
         Generate a random quantum circuit from a given set of gates.
@@ -351,6 +378,8 @@ class Circuit(Parameterizable):
             single_qubit_gates (set[Gate]): A set of single-qubit gate classes to choose from.
             two_qubit_gates (set[Gate]): A set of two-qubit gate classes to choose from.
             ngates (int): The number of gates to include in the circuit.
+            seed (int | None): Optional seed for the local random number generator, for reproducible circuits.
+                The global :mod:`random` state is never used or modified.
 
         Returns:
             Circuit: A randomly generated quantum circuit.
@@ -359,6 +388,13 @@ class Circuit(Parameterizable):
             ValueError: If it is not possible to generate a full random circuit with the provided parameters
 
         """
+        logger.debug(
+            "[Circuit] Generating random circuit with {} qubits, {} gates, single_qubit_gates={}, two_qubit_gates={}",
+            nqubits,
+            ngates,
+            single_qubit_gates,
+            two_qubit_gates,
+        )
 
         # If we only have one gate and one qubit, throw an error
         if nqubits == 1 and len(single_qubit_gates) == 1:
@@ -368,28 +404,37 @@ class Circuit(Parameterizable):
         if len(single_qubit_gates) == 0 and len(two_qubit_gates) == 0:
             raise ValueError("At least one gate must be provided to generate a random circuit.")
 
-        new_circuit = cls(nqubits)
-        gate_list: list[type[BasicGate]] = list(single_qubit_gates)
+        # Create a new rng with the seed
+        rng = random.Random(seed)
+
+        # Sort the gate lists for reproducibility
+        gate_list: list[type[BasicGate]] = sorted(single_qubit_gates, key=lambda g: g.__name__)
         if nqubits > 1:
-            gate_list.extend(list(two_qubit_gates))
+            gate_list.extend(sorted(two_qubit_gates, key=lambda g: g.__name__))
+
+        # Start adding gates to the circuit
+        new_circuit = cls(nqubits)
         prev_gate_type = None
         prev_qubits = None
-        for _ in range(ngates):
-            gate_class = random.choice(gate_list)
+        for gate_index in range(ngates):
+            gate_class = rng.choice(gate_list)
             gate_nqubits = 1 if gate_class in single_qubit_gates else 2
-            qubits = tuple(random.sample(range(nqubits), gate_nqubits))
+            qubits = tuple(rng.sample(range(nqubits), gate_nqubits))
+            logger.trace("[Circuit] Randomly selected gate {} on qubits {}", gate_class.__name__, qubits)
 
             # Avoid adding the same gate on the same qubits consecutively
             if gate_class == prev_gate_type and qubits == prev_qubits:
                 # If we only have one qubit, pick a different gate
                 if nqubits == 1:
-                    possible_new_gates = [g for g in single_qubit_gates if g != gate_class]
-                    gate_class = random.choice(possible_new_gates)
+                    possible_new_gates = sorted(
+                        (g for g in single_qubit_gates if g != gate_class), key=lambda g: g.__name__
+                    )
+                    gate_class = rng.choice(possible_new_gates)
 
                 # If the gate list does not include all qubits, change the first to be a different qubit
                 if len(qubits) < nqubits:
                     possible_new_qubits: list[int] = [q for q in range(nqubits) if q not in qubits]
-                    new_qubit = random.choice(possible_new_qubits)
+                    new_qubit = rng.choice(possible_new_qubits)
                     qubits = (new_qubit, *qubits[1:])
 
                 # Otherwise, flip the order of the qubits
@@ -404,10 +449,8 @@ class Circuit(Parameterizable):
             params = {}
             if gate_class.PARAMETER_NAMES:
                 for param_name in gate_class.PARAMETER_NAMES:
-                    val = random.uniform(-np.pi, np.pi)
-                    params[param_name] = Parameter(
-                        label=param_name + str(val), value=val, domain=Domain.REAL, bounds=(val, val)
-                    )
+                    val = rng.uniform(-np.pi, np.pi)
+                    params[param_name] = Parameter(label=f"{param_name}_{gate_index}", value=val, domain=Domain.REAL)
 
             # Add the gate to the circuit
             new_circuit.add(gate_class(*qubits, **params))  # ty:ignore[invalid-argument-type]
@@ -415,4 +458,9 @@ class Circuit(Parameterizable):
         return new_circuit
 
     def __repr__(self) -> str:
+        logger.trace(
+            "[Circuit] Generating string representation of circuit with {} qubits and {} gates",
+            self.nqubits,
+            len(self.gates),
+        )
         return f"Circuit(nqubits={self.nqubits}, gates={self.gates})"

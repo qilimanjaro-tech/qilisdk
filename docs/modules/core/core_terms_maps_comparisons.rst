@@ -164,6 +164,18 @@ These functions compose naturally with the rest of the expression tree, so you c
 constraints, objectives, or schedule coefficients and rely on the same evaluation and encoding rules
 as any other symbolic expression.
 
+The list of possible mathematical maps includes:
+
+- :class:`~qilisdk.core.variables.Abs` for absolute value
+- :class:`~qilisdk.core.variables.Exp` for exponential
+- :class:`~qilisdk.core.variables.Log` for logarithm
+- :class:`~qilisdk.core.variables.Pow` for power functions
+- :class:`~qilisdk.core.variables.Sqrt` for square root
+- :class:`~qilisdk.core.variables.Inv` for inverse
+- :class:`~qilisdk.core.variables.Sin` for sine
+- :class:`~qilisdk.core.variables.Cos` for cosine
+- :class:`~qilisdk.core.variables.Tan` for tangent
+
 Comparison Terms
 =======================
 

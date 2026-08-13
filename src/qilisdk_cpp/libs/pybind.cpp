@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "pybind.h"
+#include "logging.h"
 
 // GCOV_EXCL_BR_START
 
@@ -25,7 +26,10 @@ py::object coomatrix;
 py::object sparray;
 py::dtype dtype;
 py::object py_complex;
+py::object logger;
+py::object logger_core;
 py::object QTensor;
+py::object InitialState;
 py::object Hamiltonian;
 py::object PauliOperator;
 py::object NoiseModel;
@@ -68,6 +72,7 @@ void initialize_all_pybind_types() {
     StateTomographyReadoutResult = py::module_::import("qilisdk.readout.readout_result").attr("StateTomographyReadoutResult");
     ReadoutCompositeResults = py::module_::import("qilisdk.readout.readout_result").attr("ReadoutCompositeResults");
     QTensor = py::module_::import("qilisdk.core.qtensor").attr("QTensor");
+    InitialState = py::module_::import("qilisdk.core.qtensor").attr("InitialState");
     Hamiltonian = py::module_::import("qilisdk.analog.hamiltonian").attr("Hamiltonian");
     PauliOperator = py::module_::import("qilisdk.analog.hamiltonian").attr("PauliOperator");
     NoiseModel = py::module_::import("qilisdk.noise.noise_model").attr("NoiseModel");
@@ -89,6 +94,26 @@ void initialize_external_pybind_types() {
     sparray = py::module_::import("scipy.sparse").attr("sparray");
     dtype = py::dtype("complex128");
     py_complex = py::module_::import("builtins").attr("complex");
+    logger = py::module_::import("loguru").attr("logger");
+    logger_core = logger.attr("_core");
+    qilisdk::refresh_log_level();
+}
+
+// Logging functions
+void warning(std::string message) {
+    if (logger) {
+        logger.attr("warning")(message);
+    }
+}
+void info(std::string message) {
+    if (logger) {
+        logger.attr("info")(message);
+    }
+}
+void error(std::string message) {
+    if (logger) {
+        logger.attr("error")(message);
+    }
 }
 
 // GCOVR_EXCL_START
@@ -109,6 +134,7 @@ void finalize_all_pybind_types() {
     StateTomographyReadoutResult = py::object();
     ReadoutCompositeResults = py::object();
     QTensor = py::object();
+    InitialState = py::object();
     Hamiltonian = py::object();
     PauliOperator = py::object();
     NoiseModel = py::object();
@@ -126,6 +152,9 @@ void finalize_all_pybind_types() {
     sparray = py::object();
     dtype = py::object();
     py_complex = py::object();
+    logger = py::object();
+    logger_core = py::object();
+    qilisdk::refresh_log_level();
 }
 // GCOVR_EXCL_STOP
 

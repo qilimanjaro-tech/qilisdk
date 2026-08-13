@@ -1,0 +1,68 @@
+# Keeps GitHub Actions and Python dependencies up to date.
+#
+# Grouping strategy: minor + patch bumps are collected into one PR per ecosystem;
+# major bumps fall outside the group and therefore get their own PR each, since
+# they are the ones that can break us and deserve individual review.
+#
+# Keeping the run green: Dependabot fails the *whole* scheduled run as soon as a
+# single dependency errors, even when every other bump succeeded and its PR was
+# opened. So anything we know is permanently unresolvable has to be listed under
+# `ignore` rather than left for Dependabot to retry and fail on every week.
+version: 2
+
+updates:
+  # ----------------------------- GitHub Actions -----------------------------
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      # Without day/time/timezone Dependabot defaults to Monday at a random hour UTC.
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Madrid"  # follows CET/CEST, so 09:00 local year-round
+    groups:
+      actions-minor-patch:
+        applies-to: version-updates  # default, stated so the security path stays visible
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    commit-message:
+      prefix: "ci"
+    # Majors arrive as one PR each now, so leave headroom above the default of 5.
+    open-pull-requests-limit: 10
+    labels: ["dependencies", "github-actions"]
+    # Every `uses:` here now points at a public repo, so Dependabot's repo-scoped job
+    # token can read them all. If a workflow ever references the *private*
+    # qilimanjaro-tech/devops again, reading it requires "Grant Dependabot access to
+    # private repositories" (org Settings -> Code security) to list that repo; without
+    # the grant every run dies on `git_dependencies_not_reachable` (404/401 on
+    # devops.git/info/refs). Note that a public repo cannot call a private repo's
+    # reusable workflows at runtime regardless of that grant.
+
+  # -------------------------------- Python ---------------------------------
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Madrid"
+    groups:
+      python-minor-patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+    open-pull-requests-limit: 10
+    labels: ["dependencies", "pyproject.toml"]
+    ignore:
+      # sphinx 9 is unreachable for us, for two independent reasons:
+      #   * sphinxawesome-theme 5.x requires sphinx >=8,<9 on Python <3.13;
+      #   * sphinx >=9.1 requires Python >=3.12, while we still support >=3.11,
+      #     so uv's universal resolution cannot pin it for the 3.11 split either.
+      # Dependabot retries the bump weekly, `uv lock` fails, and the run goes red.
+      # Revisit once requires-python is >=3.12 (the second blocker is the hard one;
+      # bumping the theme to 6.x alone is not enough).
+      - dependency-name: "sphinx"
+        update-types: ["version-update:semver-major"]

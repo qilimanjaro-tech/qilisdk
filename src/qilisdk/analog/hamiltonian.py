@@ -21,6 +21,7 @@ from itertools import product
 from typing import TYPE_CHECKING, Callable, ClassVar
 
 import numpy as np
+from loguru import logger
 from scipy.sparse import csr_matrix, kron, spmatrix
 
 from qilisdk.core.parameterizable import Parameterizable
@@ -29,6 +30,7 @@ from qilisdk.core.types import Number
 from qilisdk.core.variables import Expression, Parameter
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
+from qilisdk.utils.visualization.style import HamiltonianStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import InvalidHamiltonianOperation
@@ -88,7 +90,7 @@ def Y(qubit: int) -> Hamiltonian:
     return _get_pauli("Y", qubit).to_hamiltonian()
 
 
-def I(qubit: int = 0) -> Hamiltonian:  # noqa: E743
+def I(qubit: int = 0) -> Hamiltonian:  # ruff: ignore[ambiguous-function-name]
     return _get_pauli("I", qubit).to_hamiltonian()
 
 
@@ -120,6 +122,10 @@ class PauliOperator(ABC):
         cls._MATRIX_CACHE = {}
 
     def __init__(self, qubit: int) -> None:
+        # QSDK-05: reject negative qubit indices at construction (the upper bound
+        # depends on the Hamiltonian / circuit and is enforced at execution).
+        if qubit < 0:
+            raise ValueError(f"Qubit index must be non-negative, got {qubit}.")
         self._qubit = qubit
 
     @property
@@ -392,6 +398,7 @@ class Hamiltonian(Parameterizable):
         Returns:
             spmatrix: The sparse matrix representation of the Hamiltonian.
         """
+        logger.debug("[Hamiltonian] Building sparse matrix representation over {} qubits", self.nqubits)
         dim = 2**self.nqubits
         # Initialize a zero matrix of the appropriate dimension.
         result = csr_matrix((dim, dim), dtype=_complex_dtype())
@@ -419,6 +426,7 @@ class Hamiltonian(Parameterizable):
                 f"The total number of qubits can't be less than the number of the qubits effected by this hamiltonian ({self.nqubits})"
             )
 
+        logger.debug("[Hamiltonian] Building QTensor representation over {} qubits", nqubits)
         dim = 2 ** (nqubits)
 
         # Initialize a zero matrix of the appropriate dimension.
@@ -436,6 +444,45 @@ class Hamiltonian(Parameterizable):
                 aux *= p
             out += aux * value
         return out
+
+    def draw(self, style: HamiltonianStyle | None = None, filepath: str | None = None) -> None:
+        """Render this Hamiltonian as an interaction graph and optionally save it to a file.
+
+        Every qubit is drawn as a node whose disc is split into one slice per local field acting
+        on it (labelled with the Pauli type), and every two-qubit term is drawn as an edge between
+        the qubits it couples, with a line style per coupling type. Slice and edge colours encode
+        the coefficient of the corresponding term, as described by the accompanying colour bar.
+        Terms acting on three or more qubits are drawn as star-shaped hyperedges joined at their
+        centroid, and a constant (identity) term is annotated as an energy offset.
+
+        If ``filepath`` is given, the resulting figure is saved to disk (the output format is
+        inferred from the file extension, e.g. ``.png``, ``.pdf``, ``.svg``); otherwise the figure
+        is shown.
+
+        Args:
+            style (HamiltonianStyle | None, optional): Customization options for the plot appearance.
+                Defaults to :class:`HamiltonianStyle`.
+            filepath (str | None, optional): If provided, saves the plot to the specified file path.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import X, Z
+
+                H = X(0) + 2 * Z(1) + 0.5 * Z(0) * Z(1)
+                H.draw()
+        """
+        logger.debug("[Hamiltonian] Drawing Hamiltonian with style: {} and filepath: {}", style, filepath)
+        from qilisdk.utils.visualization.hamiltonian_renderers import (  # ruff:ignore[import-outside-top-level]
+            MatplotlibHamiltonianRenderer,
+        )
+
+        renderer = MatplotlibHamiltonianRenderer(self, style=style or HamiltonianStyle())
+        renderer.plot()
+        if filepath:
+            renderer.save(filepath)
+        else:
+            renderer.show()
 
     def __iter__(self) -> Iterator[tuple[complex, list[PauliOperator]]]:
         for key, value in self.elements.items():
@@ -552,16 +599,17 @@ class Hamiltonian(Parameterizable):
             list[dict[tuple[PauliOperator, ...], complex | Expression | Parameter]]:
                 A list of dictionaries, each representing a partition of the Hamiltonian containing commuting terms.
         """
+        logger.debug("[Hamiltonian] Partitioning Hamiltonian into commuting groups")
         partitions: list[dict[tuple[PauliOperator, ...], complex | Expression | Parameter]] = []
 
         # Check each term with each partition
         for term, coeff in self.elements.items():
             placed = False
             for partition in partitions:
-                # Check if the term commutes with all terms in the current partition
-                if all(
-                    Hamiltonian({term: 1}).commutator(Hamiltonian({other_term: 1})) == 0 for other_term in partition
-                ):
+                # Check if the term commutes with all terms in the current partition.
+                # Both are single Pauli strings, so the parity check is exact and avoids
+                # building intermediate Hamiltonians.
+                if all(self._pauli_strings_commute(term, other_term) for other_term in partition):
                     # If so, add it to this partition
                     partition[term] = coeff
                     placed = True
@@ -598,6 +646,7 @@ class Hamiltonian(Parameterizable):
 
         dim = tensor.shape[0]
         n = round(np.log2(dim))
+        logger.debug("[Hamiltonian] Expanding {}-qubit dense operator into Pauli basis", n)
         if not tensor.is_hermitian():
             raise ValueError("Matrix is not Hermitian within tolerance; cannot form a Hamiltonian.")
 
@@ -641,6 +690,7 @@ class Hamiltonian(Parameterizable):
 
     @classmethod
     def parse(cls, hamiltonian_str: str) -> Hamiltonian:
+        logger.debug("[Hamiltonian] Parsing Hamiltonian from string")
         hamiltonian_str = hamiltonian_str.strip()
 
         # 1) remove *all* spaces inside any ( … ) group (coefficients or indices)
@@ -769,6 +819,33 @@ class Hamiltonian(Parameterizable):
         """
         return self * h + h * self
 
+    def commutes_with(self, h: Hamiltonian) -> bool:
+        """Check whether this Hamiltonian commutes with another one (``[self, h] == 0``).
+
+        This is faster than materialising the full commutator ``self * h - h * self``:
+        every pair of Pauli strings either commutes or anticommutes, and which one
+        holds can be decided with a cheap qubit-overlap parity check instead of a
+        matrix/operator product. Commuting pairs contribute nothing to the commutator
+        and are skipped entirely, so only the anticommuting pairs (for which
+        ``[P, Q] = 2 P Q``) are ever multiplied out and accumulated.
+
+        Args:
+            h (Hamiltonian): the Hamiltonian to test commutation against.
+
+        Returns:
+            bool: ``True`` if the two Hamiltonians commute, ``False`` otherwise.
+        """
+        residual: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
+        for ops1, c1 in self._elements.items():
+            for ops2, c2 in h._elements.items():
+                if Hamiltonian._pauli_strings_commute(ops1, ops2):
+                    continue
+                # Anticommuting strings: [P, Q] = P Q - Q P = 2 P Q.
+                phase, new_ops = self._multiply_sets(ops1, ops2)
+                residual[new_ops] += 2 * phase * c1 * c2
+
+        return Hamiltonian(residual) == Hamiltonian.ZERO
+
     def vector_norm(self) -> float:
         """
         Returns:
@@ -838,6 +915,26 @@ class Hamiltonian(Parameterizable):
         # Sort again by qubit (to keep canonical form)
         final_ops.sort(key=lambda op: op.qubit)
         return accumulated_phase, tuple(final_ops)
+
+    @staticmethod
+    def _pauli_strings_commute(ops1: tuple[PauliOperator, ...], ops2: tuple[PauliOperator, ...]) -> bool:
+        """Return whether two Pauli strings commute, using only a qubit-overlap parity check.
+
+        Two Pauli strings always either commute or anticommute. They anticommute iff they
+        disagree (both non-identity and a different Pauli) on an odd number of qubits, since
+        single-qubit Paulis anticommute exactly when they are distinct and non-identity.
+        """
+        names2 = {op.qubit: op.name for op in ops2 if op.name != "I"}
+        if not names2:
+            return True
+        anticommuting = 0
+        for op in ops1:
+            if op.name == "I":
+                continue
+            other = names2.get(op.qubit)
+            if other is not None and other != op.name:
+                anticommuting += 1
+        return anticommuting % 2 == 0
 
     @staticmethod
     def _multiply_pauli(op1: PauliOperator, op2: PauliOperator) -> tuple[complex, PauliOperator]:
@@ -931,10 +1028,10 @@ class Hamiltonian(Parameterizable):
             if not other.elements:
                 return
             # Otherwise, add each term
-            for key, val in other._elements.items():  # noqa: SLF001
+            for key, val in other._elements.items():  # ruff: ignore[private-member-access]
                 self._elements[key] += val
 
-            self._update_parameters(other._parameters)  # noqa: SLF001
+            self._update_parameters(other._parameters)  # ruff: ignore[private-member-access]
         elif isinstance(other, PauliOperator):
             # Just add 1 to that single operator key
             self._elements[other,] += 1
@@ -954,9 +1051,9 @@ class Hamiltonian(Parameterizable):
 
     def _sub_inplace(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> None:
         if isinstance(other, Hamiltonian):
-            for key, val in other._elements.items():  # noqa: SLF001
+            for key, val in other._elements.items():  # ruff: ignore[private-member-access]
                 self._elements[key] -= val
-            self._update_parameters(other._parameters)  # noqa: SLF001
+            self._update_parameters(other._parameters)  # ruff: ignore[private-member-access]
         elif isinstance(other, PauliOperator):
             self._elements[other,] -= 1
         elif isinstance(other, (int, float, complex)):
@@ -1011,7 +1108,7 @@ class Hamiltonian(Parameterizable):
 
             # Check if 'other' is purely scalar identity => short-circuit
             if len(other.elements) == 1:
-                ((ops2, c2),) = other._elements.items()  # single item  # noqa: SLF001
+                ((ops2, c2),) = other._elements.items()  # single item  # ruff: ignore[private-member-access]
                 if len(ops2) == 1:
                     op2 = ops2[0]
                     if op2.name == "I" and op2.qubit == 0:
@@ -1021,11 +1118,11 @@ class Hamiltonian(Parameterizable):
             # Otherwise, we do the general multiply
             new_dict: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
             for ops1, c1 in self._elements.items():
-                for ops2, c2 in other._elements.items():  # noqa: SLF001
+                for ops2, c2 in other._elements.items():  # ruff: ignore[private-member-access]
                     phase, new_ops = self._multiply_sets(ops1, ops2)
                     new_dict[new_ops] += phase * c1 * c2
             self._elements = new_dict
-            self._update_parameters(other._parameters)  # noqa: SLF001
+            self._update_parameters(other._parameters)  # ruff: ignore[private-member-access]
 
         else:
             raise InvalidHamiltonianOperation(

@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/noise/noise_config.rst:2
 msgid "Noise Config"
-msgstr "Configuración de Ruido"
+msgstr "Configuración de ruido"
 
 #: ../../modules/noise/noise_config.rst:4
 msgid ""
@@ -46,7 +46,7 @@ msgstr "Parámetro"
 
 #: ../../modules/noise/noise_config.rst:27
 msgid "Default Value"
-msgstr "Valor Predeterminado"
+msgstr "Valor predeterminado"
 
 #: ../../modules/noise/noise_config.rst:29
 msgid "gate_times"

@@ -39,12 +39,14 @@ from qilisdk.yaml import yaml
 
 # Re-export the expression algebra so existing ``from qilisdk.core.variables import ...`` keeps working.
 from .expression import (
+    Abs,
     Add,
     Constant,
     Cos,
     Exp,
     Expression,
     Function,
+    Inv,
     Log,
     Mul,
     Pow,
@@ -65,6 +67,7 @@ __all__ = [
     "LEQ",
     "LT",
     "NEQ",
+    "Abs",
     "Add",
     "BaseVariable",
     "BinaryVariable",
@@ -82,6 +85,7 @@ __all__ = [
     "Function",
     "GreaterThan",
     "GreaterThanOrEqual",
+    "Inv",
     "LessThan",
     "LessThanOrEqual",
     "Log",
@@ -761,7 +765,7 @@ class BinaryVariable(BaseVariable):
     def is_idempotent_under_mul(self) -> bool:
         return True
 
-    def num_binary_equivalent(self) -> int:  # noqa: PLR6301
+    def num_binary_equivalent(self) -> int:  # ruff: ignore[no-self-use]
         return 1
 
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> RealNumber:
@@ -795,7 +799,7 @@ class SpinVariable(BaseVariable):
     def __init__(self, label: str) -> None:
         super().__init__(label=label, domain=Domain.SPIN, bounds=(-1, 1))
 
-    def num_binary_equivalent(self) -> int:  # noqa: PLR6301
+    def num_binary_equivalent(self) -> int:  # ruff: ignore[no-self-use]
         return 1
 
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
@@ -868,8 +872,9 @@ class Variable(BaseVariable):
         if self._term is None:
             if self.bounds[1] > LARGE_BOUND or self.bounds[0] < -LARGE_BOUND:
                 logger.warning(
-                    f"Encoding variable {self.label} which has the bounds {self.bounds}"
-                    + "is very expensive and may take a very long time."
+                    "[Variables] Encoding variable {} which has the bounds {} is very expensive and may take a very long time.",
+                    self.label,
+                    self.bounds,
                 )
             self._term = self.to_binary()
         return self._term
@@ -1001,7 +1006,7 @@ class Parameter(BaseVariable):
         self.check_value(value)
         self._value = cast("RealNumber", value.item()) if isinstance(value, np.generic) else value
 
-    def num_binary_equivalent(self) -> int:  # noqa: PLR6301
+    def num_binary_equivalent(self) -> int:  # ruff: ignore[no-self-use]
         """A parameter has no binary representation.
 
         Returns:
@@ -1041,7 +1046,7 @@ class Parameter(BaseVariable):
         super().set_bounds(lower_bound, upper_bound)
 
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
-        if len(bounds) != 2:  # noqa: PLR2004
+        if len(bounds) != 2:  # ruff: ignore[magic-value-comparison]
             raise ValueError(
                 "Invalid bounds provided: the bounds need to be a tuple with the format (lower_bound, upper_bound)"
             )

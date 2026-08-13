@@ -34,6 +34,14 @@ code, pre {
   --qili-dark-blue: 244 45% 13%;
   --primary: var(--qili-blue);
   --inline-code-text: var(--foreground);
+  --qili-gradient: linear-gradient(
+    90deg,
+    hsl(var(--qili-red))    0%,
+    hsl(var(--qili-purple)) 50%,
+    hsl(var(--qili-blue))   100%
+  );
+  --qili-code-bg: 250 40% 97.5%;
+  --qili-code-border: 250 25% 89%;
 }
 
 .dark {
@@ -44,6 +52,8 @@ code, pre {
   --inline-code-bg: 240 18% 25%;
   --inline-code-border: 240 20% 35%;
   --inline-code-text: 349.14deg 63.74% 64.3; /* 40 93% 85%; */
+  --qili-code-bg: 244 38% 18%;
+  --qili-code-border: 244 28% 27%;
 }
 
 .mr-4 {
@@ -65,12 +75,7 @@ code, pre {
 }
 
 #content h1, #content h2, #content h3, #content h4, #content h5, #content h6 {
-    background: linear-gradient(
-      90deg,
-      hsl(var(--qili-red))    0%,
-      hsl(var(--qili-purple)) 50%,
-      hsl(var(--qili-blue))   100%
-    );
+    background: var(--qili-gradient);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -117,17 +122,83 @@ code, pre {
   background-color: transparent;
 }
 
-.sphinx-tabs-tab, .sphinx-tabs-panel {
-  background-color: var(--inline-code-bg);
-  color: var(--inline-code-text);
-}
-
-.sphinx-tabs-tab[aria-selected="true"] {
-  background-color: var(--inline-code-bg);
-  color: var(--inline-code-text);
-  border: 1px solid #a0b3bf;
+/* Lift code blocks slightly off the page background so they read as a block,
+   without turning into a high-contrast box. */
+#content pre,
+#content pre[data-theme="light"],
+#content pre[data-theme="dark"] {
+  background-color: hsl(var(--qili-code-bg));
+  border-color: hsl(var(--qili-code-border));
 }
 
 .sphinx-tabs {
   margin-top: 1em;
+}
+
+.sphinx-tabs [role="tablist"] {
+  border-bottom: 1px solid hsl(var(--qili-code-border));
+}
+
+.sphinx-tabs-tab {
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.6rem 1.1rem;
+  /* The transparent bottom border keeps every tab the same height as the
+     selected one, and the negative margin lays it over the tab-list line. */
+  margin: 0 0 -1px 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background-color: transparent;
+  color: hsl(var(--muted-foreground));
+  transition: color 0.15s ease-in-out;
+}
+
+.sphinx-tabs-tab:hover {
+  color: hsl(var(--foreground));
+}
+
+/* The selected tab gets the same gradient as the section titles, both on the
+   label and on the bar underneath it. */
+.sphinx-tabs-tab[aria-selected="true"] {
+  font-weight: 700;
+  margin: 0 0 -1px 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-image: var(--qili-gradient) 1;
+  background-color: transparent;
+  background-image: var(--qili-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.sphinx-tabs-panel {
+  background-color: hsl(var(--qili-code-bg));
+  color: inherit;
+  border: 1px solid hsl(var(--qili-code-border));
+  border-top: 0;
+}
+
+/* A code block is already a panel-wide box, so don't nest two of them. */
+.sphinx-tabs-panel:has(> div[class^="highlight-"]) {
+  padding: 0;
+}
+
+#content .sphinx-tabs-panel pre {
+  background-color: transparent;
+  border: 0;
+  margin-top: 0;
+}
+
+.title-image {
+  margin: 1em 0;
+}
+
+/* On pages that use a logo image as their title, hide the (still-present
+   for the toctree/browser-title) document H1 so only the logo shows. */
+#content:has(.title-image) > section > h1,
+#content:has(.title-image) > h1 {
+  display: none;
 }

@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_time_evolution.rst:2
 msgid "Analog Evolution"
-msgstr "Evolución Analógica"
+msgstr "Evolución temporal"
 
 #: ../../modules/functionals/functionals_time_evolution.rst:8
 msgid "Go to a specific subheading of a page."

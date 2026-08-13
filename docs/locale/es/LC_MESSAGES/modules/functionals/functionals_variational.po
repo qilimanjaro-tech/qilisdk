@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_variational.rst:2
 msgid "Variational Programs"
-msgstr "Programas Variacionales"
+msgstr "Programas variacionales"
 
 #: ../../modules/functionals/functionals_variational.rst:4
 msgid ""
@@ -150,7 +150,7 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_variational.rst:37
 msgid "**Usage Example (Using QiliSim Backend)**"
-msgstr "**Ejemplo de Uso (con el Backend QiliSim)**"
+msgstr "**Ejemplo de uso (con el backend QiliSim)**"
 
 #: ../../modules/functionals/functionals_variational.rst:84
 msgid "**Output**"

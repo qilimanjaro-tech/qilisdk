@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_analog.rst:2
 msgid "Analog Evolution"
-msgstr "Evolución Analog"
+msgstr "Evolución analógica"
 
 #: ../../modules/functionals/functionals_analog.rst:4
 msgid ""
@@ -108,7 +108,7 @@ msgstr ""
 
 #: ../../modules/functionals/functionals_analog.rst:24
 msgid "**Usage Example**"
-msgstr "**Ejemplo de Uso**"
+msgstr "**Ejemplo de uso**"
 
 #: ../../modules/functionals/functionals_analog.rst:51
 msgid "we can execute it on the QiliSim backend:"

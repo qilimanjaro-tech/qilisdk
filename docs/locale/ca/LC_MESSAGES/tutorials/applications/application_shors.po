@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_shors.rst:2
 msgid "Factoring With Shor's Algorithm"
-msgstr "Factorització amb l'Algorisme de Shor"
+msgstr "Factorització amb l'algorisme de Shor"
 
 #: ../../tutorials/applications/application_shors.rst:4
 msgid ""
@@ -46,7 +46,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_shors.rst:12
 msgid "The Problem"
-msgstr "El Problema"
+msgstr "El problema"
 
 #: ../../tutorials/applications/application_shors.rst:14
 msgid ""
@@ -74,7 +74,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_shors.rst:22
 msgid "The Solution"
-msgstr "La Solució"
+msgstr "La solució"
 
 #: ../../tutorials/applications/application_shors.rst:24
 msgid ""
@@ -143,7 +143,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_shors.rst:39
 msgid "The Implementation"
-msgstr "La Implementació"
+msgstr "La implementació"
 
 #: ../../tutorials/applications/application_shors.rst:41
 msgid ""
@@ -215,7 +215,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_shors.rst:92
 msgid "Further Reading"
-msgstr "Lectura Addicional"
+msgstr "Lectura addicional"
 
 #: ../../tutorials/applications/application_shors.rst:94
 msgid "`Shor's Algorithm`_"

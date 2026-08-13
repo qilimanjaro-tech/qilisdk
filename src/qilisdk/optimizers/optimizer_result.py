@@ -13,6 +13,8 @@
 # limitations under the License.
 from __future__ import annotations
 
+from loguru import logger
+
 from qilisdk.core.result import Result
 from qilisdk.yaml import yaml
 
@@ -70,6 +72,11 @@ class OptimizerResult(Result):
         self._optimal_cost = optimal_cost
         self._optimal_parameters = optimal_parameters
         self._intermediate_results = intermediate_results or []
+        logger.debug(
+            "[OptimizerResult] Created result with optimal cost {} and {} intermediate results",
+            optimal_cost,
+            len(self._intermediate_results),
+        )
 
     @property
     def optimal_cost(self) -> float:

@@ -1,3 +1,176 @@
+# qilisdk 0.2.1 (2026-07-08)
+
+## Features
+
+- New CudaSamplingMethods - CPU and STATE_VECTOR_MGPU, to tell the CudaBackend to use CPU or multiple GPUs, respectively. Multiple GPU statevector simulation requires a very specific setup, check the latest NVIDIA docs to see what versions of the various libraries they recommend. 
+
+  The performance of post-processing CUDA samples has also been improved. When calculating an observable cost function from samples, previously .get_probabilities() was used which if the results contained a state (as per the output of CUDA dynamics), would be 2^n values, rather than just the number of samples. ([PR #217](https://github.com/qilimanjaro-tech/qilisdk/pull/217))
+- Added a new analog simulation method to QiliSim - variational annealing, based on [this paper](https://arxiv.org/pdf/2403.05147) . This method supports any annealing schedule that transitions from an all X start to an Ising model, and  can offer big performance gains for larger numbers of qubits.
+
+  For a fully connected uniform Ising model of 60 qubits, it can give a solution within 99% of the optimum in around 5 seconds:
+
+  ```python
+  from time import time
+  from qilisdk.backends import QiliSim, AnalogMethod
+  from qilisdk.readout import Readout
+  from qilisdk.functionals import AnalogEvolution
+  from qilisdk.analog import Schedule, X, Z
+  from qilisdk.core import InitialState
+
+  # Parameters to try tweaking
+  nqubits = 60
+  nsteps = 500
+  T = 300.0
+  order = 1
+  shots = 100
+  warmups = 100
+
+  # Create the initial and final Hamiltonians
+  Hx = -sum(X(i) for i in range(nqubits))
+  Hz = 0
+  for i in range(nqubits):
+      for j in range(i + 1, nqubits):
+          Hz += Z(i) * Z(j)
+
+  # Set up the evolution
+  dt = T / nsteps
+  schedule = Schedule.linear(Hx, Hz, T, dt)
+  analog = AnalogEvolution(schedule=schedule, initial_state=InitialState.UNIFORM)
+  readout = Readout().with_expectation([Hz])
+
+  # Initialize the backend with this new method
+  backend = QiliSim(
+      analog_simulation_method=AnalogMethod.variational_annealing(order=order, shots=shots, warmups=warmups)
+  )
+
+  # Run it
+  print("Running evolution for nqubits =", nqubits, "and nsteps =", nsteps)
+  t0 = time()
+  results = backend.execute(analog, readout)
+  t1 = time()
+  print(f"Execution time: {t1 - t0} seconds")
+  print(results)  # Optimum is -(nqubits / 2) if nqubits is even
+  ```
+
+  The speed and accuracy are controlled by a number of parameters:
+   - the `order` of the ansatz, 1 for quick fast results like the above case, 2 and above for a more expressive (but slower) ansatz
+   - the number of monte carlo `shots`
+   - the number of monte carlo `warmups`
+
+  The usual things apply as with the other analog simulation backends, a longer time `T` and more a smaller `dt` mean a better evolution. ([PR #220](https://github.com/qilimanjaro-tech/qilisdk/pull/220))
+- More MathematicalMaps have been added: `Exp`, `Log`, `Tan`, `Sqrt`, `Inv`, `Abs`, `Pow`, to allow for more expressive Terms. ([PR #224](https://github.com/qilimanjaro-tech/qilisdk/pull/224))
+- A number of constructors for Model representing common optimization problems have been added:
+
+   - Model.random_ising()
+   - Model.knapsack(values, weights, max_weight, label)
+   - Model.max_cut(edges, weights, label)
+   - Model.graph_coloring(graph, num_colors, label)
+   - Model.travelling_salesman(edges, distances, label)
+   - Model.factoring(n, label)
+ 
+  To help test these binary models, a ``BruteForceSolver`` class has been added that allows a global search for the optimum to help to know what the quantum optimization should achieve. This solver is of course only for small problems as it is exponential in the worst case (as with all of these NP-hard problems).
+
+  These can be all be used to help simplify the common optimization workflow, so that now to set up an annealing job for a randomized Ising model looks like:
+
+  ```python
+  from qilisdk.analog import Schedule, X
+  from qilisdk.core import QTensor, Model
+  from qilisdk.backends import QiliSim
+  from qilisdk.functionals import AnalogEvolution
+  from qilisdk.readout import Readout
+  from qilisdk.utils.classical_solvers import BruteForceSolver
+
+  model = Model.random_ising(num_variables=5, label="Random Ising")
+  print(model)
+  print("Brute forced solution:", BruteForceSolver().solve(model))
+
+  # Define total time and timestep
+  T = 100.0
+  steps = 1000
+
+  # Define Hamiltonians
+  Hz = model.to_qubo().to_hamiltonian()
+  nqubits = Hz.nqubits
+  Hx = -sum(X(i) for i in range(nqubits))
+
+  # Set up the schedule, initial state, analog evolution, and readout
+  analog_evolution = AnalogEvolution(
+      schedule=Schedule.linear(Hx, Hz, T, dt=T/steps),
+      initial_state=QTensor.uniform(nqubits),
+  )
+  readout = Readout().with_expectation([Hz])
+
+  # Execute the analog evolution
+  print("Executing analog evolution...")
+  results = QiliSim().execute(analog_evolution, readout)
+  print(results)
+  ``` ([PR #225](https://github.com/qilimanjaro-tech/qilisdk/pull/225))
+- Two new `Schedule` constructors have been added: `Schedule.constant()` and `Schedule.linear_list()`.
+
+  Schedule.constant(hamiltonian, total_time, dt) allows for quickly defining the time evolution of a fixed Hamiltonian.
+
+  Schedule.linear_list(list_of_hamiltonians, total_time, dt) allows for the definition of a schedule in which one does a linear ramp between successive Hamiltonians. The coefficients look like the following:
+
+  <img width="1212" height="753" alt="image" src="https://github.com/user-attachments/assets/f512c435-3524-478c-bf0e-ef90f80c3954" />
+
+  Usage is the same as with the other Schedule constructors:
+
+  ```python
+
+  from qilisdk.analog import Schedule, X, Z
+
+  nqubits = 3
+  H1 = -sum(X(i) for i in range(nqubits))
+  H2 = sum(Z(i) for i in range(nqubits))
+  H3 = sum(Z(i) * Z((i+1) % nqubits) for i in range(nqubits))
+
+  schedule_constant = Schedule.constant(H1, total_time=10.0, dt=0.01)
+  schedule_constant.draw()
+
+  schedule_list = Schedule.chained_linear([H1, H2, H3], total_time=10.0, dt=0.01)
+  schedule_list.draw()
+  ``` ([PR #228](https://github.com/qilimanjaro-tech/qilisdk/pull/228))
+- The plotting functions for the experiment classes have been updated:
+  - fitting is now supported for most experiment types and can be toggled on/off
+  - each of the experiment plots can also be done in dB if requested
+  - the tests have been updated to use data that more accurately represents the experiment
+  - units for various quantities have been added
+
+  Usage remains the same as before, but now with optional parameters `fit` and `db`:
+  <!-- SKIP -->
+  ```python
+  experiment_result.plot(db=True, fit=False)
+  ```
+
+  ([PR #230](https://github.com/qilimanjaro-tech/qilisdk/pull/230))
+- Trotterization performance has been improved, done by optimizing the commutator checks. Trotterizing an 100-step X to ZZ schedule for 20 qubits previously took around 5 seconds, with this change it now takes around 0.2 seconds. ([PR #243](https://github.com/qilimanjaro-tech/qilisdk/pull/243))
+- Support has been added for the SciPy global optimizers: `direct`, `dual_annealing`, `differential_evolution`, `shgo` and `basinhopping`, as per https://docs.scipy.org/doc/scipy/tutorial/optimize.html#global-optimization. They are quite slow, but they are guarenteed to find the global minimum, useful for testing small variational programs and ensuring that the ansatz covers the true solution. Usage is the same as choosing any other SciPy optimizer:
+
+  ```python
+  from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
+  optimizer = SciPyOptimizer(method="shgo")
+  ``` ([PR #250](https://github.com/qilimanjaro-tech/qilisdk/pull/250))
+
+## Bugfixes
+
+- Fixed a bug in which the `CudaBackend` would crash if the user requested expectation values or a state from an MPS or tensor simulation. Now an error is correctly raised, telling the user to use sampling instead. This information has also been added to the docs. ([PR #221](https://github.com/qilimanjaro-tech/qilisdk/pull/221))
+- Fixed a bug in the `QiliSim` matrix-free digital simulator where applying a complex, non-symmetric single-qubit gate (such as `U2` or `U3`) to a *mixed* density matrix computed `U·ρ·U*` (complex conjugate) instead of `U·ρ·U†` (conjugate transpose). This produced a non-Hermitian state and could raise a spurious "imaginary expectation value" error. Real-symmetric gates (`X`, `Z`, `H`) and diagonal gates (`S`, `T`) were unaffected. This most commonly surfaced in `QuantumReservoir` runs, where resetting a qubit turns the state mixed before the next layer's input-encoding gate is applied. ([PR #227](https://github.com/qilimanjaro-tech/qilisdk/pull/227))
+- `ExperimentResult` can now be printed without error, previously it was using the `FunctionalResult` `__repr__` (since it inherits from `FunctionalResult`), but now it has its own dedicated print. ([PR #237](https://github.com/qilimanjaro-tech/qilisdk/pull/237))
+- Fixed a bug in which the shots were not set as expected for the new Variational Annealing method. ([PR #247](https://github.com/qilimanjaro-tech/qilisdk/pull/247))
+- The precision for CUDA-Q is now set correctly based on the QiliSDK precision setting. ([PR #258](https://github.com/qilimanjaro-tech/qilisdk/pull/258))
+- A bug regarding QuTiP matrices being cast to dense unnecessarily has been fixed, reducing the conversion overhead. ([PR #258](https://github.com/qilimanjaro-tech/qilisdk/pull/258))
+- Fixed a bug in which the default gate time was not being set correctly in QiliSim, as well as improving how per-gate noise is handled. ([PR #262](https://github.com/qilimanjaro-tech/qilisdk/pull/262))
+
+## Improved Documentation
+
+- The new logos for QiliSDK and QiliSim have been added to the documentation. ([PR #244](https://github.com/qilimanjaro-tech/qilisdk/pull/244))
+- Examples demonstrating `Schedule.draw_eigenvalues()` have been added to the docs, in the `Schedule` module reference as well as the annealing tutorial. ([PR #261](https://github.com/qilimanjaro-tech/qilisdk/pull/261))
+
+## Misc
+
+- [PR #223](https://github.com/qilimanjaro-tech/qilisdk/pull/223), [PR #229](https://github.com/qilimanjaro-tech/qilisdk/pull/229), [PR #232](https://github.com/qilimanjaro-tech/qilisdk/pull/232), [PR #235](https://github.com/qilimanjaro-tech/qilisdk/pull/235), [PR #236](https://github.com/qilimanjaro-tech/qilisdk/pull/236), [PR #246](https://github.com/qilimanjaro-tech/qilisdk/pull/246), [PR #248](https://github.com/qilimanjaro-tech/qilisdk/pull/248), [PR #251](https://github.com/qilimanjaro-tech/qilisdk/pull/251), [PR #256](https://github.com/qilimanjaro-tech/qilisdk/pull/256), [PR #257](https://github.com/qilimanjaro-tech/qilisdk/pull/257), [PR #263](https://github.com/qilimanjaro-tech/qilisdk/pull/263), [PR #328](https://github.com/qilimanjaro-tech/qilisdk/pull/328), [PR #328](https://github.com/qilimanjaro-tech/qilisdk/pull/328)
+
+
 # qilisdk 0.2.0 (2026-05-26)
 
 ## Features
@@ -165,7 +338,7 @@
   transpiler = CircuitTranspiler.default(topology=[(0, 1), (1, 2)])
   result = transpiler.transpile(circuit)
 
-  print(result.layout)              # final logical -> physical mapping after routing
+  print(result.layout)  # final logical -> physical mapping after routing
   print(result.metrics["swap_count"])
   ```
 
@@ -435,6 +608,7 @@
 
   ```python
   from qilisdk.core import QTensor
+
   state = QTensor.uniform(2)
   ```
   ([PR #186](https://github.com/qilimanjaro-tech/qilisdk/pull/186))
@@ -444,7 +618,10 @@
 
   ```python
   from qilisdk.backends import QiliSim, AnalogMethod
-  backend = QiliSim(analog_simulation_method=AnalogMethod.adaptive_integrator(tol=0.01),)
+
+  backend = QiliSim(
+      analog_simulation_method=AnalogMethod.adaptive_integrator(tol=0.01),
+  )
   ```
   ([PR #188](https://github.com/qilimanjaro-tech/qilisdk/pull/188))
 - Several init methods to simplify the construction of basic Schedules have been added:
@@ -478,7 +655,7 @@
   T = 10.0
   dt = 0.1
   Hx = -sum(X(i) for i in range(nqubits))
-  Hz = sum(Z(i)*Z((i+1) % nqubits) for i in range(nqubits))
+  Hz = sum(Z(i) * Z((i + 1) % nqubits) for i in range(nqubits))
   schedule = Schedule(
       hamiltonians={"driver": Hx, "problem": Hz},
       coefficients={
@@ -611,6 +788,7 @@
 - Added method to generate a randomized circuit from a set of single- and two-qubit gates, providing a useful tool for benchmarking. Usage is as follows:
   ```python
   from qilisdk.digital import Circuit, X, H, CNOT
+
   c = Circuit.random(
       nqubits=3,
       single_qubit_gates=[X, H],
@@ -706,10 +884,10 @@
 
   model.add(KrausNoise(kraus_operators=[op], affected_qubits=[0], affected_gates=[X]))
 
-  # OR 
+  # OR
   model.add(DissipationNoise(jump_operators=[op]))
 
-  # OR 
+  # OR
   model.add(ParameterNoise(affected_parameters=["theta"], noise_std=0.05))
   ```
   ([PR #127](https://github.com/qilimanjaro-tech/qilisdk/pull/127))
@@ -1096,7 +1274,7 @@
 
   model.add_constraint("max_weight", con)
 
-  ## Define the Ansatz: 
+  ## Define the Ansatz:
   n_qubits = 3
   ansatz = HardwareEfficientAnsatz(
       n_qubits=n_qubits, layers=2, connectivity="Linear", structure="grouped", one_qubit_gate="U2", two_qubit_gate="CNOT"
@@ -1210,7 +1388,9 @@
 
   model.set_objective(sum(binary_var[i] * values[i] for i in range(len(values))), sense=ObjectiveSense.MAXIMIZE)
 
-  model.add_constraint("max_weights", LessThanOrEqual(sum(binary_var[i] * weights[i] for i in range(len(weights))), max_weight))
+  model.add_constraint(
+      "max_weights", LessThanOrEqual(sum(binary_var[i] * weights[i] for i in range(len(weights))), max_weight)
+  )
 
 
   n_qubits = 3
@@ -1242,17 +1422,17 @@
 
   t = 2 * p[0]
 
-  H = 2 * Z(1) + t * Y(0) 
+  H = 2 * Z(1) + t * Y(0)
   H2 = 3 * X(0) + p[1] * Y(0)
 
   H3 = H + H2
 
-  print(H3) 
+  print(H3)
   # Output: 2 Z(1) + 6 Y(0) + 3 X(0)
 
   H3.set_parameters({"p(0)": 3})
 
-  print(H3) 
+  print(H3)
   # Output: 2 Z(1) + 8 Y(0) + 3 X(0)
 
   # get hamiltonian parameters
@@ -1268,7 +1448,7 @@
   from qilisdk.analog.hamiltonian import X, Z
   from qilisdk.common import Parameter
 
-  val = [0.3 , 0.7]
+  val = [0.3, 0.7]
   p = [Parameter(f"p({i})", val[i]) for i in range(2)]
 
   dt = 0.1
@@ -1279,10 +1459,7 @@
   h1 = X(0) + X(1) + X(2)
   h2 = Z(0) - 1 * Z(1) - 2 * Z(2) + 3 * Z(0) * Z(1)
 
-  schedule = Schedule(
-      T=T,
-      dt=dt
-  )
+  schedule = Schedule(T=T, dt=dt)
 
 
   def parameterized_schedule(t) -> float:
@@ -1297,14 +1474,11 @@
       return p[1] + (1 - p[1]) / 2 * (steps[t] - 8)
 
 
-  schedule.add_hamiltonian("h1", h1, lambda t: (1 - steps[t] / T))
+  schedule.add_hamiltonian("h1", h1, lambda t: 1 - steps[t] / T)
   schedule.add_hamiltonian("h2", h2, parameterized_schedule)
 
   # set parameters
-  schedule.set_parameters({
-      "p(0)" : 0.2,
-      "p(1)" : 0.5
-  })
+  schedule.set_parameters({"p(0)": 0.2, "p(1)": 0.5})
 
   # get parameters
   print(schedule.get_parameters())
@@ -1322,7 +1496,7 @@
   from qilisdk.analog.hamiltonian import X, Z
   from qilisdk.common import Parameter
 
-  val = [0.3 , 0.7]
+  val = [0.3, 0.7]
   p = [Parameter(f"p({i})", val[i]) for i in range(2)]
   h_p = [Parameter(f"h_p({i})", 0.5 * np.pi) for i in range(3)]
 
@@ -1332,12 +1506,9 @@
 
   # Define two Hamiltonians
   h1 = X(0) + X(1) + X(2)
-  h2 = sum(h_p[i] * Z(i) for i in range(3)) + 3 * Z(0) * Z(1) # parameterized hamiltonian
+  h2 = sum(h_p[i] * Z(i) for i in range(3)) + 3 * Z(0) * Z(1)  # parameterized hamiltonian
 
-  schedule = Schedule(
-      T=T,
-      dt=dt
-  )
+  schedule = Schedule(T=T, dt=dt)
 
 
   def parameterized_schedule(t) -> float:
@@ -1352,14 +1523,11 @@
       return p[1] + (1 - p[1]) / 2 * (steps[t] - 8)
 
 
-  schedule.add_hamiltonian("h1", h1, lambda t: (1 - steps[t] / T))
+  schedule.add_hamiltonian("h1", h1, lambda t: 1 - steps[t] / T)
   schedule.add_hamiltonian("h2", h2, parameterized_schedule)
 
   # set parameters
-  schedule.set_parameters({
-      "p(0)" : 0.2,
-      "p(1)" : 0.5
-  })
+  schedule.set_parameters({"p(0)": 0.2, "p(1)": 0.5})
 
   # get parameters
   print(schedule.get_parameters())
@@ -1370,7 +1538,6 @@
   - Introduced a new ``ModelCostFunction`` class that allows you to create cost functions directly from abstract models.
 
   ```python
-
   from qilisdk.common import BinaryVariable, LEQ, Model, ObjectiveSense
   from qilisdk.cost_functions import ModelCostFunction
 
@@ -1386,7 +1553,6 @@
   model.add_constraint("max_weights", LEQ(sum(binary_var[i] * weights[i] for i in range(len(weights))), max_weight))
 
   model_cost_function = ModelCostFunction(model)
-
   ```
 
   ([PR #64](https://github.com/qilimanjaro-tech/qilisdk/pull/64))
@@ -1402,12 +1568,12 @@
   ansatz = HardwareEfficientAnsatz(
       nqubits=4,
       layers=2,
-      connectivity="linear",        # or "circular" / "full"   
-      structure="grouped",          # or "interposed"
-      one_qubit_gate=U3,            # or U1 / U2
-      two_qubit_gate=CNOT,          # or CZ
+      connectivity="linear",  # or "circular" / "full"
+      structure="grouped",  # or "interposed"
+      one_qubit_gate=U3,  # or U1 / U2
+      two_qubit_gate=CNOT,  # or CZ
   )
-  ansatz.draw()                     # ansatz is a Circuit
+  ansatz.draw()  # ansatz is a Circuit
 
   # add measurements explicitly if your workflow requires them
   ```
@@ -1605,7 +1771,7 @@
   circuit.add(CNOT(0, 1))
 
   # Get circuit's parameters
-  circuit.get_parameter_values() # returns [3.141592653589793]
+  circuit.get_parameter_values()  # returns [3.141592653589793]
 
   # Set circuit's parameters
   circuit.set_parameter_values([2 * np.pi])
@@ -1695,9 +1861,11 @@
   ```python
   from optimizer import SciPyOptimizer
 
+
   # Define a simple cost function, e.g., a quadratic function with minimum at [1, 1, 1]
   def cost_function(params):
       return sum((p - 1) ** 2 for p in params)
+
 
   # Create an instance of the SciPyOptimizer using the BFGS method.
   optimizer = SciPyOptimizer(method="BFGS")
@@ -1890,10 +2058,7 @@
   schedule = Schedule(
       T,
       dt,
-      hamiltonians={
-          "h1": H1,
-          "h2": H2
-      },
+      hamiltonians={"h1": H1, "h2": H2},
       schedule={
           t: {
               "h1": 1 - steps[t] / T,
@@ -1948,11 +2113,7 @@
   # 'n_qubits' is set to the number of items for this example.
   nqubits = n_items
   ansatz = HardwareEfficientAnsatz(
-      n_qubits=nqubits,
-      connectivity="Full",
-      layers=1,
-      one_qubit_gate="U3",
-      two_qubit_gate="CNOT"
+      n_qubits=nqubits, connectivity="Full", layers=1, one_qubit_gate="U3", two_qubit_gate="CNOT"
   )
 
   # Set up the backend, for instance using a CUDA backend for hardware acceleration.
@@ -1960,6 +2121,7 @@
 
   # LM is defined as the total sum of values and used within the cost function.
   LM = sum(values)
+
 
   def cost_function(x: DigitalResult) -> float:
       """
@@ -1987,18 +2149,12 @@
 
       return final_cost
 
+
   # Set up the SciPy optimizer using the "Powell" method and define parameter bounds.
-  optimizer = SciPyOptimizer(
-      method="Powell",
-      bounds=[(0, np.pi) for _ in range(ansatz.nparameters)]
-  )
+  optimizer = SciPyOptimizer(method="Powell", bounds=[(0, np.pi) for _ in range(ansatz.nparameters)])
 
   # Create the VQE algorithm instance with an initial guess for the parameters.
-  algorithm = VQE(
-      ansatz,
-      [0.5 for _ in range(ansatz.nparameters)],
-      cost_function
-  )
+  algorithm = VQE(ansatz, [0.5 for _ in range(ansatz.nparameters)], cost_function)
 
   # Execute the VQE algorithm using the specified backend and optimizer.
   # The flag store_intermediate_results is set to True to capture each optimization step.
@@ -2033,8 +2189,8 @@
   deserialized_circuit = deserialize(yaml_string, cls=Circuit)
 
   # Serialize to and deserialize from a file.
-  serialize_to(circuit, 'circuit.yml')
-  deserialized_circuit = deserialize_from('circuit.yml', cls=Circuit)
+  serialize_to(circuit, "circuit.yml")
+  deserialized_circuit = deserialize_from("circuit.yml", cls=Circuit)
   ```
 
   ([PR #22](https://github.com/qilimanjaro-tech/qilisdk/pull/22))

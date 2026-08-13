@@ -360,12 +360,12 @@ def test_random_circuit():
     nqubits = 3
     ngates = 30
 
-    random.seed(42)  # Set seed for reproducibility
     c = Circuit.random(
         nqubits=nqubits,
         single_qubit_gates=single_qubit_gates,
         two_qubit_gates=two_qubit_gates,
         ngates=ngates,
+        seed=42,
     )
 
     # Check that the circuit has the correct number of gates
@@ -391,12 +391,12 @@ def test_random_single_qubit_circuit():
     nqubits = 1
     ngates = 10
 
-    random.seed(42)  # Set seed for reproducibility
     c = Circuit.random(
         nqubits=nqubits,
         single_qubit_gates=single_qubit_gates,
         two_qubit_gates=two_qubit_gates,
         ngates=ngates,
+        seed=42,
     )
 
     # Check that the circuit has the correct number of gates
@@ -414,13 +414,11 @@ def test_random_single_qubit_circuit():
 
 
 def test_random_circuit_no_gates():
-    random.seed(42)
     with pytest.raises(ValueError, match=r"At least one gate must be provided to generate a random circuit."):
         Circuit.random(nqubits=0, single_qubit_gates=set(), two_qubit_gates=set(), ngates=1000)
 
 
 def test_random_circuit_single_qubit_one_gate():
-    random.seed(42)
     with pytest.raises(ValueError, match=r"Cannot generate a full random circuit with only one qubit and one gate."):
         Circuit.random(nqubits=1, single_qubit_gates={X}, two_qubit_gates=set(), ngates=1000)
 
@@ -513,7 +511,7 @@ def test_prepend_circuit():
     rz_gate = RZ(0, phi=0.2)
     x2_gate = X(1)
     prepended.add([rz_gate, x2_gate])
-    new = base.__radd__(prepended)  # noqa: PLC2801
+    new = base.__radd__(prepended)  # ruff: ignore[unnecessary-dunder-call]
 
     assert new.gates == [rz_gate, x2_gate, x_gate]
 
@@ -524,21 +522,25 @@ def test_random_circuit_seedable():
     nqubits = 3
     ngates = 200
 
-    random.seed(42)
+    state_before = random.getstate()
     c1 = Circuit.random(
         nqubits=nqubits,
         single_qubit_gates=single_qubit_gates,
         two_qubit_gates=two_qubit_gates,
         ngates=ngates,
+        seed=42,
     )
 
-    random.seed(42)
     c2 = Circuit.random(
         nqubits=nqubits,
         single_qubit_gates=single_qubit_gates,
         two_qubit_gates=two_qubit_gates,
         ngates=ngates,
+        seed=42,
     )
+
+    # The global random state must be left untouched
+    assert random.getstate() == state_before
 
     # Check that both circuits have the same gates in the same order
     assert len(c1.gates) == len(c2.gates)
@@ -548,6 +550,29 @@ def test_random_circuit_seedable():
         assert gate1.name == gate2.name
         assert gate1.qubits == gate2.qubits
         assert gate1.get_parameter_values() == gate2.get_parameter_values()
+
+
+def test_random_circuit_different_seeds_differ():
+    kwargs = {"nqubits": 3, "single_qubit_gates": {RX}, "two_qubit_gates": {CNOT}, "ngates": 20}
+    c1 = Circuit.random(**kwargs, seed=1)
+    c2 = Circuit.random(**kwargs, seed=2)
+    assert c1.get_parameter_values() != c2.get_parameter_values()
+
+
+def test_random_circuit_parameters_are_assignable():
+    c = Circuit.random(nqubits=2, single_qubit_gates={RX, U3}, two_qubit_gates={CNOT}, ngates=10, seed=7)
+    assert c.nparameters > 0
+
+    # Labels must not embed the random values, and must be unique
+    names = c.get_parameter_names()
+    assert len(set(names)) == len(names)
+    for name in names:
+        assert "." not in name
+
+    # Parameters are unbounded, so any real value can be assigned
+    values = [0.1 * i for i in range(c.nparameters)]
+    c.set_parameter_values(values)
+    assert c.get_parameter_values() == values
 
 
 def test_repr():
@@ -704,3 +729,13 @@ def test_circuit_set_prefix_then_set_parameters_updates_all_shared_gates():
     expected = np.exp(1j * 5.0)
     assert np.isclose(g0.matrix[1, 1], expected)
     assert np.isclose(g1.matrix[1, 0], expected / np.sqrt(2))
+
+
+@pytest.mark.parametrize("bad_qubit", [-1, 2, 5])
+def test_circuit_rejects_out_of_range_qubit(bad_qubit):
+    """QSDK-05: the Python layer must reject both negative and too-large qubit
+    indices (the negative case was previously unguarded)."""
+    circuit = Circuit(2)
+    gate = X(bad_qubit)
+    with pytest.raises(QubitOutOfRangeError):
+        circuit.add(gate)

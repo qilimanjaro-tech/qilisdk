@@ -46,7 +46,7 @@ Embedded as penalties, these constraints give the penalized objective
 
 where :math:`\lambda_0 > 0` is a penalty strength parameter.
 
-Ineqaulity constraints can be defined as:
+Inequality constraints can be defined as:
 
 .. math::
 
@@ -65,11 +65,11 @@ To translate these into penalties, two strategies are supported:
     
     where :math:`s_k` are slack binary variables introduced to encode the inequality constraint (with the
     number of bits :math:`N` chosen so that their binary expansion spans the admissible slack range) and
-    :math:`\lambda_{1}` control the penalty strength.
+    :math:`\lambda_{1}` controls the penalty strength.
 
 - **Unbalanced penalization**:  
     Directly penalize violation without slack variables using two weights (a, b) to scale positive and negative deviations differently [1]_.
-    we define :math:`h(x) = B - \sum_{i=1}^{n} \ell_i x_i` as the signed residual of the constraint, and the penalty term becomes:
+    We define :math:`h(x) = B - \sum_{i=1}^{n} \ell_i x_i` as the signed residual of the constraint, and the penalty term becomes:
 
     .. math::
         

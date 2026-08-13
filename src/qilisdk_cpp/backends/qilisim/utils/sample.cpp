@@ -98,6 +98,66 @@ std::map<std::string, int> filter_counts(const std::map<std::string, int>& count
     return filtered_counts;
 }
 
+static std::map<std::string, int> sample_from_outcome_probabilities(Eigen::VectorXd& probabilities, double total_prob, int n_qubits, int n_shots, NoiseModelCpp& noise_model_cpp, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
+    /*
+    Draw shots from a computational-basis probability distribution, applying readout error and
+    keeping only the measured qubits.
+
+    Args:
+        probabilities (Eigen::VectorXd&): The (possibly unnormalized) outcome probabilities.
+        total_prob (double): The sum of the probabilities, used to normalize them if needed.
+        n_qubits (int): the number of qubits in the quantum state.
+        n_shots (int): the number of shots used for the sampling.
+        noise_model_cpp (NoiseModelCpp&): the noise model to be considered when computing the samples.
+        config (QiliSimConfig&): QiliSim configuration.
+        qubits_to_measure (vector<bool>&): a list of booleans specifying which qubits to measure.
+
+    Returns:
+        std::map<std::string, int>: a map containing the state and the number of samples obtained of that state.
+    */
+
+    // Make sure probabilities sum to 1
+    if (std::abs(total_prob - 1.0) > config.get_atol()) {
+        probabilities /= total_prob;
+    }
+
+    // Sample from these probabilities
+    std::map<std::string, int> counts = sample_from_probabilities(probabilities.data(), static_cast<std::size_t>(probabilities.size()), n_qubits, n_shots, config.get_seed());
+
+    // Apply readout error to counts
+    if (!noise_model_cpp.is_empty()) {
+        counts = apply_readout_error(counts, noise_model_cpp, n_qubits);
+    }
+
+    // Only keep measured qubits in the counts
+    return filter_counts(counts, qubits_to_measure);
+}
+
+std::map<std::string, int> construct_samples_trajectories(const DenseMatrix& trajectories, int n_qubits, int n_shots, NoiseModelCpp& noise_model_cpp, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
+    /*
+    Sample a Monte Carlo ensemble, given a noise model and a set of qubits to measure.
+
+    The columns of `trajectories` are state vectors representing rho = 1/N sum_i |psi_i><psi_i|.
+
+    Args:
+        trajectories (DenseMatrix&): dim x n_trajectories batch of state vectors.
+        n_qubits (int): the number of qubits in the quantum state.
+        n_shots (int): the number of shots used for the sampling.
+        noise_model_cpp (NoiseModelCpp&): the noise model to be considered when computing the samples.
+        config (QiliSimConfig&): QiliSim configuration.
+        qubits_to_measure (vector<bool>&): a list of booleans specifying which qubits to measure.
+
+    Returns:
+        std::map<std::string, int>: a map containing the state and the number of samples obtained of that state.
+    */
+    Eigen::VectorXd probabilities = Eigen::VectorXd::Zero(trajectories.rows());
+    for (long c = 0; c < trajectories.cols(); ++c) {
+        probabilities += trajectories.col(c).cwiseAbs2().cast<double>();
+    }
+    double total_prob = probabilities.sum();
+    return sample_from_outcome_probabilities(probabilities, total_prob, n_qubits, n_shots, noise_model_cpp, config, qubits_to_measure);
+}
+
 std::map<std::string, int> construct_samples(const DenseMatrix& state, int n_qubits, int n_shots, NoiseModelCpp& noise_model_cpp, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
     /*
     Sample a quantum state, given a noise model and a set of qubits to measure.
@@ -115,45 +175,41 @@ std::map<std::string, int> construct_samples(const DenseMatrix& state, int n_qub
         std::map<std::string, int>: a map containing the state and the number of samples obtained of that state.
 
     */
-    std::map<std::string, int> counts;
-    bool has_noise = !noise_model_cpp.is_empty();
     long dim = 1L << n_qubits;
     bool is_statevector = (state.cols() == 1 && state.rows() == dim);
 
     // Get the probabilities
-    std::vector<double> probabilities(state.rows());
+    const long n_rows = state.rows();
+    Eigen::VectorXd probabilities(n_rows);
     double total_prob = 0.0;
+    if (is_statevector) {
+        const auto amplitudes = state.col(0);
 #if defined(_OPENMP)
-#pragma omp parallel for reduction(+ : total_prob) schedule(static)
-#endif
-    for (int row = 0; row < state.rows(); ++row) {
-        double prob = 0.0;
-        if (is_statevector) {
-            prob = std::norm(state(row, 0));
-        } else {
-            prob = state.coeff(row, row).real();
+        // Chunk across threads
+#pragma omp parallel reduction(+ : total_prob)
+        {
+            const long n_threads = omp_get_num_threads();
+            const long tid = omp_get_thread_num();
+            const long chunk = (n_rows + n_threads - 1) / n_threads;
+            const long begin = std::min(tid * chunk, n_rows);
+            const long len = std::min(chunk, n_rows - begin);
+            if (len > 0) {
+                probabilities.segment(begin, len) = amplitudes.segment(begin, len).cwiseAbs2().cast<double>();
+                // Sum the just-written (cache-hot) probabilities
+                total_prob += probabilities.segment(begin, len).sum();
+            }
         }
-        total_prob += prob;
-        probabilities[row] = prob;
+#else
+        probabilities = amplitudes.cwiseAbs2().cast<double>();
+        total_prob = probabilities.sum();
+#endif
+    } else {
+        // Only the diagonal of the density matrix carries probability
+        probabilities = state.diagonal().real().cast<double>();
+        total_prob = probabilities.sum();
     }
 
-    // Make sure probabilities sum to 1
-    if (std::abs(total_prob - 1.0) > config.get_atol()) {
-        std::stringstream ss;
-        ss << std::setprecision(15) << total_prob;
-        throw py::value_error("Probabilities do not sum to 1 (sum = " + ss.str() + ")");
-    }
-
-    // Sample from these probabilities
-    counts = sample_from_probabilities(probabilities, n_qubits, n_shots, config.get_seed());
-
-    // Apply readout error to counts
-    if (has_noise) {
-        counts = apply_readout_error(counts, noise_model_cpp, n_qubits);
-    }
-
-    // Only keep measured qubits in the counts
-    return filter_counts(counts, qubits_to_measure);
+    return sample_from_outcome_probabilities(probabilities, total_prob, n_qubits, n_shots, noise_model_cpp, config, qubits_to_measure);
 }
 
 // GCOV_EXCL_BR_STOP

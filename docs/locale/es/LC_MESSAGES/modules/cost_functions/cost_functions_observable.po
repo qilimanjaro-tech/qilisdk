@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/cost_functions/cost_functions_observable.rst:2
 msgid "ObservableCostFunction"
-msgstr "Función de Coste de Observable"
+msgstr "Función de coste de observable"
 
 #: ../../modules/cost_functions/cost_functions_observable.rst:4
 msgid ""

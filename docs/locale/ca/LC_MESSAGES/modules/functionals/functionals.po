@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/functionals/functionals.rst:2
 msgid "Functionals"
-msgstr "Funcionals"
+msgstr "Functionals"
 
 #~ msgid ""
 #~ "The :mod:`~qilisdk.functionals` module provides "

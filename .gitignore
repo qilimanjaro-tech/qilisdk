@@ -22,6 +22,9 @@ qili*.lib
 # Profiling stuff
 *.prof
 callgrind*
+perf.*
+*.annotation
+python3*.json
 
 # Virtual environments
 .venv
@@ -52,3 +55,6 @@ sphinx.log
 # Code Coverage
 junit.xml
 coverage.xml
+
+# CodeGraph
+.codegraph/*

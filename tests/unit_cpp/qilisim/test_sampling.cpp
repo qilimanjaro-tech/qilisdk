@@ -17,6 +17,8 @@
 #include <gtest/gtest.h>
 
 #include "../../../src/qilisdk_cpp/backends/qilisim/digital/sampling.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/utils/matrix_utils.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/utils/random.h"
 #include "../../../src/qilisdk_cpp/backends/qilisim/utils/sample.h"
 
 #include <algorithm>
@@ -54,17 +56,17 @@ SparseMatrix hadamard2() {
     return m;
 }
 
-SparseMatrix zeroStateSparse(int n_qubits) {
+SparseMatrixCol zeroStateSparse(int n_qubits) {
     long dim = 1L << n_qubits;
-    SparseMatrix m(dim, 1);
+    SparseMatrixCol m(dim, 1);
     m.insert(0, 0) = cx(1, 0);
     m.makeCompressed();
     return m;
 }
 
-SparseMatrix zeroStateDenseSparse(int n_qubits) {
+SparseMatrixCol zeroStateDenseSparse(int n_qubits) {
     long dim = 1L << n_qubits;
-    SparseMatrix m(dim, dim);
+    SparseMatrixCol m(dim, dim);
     m.insert(0, 0) = cx(1, 0);
     m.makeCompressed();
     return m;
@@ -318,6 +320,37 @@ TEST_F(SamplingTest, XGateOnQubit0_AllCountsAre10) {
     EXPECT_EQ(counts.at("10"), 1000);
 }
 
+TEST_F(SamplingTest, FusionWithSingleQubitGateCombiningEnabled) {
+    int n = 2;
+    QiliSimConfig cfg_fuse = defaultConfig();
+    cfg_fuse.set_fuse_gates(true);
+    cfg_fuse.set_combine_single_qubit_gates(true);
+    cfg_fuse.set_num_threads(4);
+    std::vector<Gate> gates = {makeX(0), makeX(0), makeX(1)};
+    std::vector<bool> measure = {true, true};
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg_fuse, readout);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg_fuse, measure);
+    ASSERT_EQ(counts.size(), 1u);
+    EXPECT_EQ(counts.at("01"), 1000);
+}
+
+TEST_F(SamplingTest, DivergingCircuitThrows) {
+    // Two non-unitary gates that each scale the amplitudes by 1e200 overflow the state to +inf.
+    // The digital sampling path must raise on the blown-up state (consistent with the analog path)
+    // rather than returning inf/garbage.
+    int n = 1;
+    SparseMatrix huge(2, 2);
+    huge.insert(0, 0) = std::complex<double>(1e200, 0);
+    huge.insert(1, 1) = std::complex<double>(1e200, 0);
+    huge.makeCompressed();
+    std::vector<Gate> gates = {Gate("HUGE", huge, {}, {0}, {}), Gate("HUGE", huge, {}, {0}, {})};
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    EXPECT_THROW(sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout), std::invalid_argument);
+}
+
 TEST_F(SamplingTest, DoubleXGateOnQubit0_AllCountsAre00_NoCache) {
     int n = 2;
     std::vector<Gate> gates = {makeX(0), makeX(0)};
@@ -356,6 +389,22 @@ TEST_F(SamplingTest, XOnBothQubits_AllCountsAre11) {
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("11"), 1000);
+}
+
+TEST_F(SamplingTest, UnnormalizedStatevector_IsRenormalized) {
+    // A statevector whose probabilities sum to 2 (not 1) must be renormalized before sampling; all
+    // shots are still accounted for and the two equally weighted outcomes are both produced.
+    int n = 1;
+    DenseMatrix state(2, 1);
+    state(0, 0) = cx(1, 0);
+    state(1, 0) = cx(1, 0);
+    std::vector<bool> measure = {true};
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
+    int total = 0;
+    for (const auto& [bitstring, count] : counts) {
+        total += count;
+    }
+    EXPECT_EQ(total, 1000);
 }
 
 TEST_F(SamplingTest, HadamardOnSingleQubit_ApproxFiftyFifty) {
@@ -655,6 +704,21 @@ TEST_F(SamplingMatrixFreeTest, HadamardCircuit_StatisticsMatchStandardSampling) 
     }
 }
 
+TEST_F(SamplingMatrixFreeTest, DivergingCircuitThrows) {
+    // Matrix-free analogue of the dense diverging-circuit test: two non-unitary gates that each scale
+    // the amplitudes by 1e200 overflow the state to +inf. The matrix-free sampling path must raise on
+    // the blown-up state rather than returning inf/garbage.
+    int n = 1;
+    SparseMatrix huge(2, 2);
+    huge.insert(0, 0) = std::complex<double>(1e200, 0);
+    huge.insert(1, 1) = std::complex<double>(1e200, 0);
+    huge.makeCompressed();
+    std::vector<Gate> gates = {Gate("HUGE", huge, {}, {0}, {}), Gate("HUGE", huge, {}, {0}, {})};
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    EXPECT_THROW(sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout), std::invalid_argument);
+}
+
 TEST_F(SamplingMatrixFreeTest, DensityMatrixInitialState_ZeroState_AllCountsAreZero) {
     int n = 2;
     std::vector<Gate> gates;
@@ -685,7 +749,7 @@ TEST_F(SamplingMonteCarloTest, MonteCarloEnabled_ProducesNonDeterministicCounts)
     const int shots = 1000;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    SparseMatrix rho_mixed(2, 2);
+    SparseMatrixCol rho_mixed(2, 2);
     rho_mixed.insert(0, 0) = cx(0.5, 0);
     rho_mixed.insert(1, 1) = cx(0.5, 0);
     rho_mixed.makeCompressed();
@@ -704,7 +768,7 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloEnabled_ProducesNonDeterminis
     const int shots = 1000;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    SparseMatrix rho_mixed(2, 2);
+    SparseMatrixCol rho_mixed(2, 2);
     rho_mixed.insert(0, 0) = cx(0.5, 0);
     rho_mixed.insert(1, 1) = cx(0.5, 0);
     rho_mixed.makeCompressed();
@@ -715,14 +779,148 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloEnabled_ProducesNonDeterminis
     EXPECT_TRUE(counts.count("1") > 0);
 }
 
+// A caller that passes output_is_trajectories opts into receiving the raw Monte Carlo ensemble
+// (columns are state vectors) instead of the averaged density matrix, so the readouts can be
+// averaged over the trajectories.
+TEST_F(SamplingMonteCarloTest, MonteCarloKeepsTrajectoriesWhenRequested) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0)};
+    DenseMatrix state;
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(8);
+    SparseMatrixCol rho_mixed(2, 2);
+    rho_mixed.insert(0, 0) = cx(0.5, 0);
+    rho_mixed.insert(1, 1) = cx(0.5, 0);
+    rho_mixed.makeCompressed();
+    std::vector<py::object> intermediate_results;
+
+    bool is_trajectories = false;
+    sampling(gates, n, rho_mixed, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+
+    EXPECT_TRUE(is_trajectories);
+    EXPECT_EQ(state.rows(), 2);
+    EXPECT_EQ(state.cols(), 8);
+    EXPECT_NEAR(std::real(trace(trajectories_to_density_matrix(state))), 1.0, 1e-12);
+}
+
+TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloKeepsTrajectoriesWhenRequested) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0)};
+    DenseMatrix state;
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(8);
+    SparseMatrixCol rho_mixed(2, 2);
+    rho_mixed.insert(0, 0) = cx(0.5, 0);
+    rho_mixed.insert(1, 1) = cx(0.5, 0);
+    rho_mixed.makeCompressed();
+    std::vector<py::object> intermediate_results;
+
+    bool is_trajectories = false;
+    sampling_matrix_free(gates, n, rho_mixed, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+
+    EXPECT_TRUE(is_trajectories);
+    EXPECT_EQ(state.rows(), 2);
+    EXPECT_EQ(state.cols(), 8);
+    EXPECT_NEAR(std::real(trace(trajectories_to_density_matrix(state))), 1.0, 1e-12);
+}
+
+// A mid-circuit collapse turns the ensemble back into a density matrix, so the caller must be told
+// the output is no longer a batch of trajectories (and the state must stay a valid density matrix).
+TEST_F(SamplingMonteCarloTest, MidCircuitCollapseDropsTrajectories) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0), makeM(0), makeH(0)};
+    DenseMatrix state;
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(8);
+    cfgMC.set_measurement_collapse(true);
+    SparseMatrixCol rho_mixed(2, 2);
+    rho_mixed.insert(0, 0) = cx(0.5, 0);
+    rho_mixed.insert(1, 1) = cx(0.5, 0);
+    rho_mixed.makeCompressed();
+    std::vector<py::object> intermediate_results;
+
+    bool is_trajectories = true;
+    sampling(gates, n, rho_mixed, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+
+    EXPECT_FALSE(is_trajectories);
+    EXPECT_EQ(state.rows(), 2);
+    EXPECT_EQ(state.cols(), 2);
+    EXPECT_NEAR(std::real(trace(state)), 1.0, 1e-12);
+    EXPECT_TRUE((state - state.adjoint()).isZero(1e-12));
+}
+
+TEST_F(SamplingMonteCarloTest, MatrixFreeMidCircuitCollapseDropsTrajectories) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0), makeM(0), makeH(0)};
+    DenseMatrix state;
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(8);
+    cfgMC.set_measurement_collapse(true);
+    SparseMatrixCol rho_mixed(2, 2);
+    rho_mixed.insert(0, 0) = cx(0.5, 0);
+    rho_mixed.insert(1, 1) = cx(0.5, 0);
+    rho_mixed.makeCompressed();
+    std::vector<py::object> intermediate_results;
+
+    bool is_trajectories = true;
+    sampling_matrix_free(gates, n, rho_mixed, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+
+    EXPECT_FALSE(is_trajectories);
+    EXPECT_EQ(state.rows(), 2);
+    EXPECT_EQ(state.cols(), 2);
+    EXPECT_NEAR(std::real(trace(state)), 1.0, 1e-12);
+    EXPECT_TRUE((state - state.adjoint()).isZero(1e-12));
+}
+
 TEST_F(SamplingMatrixFreeTest, BadGate_ThrowsException) {
-    // MatrixFreeOperator rejects gates with != 1 target qubit (unless SWAP).
+    // MatrixFreeOperator rejects multi-target gates unless they are SWAP, M, or a
+    // dense 2^k x 2^k block (gate fusion). A 2-target gate carrying a 2x2 matrix is
+    // none of these (its matrix doesn't match the target count), so it is rejected.
     // sampling() has no gate-name validation, so this test only applies to matrix-free.
     int n = 2;
-    std::vector<Gate> gates = {Gate("BadGate", SparseMatrix(4, 4), {}, {0, 1}, {})};
+    std::vector<Gate> gates = {Gate("BadGate", SparseMatrix(2, 2), {}, {0, 1}, {})};
     DenseMatrix state;
     std::vector<py::object> intermediate_results;
     EXPECT_ANY_THROW(sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout));
+}
+
+TEST_F(SamplingMatrixFreeTest, GateFusionEnabled_MatchesUnfusedResult) {
+    // With fusion enabled (statevector, no noise, >= 4 threads) the matrix-free
+    // path fuses runs of gates into dense blocks. The sampled distribution must
+    // match the unfused path. Two H gates on each of two qubits return to |00>.
+    int n = 2;
+    std::vector<Gate> gates = {makeH(0), makeH(1), makeH(0), makeH(1)};
+    std::vector<bool> measure = {true, true};
+    QiliSimConfig cfgFuse = cfg;
+    cfgFuse.set_fuse_gates(true);
+    cfgFuse.set_num_threads(4);
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgFuse, readout);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgFuse, measure);
+    EXPECT_NEAR(fractionOf(counts, "00"), 1.0, kLoose);
+}
+
+TEST_F(SamplingMatrixFreeTest, GateFusionWithSingleQubitCombiningEnabled) {
+    // Fusion with single-qubit-gate combining on the matrix-free path: the two X
+    // gates on qubit 0 combine to the identity, leaving qubit 0 in |0> and qubit 1
+    // in |1>.
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeX(0), makeX(1)};
+    std::vector<bool> measure = {true, true};
+    QiliSimConfig cfgFuse = cfg;
+    cfgFuse.set_fuse_gates(true);
+    cfgFuse.set_combine_single_qubit_gates(true);
+    cfgFuse.set_num_threads(4);
+    DenseMatrix state;
+    std::vector<py::object> intermediate_results;
+    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgFuse, readout);
+    std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgFuse, measure);
+    EXPECT_NEAR(fractionOf(counts, "01"), 1.0, kLoose);
 }
 
 TEST_F(SamplingTest, PureDensityMatrixInitialState_OutputIsMatrixNotStatevector) {
@@ -856,6 +1054,29 @@ TEST_F(SamplingTest, MidCircuitMeasurements) {
     std::vector<py::object> intermediate_results;
     sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
     EXPECT_EQ(intermediate_results.size(), 1u);
+}
+
+// The stabilizer simulator ignores noise models, warning the user. The circuit still runs.
+TEST_F(SamplingTest, Stabilizer_NoiseModel_IgnoredWithWarning) {
+    int n = 1;
+    std::vector<Gate> gates = {makeX(0)};
+    StabilizerStateSum initial(n);
+    StabilizerStateSum final_state(n);
+    NoiseModelCpp nm = symmetricReadoutNoise(n, 0.1);  // non-empty -> triggers the warning
+    EXPECT_NO_THROW(sampling_stabilizer(gates, n, initial, nm, final_state, cfg, readout));
+    EXPECT_EQ(final_state.sample(1).begin()->first, "1");  // X|0> = |1>
+}
+
+// The stabilizer simulator ignores Monte Carlo sampling, warning the user. The circuit still runs.
+TEST_F(SamplingTest, Stabilizer_MonteCarlo_IgnoredWithWarning) {
+    int n = 1;
+    std::vector<Gate> gates = {makeX(0)};
+    StabilizerStateSum initial(n);
+    StabilizerStateSum final_state(n);
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);  // triggers the warning
+    EXPECT_NO_THROW(sampling_stabilizer(gates, n, initial, noNoise, final_state, cfgMC, readout));
+    EXPECT_EQ(final_state.sample(1).begin()->first, "1");  // X|0> = |1>
 }
 
 // GCOV_EXCL_BR_STOP

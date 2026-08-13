@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-06 15:01+0200\n"
+"POT-Creation-Date: 2026-06-16 12:04+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -24,7 +24,6 @@ msgid "QUBO"
 msgstr "QUBO"
 
 #: ../../modules/core/core_qubo.rst:4
-#, fuzzy
 msgid ""
 "The :class:`~qilisdk.core.model.QUBO` subclass specializes in **Quadratic"
 " Unconstrained Binary Optimization** models, where every decision "
@@ -127,7 +126,7 @@ msgid "where :math:`\\lambda_0 > 0` is a penalty strength parameter."
 msgstr "on :math:`\\lambda_0 > 0` és un paràmetre de força de la penalització."
 
 #: ../../modules/core/core_qubo.rst:49
-msgid "Ineqaulity constraints can be defined as:"
+msgid "Inequality constraints can be defined as:"
 msgstr "Les restriccions d'inequació es poden definir com:"
 
 #: ../../modules/core/core_qubo.rst:51
@@ -168,7 +167,7 @@ msgid ""
 "where :math:`s_k` are slack binary variables introduced to encode the "
 "inequality constraint (with the number of bits :math:`N` chosen so that "
 "their binary expansion spans the admissible slack range) and "
-":math:`\\lambda_{1}` control the penalty strength."
+":math:`\\lambda_{1}` controls the penalty strength."
 msgstr ""
 "on :math:`s_k` són variables binàries de relaxació introduïdes per "
 "codificar la restricció d'inequació (amb el nombre de bits :math:`N` "
@@ -184,7 +183,7 @@ msgstr "**Penalització no equilibrada**:"
 #, python-brace-format
 msgid ""
 "Directly penalize violation without slack variables using two weights (a,"
-" b) to scale positive and negative deviations differently [1]_. we define"
+" b) to scale positive and negative deviations differently [1]_. We define"
 " :math:`h(x) = B - \\sum_{i=1}^{n} \\ell_i x_i` as the signed residual of"
 " the constraint, and the penalty term becomes:"
 msgstr ""

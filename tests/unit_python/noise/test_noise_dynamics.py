@@ -89,3 +89,29 @@ def test_lindblad_repr():
     assert "LindbladGenerator" in repr_str
     assert "jump_operators=" in repr_str
     assert "rates=" in repr_str
+
+
+def test_lindblad_time_dependent_rate_api():
+    operator = QTensor(_sigma_plus())
+
+    # Constant rates are not time-dependent and can be statically folded.
+    const_gen = LindbladGenerator(jump_operators=[operator], rates=[0.2])
+    assert const_gen.is_time_dependent is False
+    assert len(const_gen.jump_operators_with_rates) == 1
+
+    # No rates at all behaves as before (not time-dependent).
+    assert LindbladGenerator(jump_operators=[operator]).is_time_dependent is False
+
+    # A callable rate marks the generator time-dependent and cannot be statically folded.
+    td_gen = LindbladGenerator(jump_operators=[operator], rates=[lambda t: 0.2 * t])
+    assert td_gen.is_time_dependent is True
+    with pytest.raises(ValueError, match=r"time-dependent"):
+        td_gen.jump_operators_with_rates
+
+    # A mixed list (constant + callable) is still time-dependent.
+    mixed_gen = LindbladGenerator(jump_operators=[operator, operator], rates=[0.2, lambda t: 0.2 * t])
+    assert mixed_gen.is_time_dependent is True
+
+    # Rates must be real numbers or callables.
+    with pytest.raises(ValueError, match=r"real number or a callable"):
+        LindbladGenerator(jump_operators=[operator], rates=["not-a-rate"])

@@ -66,7 +66,7 @@ DenseMatrix pauli_z() {
 
 MatrixFreeHamiltonian make_matrix_free_H(std::complex<double> coeff, int qubit, const std::string& pauli) {
     MatrixFreeOperator op(pauli, {}, {qubit}, DenseMatrix());
-    return MatrixFreeHamiltonian({{coeff, {op}}});
+    return MatrixFreeHamiltonian(1, op, coeff);
 }
 
 }  // namespace
@@ -622,6 +622,137 @@ TEST_F(IterArnoldiLindbladTest, LongTimeConvergesToGroundState) {
     EXPECT_NEAR(std::real(result(1, 1)), 0.0, kTolLoose);
 }
 
+class IterArnoldiMatrixFreeValidationTest : public ::testing::Test {
+   protected:
+    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");
+    DenseMatrix rho = pure_zero();
+    double dt = 0.1;
+    int arnoldi_dim = 4;
+    int num_substeps = 1;
+};
+
+TEST_F(IterArnoldiMatrixFreeValidationTest, NonPositiveArnoldiDimThrows) {
+    EXPECT_ANY_THROW(iter_arnoldi_matrix_free(rho, dt, H_mf, {}, 0, num_substeps, false, kAtol));
+}
+
+TEST_F(IterArnoldiMatrixFreeValidationTest, NonPositiveNumSubstepsThrows) {
+    EXPECT_ANY_THROW(iter_arnoldi_matrix_free(rho, dt, H_mf, {}, arnoldi_dim, 0, false, kAtol));
+}
+
+class IterArnoldiMatrixFreeUnitaryStatevectorTest : public ::testing::Test {
+   protected:
+    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");
+    SparseMatrix H_sparse = to_sparse(0.5 * pauli_z());
+    double dt = 0.1;
+    int arnoldi_dim = 4;
+    int num_substeps = 1;
+};
+
+TEST_F(IterArnoldiMatrixFreeUnitaryStatevectorTest, NormPreserved) {
+    DenseMatrix psi(2, 1);
+    psi << 1.0 / std::sqrt(2.0), 1.0 / std::sqrt(2.0);
+    DenseMatrix result = iter_arnoldi_matrix_free(psi, dt, H_mf, {}, arnoldi_dim, num_substeps, true, kAtol);
+    EXPECT_NEAR(result.norm(), 1.0, kTol);
+}
+
+TEST_F(IterArnoldiMatrixFreeUnitaryStatevectorTest, EigenstateLeavesPopulationUnchanged) {
+    DenseMatrix psi(2, 1);
+    psi << 1, 0;
+    DenseMatrix result = iter_arnoldi_matrix_free(psi, dt, H_mf, {}, arnoldi_dim, num_substeps, true, kAtol);
+    EXPECT_NEAR(std::abs(result(0, 0)), 1.0, kTol);
+    EXPECT_NEAR(std::abs(result(1, 0)), 0.0, kTol);
+}
+
+TEST_F(IterArnoldiMatrixFreeUnitaryStatevectorTest, MatchesSparseOverload) {
+    DenseMatrix psi(2, 1);
+    psi << 1.0 / std::sqrt(2.0), 1.0 / std::sqrt(2.0);
+    DenseMatrix result_mf = iter_arnoldi_matrix_free(psi, dt, H_mf, {}, arnoldi_dim, num_substeps, true, kAtol);
+    DenseMatrix result_sp = iter_arnoldi(psi, dt, H_sparse, {}, arnoldi_dim, num_substeps, true, kAtol);
+    EXPECT_TRUE(result_mf.isApprox(result_sp, kTolLoose));
+}
+
+TEST_F(IterArnoldiMatrixFreeUnitaryStatevectorTest, ZeroInitialStateReturnsZero) {
+    DenseMatrix psi = DenseMatrix::Zero(2, 1);
+    DenseMatrix result = iter_arnoldi_matrix_free(psi, dt, H_mf, {}, arnoldi_dim, num_substeps, true, kAtol);
+    EXPECT_TRUE(result.isZero(kTol));
+}
+
+class IterArnoldiMatrixFreeUnitaryDensityMatrixTest : public ::testing::Test {
+   protected:
+    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");
+    SparseMatrix H_sparse = to_sparse(0.5 * pauli_z());
+    double dt = 0.1;
+    int arnoldi_dim = 4;
+    int num_substeps = 1;
+};
+
+TEST_F(IterArnoldiMatrixFreeUnitaryDensityMatrixTest, TracePreserved) {
+    DenseMatrix rho = pure_plus();
+    DenseMatrix result = iter_arnoldi_matrix_free(rho, dt, H_mf, {}, arnoldi_dim, num_substeps, false, kAtol);
+    EXPECT_NEAR(std::real(result.trace()), 1.0, kTol);
+}
+
+TEST_F(IterArnoldiMatrixFreeUnitaryDensityMatrixTest, HermiticityPreserved) {
+    DenseMatrix rho = pure_plus();
+    DenseMatrix result = iter_arnoldi_matrix_free(rho, dt, H_mf, {}, arnoldi_dim, num_substeps, false, kAtol);
+    EXPECT_TRUE((result - result.adjoint()).isZero(kTol));
+}
+
+TEST_F(IterArnoldiMatrixFreeUnitaryDensityMatrixTest, MatchesSparseOverload) {
+    DenseMatrix rho = pure_plus();
+    DenseMatrix result_mf = iter_arnoldi_matrix_free(rho, dt, H_mf, {}, arnoldi_dim, num_substeps, false, kAtol);
+    DenseMatrix result_sp = iter_arnoldi(rho, dt, H_sparse, {}, arnoldi_dim, num_substeps, false, kAtol);
+    EXPECT_TRUE(result_mf.isApprox(result_sp, kTolLoose));
+}
+
+TEST_F(IterArnoldiMatrixFreeUnitaryDensityMatrixTest, MultipleSubstepsPreserveTrace) {
+    DenseMatrix rho = pure_plus();
+    DenseMatrix result = iter_arnoldi_matrix_free(rho, dt, H_mf, {}, arnoldi_dim, 4, false, kAtol);
+    EXPECT_NEAR(std::real(result.trace()), 1.0, kTol);
+}
+
+class IterArnoldiMatrixFreeLindbladTest : public ::testing::Test {
+   protected:
+    MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");
+    SparseMatrix H_sparse = to_sparse(0.5 * pauli_z());
+    SparseMatrix jump = amp_damp_jump();
+    double dt = 0.1;
+    int arnoldi_dim = 4;
+    int num_substeps = 1;
+};
+
+TEST_F(IterArnoldiMatrixFreeLindbladTest, TracePreserved) {
+    DenseMatrix rho = pure_plus();
+    DenseMatrix result = iter_arnoldi_matrix_free(rho, dt, H_mf, {jump}, arnoldi_dim, num_substeps, false, kAtol);
+    EXPECT_NEAR(std::real(result.trace()), 1.0, kTol);
+}
+
+TEST_F(IterArnoldiMatrixFreeLindbladTest, HermiticityPreserved) {
+    DenseMatrix rho = pure_plus();
+    DenseMatrix result = iter_arnoldi_matrix_free(rho, dt, H_mf, {jump}, arnoldi_dim, num_substeps, false, kAtol);
+    EXPECT_TRUE((result - result.adjoint()).isZero(kTol));
+}
+
+TEST_F(IterArnoldiMatrixFreeLindbladTest, MatchesSparseOverload) {
+    DenseMatrix rho = pure_plus();
+    DenseMatrix result_mf = iter_arnoldi_matrix_free(rho, dt, H_mf, {jump}, arnoldi_dim, num_substeps, false, kAtol);
+    DenseMatrix result_sp = iter_arnoldi(rho, dt, H_sparse, {jump}, arnoldi_dim, num_substeps, false, kAtol);
+    EXPECT_TRUE(result_mf.isApprox(result_sp, kTolLoose));
+}
+
+TEST_F(IterArnoldiMatrixFreeLindbladTest, GroundStateIsFixedPoint) {
+    DenseMatrix rho = pure_zero();
+    DenseMatrix result = iter_arnoldi_matrix_free(rho, dt, H_mf, {jump}, arnoldi_dim, num_substeps, false, kAtol);
+    EXPECT_TRUE(result.isApprox(rho, kTol));
+}
+
+TEST_F(IterArnoldiMatrixFreeLindbladTest, LongTimeConvergesToGroundState) {
+    DenseMatrix rho = pure_plus();
+    DenseMatrix result = iter_arnoldi_matrix_free(rho, 20.0, H_mf, {jump}, arnoldi_dim, 20, false, kAtol);
+    EXPECT_NEAR(std::real(result(0, 0)), 1.0, kTolLoose);
+    EXPECT_NEAR(std::real(result(1, 1)), 0.0, kTolLoose);
+}
+
 class IterIntegrateSparseValidationTest : public ::testing::Test {
    protected:
     SparseMatrix H = to_sparse(0.5 * pauli_z());
@@ -889,6 +1020,14 @@ TEST_F(IterIntegrateMatrixFreeUnitaryDensityMatrixTest, MatchesSparseOverloadFor
     EXPECT_TRUE(rho_mf.isApprox(result_sp, kTolLoose));
 }
 
+TEST_F(IterIntegrateMatrixFreeUnitaryDensityMatrixTest, NormalizeFalseKeepsUnnormalizedState) {
+    // With normalization disabled the state is not renormalized; unitary dynamics preserve the
+    // (deliberately non-unit) trace of the initial density matrix.
+    DenseMatrix rho = 3.0 * pure_plus();
+    iter_rk4(rho, 0.0, dt, {}, {H_mf}, {{1.0}}, {}, /*is_unitary_on_statevector=*/false, /*normalize=*/false);
+    EXPECT_NEAR(std::real(rho.trace()), 3.0, kTol);
+}
+
 class IterIntegrateMatrixFreeLindbladTest : public ::testing::Test {
    protected:
     MatrixFreeHamiltonian H_mf = make_matrix_free_H(0.5, 0, "Z");
@@ -938,6 +1077,31 @@ TEST_F(IterIntegrateMatrixFreeLindbladTest, MatchesSparseOverloadForShortTime) {
     iter_rk4(rho_mf, 0.0, dt, {}, {H_mf}, {{1.0}}, {jump}, false);
     DenseMatrix result_sp = iter_rk4_matrix(rho_sp, dt, H_sparse, {jump}, false);
     EXPECT_TRUE(rho_mf.isApprox(result_sp, kTolLoose));
+}
+
+class IterRK4ExponentialAnsatzTest : public ::testing::Test {
+   protected:
+    double dt = 0.1;
+    MatrixFreeHamiltonian H_X = make_matrix_free_H(1.0, 0, "X");
+    MatrixFreeHamiltonian H_Z = make_matrix_free_H(1.0, 0, "Z");
+};
+
+TEST_F(IterRK4ExponentialAnsatzTest, DoesNotThrowForValidInput) {
+    ExponentialAnsatz rho(1, 1, 50, 0);
+    std::vector<double> step_list = {0.5, 1.0};
+    std::vector<MatrixFreeHamiltonian> hamiltonians = {H_X, H_Z};
+    std::vector<std::vector<double>> params = {{1.0, 0.0}, {0.0, 1.0}};
+    EXPECT_NO_THROW(iter_rk4(rho, 0.0, dt, step_list, hamiltonians, params));
+}
+
+TEST_F(IterRK4ExponentialAnsatzTest, TermCountUnchangedAfterStep) {
+    ExponentialAnsatz rho(1, 1, 50, 0);
+    size_t initial_terms = rho.get_terms().size();
+    std::vector<double> step_list = {0.5, 1.0};
+    std::vector<MatrixFreeHamiltonian> hamiltonians = {H_X, H_Z};
+    std::vector<std::vector<double>> params = {{1.0, 0.0}, {0.0, 1.0}};
+    iter_rk4(rho, 0.0, dt, step_list, hamiltonians, params);
+    EXPECT_EQ(rho.get_terms().size(), initial_terms);
 }
 
 // GCOV_EXCL_BR_STOP

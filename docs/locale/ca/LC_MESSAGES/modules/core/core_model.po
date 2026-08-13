@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-07-31 12:47+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -57,12 +57,12 @@ msgid ""
 "The :class:`~qilisdk.core.model.Objective` defines the function the model"
 " aims to minimize or maximize. Example:"
 msgstr ""
-"El :class:`~qilisdk.core.model.Objective` defineix la funció que el "
-"model pretén minimitzar o maximitzar. Exemple:"
+"El :class:`~qilisdk.core.model.Objective` defineix la funció que el model"
+" pretén minimitzar o maximitzar. Exemple:"
 
 #: ../../modules/core/core_model.rst:47 ../../modules/core/core_model.rst:73
-#: ../../modules/core/core_model.rst:101 ../../modules/core/core_model.rst:134
-#: ../../modules/core/core_model.rst:151
+#: ../../modules/core/core_model.rst:101 ../../modules/core/core_model.rst:166
+#: ../../modules/core/core_model.rst:183
 msgid "**Output**:"
 msgstr "**Sortida**:"
 
@@ -92,11 +92,157 @@ msgstr ""
 "Es poden afegir :class:`Restriccions<qilisdk.core.model.Constraint>` "
 "addicionals per limitar l'espai de solucions:"
 
-#: ../../modules/core/core_model.rst:124
+#: ../../modules/core/core_model.rst:123
+msgid "Constructors"
+msgstr "Constructors"
+
+#: ../../modules/core/core_model.rst:125
+msgid ""
+"Rather than building a model from scratch, you can also construct it for "
+"certain predefined problems:"
+msgstr ""
+"En lloc de construir un model des de zero, també podeu construir-lo per a"
+" certs problemes predefinits:"
+
+#: ../../modules/core/core_model.rst:127
+msgid ""
+":func:`Model.ising(edges, couplings, fields, "
+"label)<qilisdk.core.model.Model.ising>` - Constructs an Ising problem for"
+" a given weighted graph."
+msgstr ""
+":func:`Model.ising(edges, couplings, fields, "
+"label)<qilisdk.core.model.Model.ising>` - Construeix un problema d'Ising "
+"per a un graf amb pesos donat."
+
+#: ../../modules/core/core_model.rst:128
+msgid ""
+":func:`Model.knapsack(values, weights, max_weight, label, "
+"lagrange_multiplier)<qilisdk.core.model.Model.knapsack>` - Constructs a "
+"knapsack problem with given weights, values, and capacity."
+msgstr ""
+":func:`Model.knapsack(values, weights, max_weight, label, "
+"lagrange_multiplier)<qilisdk.core.model.Model.knapsack>` - Construeix un "
+"problema de la motxilla amb els pesos, valors i capacitat donats."
+
+#: ../../modules/core/core_model.rst:129
+msgid ""
+":func:`Model.max_cut(edges, weights, "
+"label)<qilisdk.core.model.Model.max_cut>` - Constructs a max cut problem "
+"for a given graph."
+msgstr ""
+":func:`Model.max_cut(edges, weights, "
+"label)<qilisdk.core.model.Model.max_cut>` - Construeix un problema de "
+"tall màxim per a un graf donat."
+
+#: ../../modules/core/core_model.rst:130
+msgid ""
+":func:`Model.graph_coloring(graph, num_colors, label, "
+"lagrange_multiplier)<qilisdk.core.model.Model.graph_coloring>` - "
+"Constructs a graph coloring problem for a given graph and number of "
+"colors."
+msgstr ""
+":func:`Model.graph_coloring(graph, num_colors, label, "
+"lagrange_multiplier)<qilisdk.core.model.Model.graph_coloring>` - "
+"Construeix un problema de coloració de grafs per a un graf i un nombre de"
+" colors donats."
+
+#: ../../modules/core/core_model.rst:131
+msgid ""
+":func:`Model.travelling_salesman(edges, distances, label, "
+"lagrange_multiplier)<qilisdk.core.model.Model.travelling_salesman>` - "
+"Constructs a travelling salesman problem for a given distance matrix."
+msgstr ""
+":func:`Model.travelling_salesman(edges, distances, label, "
+"lagrange_multiplier)<qilisdk.core.model.Model.travelling_salesman>` - "
+"Construeix un problema del viatjant de comerç per a una matriu de "
+"distàncies donada."
+
+#: ../../modules/core/core_model.rst:132
+msgid ""
+":func:`Model.factoring(n, label)<qilisdk.core.model.Model.factoring>` - "
+"Constructs a factoring problem for a given integer."
+msgstr ""
+":func:`Model.factoring(n, label)<qilisdk.core.model.Model.factoring>` - "
+"Construeix un problema de factorització per a un enter donat."
+
+#: ../../modules/core/core_model.rst:134
+msgid ""
+"Each of these (except factoring) also has a random counterpart, useful "
+"for generating problems for testing and benchmarking:"
+msgstr ""
+"Cadascun d'aquests (excepte la factorització) també té una contrapart "
+"aleatòria, útil per generar problemes per a proves i avaluacions de "
+"rendiment:"
+
+#: ../../modules/core/core_model.rst:137
+msgid ""
+":func:`Model.random_ising(num_variables, edge_probability, "
+"coefficient_range, label, seed)<qilisdk.core.model.Model.random_ising>` -"
+" Constructs a random Ising model, fully connected by default."
+msgstr ""
+":func:`Model.random_ising(num_variables, edge_probability, "
+"coefficient_range, label, seed)<qilisdk.core.model.Model.random_ising>` -"
+" Construeix un model d'Ising aleatori, completament connectat per "
+"defecte."
+
+#: ../../modules/core/core_model.rst:138
+msgid ""
+":func:`Model.random_knapsack(num_items, value_range, weight_range, "
+"capacity_ratio, label, seed, "
+"lagrange_multiplier)<qilisdk.core.model.Model.random_knapsack>` - "
+"Constructs a knapsack problem with random values and weights."
+msgstr ""
+":func:`Model.random_knapsack(num_items, value_range, weight_range, "
+"capacity_ratio, label, seed, "
+"lagrange_multiplier)<qilisdk.core.model.Model.random_knapsack>` - "
+"Construeix un problema de la motxilla amb valors i pesos aleatoris."
+
+#: ../../modules/core/core_model.rst:139
+msgid ""
+":func:`Model.random_max_cut(num_nodes, edge_probability, weight_range, "
+"label, seed)<qilisdk.core.model.Model.random_max_cut>` - Constructs a max"
+" cut problem on a random connected graph."
+msgstr ""
+":func:`Model.random_max_cut(num_nodes, edge_probability, weight_range, "
+"label, seed)<qilisdk.core.model.Model.random_max_cut>` - Construeix un "
+"problema de tall màxim sobre un graf connex aleatori."
+
+#: ../../modules/core/core_model.rst:140
+msgid ""
+":func:`Model.random_graph_coloring(num_nodes, num_colors, "
+"edge_probability, label, seed, "
+"lagrange_multiplier)<qilisdk.core.model.Model.random_graph_coloring>` - "
+"Constructs a graph coloring problem on a random connected graph."
+msgstr ""
+":func:`Model.random_graph_coloring(num_nodes, num_colors, "
+"edge_probability, label, seed, "
+"lagrange_multiplier)<qilisdk.core.model.Model.random_graph_coloring>` - "
+"Construeix un problema de coloració de grafs sobre un graf connex "
+"aleatori."
+
+#: ../../modules/core/core_model.rst:141
+msgid ""
+":func:`Model.random_travelling_salesman(num_cities, edge_probability, "
+"distance_range, label, seed, "
+"lagrange_multiplier)<qilisdk.core.model.Model.random_travelling_salesman>`"
+" - Constructs a travelling salesman problem with random distances, on a "
+"complete graph by default."
+msgstr ""
+":func:`Model.random_travelling_salesman(num_cities, edge_probability, "
+"distance_range, label, seed, "
+"lagrange_multiplier)<qilisdk.core.model.Model.random_travelling_salesman>`"
+" - Construeix un problema del viatjant de comerç amb distàncies "
+"aleatòries, sobre un graf complet per defecte."
+
+#: ../../modules/core/core_model.rst:143
+msgid "For instance, to create a knapsack problem:"
+msgstr "Per exemple, per crear un problema de la motxilla:"
+
+#: ../../modules/core/core_model.rst:156
 msgid "Evaluating a Model"
 msgstr "Avaluar un model"
 
-#: ../../modules/core/core_model.rst:126
+#: ../../modules/core/core_model.rst:158
 msgid ""
 "To evaluate a :class:`~qilisdk.core.model.Model`, provide values for all "
 "involved variables:"
@@ -104,7 +250,7 @@ msgstr ""
 "Per avaluar un :class:`~qilisdk.core.model.Model`, proporcioneu valors "
 "per a totes les variables implicades:"
 
-#: ../../modules/core/core_model.rst:140
+#: ../../modules/core/core_model.rst:172
 msgid ""
 "The evaluation returns a dictionary with values for the objective and "
 "constraints. A constraint returns `0.0` if satisfied, or its Lagrange "
@@ -114,9 +260,53 @@ msgstr ""
 "restriccions. Una restricció retorna `0.0` si es satisfà, o el seu "
 "multiplicador de Lagrange si es viola."
 
-#: ../../modules/core/core_model.rst:143
+#: ../../modules/core/core_model.rst:175
 msgid "For example:"
 msgstr "Per exemple:"
 
+#: ../../modules/core/core_model.rst:191
+msgid "Solving a Model Classically"
+msgstr "Resoldre un model de manera clàssica"
+
+#: ../../modules/core/core_model.rst:193
+msgid ""
+"To help demonstrate the limits of classical solvers, a variety of "
+"wrappers to different solvers are provided:"
+msgstr ""
+"Per ajudar a demostrar els límits dels resolutors clàssics, es "
+"proporcionen diversos embolcalls per a diferents resolutors:"
+
+#: ../../modules/core/core_model.rst:195
+msgid ""
+":class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver`"
+" - A brute-force solver that evaluates all possible solutions."
+msgstr ""
+":class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver`"
+" - Un resolutor de força bruta que avalua totes les solucions possibles."
+
+#: ../../modules/core/core_model.rst:196
+msgid ""
+":class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver` - A "
+"solver that uses one of SciPy's `optimize` routines to find a solution."
+msgstr ""
+":class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver` - Un "
+"resolutor que utilitza una de les rutines `optimize` de SciPy per trobar "
+"una solució."
+
+#: ../../modules/core/core_model.rst:197
+msgid ""
+":class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` - A "
+"wrapper to SCIP, a mixed-integer programming solver. This requires the "
+"SCIP extra (i.e. ``pip install \"qilisdk[scip]\"``)."
+msgstr ""
+":class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` - Un "
+"embolcall per a SCIP, un resolutor de programació entera mixta. Això "
+"requereix l'extra de SCIP (és a dir, ``pip install \"qilisdk[scip]\"``)."
+
+#: ../../modules/core/core_model.rst:199
+msgid "These can be used as follows:"
+msgstr "Es poden utilitzar de la manera següent:"
+
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Aneu a un subapartat específic d'una pàgina."
+

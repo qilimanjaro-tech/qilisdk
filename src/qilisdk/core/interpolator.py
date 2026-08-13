@@ -21,6 +21,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Mapping
 
 import numpy as np
+from loguru import logger
 from typing_extensions import TypeAlias
 
 from qilisdk.core.parameterizable import Parameterizable
@@ -116,6 +117,11 @@ class Interpolator(Parameterizable):
             ValueError: If the time intervals contain a number of points different than 2.
         """
         super(Interpolator, self).__init__()
+        logger.debug(
+            "[Interpolator] Creating Interpolator with {} time points, interpolation={}",
+            len(time_dict),
+            interpolation,
+        )
         self._interpolation = interpolation
         self._time_dict: dict[ParameterizedNumber, ParameterizedNumber] = {}
         self._current_time = Parameter("t", 0)
@@ -130,22 +136,14 @@ class Interpolator(Parameterizable):
 
         fixed_times: list[ParameterizedNumber | tuple[float, float]] = sorted(
             time_dict.keys(),
-            key=lambda t: self._get_value(
-                min(t, key=self._get_value)  # ty:ignore[no-matching-overload]
-                if isinstance(t, tuple)
-                else self._get_value(t)
-            ),
+            key=lambda t: self._get_value(min(t, key=self._get_value) if isinstance(t, tuple) else self._get_value(t)),
         )
 
         for i in range(len(fixed_times) - 1):
             ti: ParameterizedNumber | tuple[float, float] = fixed_times[i]
             tj: ParameterizedNumber | tuple[float, float] = fixed_times[i + 1]
-            t0 = (
-                self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])  # ty:ignore[invalid-argument-type]
-            )
-            t1 = (
-                self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])  # ty:ignore[invalid-argument-type]
-            )
+            t0 = self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])
+            t1 = self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])
             if abs(t0 - t1) < get_settings().atol:
                 raise ValueError(f"The time point {t0} is defined twice.")
             if t0 > t1:
@@ -153,12 +151,12 @@ class Interpolator(Parameterizable):
 
         for time, coefficient in time_dict.items():
             if isinstance(time, tuple):
-                if len(time) != 2:  # noqa: PLR2004
+                if len(time) != 2:  # ruff: ignore[magic-value-comparison]
                     raise ValueError(
                         f"time intervals need to be defined by two points, but this interval was provided: {time}"
                     )
-                self.add_time_point(time[0], coefficient)  # ty:ignore[invalid-argument-type]
-                self.add_time_point(time[1], coefficient)  # ty:ignore[invalid-argument-type]
+                self.add_time_point(time[0], coefficient)
+                self.add_time_point(time[1], coefficient)
             else:
                 self.add_time_point(time, coefficient)
         self._tlist = self._generate_tlist()
@@ -166,7 +164,7 @@ class Interpolator(Parameterizable):
         time_insertion_list = sorted(
             [k for item in time_dict for k in (item if isinstance(item, tuple) else (item,))],
             key=self._get_value,
-        )  # ty:ignore[no-matching-overload]
+        )
         l = len(time_insertion_list)
         for i in range(l):
             t = time_insertion_list[i]
@@ -187,7 +185,7 @@ class Interpolator(Parameterizable):
         Returns:
             list[ParameterizedNumber]: Sorted time indices based on their evaluated value.
         """
-        return sorted((self._time_dict.keys()), key=self._get_value)  # ty:ignore[invalid-return-type]
+        return sorted((self._time_dict.keys()), key=self._get_value)
 
     @property
     def _time_scale(self) -> float:
@@ -323,6 +321,7 @@ class Interpolator(Parameterizable):
         """
         if abs(self._get_value(max_time)) < get_settings().atol:
             raise ValueError("Cannot set the max time to zero.")
+        logger.debug("[Interpolator] Setting max time to {}", max_time)
         self.delete_cache()
         self._max_time = max_time
 
@@ -402,6 +401,7 @@ class Interpolator(Parameterizable):
         Raises:
             ValueError: If the coefficient type is unsupported or the callable uses invalid variables.
         """
+        logger.opt(lazy=True).trace("[Interpolator] Adding time point at t={}", lambda: time)
         self._extract_parameters(time)
         coeff = coefficient
         if callable(coeff):
@@ -431,6 +431,7 @@ class Interpolator(Parameterizable):
             values (list[float]): New values ordered consistently with ``get_parameter_names()``.
             where (Callable[[Parameter], bool] | None): Optional predicate selecting parameters to update.
         """
+        logger.trace("[Interpolator] Setting {} parameter values", len(values))
         self.delete_cache()
         super().set_parameter_values(values=values, where=where)
 
@@ -441,6 +442,7 @@ class Interpolator(Parameterizable):
         Args:
             parameters (dict[str, int | float]): Mapping from parameter labels to numeric values.
         """
+        logger.opt(lazy=True).trace("[Interpolator] Setting parameters by label {}", lambda: parameters)
         self.delete_cache()
         super().set_parameters(parameters)
 
@@ -451,6 +453,7 @@ class Interpolator(Parameterizable):
         Args:
             ranges (dict[str, tuple[float, float]]): Bounds keyed by parameter label.
         """
+        logger.opt(lazy=True).trace("[Interpolator] Setting bounds for parameters {}", lambda: ranges)
         self.delete_cache()
         super().set_parameter_bounds(ranges)
 
@@ -464,7 +467,8 @@ class Interpolator(Parameterizable):
         Returns:
             float: Evaluated coefficient.
         """
-        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)  # ty:ignore[invalid-assignment]
+        logger.trace("[Interpolator] Evaluating coefficient at t={}", time_step)
+        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
         val = self.get_coefficient_expression(time_step=time_step)
 
         if self._max_time is not None:
@@ -487,7 +491,7 @@ class Interpolator(Parameterizable):
         Raises:
             ValueError: If the interpolation mode is unsupported or evaluation fails.
         """
-        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)  # ty:ignore[invalid-assignment]
+        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
 
         # generate the tlist
         self._tlist = self._generate_tlist()

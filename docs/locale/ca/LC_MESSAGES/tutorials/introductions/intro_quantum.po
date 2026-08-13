@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_quantum.rst:2
 msgid "Quantum Basics"
-msgstr "Fonaments Quàntics"
+msgstr "Fonaments quàntics"
 
 #: ../../tutorials/introductions/intro_quantum.rst:4
 msgid ""
@@ -37,7 +37,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_quantum.rst:9
 msgid "What Does Quantum Mean?"
-msgstr "Què Significa Quàntic?"
+msgstr "Què significa quàntic?"
 
 #: ../../tutorials/introductions/intro_quantum.rst:11
 msgid ""
@@ -59,7 +59,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_quantum.rst:17
 msgid "What is Quantum Advantage?"
-msgstr "Què és l'Avantatge Quàntic?"
+msgstr "Què és l'avantatge quàntic?"
 
 #: ../../tutorials/introductions/intro_quantum.rst:19
 msgid ""
@@ -106,7 +106,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_quantum.rst:31
 msgid "What is a Qubit?"
-msgstr "Què és un Qubit?"
+msgstr "Què és un qubit?"
 
 #: ../../tutorials/introductions/intro_quantum.rst:33
 msgid ""
@@ -166,7 +166,7 @@ msgstr "|1⟩ = \\begin{pmatrix} 0 \\\\ 1 \\end{pmatrix}"
 
 #: ../../tutorials/introductions/intro_quantum.rst:59
 msgid "What is Superposition?"
-msgstr "Què és la Superposició?"
+msgstr "Què és la superposició?"
 
 #: ../../tutorials/introductions/intro_quantum.rst:61
 msgid ""
@@ -231,7 +231,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_quantum.rst:88
 msgid "What Happens if We Have More Than One Qubit?"
-msgstr "Què Passa si Tenim Més d'un Qubit?"
+msgstr "Què passa si tenim més d'un qubit?"
 
 #: ../../tutorials/introductions/intro_quantum.rst:90
 msgid ""
@@ -316,7 +316,7 @@ msgstr "|α|^2 + |β|^2 + |γ|^2 + |δ|^2 = 1"
 
 #: ../../tutorials/introductions/intro_quantum.rst:121
 msgid "What is Entanglement?"
-msgstr "Què és l'Entrellaçament?"
+msgstr "Què és l'entrellaçament?"
 
 #: ../../tutorials/introductions/intro_quantum.rst:123
 msgid ""
@@ -361,7 +361,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_quantum.rst:138
 msgid "How Can We Visualize a Qubit?"
-msgstr "Com Podem Visualitzar un Qubit?"
+msgstr "Com podem visualitzar un qubit?"
 
 #: ../../tutorials/introductions/intro_quantum.rst:140
 msgid ""
@@ -415,7 +415,7 @@ msgstr ""
 
 #: ../../tutorials/introductions/intro_quantum.rst:173
 msgid "Further Reading"
-msgstr "Lectures Addicionals"
+msgstr "Lectures addicionals"
 
 #: ../../tutorials/introductions/intro_quantum.rst:175
 msgid "`Qubit`_"

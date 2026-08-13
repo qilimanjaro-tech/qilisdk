@@ -749,26 +749,23 @@ TEST(BraPythonTest, Valid) {
 }
 
 TEST(ZeroTest, NegativeNqubits_Throws) {
-    EXPECT_THROW(QTensorCpp::zero(-1, "ket"), py::value_error);
+    EXPECT_THROW(QTensorCpp::zero(-1), py::value_error);
 }
 
 TEST(ZeroTest, Ket_Type) {
-    QTensorCpp q = QTensorCpp::zero(1, "ket");
+    QTensorCpp q = QTensorCpp::zero(2);
     EXPECT_TRUE(q.is_ket());
+    EXPECT_NEAR(q.get_data().coeff(0, 0).real(), 1.0, 1e-10);
 }
 
-TEST(ZeroTest, Bra_Type) {
-    QTensorCpp q = QTensorCpp::zero(1, "bra");
-    EXPECT_TRUE(q.is_bra());
+TEST(OneTest, NegativeNqubits_Throws) {
+    EXPECT_THROW(QTensorCpp::one(-1), py::value_error);
 }
 
-TEST(ZeroTest, Operator_Type) {
-    QTensorCpp q = QTensorCpp::zero(1, "operator");
-    EXPECT_TRUE(q.is_operator());
-}
-
-TEST(ZeroTest, InvalidType_Throws) {
-    EXPECT_THROW(QTensorCpp::zero(1, "vector"), py::value_error);
+TEST(OneTest, Ket_Type) {
+    QTensorCpp q = QTensorCpp::one(2);
+    EXPECT_TRUE(q.is_ket());
+    EXPECT_NEAR(q.get_data().coeff(3, 0).real(), 1.0, 1e-10);
 }
 
 TEST(IdentityTest, Is2x2Identity) {
@@ -1210,16 +1207,17 @@ TEST(ExpectationValueTest, ExactOperator) {
 }
 
 TEST(ExpectationValueTest, SampledZeroState_Throws) {
-    QTensorCpp q(QTensorCpp::zero(2, "operator"));
-    q.compute_eigendecomposition();
+    QTensorCpp q(QTensorCpp(SparseMatrix(2, 2)));
     QTensorCpp op(make_identity2());
     EXPECT_THROW(q.expectation_value(op, 10), py::value_error);
 }
 
-TEST(ExpectationValueTest, SampledNoEigendecomp_Throws) {
+TEST(ExpectationValueTest, SampledNoEigendecomp_ComputesItOnTheObservable) {
     QTensorCpp q(make_dm_pure0());
     QTensorCpp op(make_identity2());
-    EXPECT_THROW(q.expectation_value(op, 10), py::value_error);
+    EXPECT_NEAR(q.expectation_value(op, 10).real(), 1.0, 1e-10);
+    EXPECT_EQ(op.get_eigenvalues().size(), 2u);
+    EXPECT_THROW(q.get_eigenvalues(), py::value_error);
 }
 
 TEST(ExpectationValueTest, SampledWithEigendecomp_Succeeds) {
@@ -1227,6 +1225,40 @@ TEST(ExpectationValueTest, SampledWithEigendecomp_Succeeds) {
     q.compute_eigendecomposition();
     QTensorCpp op(make_identity2());
     EXPECT_NO_THROW(q.expectation_value(op, 10));
+}
+
+TEST(ExpectationValueTest, SampledKetInEigenbasis_GivesExactValue) {
+    SparseMatrix Z(2, 2);
+    Z.insert(0, 0) = 1.0;
+    Z.insert(1, 1) = -1.0;
+    Z.makeCompressed();
+    QTensorCpp ket(make_ket0());
+    QTensorCpp op_z(Z);
+    EXPECT_NEAR(ket.expectation_value(op_z, 10).real(), 1.0, 1e-10);
+}
+
+TEST(ExpectationValueTest, SampledSuperposition_ConvergesToExactValue) {
+    SparseMatrix Z(2, 2);
+    Z.insert(0, 0) = 1.0;
+    Z.insert(1, 1) = -1.0;
+    Z.makeCompressed();
+    SparseMatrix plus(2, 1);
+    plus.insert(0, 0) = std::sqrt(0.5);
+    plus.insert(1, 0) = std::sqrt(0.5);
+    plus.makeCompressed();
+    QTensorCpp ket(plus);
+    QTensorCpp op_z(Z);
+    EXPECT_NEAR(std::abs(ket.expectation_value(op_z, 1).real()), 1.0, 1e-10);
+    EXPECT_NEAR(ket.expectation_value(op_z, 100000).real(), 0.0, 0.05);
+}
+
+TEST(ExpectationValueTest, SampledNonNormalizedState_KeepsNormalization) {
+    SparseMatrix m(2, 1);
+    m.insert(0, 0) = 2.0;
+    m.makeCompressed();
+    QTensorCpp ket(m);
+    QTensorCpp op(make_identity2());
+    EXPECT_NEAR(ket.expectation_value(op, 10).real(), 4.0, 1e-10);
 }
 
 TEST(ExpectationValuePythonTest, QTensorCppDirect) {
@@ -1524,6 +1556,58 @@ TEST(EntropyTest, Renyi_Alpha2_Succeeds) {
     EXPECT_NO_THROW(q.entropy_renyi(2.0));
 }
 
+static SparseMatrix make_t_plus() {
+    constexpr double pi = 3.14159265358979323846;
+    SparseMatrix m(2, 1);
+    m.insert(0, 0) = Complex(1.0 / std::sqrt(2.0), 0.0);
+    m.insert(1, 0) = std::exp(Complex(0.0, pi / 4.0)) / std::sqrt(2.0);
+    m.makeCompressed();
+    return m;
+}
+
+TEST(MagicTest, Ket0_IsStabilizer_Zero) {
+    QTensorCpp q(make_ket0());
+    EXPECT_NEAR(q.magic(2.0), 0.0, 1e-10);
+}
+
+TEST(MagicTest, GHZ_IsStabilizer_Zero) {
+    QTensorCpp q = QTensorCpp::ghz(3);
+    EXPECT_NEAR(q.magic(2.0), 0.0, 1e-10);
+}
+
+TEST(MagicTest, TPlus_Alpha2_IsLog2FourThirds) {
+    QTensorCpp q(make_t_plus());
+    EXPECT_NEAR(q.magic(2.0), std::log2(4.0 / 3.0), 1e-10);
+}
+
+TEST(MagicTest, TPlus_Alpha1_ShannonLimit) {
+    QTensorCpp q(make_t_plus());
+    EXPECT_NEAR(q.magic(1.0), 0.5, 1e-10);
+}
+
+TEST(MagicTest, Bra_MatchesKet) {
+    QTensorCpp ket(make_t_plus());
+    QTensorCpp bra = ket.adjoint();
+    EXPECT_NEAR(bra.magic(2.0), ket.magic(2.0), 1e-10);
+}
+
+TEST(MagicTest, Operator_Throws) {
+    QTensorCpp q(make_identity2());
+    EXPECT_THROW(q.magic(2.0), py::value_error);
+}
+
+TEST(MagicTest, AlphaZero_Throws) {
+    QTensorCpp q(make_t_plus());
+    EXPECT_THROW(q.magic(0.0), py::value_error);
+}
+
+TEST(MagicTest, ZeroState_Throws) {
+    SparseMatrix m(2, 1);
+    m.makeCompressed();
+    QTensorCpp q(m);
+    EXPECT_THROW(q.magic(2.0), py::value_error);
+}
+
 TEST(RankTest, Ket_Rank1) {
     QTensorCpp q(make_ket0());
     EXPECT_EQ(q.rank(), 1);
@@ -1592,7 +1676,7 @@ TEST(SqrtTest, NonOperator_Throws) {
 }
 
 TEST(SqrtTest, ZeroMatrix_SpecialCase) {
-    QTensorCpp zero = QTensorCpp::zero(2, "operator");
+    QTensorCpp zero = QTensorCpp(SparseMatrix(2, 2));
     ASSERT_NO_THROW(zero.sqrt());
 }
 
@@ -1762,6 +1846,199 @@ TEST(ResetQubitsTest, ResetToZeroState) {
     QTensorCpp r = q.reset_qubits({0, 1});
     EXPECT_TRUE(r.is_density_matrix());
     EXPECT_NEAR(r.get_data().coeff(0, 0).real(), 1.0, 1e-10);
+}
+
+// --- MatrixFree expectation_value overload ---
+
+static MatrixFreeHamiltonian make_mf_z() {
+    MatrixFreeHamiltonian h(1);
+    h.add({1.0, 0.0}, MatrixFreeOperator("Z", 0));
+    return h;
+}
+
+static MatrixFreeHamiltonian make_mf_x() {
+    MatrixFreeHamiltonian h(1);
+    h.add({1.0, 0.0}, MatrixFreeOperator("X", 0));
+    return h;
+}
+
+TEST(ExpectationValueMatrixFree, KetZeroWithZ_GivesOne) {
+    // <0|Z|0> = 1
+    QTensorCpp ket(make_ket0());
+    auto ev = ket.expectation_value(make_mf_z());
+    EXPECT_NEAR(ev.real(), 1.0, 1e-10);
+    EXPECT_NEAR(ev.imag(), 0.0, 1e-10);
+}
+
+TEST(ExpectationValueMatrixFree, KetOneWithZ_GivesMinusOne) {
+    // <1|Z|1> = -1
+    QTensorCpp ket(make_ket1());
+    auto ev = ket.expectation_value(make_mf_z());
+    EXPECT_NEAR(ev.real(), -1.0, 1e-10);
+}
+
+TEST(ExpectationValueMatrixFree, BraZeroWithZ_GivesOne) {
+    // <0|Z|0> = 1 (bra form)
+    SparseMatrix bra_m(1, 2);
+    bra_m.insert(0, 0) = 1.0;
+    bra_m.makeCompressed();
+    QTensorCpp bra(bra_m);
+    auto ev = bra.expectation_value(make_mf_z());
+    EXPECT_NEAR(ev.real(), 1.0, 1e-10);
+}
+
+TEST(ExpectationValueMatrixFree, DensityMatrixZeroWithZ_GivesOne) {
+    // tr(Z * |0><0|) = 1
+    QTensorCpp dm(make_dm_pure0());
+    auto ev = dm.expectation_value(make_mf_z());
+    EXPECT_NEAR(ev.real(), 1.0, 1e-10);
+}
+
+TEST(ExpectationValueMatrixFree, KetZeroWithX_GivesZero) {
+    // <0|X|0> = 0
+    QTensorCpp ket(make_ket0());
+    auto ev = ket.expectation_value(make_mf_x());
+    EXPECT_NEAR(ev.real(), 0.0, 1e-10);
+}
+
+TEST(ExpectationValueMatrixFree, BraOneWithZ_GivesMinusOne) {
+    // <1|Z|1> = -1 (bra form), a bra is measured on its own amplitudes and not on the first one only
+    SparseMatrix bra_m(1, 2);
+    bra_m.insert(0, 1) = 1.0;
+    bra_m.makeCompressed();
+    QTensorCpp bra(bra_m);
+    auto ev = bra.expectation_value(make_mf_z());
+    EXPECT_NEAR(ev.real(), -1.0, 1e-10);
+}
+
+TEST(ExpectationValueMatrixFree, SampledDeterministicTerm_GivesExactValue) {
+    // Z has no variance on |0>, so sampling it returns the exact value for any number of shots
+    QTensorCpp ket(make_ket0());
+    auto ev = ket.expectation_value(make_mf_z(), 10);
+    EXPECT_NEAR(ev.real(), 1.0, 1e-10);
+}
+
+TEST(ExpectationValueMatrixFree, SampledIdentityTerm_HasNoShotNoise) {
+    // The identity term is not measured, so its coefficient is always recovered exactly
+    MatrixFreeHamiltonian h(1, 2.0);
+    QTensorCpp ket(make_ket0());
+    auto ev = ket.expectation_value(h, 10);
+    EXPECT_NEAR(ev.real(), 2.0, 1e-10);
+}
+
+TEST(ExpectationValueMatrixFree, SampledNonNormalizedState_KeepsNormalization) {
+    // A state which is not normalized scales the expectation value, exactly as in the exact case
+    SparseMatrix m(2, 1);
+    m.insert(0, 0) = 2.0;
+    m.makeCompressed();
+    QTensorCpp ket(m);
+    auto ev = ket.expectation_value(make_mf_z(), 10);
+    EXPECT_NEAR(ev.real(), 4.0, 1e-10);
+}
+
+TEST(ExpectationValueMatrixFree, SampledZeroState_Throws) {
+    QTensorCpp ket(SparseMatrix(2, 1));
+    EXPECT_THROW(ket.expectation_value(make_mf_z(), 10), py::value_error);
+}
+
+TEST(ExpectationValueMatrixFree, SampledUncertainTerm_ConvergesToExactValue) {
+    // X is maximally uncertain on |0>, so single shots give +-1 and many shots converge to 0
+    QTensorCpp ket(make_ket0());
+    auto single_shot = ket.expectation_value(make_mf_x(), 1);
+    EXPECT_NEAR(std::abs(single_shot.real()), 1.0, 1e-10);
+    auto many_shots = ket.expectation_value(make_mf_x(), 100000);
+    EXPECT_NEAR(many_shots.real(), 0.0, 0.05);
+}
+
+// ---------------------------------------------------------------------------
+// Storage backend selection (row-sparse / column-sparse / dense).
+// ---------------------------------------------------------------------------
+
+TEST(StorageFormatTest, KetIsColumnSparse) {
+    SparseMatrix m(8, 1);
+    m.insert(0, 0) = 1.0;
+    m.makeCompressed();
+    QTensorCpp ket(m);
+    EXPECT_EQ(ket.get_format(), StorageFormat::ColSparse);
+    EXPECT_EQ(ket.get_format_string(), "col_sparse");
+    EXPECT_TRUE(ket.is_ket());
+}
+
+TEST(StorageFormatTest, BraIsRowSparse) {
+    SparseMatrix m(1, 8);
+    m.insert(0, 0) = 1.0;
+    m.makeCompressed();
+    QTensorCpp bra(m);
+    EXPECT_EQ(bra.get_format(), StorageFormat::RowSparse);
+    EXPECT_EQ(bra.get_format_string(), "row_sparse");
+    EXPECT_TRUE(bra.is_bra());
+}
+
+TEST(StorageFormatTest, SparseOperatorIsRowSparse) {
+    SparseMatrix m(4, 4);
+    for (int i = 0; i < 4; ++i) {
+        m.insert(i, i) = 1.0;
+    }
+    m.makeCompressed();
+    QTensorCpp op(m);
+    EXPECT_EQ(op.get_format(), StorageFormat::RowSparse);
+}
+
+TEST(StorageFormatTest, DenseOperatorIsDense) {
+    SparseMatrix m(2, 2);
+    m.insert(0, 0) = 1.0;
+    m.insert(0, 1) = 2.0;
+    m.insert(1, 0) = 3.0;
+    m.insert(1, 1) = 4.0;
+    m.makeCompressed();
+    QTensorCpp op(m);
+    EXPECT_EQ(op.get_format(), StorageFormat::Dense);
+    EXPECT_EQ(op.get_format_string(), "dense");
+}
+
+TEST(StorageFormatTest, ForcedFormatOverridesDefault) {
+    QTensorCpp forced_dense(make_identity2(), StorageFormat::Dense);
+    EXPECT_EQ(forced_dense.get_format(), StorageFormat::Dense);
+    QTensorCpp forced_col(make_identity2(), StorageFormat::ColSparse);
+    EXPECT_EQ(forced_col.get_format(), StorageFormat::ColSparse);
+}
+
+TEST(StorageFormatTest, FactoriesPickExpectedFormat) {
+    EXPECT_EQ(QTensorCpp::zero(3).get_format(), StorageFormat::ColSparse);
+    EXPECT_EQ(QTensorCpp::one(3).get_format(), StorageFormat::ColSparse);
+    EXPECT_EQ(QTensorCpp::ghz(3).get_format(), StorageFormat::ColSparse);
+    EXPECT_EQ(QTensorCpp::ket({0, 1, 0}).get_format(), StorageFormat::ColSparse);
+    QTensorCpp u = QTensorCpp::uniform(3);
+    EXPECT_EQ(u.get_format(), StorageFormat::Dense);
+    EXPECT_TRUE(u.is_ket());
+}
+
+TEST(StorageFormatTest, FormatIsReselectedAfterOperations) {
+    QTensorCpp ket(make_ket0());
+    QTensorCpp bra = ket.adjoint();
+    EXPECT_TRUE(bra.is_bra());
+    EXPECT_NE(bra.get_format(), StorageFormat::ColSparse);
+}
+
+TEST(StorageFormatTest, ConversionsAgreeAcrossFormats) {
+    SparseMatrix m(2, 2);
+    m.insert(0, 0) = std::complex<double>(1.0, 0.0);
+    m.insert(1, 0) = std::complex<double>(0.0, 2.0);
+    m.insert(1, 1) = std::complex<double>(3.0, 0.0);
+    m.makeCompressed();
+    QTensorCpp row(m, StorageFormat::RowSparse);
+    QTensorCpp col(m, StorageFormat::ColSparse);
+    QTensorCpp dense(m, StorageFormat::Dense);
+    for (int r = 0; r < 2; ++r) {
+        for (int c = 0; c < 2; ++c) {
+            EXPECT_EQ(row.coeff(r, c), col.coeff(r, c));
+            EXPECT_EQ(row.coeff(r, c), dense.coeff(r, c));
+        }
+    }
+    EXPECT_TRUE(row.equals(col));
+    EXPECT_TRUE(row.equals(dense));
+    EXPECT_EQ(row.nnz(), col.nnz());
+    EXPECT_EQ(row.nnz(), dense.nnz());
 }
 
 // GCOV_EXCL_BR_STOP

@@ -47,7 +47,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_qaoa.rst:13
 msgid "The Problem"
-msgstr "El Problema"
+msgstr "El problema"
 
 #: ../../shared/team_building.rst:1
 msgid ""
@@ -210,7 +210,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_qaoa.rst:18
 msgid "The Solution"
-msgstr "La Solució"
+msgstr "La solució"
 
 #: ../../tutorials/applications/application_qaoa.rst:20
 msgid ""
@@ -338,10 +338,9 @@ msgstr ""
 
 #: ../../tutorials/applications/application_qaoa.rst:79
 msgid "The Implementation"
-msgstr "La Implementació"
+msgstr "La implementació"
 
 #: ../../tutorials/applications/application_qaoa.rst:81
-#, fuzzy
 msgid ""
 "In QiliSDK, a variety of classes are available to help streamline the "
 "implementation. Starting with the problem Hamiltonian, we can use the "
@@ -351,9 +350,10 @@ msgid ""
 msgstr ""
 "A QiliSDK, hi ha disponible una varietat de classes per agilitzar la "
 "implementació. Començant amb el Hamiltonià del problema, podem usar la "
-"classe :class:`~qilisdk.core.QUBO` per representar el nostre problema "
-"QUBO, i després usar la classe :class:`~qilisdk.core.QAOA` per construir "
-"el circuit QAOA i realitzar l'optimització."
+"classe :class:`~qilisdk.core.model.QUBO` per representar el nostre "
+"problema QUBO, i després usar la classe "
+":class:`~qilisdk.digital.ansatz.QAOA` per construir el circuit QAOA i "
+"realitzar l'optimització."
 
 #: ../../tutorials/applications/application_qaoa.rst:85
 msgid "To create our model:"
@@ -391,7 +391,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_qaoa.rst:147
 msgid "Further Reading"
-msgstr "Lectura Addicional"
+msgstr "Lectura addicional"
 
 #: ../../tutorials/applications/application_qaoa.rst:149
 msgid "`QUBO`_"

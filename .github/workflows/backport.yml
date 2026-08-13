@@ -1,0 +1,70 @@
+name: Backport
+
+# Label a merged PR `backport <branch>` (e.g. `backport qilisdk-0.2.1`) and this
+# workflow cherry-picks it onto <branch> and opens a backport PR.
+#
+# This used to be a thin caller for the shared reusable workflow in
+# qilimanjaro-tech/devops. GitHub only lets *private* repositories consume a
+# private repository's reusable workflows, and this repository is public, so the
+# call could never resolve ("workflow was not found") and the logic is inlined
+# here instead. If these steps ever need to be shared with another public repo,
+# move them to a reusable workflow in a *public* repository rather than devops.
+
+# pull_request_target is required so the backport has a writable token for PRs
+# from forks. This workflow runs no PR-head code: it checks out the base branch
+# and only runs the backport action.
+on:
+  # zizmor: ignore[dangerous-triggers]
+  pull_request_target:
+    types: [closed, labeled]
+
+# Every git and API operation uses the App token generated below, so the
+# built-in GITHUB_TOKEN needs no permissions of its own.
+permissions: {}
+
+concurrency:
+  group: backport-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  backport:
+    name: Backport merged PR
+    if: >-
+      github.event.pull_request.merged == true &&
+      contains(toJSON(github.event.pull_request.labels.*.name), '"backport ') &&
+      (github.event.action == 'closed' || startsWith(github.event.label.name, 'backport '))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1  # v3.2.0
+        with:
+          client-id: ${{ vars.BACKPORT_CLIENT_ID }}
+          private-key: ${{ secrets.BACKPORT_APP_PRIVATE_KEY }}
+          # Scope the token to just what the backport needs, instead of the
+          # App's full installation permissions.
+          permission-contents: write
+          permission-pull-requests: write
+          permission-workflows: write
+
+      # backport-action pushes the backport branch using the credentials that
+      # actions/checkout persists, so persist-credentials cannot be false here.
+      # Handing checkout the App token keeps the persisted credential short-lived
+      # and scoped (not the blanket GITHUB_TOKEN), and makes the backport branch
+      # and PR come from the App so CI runs on the backport PR. Pinned to v7.0.1.
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # zizmor: ignore[artipacked]
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+
+      # The patterns below were the reusable workflow's input defaults. The
+      # ${target_branch} and ${pull_title} placeholders are expanded by
+      # backport-action itself, not by GitHub expression syntax.
+      - name: Create backport PRs
+        uses: korthout/backport-action@2e830a1d0b8269505846ddd407a70876913ad1f8  # v4.6.0
+        with:
+          github_token: ${{ steps.app-token.outputs.token }}
+          label_pattern: '^backport ([^ ]+)$'
+          pull_title: '[Backport ${target_branch}] ${pull_title}'
+          copy_labels_pattern: '^(?!backport ).+'
+          merge_commits: fail

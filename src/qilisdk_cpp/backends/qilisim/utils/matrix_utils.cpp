@@ -17,13 +17,13 @@
 
 // GCOV_EXCL_BR_START
 
-SparseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, const SparseMatrix& e1) {
+SparseMatrix exp_mat_action(const SparseMatrix& H, Complex dt, const SparseMatrix& e1) {
     /*
     Compute the action of the matrix exponential exp(H*dt) acting on a vector e1.
 
     Args:
         H (SparseMatrix): The upper Hessenberg matrix.
-        dt (std::complex<double>): The time step. Can be complex if needed.
+        dt (Complex): The time step. Can be complex if needed.
         e1 (SparseMatrix): The vector to apply the exponential to.
 
     Returns:
@@ -35,13 +35,13 @@ SparseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, cons
     return exp_H_sparse;
 }
 
-DenseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, const DenseMatrix& e1) {
+DenseMatrix exp_mat_action(const SparseMatrix& H, Complex dt, const DenseMatrix& e1) {
     /*
     Compute the action of the matrix exponential exp(H*dt) acting on a vector e1.
 
     Args:
         H (SparseMatrix): The upper Hessenberg matrix.
-        dt (std::complex<double>): The time step. Can be complex if needed.
+        dt (Complex): The time step. Can be complex if needed.
         e1 (SparseMatrix): The vector to apply the exponential to.
 
     Returns:
@@ -50,13 +50,13 @@ DenseMatrix exp_mat_action(const SparseMatrix& H, std::complex<double> dt, const
     return (dt * DenseMatrix(H)).exp() * e1;
 }
 
-SparseMatrix exp_mat(const SparseMatrix& H, std::complex<double> dt) {
+SparseMatrix exp_mat(const SparseMatrix& H, Complex dt) {
     /*
     Compute the matrix exponential exp(H*dt).
 
     Args:
         H (SparseMatrix): The matrix to exponentiate.
-        dt (std::complex<double>): The time step. Can be complex if needed.
+        dt (Complex): The time step. Can be complex if needed.
 
     Returns:
         SparseMatrix: The matrix exponential exp(H*dt).
@@ -67,7 +67,7 @@ SparseMatrix exp_mat(const SparseMatrix& H, std::complex<double> dt) {
     return exp_H_sparse;
 }
 
-std::complex<double> dot(const SparseMatrix& v1, const SparseMatrix& v2) {
+Complex dot(const SparseMatrix& v1, const SparseMatrix& v2) {
     /*
     Compute the inner product between two sparse matrices.
     Note that the first matrix is conjugated.
@@ -77,12 +77,12 @@ std::complex<double> dot(const SparseMatrix& v1, const SparseMatrix& v2) {
         v2 (SparseMatrix): The second matrix.
 
     Returns:
-        std::complex<double>: The inner product result.
+        Complex: The inner product result.
     */
     return v1.conjugate().cwiseProduct(v2).sum();
 }
 
-std::complex<double> dot(const DenseMatrix& v1, const DenseMatrix& v2) {
+Complex dot(const DenseMatrix& v1, const DenseMatrix& v2) {
     /*
     Compute the inner product between two dense matrices.
     Note that the first matrix is conjugated.
@@ -92,12 +92,12 @@ std::complex<double> dot(const DenseMatrix& v1, const DenseMatrix& v2) {
         v2 (DenseMatrix): The second matrix.
 
     Returns:
-        std::complex<double>: The inner product result.
+        Complex: The inner product result.
     */
     return v1.conjugate().cwiseProduct(v2).sum();
 }
 
-std::complex<double> trace(const DenseMatrix& matrix) {
+Complex trace(const DenseMatrix& matrix) {
     /*
     Compute the trace of a square matrix.
 
@@ -105,7 +105,7 @@ std::complex<double> trace(const DenseMatrix& matrix) {
         matrix (DenseMatrix): The input square matrix.
 
     Returns:
-        std::complex<double>: The trace of the matrix.
+        Complex: The trace of the matrix.
     */
     if (matrix.rows() != matrix.cols()) {
         throw py::value_error("Matrix must be square to compute trace.");
@@ -113,7 +113,7 @@ std::complex<double> trace(const DenseMatrix& matrix) {
     return matrix.trace();
 }
 
-std::complex<double> trace(const SparseMatrix& matrix) {
+Complex trace(const SparseMatrix& matrix) {
     /*
     Compute the trace of a square matrix.
 
@@ -121,12 +121,12 @@ std::complex<double> trace(const SparseMatrix& matrix) {
         matrix (SparseMatrix): The input square matrix.
 
     Returns:
-        std::complex<double>: The trace of the matrix.
+        Complex: The trace of the matrix.
     */
     if (matrix.rows() != matrix.cols()) {
         throw py::value_error("Matrix must be square to compute trace.");
     }
-    std::complex<double> tr = 0.0;
+    Complex tr = 0.0;
     for (int i = 0; i < matrix.rows(); ++i) {
         tr += matrix.coeff(i, i);
     }
@@ -237,7 +237,7 @@ SparseMatrix vectorize(const SparseMatrix& matrix, double atol) {
     Triplets vec_entries;
     for (int c = 0; c < cols; ++c) {
         for (int r = 0; r < rows; ++r) {
-            std::complex<double> val = matrix.coeff(r, c);
+            Complex val = matrix.coeff(r, c);
             if (std::abs(val) > atol) {
                 vec_entries.emplace_back(Triplet(r + c * rows, 0, val));
             }
@@ -284,7 +284,7 @@ SparseMatrix devectorize(const SparseMatrix& vec_matrix, double atol) {
     Triplets mat_entries;
     for (int c = 0; c < dim; ++c) {
         for (int r = 0; r < dim; ++r) {
-            std::complex<double> val = vec_matrix.coeff(r + c * dim, 0);
+            Complex val = vec_matrix.coeff(r + c * dim, 0);
             if (std::abs(val) > atol) {
                 mat_entries.emplace_back(Triplet(r, c, val));
             }
@@ -325,52 +325,109 @@ void normalize_state(DenseMatrix& state, bool is_statevector, bool monte_carlo) 
         monte_carlo (bool): Whether we are doing monte-carlo sampling.
     */
     if (monte_carlo) {
+        bool diverged = false;
 #if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static) reduction(|| : diverged)
 #endif
         for (int col = 0; col < state.cols(); ++col) {
-            state.col(col) /= state.col(col).norm();
+            const double norm = state.col(col).norm();
+            if (!std::isfinite(norm) || norm == 0.0) {
+                diverged = true;
+                continue;
+            }
+            state.col(col) /= norm;
+        }
+        if (diverged) {
+            nan_error();
         }
     } else if (is_statevector) {
         double sum = 0.0;
 #if defined(_OPENMP)
-#pragma omp parallel
+#pragma omp parallel for reduction(+ : sum) schedule(static)
 #endif
-        {
+        for (int i = 0; i < state.rows(); ++i) {
+            sum += std::norm(state(i, 0));
+        }
+        const double norm = std::sqrt(sum);
+        check_valid_divisor(norm);
 #if defined(_OPENMP)
-#pragma omp for reduction(+ : sum) schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
-            for (int i = 0; i < state.rows(); ++i) {
-                sum += std::norm(state(i, 0));
-            }
-            double norm = std::sqrt(sum);
-#if defined(_OPENMP)
-#pragma omp for schedule(static)
-#endif
-            for (int i = 0; i < state.rows(); ++i) {
-                state(i, 0) /= norm;
-            }
+        for (int i = 0; i < state.rows(); ++i) {
+            state(i, 0) /= norm;
         }
     } else {
         double sum = 0.0;
 #if defined(_OPENMP)
-#pragma omp parallel
+#pragma omp parallel for reduction(+ : sum) schedule(static)
 #endif
-        {
+        for (int i = 0; i < state.rows(); ++i) {
+            sum += state.coeff(i, i).real();
+        }
+        check_valid_divisor(sum);
 #if defined(_OPENMP)
-#pragma omp for reduction(+ : sum) schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
-            for (int i = 0; i < state.rows(); ++i) {
-                sum += state.coeff(i, i).real();
-            }
-#if defined(_OPENMP)
-#pragma omp for schedule(static)
-#endif
-            for (int i = 0; i < state.rows(); ++i) {
-                state.coeffRef(i, i) /= sum;
-            }
+        for (int i = 0; i < state.rows(); ++i) {
+            state.coeffRef(i, i) /= sum;
         }
     }
+}
+
+template <typename SparseType>
+static void normalize_state_sparse(SparseType& state) {
+    /*
+    Normalize a sparse state in place.
+
+    A column vector is treated as a statevector and divided by its L2 norm, anything
+    else is treated as a density matrix and divided by its trace.
+
+    Args:
+        state (SparseType&): The state to normalize (statevector or density matrix).
+    */
+    state.makeCompressed();
+    long nnz = static_cast<long>(state.nonZeros());
+    double divisor;
+    if (state.cols() == 1) {
+        const Complex* values = state.valuePtr();
+        double sum = 0.0;
+#if defined(_OPENMP)
+#pragma omp parallel for reduction(+ : sum) schedule(static)
+#endif
+        for (long i = 0; i < nnz; ++i) {
+            sum += std::norm(values[i]);
+        }
+        divisor = std::sqrt(sum);
+    } else {
+        double sum = 0.0;
+#if defined(_OPENMP)
+#pragma omp parallel for reduction(+ : sum) schedule(static)
+#endif
+        for (long i = 0; i < state.rows(); ++i) {
+            sum += state.coeff(i, i).real();
+        }
+        divisor = sum;
+    }
+    if (!std::isfinite(divisor) || std::abs(divisor) < 1e-15) {
+        return;
+    }
+
+    // Scaling by a real divisor keeps this off the slow complex-division path
+    Complex* values = state.valuePtr();
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (long i = 0; i < nnz; ++i) {
+        values[i] /= divisor;
+    }
+}
+
+void normalize_state(SparseMatrix& state) {
+    normalize_state_sparse(state);
+}
+
+void normalize_state(SparseMatrixCol& state) {
+    normalize_state_sparse(state);
 }
 
 // GCOV_EXCL_BR_STOP

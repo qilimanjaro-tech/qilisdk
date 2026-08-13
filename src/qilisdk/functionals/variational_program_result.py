@@ -12,26 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pprint import pformat
+from typing import Any, Generic, TypeVar
+
+from loguru import logger
 
 from qilisdk.core.result import Result
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.optimizers.optimizer_result import OptimizerIntermediateResult, OptimizerResult
 from qilisdk.yaml import yaml
 
+TFunctionalResult_co = TypeVar("TFunctionalResult_co", bound=FunctionalResult[Any, Any, Any], covariant=True)
+
 
 @yaml.register_class
-class VariationalProgramResult(Result):
-    """Aggregate the optimizer summary and best functional result from a variational run."""
+class VariationalProgramResult(Result, Generic[TFunctionalResult_co]):
+    """Aggregate the optimizer summary and best functional result from a variational run.
 
-    def __init__(self, optimizer_result: OptimizerResult, result: FunctionalResult) -> None:
+    The type parameter is the concrete :class:`~qilisdk.functionals.FunctionalResult` produced by evaluating the inner
+    functional at the optimal parameters, so ``result.optimal_execution_results`` keeps the readout typing of the
+    :class:`~qilisdk.readout.Readout` used at execution time.
+    """
+
+    def __init__(self, optimizer_result: OptimizerResult, result: TFunctionalResult_co) -> None:
         """
         Args:
             optimizer_result (OptimizerResult): Summary produced by the optimiser.
-            result (FunctionalResult): Functional result evaluated at the final parameters.
+            result (TFunctionalResult_co): Functional result evaluated at the final parameters.
         """
         super().__init__()
         self._optimizer_result = optimizer_result
         self._result = result
+        logger.debug("[VariationalProgramResult] Created VariationalProgramResult")
 
     @property
     def optimal_cost(self) -> float:
@@ -39,7 +50,7 @@ class VariationalProgramResult(Result):
         return self._optimizer_result.optimal_cost
 
     @property
-    def optimal_execution_results(self) -> FunctionalResult:
+    def optimal_execution_results(self) -> TFunctionalResult_co:
         """Functional result evaluated at the optimal parameters."""
         return self._result
 
@@ -55,8 +66,10 @@ class VariationalProgramResult(Result):
 
     def __repr__(self) -> str:
         class_name = self.__class__.__name__
+        execution_time = f"  Execution Time={self.execution_time:.6g} s,\n" if self.execution_time is not None else ""
         return (
             f"{class_name}(\n"
+            f"{execution_time}"
             f"  Optimal Cost={self.optimal_cost},\n"
             f"  Optimal Parameters={pformat(self.optimal_parameters)},\n"
             f"  Intermediate Results={pformat(self.intermediate_results)},\n"

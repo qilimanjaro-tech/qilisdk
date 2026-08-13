@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/core/core_variables_parameters.rst:2
 msgid "Variables and Parameters"
-msgstr "Variables y Parámetros"
+msgstr "Variables y parámetros"
 
 #: ../../modules/core/core_variables_parameters.rst:5
 msgid "Variables"

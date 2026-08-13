@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:45+0200\n"
+"POT-Creation-Date: 2026-06-16 12:04+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/noise/noise_overview.rst:2
 msgid "Overview"
-msgstr "Visió General"
+msgstr "Visió general"
 
 #: ../../modules/noise/noise_overview.rst:4
 msgid ""
@@ -29,7 +29,7 @@ msgid ""
 " types of noise in quantum systems. These noise models can be integrated "
 "into quantum simulations to account for real-world imperfections and "
 "decoherence effects. A :class:`~qilisdk.noise.noise_model.NoiseModel` can"
-" contains various types of noise, each of which is then applied during "
+" contain various types of noise, each of which is then applied during "
 "simulation."
 msgstr ""
 "El mòdul :mod:`qilisdk.noise` conté classes que representen diferents "
@@ -45,7 +45,7 @@ msgstr "Backend"
 
 #: ../../modules/noise/noise_overview.rst:14
 msgid "Noise Models Supported"
-msgstr "Models de Soroll Compatibles"
+msgstr "Models de soroll compatibles"
 
 #: ../../modules/noise/noise_overview.rst:16
 msgid ":class:`~qilisdk.backends.qilisim.QiliSim`"
@@ -98,7 +98,7 @@ msgstr ""
 
 #: ../../modules/noise/noise_overview.rst:54
 msgid "Summary of Noise Types"
-msgstr "Resum dels Tipus de Soroll"
+msgstr "Resum dels tipus de soroll"
 
 #: ../../modules/noise/noise_overview.rst:56
 msgid ""
@@ -112,15 +112,15 @@ msgstr ""
 
 #: ../../modules/noise/noise_overview.rst:64
 msgid "Noise Type"
-msgstr "Tipus de Soroll"
+msgstr "Tipus de soroll"
 
 #: ../../modules/noise/noise_overview.rst:64
-msgid "Digital Propogation"
-msgstr "Propagació Digital"
+msgid "Digital Propagation"
+msgstr "Propagació digital"
 
 #: ../../modules/noise/noise_overview.rst:64
 msgid "Analog Evolution"
-msgstr "Evolució Analògica"
+msgstr "Evolució analògica"
 
 #: ../../modules/noise/noise_overview.rst:66
 msgid ":class:`~qilisdk.noise.representations.KrausChannel`"
@@ -165,3 +165,4 @@ msgstr ":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation`"
 #: ../../modules/noise/noise_overview.rst:86
 msgid ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`"
 msgstr ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`"
+

@@ -12,10 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .expression import Add, Constant, Cos, Exp, Expression, Function, Log, Mul, Pow, Sin, Sqrt, Tan
+from .expression import Abs, Add, Constant, Cos, Exp, Expression, Function, Inv, Log, Mul, Pow, Sin, Sqrt, Tan
 from .interpolator import Interpolation, Interpolator, ParameterizedNumber
-from .model import Constraint, Model, Objective, ObjectiveSense
-from .qtensor import QTensor, basis_state, bra, expect_val, ghz, identity, ket, reset_qubits, tensor_prod, zero
+from .model import QUBO, Constraint, Model, Objective, ObjectiveSense
+from .qtensor import (
+    InitialState,
+    QTensor,
+    basis_state,
+    bra,
+    expect_val,
+    ghz,
+    identity,
+    ket,
+    reset_qubits,
+    tensor_prod,
+    zero,
+)
 from .variables import (
     EQ,
     GEQ,
@@ -45,6 +57,8 @@ __all__ = [
     "LEQ",
     "LT",
     "NEQ",
+    "QUBO",
+    "Abs",
     "Add",
     "BaseVariable",
     "BinaryVariable",
@@ -59,8 +73,10 @@ __all__ = [
     "Function",
     "GreaterThan",
     "GreaterThanOrEqual",
+    "InitialState",
     "Interpolation",
     "Interpolator",
+    "Inv",
     "LessThan",
     "LessThanOrEqual",
     "Log",

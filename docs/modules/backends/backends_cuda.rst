@@ -9,9 +9,25 @@ also run on an accelerated machine.
 Installation
 ============
 
-.. code-block:: console
+.. tabs::
 
-    pip install qilisdk[cuda12]   # or [cuda13]
+    .. group-tab:: Linux
+
+        .. code-block:: console
+
+            pip install qilisdk[cuda12]   # or [cuda13]
+
+    .. group-tab:: Mac OSX
+
+        .. code-block:: console
+
+            pip install "qilisdk[cuda12]"   # or "qilisdk[cuda13]"
+
+    .. group-tab:: Windows
+
+        .. code-block:: console
+
+            pip install qilisdk[cuda12]   # or [cuda13]
 
 Quick start
 ===========
@@ -65,31 +81,43 @@ Configuration
 
 The CUDA backend exposes a single configuration parameter —
 :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod` — that selects the underlying CUDA-Q
-target used for **digital** circuits. Analog evolution always runs on the ``dynamics`` target and
-ignores this setting.
+target used for **digital** circuits. If no method is specified, ``STATE_VECTOR`` is used.
+Analog evolution always runs on the ``dynamics`` target and ignores this setting. 
 
 .. list-table::
    :header-rows: 1
-   :widths: 25 60 15
+   :widths: 25 60 15 15 15
 
    * - Method
-     - CUDA-Q target (and fallback)
-     - Default
+     - CUDA-Q target
+     - Supports Sampling
+     - Supports Expectation Values
+     - Supports State Tomography
    * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR`
-     - ``nvidia`` (GPU) when a GPU is available, otherwise ``qpp-cpu``. Precision matches :class:`~qilisdk.settings.Precision`.
+     - ``nvidia`` when a GPU is available, otherwise ``qpp-cpu``. Precision matches :class:`~qilisdk.settings.Precision`.
+     - |y|
+     - |y|
      - |y|
    * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR_MGPU`
-     - ``nvidia-mgpu`` (multiple GPUs) when multiple GPUs are available, otherwise falls back to ``nvidia``.
-     - 
+     - ``nvidia-mgpu`` when multiple GPUs are available, otherwise falls back to ``nvidia``.
+     - |y|
+     - |y|
+     - |y|
    * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK`
      - ``tensornet``. Good for shallow, wide circuits.
-     -
+     - |y|
+     - |n|
+     - |n|
    * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE`
      - ``tensornet-mps``. Good for low-entanglement, long circuits.
-     -
+     - |y|
+     - |n|
+     - |n|
    * - :class:`~qilisdk.backends.cuda_backend.CudaSamplingMethod.CPU`
      - ``cpu``. Force running on CPU. Mostly useful for benchmarking.
-     -
+     - |y|
+     - |y|
+     - |y|
 
 Set the method at construction time:
 
@@ -98,6 +126,18 @@ Set the method at construction time:
     from qilisdk.backends import CudaBackend, CudaSamplingMethod
 
     backend = CudaBackend(sampling_method=CudaSamplingMethod.MATRIX_PRODUCT_STATE)
+
+Some CUDA simulation methods support parameters being set via environment variables, notably the `MATRIX_PRODUCT_STATE` and `TENSOR_NETWORK` methods. 
+See the `CUDA-Q documentation <https://nvidia.github.io/cuda-quantum/latest/using/backends/sims/tnsims.html>`_ for details.
+
+To set the precision of the simulation, use the :class:`~qilisdk.settings.Settings` object:
+
+.. code-block:: python
+
+    from qilisdk.settings import get_settings, Precision
+
+    settings = get_settings()
+    settings.complex_precision = Precision.COMPLEX_64  # or COMPLEX_32
 
 Noise model support
 ===================

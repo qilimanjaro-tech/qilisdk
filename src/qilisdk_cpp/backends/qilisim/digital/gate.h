@@ -46,6 +46,7 @@ class Gate {
     SparseMatrix get_full_matrix(int num_qubits) const;
 };
 
+std::ostream& operator<<(std::ostream& os, const Gate& gate);
 std::ostream& operator<<(std::ostream& os, const std::vector<Gate>& gates);
 
 // GCOV_EXCL_BR_STOP

@@ -16,7 +16,7 @@ Configuration options:
 - **problem_hamiltonian**: The problem Hamiltonian encoding the cost function.
 - **layers**: Number of repeating layers of gates. Each layer applies two evolutions: one for the problem Hamiltonian and one for the mixer Hamiltonian.
 - **mixer_hamiltonian**: The mixer Hamiltonian. Defaults to X mixer.
-- **trotter_steps**: Number of Trotter steps to use for Hamiltonian approximation. Only used if the Hamiltonians contains non-commuting terms.
+- **trotter_steps**: Number of Trotter steps to use for Hamiltonian approximation. Only used if the Hamiltonians contain non-commuting terms.
 - **problem_params**: Initial parameter values for the problem Hamiltonian evolution angles. Defaults to 0.0 for all layers.
 - **mixer_params**: Initial parameter values for the mixer Hamiltonian evolution angles. Defaults to 0.0 for all layers.
 

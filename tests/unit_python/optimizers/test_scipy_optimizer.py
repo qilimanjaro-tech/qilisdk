@@ -14,6 +14,7 @@
 from unittest.mock import MagicMock, patch
 
 import numpy as np
+import pytest
 
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 
@@ -111,3 +112,17 @@ def test_repr():
     assert "SciPyOptimizer" in repr_str
     assert "method='BFGS'" in repr_str
     assert "jac='dummy_jac'" in repr_str
+
+
+@pytest.mark.parametrize("method", ["basinhopping", "direct", "dual_annealing", "differential_evolution", "shgo"])
+def test_global_optimizers_run(method):
+    dummy_cost = MagicMock(side_effect=lambda x: x[0] ** 2 + x[1] ** 2)
+    optimizer = SciPyOptimizer(method=method)
+    initial_parameters = [0.0, 0.0]
+    bounds = [(0, 5), (0, 5)]
+    optimizer_result = optimizer.optimize(dummy_cost, initial_parameters, bounds)
+
+    assert np.isclose(optimizer_result.optimal_cost, 0.0, atol=1e-2)
+    assert np.isclose(optimizer_result.optimal_parameters[0], 0.0, atol=1e-2)
+    assert np.isclose(optimizer_result.optimal_parameters[1], 0.0, atol=1e-2)
+    assert dummy_cost.call_count > 0

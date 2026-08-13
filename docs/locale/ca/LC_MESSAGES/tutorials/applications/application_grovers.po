@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_grovers.rst:2
 msgid "Quantum Search with Grover's Algorithm"
-msgstr "Cerca Quàntica amb l'Algorisme de Grover"
+msgstr "Cerca quàntica amb l'algorisme de Grover"
 
 #: ../../tutorials/applications/application_grovers.rst:4
 msgid ""
@@ -45,7 +45,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_grovers.rst:12
 msgid "The Problem"
-msgstr "El Problema"
+msgstr "El problema"
 
 #: ../../tutorials/applications/application_grovers.rst:14
 msgid ""
@@ -92,7 +92,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_grovers.rst:30
 msgid "The Solution"
-msgstr "La Solució"
+msgstr "La solució"
 
 #: ../../tutorials/applications/application_grovers.rst:32
 #, python-brace-format
@@ -171,7 +171,7 @@ msgstr ""
 
 #: ../../tutorials/applications/application_grovers.rst:55
 msgid "The Implementation"
-msgstr "La Implementació"
+msgstr "La implementació"
 
 #: ../../tutorials/applications/application_grovers.rst:57
 msgid ""
@@ -243,7 +243,7 @@ msgstr "Aquest és el resultat esperat ja que cercàvem l'estat \"01\"."
 
 #: ../../tutorials/applications/application_grovers.rst:132
 msgid "Further Reading"
-msgstr "Lectura Addicional"
+msgstr "Lectura addicional"
 
 #: ../../tutorials/applications/application_grovers.rst:134
 msgid "`Grover's Algorithm`_"

@@ -11,26 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from .experiment_functional import ExperimentFunctional, RabiExperiment, T1Experiment, T2Experiment, TwoTonesExperiment
-from .experiment_result import (
-    Dimension,
-    ExperimentResult,
-    RabiExperimentResult,
-    T1ExperimentResult,
-    T2ExperimentResult,
-    TwoTonesExperimentResult,
-)
+from .experiment_functional import ExperimentFunctional
+from .experiment_result import Dimension, ExperimentResult
 
 __all__ = [
     "Dimension",
     "ExperimentFunctional",
     "ExperimentResult",
-    "RabiExperiment",
-    "RabiExperimentResult",
-    "T1Experiment",
-    "T1ExperimentResult",
-    "T2Experiment",
-    "T2ExperimentResult",
-    "TwoTonesExperiment",
-    "TwoTonesExperimentResult",
 ]

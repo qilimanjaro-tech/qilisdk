@@ -49,6 +49,7 @@ if TYPE_CHECKING:
     from .variables import BaseVariable, Parameter
 
 _TOL = get_settings().atol
+_DIVISION_MESSAGE = "Division by zero is not allowed"
 
 
 def _float_if_real(value: Number) -> Number:
@@ -144,6 +145,20 @@ def _scale(base: Expression, coeff: Number) -> Expression:
         Expression: the product ``coeff * base``.
     """
     return Mul.build((Constant(coeff), base))
+
+
+def _safe_pow(base: Number, exponent: Number) -> Number:
+    """Raise ``base`` to ``exponent``, turning a zero base under a negative exponent into a clear error.
+
+    Returns:
+        Number: ``base ** exponent``.
+
+    Raises:
+        ValueError: if ``base`` is zero and ``exponent`` is negative.
+    """
+    if abs(base) < _TOL and isinstance(exponent, RealNumber) and exponent < 0:
+        raise ValueError(_DIVISION_MESSAGE)
+    return base**exponent
 
 
 def _mul_expand(left: Expression, right: Expression) -> Expression:
@@ -254,7 +269,7 @@ class Expression(ABC):
         """
         return all(symbol.is_parameter for symbol in self.free_symbols())
 
-    def get_constant(self) -> Number:  # noqa: PLR6301
+    def get_constant(self) -> Number:  # ruff: ignore[no-self-use]
         """Return the additive constant of the expression.
 
         Returns:
@@ -335,7 +350,7 @@ class Expression(ABC):
     def __truediv__(self, other: object) -> Expression:
         if isinstance(other, (int, float)):
             if abs(other) < self._TOL:
-                raise ValueError("Division by zero is not allowed")
+                raise ValueError(_DIVISION_MESSAGE)
             return Mul.build((Constant(1.0 / other), self))
         rhs = _coerce(other)
         return NotImplemented if rhs is None else Mul.build((self, Pow.build(rhs, Constant(-1))))
@@ -376,23 +391,23 @@ class Constant(Expression):
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
         return _finalize(self.value)
 
-    def free_symbols(self) -> set[BaseVariable]:  # noqa: PLR6301
+    def free_symbols(self) -> set[BaseVariable]:  # ruff: ignore[no-self-use]
         return set()
 
     @property
     def degree(self) -> int:
         return 0
 
-    def diff(self, symbol: BaseVariable) -> Expression:  # noqa: PLR6301
+    def diff(self, symbol: BaseVariable) -> Expression:  # ruff: ignore[no-self-use]
         return Constant(0)
 
     def get_constant(self) -> Number:
         return self.value
 
-    def as_coefficients_dict(self) -> dict[Expression, Number]:  # noqa: PLR6301
+    def as_coefficients_dict(self) -> dict[Expression, Number]:  # ruff: ignore[no-self-use]
         return {}
 
-    def monomial_factors(self) -> list[tuple[Expression, int]]:  # noqa: PLR6301
+    def monomial_factors(self) -> list[tuple[Expression, int]]:  # ruff: ignore[no-self-use]
         return []
 
     def _sort_key(self) -> tuple:
@@ -451,7 +466,7 @@ class Add(Expression):
             return Constant(0)
         if len(terms) == 1:
             return terms[0]
-        terms.sort(key=lambda term: term._sort_key())  # noqa: SLF001
+        terms.sort(key=lambda term: term._sort_key())  # ruff: ignore[private-member-access]
         return cls(tuple(terms))
 
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
@@ -504,7 +519,7 @@ class Add(Expression):
         return coefficients
 
     def _sort_key(self) -> tuple:
-        return (4, tuple(term._sort_key() for term in self.args))  # noqa: SLF001
+        return (4, tuple(term._sort_key() for term in self.args))  # ruff: ignore[private-member-access]
 
     def _compute_hash(self) -> int:
         return qili_hash("Add", self.args)
@@ -565,7 +580,7 @@ class Mul(Expression):
             return Constant(1)
         if len(out) == 1:
             return out[0]
-        out.sort(key=lambda factor: factor._sort_key())  # noqa: SLF001
+        out.sort(key=lambda factor: factor._sort_key())  # ruff: ignore[private-member-access]
         return cls(tuple(out))
 
     def coefficient(self) -> Number:
@@ -635,7 +650,7 @@ class Mul(Expression):
         return factors
 
     def _sort_key(self) -> tuple:
-        return (3, tuple(factor._sort_key() for factor in self.args))  # noqa: SLF001
+        return (3, tuple(factor._sort_key() for factor in self.args))  # ruff: ignore[private-member-access]
 
     def _compute_hash(self) -> int:
         return qili_hash("Mul", self.args)
@@ -665,7 +680,7 @@ class Pow(Expression):
             if exp.value == 0:
                 return Constant(1)
             if isinstance(base, Constant):
-                return Constant(base.value**exp.value)
+                return Constant(_safe_pow(base.value, exp.value))
             if isinstance(base, Pow):
                 inner = _int_exponent(base.exp)
                 outer = _int_exponent(exp)
@@ -679,7 +694,7 @@ class Pow(Expression):
 
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
         env = env if env is not None else {}
-        return _finalize(self.base.evaluate(env) ** self.exp.evaluate(env))
+        return _finalize(_safe_pow(self.base.evaluate(env), self.exp.evaluate(env)))
 
     def free_symbols(self) -> set[BaseVariable]:
         return self.base.free_symbols() | self.exp.free_symbols()
@@ -733,7 +748,7 @@ class Pow(Expression):
         raise NonPolynomialError(f"Expression {self!r} is not a monomial with an integer power.")
 
     def _sort_key(self) -> tuple:
-        return (2, self.base._sort_key(), self.exp._sort_key())  # noqa: SLF001
+        return (2, self.base._sort_key(), self.exp._sort_key())  # ruff: ignore[private-member-access]
 
     def _compute_hash(self) -> int:
         return qili_hash("Pow", self.base, self.exp)
@@ -813,7 +828,7 @@ class Function(Expression, ABC):
         return type(self)(self.arg.to_binary())
 
     def _sort_key(self) -> tuple:
-        return (5, self.NAME, self.arg._sort_key())  # noqa: SLF001
+        return (5, self.NAME, self.arg._sort_key())  # ruff: ignore[private-member-access]
 
     def _compute_hash(self) -> int:
         return qili_hash(self.NAME, self.arg)
@@ -825,11 +840,11 @@ class Function(Expression, ABC):
         return f"{self.NAME}({self.arg!r})"
 
     @classmethod
-    def to_yaml(cls, representer, node):  # noqa: ANN001, ANN206
+    def to_yaml(cls, representer, node):  # ruff: ignore[missing-type-function-argument, missing-return-type-class-method]
         return representer.represent_mapping(cls.yaml_tag, {"arg": node.arg})  # ty:ignore[unresolved-attribute]
 
     @classmethod
-    def from_yaml(cls, constructor, node):  # noqa: ANN001, ANN206
+    def from_yaml(cls, constructor, node):  # ruff: ignore[missing-type-function-argument, missing-return-type-class-method]
         mapping = constructor.construct_mapping(node, deep=True)
         return cls(mapping["arg"])
 
@@ -844,7 +859,7 @@ class Sin(Function):
     def _numeric(value: RealNumber) -> Number:
         return float(np.sin(value))
 
-    def _derivative(self, operand: Expression) -> Expression:  # noqa: PLR6301
+    def _derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
         return Cos(operand)
 
 
@@ -858,7 +873,7 @@ class Cos(Function):
     def _numeric(value: RealNumber) -> Number:
         return float(np.cos(value))
 
-    def _derivative(self, operand: Expression) -> Expression:  # noqa: PLR6301
+    def _derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
         return -Sin(operand)
 
 
@@ -872,7 +887,7 @@ class Exp(Function):
     def _numeric(value: RealNumber) -> Number:
         return float(np.exp(value))
 
-    def _derivative(self, operand: Expression) -> Expression:  # noqa: PLR6301
+    def _derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
         return Exp(operand)
 
 
@@ -886,7 +901,7 @@ class Log(Function):
     def _numeric(value: RealNumber) -> Number:
         return float(np.log(value))
 
-    def _derivative(self, operand: Expression) -> Expression:  # noqa: PLR6301
+    def _derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
         return Pow.build(operand, Constant(-1))
 
 
@@ -898,9 +913,11 @@ class Tan(Function):
 
     @staticmethod
     def _numeric(value: RealNumber) -> Number:
+        if abs(np.cos(value)) < _TOL:
+            raise ValueError("Tangent is not defined for values where cosine is zero.")
         return float(np.tan(value))
 
-    def _derivative(self, operand: Expression) -> Expression:  # noqa: PLR6301
+    def _derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
         return Pow.build(Cos(operand), Constant(-2))
 
 
@@ -914,5 +931,41 @@ class Sqrt(Function):
     def _numeric(value: RealNumber) -> Number:
         return float(np.sqrt(value))
 
-    def _derivative(self, operand: Expression) -> Expression:  # noqa: PLR6301
+    def _derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
         return Constant(0.5) * Pow.build(operand, Constant(-0.5))
+
+
+@yaml.register_class
+class Abs(Function):
+    """Absolute value of an expression.
+
+    ``Abs`` is not differentiable at zero and there is no ``sign`` node to express its derivative
+    away from zero, so :meth:`Expression.diff` raises on it.
+    """
+
+    NAME = "abs"
+
+    @staticmethod
+    def _numeric(value: RealNumber) -> Number:
+        return float(abs(value))
+
+    def _derivative(self, operand: Expression) -> Expression:
+        raise NotSupportedOperation(f"The derivative of {self.NAME} is not supported.")
+
+
+def Inv(arg: object) -> Expression:
+    """Build the reciprocal ``1 / arg``.
+
+    This is a thin wrapper over :class:`Pow` rather than a node of its own, so ``Inv(x)`` and
+    ``x ** -1`` are the same expression.
+
+    Returns:
+        Expression: the reciprocal of ``arg``.
+
+    Raises:
+        TypeError: if ``arg`` is neither an :class:`Expression` nor a number.
+    """
+    operand = _coerce(arg)
+    if operand is None:
+        raise TypeError(f"Inv expects an Expression or number, got {type(arg).__name__}")
+    return Pow.build(operand, Constant(-1))

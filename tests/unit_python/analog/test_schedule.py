@@ -68,7 +68,7 @@ def test_schedule_parameters():
     assert p[3] in list(schedule._filtered_parameter_map().values())
     assert schedule.nparameters == 4
 
-    schedule = Schedule(hamiltonians={"H0": H0, "H1": H1})
+    schedule = Schedule(hamiltonians={"H0": H0, "H1": H1}, total_time=10)
     schedule.update_hamiltonian("H0", new_coefficients={0: 1 + p[2]})
     schedule.update_hamiltonian("H1", new_coefficients={0: p[3]})
 
@@ -152,7 +152,7 @@ def test_schedule_constructor_with_hamiltonians_and_schedule():
     hams = {"H1": H1, "H2": H2}
     # Provide a schedule that sets only H1 at time step 0.
     sch = {"H1": {0: 0.5}}
-    sched = Schedule(dt=1, hamiltonians=hams, coefficients=sch)
+    sched = Schedule(dt=1, hamiltonians=hams, coefficients=sch, total_time=10)
     # At t=0, H1 coefficient is set; H2 should be filled in with 0.
     assert _isclose(sched.coefficients["H1"][0], 0.5)
     assert _isclose(sched.coefficients["H2"][0], 1.0)
@@ -204,7 +204,7 @@ def test_update_hamiltonian_coefficient_valid():
     """Updating the Hamiltonian coefficient at a valid time step works correctly."""
     H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
-    sched = Schedule(dt=1, hamiltonians=hams)
+    sched = Schedule(dt=1, hamiltonians=hams, total_time=10)
     sched.update_hamiltonian("H1", new_coefficients={5: 3.0})
     assert _isclose(sched.coefficients["H1"][5], 3.0)
 
@@ -260,7 +260,7 @@ def test_getitem_without_direct_time_step():
     H1 = PauliZ(0).to_hamiltonian()
     hams = {"H1": H1}
     sch = {"H1": {0: 0.5}}
-    sched = Schedule(dt=1, hamiltonians=hams, coefficients=sch)
+    sched = Schedule(dt=1, hamiltonians=hams, coefficients=sch, total_time=10)
     # Requesting time step 3 (undefined) should fall back to time step 0.
     result = sched[3]
     expected = H1 * 0.5
@@ -331,7 +331,7 @@ def test_add_schedule_step_term_basevariable_errors():
     dummy = BinaryVariable("dummy")
     term = dummy * 2
     H1 = PauliZ(0).to_hamiltonian()
-    sched = Schedule(dt=1, hamiltonians={"H1": H1})
+    sched = Schedule(dt=1, hamiltonians={"H1": H1}, total_time=10)
     with pytest.raises(
         ValueError,
         match=r"Tlist can only contain parameters and no variables, but the term 2 \* dummy contains objects other than parameters.",
@@ -354,7 +354,7 @@ def test_update_hamiltonian_coefficient_term_basevariable_errors():
         match=r"Tlist can only contain parameters and no variables, but the term 2 \* dummy contains objects other than parameters.",
     ):
         sched.update_hamiltonian("H1", new_coefficients={1: term})
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         sched.update_hamiltonian("H1", new_coefficients={2: dummy})
 
 
@@ -386,7 +386,7 @@ def test_add_hamiltonian_term_basevariable_errors():
         return dummy * 2
 
     H1 = PauliZ(0).to_hamiltonian()
-    sched = Schedule(hamiltonians={"H1": H1})
+    sched = Schedule(hamiltonians={"H1": H1}, total_time=10)
     with pytest.raises(
         ValueError,
         match=r"function contains variables that are not time. Only Parameters are allowed.",
@@ -457,7 +457,7 @@ def test_linear_schedule_edge_cases():
     H1 = PauliZ(0).to_hamiltonian()
     # Only one time step defined
     sch = {"H1": {0: 3.0}}
-    sched = Schedule(dt=dt, hamiltonians={"H1": H1}, coefficients=sch)
+    sched = Schedule(dt=dt, hamiltonians={"H1": H1}, coefficients=sch, total_time=T)
     # All times should return 3.0
     for t in range(0, T + 1, dt):
         assert _isclose(sched.coefficients["H1"][t], 3.0)
@@ -609,7 +609,7 @@ def test_update_hamiltonian_from_interpolator():
     dt = 1
     H1 = PauliZ(0).to_hamiltonian()
     param = Parameter("param", 1.0)
-    sched = Schedule(dt=dt, hamiltonians={"H1": H1})
+    sched = Schedule(dt=dt, hamiltonians={"H1": H1}, total_time=10)
     inter = Interpolator({0: 0, 5: param, 10: 2}, Interpolation.LINEAR)
     sched.update_hamiltonian("H1", new_coefficients=inter)
     assert _isclose(sched.coefficients["H1"][0], 0.0)
@@ -621,7 +621,7 @@ def test_bad_update_hamiltonian():
     dt = 1
     H1 = PauliZ(0).to_hamiltonian()
     H2 = PauliX(0).to_hamiltonian()
-    sched = Schedule(dt=dt, hamiltonians={"H1": H1})
+    sched = Schedule(dt=dt, hamiltonians={"H1": H1}, total_time=10)
     with pytest.raises(ValueError, match=r"Unsupported type of coefficient"):
         sched.update_hamiltonian("H1", new_coefficients="bad coeffs")
     with pytest.raises(ValueError, match=r"Expecting a Hamiltonian object"):
@@ -783,6 +783,91 @@ def test_calculate_eigenvalues():
     assert np.allclose(eigenvalues[-1], evals_h2)
 
 
+def test_schedule_constant():
+    dt = 1
+    H1 = PauliZ(0).to_hamiltonian()
+    sched = Schedule.constant(H1, total_time=10, dt=dt)
+    assert sched.hamiltonians == {"constant": H1}
+    assert _isclose(sched.coefficients["constant"][0], 1.0)
+    assert _isclose(sched.coefficients["constant"][5], 1.0)
+    assert _isclose(sched.coefficients["constant"][10], 1.0)
+    assert _isclose(sched.T, 10.0)
+
+
+def test_schedule_chained_linear_single_delegates_to_constant():
+    dt = 1
+    H1 = PauliX(0).to_hamiltonian()
+    sched = Schedule.chained_linear([H1], total_time=10, dt=dt)
+    assert "constant" in sched.hamiltonians
+    assert _isclose(sched.coefficients["constant"][0], 1.0)
+    assert _isclose(sched.coefficients["constant"][10], 1.0)
+
+
+def test_schedule_chained_linear_two_delegates_to_linear():
+    dt = 1
+    H1 = PauliX(0).to_hamiltonian()
+    H2 = PauliZ(0).to_hamiltonian()
+    sched = Schedule.chained_linear([H1, H2], total_time=10, dt=dt)
+    assert sched.hamiltonians == {"driver": H1, "problem": H2}
+    assert _isclose(sched.coefficients["driver"][0], 1.0)
+    assert _isclose(sched.coefficients["problem"][10], 1.0)
+
+
+def test_schedule_chained_linear_three():
+    dt = 1
+    H1 = PauliX(0).to_hamiltonian()
+    H2 = PauliZ(0).to_hamiltonian()
+    H3 = PauliX(0).to_hamiltonian()
+    sched = Schedule.chained_linear([H1, H2, H3], total_time=10, dt=dt)
+    assert sched.hamiltonians == {"h0": H1, "h1": H2, "h2": H3}
+
+    # boundary values
+    assert _isclose(sched.coefficients["h0"][0], 1.0)
+    assert _isclose(sched.coefficients["h0"][5], 0.0)
+    assert _isclose(sched.coefficients["h0"][10], 0.0)
+
+    assert _isclose(sched.coefficients["h1"][0], 0.0)
+    assert _isclose(sched.coefficients["h1"][5], 1.0)
+    assert _isclose(sched.coefficients["h1"][10], 0.0)
+
+    assert _isclose(sched.coefficients["h2"][0], 0.0)
+    assert _isclose(sched.coefficients["h2"][5], 0.0)
+    assert _isclose(sched.coefficients["h2"][10], 1.0)
+
+    # coefficients sum to 1 at all sampled times
+    for t in sched.tlist:
+        total = sum(sched.coefficients[f"h{i}"][t] for i in range(3))
+        assert _isclose(total, 1.0), f"sum={total} at t={t}"
+
+
+def test_schedule_chained_linear_four():
+    dt = 1
+    hamiltonians = [
+        PauliX(0).to_hamiltonian(),
+        PauliZ(0).to_hamiltonian(),
+        PauliX(0).to_hamiltonian(),
+        PauliZ(0).to_hamiltonian(),
+    ]
+    sched = Schedule.chained_linear(hamiltonians, total_time=9, dt=dt)
+    assert list(sched.hamiltonians.keys()) == ["h0", "h1", "h2", "h3"]
+
+    # each Hamiltonian peaks at its own segment boundary
+    assert _isclose(sched.coefficients["h0"][0], 1.0)
+    assert _isclose(sched.coefficients["h1"][3], 1.0)
+    assert _isclose(sched.coefficients["h2"][6], 1.0)
+    assert _isclose(sched.coefficients["h3"][9], 1.0)
+
+    # coefficients sum to 1 at transition midpoints
+    for t in [1.5, 4.5, 7.5]:
+        total = sum(sched.coefficients[f"h{i}"][t] for i in range(4))
+        assert _isclose(total, 1.0), f"sum={total} at t={t}"
+
+
+def test_schedule_chained_linear_empty_raises():
+    with pytest.raises(ValueError, match=r"At least one Hamiltonian"):
+        Schedule.chained_linear([], total_time=10)
+
+
 def test_calculate_eigenvalues_with_too_many_qubits_runs_but_warns(monkeypatch):
     class DummyQTensor:
         def __init__(self, nqubits):
@@ -803,3 +888,10 @@ def test_calculate_eigenvalues_with_too_many_qubits_runs_but_warns(monkeypatch):
     assert any("qubits may be very slow" in w for w in warnings)
     assert len(eigenvalues) == len(sched.tlist)
     assert len(eigenstates) == len(sched.tlist)
+
+
+def test_schedule_without_max_time_throws():
+    H1 = PauliX(0).to_hamiltonian()
+    H2 = PauliZ(0).to_hamiltonian()
+    with pytest.raises(ValueError, match=r"Total time must be provided at initialization."):
+        Schedule(dt=1, hamiltonians={"driver": H1, "problem": H2})

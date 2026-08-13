@@ -18,6 +18,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Literal
 
 import psutil
+from loguru import logger
 from pydantic import BaseModel, Field, field_validator
 from pydantic import ConfigDict as PydanticConfigDict
 
@@ -89,8 +90,7 @@ class AnalogMethod(BaseSimulatorConfig):
 
     Args:
         evolution_method (str): Analog time-evolution method to use:
-            ``"direct"``, ``"arnoldi"``, ``"integrate_rk4"``, ``"integrate_rk45_matrix_free"``, or
-            ``"integrate_rk4_matrix_free"``. Defaults to ``"integrate_rk4_matrix_free"``.
+            ``"direct"``, ``"arnoldi"``, ``"integrate_rk4"``, ``"integrate_rk45_matrix_free"``, ``"integrate_rk4_matrix_free"``, or ``"variational_exponential"``. Defaults to ``"integrate_rk4_matrix_free"``.
         arnoldi_dim (int): Dimension of the Arnoldi Krylov subspace used
             when ``evolution_method="arnoldi"``. Defaults to ``10``.
         num_arnoldi_substeps (int): Number of integration substeps per
@@ -98,10 +98,16 @@ class AnalogMethod(BaseSimulatorConfig):
     """
 
     evolution_method: Literal[
-        "direct", "arnoldi", "integrate_rk4", "integrate_rk45_matrix_free", "integrate_rk4_matrix_free"
+        "direct",
+        "arnoldi",
+        "arnoldi_matrix_free",
+        "integrate_rk4",
+        "integrate_rk45_matrix_free",
+        "integrate_rk4_matrix_free",
+        "variational_exponential",
     ] = Field(
         default="integrate_rk4_matrix_free",
-        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'integrate_rk4', 'integrate_rk45_matrix_free', or 'integrate_rk4_matrix_free'.",
+        description="Analog time-evolution method to use: 'direct', 'arnoldi', 'arnoldi_matrix_free', 'integrate_rk4', 'integrate_rk45_matrix_free', 'integrate_rk4_matrix_free', or 'variational_exponential'.",
     )
     arnoldi_dim: int = Field(
         default=10,
@@ -118,6 +124,21 @@ class AnalogMethod(BaseSimulatorConfig):
         gt=0,
         description="Tolerance for the adaptive integrator method when `evolution_method='integrate_rk45_matrix_free'`.",
     )
+    variational_shots: int = Field(
+        default=100,
+        gt=0,
+        description="Number of shots to use when estimating expectation values for the variational optimization when `evolution_method='variational_exponential'`.",
+    )
+    variational_warmups: int = Field(
+        default=10,
+        ge=0,
+        description="Number of warmup iterations to perform before collecting samples for the variational optimization when `evolution_method='variational_exponential'`.",
+    )
+    variational_order: int = Field(
+        default=2,
+        gt=0,
+        description="Order of the polynomial expansion used in the variational ansatz when `evolution_method='variational_exponential'`.",
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return a complete analog solver configuration for the C++ backend."""
@@ -126,8 +147,10 @@ class AnalogMethod(BaseSimulatorConfig):
             "arnoldi_dim": self.arnoldi_dim,
             "num_arnoldi_substeps": self.num_arnoldi_substeps,
             "adaptive_tol": self.adaptive_tol,
+            "variational_shots": self.variational_shots,
+            "variational_warmups": self.variational_warmups,
+            "variational_order": self.variational_order,
         }
-
         return d
 
     @classmethod
@@ -143,7 +166,36 @@ class AnalogMethod(BaseSimulatorConfig):
             AnalogMethod: Configured integrate-method analog configuration.
         """
         evolution_method = "integrate_rk4_matrix_free" if matrix_free else "integrate_rk4"
+        logger.debug("[BackendConfig] Configuring integrator analog method (matrix_free={})", matrix_free)
         return cls(evolution_method=evolution_method)
+
+    @classmethod
+    def variational_annealing(cls, *, order: int = 2, shots: int = 100, warmups: int = 10) -> AnalogMethod:
+        """
+        Anneal a variational ansatz rather than the full state.
+
+        Based on this paper: https://arxiv.org/pdf/2403.05147
+
+        Args:
+            order (int): Order of the polynomial expansion used in the variational ansatz.
+            shots (int): Number of samples to use when estimating expectation values for the variational optimization.
+            warmups (int): Number of warmup iterations to perform before collecting samples for the variational optimization.
+
+        Returns:
+            AnalogMethod: Configured variational-method analog configuration.
+        """
+        logger.debug(
+            "[BackendConfig] Configuring variational_annealing analog method (order={}, shots={}, warmups={})",
+            order,
+            shots,
+            warmups,
+        )
+        return cls(
+            evolution_method="variational_exponential",
+            variational_order=order,
+            variational_shots=shots,
+            variational_warmups=warmups,
+        )
 
     @classmethod
     def adaptive_integrator(cls, *, tol: float = 1e-2) -> AnalogMethod:
@@ -159,6 +211,7 @@ class AnalogMethod(BaseSimulatorConfig):
         Returns:
             AnalogMethod: Configured integrate-method analog configuration.
         """
+        logger.debug("[BackendConfig] Configuring adaptive_integrator analog method (tol={})", tol)
         return cls(evolution_method="integrate_rk45_matrix_free", adaptive_tol=tol)
 
     @classmethod
@@ -167,6 +220,7 @@ class AnalogMethod(BaseSimulatorConfig):
         *,
         num_substeps: int = 1,
         dim: int = 10,
+        matrix_free: bool = True,
     ) -> AnalogMethod:
         """Build an ``arnoldi`` analog method configuration.
 
@@ -175,12 +229,14 @@ class AnalogMethod(BaseSimulatorConfig):
                 step when using the Arnoldi method. Defaults to ``1``.
             dim (int): Dimension of the Arnoldi Krylov subspace. Defaults
                 to ``10``.
+            matrix_free (bool): Whether to use the matrix-free implementation.
 
         Returns:
             AnalogMethod: Configured arnoldi-method analog configuration.
         """
+        logger.debug("[BackendConfig] Configuring arnoldi analog method (dim={}, num_substeps={})", dim, num_substeps)
         return cls(
-            evolution_method="arnoldi",
+            evolution_method="arnoldi_matrix_free" if matrix_free else "arnoldi",
             arnoldi_dim=dim,
             num_arnoldi_substeps=num_substeps,
         )
@@ -192,6 +248,7 @@ class AnalogMethod(BaseSimulatorConfig):
         Returns:
             AnalogMethod: Configured direct-method analog configuration.
         """
+        logger.debug("[BackendConfig] Configuring direct analog method")
         return cls(evolution_method="direct")
 
 
@@ -238,6 +295,16 @@ class ExecutionConfig(BaseSimulatorConfig):
             "Whether to apply state collapse immediately after measurements. If `False`, measurements are recorded but the state is not collapsed."
         ),
     )
+    normalize_state: bool = Field(
+        default=True,
+        description=("Whether to normalize the quantum state during simulation"),
+    )
+    gpu: bool = Field(
+        default=False,
+        description=(
+            "Whether to use GPU acceleration for simulation. If `True`, the simulator will attempt to use available GPU resources for the methods that support it."
+        ),
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return execution settings with resolved defaults."""
@@ -246,6 +313,8 @@ class ExecutionConfig(BaseSimulatorConfig):
             "seed": int(self.seed) if self.seed is not None else 0,  # defensive
             "monte_carlo": self.monte_carlo is not None,
             "measurement_collapse": self.measurement_collapse,
+            "normalize_state": self.normalize_state,
+            "gpu": self.gpu,
         }
         if self.monte_carlo is not None:
             d.update(self.monte_carlo.get_config())
@@ -257,14 +326,18 @@ class ExecutionConfig(BaseSimulatorConfig):
     @classmethod
     def _validate_num_threads(cls, num_threads: int) -> int:
         if num_threads <= 0:
-            return psutil.cpu_count(logical=False) or 1
+            resolved = psutil.cpu_count(logical=False) or 1
+            logger.debug("[BackendConfig] num_threads=0 requested, resolved to {} physical cores", resolved)
+            return resolved
         return num_threads
 
     @field_validator("seed", mode="after")
     @classmethod
     def _validate_seed(cls, seed: int | None) -> int:
         if seed is None:
-            return secrets.randbelow(2**15)
+            generated = secrets.randbelow(2**15)
+            logger.debug("[BackendConfig] No seed provided, generated random seed {}", generated)
+            return generated
         return seed
 
 
@@ -289,10 +362,27 @@ class DigitalMethod(BaseSimulatorConfig):
         combine_single_qubit_gates (bool): Whether to combine consecutive
             single-qubit gates into a single operation to reduce overhead
             at the cost of increased memory usage. Defaults to ``True``.
+        fuse_gates (bool): Whether to fuse runs of adjacent gates acting on a
+            small set of qubits into a single dense multi-qubit operation. This
+            reduces the number of passes over the statevector (the memory
+            bandwidth bottleneck for large qubit counts) at the cost of extra
+            arithmetic per fused block. Supersedes ``combine_single_qubit_gates``
+            when enabled, and only applies to the matrix-free statevector path
+            (disabled automatically when a noise model is present). Defaults to
+            ``True``.
+        max_fused_qubits (int): Maximum number of qubits a single fused block may
+            span. Larger values fuse more aggressively but build larger dense
+            matrices (``2**max_fused_qubits`` square). Defaults to ``4``.
         matrix_free (bool): Whether to use the matrix-free implementation
             for statevector simulation. Defaults to ``True``.
     """
 
+    digital_method: str = Field(
+        default="statevector_matrix_free",
+        description=(
+            "Digital simulation method to use. This is set automatically by the preferred constructors like `statevector`."
+        ),
+    )
     max_cache_size: int = Field(
         default=1000,
         ge=0,
@@ -306,19 +396,36 @@ class DigitalMethod(BaseSimulatorConfig):
         default=True,
         description="Whether to combine consecutive single-qubit gates into a single operation to reduce overhead at the cost of increased memory usage.",
     )
+    fuse_gates: bool = Field(
+        default=True,
+        description="Whether to fuse runs of adjacent gates on a small set of qubits into a single dense multi-qubit operation to reduce passes over the statevector. Only applies to the matrix-free statevector path.",
+    )
+    max_fused_qubits: int = Field(
+        default=0,
+        ge=0,
+        description="Maximum number of qubits a single fused block may span. 0 (the default) selects the depth automatically from the qubit count.",
+    )
     matrix_free: bool = Field(
         default=True,
         description="Whether to use the matrix-free implementation for statevector simulation.",
     )
+    stabilizer_max_states: int = Field(
+        default=100,
+        description="Maximum number of stabilizer states to track when using the stabilizer digital simulation method. Set to zero or less for unlimited.",
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return digital simulation settings in backend-compatible key names."""
-        return {
+        d: SolverConfigDict = {
             "max_cache_size": self.max_cache_size,
-            "sampling_method": "statevector_matrix_free" if self.matrix_free else "statevector",
+            "digital_method": self.digital_method,
             "normalize_after_each_gate": self.normalize_after_each_gate,
             "combine_single_qubit_gates": self.combine_single_qubit_gates,
+            "fuse_gates": self.fuse_gates,
+            "max_fused_qubits": self.max_fused_qubits,
+            "stabilizer_max_states": self.stabilizer_max_states,
         }
+        return d
 
     @classmethod
     def statevector(
@@ -328,6 +435,8 @@ class DigitalMethod(BaseSimulatorConfig):
         normalize_after_each_gate: bool = False,
         matrix_free: bool = True,
         combine_single_qubit_gates: bool = True,
+        fuse_gates: bool = True,
+        max_fused_qubits: int = 0,
     ) -> DigitalMethod:
         """Build the standard statevector simulation configuration.
 
@@ -340,13 +449,40 @@ class DigitalMethod(BaseSimulatorConfig):
                 Defaults to ``True``.
             combine_single_qubit_gates (bool): Whether to combine consecutive single-qubit gates into a single operation.
                 Defaults to ``True``.
+            fuse_gates (bool): Whether to fuse runs of adjacent gates on a small set of qubits into a single dense
+                multi-qubit operation (matrix-free statevector path only). Defaults to ``True``.
+            max_fused_qubits (int): Maximum number of qubits a single fused block may span. ``0`` (the default)
+                selects the depth automatically from the qubit count.
 
         Returns:
             DigitalMethod: Configured statevector digital configuration.
         """
+        logger.debug(
+            "[BackendConfig] Configuring statevector digital method (max_cache_size={}, matrix_free={}, "
+            "normalize_after_each_gate={}, combine_single_qubit_gates={})",
+            max_cache_size,
+            matrix_free,
+            normalize_after_each_gate,
+            combine_single_qubit_gates,
+        )
         return cls(
+            digital_method="statevector_matrix_free" if matrix_free else "statevector",
             max_cache_size=max_cache_size,
             normalize_after_each_gate=normalize_after_each_gate,
             combine_single_qubit_gates=combine_single_qubit_gates,
+            fuse_gates=fuse_gates,
+            max_fused_qubits=max_fused_qubits,
             matrix_free=matrix_free,
+        )
+
+    @classmethod
+    def stabilizer(cls, max_states: int = 100) -> DigitalMethod:
+        """Return a stabilizer-based simulation configuration.
+
+        Args:
+            max_states (int): Maximum number of stabilizer states to track. Set to zero or less for unlimited.
+        """
+        return DigitalMethod(
+            digital_method="stabilizer",
+            stabilizer_max_states=max_states,
         )

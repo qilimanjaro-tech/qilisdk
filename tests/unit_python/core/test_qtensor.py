@@ -13,13 +13,17 @@
 # limitations under the License.
 
 
+import itertools
+
 import numpy as np
 import pytest
 from scipy.linalg import expm, logm, sqrtm
 from scipy.sparse import coo_matrix, csc_array, issparse
 from scipy.sparse.linalg import norm as scipy_norm
 
+from qilisdk.analog import X, Z
 from qilisdk.core.qtensor import (
+    InitialState,
     QTensor,
     basis_state,
     bra,
@@ -42,18 +46,70 @@ def test_constructor_valid_ndarray():
     assert issparse(qobj.data)
 
 
+@pytest.mark.parametrize("source", ["ndarray", "list", "scipy"])
+def test_constructor_preserves_non_finite_values(source):
+    """Regression (SDK-359): the sparse-construction paths threshold on ``abs(val) > atol``,
+    and ``abs(nan) > atol`` is False — so NaN/Inf entries used to be silently dropped, turning a
+    diverged (NaN) state into a valid-looking all-zero matrix. Non-finite values must survive
+    construction from every supported input type, in both the dense and scipy-sparse views."""
+    arr = np.array([[np.nan, 0.0], [0.0, np.inf]], dtype=complex)
+    if source == "ndarray":
+        qobj = QTensor(arr)
+    elif source == "list":
+        qobj = QTensor([[complex(np.nan), 0.0], [0.0, complex(np.inf)]])
+    else:  # scipy sparse
+        qobj = QTensor(coo_matrix(arr))
+
+    dense = np.asarray(qobj.dense())
+    assert np.isnan(dense[0, 0])
+    assert np.isinf(dense[1, 1])
+
+    # The scipy-sparse view (``.data``) must not hide the non-finite entries either.
+    data_dense = np.asarray(qobj.data.todense())
+    assert np.isnan(data_dense[0, 0])
+    assert np.isinf(data_dense[1, 1])
+
+
+def test_from_numpy_coerces_mismatched_dtype_and_strides():
+    """QSDK-04: ``from_numpy`` must coerce a non-complex128 or non-contiguous
+    input to a contiguous complex128 buffer instead of reinterpreting the raw
+    bytes (which strides 16 B/element over a smaller/mismatched allocation and
+    reads out of bounds). Exercised via the uncoerced ``QTensorCpp`` path."""
+    from qtensor_module import QTensorCpp  # ruff: ignore[import-outside-top-level]
+
+    expected = np.eye(4)
+    for dtype in (np.complex64, np.float64, np.float32, np.complex128):
+        result = np.asarray(QTensorCpp(np.eye(4, dtype=dtype)).as_numpy())
+        assert np.allclose(result, expected), f"dtype {np.dtype(dtype).name} mismatched"
+
+    # Non-contiguous complex128 view: strides must be honoured, not ignored.
+    base = np.arange(64, dtype=np.complex128).reshape(8, 8)
+    view = base[::2, ::2]
+    assert not view.flags["C_CONTIGUOUS"]
+    result = np.asarray(QTensorCpp(view).as_numpy())
+    assert np.allclose(result, np.ascontiguousarray(view))
+
+
+def test_from_numpy_raises_when_array_is_not_convertible_to_complex128():
+    from qtensor_module import QTensorCpp  # ruff: ignore[import-outside-top-level]
+
+    bad = np.array([["not-a-number"]], dtype=object)
+    with pytest.raises(ValueError, match=r"Input array must be convertible to a 2D complex128 array\."):
+        QTensorCpp(bad)
+
+
 def test_constructor_valid_sparse():
     """QTensor should accept a valid SciPy sparse matrix."""
     sparse_mat = csc_array([[1, 0], [0, 1]])
     qobj = QTensor(sparse_mat)
-    # Should be stored as a CSR matrix.
+    # .data always exposes the contents as CSR, regardless of the internal storage backend.
     assert qobj.data.format == "csr"
 
 
 @pytest.mark.parametrize("invalid_input", [1, "string", [1, 2, 3]])
 def test_constructor_invalid_input(invalid_input):
     """QTensor should raise ValueError for inputs that are not arrays or sparse matrices."""
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         QTensor(invalid_input)
 
 
@@ -70,7 +126,7 @@ def test_constructor_invalid_input(invalid_input):
 def test_constructor_invalid_shape(shape):
     """QTensor should raise ValueError for arrays with invalid shapes."""
     arr = np.zeros(shape)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         QTensor(arr)
 
 
@@ -176,11 +232,11 @@ def test_ptrace_invalid_keep():
     """Partial trace should raise ValueError if keep indices are out of bounds."""
     arr = np.eye(2)
     qobj = QTensor(arr)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         qobj.ptrace(keep=[1])
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         qobj.ptrace(keep=[2])  # out of bounds index
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         qobj.ptrace(keep=[0, 1])  # too many indices
 
 
@@ -203,7 +259,7 @@ def test_add_QTensor():
     q2 = QTensor(arr)
     result = q1 + q2
     np.testing.assert_array_equal(result.dense(), arr + arr)
-    result2 = q1.__radd__(q2)  # noqa: PLC2801
+    result2 = q1.__radd__(q2)  # ruff: ignore[unnecessary-dunder-call]
     np.testing.assert_array_equal(result2.dense(), arr + arr)
 
 
@@ -329,7 +385,7 @@ def test_unit_zero_norm():
     """Normalization of a zero-norm QTensor should raise a ValueError."""
     zero_vector = np.zeros((2, 1))
     qobj = QTensor(zero_vector)
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         qobj.unit()
 
 
@@ -404,7 +460,7 @@ def test_to_dm_from_ket():
 def test_to_dm_from_scalar():
     """Attempting to call to_dm() on a scalar should raise a ValueError."""
     qscalar = QTensor(np.array([[1]]))
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         qscalar.to_density_matrix()
 
 
@@ -465,7 +521,7 @@ def test_ket_valid(state):
 @pytest.mark.parametrize("state", [(), (2,), (-1,), (0, 2), (1, 3)])
 def test_ket_invalid(state):
     """ket should raise ValueError if any qubit state is not 0 or 1."""
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         ket(*state)
 
 
@@ -480,7 +536,7 @@ def test_bra_valid(state):
 @pytest.mark.parametrize("state", [(2,), (-1,), (0, 2), (1, 3)])
 def test_bra_invalid(state):
     """bra should raise ValueError if any qubit state is not 0 or 1."""
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         bra(*state)
 
 
@@ -522,6 +578,45 @@ def test_expect_bra():
     exp_val = expect_val(identity, qbra_obj)
     # For a normalized bra, ⟨ψ|I|ψ⟩ should equal 1.
     assert np.isclose(exp_val, 1)
+
+
+def test_expect_hamiltonian_sampled():
+    """Test that sampling a Hamiltonian observable converges towards the exact expectation value."""
+    state = QTensor.uniform(2)
+    observable = 0.5 * X(0) + 2 * Z(1) + 3
+
+    # X(0) has no variance on the uniform state, so any number of shots gives the exact value
+    assert np.isclose(state.expectation_value(X(0), nshots=10), 1)
+
+    # Z(1) is maximally uncertain on the uniform state, so the estimates fluctuate around zero
+    samples = [state.expectation_value(Z(1), nshots=1).real for _ in range(100)]
+    assert set(samples) == {-1.0, 1.0}
+
+    # More shots reduce the shot noise, the standard error scales as 1 / sqrt(nshots)
+    estimates = [state.expectation_value(observable, nshots=10000).real for _ in range(10)]
+    assert np.allclose(estimates, 3.5, atol=0.2)
+    assert not np.allclose(estimates, 3.5, atol=1e-10)
+
+
+def test_expect_qtensor_sampled():
+    """Test that sampling a QTensor observable does not require a precomputed eigendecomposition."""
+    observable = (0.7 * Z(0) + 2 * X(1) + 1.5).to_qtensor(2)
+    state = QTensor.uniform(2)
+
+    exact = state.expectation_value(observable)
+    estimates = [state.expectation_value(observable, nshots=100000).real for _ in range(5)]
+    assert np.allclose(estimates, exact.real, atol=0.05)
+    assert not np.allclose(estimates, exact.real, atol=1e-10)
+
+    # The eigendecomposition is cached on the observable, not on the state
+    assert len(observable.eigenvalues) == 4
+
+
+def test_expect_hamiltonian_sampled_shapes():
+    """Test that sampling a Hamiltonian observable works for kets, bras and density matrices."""
+    for state in [ket(0, 1), bra(0, 1), ket(0, 1).to_density_matrix()]:
+        assert np.isclose(state.expectation_value(Z(0), nshots=100), 1)
+        assert np.isclose(state.expectation_value(Z(1), nshots=100), -1)
 
 
 def test_to_density_matrix():
@@ -788,15 +883,17 @@ def test_qtensor_identity():
 def test_qtensor_zero():
     qzero = QTensor.zero(2)
     qzero2 = zero(2)
-    qzero_ket = QTensor.zero(2, "ket")
-    qzero_bra = QTensor.zero(2, "bra")
-    expected = np.zeros((4, 4))
     expected_ket = np.zeros((4, 1))
-    expected_bra = np.zeros((1, 4))
-    np.testing.assert_array_equal(qzero.dense(), expected)
-    np.testing.assert_array_equal(qzero2.dense(), expected)
-    np.testing.assert_array_equal(qzero_ket.dense(), expected_ket)
-    np.testing.assert_array_equal(qzero_bra.dense(), expected_bra)
+    expected_ket[0, 0] = 1
+    np.testing.assert_array_equal(qzero.dense(), expected_ket)
+    np.testing.assert_array_equal(qzero2.dense(), expected_ket)
+
+
+def test_qtensor_one():
+    qone = QTensor.one(2)
+    expected_ket = np.zeros((4, 1))
+    expected_ket[3, 0] = 1
+    np.testing.assert_array_equal(qone.dense(), expected_ket)
 
 
 def test_qtensor_ghz():
@@ -1041,3 +1138,182 @@ def test_qtensor_negative_norm():
         qobj.norm(order=-1)
     with pytest.raises(ValueError, match="Norm order must be a positive"):
         qobj.norm(order=0)
+
+
+# --- InitialState Tests ---
+
+
+def test_initial_state_zero_as_qtensor():
+    result = InitialState.ZERO.as_qtensor(2)
+    assert isinstance(result, QTensor)
+    assert result.shape == (4, 1)
+
+
+def test_initial_state_uniform_as_qtensor():
+    result = InitialState.UNIFORM.as_qtensor(2)
+    assert isinstance(result, QTensor)
+    assert result.shape == (4, 1)
+
+
+def test_initial_state_one_as_qtensor():
+    result = InitialState.ONE.as_qtensor(2)
+    assert isinstance(result, QTensor)
+    assert result.shape == (4, 1)
+
+
+def test_initial_state_unknown_raises():
+    class FakeState:
+        name = "FAKE"
+
+        def __eq__(self, other):
+            return False
+
+        def __hash__(self):
+            return hash(self.name)
+
+    with pytest.raises(ValueError, match="Unknown symbolic QTensor"):
+        InitialState.as_qtensor(FakeState(), 2)
+
+
+# --- Storage backend selection tests ---
+
+
+def test_ket_is_stored_column_sparse():
+    k = zero(3)
+    assert k._qtensor_cpp.storage_format() == "col_sparse"
+    assert k.is_ket()
+
+
+def test_bra_is_stored_row_sparse():
+    b = bra(0, 1)
+    assert b._qtensor_cpp.storage_format() == "row_sparse"
+    assert b.is_bra()
+
+
+def test_sparse_operator_is_row_sparse():
+    op = QTensor(np.diag([1, -1, 1, -1]).astype(complex))  # 4 non-zeros out of 16
+    assert op._qtensor_cpp.storage_format() == "row_sparse"
+
+
+def test_dense_operator_is_dense():
+    op = QTensor(np.array([[1, 2], [3, 4]], dtype=complex))
+    assert op._qtensor_cpp.storage_format() == "dense"
+
+
+def test_uniform_is_dense_ket():
+    u = QTensor.uniform(3)
+    assert u._qtensor_cpp.storage_format() == "dense"
+    assert u.is_ket()
+
+
+def test_large_zero_ket_is_representable():
+    k = zero(20)
+    assert k.shape == (2**20, 1)
+    assert k._qtensor_cpp.storage_format() == "col_sparse"
+    assert np.isclose(k[0, 0], 1.0)
+
+
+def test_storage_format_roundtrips_through_operations():
+    k0 = ket(0)
+    rho = k0 @ k0.adjoint()
+    assert rho.shape == (2, 2)
+    assert rho.trace() == pytest.approx(1.0)
+    assert np.allclose(rho.dense(), np.array([[1, 0], [0, 0]], dtype=complex))
+    assert k0.adjoint().is_bra()
+    assert k0.adjoint()._qtensor_cpp.storage_format() != "col_sparse"
+
+
+# --- Magic / Stabilizer Rényi Entropy Tests ---
+
+_PAULIS = {
+    "I": np.eye(2, dtype=complex),
+    "X": np.array([[0, 1], [1, 0]], dtype=complex),
+    "Y": np.array([[0, -1j], [1j, 0]], dtype=complex),
+    "Z": np.array([[1, 0], [0, -1]], dtype=complex),
+}
+
+
+def _brute_force_sre(psi: np.ndarray, nqubits: int, alpha: float) -> float:
+    """Reference SRE via an explicit sum over all 4**N Pauli strings."""
+    if np.isclose(alpha, 1.0):
+        xis = []
+        for combo in itertools.product("IXYZ", repeat=nqubits):
+            pauli = np.array([[1]], dtype=complex)
+            for label in combo:
+                pauli = np.kron(pauli, _PAULIS[label])
+            xis.append((psi.conj() @ pauli @ psi).real ** 2 / 2**nqubits)
+        xis = np.array(xis)
+        nonzero = xis[xis > 0]
+        return -nqubits - float(np.sum(nonzero * np.log2(nonzero)))
+
+    total = 0.0
+    for combo in itertools.product("IXYZ", repeat=nqubits):
+        pauli = np.array([[1]], dtype=complex)
+        for label in combo:
+            pauli = np.kron(pauli, _PAULIS[label])
+        total += abs(psi.conj() @ pauli @ psi) ** (2 * alpha)
+    return (1.0 / (1.0 - alpha)) * np.log2(total / 2**nqubits)
+
+
+@pytest.mark.parametrize("nqubits", [1, 2, 3, 4])
+@pytest.mark.parametrize("alpha", [0.5, 1.0, 2.0, 3.0])
+def test_magic_matches_brute_force(nqubits, alpha):
+    """magic() must agree with the naive Pauli-string sum for random states."""
+    rng = np.random.default_rng(nqubits * 10 + int(alpha * 2))
+    psi = rng.standard_normal(2**nqubits) + 1j * rng.standard_normal(2**nqubits)
+    psi /= np.linalg.norm(psi)
+    got = QTensor(psi.reshape(-1, 1)).magic(alpha)
+    assert got == pytest.approx(_brute_force_sre(psi, nqubits, alpha), abs=1e-9)
+
+
+@pytest.mark.parametrize("nqubits", [1, 2, 3])
+def test_magic_of_stabilizer_states_is_zero(nqubits):
+    """Stabilizer states (|0..0>, GHZ) have vanishing magic (faithfulness)."""
+    assert QTensor.zero(nqubits).magic(2) == pytest.approx(0.0, abs=1e-10)
+    assert QTensor.ghz(nqubits).magic(2) == pytest.approx(0.0, abs=1e-10)
+
+
+def test_magic_of_t_state():
+    """The single-qubit magic state T|+> has the known SRE M_2 = log2(4/3)."""
+    t_plus = np.array([1.0, np.exp(1j * np.pi / 4)]) / np.sqrt(2)
+    assert QTensor(t_plus.reshape(-1, 1)).magic(2) == pytest.approx(np.log2(4 / 3))
+
+
+def test_magic_is_additive_under_tensor_product():
+    """M(|a> ⊗ |b>) = M(|a>) + M(|b>)."""
+    t_plus = np.array([1.0, np.exp(1j * np.pi / 4)]) / np.sqrt(2)
+    a = QTensor(t_plus.reshape(-1, 1))
+    b = QTensor(t_plus.reshape(-1, 1))
+    combined = QTensor.tensor_product([a, b])
+    assert combined.magic(2) == pytest.approx(a.magic(2) + b.magic(2), abs=1e-10)
+
+
+def test_magic_matches_for_bra_and_ket():
+    """The magic of a state is invariant under taking the adjoint (bra vs ket)."""
+    t_plus = np.array([1.0, np.exp(1j * np.pi / 4)]) / np.sqrt(2)
+    ket_state = QTensor(t_plus.reshape(-1, 1))
+    assert ket_state.magic(2) == pytest.approx(ket_state.adjoint().magic(2))
+
+
+def test_magic_is_normalization_invariant():
+    """Unnormalized input is normalized internally, so scaling does not change magic."""
+    rng = np.random.default_rng(42)
+    psi = rng.standard_normal(8) + 1j * rng.standard_normal(8)
+    unscaled = QTensor(psi.reshape(-1, 1))
+    scaled = QTensor((psi * 7.0).reshape(-1, 1))
+    assert unscaled.magic(2) == pytest.approx(scaled.magic(2), abs=1e-10)
+
+
+def test_magic_rejects_operators():
+    """magic() is only defined for pure states."""
+    operator = QTensor.identity(2)
+    with pytest.raises(ValueError, match="pure states"):
+        operator.magic(2)
+
+
+@pytest.mark.parametrize("alpha", [0.0, -1.0])
+def test_magic_rejects_non_positive_alpha(alpha):
+    """The Rényi index must be positive."""
+    state = QTensor.zero(2)
+    with pytest.raises(ValueError, match="alpha must be positive"):
+        state.magic(alpha)

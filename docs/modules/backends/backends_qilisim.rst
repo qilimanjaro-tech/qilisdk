@@ -1,18 +1,28 @@
-QiliSim Backend
----------------
+QiliSim
+=======
+
+.. image:: ../../_static/QiliSim_wht.svg
+   :align: left
+   :width: 200px
+   :class: title-image only-dark
+
+.. image:: ../../_static/QiliSim_blk.svg
+   :align: left
+   :width: 200px
+   :class: title-image only-light
 
 The **QiliSim** backend is the default CPU simulator developed by Qilimanjaro and written in C++.
 It implements every primitive functional natively, supports a noise model on all execution paths,
 and is included with the core ``qilisdk`` installation — no extra dependency or hardware is required.
 
 Installation
-============
+------------
 
 QiliSim is bundled with the core ``qilisdk`` installation, so no extra package is required.
 
 
 Quick start
-===========
+-----------
 
 .. code-block:: python
 
@@ -36,7 +46,7 @@ Quick start
     print(result.get_samples())
 
 Functional support
-==================
+-------------------
 
 QiliSim natively supports all primitive functionals through dedicated C++ routines:
 
@@ -65,7 +75,7 @@ QiliSim natively supports all primitive functionals through dedicated C++ routin
 .. |n| unicode:: U+274C
 
 Configuration
-=============
+-------------
 
 QiliSim is configured at construction time through three orthogonal sections, all defined in
 :mod:`qilisdk.backends.backend_config`:
@@ -88,7 +98,7 @@ QiliSim is configured at construction time through three orthogonal sections, al
     )
 
     backend = QiliSim(
-        analog_simulation_method=AnalogMethod.arnoldi(dim=16, num_substeps=2),
+        analog_simulation_method=AnalogMethod.arnoldi(dim=16, num_substeps=2, matrix_free=True),
         digital_simulation_method=DigitalMethod.statevector(
             matrix_free=True,
             max_cache_size=2_000,
@@ -111,7 +121,7 @@ If any argument is omitted, QiliSim falls back to:
   Monte Carlo disabled).
 
 Analog simulation methods
-^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use the classmethods of :class:`~qilisdk.backends.backend_config.AnalogMethod` to choose how the
 schedule is integrated:
@@ -125,18 +135,21 @@ schedule is integrated:
      - When to use it
    * - :meth:`AnalogMethod.integrator(matrix_free=True) <qilisdk.backends.backend_config.AnalogMethod.integrator>`
      - RK4
-     - Default. Fixed-step Runge-Kutta 4; matrix-free is faster for sparse Hamiltonians.
+     - Default. Fixed-step Runge-Kutta 4. matrix-free is faster for sparse Hamiltonians.
+   * - :meth:`AnalogMethod.variational_annealing() <qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`
+     - Variational annealing
+     - Only available for X to Z annealing schedules. Can be used to simulate large (i.e. 60+ qubits) systems at the cost of accuracy. Set `order=1` for a quicker but less accurate simulation. Increasing warmups can also improve accuracy at the cost of time.
    * - :meth:`AnalogMethod.adaptive_integrator(tol=1e-2) <qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`
      - Dormand-Prince RK4/5
      - Adaptive step size; ``tol`` bounds the fidelity error between the RK4 and RK5 estimates.
-   * - :meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1) <qilisdk.backends.backend_config.AnalogMethod.arnoldi>`
+   * - :meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1, matrix_free=True) <qilisdk.backends.backend_config.AnalogMethod.arnoldi>`
      - Krylov / Arnoldi
      - Can offer decent scaling for large sparse Hamiltonians; tune ``dim`` for the Krylov subspace size.
    * - :meth:`AnalogMethod.direct() <qilisdk.backends.backend_config.AnalogMethod.direct>`
      - Matrix exponential
      - Reference scheme for small systems; cost grows quickly with qubit count.
 
-Example, using the adaptive integrator for a stiffer schedule:
+Example, using the adaptive integrator:
 
 .. code-block:: python
 
@@ -145,11 +158,9 @@ Example, using the adaptive integrator for a stiffer schedule:
     backend = QiliSim(analog_simulation_method=AnalogMethod.adaptive_integrator(tol=1e-2))
 
 Digital simulation methods
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Digital execution is currently always state-vector based; the
-:class:`~qilisdk.backends.backend_config.DigitalMethod` configuration tunes its performance
-characteristics rather than choosing a different algorithm:
+There are currently two digital simulation methods available. The first is a statevector simulator, which can be configured through the options:
 
 .. list-table::
    :header-rows: 1
@@ -177,20 +188,38 @@ characteristics rather than choosing a different algorithm:
         ),
     )
 
+The second is a stabilizer simulator, which can efficiently simulate circuits composed of Clifford gates and Pauli measurements,
+at the cost of being slower if the circuit contains many non-Clifford gates. It has the following options:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 35 65
+
+   * - Option
+     - Meaning
+   * - ``max_states``
+     - Maximum number of terms in the stabilizer sum. Increasing this can improve accuracy at the cost of memory and runtime.
+
+.. code-block:: python
+
+    from qilisdk.backends import DigitalMethod, QiliSim
+
+    backend = QiliSim(
+        digital_simulation_method=DigitalMethod.stabilizer(max_states=100),
+    )
+
 Execution and Monte Carlo
-^^^^^^^^^^^^^^^^^^^^^^^^^
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :class:`~qilisdk.backends.backend_config.ExecutionConfig` controls threading, randomness, and
 optional Monte Carlo trajectory sampling for open-system simulations.
 
-- ``num_threads=0`` (default) lets the simulator use every physical core.
-- ``seed=None`` (default) draws a fresh random seed at construction time; pass an integer for
-  reproducibility.
-- ``monte_carlo=MonteCarloConfig(trajectories=N)`` enables stochastic trajectory sampling for
-  noise models that admit a Monte Carlo unraveling; leave it ``None`` for deterministic master-equation
-  evolution.
-- ``measurement_collapse`` controls whether measurements collapse the statevector in place
-  (relevant for mid-circuit measurement and reservoir computing); defaults to ``False``.
+- ``num_threads`` controls the number of threads used for parallelization, defaults to using all available cores.
+- ``seed`` controls the random number generator seed, defaults to a random seed.
+- ``monte_carlo=MonteCarloConfig(trajectories=N)`` enabled Monte Carlo sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled.
+- ``measurement_collapse`` controls whether measurements collapse the statevector in place (relevant for mid-circuit measurement and reservoirs) - defaults to ``False``.
+- ``normalize_state`` controls whether the state should be renormalized - defaults to ``True``.
+- ``gpu`` controls whether to use GPU acceleration if available - defaults to ``False``.
 
 .. code-block:: python
 
@@ -199,14 +228,16 @@ optional Monte Carlo trajectory sampling for open-system simulations.
     backend = QiliSim(
         execution_config=ExecutionConfig(
             num_threads=8,
-            seed=1234,
+            seed=42,
             monte_carlo=MonteCarloConfig(trajectories=500),
             measurement_collapse=True,
+            normalize_state=False,
+            gpu=True,
         ),
     )
 
 Noise model support
-===================
+-------------------
 
 Any :class:`~qilisdk.noise.NoiseModel` accepted by the SDK can be passed directly to the constructor;
 QiliSim applies it inside the C++ solver, so digital, analog, and reservoir runs all see the same
@@ -221,3 +252,50 @@ noise channels:
     nm.add(Depolarizing(probability=1e-3))
 
     backend = QiliSim(noise_model=nm)
+
+GPU acceleration
+-------------------
+
+Some simulation methods in QiliSim support GPU acceleration if a CUDA-capable device is available.
+These require the ``cuda`` extra to be installed:
+
+.. tabs::
+
+    .. group-tab:: Linux
+
+        .. code-block:: console
+
+            pip install qilisdk[cuda13]
+
+    .. group-tab:: Mac OSX
+
+        .. code-block:: console
+
+            pip install "qilisdk[cuda13]"
+
+    .. group-tab:: Windows
+
+        .. code-block:: console
+
+            pip install qilisdk[cuda13]
+
+.. list-table::
+    :header-rows: 1
+    :widths: 35 65
+  
+    * - Method
+      - GPU support
+    * - :meth:`AnalogMethod.direct() <qilisdk.backends.backend_config.AnalogMethod.direct>`
+      - |n|
+    * - :meth:`AnalogMethod.integrator() <qilisdk.backends.backend_config.AnalogMethod.integrator>`
+      - |n|
+    * - :meth:`AnalogMethod.adaptive_integrator() <qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`
+      - |n|
+    * - :meth:`AnalogMethod.arnoldi() <qilisdk.backends.backend_config.AnalogMethod.arnoldi>`
+      - |n|
+    * - :meth:`AnalogMethod.variational_annealing() <qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`
+      - |y|
+    * - :meth:`DigitalMethod.statevector() <qilisdk.backends.backend_config.DigitalMethod.statevector>`
+      - |n|
+    * - :meth:`DigitalMethod.stabilizer() <qilisdk.backends.backend_config.DigitalMethod.stabilizer>`
+      - |n|

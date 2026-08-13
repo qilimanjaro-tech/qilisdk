@@ -21,7 +21,7 @@ msgstr ""
 
 #: ../../modules/readout/readout_state.rst:2
 msgid "Full Quantum State"
-msgstr "Estat Quàntic Complet"
+msgstr "Estat quàntic complet"
 
 #: ../../modules/readout/readout_state.rst:4
 msgid ""
@@ -51,7 +51,7 @@ msgstr ""
 
 #: ../../modules/readout/readout_state.rst:28
 msgid "**When to Use It**"
-msgstr "**Quan Utilitzar-lo**"
+msgstr "**Quan utilitzar-lo**"
 
 #: ../../modules/readout/readout_state.rst:30
 msgid ""
