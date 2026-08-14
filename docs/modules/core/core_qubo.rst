@@ -120,7 +120,8 @@ Example: Slack Penalization
 .. code-block:: python
 
     from qilisdk.core.model import QUBO, ObjectiveSense
-    from qilisdk.core.variables import BinaryVariable, LEQ
+    from qilisdk.core.comparison import LEQ
+    from qilisdk.core.variables import BinaryVariable
 
     b, b2 = BinaryVariable("b"), BinaryVariable("b2")
     model = QUBO("slack_example")
@@ -133,7 +134,7 @@ Example: Slack Penalization
 
 **Output**::
 
-    obj: 11 + b2 + 2 * b + 10 * (-1 * b + -1 * c1_slack(0) + 2 * b * c1_slack(0) + 4 * b * b2 + 4 * b2 * c1_slack(0))
+    obj: 11 + b2 + 2 * b + 10 * (-b - c1_slack(0) + 2 * b * c1_slack(0) + 4 * b * b2 + 4 * b2 * c1_slack(0))
 
 |
 
@@ -143,7 +144,8 @@ Example: Unbalanced Penalization
 .. code-block:: python
 
     from qilisdk.core.model import QUBO, ObjectiveSense
-    from qilisdk.core.variables import BinaryVariable, LEQ
+    from qilisdk.core.comparison import LEQ
+    from qilisdk.core.variables import BinaryVariable
 
     b, b2 = BinaryVariable("b"), BinaryVariable("b2")
     model = QUBO("unbalanced_penalization_example")

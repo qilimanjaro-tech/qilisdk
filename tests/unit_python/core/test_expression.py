@@ -461,3 +461,13 @@ def test_sums_print_negative_terms_with_a_minus(params):
     assert repr(-x) == "-x"
     assert repr(-2 * x) == "-2 * x"
     assert repr(-(x + y)) == "-(x + y)"
+
+
+def test_a_subtracted_sum_keeps_its_parentheses(params):
+    x, y, z = params
+    # "a - (b + c)" is not "a - b + c", so the parentheses are load bearing.
+    assert repr(x - (y + z)) == "x - (y + z)"
+    assert repr(x - (y + 1)) == "x - (1 + y)"
+    # and the printed form still agrees with what the expression evaluates to
+    expr = x - (y + z)
+    assert expr.evaluate({x: 5.0, y: 2.0, z: 1.0}) == 5.0 - (2.0 + 1.0)

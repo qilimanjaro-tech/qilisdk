@@ -34,12 +34,12 @@ For example:
     e1: 3 + 2 * x
     e2: 4 + 2 * x + 3 * x**2
     e3: -1 + b + 2 * x
-    e4: 3 + -1 * (4 + 2 * x + 3 * x**2) + 2 * x
+    e4: 3 - (4 + 2 * x + 3 * x**2) + 2 * x
 
 Construction *canonicalizes* the expression (flattening nested sums/products, combining like terms
 and powers, folding constants, ordering operands deterministically), which is why the numeric
 constant is printed first and ``x + y`` equals ``y + x``. Canonicalization is intentionally cheap:
-products are **not** distributed over sums, so ``e4`` keeps the factored ``-1 * (4 + 2 * x + 3 * x**2)``
+products are **not** distributed over sums, so ``e4`` keeps the factored ``- (4 + 2 * x + 3 * x**2)``
 sub-expression. Use :meth:`~qilisdk.core.expression.Expression.expand` to distribute, and
 :meth:`~qilisdk.core.expression.Expression.simplify` to request a simpler (but semantically equal) form:
 
@@ -51,7 +51,7 @@ sub-expression. Use :meth:`~qilisdk.core.expression.Expression.expand` to distri
 
 ::
 
-    -1 + -3 * x**2
+    -1 - 3 * x**2
 
 Expressions can be evaluated by providing values for the involved variables via
 :meth:`~qilisdk.core.expression.Expression.evaluate`:
@@ -249,7 +249,8 @@ Example:
 
 .. code-block:: python
 
-    from qilisdk.core.variables import BinaryVariable, LT
+    from qilisdk.core.comparison import LT
+    from qilisdk.core.variables import BinaryVariable
     x = BinaryVariable("x")
     print(LT(2 * x - 1, 1))
 

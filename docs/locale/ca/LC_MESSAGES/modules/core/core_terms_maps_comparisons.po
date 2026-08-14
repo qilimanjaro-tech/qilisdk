@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-16 12:04+0200\n"
+"POT-Creation-Date: 2026-08-14 16:25+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -20,216 +20,344 @@ msgstr ""
 "Generated-By: Babel 2.18.0\n"
 
 #: ../../modules/core/core_terms_maps_comparisons.rst:2
-msgid "Terms, Maps and Comparisons"
-msgstr "Termes, mapes i comparacions"
+msgid "Expressions, Functions and Comparisons"
+msgstr "Expressions, funcions i comparacions"
 
 #: ../../modules/core/core_terms_maps_comparisons.rst:5
-msgid "Terms"
-msgstr "Termes"
+msgid "Expressions"
+msgstr "Expressions"
 
 #: ../../modules/core/core_terms_maps_comparisons.rst:7
 msgid ""
 ":class:`Variables<qilisdk.core.variables.Variable>` can be combined "
-"algebraically to form expressions known as "
-":class:`Terms<qilisdk.core.variables.Term>`. For example:"
+"algebraically with the usual Python operators (``+``, ``-``, ``*``, "
+"``/``, ``**``) to build a symbolic "
+":class:`~qilisdk.core.expression.Expression`. Every leaf (a variable, "
+"parameter or numeric constant) and every operator node "
+"(:class:`~qilisdk.core.expression.Add`, "
+":class:`~qilisdk.core.expression.Mul`, "
+":class:`~qilisdk.core.expression.Pow`) is itself an ``Expression``, so "
+"expressions compose freely. For example:"
 msgstr ""
-"Les :class:`Variables<qilisdk.core.variables.Variable>` es poden combinar"
-" algebraicament per formar expressions conegudes com a "
-":class:`Termes<qilisdk.core.variables.Term>`. Per exemple:"
+"Les :class:`variables<qilisdk.core.variables.Variable>` es poden combinar "
+"algebraicament amb els operadors habituals de Python (``+``, ``-``, ``*``, "
+"``/``, ``**``) per construir una "
+":class:`~qilisdk.core.expression.Expression` simbòlica. Cada fulla (una "
+"variable, un paràmetre o una constant numèrica) i cada node operador "
+"(:class:`~qilisdk.core.expression.Add`, "
+":class:`~qilisdk.core.expression.Mul`, "
+":class:`~qilisdk.core.expression.Pow`) és en si mateix una ``Expression``, "
+"de manera que les expressions es componen lliurement. Per exemple:"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:26
-#: ../../modules/core/core_terms_maps_comparisons.rst:44
-#: ../../modules/core/core_terms_maps_comparisons.rst:135
+#: ../../modules/core/core_terms_maps_comparisons.rst:30
+#: ../../modules/core/core_terms_maps_comparisons.rst:50
+#: ../../modules/core/core_terms_maps_comparisons.rst:66
+#: ../../modules/core/core_terms_maps_comparisons.rst:98
+#: ../../modules/core/core_terms_maps_comparisons.rst:134
+#: ../../modules/core/core_terms_maps_comparisons.rst:158
+#: ../../modules/core/core_terms_maps_comparisons.rst:200
+#: ../../modules/core/core_terms_maps_comparisons.rst:257
 msgid "**Output**:"
 msgstr "**Sortida**:"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:35
-msgid "Terms can be evaluated by providing values for the involved variables:"
-msgstr ""
-"Els termes es poden avaluar proporcionant valors per a les variables "
-"implicades:"
-
-#: ../../modules/core/core_terms_maps_comparisons.rst:52
+#: ../../modules/core/core_terms_maps_comparisons.rst:39
 msgid ""
-"To evaluate a term, all participating variables must be assigned valid "
-"values within their respective domains and bounds."
+"Construction *canonicalizes* the expression (flattening nested "
+"sums/products, combining like terms and powers, folding constants, "
+"ordering operands deterministically), which is why the numeric constant "
+"is printed first and ``x + y`` equals ``y + x``. Canonicalization is "
+"intentionally cheap: products are **not** distributed over sums, so "
+"``e4`` keeps the factored ``- (4 + 2 * x + 3 * x**2)`` sub-expression. "
+"Use :meth:`~qilisdk.core.expression.Expression.expand` to distribute, and"
+" :meth:`~qilisdk.core.expression.Expression.simplify` to request a "
+"simpler (but semantically equal) form:"
 msgstr ""
-"Per avaluar un terme, a totes les variables participants se'ls han "
-"d'assignar valors vàlids dins dels seus dominis i límits respectius."
+"La construcció *canonitza* l'expressió (aplanant sumes i productes "
+"imbricats, combinant termes i potències semblants, plegant constants i "
+"ordenant els operands de manera determinista), i per això la constant "
+"numèrica s'imprimeix primer i ``x + y`` és igual a ``y + x``. La "
+"canonització és deliberadament barata: els productes **no** es "
+"distribueixen sobre les sumes, així que ``e4`` conserva la subexpressió "
+"factoritzada ``- (4 + 2 * x + 3 * x**2)``. Utilitzeu "
+":meth:`~qilisdk.core.expression.Expression.expand` per distribuir i "
+":meth:`~qilisdk.core.expression.Expression.simplify` per demanar una forma "
+"més simple (però semànticament igual):"
 
 #: ../../modules/core/core_terms_maps_comparisons.rst:56
-msgid "Mathematical Maps"
-msgstr "Mapes matemàtics"
-
-#: ../../modules/core/core_terms_maps_comparisons.rst:58
 msgid ""
-"Use :class:`~qilisdk.core.variables.MathematicalMap` helpers to apply "
-"common functions to a parameter or term while keeping expressions "
-"symbolic. Each wraps a :class:`~qilisdk.core.variables.Parameter`, "
-":class:`~qilisdk.core.variables.Term`, or any other base variable and "
-"defers evaluation until values are provided."
+"Expressions can be evaluated by providing values for the involved "
+"variables via :meth:`~qilisdk.core.expression.Expression.evaluate`:"
 msgstr ""
-"Utilitzeu els auxiliars :class:`~qilisdk.core.variables.MathematicalMap` "
-"per aplicar funcions habituals a un paràmetre o terme mantenint les "
-"expressions simbòliques. Cada un embolica un "
-":class:`~qilisdk.core.variables.Parameter`, un "
-":class:`~qilisdk.core.variables.Term`, o qualsevol altra variable base i "
-"difereix l'avaluació fins que es proporcionin valors."
+"Les expressions es poden avaluar proporcionant valors per a les variables "
+"implicades mitjançant "
+":meth:`~qilisdk.core.expression.Expression.evaluate`:"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:76
+#: ../../modules/core/core_terms_maps_comparisons.rst:74
 msgid ""
-"These maps compose naturally with other terms, so you can include them in"
-" constraints or objectives and rely on the same evaluation and encoding "
-"rules as other symbolic expressions."
+"To evaluate an expression, all participating variables must be assigned "
+"valid values within their respective domains and bounds."
 msgstr ""
-"Aquests mapes es composen de forma natural amb altres termes, de manera "
-"que podeu incloure'ls en restriccions o objectius i confiar en les "
-"mateixes regles d'avaluació i codificació que les altres expressions "
-"simbòliques."
+"Per avaluar una expressió, a totes les variables participants se'ls han "
+"d'assignar valors vàlids dins dels seus dominis i límits respectius."
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:80
-msgid "The list of possible mathematical maps includes:"
-msgstr "La llista de mapes matemàtics possibles inclou:"
+#: ../../modules/core/core_terms_maps_comparisons.rst:77
+msgid "Inspecting and differentiating expressions"
+msgstr "Inspeccionar i derivar expressions"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:82
-msgid ":class:`~qilisdk.core.variables.Abs` for absolute value"
-msgstr ":class:`~qilisdk.core.variables.Abs` per al valor absolut"
-
-#: ../../modules/core/core_terms_maps_comparisons.rst:83
-msgid ":class:`~qilisdk.core.variables.Exp` for exponential"
-msgstr ":class:`~qilisdk.core.variables.Exp` per a l'exponencial"
-
-#: ../../modules/core/core_terms_maps_comparisons.rst:84
-msgid ":class:`~qilisdk.core.variables.Log` for logarithm"
-msgstr ":class:`~qilisdk.core.variables.Log` per al logaritme"
-
-#: ../../modules/core/core_terms_maps_comparisons.rst:85
-msgid ":class:`~qilisdk.core.variables.Pow` for power functions"
-msgstr ":class:`~qilisdk.core.variables.Pow` per a les funcions de potència"
-
-#: ../../modules/core/core_terms_maps_comparisons.rst:86
-msgid ":class:`~qilisdk.core.variables.Sqrt` for square root"
-msgstr ":class:`~qilisdk.core.variables.Sqrt` per a l'arrel quadrada"
-
-#: ../../modules/core/core_terms_maps_comparisons.rst:87
-msgid ":class:`~qilisdk.core.variables.Inv` for inverse"
-msgstr ":class:`~qilisdk.core.variables.Inv` per a la inversa"
-
-#: ../../modules/core/core_terms_maps_comparisons.rst:88
-msgid ":class:`~qilisdk.core.variables.Sin` for sine"
-msgstr ":class:`~qilisdk.core.variables.Sin` per al sinus"
-
-#: ../../modules/core/core_terms_maps_comparisons.rst:89
-msgid ":class:`~qilisdk.core.variables.Cos` for cosine"
-msgstr ":class:`~qilisdk.core.variables.Cos` per al cosinus"
-
-#: ../../modules/core/core_terms_maps_comparisons.rst:90
-msgid ":class:`~qilisdk.core.variables.Tan` for tangent"
-msgstr ":class:`~qilisdk.core.variables.Tan` per a la tangent"
-
-#: ../../modules/core/core_terms_maps_comparisons.rst:93
-msgid "Comparison Terms"
-msgstr "Termes de comparació"
-
-#: ../../modules/core/core_terms_maps_comparisons.rst:95
+#: ../../modules/core/core_terms_maps_comparisons.rst:79
 msgid ""
-"Each :class:`~qilisdk.core.variables.ComparisonTerm` defines a constraint"
-" using mathematical comparisons. Use the following operators to construct"
-" them:"
+"An :class:`~qilisdk.core.expression.Expression` exposes a small "
+"introspection API. You can list the named leaves it depends on, isolate "
+"just the free :class:`~qilisdk.core.variables.Parameter` leaves, read its"
+" polynomial :attr:`~qilisdk.core.expression.Expression.degree`, and take "
+"a symbolic derivative with "
+":meth:`~qilisdk.core.expression.Expression.diff`:"
 msgstr ""
-"Cada :class:`~qilisdk.core.variables.ComparisonTerm` defineix una "
-"restricció mitjançant comparacions matemàtiques. Useu els operadors "
-"següents per construir-los:"
+"Una :class:`~qilisdk.core.expression.Expression` exposa una petita API "
+"d'introspecció. Podeu llistar les fulles amb nom de les quals depèn, "
+"aïllar únicament les fulles :class:`~qilisdk.core.variables.Parameter` "
+"lliures, llegir el seu :attr:`~qilisdk.core.expression.Expression.degree` "
+"polinòmic i calcular una derivada simbòlica amb "
+":meth:`~qilisdk.core.expression.Expression.diff`:"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:103
+#: ../../modules/core/core_terms_maps_comparisons.rst:109
+msgid "Mathematical Functions"
+msgstr "Funcions matemàtiques"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:111
+msgid ""
+"Non-polynomial operations are represented by "
+":class:`~qilisdk.core.expression.Function`, the abstract base for the "
+"unary maths functions. Its concrete subclasses "
+":class:`~qilisdk.core.expression.Sin`, "
+":class:`~qilisdk.core.expression.Cos`, "
+":class:`~qilisdk.core.expression.Exp`, "
+":class:`~qilisdk.core.expression.Log`, "
+":class:`~qilisdk.core.expression.Tan`, "
+":class:`~qilisdk.core.expression.Sqrt` and "
+":class:`~qilisdk.core.expression.Abs` each wrap a single "
+":class:`~qilisdk.core.expression.Expression` operand (a "
+":class:`~qilisdk.core.variables.Parameter`, any other variable, or a "
+"compound expression) and defer numeric evaluation until values are "
+"provided."
+msgstr ""
+"Les operacions no polinòmiques es representen amb "
+":class:`~qilisdk.core.expression.Function`, la base abstracta de les "
+"funcions matemàtiques unàries. Les seves subclasses concretes "
+":class:`~qilisdk.core.expression.Sin`, "
+":class:`~qilisdk.core.expression.Cos`, "
+":class:`~qilisdk.core.expression.Exp`, "
+":class:`~qilisdk.core.expression.Log`, "
+":class:`~qilisdk.core.expression.Tan`, "
+":class:`~qilisdk.core.expression.Sqrt` i "
+":class:`~qilisdk.core.expression.Abs` embolcallen cadascuna un únic "
+"operand :class:`~qilisdk.core.expression.Expression` (un "
+":class:`~qilisdk.core.variables.Parameter`, qualsevol altra variable o una "
+"expressió composta) i ajornen l'avaluació numèrica fins que es "
+"proporcionen valors."
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:142
+msgid ""
+"Because every function is a regular ``Expression`` node, it participates "
+"in the same algebra: it can be added to or multiplied with other "
+"expressions, differentiated symbolically (the chain rule is applied "
+"automatically), and evaluated. Wrapping a numeric constant folds eagerly "
+"to a :class:`~qilisdk.core.expression.Constant`:"
+msgstr ""
+"Com que cada funció és un node ``Expression`` normal, participa en la "
+"mateixa àlgebra: es pot sumar o multiplicar amb altres expressions, "
+"derivar simbòlicament (la regla de la cadena s'aplica automàticament) i "
+"avaluar. Embolcallar una constant numèrica es plega immediatament a una "
+":class:`~qilisdk.core.expression.Constant`:"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:166
+msgid ""
+"These functions compose naturally with the rest of the expression tree, "
+"so you can include them in constraints, objectives, or schedule "
+"coefficients and rely on the same evaluation and encoding rules as any "
+"other symbolic expression."
+msgstr ""
+"Aquestes funcions es componen de manera natural amb la resta de l'arbre "
+"d'expressions, de manera que les podeu incloure en restriccions, objectius "
+"o coeficients de schedules i es regeixen per les mateixes regles "
+"d'avaluació i codificació que qualsevol altra expressió simbòlica."
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:170
+msgid "The available function nodes are:"
+msgstr "Els nodes de funció disponibles són:"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:172
+msgid ":class:`~qilisdk.core.expression.Sin` for sine"
+msgstr ":class:`~qilisdk.core.expression.Sin` per al sinus"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:173
+msgid ":class:`~qilisdk.core.expression.Cos` for cosine"
+msgstr ":class:`~qilisdk.core.expression.Cos` per al cosinus"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:174
+msgid ":class:`~qilisdk.core.expression.Tan` for tangent"
+msgstr ":class:`~qilisdk.core.expression.Tan` per a la tangent"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:175
+msgid ":class:`~qilisdk.core.expression.Exp` for exponential"
+msgstr ":class:`~qilisdk.core.expression.Exp` per a l'exponencial"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:176
+msgid ":class:`~qilisdk.core.expression.Log` for logarithm"
+msgstr ":class:`~qilisdk.core.expression.Log` per al logaritme"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:177
+msgid ":class:`~qilisdk.core.expression.Sqrt` for square root"
+msgstr ":class:`~qilisdk.core.expression.Sqrt` per a l'arrel quadrada"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:178
+msgid ":class:`~qilisdk.core.expression.Abs` for absolute value"
+msgstr ":class:`~qilisdk.core.expression.Abs` per al valor absolut"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:180
+msgid ""
+"``Abs`` is the one function with no derivative: it is not differentiable "
+"at zero and there is no ``sign`` node to write its derivative with, so "
+":meth:`~qilisdk.core.expression.Expression.diff` raises on it."
+msgstr ""
+"``Abs`` és l'única funció sense derivada: no és derivable a zero i no "
+"existeix cap node ``sign`` amb què escriure la seva derivada, de manera "
+"que :meth:`~qilisdk.core.expression.Expression.diff` llança un error sobre "
+"ella."
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:184
+msgid ""
+"Powers are not functions. Use the ``**`` operator, which builds a "
+":class:`~qilisdk.core.expression.Pow` node and accepts a fractional or "
+"symbolic exponent. :func:`~qilisdk.core.expression.Inv` is a shorthand "
+"for ``x ** -1``, so ``Inv(x)``, ``1 / x`` and ``x ** -1`` are all the "
+"same expression:"
+msgstr ""
+"Les potències no són funcions. Utilitzeu l'operador ``**``, que construeix "
+"un node :class:`~qilisdk.core.expression.Pow` i admet un exponent "
+"fraccionari o simbòlic. :func:`~qilisdk.core.expression.Inv` és una "
+"abreviatura de ``x ** -1``, així que ``Inv(x)``, ``1 / x`` i ``x ** -1`` "
+"són totes la mateixa expressió:"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:208
+msgid ""
+"To write your own function, subclass "
+":class:`~qilisdk.core.expression.Function` with a ``NAME``, a numeric "
+"kernel and a derivative. Everything else (canonicalization, equality, "
+"``diff``, ``expand``, ``substitute``, serialization) comes from the base "
+"class."
+msgstr ""
+"Per escriure la vostra pròpia funció, creeu una subclasse de "
+":class:`~qilisdk.core.expression.Function` amb un ``NAME``, un nucli "
+"numèric i una derivada. Tota la resta (canonització, igualtat, ``diff``, "
+"``expand``, ``substitute``, serialització) la proporciona la classe base."
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:213
+msgid "Comparisons"
+msgstr "Comparacions"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:215
+msgid ""
+"A :class:`~qilisdk.core.comparison.Comparison` relates two expressions "
+"and is what a :class:`~qilisdk.core.model.Constraint` is built from. It "
+"is not an ``Expression`` itself. Use the following operators to construct"
+" one:"
+msgstr ""
+"Una :class:`~qilisdk.core.comparison.Comparison` relaciona dues "
+"expressions i és allò a partir del qual es construeix una "
+":class:`~qilisdk.core.model.Constraint`. No és una ``Expression`` en si "
+"mateixa. Utilitzeu els operadors següents per construir-ne una:"
+
+#: ../../modules/core/core_terms_maps_comparisons.rst:224
 msgid "Comparison Operation"
 msgstr "Operació de comparació"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:104
+#: ../../modules/core/core_terms_maps_comparisons.rst:225
 msgid "QiliSDK Method"
 msgstr "Mètode QiliSDK"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:105
+#: ../../modules/core/core_terms_maps_comparisons.rst:226
 msgid "Alias"
 msgstr "Àlies"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:106
+#: ../../modules/core/core_terms_maps_comparisons.rst:227
 msgid "Equality"
 msgstr "Igualtat"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:107
-msgid ":meth:`Equal(lhs, rhs)<qilisdk.core.variables.Equal>`"
-msgstr ":meth:`Equal(lhs, rhs)<qilisdk.core.variables.Equal>`"
+#: ../../modules/core/core_terms_maps_comparisons.rst:228
+msgid ":meth:`Equal(lhs, rhs)<qilisdk.core.comparison.Equal>`"
+msgstr ":meth:`Equal(lhs, rhs)<qilisdk.core.comparison.Equal>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:108
-msgid ":meth:`EQ(lhs, rhs)<qilisdk.core.variables.EQ>`"
-msgstr ":meth:`EQ(lhs, rhs)<qilisdk.core.variables.EQ>`"
+#: ../../modules/core/core_terms_maps_comparisons.rst:229
+msgid ":meth:`EQ(lhs, rhs)<qilisdk.core.comparison.EQ>`"
+msgstr ":meth:`EQ(lhs, rhs)<qilisdk.core.comparison.EQ>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:109
+#: ../../modules/core/core_terms_maps_comparisons.rst:230
 msgid "Not Equal"
 msgstr "Diferent de"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:110
-msgid ":meth:`NotEqual(lhs, rhs)<qilisdk.core.variables.NotEqual>`"
-msgstr ":meth:`NotEqual(lhs, rhs)<qilisdk.core.variables.NotEqual>`"
+#: ../../modules/core/core_terms_maps_comparisons.rst:231
+msgid ":meth:`NotEqual(lhs, rhs)<qilisdk.core.comparison.NotEqual>`"
+msgstr ":meth:`NotEqual(lhs, rhs)<qilisdk.core.comparison.NotEqual>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:111
-msgid ":meth:`NEQ(lhs, rhs)<qilisdk.core.variables.NEQ>`"
-msgstr ":meth:`NEQ(lhs, rhs)<qilisdk.core.variables.NEQ>`"
+#: ../../modules/core/core_terms_maps_comparisons.rst:232
+msgid ":meth:`NEQ(lhs, rhs)<qilisdk.core.comparison.NEQ>`"
+msgstr ":meth:`NEQ(lhs, rhs)<qilisdk.core.comparison.NEQ>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:112
+#: ../../modules/core/core_terms_maps_comparisons.rst:233
 msgid "Less Than"
 msgstr "Menor que"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:113
-msgid ":meth:`LessThan(lhs, rhs)<qilisdk.core.variables.LessThan>`"
-msgstr ":meth:`LessThan(lhs, rhs)<qilisdk.core.variables.LessThan>`"
+#: ../../modules/core/core_terms_maps_comparisons.rst:234
+msgid ":meth:`LessThan(lhs, rhs)<qilisdk.core.comparison.LessThan>`"
+msgstr ":meth:`LessThan(lhs, rhs)<qilisdk.core.comparison.LessThan>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:114
-msgid ":meth:`LT(lhs, rhs)<qilisdk.core.variables.LT>`"
-msgstr ":meth:`LT(lhs, rhs)<qilisdk.core.variables.LT>`"
+#: ../../modules/core/core_terms_maps_comparisons.rst:235
+msgid ":meth:`LT(lhs, rhs)<qilisdk.core.comparison.LT>`"
+msgstr ":meth:`LT(lhs, rhs)<qilisdk.core.comparison.LT>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:115
+#: ../../modules/core/core_terms_maps_comparisons.rst:236
 msgid "Less Than or Equal"
 msgstr "Menor o igual que"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:116
-msgid ":meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.variables.LessThanOrEqual>`"
-msgstr ":meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.variables.LessThanOrEqual>`"
+#: ../../modules/core/core_terms_maps_comparisons.rst:237
+msgid ":meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.comparison.LessThanOrEqual>`"
+msgstr ""
+":meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.comparison.LessThanOrEqual>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:117
-msgid ":meth:`LEQ(lhs, rhs)<qilisdk.core.variables.LEQ>`"
-msgstr ":meth:`LEQ(lhs, rhs)<qilisdk.core.variables.LEQ>`"
+#: ../../modules/core/core_terms_maps_comparisons.rst:238
+msgid ":meth:`LEQ(lhs, rhs)<qilisdk.core.comparison.LEQ>`"
+msgstr ":meth:`LEQ(lhs, rhs)<qilisdk.core.comparison.LEQ>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:118
+#: ../../modules/core/core_terms_maps_comparisons.rst:239
 msgid "Greater Than"
 msgstr "Major que"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:119
-msgid ":meth:`GreaterThan(lhs, rhs)<qilisdk.core.variables.GreaterThan>`"
-msgstr ":meth:`GreaterThan(lhs, rhs)<qilisdk.core.variables.GreaterThan>`"
+#: ../../modules/core/core_terms_maps_comparisons.rst:240
+msgid ":meth:`GreaterThan(lhs, rhs)<qilisdk.core.comparison.GreaterThan>`"
+msgstr ":meth:`GreaterThan(lhs, rhs)<qilisdk.core.comparison.GreaterThan>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:120
-msgid ":meth:`GT(lhs, rhs)<qilisdk.core.variables.GT>`"
-msgstr ":meth:`GT(lhs, rhs)<qilisdk.core.variables.GT>`"
+#: ../../modules/core/core_terms_maps_comparisons.rst:241
+msgid ":meth:`GT(lhs, rhs)<qilisdk.core.comparison.GT>`"
+msgstr ":meth:`GT(lhs, rhs)<qilisdk.core.comparison.GT>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:121
+#: ../../modules/core/core_terms_maps_comparisons.rst:242
 msgid "Greater Than or Equal"
 msgstr "Major o igual que"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:122
+#: ../../modules/core/core_terms_maps_comparisons.rst:243
 msgid ""
 ":meth:`GreaterThanOrEqual(lhs, "
-"rhs)<qilisdk.core.variables.GreaterThanOrEqual>`"
+"rhs)<qilisdk.core.comparison.GreaterThanOrEqual>`"
 msgstr ""
 ":meth:`GreaterThanOrEqual(lhs, "
-"rhs)<qilisdk.core.variables.GreaterThanOrEqual>`"
+"rhs)<qilisdk.core.comparison.GreaterThanOrEqual>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:123
-msgid ":meth:`GEQ(lhs, rhs)<qilisdk.core.variables.GEQ>`"
-msgstr ":meth:`GEQ(lhs, rhs)<qilisdk.core.variables.GEQ>`"
+#: ../../modules/core/core_terms_maps_comparisons.rst:244
+msgid ":meth:`GEQ(lhs, rhs)<qilisdk.core.comparison.GEQ>`"
+msgstr ":meth:`GEQ(lhs, rhs)<qilisdk.core.comparison.GEQ>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:125
+#: ../../modules/core/core_terms_maps_comparisons.rst:246
 msgid ""
 "*Note*: `lhs` and `rhs` refer to the left-hand side and right-hand side "
 "expressions, respectively."
@@ -237,11 +365,11 @@ msgstr ""
 "*Nota*: `lhs` i `rhs` fan referència a les expressions del costat "
 "esquerre i del costat dret, respectivament."
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:127
+#: ../../modules/core/core_terms_maps_comparisons.rst:248
 msgid "Example:"
 msgstr "Exemple:"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:141
+#: ../../modules/core/core_terms_maps_comparisons.rst:263
 msgid ""
 "When a comparison term is created, constants are automatically moved to "
 "the right-hand side, and variable terms to the left-hand side."
@@ -249,4 +377,59 @@ msgstr ""
 "Quan es crea un terme de comparació, les constants es mouen "
 "automàticament al costat dret i els termes amb variables al costat "
 "esquerre."
+
+#~ msgid "Terms"
+#~ msgstr "Termes"
+
+#~ msgid ""
+#~ ":class:`Variables<qilisdk.core.variables.Variable>` can be"
+#~ " combined algebraically to form expressions"
+#~ " known as :class:`Terms<qilisdk.core.variables.Term>`."
+#~ " For example:"
+#~ msgstr ""
+#~ "Les :class:`Variables<qilisdk.core.variables.Variable>` es"
+#~ " poden combinar algebraicament per formar"
+#~ " expressions conegudes com a "
+#~ ":class:`Termes<qilisdk.core.variables.Term>`. Per exemple:"
+
+#~ msgid ""
+#~ "Use :class:`~qilisdk.core.variables.MathematicalMap` "
+#~ "helpers to apply common functions to "
+#~ "a parameter or term while keeping "
+#~ "expressions symbolic. Each wraps a "
+#~ ":class:`~qilisdk.core.variables.Parameter`, "
+#~ ":class:`~qilisdk.core.variables.Term`, or any other"
+#~ " base variable and defers evaluation "
+#~ "until values are provided."
+#~ msgstr ""
+#~ "Utilitzeu els auxiliars "
+#~ ":class:`~qilisdk.core.variables.MathematicalMap` per "
+#~ "aplicar funcions habituals a un "
+#~ "paràmetre o terme mantenint les "
+#~ "expressions simbòliques. Cada un embolica "
+#~ "un :class:`~qilisdk.core.variables.Parameter`, un "
+#~ ":class:`~qilisdk.core.variables.Term`, o qualsevol "
+#~ "altra variable base i difereix "
+#~ "l'avaluació fins que es proporcionin "
+#~ "valors."
+
+#~ msgid "The list of possible mathematical maps includes:"
+#~ msgstr "La llista de mapes matemàtics possibles inclou:"
+
+#~ msgid ":class:`~qilisdk.core.variables.Pow` for power functions"
+#~ msgstr ":class:`~qilisdk.core.variables.Pow` per a les funcions de potència"
+
+#~ msgid ":class:`~qilisdk.core.variables.Inv` for inverse"
+#~ msgstr ":class:`~qilisdk.core.variables.Inv` per a la inversa"
+
+#~ msgid ""
+#~ "Each :class:`~qilisdk.core.variables.ComparisonTerm` "
+#~ "defines a constraint using mathematical "
+#~ "comparisons. Use the following operators "
+#~ "to construct them:"
+#~ msgstr ""
+#~ "Cada :class:`~qilisdk.core.variables.ComparisonTerm` "
+#~ "defineix una restricció mitjançant "
+#~ "comparacions matemàtiques. Useu els operadors"
+#~ " següents per construir-los:"
 

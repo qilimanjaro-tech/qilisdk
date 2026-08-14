@@ -627,7 +627,12 @@ class Add(Expression):
         out = repr(self._args[0])
         for term in self._args[1:]:
             negated = _negate_for_repr(term)
-            out += f" - {negated!r}" if negated is not None else f" + {term!r}"
+            if negated is None:
+                out += f" + {term!r}"
+            else:
+                # A bare sum has to keep its parentheses: "a - (b + c)" is not "a - b + c".
+                body = f"({negated!r})" if isinstance(negated, Add) else repr(negated)
+                out += f" - {body}"
         return out
 
 
