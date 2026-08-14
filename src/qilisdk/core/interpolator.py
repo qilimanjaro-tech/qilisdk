@@ -104,6 +104,7 @@ class Interpolator(Parameterizable):
         time_dict: TimeDict,
         interpolation: Interpolation = Interpolation.LINEAR,
         nsamples: int = 100,
+        extrapolate: bool = False,
     ) -> None:
         """Initialize an interpolator over discrete points or intervals.
 
@@ -111,6 +112,10 @@ class Interpolator(Parameterizable):
             time_dict (TimeDict): Mapping from time points or intervals to coefficients or callables.
             interpolation (Interpolation): Interpolation rule between provided points (``LINEAR`` or ``STEP``).
             nsamples (int): Number of samples used to expand interval definitions.
+            extrapolate (bool): How to evaluate times outside the defined range. If ``False`` (the default) the
+                first and last coefficients are held constant outside the range, and a warning is issued the first
+                time this happens. If ``True``, the slope of the first/last linear segment is extended instead
+                (only meaningful for ``LINEAR`` interpolation).
 
         Raises:
             ValueError: If the time intervals contain a number of points different than 2.
@@ -122,6 +127,8 @@ class Interpolator(Parameterizable):
             interpolation,
         )
         self._interpolation = interpolation
+        self._extrapolate = extrapolate
+        self._warned_extrapolation = False
         self._time_dict: dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER] = {}
         self._current_time = Parameter("t", 0)
         self._total_time: float | None = None
@@ -516,6 +523,17 @@ class Interpolator(Parameterizable):
         self._cached_time[time_step * factor] = result
         return result
 
+    def _warn_no_extrapolation(self) -> None:
+        """
+        Warn (once per interpolator) that a coefficient is being evaluated outside its defined time range without extrapolation.
+        """
+        if self._warned_extrapolation or self._tlist is None or len(self._tlist) < 2:  # ruff: ignore[magic-value-comparison]
+            return
+        self._warned_extrapolation = True
+        logger.warning(
+            "[Interpolator] At least one Schedule coefficient is being assumed constant outside its defined time range."
+        )
+
     def _get_coefficient_expression_step(self, time_step: float) -> Number | Term | Parameter:
         """
         Return the step-interpolated coefficient expression for ``time_step``.
@@ -579,16 +597,18 @@ class Interpolator(Parameterizable):
         next_expr = self._time_dict[next_idx] if has_next else 0
 
         if not has_prev and has_next:
-            if len(self._tlist) == 1:
-                return next_expr
             first_idx = self._tlist[0]
+            if len(self._tlist) == 1 or not self._extrapolate:
+                self._warn_no_extrapolation()
+                return self._time_dict[first_idx]
             second_idx = self._tlist[1]
             return _linear_value(first_idx, self._time_dict[first_idx], second_idx, self._time_dict[second_idx])
 
         if not has_next and has_prev:
-            if len(self._tlist) == 1:
-                return prev_expr
             last_idx = self._tlist[-1]
+            if len(self._tlist) == 1 or not self._extrapolate:
+                self._warn_no_extrapolation()
+                return self._time_dict[last_idx]
             penultimate_idx = self._tlist[-2]
             return _linear_value(penultimate_idx, self._time_dict[penultimate_idx], last_idx, self._time_dict[last_idx])
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-06 12:26+0200\n"
+"POT-Creation-Date: 2026-08-14 13:01+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -173,7 +173,15 @@ msgstr ""
 "que reescala todos los puntos temporales preservando sus posiciones "
 "relativas."
 
-#: ../../modules/analog/analog_schedule.rst:54
+#: ../../modules/analog/analog_schedule.rst:51
+msgid ""
+"**extrapolate** (bool): Whether to extrapolate a coefficient outside its "
+"own time points."
+msgstr ""
+"**extrapolate** (bool): Si se debe extrapolar un coeficiente fuera de sus "
+"propios puntos temporales."
+
+#: ../../modules/analog/analog_schedule.rst:55
 msgid ""
 "When you place parameters on the time axis (e.g., as time points or "
 "interval endpoints), the schedule automatically constrains those "
@@ -186,15 +194,15 @@ msgstr ""
 "temporales vecinos, de modo que el orden de la línea temporal siga siendo"
 " válido."
 
-#: ../../modules/analog/analog_schedule.rst:59
+#: ../../modules/analog/analog_schedule.rst:60
 msgid "Example 1: Callable coefficients with interval sampling"
 msgstr "Ejemplo 1: Coeficientes invocables con muestreo por intervalos"
 
-#: ../../modules/analog/analog_schedule.rst:81
+#: ../../modules/analog/analog_schedule.rst:82
 msgid "Example 2: Step interpolation and max-time rescaling"
 msgstr "Ejemplo 2: Interpolación por pasos y reescalado del tiempo máximo"
 
-#: ../../modules/analog/analog_schedule.rst:106
+#: ../../modules/analog/analog_schedule.rst:107
 msgid ""
 "The draw function samples 1/dt points from the schedule, therefore, for "
 "an increased resolution in the plot you can reduce dt."
@@ -202,11 +210,11 @@ msgstr ""
 "La función draw muestrea 1/dt puntos del schedule; por lo tanto, para "
 "obtener mayor resolución en el gráfico se puede reducir dt."
 
-#: ../../modules/analog/analog_schedule.rst:110
+#: ../../modules/analog/analog_schedule.rst:111
 msgid "Parameterized Schedules"
 msgstr "Schedules parametrizados"
 
-#: ../../modules/analog/analog_schedule.rst:112
+#: ../../modules/analog/analog_schedule.rst:113
 msgid ""
 ":class:`~qilisdk.analog.schedule.Schedule` coefficients can be symbolic, "
 "enabling classical optimization loops or experiments that scan over a "
@@ -224,7 +232,7 @@ msgstr ""
 "construidas a partir de parámetros. El schedule registra cada parámetro "
 "que encuentra para que pueda consultarlos o modificarlos posteriormente."
 
-#: ../../modules/analog/analog_schedule.rst:142
+#: ../../modules/analog/analog_schedule.rst:143
 msgid ""
 "For schedules, Hamiltonians, and interpolators, use ``get_parameters`` "
 "and related accessor methods to inspect parameter state."
@@ -233,11 +241,11 @@ msgstr ""
 "los métodos de acceso relacionados para inspeccionar el estado de los "
 "parámetros."
 
-#: ../../modules/analog/analog_schedule.rst:147
+#: ../../modules/analog/analog_schedule.rst:148
 msgid "Visualizing Schedules"
 msgstr "Visualización de schedules"
 
-#: ../../modules/analog/analog_schedule.rst:149
+#: ../../modules/analog/analog_schedule.rst:150
 msgid ""
 "Whilst :meth:`Schedule.draw()<qilisdk.analog.schedule.Schedule.draw>` is "
 "useful for visualizing the coefficients of the Hamiltonians over time, "
@@ -260,7 +268,7 @@ msgstr ""
 " la separación entre el estado fundamental y el primer estado excitado. "
 "Por ejemplo:"
 
-#: ../../modules/analog/analog_schedule.rst:175
+#: ../../modules/analog/analog_schedule.rst:176
 msgid ""
 "If we start in the ground state of the driver Hamiltonian (the bottom "
 "line, at the very left) and then evolve slowly, we should end up in the "
@@ -269,12 +277,12 @@ msgid ""
 "states in the plot:"
 msgstr ""
 "Si comenzamos en el estado fundamental del Hamiltoniano conductor (la "
-"línea inferior, en el extremo izquierdo) y luego evolucionamos lentamente,"
-" deberíamos terminar en el estado fundamental del Hamiltoniano de problema"
-" (en el extremo derecho). Para comprobarlo, podemos simular la evolución y"
-" luego incluir los estados intermedios en el gráfico:"
+"línea inferior, en el extremo izquierdo) y luego evolucionamos "
+"lentamente, deberíamos terminar en el estado fundamental del Hamiltoniano"
+" de problema (en el extremo derecho). Para comprobarlo, podemos simular "
+"la evolución y luego incluir los estados intermedios en el gráfico:"
 
-#: ../../modules/analog/analog_schedule.rst:210
+#: ../../modules/analog/analog_schedule.rst:211
 msgid ""
 "Here we can see that the state correctly started in the ground state of "
 "the initial Hamiltonian, and then evolved to the ground state of the "
@@ -291,4 +299,34 @@ msgstr ""
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Ir a un subtítulo específico de una página."
+
+#~ msgid ""
+#~ "**extrapolate** (bool): How to evaluate "
+#~ "a coefficient outside its own time "
+#~ "points. The total time of a "
+#~ "schedule is the maximum over all "
+#~ "of its coefficients, so a coefficient"
+#~ " whose last time point comes earlier"
+#~ " than that is sampled outside its "
+#~ "own range. By default (``False``) its"
+#~ " first and last values are held "
+#~ "constant there, and a warning is "
+#~ "issued the first time it happens. "
+#~ "With ``True``, the first and last "
+#~ "linear segments are extended instead."
+#~ msgstr ""
+#~ "**extrapolate** (bool): Cómo se evalúa "
+#~ "un coeficiente fuera de sus propios "
+#~ "puntos temporales. El tiempo total de"
+#~ " un schedule es el máximo de "
+#~ "todos sus coeficientes, por lo que "
+#~ "un coeficiente cuyo último punto "
+#~ "temporal llega antes se muestrea fuera"
+#~ " de su propio rango. Por defecto "
+#~ "(``False``) sus valores inicial y final"
+#~ " se mantienen constantes en esa zona,"
+#~ " y se emite un aviso la primera"
+#~ " vez que ocurre. Con ``True``, se "
+#~ "extienden los segmentos lineales inicial "
+#~ "y final."
 

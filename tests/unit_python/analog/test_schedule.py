@@ -895,3 +895,32 @@ def test_schedule_without_max_time_throws():
     H2 = PauliZ(0).to_hamiltonian()
     with pytest.raises(ValueError, match=r"Total time must be provided at initialization."):
         Schedule(dt=1, hamiltonians={"driver": H1, "problem": H2})
+
+
+def _driver_problem_schedule(**kwargs) -> Schedule:
+    return Schedule(
+        hamiltonians={"driver": PauliX(0).to_hamiltonian(), "problem": PauliZ(0).to_hamiltonian()},
+        coefficients={"driver": {0.0: 1.0, 2.0: 0.0}, "problem": {0.0: 0.0, 10.0: 1.0}},
+        dt=1.0,
+        **kwargs,
+    )
+
+
+def test_schedule_holds_coefficients_defined_over_a_shorter_window(monkeypatch):
+    """A coefficient that ends before T stays at its final value instead of being extrapolated."""
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    sched = _driver_problem_schedule()
+
+    assert _isclose(sched.coefficients["driver"][4.0], 0.0)
+    assert _isclose(sched.coefficients["driver"][10.0], 0.0)
+    assert sched[10.0] == PauliZ(0).to_hamiltonian()
+    assert any("assumed constant outside its defined time range" in w for w in warnings)
+
+
+def test_schedule_extrapolate_extends_the_last_segment():
+    sched = _driver_problem_schedule(extrapolate=True)
+
+    assert _isclose(sched.coefficients["driver"][4.0], -1.0)
+    assert _isclose(sched.coefficients["driver"][10.0], -4.0)
