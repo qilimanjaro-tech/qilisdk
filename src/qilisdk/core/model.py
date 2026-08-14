@@ -23,20 +23,10 @@ from loguru import logger
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
+from .comparison import EQ, GEQ, LEQ, Comparison, ComparisonOperation
 from .expression import Add, Constant, Expression, Mul, Pow
 from .types import Number, QiliEnum, RealNumber
-from .variables import (
-    EQ,
-    GEQ,
-    LEQ,
-    BaseVariable,
-    BinaryVariable,
-    Bitwise,
-    ComparisonOperation,
-    ComparisonTerm,
-    Domain,
-    Variable,
-)
+from .variables import BaseVariable, BinaryVariable, Bitwise, Domain, Variable
 
 if TYPE_CHECKING:
     from qilisdk.analog.hamiltonian import Hamiltonian
@@ -181,20 +171,20 @@ class Constraint:
             constraint = Constraint("limit", LEQ(x, 1))
     """
 
-    def __init__(self, label: str, term: ComparisonTerm) -> None:
+    def __init__(self, label: str, term: Comparison) -> None:
         """
         Build a constraint defined by a comparison term such as ``x + y <= 2``.
 
         Args:
             label (str): The constraint's label.
-            term (ComparisonTerm): The comparison term that defines the constraint.
+            term (Comparison): The comparison term that defines the constraint.
 
         Raises:
             ValueError: if the term provided is not a ConstraintTerm.
         """
         self._label = label
-        if not isinstance(term, ComparisonTerm):
-            raise ValueError(f"the parameter term is expecting a {ComparisonTerm} but received {term.__class__}")
+        if not isinstance(term, Comparison):
+            raise ValueError(f"the parameter term is expecting a {Comparison} but received {term.__class__}")
 
         self._term = term
 
@@ -207,10 +197,10 @@ class Constraint:
         return self._label
 
     @property
-    def term(self) -> ComparisonTerm:
+    def term(self) -> Comparison:
         """
         Returns:
-            ComparisonTerm: The comparison term of the constraint object.
+            Comparison: The comparison term of the constraint object.
         """
         return self._term
 
@@ -499,14 +489,14 @@ class Model:
     def add_constraint(
         self,
         label: str,
-        term: ComparisonTerm,
+        term: Comparison,
         lagrange_multiplier: float = 100,
     ) -> None:
         """Add a constraint to the model.
 
         Args:
             label (str): constraint label.
-            term (ComparisonTerm): The constraint's comparison term.
+            term (Comparison): The constraint's comparison term.
 
         Raises:
             ValueError: if the constraint label is already used in the model.
@@ -1250,7 +1240,7 @@ class _Linearizer:
                 counts[pair] = counts.get(pair, 0) + 1
         self._preferred_pairs.update(pair for pair, count in counts.items() if count >= 2)  # ruff: ignore[magic-value-comparison]
 
-    def rosenberg_constraints(self) -> list[tuple[str, ComparisonTerm]]:
+    def rosenberg_constraints(self) -> list[tuple[str, Comparison]]:
         """Materialize the Rosenberg penalty constraints that pin each auxiliary to its product.
 
         One equality constraint ``P(a, b, w) = 0`` is returned per registered pair. Each penalty is
@@ -1258,9 +1248,9 @@ class _Linearizer:
         ``transform_to_qubo=False``.
 
         Returns:
-            list[tuple[str, ComparisonTerm]]: pairs of ``(label, penalty_constraint)``.
+            list[tuple[str, Comparison]]: pairs of ``(label, penalty_constraint)``.
         """
-        out: list[tuple[str, ComparisonTerm]] = []
+        out: list[tuple[str, Comparison]] = []
         for _, (a, b, w) in self._substitutions.items():
             penalty = a * b - 2 * a * w - 2 * b * w + 3 * w
             out.append((f"linearization_{w.label}", EQ(penalty, 0)))
@@ -1480,7 +1470,7 @@ class QUBO(Model):
     def _transform_constraint(
         self,
         label: str,
-        term: ComparisonTerm,
+        term: Comparison,
         penalization: Literal["unbalanced", "slack"] = "slack",
         parameters: list[float] | None = None,
     ) -> Expression | None:
@@ -1488,7 +1478,7 @@ class QUBO(Model):
 
         Args:
             label (str): the constraint's label.
-            term (ComparisonTerm): the constraint term.
+            term (Comparison): the constraint term.
             penalization (Literal[&quot;unbalanced&quot;, &quot;slack&quot;], optional): The penalization used to
                             handel inequality constraints. Defaults to "slack".
             parameters (list[float] | None, optional): the parameters used for the unbalanced penalization method.
@@ -1576,7 +1566,7 @@ class QUBO(Model):
     def add_constraint(
         self,
         label: str,
-        term: ComparisonTerm,
+        term: Comparison,
         lagrange_multiplier: float = 100,
         penalization: Literal["unbalanced", "slack"] = "slack",
         parameters: list[float] | None = None,
@@ -1587,7 +1577,7 @@ class QUBO(Model):
 
         Args:
             label (str): the constraint label.
-            term (ComparisonTerm): the constraint's comparison term.
+            term (Comparison): the constraint's comparison term.
             lagrange_multiplier (float, optional): the lagrange multiplier used to scale this constraint.
                                                     Defaults to 100.
             penalization (Literal[&quot;unbalanced&quot;, &quot;slack&quot;], optional): the penalization used to
@@ -1621,9 +1611,9 @@ class QUBO(Model):
             parameters = [1, 1] if lower_penalization == "unbalanced" else []
 
         if term.operation in {ComparisonOperation.GEQ, ComparisonOperation.GT}:
-            c = ComparisonTerm(lhs=(term.lhs - term.rhs), rhs=0, operation=term.operation)
+            c = Comparison(lhs=(term.lhs - term.rhs), rhs=0, operation=term.operation)
         elif term.operation in {ComparisonOperation.LEQ, ComparisonOperation.LT}:
-            c = ComparisonTerm(lhs=0, rhs=(term.rhs - term.lhs), operation=term.operation)
+            c = Comparison(lhs=0, rhs=(term.rhs - term.lhs), operation=term.operation)
         else:
             c = copy.copy(term)
 
@@ -1640,7 +1630,7 @@ class QUBO(Model):
         if transform_to_qubo:
             c = c.to_binary()
             if self._linearizer:
-                c = ComparisonTerm(
+                c = Comparison(
                     lhs=self._linearizer.reduce(c.lhs),
                     rhs=self._linearizer.reduce(c.rhs),
                     operation=c.operation,
@@ -1660,7 +1650,7 @@ class QUBO(Model):
                 )
             else:
                 self.lagrange_multipliers[label] = lagrange_multiplier
-            self._constraints[label] = Constraint(label, term=ComparisonTerm(transformed_c, 0, ComparisonOperation.EQ))
+            self._constraints[label] = Constraint(label, term=Comparison(transformed_c, 0, ComparisonOperation.EQ))
 
         else:
             self.lagrange_multipliers[label] = lagrange_multiplier
@@ -1698,7 +1688,7 @@ class QUBO(Model):
         term = self._reduce(term)
         self._objective = Objective(label=label, term=term, sense=sense)
 
-    def _check_variables(self, term: Expression | ComparisonTerm, lagrange_multiplier: RealNumber = 100) -> None:
+    def _check_variables(self, term: Expression | Comparison, lagrange_multiplier: RealNumber = 100) -> None:
         """checks if the variables in the provided term are valid to be used in a QUBO model. Moreover, we add all the
         encoding constraint for supported continuous variables.
 

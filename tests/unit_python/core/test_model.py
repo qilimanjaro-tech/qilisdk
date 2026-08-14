@@ -21,6 +21,7 @@ import pytest
 
 import qilisdk.core.model as model_module
 from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.comparison import EQ, GT, LEQ, LT, NEQ, Comparison, ComparisonOperation
 from qilisdk.core.expression import Constant, Expression, Sin
 from qilisdk.core.model import (
     QUBO,
@@ -32,21 +33,7 @@ from qilisdk.core.model import (
     _Linearizer,
     _validate_undirected_edges,
 )
-from qilisdk.core.variables import (
-    EQ,
-    GT,
-    LEQ,
-    LT,
-    NEQ,
-    BinaryVariable,
-    Bitwise,
-    ComparisonOperation,
-    ComparisonTerm,
-    Domain,
-    OneHot,
-    SpinVariable,
-    Variable,
-)
+from qilisdk.core.variables import BinaryVariable, Bitwise, Domain, OneHot, SpinVariable, Variable
 from qilisdk.utils.classical_solvers import BruteForceSolver
 
 
@@ -66,7 +53,7 @@ def test_slackcounter_singleton_and_increment():
 # ---------- Constraint ----------
 def test_constraint_init_and_repr():
     var = Variable("x", Domain.BINARY)
-    ct = ComparisonTerm(lhs=var, rhs=0, operation=ComparisonOperation.GEQ)
+    ct = Comparison(lhs=var, rhs=0, operation=ComparisonOperation.GEQ)
     cons = Constraint(label="c1", term=ct)
     assert cons.label == "c1"
     assert cons.term is ct
@@ -81,14 +68,14 @@ def test_constraint_init_and_repr():
 
 def test_constraint_variables():
     var = Variable("x", Domain.INTEGER)
-    ct = ComparisonTerm(lhs=var + 1, rhs=2, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var + 1, rhs=2, operation=ComparisonOperation.EQ)
     cons = Constraint(label="c1", term=ct)
     var_list = cons.variables()
     assert len(var_list) == 1
     assert var in var_list
 
     var2 = Variable("x2", Domain.INTEGER)
-    ct = ComparisonTerm(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
     cons2 = Constraint(label="c1", term=ct)
     var_list = cons2.variables()
     assert len(var_list) == 2
@@ -96,7 +83,7 @@ def test_constraint_variables():
 
 def test_constraint_copy():
     var = Variable("x", Domain.INTEGER)
-    ct = ComparisonTerm(lhs=var + 1, rhs=2, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var + 1, rhs=2, operation=ComparisonOperation.EQ)
     cons = Constraint(label="c1", term=ct)
     cons2 = copy.copy(cons)
 
@@ -158,7 +145,7 @@ def simple_model():
 def test_model_add_duplicate_constraint(simple_model):
     m = simple_model
     var = Variable("x", Domain.BINARY)
-    ct = ComparisonTerm(lhs=var, rhs=0, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var, rhs=0, operation=ComparisonOperation.EQ)
     m.add_constraint("c", ct)
     assert len(m.encoding_constraints) == 0
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
@@ -168,7 +155,7 @@ def test_model_add_duplicate_constraint(simple_model):
 def test_model_lagrange_multipliers(simple_model):
     m = simple_model
     var = Variable("x", Domain.BINARY)
-    ct = ComparisonTerm(lhs=var, rhs=0, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var, rhs=0, operation=ComparisonOperation.EQ)
     m.add_constraint("c", ct, lagrange_multiplier=10)
     assert m.lagrange_multipliers["c"] == 10
     m.set_lagrange_multiplier("c", 20)
@@ -190,7 +177,7 @@ def test_model_set_objective_and_repr(simple_model):
     assert "subject to the constraint" not in s
 
     var2 = Variable("x2", Domain.INTEGER)
-    ct = ComparisonTerm(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
     cons1 = Constraint(label="cons1", term=ct)
 
     m.add_constraint("cons1", ct)
@@ -206,7 +193,7 @@ def test_model_variables(simple_model):
     t = var + 1
 
     var2 = Variable("x2", Domain.INTEGER)
-    ct = ComparisonTerm(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
 
     m.set_objective(t)
     assert len(m.variables()) == 1
@@ -220,7 +207,7 @@ def test_model_copy(simple_model):
     t = var + 1
 
     var2 = Variable("x2", Domain.INTEGER)
-    ct = ComparisonTerm(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
 
     m.set_objective(t)
     m.add_constraint("cons1", ct)
@@ -761,7 +748,7 @@ def test_qubo_check_valid_constraint_always_feasible_and_unsat():
     q = QUBO(label="q2")
     v = BinaryVariable("b2")
     # always feasible: term 0 >= 0
-    h = ComparisonTerm(lhs=v, rhs=v, operation=ComparisonOperation.GEQ)
+    h = Comparison(lhs=v, rhs=v, operation=ComparisonOperation.GEQ)
     slack = q._check_valid_constraint("c1", h.lhs - h.rhs, h.operation)
     assert slack is None
     # unsatisfiable: v > 2
@@ -785,7 +772,7 @@ def test_qubo_check_valid_constraint_always_feasible_and_unsat():
 def test_qubo_add_constraint_and_objective_errors():
     q = QUBO(label="q3")
     x = BinaryVariable("x")
-    term = ComparisonTerm(lhs=x, rhs=0, operation=ComparisonOperation.EQ)
+    term = Comparison(lhs=x, rhs=0, operation=ComparisonOperation.EQ)
     # invalid penalization
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         q.add_constraint("c", term, penalization="bad")
@@ -794,7 +781,7 @@ def test_qubo_add_constraint_and_objective_errors():
     assert "c" in q.lagrange_multipliers
     # non-binary domain var
     y = Variable("y", Domain.INTEGER)
-    t2 = ComparisonTerm(lhs=y, rhs=0, operation=ComparisonOperation.EQ)
+    t2 = Comparison(lhs=y, rhs=0, operation=ComparisonOperation.EQ)
     q2 = QUBO(label="q4")
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         q2.add_constraint("c2", t2)
@@ -1102,7 +1089,7 @@ def test_model_evaluate():
 def test_complex_constraint_raises():
     q = QUBO(label="test")
     x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
-    complex_constraint = ComparisonTerm(lhs=2 * x + 1j, rhs=1, operation=ComparisonOperation.EQ)
+    complex_constraint = Comparison(lhs=2 * x + 1j, rhs=1, operation=ComparisonOperation.EQ)
     with pytest.raises(ValueError, match=r"Complex values"):
         q.add_constraint("c", complex_constraint)
 

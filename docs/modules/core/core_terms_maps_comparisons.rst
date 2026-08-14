@@ -209,11 +209,12 @@ To write your own function, subclass :class:`~qilisdk.core.expression.Function` 
 numeric kernel and a derivative. Everything else (canonicalization, equality, ``diff``, ``expand``,
 ``substitute``, serialization) comes from the base class.
 
-Comparison Terms
-=======================
+Comparisons
+===========
 
-Each :class:`~qilisdk.core.variables.ComparisonTerm` defines a constraint using mathematical comparisons. 
-Use the following operators to construct them:
+A :class:`~qilisdk.core.comparison.Comparison` relates two expressions and is what a
+:class:`~qilisdk.core.model.Constraint` is built from. It is not an ``Expression`` itself.
+Use the following operators to construct one:
 
 .. list-table::
    :class: longtable
@@ -224,23 +225,23 @@ Use the following operators to construct them:
      - QiliSDK Method
      - Alias
    * - Equality
-     - :meth:`Equal(lhs, rhs)<qilisdk.core.variables.Equal>`
-     - :meth:`EQ(lhs, rhs)<qilisdk.core.variables.EQ>`
+     - :meth:`Equal(lhs, rhs)<qilisdk.core.comparison.Equal>`
+     - :meth:`EQ(lhs, rhs)<qilisdk.core.comparison.EQ>`
    * - Not Equal
-     - :meth:`NotEqual(lhs, rhs)<qilisdk.core.variables.NotEqual>`
-     - :meth:`NEQ(lhs, rhs)<qilisdk.core.variables.NEQ>`
+     - :meth:`NotEqual(lhs, rhs)<qilisdk.core.comparison.NotEqual>`
+     - :meth:`NEQ(lhs, rhs)<qilisdk.core.comparison.NEQ>`
    * - Less Than
-     - :meth:`LessThan(lhs, rhs)<qilisdk.core.variables.LessThan>`
-     - :meth:`LT(lhs, rhs)<qilisdk.core.variables.LT>`
+     - :meth:`LessThan(lhs, rhs)<qilisdk.core.comparison.LessThan>`
+     - :meth:`LT(lhs, rhs)<qilisdk.core.comparison.LT>`
    * - Less Than or Equal
-     - :meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.variables.LessThanOrEqual>`
-     - :meth:`LEQ(lhs, rhs)<qilisdk.core.variables.LEQ>`
+     - :meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.comparison.LessThanOrEqual>`
+     - :meth:`LEQ(lhs, rhs)<qilisdk.core.comparison.LEQ>`
    * - Greater Than
-     - :meth:`GreaterThan(lhs, rhs)<qilisdk.core.variables.GreaterThan>`
-     - :meth:`GT(lhs, rhs)<qilisdk.core.variables.GT>`
+     - :meth:`GreaterThan(lhs, rhs)<qilisdk.core.comparison.GreaterThan>`
+     - :meth:`GT(lhs, rhs)<qilisdk.core.comparison.GT>`
    * - Greater Than or Equal
-     - :meth:`GreaterThanOrEqual(lhs, rhs)<qilisdk.core.variables.GreaterThanOrEqual>`
-     - :meth:`GEQ(lhs, rhs)<qilisdk.core.variables.GEQ>`
+     - :meth:`GreaterThanOrEqual(lhs, rhs)<qilisdk.core.comparison.GreaterThanOrEqual>`
+     - :meth:`GEQ(lhs, rhs)<qilisdk.core.comparison.GEQ>`
 
 *Note*: `lhs` and `rhs` refer to the left-hand side and right-hand side expressions, respectively.
 

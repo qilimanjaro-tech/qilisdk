@@ -22,7 +22,7 @@ Only parameters marked as trainable are optimized during this loop.
   to a scalar cost; frequently constructed from a :class:`~qilisdk.core.model.Model`.
 - **store_intermediate_results** (bool, optional): When True, the optimizer keeps the intermediate steps, which are
   exposed through :attr:`~qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results`.
-- **parameter_constraints** (list[:class:`~qilisdk.core.variables.ComparisonTerm`], optional): Constraints on functional
+- **parameter_constraints** (list[:class:`~qilisdk.core.comparison.Comparison`], optional): Constraints on functional
   parameters (e.g., ``theta >= 0.5``) evaluated before each optimizer update. This is the supported entry point for
   enforcing parameter relations in QiliSDK.
 

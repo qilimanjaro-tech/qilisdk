@@ -17,8 +17,9 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
+from qilisdk.core.comparison import EQ
 from qilisdk.core.model import Model, ObjectiveSense
-from qilisdk.core.variables import EQ, BinaryVariable, Domain, SpinVariable, Variable
+from qilisdk.core.variables import BinaryVariable, Domain, SpinVariable, Variable
 from qilisdk.utils.classical_solvers import BruteForceSolver, ClassicalSolver, ScipySolver
 from qilisdk.utils.classical_solvers.base_solver import _assert_real, _variable_bounds
 from qilisdk.utils.classical_solvers.scipy_solver import _decode_value

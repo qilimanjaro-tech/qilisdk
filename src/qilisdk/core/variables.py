@@ -18,7 +18,7 @@ The arithmetic core (``Expression`` and the operator/function nodes) lives in
 :mod:`qilisdk.core.expression`; this module defines the *leaves* of that tree -- the named
 :class:`BaseVariable` family (:class:`Parameter`, :class:`Variable`, :class:`BinaryVariable`,
 :class:`SpinVariable`) -- together with the :class:`Encoding` strategies that lower continuous
-variables to binary, and :class:`ComparisonTerm`, the (non-``Expression``) relation type produced by
+variables to binary, and :class:`Comparison`, the (non-``Expression``) relation type produced by
 the :func:`LT`/:func:`LEQ`/:func:`EQ`/:func:`NEQ`/:func:`GT`/:func:`GEQ` helpers.
 """
 
@@ -37,33 +37,20 @@ from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
 
-from .expression import _RANK_VARIABLE, Add, Constant, Expression, _coerce
+from .comparison import Comparison, ComparisonOperation
+from .expression import _RANK_VARIABLE, Add, Constant, Expression
 from .types import Number, QiliEnum, RealNumber
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
 __all__ = [
-    "EQ",
-    "GEQ",
-    "GT",
-    "LEQ",
-    "LT",
-    "NEQ",
     "BaseVariable",
     "BinaryVariable",
     "Bitwise",
-    "ComparisonOperation",
-    "ComparisonTerm",
     "Domain",
     "DomainWall",
     "Encoding",
-    "Equal",
-    "GreaterThan",
-    "GreaterThanOrEqual",
-    "LessThan",
-    "LessThanOrEqual",
-    "NotEqual",
     "OneHot",
     "Parameter",
     "SpinVariable",
@@ -73,102 +60,6 @@ __all__ = [
 MAX_INT = np.iinfo(np.int64).max
 MIN_INT = np.iinfo(np.int64).min
 LARGE_BOUND = 100
-
-
-def LT(lhs: RealNumber | Expression, rhs: RealNumber | Expression) -> ComparisonTerm:
-    """'Less Than' mathematical operation.
-
-    Args:
-        lhs (RealNumber | Expression): the left hand side of the comparison term.
-        rhs (RealNumber | Expression): the right hand side of the comparison term.
-
-    Returns:
-        ComparisonTerm: a comparison term with the structure lhs < rhs.
-    """
-    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.LT)
-
-
-LessThan = LT
-
-
-def LEQ(lhs: RealNumber | Expression, rhs: RealNumber | Expression) -> ComparisonTerm:
-    """'Less Than or equal to' mathematical operation.
-
-    Args:
-        lhs (RealNumber | Expression): the left hand side of the comparison term.
-        rhs (RealNumber | Expression): the right hand side of the comparison term.
-
-    Returns:
-        ComparisonTerm: a comparison term with the structure lhs <= rhs.
-    """
-    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.LEQ)
-
-
-LessThanOrEqual = LEQ
-
-
-def EQ(lhs: RealNumber | Expression, rhs: RealNumber | Expression) -> ComparisonTerm:
-    """'Equal to' mathematical operation.
-
-    Args:
-        lhs (RealNumber | Expression): the left hand side of the comparison term.
-        rhs (RealNumber | Expression): the right hand side of the comparison term.
-
-    Returns:
-        ComparisonTerm: a comparison term with the structure lhs == rhs.
-    """
-    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.EQ)
-
-
-Equal = EQ
-
-
-def NEQ(lhs: RealNumber | Expression, rhs: RealNumber | Expression) -> ComparisonTerm:
-    """'Not Equal to' mathematical operation.
-
-    Args:
-        lhs (RealNumber | Expression): the left hand side of the comparison term.
-        rhs (RealNumber | Expression): the right hand side of the comparison term.
-
-    Returns:
-        ComparisonTerm: a comparison term with the structure lhs != rhs.
-    """
-    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.NEQ)
-
-
-NotEqual = NEQ
-
-
-def GT(lhs: RealNumber | Expression, rhs: RealNumber | Expression) -> ComparisonTerm:
-    """'Greater Than' mathematical operation.
-
-    Args:
-        lhs (RealNumber | Expression): the left hand side of the comparison term.
-        rhs (RealNumber | Expression): the right hand side of the comparison term.
-
-    Returns:
-        ComparisonTerm: a comparison term with the structure lhs > rhs.
-    """
-    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.GT)
-
-
-GreaterThan = GT
-
-
-def GEQ(lhs: RealNumber | Expression, rhs: RealNumber | Expression) -> ComparisonTerm:
-    """'Greater Than or equal to' mathematical operation.
-
-    Args:
-        lhs (RealNumber | Expression): the left hand side of the comparison term.
-        rhs (RealNumber | Expression): the right hand side of the comparison term.
-
-    Returns:
-        ComparisonTerm: a comparison term with the structure lhs >= rhs.
-    """
-    return ComparisonTerm(lhs=lhs, rhs=rhs, operation=ComparisonOperation.GEQ)
-
-
-GreaterThanOrEqual = GEQ
 
 
 def _extract_number(label: str) -> int:
@@ -240,17 +131,6 @@ class Domain(QiliEnum):
         return 1e30
 
 
-@yaml.register_class
-class ComparisonOperation(QiliEnum):
-    LT = "<"
-    LEQ = "<="
-    EQ = "=="
-    NEQ = "!="
-    GT = ">"
-    GEQ = ">="
-
-
-@yaml.register_class
 class Encoding(ABC):
     """Abstract variable encoding: how a continuous variable is represented in binary variables."""
 
@@ -266,7 +146,7 @@ class Encoding(ABC):
 
     @staticmethod
     @abstractmethod
-    def encoding_constraint(var: Variable, precision: float = 1e-2) -> ComparisonTerm:
+    def encoding_constraint(var: Variable, precision: float = 1e-2) -> Comparison:
         """Return a constraint that ensures the encoding is respected."""
 
     @staticmethod
@@ -374,7 +254,7 @@ class Bitwise(Encoding):
         return out
 
     @staticmethod
-    def encoding_constraint(var: Variable, precision: float = 1e-2) -> ComparisonTerm:
+    def encoding_constraint(var: Variable, precision: float = 1e-2) -> Comparison:
         raise NotImplementedError("Bitwise encoding constraints are not supported at the moment")
 
     @staticmethod
@@ -466,7 +346,7 @@ class OneHot(Encoding):
         return out
 
     @staticmethod
-    def encoding_constraint(var: Variable, precision: float = 1e-2) -> ComparisonTerm:
+    def encoding_constraint(var: Variable, precision: float = 1e-2) -> Comparison:
         bounds = var.bounds
         if var.domain is Domain.REAL:
             bounds = (bounds[0] / precision, bounds[1] / precision)
@@ -474,7 +354,7 @@ class OneHot(Encoding):
         n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
 
         binary_vars = [BinaryVariable(var.label + f"({i})") for i in range(n_binary)]
-        return ComparisonTerm(lhs=sum(binary_vars, Constant(0)), rhs=1, operation=ComparisonOperation.EQ)
+        return Comparison(lhs=sum(binary_vars, Constant(0)), rhs=1, operation=ComparisonOperation.EQ)
 
     @staticmethod
     def num_binary_equivalent(var: Variable, precision: float = 1e-2) -> int:
@@ -555,7 +435,7 @@ class DomainWall(Encoding):
         return out
 
     @staticmethod
-    def encoding_constraint(var: Variable, precision: float = 1e-2) -> ComparisonTerm:
+    def encoding_constraint(var: Variable, precision: float = 1e-2) -> Comparison:
         bounds = var.bounds
         if var.domain is Domain.REAL:
             bounds = (bounds[0] / precision, bounds[1] / precision)
@@ -563,7 +443,7 @@ class DomainWall(Encoding):
         n_binary = int(np.abs(bounds[1] - bounds[0]))
 
         binary_vars = [BinaryVariable(var.label + f"({i})") for i in range(n_binary)]
-        return ComparisonTerm(
+        return Comparison(
             lhs=sum((binary_vars[i + 1] * (1 - binary_vars[i]) for i in range(len(binary_vars) - 1)), Constant(0)),
             rhs=0,
             operation=ComparisonOperation.EQ,
@@ -936,7 +816,7 @@ class Variable(BaseVariable):
         """
         return self.encoding.check_valid(binary_list)
 
-    def encoding_constraint(self) -> ComparisonTerm:
+    def encoding_constraint(self) -> Comparison:
         """Return a constraint that ensures the variable's encoding is respected."""
         return self.encoding.encoding_constraint(self, precision=self._precision)
 
@@ -1076,144 +956,3 @@ class Parameter(BaseVariable):
         if isinstance(other, (float, int)):
             return self.value > other
         return NotImplemented
-
-
-@yaml.register_class
-class ComparisonTerm:
-    """A comparison (equality or inequality) between two :class:`Expression` operands.
-
-    The relation is normalized at construction to ``lhs - rhs <op> 0`` with the additive constant
-    moved to the right-hand side (so ``lhs`` carries no constant and ``rhs`` is that constant).
-    """
-
-    def __init__(
-        self,
-        lhs: RealNumber | Expression,
-        rhs: RealNumber | Expression,
-        operation: ComparisonOperation,
-    ) -> None:
-        """Initialize a new comparison term.
-
-        Args:
-            lhs (RealNumber | Expression): the left hand side of the comparison.
-            rhs (RealNumber | Expression): the right hand side of the comparison.
-            operation (ComparisonOperation): the comparison operation.
-
-        Raises:
-            TypeError: if an operand is neither a number nor an :class:`Expression`.
-        """
-        lhs_expr = _coerce(lhs)
-        rhs_expr = _coerce(rhs)
-        if lhs_expr is None or rhs_expr is None:
-            raise TypeError("ComparisonTerm operands must be numbers or Expressions.")
-        term = lhs_expr - rhs_expr
-        const = term.get_constant()
-        self._lhs: Expression = term - Constant(const)
-        self._rhs: Expression = Constant(-const)
-        self._operation = operation
-
-    @property
-    def operation(self) -> ComparisonOperation:
-        """The comparison operation."""
-        return self._operation
-
-    @property
-    def lhs(self) -> Expression:
-        """The left hand side of the comparison term."""
-        return self._lhs
-
-    @property
-    def rhs(self) -> Expression:
-        """The right hand side of the comparison term."""
-        return self._rhs
-
-    def variables(self) -> list[BaseVariable]:
-        """Collect the unique variables in the comparison term.
-
-        Returns:
-            list[BaseVariable]: the variables, sorted by label.
-        """
-        var = set()
-        var.update(self._lhs.variables())
-        var.update(self._rhs.variables())
-        return sorted(var, key=lambda x: x.label)
-
-    @property
-    def degree(self) -> int:
-        """The maximum degree of the two sides of the comparison term."""
-        return max(self.rhs.degree, self.lhs.degree)
-
-    def to_binary(self) -> ComparisonTerm:
-        """Encode the continuous variables of both sides into binary.
-
-        Returns:
-            ComparisonTerm: the comparison term with both sides encoded into binary.
-        """
-        return ComparisonTerm(lhs=self.lhs.to_binary(), rhs=self.rhs.to_binary(), operation=self.operation)
-
-    def _apply_comparison_operation(self, v1: RealNumber, v2: RealNumber) -> bool:
-        if self.operation is ComparisonOperation.EQ:
-            return v1 == v2
-        if self.operation is ComparisonOperation.GEQ:
-            return v1 >= v2
-        if self.operation is ComparisonOperation.GT:
-            return v1 > v2
-        if self.operation is ComparisonOperation.LEQ:
-            return v1 <= v2
-        if self.operation is ComparisonOperation.LT:
-            return v1 < v2
-        if self.operation is ComparisonOperation.NEQ:
-            return v1 != v2
-        raise ValueError(f"Unsupported Operation of type {self.operation.value}")
-
-    def evaluate(self, var_values: Mapping[BaseVariable, RealNumber | list[int]]) -> bool:
-        """Evaluate the comparison given a set of variable values.
-
-        Args:
-            var_values (Mapping[BaseVariable, RealNumber | list[int]]): the variable assignment.
-
-        Returns:
-            bool: the result of the comparison.
-
-        Raises:
-            ValueError: if evaluation yields a complex value.
-        """
-        lhs = self._lhs.evaluate(var_values)
-        rhs = self._rhs.evaluate(var_values)
-        if isinstance(lhs, complex):
-            if abs(lhs.imag) > get_settings().atol:
-                raise ValueError("evaluating inequality constraints with complex values is not allowed")
-            lhs = lhs.real
-        if isinstance(rhs, complex):
-            if abs(rhs.imag) > get_settings().atol:
-                raise ValueError("evaluating inequality constraints with complex values is not allowed")
-            rhs = rhs.real
-        return self._apply_comparison_operation(lhs, rhs)
-
-    def __getstate__(self) -> dict:
-        return {"_lhs": self._lhs, "_rhs": self._rhs, "_operation": self._operation}
-
-    def __setstate__(self, state: dict) -> None:
-        self.__dict__.update(state)
-
-    def __copy__(self) -> ComparisonTerm:
-        return ComparisonTerm(rhs=copy.copy(self.rhs), lhs=copy.copy(self.lhs), operation=self.operation)
-
-    def __repr__(self) -> str:
-        return f"{str(self.lhs).strip()} {self.operation.value} {str(self.rhs).strip()}"
-
-    __str__ = __repr__
-
-    def __bool__(self) -> bool:
-        raise TypeError(
-            "Symbolic Constraint Term objects do not have an inherent truth value. "
-            "Use a method like .evaluate() to obtain a Boolean value."
-        )
-
-    def __hash__(self) -> int:
-        return qili_hash(self._lhs, self.operation.value, self._rhs)
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, ComparisonTerm):
-            return False
-        return hash(self) == hash(other)

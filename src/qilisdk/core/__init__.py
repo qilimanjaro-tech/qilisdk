@@ -12,6 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from .comparison import (
+    EQ,
+    GEQ,
+    GT,
+    LEQ,
+    LT,
+    NEQ,
+    Comparison,
+    ComparisonOperation,
+    Equal,
+    GreaterThan,
+    GreaterThanOrEqual,
+    LessThan,
+    LessThanOrEqual,
+    NotEqual,
+)
 from .expression import Abs, Add, Constant, Cos, Exp, Expression, Function, Inv, Log, Mul, Pow, Sin, Sqrt, Tan
 from .interpolator import Interpolation, Interpolator, ParameterizedNumber
 from .model import QUBO, Constraint, Model, Objective, ObjectiveSense
@@ -28,27 +44,7 @@ from .qtensor import (
     tensor_prod,
     zero,
 )
-from .variables import (
-    EQ,
-    GEQ,
-    GT,
-    LEQ,
-    LT,
-    NEQ,
-    BaseVariable,
-    BinaryVariable,
-    ComparisonTerm,
-    Domain,
-    Equal,
-    GreaterThan,
-    GreaterThanOrEqual,
-    LessThan,
-    LessThanOrEqual,
-    NotEqual,
-    Parameter,
-    SpinVariable,
-    Variable,
-)
+from .variables import BaseVariable, BinaryVariable, Domain, Parameter, SpinVariable, Variable
 
 __all__ = [
     "EQ",
@@ -62,7 +58,8 @@ __all__ = [
     "Add",
     "BaseVariable",
     "BinaryVariable",
-    "ComparisonTerm",
+    "Comparison",
+    "ComparisonOperation",
     "Constant",
     "Constraint",
     "Cos",

@@ -18,18 +18,10 @@ from pyscipopt import Model as ScipModel
 from pyscipopt.recipes.nonlinear import set_nonlinear_objective
 
 from qilisdk.core import Model
+from qilisdk.core.comparison import ComparisonOperation
 from qilisdk.core.expression import Add, Constant, Expression, Mul, Pow
 from qilisdk.core.model import ObjectiveSense
-from qilisdk.core.variables import (
-    BaseVariable,
-    BinaryVariable,
-    ComparisonOperation,
-    Domain,
-    Number,
-    RealNumber,
-    SpinVariable,
-    Variable,
-)
+from qilisdk.core.variables import BaseVariable, BinaryVariable, Domain, Number, RealNumber, SpinVariable, Variable
 
 from .base_solver import ClassicalSolver, _assert_real, _variable_bounds
 

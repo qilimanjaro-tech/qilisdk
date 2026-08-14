@@ -24,7 +24,7 @@ from qilisdk.functionals.functional import Functional, PrimitiveFunctional
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
-    from qilisdk.core.variables import ComparisonTerm
+    from qilisdk.core.comparison import Comparison
     from qilisdk.cost_functions.cost_function import CostFunction
     from qilisdk.optimizers.optimizer import Optimizer
 
@@ -46,7 +46,7 @@ class VariationalProgram(Functional):
         optimizer: Optimizer,
         cost_function: CostFunction,
         store_intermediate_results: bool = False,
-        parameter_constraints: list[ComparisonTerm] | None = None,
+        parameter_constraints: list[Comparison] | None = None,
     ) -> None:
         """
         Args:
@@ -55,7 +55,7 @@ class VariationalProgram(Functional):
             cost_function (CostFunction): Metric used to evaluate functional executions.
             store_intermediate_results (bool): Persist intermediate executions
                 if requested by the optimizer. Defaults to False.
-            parameter_constraints (list[ComparisonTerm] | None): Optional
+            parameter_constraints (list[Comparison] | None): Optional
                 constraints on parameter values that are enforced before
                 optimizer updates are applied. Defaults to None.
 
@@ -107,11 +107,11 @@ class VariationalProgram(Functional):
         """Whether intermediate execution data should be stored."""
         return self._store_intermediate_results
 
-    def get_constraints(self) -> list[ComparisonTerm]:
+    def get_constraints(self) -> list[Comparison]:
         """Return variational-program-level constraints plus those from the underlying functional.
 
         Returns:
-            list[ComparisonTerm]: Combined list of constraints from the
+            list[Comparison]: Combined list of constraints from the
                 program and the wrapped functional.
         """
         return self._parameter_constraints + self._functional.get_constraints()

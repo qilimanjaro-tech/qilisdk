@@ -19,19 +19,10 @@ pytest.importorskip("pyscipopt", reason="ScipSolver tests require the 'scip' opt
 
 from pyscipopt import Model as ScipModel
 
+from qilisdk.core.comparison import EQ, GEQ, LEQ, NEQ
 from qilisdk.core.expression import Constant, Sin
 from qilisdk.core.model import Model, ObjectiveSense
-from qilisdk.core.variables import (
-    EQ,
-    GEQ,
-    LEQ,
-    NEQ,
-    BinaryVariable,
-    Domain,
-    Parameter,
-    SpinVariable,
-    Variable,
-)
+from qilisdk.core.variables import BinaryVariable, Domain, Parameter, SpinVariable, Variable
 from qilisdk.utils.classical_solvers import ScipSolver
 from qilisdk.utils.classical_solvers.scip_solver import _decode_scip_value, _expression_to_scip_expr
 
