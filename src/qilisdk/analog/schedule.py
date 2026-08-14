@@ -348,10 +348,10 @@ class Schedule(Parameterizable):
         Returns:
             list[float]: The sampling times, of length ``T / dt + 1``.
         """
-        T = self.T
-        if T <= 0:
+        total_time = self.T
+        if total_time <= 0:
             return [0.0]
-        return list(linspace(0, T, self._nsteps(T) + 1, dtype=float))
+        return list(linspace(0, total_time, self._nsteps(total_time) + 1, dtype=float))
 
     def _nsteps(self, T: float) -> int:
         """Number of ``dt``-sized intervals that tile ``[0, T]``.
