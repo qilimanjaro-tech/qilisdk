@@ -49,7 +49,17 @@ if TYPE_CHECKING:
     from .variables import BaseVariable, Parameter
 
 _TOL = get_settings().atol
-_DIVISION_MESSAGE = "Division by zero is not allowed"
+_DIVISION_MESSAGE = "Division by zero is not allowed in an Expression."
+
+# Leading element of ``_sort_key``. It groups operands by node kind so that a canonical ``Add`` or
+# ``Mul`` always lists constants first, then symbols, then compound nodes, whatever order the user
+# wrote them in. The exact numbers only matter relative to each other.
+_RANK_CONSTANT = 0
+_RANK_VARIABLE = 1  # assigned by BaseVariable in qilisdk.core.variables
+_RANK_POW = 2
+_RANK_MUL = 3
+_RANK_ADD = 4
+_RANK_FUNCTION = 5
 
 
 def _float_if_real(value: Number) -> Number:
@@ -204,6 +214,22 @@ def _rebuild_power_factors(powers: dict[Expression, Expression]) -> list[Express
     return factors
 
 
+def _negate_for_repr(term: Expression) -> Expression | None:
+    """Flip the sign of a negative term so a sum can print ``a - b`` instead of ``a + -b``.
+
+    Only called for the terms after the first. A sum holds at most one :class:`Constant` and it
+    sorts first, so anything reaching here with a negative sign is a :class:`Mul`.
+
+    Returns:
+        Expression | None: the positive form of ``term``, or ``None`` if ``term`` is not negative.
+    """
+    if isinstance(term, Mul):
+        coefficient = term.coefficient()
+        if isinstance(coefficient, RealNumber) and coefficient < 0:
+            return Mul.build((Constant(-1), term))
+    return None
+
+
 def _mul_expand(left: Expression, right: Expression) -> Expression:
     """Distribute the product of two (possibly ``Add``) expressions.
 
@@ -251,7 +277,14 @@ class Expression(ABC):
 
     @abstractmethod
     def _sort_key(self) -> tuple:
-        """A total-order key used to order operands deterministically and define equality."""
+        """A total-order key used to order operands deterministically and define equality.
+
+        The first element is always the node's kind rank (``_RANK_CONSTANT``, ``_RANK_VARIABLE``,
+        ``_RANK_POW``, ``_RANK_MUL``, ``_RANK_ADD``, ``_RANK_FUNCTION``), so nodes of different
+        kinds never need to be compared field by field. What follows is kind-specific and must
+        itself be comparable: the numeric value for a constant, the label for a variable, the
+        operands' own sort keys for the compound nodes.
+        """
 
     @abstractmethod
     def _compute_hash(self) -> int: ...
@@ -335,6 +368,16 @@ class Expression(ABC):
             list[tuple[Expression, int]]: the ``(base, integer_power)`` factors.
         """
         return [(self, 1)]
+
+    def to_list(self) -> list[Expression]:
+        """The node's operands as a list: the summands of a sum, the factors of a product.
+
+        A leaf has no operands, so it yields itself. This is the readable spelling of ``.args``.
+
+        Returns:
+            list[Expression]: the operands of this node.
+        """
+        return [self]
 
     # ------------------------------------------------------------------ identity
     def __hash__(self) -> int:
@@ -428,11 +471,16 @@ class Constant(Expression):
             raw = raw.item()
         if isinstance(raw, bool):
             raw = int(raw)
-        self.value: Number = _float_if_real(raw)
+        self._value: Number = _float_if_real(raw)
         self._hash_cache: int | None = None
 
+    @property
+    def value(self) -> Number:
+        """The numeric literal. Read-only: nodes are immutable so the cached hash stays valid."""
+        return self._value
+
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
-        return _finalize(self.value)
+        return _finalize(self._value)
 
     def free_symbols(self) -> set[BaseVariable]:  # ruff: ignore[no-self-use]
         return set()
@@ -445,7 +493,7 @@ class Constant(Expression):
         return Constant(0)
 
     def get_constant(self) -> Number:
-        return self.value
+        return self._value
 
     def as_coefficients_dict(self) -> dict[Expression, Number]:  # ruff: ignore[no-self-use]
         return {}
@@ -454,16 +502,16 @@ class Constant(Expression):
         return []
 
     def _sort_key(self) -> tuple:
-        value = self.value
+        value = self._value
         if isinstance(value, complex):
-            return (0, float(value.real), float(value.imag))
-        return (0, float(value), 0.0)
+            return (_RANK_CONSTANT, float(value.real), float(value.imag))
+        return (_RANK_CONSTANT, float(value), 0.0)
 
     def _compute_hash(self) -> int:
-        return qili_hash("Constant", self.value)
+        return qili_hash("Constant", self._value)
 
     def __repr__(self) -> str:
-        return repr(_float_if_real(self.value))
+        return repr(_float_if_real(self._value))
 
 
 @yaml.register_class
@@ -473,8 +521,13 @@ class Add(Expression):
     def __init__(self, args: tuple[Expression, ...]) -> None:
         # Trusting constructor: ``args`` must already be canonical (flattened, like-terms combined,
         # at most one Constant, length >= 2, deterministically sorted). Use ``_build`` to normalize.
-        self.args: tuple[Expression, ...] = tuple(args)
+        self._args: tuple[Expression, ...] = tuple(args)
         self._hash_cache: int | None = None
+
+    @property
+    def args(self) -> tuple[Expression, ...]:
+        """The summands. Read-only: nodes are immutable so the cached hash stays valid."""
+        return self._args
 
     @classmethod
     def build(cls, raw: tuple[Expression, ...]) -> Expression:
@@ -515,46 +568,49 @@ class Add(Expression):
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
         env = env if env is not None else {}
         total: Number = 0
-        for term in self.args:
+        for term in self._args:
             total += term.evaluate(env)
         return _finalize(total)
 
     def free_symbols(self) -> set[BaseVariable]:
         symbols: set[BaseVariable] = set()
-        for term in self.args:
+        for term in self._args:
             symbols |= term.free_symbols()
         return symbols
 
     @property
     def degree(self) -> int:
-        return max((term.degree for term in self.args), default=0)
+        return max((term.degree for term in self._args), default=0)
 
     def diff(self, symbol: BaseVariable) -> Expression:
-        return Add.build(tuple(term.diff(symbol) for term in self.args))
+        return Add.build(tuple(term.diff(symbol) for term in self._args))
 
     def expand(self) -> Expression:
-        return Add.build(tuple(term.expand() for term in self.args))
+        return Add.build(tuple(term.expand() for term in self._args))
 
     def simplify(self) -> Expression:
-        return Add.build(tuple(term.simplify() for term in self.args))
+        return Add.build(tuple(term.simplify() for term in self._args))
 
     def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
         if self in mapping:
             return super().substitute(mapping)
-        return Add.build(tuple(term.substitute(mapping) for term in self.args))
+        return Add.build(tuple(term.substitute(mapping) for term in self._args))
 
     def to_binary(self) -> Expression:
-        return Add.build(tuple(term.to_binary() for term in self.args))
+        return Add.build(tuple(term.to_binary() for term in self._args))
 
     def get_constant(self) -> Number:
-        for term in self.args:
+        for term in self._args:
             if isinstance(term, Constant):
                 return term.value
         return 0
 
+    def to_list(self) -> list[Expression]:
+        return list(self._args)
+
     def as_coefficients_dict(self) -> dict[Expression, Number]:
         coefficients: dict[Expression, Number] = {}
-        for term in self.args:
+        for term in self._args:
             if isinstance(term, Constant):
                 continue
             base, coeff = _peel_coeff(term)
@@ -562,13 +618,17 @@ class Add(Expression):
         return coefficients
 
     def _sort_key(self) -> tuple:
-        return (4, tuple(term._sort_key() for term in self.args))  # ruff: ignore[private-member-access]
+        return (_RANK_ADD, tuple(term._sort_key() for term in self._args))  # ruff: ignore[private-member-access]
 
     def _compute_hash(self) -> int:
-        return qili_hash("Add", self.args)
+        return qili_hash("Add", self._args)
 
     def __repr__(self) -> str:
-        return " + ".join(repr(term) for term in self.args)
+        out = repr(self._args[0])
+        for term in self._args[1:]:
+            negated = _negate_for_repr(term)
+            out += f" - {negated!r}" if negated is not None else f" + {term!r}"
+        return out
 
 
 @yaml.register_class
@@ -580,8 +640,13 @@ class Mul(Expression):
 
     def __init__(self, args: tuple[Expression, ...]) -> None:
         # Trusting constructor: ``args`` must already be canonical. Use ``_build`` to normalize.
-        self.args: tuple[Expression, ...] = tuple(args)
+        self._args: tuple[Expression, ...] = tuple(args)
         self._hash_cache: int | None = None
+
+    @property
+    def args(self) -> tuple[Expression, ...]:
+        """The factors. Read-only: nodes are immutable so the cached hash stays valid."""
+        return self._args
 
     @classmethod
     def build(cls, raw: tuple[Expression, ...]) -> Expression:
@@ -599,13 +664,13 @@ class Mul(Expression):
         return cls(tuple(out))
 
     def coefficient(self) -> Number:
-        for factor in self.args:
+        for factor in self._args:
             if isinstance(factor, Constant):
                 return factor.value
         return 1
 
     def monomial(self) -> Expression:
-        rest = tuple(factor for factor in self.args if not isinstance(factor, Constant))
+        rest = tuple(factor for factor in self._args if not isinstance(factor, Constant))
         if not rest:
             return Constant(1)
         if len(rest) == 1:
@@ -615,66 +680,72 @@ class Mul(Expression):
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
         env = env if env is not None else {}
         total: Number = 1
-        for factor in self.args:
+        for factor in self._args:
             total *= factor.evaluate(env)
         return _finalize(total)
 
     def free_symbols(self) -> set[BaseVariable]:
         symbols: set[BaseVariable] = set()
-        for factor in self.args:
+        for factor in self._args:
             symbols |= factor.free_symbols()
         return symbols
 
     @property
     def degree(self) -> int:
-        return sum(factor.degree for factor in self.args)
+        return sum(factor.degree for factor in self._args)
 
     def diff(self, symbol: BaseVariable) -> Expression:
         terms: list[Expression] = []
-        for index in range(len(self.args)):
-            factors = (*self.args[:index], self.args[index].diff(symbol), *self.args[index + 1 :])
+        for index in range(len(self._args)):
+            factors = (*self._args[:index], self._args[index].diff(symbol), *self._args[index + 1 :])
             terms.append(Mul.build(factors))
         return Add.build(tuple(terms))
 
     def expand(self) -> Expression:
         result: Expression = Constant(1)
-        for factor in self.args:
+        for factor in self._args:
             result = _mul_expand(result, factor.expand())
         return result
 
     def simplify(self) -> Expression:
-        return Mul.build(tuple(factor.simplify() for factor in self.args))
+        return Mul.build(tuple(factor.simplify() for factor in self._args))
 
     def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
         if self in mapping:
             return super().substitute(mapping)
-        return Mul.build(tuple(factor.substitute(mapping) for factor in self.args))
+        return Mul.build(tuple(factor.substitute(mapping) for factor in self._args))
 
     def to_binary(self) -> Expression:
-        return Mul.build(tuple(factor.to_binary() for factor in self.args))
+        return Mul.build(tuple(factor.to_binary() for factor in self._args))
+
+    def to_list(self) -> list[Expression]:
+        return list(self._args)
 
     def as_coefficients_dict(self) -> dict[Expression, Number]:
         return {self.monomial(): self.coefficient()}
 
     def monomial_factors(self) -> list[tuple[Expression, int]]:
         factors: list[tuple[Expression, int]] = []
-        for factor in self.args:
+        for factor in self._args:
             if isinstance(factor, Constant):
                 continue
             factors.extend(factor.monomial_factors())
         return factors
 
     def _sort_key(self) -> tuple:
-        return (3, tuple(factor._sort_key() for factor in self.args))  # ruff: ignore[private-member-access]
+        return (_RANK_MUL, tuple(factor._sort_key() for factor in self._args))  # ruff: ignore[private-member-access]
 
     def _compute_hash(self) -> int:
-        return qili_hash("Mul", self.args)
+        return qili_hash("Mul", self._args)
 
     def __repr__(self) -> str:
-        parts = []
-        for factor in self.args:
-            parts.append(f"({factor!r})" if isinstance(factor, Add) else repr(factor))
-        return " * ".join(parts)
+        args = self._args
+        # A coefficient of exactly -1 reads better as a leading minus than as "-1 * x".
+        sign = ""
+        if isinstance(args[0], Constant) and args[0].value == -1:
+            sign, args = "-", args[1:]
+        parts = [f"({factor!r})" if isinstance(factor, Add) else repr(factor) for factor in args]
+        return sign + " * ".join(parts)
 
 
 @yaml.register_class
@@ -683,9 +754,19 @@ class Pow(Expression):
 
     def __init__(self, base: Expression, exp: Expression) -> None:
         # Trusting constructor: use ``_build`` to normalize.
-        self.base: Expression = base
-        self.exp: Expression = exp
+        self._base: Expression = base
+        self._exp: Expression = exp
         self._hash_cache: int | None = None
+
+    @property
+    def base(self) -> Expression:
+        """The base. Read-only: nodes are immutable so the cached hash stays valid."""
+        return self._base
+
+    @property
+    def exp(self) -> Expression:
+        """The exponent. Read-only: nodes are immutable so the cached hash stays valid."""
+        return self._exp
 
     @classmethod
     def build(cls, base: Expression, exp: Expression) -> Expression:
@@ -694,6 +775,11 @@ class Pow(Expression):
                 return base
             if exp.value == 0:
                 return Constant(1)
+            if base.is_idempotent_under_mul and isinstance(exp.value, RealNumber) and exp.value < 0:
+                raise NotSupportedOperation(
+                    f"{base!r} is binary, so {base!r}**{exp.value} is 1/{base!r}, which is undefined when "
+                    f"{base!r} is 0. Negative powers of a binary variable are not supported."
+                )
             if isinstance(base, Constant):
                 return Constant(_safe_pow(base.value, exp.value))
             if isinstance(base, Pow):
@@ -709,22 +795,22 @@ class Pow(Expression):
 
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
         env = env if env is not None else {}
-        return _finalize(_safe_pow(self.base.evaluate(env), self.exp.evaluate(env)))
+        return _finalize(_safe_pow(self._base.evaluate(env), self._exp.evaluate(env)))
 
     def free_symbols(self) -> set[BaseVariable]:
-        return self.base.free_symbols() | self.exp.free_symbols()
+        return self._base.free_symbols() | self._exp.free_symbols()
 
     @property
     def degree(self) -> int:
-        exponent = _int_exponent(self.exp)
+        exponent = _int_exponent(self._exp)
         if exponent is not None and exponent >= 0:
-            return self.base.degree * exponent
+            return self._base.degree * exponent
         raise NonPolynomialError(f"Expression {self!r} is not a polynomial; its degree is undefined.")
 
     def diff(self, symbol: BaseVariable) -> Expression:
-        base, exp = self.base, self.exp
+        base, exp = self._base, self._exp
         if symbol not in exp.free_symbols():
-            # d/dx b**c = c * b**(c-1) * b'
+            # (b**c)' = c * b**(c-1) * b'
             return Mul.build((exp, Pow.build(base, Add.build((exp, Constant(-1)))), base.diff(symbol)))
         # general case: b**e * (e' * ln(b) + e * b'/b)
         chain = Add.build(
@@ -736,41 +822,41 @@ class Pow(Expression):
         return Mul.build((self, chain))
 
     def expand(self) -> Expression:
-        base = self.base.expand()
-        exponent = _int_exponent(self.exp)
+        base = self._base.expand()
+        exponent = _int_exponent(self._exp)
         if exponent is not None and exponent > 0:
             result = base
             for _ in range(exponent - 1):
                 result = _mul_expand(result, base)
             return result
-        return Pow.build(base, self.exp)
+        return Pow.build(base, self._exp)
 
     def simplify(self) -> Expression:
-        return Pow.build(self.base.simplify(), self.exp.simplify())
+        return Pow.build(self._base.simplify(), self._exp.simplify())
 
     def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
         if self in mapping:
             return super().substitute(mapping)
-        return Pow.build(self.base.substitute(mapping), self.exp.substitute(mapping))
+        return Pow.build(self._base.substitute(mapping), self._exp.substitute(mapping))
 
     def to_binary(self) -> Expression:
-        return Pow.build(self.base.to_binary(), self.exp.to_binary())
+        return Pow.build(self._base.to_binary(), self._exp.to_binary())
 
     def monomial_factors(self) -> list[tuple[Expression, int]]:
-        exponent = _int_exponent(self.exp)
+        exponent = _int_exponent(self._exp)
         if exponent is not None and exponent > 0:
-            return [(self.base, exponent)]
+            return [(self._base, exponent)]
         raise NonPolynomialError(f"Expression {self!r} is not a monomial with an integer power.")
 
     def _sort_key(self) -> tuple:
-        return (2, self.base._sort_key(), self.exp._sort_key())  # ruff: ignore[private-member-access]
+        return (_RANK_POW, self._base._sort_key(), self._exp._sort_key())  # ruff: ignore[private-member-access]
 
     def _compute_hash(self) -> int:
-        return qili_hash("Pow", self.base, self.exp)
+        return qili_hash("Pow", self._base, self._exp)
 
     def __repr__(self) -> str:
-        base = f"({self.base!r})" if isinstance(self.base, (Add, Mul)) else repr(self.base)
-        exp = f"({self.exp!r})" if isinstance(self.exp, (Add, Mul)) else repr(self.exp)
+        base = f"({self._base!r})" if isinstance(self._base, (Add, Mul)) else repr(self._base)
+        exp = f"({self._exp!r})" if isinstance(self._exp, (Add, Mul)) else repr(self._exp)
         return f"{base}**{exp}"
 
 
@@ -800,8 +886,13 @@ class Function(Expression, ABC):
 
     def __init__(self, arg: object) -> None:
         operand = _coerce(arg)
-        self.arg: Expression = operand  # ty:ignore[invalid-assignment]
+        self._arg: Expression = operand  # ty:ignore[invalid-assignment]
         self._hash_cache: int | None = None
+
+    @property
+    def arg(self) -> Expression:
+        """The operand. Read-only: nodes are immutable so the cached hash stays valid."""
+        return self._arg
 
     @staticmethod
     @abstractmethod
@@ -814,45 +905,45 @@ class Function(Expression, ABC):
 
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
         env = env if env is not None else {}
-        return _finalize(self._numeric(_assert_real(self.arg.evaluate(env))))
+        return _finalize(self._numeric(_assert_real(self._arg.evaluate(env))))
 
     def free_symbols(self) -> set[BaseVariable]:
-        return self.arg.free_symbols()
+        return self._arg.free_symbols()
 
     @property
     def degree(self) -> int:
-        if self.arg.free_symbols():
+        if self._arg.free_symbols():
             raise NonPolynomialError(f"Expression {self!r} is not a polynomial; its degree is undefined.")
         return 0
 
     def diff(self, symbol: BaseVariable) -> Expression:
-        return Mul.build((self._derivative(self.arg), self.arg.diff(symbol)))
+        return Mul.build((self._derivative(self._arg), self._arg.diff(symbol)))
 
     def expand(self) -> Expression:
-        return type(self)(self.arg.expand())
+        return type(self)(self._arg.expand())
 
     def simplify(self) -> Expression:
-        return type(self)(self.arg.simplify())
+        return type(self)(self._arg.simplify())
 
     def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
         if self in mapping:
             return super().substitute(mapping)
-        return type(self)(self.arg.substitute(mapping))
+        return type(self)(self._arg.substitute(mapping))
 
     def to_binary(self) -> Expression:
-        return type(self)(self.arg.to_binary())
+        return type(self)(self._arg.to_binary())
 
     def _sort_key(self) -> tuple:
-        return (5, self.NAME, self.arg._sort_key())  # ruff: ignore[private-member-access]
+        return (_RANK_FUNCTION, self.NAME, self._arg._sort_key())  # ruff: ignore[private-member-access]
 
     def _compute_hash(self) -> int:
-        return qili_hash(self.NAME, self.arg)
+        return qili_hash(self.NAME, self._arg)
 
     def __copy__(self) -> Expression:
-        return type(self)(self.arg)
+        return type(self)(self._arg)
 
     def __repr__(self) -> str:
-        return f"{self.NAME}({self.arg!r})"
+        return f"{self.NAME}({self._arg!r})"
 
     @classmethod
     def to_yaml(cls, representer, node):  # ruff: ignore[missing-type-function-argument, missing-return-type-class-method]

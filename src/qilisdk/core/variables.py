@@ -37,7 +37,7 @@ from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
 
-from .expression import Add, Constant, Expression, _coerce
+from .expression import _RANK_VARIABLE, Add, Constant, Expression, _coerce
 from .types import Number, QiliEnum, RealNumber
 
 if TYPE_CHECKING:
@@ -303,12 +303,14 @@ def _check_output(var: Variable, output: Number) -> RealNumber:
     elif isinstance(output, complex) and abs(output.imag) < get_settings().atol:
         out = float(output.real)
     else:
-        raise ValueError(f"Evaluation answer ({output}) is outside the variable domain ({var.domain}).")
+        raise ValueError(
+            f"The value ({output}) is not real, so it cannot be a value of the variable {var} ({var.domain.value})."
+        )
 
     out = int(out) if var.domain in {Domain.INTEGER, Domain.POSITIVE_INTEGER} else out
 
     if not var.domain.check_value(out):
-        raise ValueError(f"The value {out} violates the domain {var.domain.__class__.__name__} of the variable {var}")
+        raise ValueError(f"The value ({out}) violates the {var.domain.value} of the variable {var}.")
 
     return out
 
@@ -322,6 +324,10 @@ class Bitwise(Encoding):
     @staticmethod
     def _bitwise_encode(x: int, N: int) -> list[int]:
         """Encode the integer ``x`` using ``N`` bits (little-endian).
+
+        Args:
+            x (int): the integer to encode.
+            N (int): the number of bits to encode ``x`` in.
 
         Returns:
             list[int]: the little-endian binary digits of ``x``.
@@ -361,7 +367,7 @@ class Bitwise(Encoding):
         elif len(binary_list) != len(binary_var):
             raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
 
-        binary_dict: dict[BaseVariable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
+        binary_dict: dict[BaseVariable, Number] = {binary_var[i]: binary_list[i] for i in range(len(binary_list))}
 
         out = _check_output(var, term.evaluate(binary_dict))
 
@@ -409,7 +415,7 @@ class OneHot(Encoding):
     @staticmethod
     def _find_zero(var: Variable) -> int:
         binary_var = var.bin_vars
-        term = var.term
+        term = var.expression
         for i in range(var.num_binary_equivalent()):
             if binary_var[i] not in term.free_symbols():
                 return i
@@ -448,12 +454,12 @@ class OneHot(Encoding):
             raise ValueError(f"expected {len(binary_var) + 1} variables but received {len(binary_list)}")
 
         zero_index = OneHot._find_zero(var)
-        binary_dict: dict[BaseVariable, list[int]] = {}
+        binary_dict: dict[BaseVariable, Number] = {}
         for i in range(var.num_binary_equivalent()):
             if i < zero_index:
-                binary_dict[binary_var[i]] = [binary_list[i]]
+                binary_dict[binary_var[i]] = binary_list[i]
             if i > zero_index:
-                binary_dict[binary_var[i - 1]] = [binary_list[i]]
+                binary_dict[binary_var[i - 1]] = binary_list[i]
 
         out = _check_output(var, term.evaluate(binary_dict))
 
@@ -542,7 +548,7 @@ class DomainWall(Encoding):
         elif len(binary_list) != len(binary_var):
             raise ValueError(f"expected {len(binary_var)} variables but received {len(binary_list)}")
 
-        binary_dict: dict[BaseVariable, list[int]] = {binary_var[i]: [binary_list[i]] for i in range(len(binary_list))}
+        binary_dict: dict[BaseVariable, Number] = {binary_var[i]: binary_list[i] for i in range(len(binary_list))}
 
         out = _check_output(var, term.evaluate(binary_dict))
 
@@ -657,7 +663,6 @@ class BaseVariable(Expression, ABC):
             OutOfBoundsException: a bound does not respect the variable's domain.
             InvalidBoundsError: the lower bound is greater than the upper bound.
         """
-        self._hash_cache = None
         if lower_bound is None:
             lower_bound = self._domain.min()
         if upper_bound is None:
@@ -687,7 +692,6 @@ class BaseVariable(Expression, ABC):
             domain (Domain): The updated domain of the variable.
             bounds (tuple[float | None, float | None]): The updated bounds. Defaults to (None, None).
         """
-        self._hash_cache = None
         self._domain = domain
         self.set_bounds(bounds[0], bounds[1])
 
@@ -703,7 +707,7 @@ class BaseVariable(Expression, ABC):
         return Constant(1) if self == symbol else Constant(0)
 
     def _sort_key(self) -> tuple:
-        return (1, self._label)
+        return (_RANK_VARIABLE, self._label)
 
     def _compute_hash(self) -> int:
         return qili_hash(self._label)
@@ -825,8 +829,9 @@ class Variable(BaseVariable):
         super().__init__(label=label, domain=domain, bounds=bounds)
         self._encoding = encoding
         self._precision = precision
-        self._term: Expression | None = None
+        self._expression: Expression | None = None
         self._bin_vars: list[BaseVariable] = []
+        self._num_binary_equivalent: int | None = None
 
     @property
     def encoding(self) -> type[Encoding]:
@@ -837,32 +842,43 @@ class Variable(BaseVariable):
         return self._precision
 
     @property
-    def term(self) -> Expression:
-        if self._term is None:
+    def expression(self) -> Expression:
+        """The binary-encoded expression for this variable, computed once and cached."""
+        if self._expression is None:
             if self.bounds[1] > LARGE_BOUND or self.bounds[0] < -LARGE_BOUND:
                 logger.warning(
                     "[Variables] Encoding variable {} which has the bounds {} is very expensive and may take a very long time.",
                     self.label,
                     self.bounds,
                 )
-            self._term = self.to_binary()
-        return self._term
+            self._expression = self.to_binary()
+        return self._expression
 
     @property
     def bin_vars(self) -> list[BaseVariable]:
-        if self._term is None:
+        if self._expression is None:
             self.to_binary()
         return self._bin_vars
 
+    def _invalidate_encoding(self) -> None:
+        """Drop everything derived from the domain, bounds, encoding and precision."""
+        self._expression = None
+        self._bin_vars = []
+        self._num_binary_equivalent = None
+
     def set_precision(self, precision: float) -> None:
         self._precision = precision
-        self._term = None
+        self._invalidate_encoding()
+
+    def set_bounds(self, lower_bound: float | None, upper_bound: float | None) -> None:
+        super().set_bounds(lower_bound, upper_bound)
+        self._invalidate_encoding()
 
     def __copy__(self) -> Variable:
         return Variable(label=self.label, domain=self.domain, bounds=self.bounds, encoding=self._encoding)
 
     def __getitem__(self, item: int) -> BaseVariable:
-        if self._term is None:
+        if self._expression is None:
             self.to_binary()
         return self._bin_vars[item]
 
@@ -873,7 +889,7 @@ class Variable(BaseVariable):
         encoding: type[Encoding] | None = None,
     ) -> None:
         self._encoding = encoding if encoding is not None else self._encoding
-        self._term = None
+        self._invalidate_encoding()
         return super().update_variable(domain, bounds)
 
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> RealNumber:
@@ -892,20 +908,25 @@ class Variable(BaseVariable):
         return self.encoding.evaluate(self, value, self._precision)
 
     def to_binary(self) -> Expression:
-        if self._term is None:
-            term = self.encoding.encode(self, precision=self._precision)
-            self._term = copy.copy(term)
+        if self._expression is None:
+            expression = self.encoding.encode(self, precision=self._precision)
+            self._expression = copy.copy(expression)
             self._bin_vars = [BinaryVariable(f"{self.label}({i})") for i in range(self.num_binary_equivalent())]
             self._bin_vars = sorted(self._bin_vars, key=lambda x: _extract_number(x.label))
-        return self._term
+        return self._expression
 
     def num_binary_equivalent(self) -> int:
         """Number of binary variables needed to encode the continuous variable.
 
+        Cached; :meth:`_invalidate_encoding` drops it when the domain, bounds, encoding or
+        precision change.
+
         Returns:
             int: the number of binary variables in the variable's encoding.
         """
-        return self.encoding.num_binary_equivalent(self, precision=self._precision)
+        if self._num_binary_equivalent is None:
+            self._num_binary_equivalent = self.encoding.num_binary_equivalent(self, precision=self._precision)
+        return self._num_binary_equivalent
 
     def check_valid(self, binary_list: list[int]) -> tuple[bool, int]:
         """Check whether ``binary_list`` is a valid sample in the variable's encoding.

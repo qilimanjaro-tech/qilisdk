@@ -267,8 +267,8 @@ def test_arithmetic_and_comparisons():
     t = a + b * 2 - 3
     # t should be an Expression (a canonical Add)
     assert isinstance(t, Add)
-    # test evaluation with values
-    val = t.evaluate({a: [2], b: [1]})
+    # test evaluation with values: little-endian bits, so a = 2 is [0, 1, 0] and b = 1 is [1, 0, 0]
+    val = t.evaluate({a: [0, 1, 0], b: [1, 0, 0]})
     assert val == 2 + 1 * 2 - 3
 
     # test division by zero
@@ -283,7 +283,7 @@ def test_arithmetic_and_comparisons():
     # power operations
     t2 = a**2
     assert isinstance(t2, Pow)
-    val = t2.evaluate({a: [2]})
+    val = t2.evaluate({a: [0, 1, 0]})
     assert val == 2**2
 
     t2 = a**0
@@ -292,7 +292,7 @@ def test_arithmetic_and_comparisons():
 
     t2 = a**1
     assert t2 == a
-    val = t2.evaluate({a: [2]})
+    val = t2.evaluate({a: [0, 1, 0]})
     assert val == 2
 
     # negative power is now valid (returns a ``Pow`` node)
@@ -301,8 +301,8 @@ def test_arithmetic_and_comparisons():
     # comparisons
     c = LT(a, 3)
     assert isinstance(c, ComparisonTerm)
-    assert c.evaluate({a: [2]})
-    assert not c.evaluate({a: [5]})
+    assert c.evaluate({a: [0, 1, 0]})  # a = 2
+    assert not c.evaluate({a: [1, 1, 1]})  # a = 5
     # comparing two equal sides collapses to ``0 <op> 0``
     c2 = EQ(a, a)
     zero = Constant(0)
@@ -428,7 +428,7 @@ def test_invalid_bit_string(monkeypatch):
         x.evaluate({x: [1, 1, 1]})
 
     # pretend we inited wrongly
-    monkeypatch.setattr(x, "_term", x.term + x[0])
+    monkeypatch.setattr(x, "_expression", x.expression + x[0])
     x.evaluate({x: [1, 0, 0]})
 
     # Bitwise
@@ -488,9 +488,9 @@ def test_encoding_and_evaluate():
     assert x.evaluate({x: [1, 0, 0, 0]}) == 0
     assert x.evaluate({x: [1]}) == 0
 
-    assert x.term == sum(i * x[i] for i in range(x.num_binary_equivalent()))
+    assert x.expression == sum(i * x[i] for i in range(x.num_binary_equivalent()))
     x.set_precision(1e-1)
-    assert x.term == (sum(i * x[i] for i in range(x.num_binary_equivalent())) * 1e-1)
+    assert x.expression == (sum(i * x[i] for i in range(x.num_binary_equivalent())) * 1e-1)
 
     var = Variable("v", Domain.INTEGER, bounds=(0, 2), encoding=OneHot)
     # should have 3 binary vars
@@ -540,7 +540,7 @@ def test_encoding_and_evaluate():
     assert not var.check_valid([0, 1, 0])[0]
 
     var = Variable("v", Domain.INTEGER, bounds=(0, 2), encoding=DomainWall)
-    assert var.term == sum(var)
+    assert var.expression == sum(var)
 
     # #######################  DomainWall #######################
 
@@ -949,7 +949,7 @@ def test_Comparison_Term_printing():
     assert repr(t) == expected_t
 
     t = GT(1, x)
-    expected_t = "-1 * x > -1"
+    expected_t = "-x > -1"
 
     assert repr(t) == expected_t
 
@@ -1152,6 +1152,7 @@ def test_log_map():
 def test_inv_is_a_power_of_minus_one():
     b = BinaryVariable("b")
     p = Parameter("p", 1)
+    q = Parameter("q", 2)
     term = 2 * b + p
 
     # Inv is a helper over Pow, not a node of its own, so 1/x and Inv(x) are the same expression.
@@ -1159,8 +1160,8 @@ def test_inv_is_a_power_of_minus_one():
     assert Inv(p) == 1 / p
     assert isinstance(Inv(p), Pow)
 
-    assert str(Inv(b)) == "b**-1"
-    assert Inv(b).evaluate({b: 1}) == 1
+    assert str(Inv(q)) == "q**-1"
+    assert Inv(q).evaluate({q: 1}) == 1
 
     assert Inv(p).evaluate({}) == 1
 
@@ -1177,7 +1178,19 @@ def test_inv_is_a_power_of_minus_one():
         Inv("not a number")
 
     with pytest.raises(ValueError, match=r"Division by zero is not allowed"):
-        Inv(b).evaluate({b: 0})
+        Inv(q).evaluate({q: 0})
+
+
+def test_negative_powers_of_a_binary_variable_are_rejected():
+    b = BinaryVariable("b")
+    # b is 0 or 1, so 1/b is either 1 or undefined. Reject it at construction rather than at
+    # evaluation, whichever way the user spells it.
+    for build in (lambda: b**-1, lambda: 1 / b, lambda: b / b, lambda: b**-2.5):
+        with pytest.raises(NotSupportedOperation, match=r"Negative powers of a binary variable"):
+            build()
+
+    # Positive powers still collapse, because b**n == b.
+    assert b**3 == b
 
 
 def test_exp_map():
@@ -1409,7 +1422,7 @@ def test_big_bounds(monkeypatch):
 
     monkeypatch.setattr("loguru.logger.warning", log_append)
     x = Variable("x", Domain.REAL, (0, LARGE_BOUND + 1))
-    x.term
+    x.expression
     assert len(out) >= 1
     assert "Encoding variable" in out[0]
 
@@ -1621,12 +1634,12 @@ def test_comparison_term_hash_consistency():
 def test_check_output():
     x = Variable("x", Domain.INTEGER, (0, 3))
     assert _check_output(x, 3) == 3
-    with pytest.raises(ValueError, match=r"outside the variable domain"):
+    with pytest.raises(ValueError, match=r"is not real"):
         _check_output(x, "test")
     assert _check_output(x, complex(3, 0)) == 3
 
     b = Variable("b", Domain.BINARY)
-    with pytest.raises(ValueError, match=r"violates the domain"):
+    with pytest.raises(ValueError, match=r"violates the Binary Domain"):
         _check_output(b, 4.4)
 
 

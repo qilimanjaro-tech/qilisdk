@@ -412,3 +412,52 @@ def test_a_product_of_the_same_function_is_a_square(params):
     x, _, _ = params
     assert Sin(x) * Sin(x) == Sin(x) ** 2
     assert (Sin(x) * Sin(x)).evaluate({x: 0.5}) == pytest.approx(math.sin(0.5) ** 2)
+
+
+# --------------------------------------------------------------------------- immutability
+@pytest.mark.parametrize(
+    ("factory", "attribute"),
+    [
+        (lambda x: Constant(2), "value"),
+        (lambda x: x + 1, "args"),
+        (lambda x: 2 * x, "args"),
+        (lambda x: x**2, "base"),
+        (lambda x: x**2, "exp"),
+        (Sin, "arg"),
+    ],
+)
+def test_node_payloads_are_read_only(params, factory, attribute):
+    x, _, _ = params
+    node = factory(x)
+    # The hash is cached on first use, so a writable payload would let it go stale.
+    before = hash(node)
+    with pytest.raises(AttributeError):
+        setattr(node, attribute, None)
+    assert hash(node) == before
+    assert getattr(node, attribute) is not None
+
+
+# --------------------------------------------------------------------------- to_list
+def test_to_list_returns_the_operands(params):
+    x, y, _ = params
+    assert (x + 2 * y + 1).to_list() == [Constant(1), x, 2 * y]
+    assert (2 * x * y).to_list() == [Constant(2), x, y]
+    # A leaf has no operands, so it yields itself.
+    assert x.to_list() == [x]
+    assert Constant(3).to_list() == [Constant(3)]
+    assert Sin(x).to_list() == [Sin(x)]
+
+
+# --------------------------------------------------------------------------- printing
+def test_sums_print_negative_terms_with_a_minus(params):
+    x, y, _ = params
+    b = BinaryVariable("b")
+    assert repr(-2 - 2 * b) == "-2 - 2 * b"
+    assert repr(x - y) == "x - y"
+    assert repr(x + y) == "x + y"
+    assert repr(-x - y) == "-x - y"
+    assert repr(x - Sin(y)) == "x - sin(y)"
+    # A coefficient of exactly -1 reads as a leading minus, other coefficients keep the product.
+    assert repr(-x) == "-x"
+    assert repr(-2 * x) == "-2 * x"
+    assert repr(-(x + y)) == "-(x + y)"
