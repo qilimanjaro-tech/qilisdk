@@ -367,11 +367,10 @@ class Schedule(Parameterizable):
         if abs(snapped_dt - self._dt) > get_settings().atol and self._snap_warned_for != (T, self._dt):
             self._snap_warned_for = (T, self._dt)
             logger.warning(
-                "[Schedule] Total time {} is not an integer multiple of dt={}, so dt has been snapped to {}."
+                "[Schedule] Total time {} is not an integer multiple of dt={}, so dt has been snapped to {}.",
                 T,
                 self._dt,
                 snapped_dt,
-                nsteps,
             )
         return nsteps
 

@@ -932,11 +932,11 @@ def test_tlist_snaps_dt_with_a_warning_when_incommensurate(monkeypatch):
     assert len(tlist) == 34
     assert _isclose(tlist[-1], 10.0)
     assert _isclose(sched.dt, 10.0 / 33)
-    # The warning is not repeated on every access, but is re-armed by set_dt.
+    # The warning is not repeated on every access, only once per snapped dt.
     assert sched.tlist == tlist
     assert len(warnings) == 1
-    sched.set_dt(0.3)
-    assert len(sched.tlist) == 34
+    sched.set_dt(0.7)
+    assert len(sched.tlist) == 15
     assert len(warnings) == 2
 
 
