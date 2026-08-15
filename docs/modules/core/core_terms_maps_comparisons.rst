@@ -77,7 +77,7 @@ Inspecting and differentiating expressions
 An :class:`~qilisdk.core.expression.Expression` exposes a number of helper functions. You can list the
 named leaves it depends on, isolate just the free :class:`~qilisdk.core.variables.Parameter` leaves,
 read its polynomial :attr:`~qilisdk.core.expression.Expression.degree`, or take a symbolic
-derivative with :meth:`~qilisdk.core.expression.Expression.diff`:
+derivative with :meth:`~qilisdk.core.expression.Expression.derivative`:
 
 .. code-block:: python
 
@@ -91,7 +91,7 @@ derivative with :meth:`~qilisdk.core.expression.Expression.diff`:
     print(expr.variables())          # named leaves, sorted by label
     print(expr.free_parameters())    # only the Parameter leaves
     print(expr.degree)               # highest polynomial degree (a and y both count)
-    print(expr.diff(y))              # symbolic d/dy
+    print(expr.derivative(y))              # symbolic d/dy
 
 **Output**:
 
@@ -145,8 +145,8 @@ applied automatically), and evaluated. Wrapping a numeric constant folds eagerly
 
     theta = Parameter("theta", 0.5)
 
-    print(Sin(theta).diff(theta))   # d/dtheta Sin(theta) == Cos(theta)
-    print(Exp(theta).diff(theta))   # d/dtheta Exp(theta) == Exp(theta)
+    print(Sin(theta).derivative(theta))   # d/dtheta Sin(theta) == Cos(theta)
+    print(Exp(theta).derivative(theta))   # d/dtheta Exp(theta) == Exp(theta)
     print(Cos(0))                   # folds to a numeric constant
 
 **Output**:
@@ -172,7 +172,7 @@ The available function nodes are:
 - :class:`~qilisdk.core.expression.Abs` for absolute value
 
 ``Abs`` is the one function with no derivative: it is not differentiable at zero and there is no
-``sign`` node to write its derivative with, so :meth:`~qilisdk.core.expression.Expression.diff`
+``sign`` node to write its derivative with, so :meth:`~qilisdk.core.expression.Expression.derivative`
 raises on it.
 
 For powers, use the ``**`` operator, which builds a
@@ -200,7 +200,7 @@ For powers, use the ``**`` operator, which builds a
     True
 
 To write your own function, subclass :class:`~qilisdk.core.expression.Function` with a ``NAME``, a
-numeric kernel and a derivative. Everything else (canonicalization, equality, ``diff``, ``expand``,
+numeric kernel and a derivative. Everything else (canonicalization, equality, ``derivative``, ``expand``,
 ``substitute``, serialization) comes from the base class.
 
 Comparisons

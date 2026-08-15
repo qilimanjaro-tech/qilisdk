@@ -144,20 +144,20 @@ def test_non_integer_and_symbolic_powers(params):
 # --------------------------------------------------------------------------- differentiation
 def test_diff_rules(params):
     x, y, _ = params
-    assert x.diff(x) == Constant(1)
-    assert x.diff(y) == Constant(0)
-    assert (x * y).diff(x) == y
-    assert (x**2).diff(x) == (2 * x)
-    assert (x + y).diff(x) == Constant(1)
+    assert x.derivative(x) == Constant(1)
+    assert x.derivative(y) == Constant(0)
+    assert (x * y).derivative(x) == y
+    assert (x**2).derivative(x) == (2 * x)
+    assert (x + y).derivative(x) == Constant(1)
 
 
 def test_diff_chain_rule(params):
     x, _, _ = params
-    assert Sin(x).diff(x) == Cos(x)
-    assert Cos(x).diff(x) == -Sin(x)
-    assert Exp(x).diff(x) == Exp(x)
+    assert Sin(x).derivative(x) == Cos(x)
+    assert Cos(x).derivative(x) == -Sin(x)
+    assert Exp(x).derivative(x) == Exp(x)
     # numerical check of the chain rule on sin(x**2): 2x cos(x**2)
-    d = Sin(x**2).diff(x)
+    d = Sin(x**2).derivative(x)
     assert d.evaluate({x: 1.3}) == pytest.approx(2 * 1.3 * math.cos(1.3**2))
 
 
@@ -252,28 +252,28 @@ def test_diff_matches_finite_differences(params, factory):
     expr = factory(x)
     at, h = 0.7, 1e-6
     numeric = (expr.evaluate({x: at + h}) - expr.evaluate({x: at - h})) / (2 * h)
-    assert expr.diff(x).evaluate({x: at}) == pytest.approx(numeric, rel=1e-4)
+    assert expr.derivative(x).evaluate({x: at}) == pytest.approx(numeric, rel=1e-4)
 
 
 def test_diff_with_symbolic_exponent(params):
     x, y, _ = params
     # d/dx x**y = x**y * (y' ln x + y/x); with y independent of x this is y * x**(y-1).
-    assert (x**y).diff(x).evaluate({x: 2.0, y: 3.0}) == pytest.approx(3 * 2.0**2)
+    assert (x**y).derivative(x).evaluate({x: 2.0, y: 3.0}) == pytest.approx(3 * 2.0**2)
     # d/dy x**y = x**y * ln x
-    assert (x**y).diff(y).evaluate({x: 2.0, y: 3.0}) == pytest.approx(2.0**3 * math.log(2.0))
+    assert (x**y).derivative(y).evaluate({x: 2.0, y: 3.0}) == pytest.approx(2.0**3 * math.log(2.0))
 
 
 def test_diff_of_abs_is_not_supported(params):
     x, _, _ = params
     expr = Abs(x)
     with pytest.raises(NotSupportedOperation, match=r"The derivative of Abs is not supported."):
-        expr.diff(x)
+        expr.derivative(x)
 
 
 def test_diff_of_a_constant_and_an_unrelated_symbol(params):
     x, y, _ = params
-    assert Constant(7).diff(x) == Constant(0)
-    assert Sin(y).diff(x) == Constant(0)
+    assert Constant(7).derivative(x) == Constant(0)
+    assert Sin(y).derivative(x) == Constant(0)
 
 
 # --------------------------------------------------------------------------- canonicalization on construction
@@ -486,8 +486,9 @@ def test_functions_print_the_name_you_construct_them_with(params):
     assert repr(Sin(x) ** 2 + Cos(x)) == "Sin(x)**2 + Cos(x)"
 
 
-def test_derivative_is_an_alias_of_diff(params):
+def test_diff_is_gone(params):
     x, _, _ = params
-    assert Sin(x).derivative(x) == Sin(x).diff(x)
-    assert (x**3).derivative(x) == (x**3).diff(x)
+    # Renamed to derivative() on review; the old SymPy-style spelling is not kept as an alias.
+    assert not hasattr(x, "diff")
+    assert not hasattr(Sin(x), "diff")
     assert (x**3).derivative(x) == 3 * x**2

@@ -26,7 +26,7 @@ Construction *canonicalizes* (a cheap, total normalization: flattening, combinin
 folding constants, eliminating identities, ordering operands deterministically). Canonical form is
 the sole definition of ``==``/``hash`` -- equal expressions are structurally identical and equality
 is order-independent for ``+`` and ``*`` (``x + y == y + x``). Semantic rewrites -- :meth:`expand` and
-:meth:`diff` -- are explicit and never participate in equality.
+:meth:`derivative` -- are explicit and never participate in equality.
 """
 
 from __future__ import annotations
@@ -276,19 +276,13 @@ class Expression(ABC):
         """Polynomial degree. Raises :class:`NonPolynomialError` for non-polynomial expressions."""
 
     @abstractmethod
-    def diff(self, symbol: BaseVariable) -> Expression:
-        """Symbolic derivative with respect to ``symbol``."""
-
     def derivative(self, symbol: BaseVariable) -> Expression:
         """Symbolic derivative with respect to ``symbol``.
 
-        Spelled-out alias of :meth:`diff`, which is the name SymPy uses. Both are supported; pick
-        whichever reads better in your code.
-
-        Returns:
-            Expression: the derivative of this expression with respect to ``symbol``.
+        This started out as ``diff``, the name SymPy uses, but was renamed on review: we avoid
+        abbreviations, and ``diff`` reads as a difference elsewhere in the stack (``numpy.diff``
+        computes successive differences, not a derivative).
         """
-        return self.diff(symbol)
 
     @abstractmethod
     def _sort_key(self) -> tuple:
@@ -500,7 +494,7 @@ class Constant(Expression):
     def degree(self) -> int:
         return 0
 
-    def diff(self, symbol: BaseVariable) -> Expression:  # ruff: ignore[no-self-use]
+    def derivative(self, symbol: BaseVariable) -> Expression:  # ruff: ignore[no-self-use]
         return Constant(0)
 
     def get_constant(self) -> Number:
@@ -593,8 +587,8 @@ class Add(Expression):
     def degree(self) -> int:
         return max((term.degree for term in self._args), default=0)
 
-    def diff(self, symbol: BaseVariable) -> Expression:
-        return Add.build(tuple(term.diff(symbol) for term in self._args))
+    def derivative(self, symbol: BaseVariable) -> Expression:
+        return Add.build(tuple(term.derivative(symbol) for term in self._args))
 
     def expand(self) -> Expression:
         return Add.build(tuple(term.expand() for term in self._args))
@@ -707,10 +701,10 @@ class Mul(Expression):
     def degree(self) -> int:
         return sum(factor.degree for factor in self._args)
 
-    def diff(self, symbol: BaseVariable) -> Expression:
+    def derivative(self, symbol: BaseVariable) -> Expression:
         terms: list[Expression] = []
         for index in range(len(self._args)):
-            factors = (*self._args[:index], self._args[index].diff(symbol), *self._args[index + 1 :])
+            factors = (*self._args[:index], self._args[index].derivative(symbol), *self._args[index + 1 :])
             terms.append(Mul.build(factors))
         return Add.build(tuple(terms))
 
@@ -817,16 +811,16 @@ class Pow(Expression):
             return self._base.degree * exponent
         raise NonPolynomialError(f"Expression {self!r} is not a polynomial; its degree is undefined.")
 
-    def diff(self, symbol: BaseVariable) -> Expression:
+    def derivative(self, symbol: BaseVariable) -> Expression:
         base, exp = self._base, self._exp
         if symbol not in exp.free_symbols():
             # (b**c)' = c * b**(c-1) * b'
-            return Mul.build((exp, Pow.build(base, Add.build((exp, Constant(-1)))), base.diff(symbol)))
+            return Mul.build((exp, Pow.build(base, Add.build((exp, Constant(-1)))), base.derivative(symbol)))
         # general case: b**e * (e' * ln(b) + e * b'/b)
         chain = Add.build(
             (
-                Mul.build((exp.diff(symbol), Log(base))),
-                Mul.build((exp, base.diff(symbol), Pow.build(base, Constant(-1)))),
+                Mul.build((exp.derivative(symbol), Log(base))),
+                Mul.build((exp, base.derivative(symbol), Pow.build(base, Constant(-1)))),
             )
         )
         return Mul.build((self, chain))
@@ -874,7 +868,7 @@ class Function(Expression, ABC):
 
     A concrete function declares -- all at the *class* level so serialization carries only the
     operand -- a stable ``NAME``, a numpy numeric kernel :meth:`_numeric`, and the local outer
-    derivative :meth:`_derivative` (the chain rule is applied by :meth:`diff`).
+    derivative :meth:`_outer_derivative` (the chain rule is applied by :meth:`derivative`).
     """
 
     NAME: ClassVar[str] = ""
@@ -909,8 +903,8 @@ class Function(Expression, ABC):
         """Numeric kernel applied to an already-evaluated, real operand."""
 
     @abstractmethod
-    def _derivative(self, operand: Expression) -> Expression:
-        """The outer derivative ``f'(operand)`` as an expression (chain rule applied by :meth:`diff`)."""
+    def _outer_derivative(self, operand: Expression) -> Expression:
+        """The outer derivative ``f'(operand)`` as an expression (chain rule applied by :meth:`derivative`)."""
 
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
         env = env if env is not None else {}
@@ -925,8 +919,8 @@ class Function(Expression, ABC):
             raise NonPolynomialError(f"Expression {self!r} is not a polynomial; its degree is undefined.")
         return 0
 
-    def diff(self, symbol: BaseVariable) -> Expression:
-        return Mul.build((self._derivative(self._arg), self._arg.diff(symbol)))
+    def derivative(self, symbol: BaseVariable) -> Expression:
+        return Mul.build((self._outer_derivative(self._arg), self._arg.derivative(symbol)))
 
     def expand(self) -> Expression:
         return type(self)(self._arg.expand())
@@ -971,7 +965,7 @@ class Sin(Function):
     def _numeric(value: RealNumber) -> Number:
         return float(np.sin(value))
 
-    def _derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
+    def _outer_derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
         return Cos(operand)
 
 
@@ -985,7 +979,7 @@ class Cos(Function):
     def _numeric(value: RealNumber) -> Number:
         return float(np.cos(value))
 
-    def _derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
+    def _outer_derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
         return -Sin(operand)
 
 
@@ -999,7 +993,7 @@ class Exp(Function):
     def _numeric(value: RealNumber) -> Number:
         return float(np.exp(value))
 
-    def _derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
+    def _outer_derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
         return Exp(operand)
 
 
@@ -1013,7 +1007,7 @@ class Log(Function):
     def _numeric(value: RealNumber) -> Number:
         return float(np.log(value))
 
-    def _derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
+    def _outer_derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
         return Pow.build(operand, Constant(-1))
 
 
@@ -1029,7 +1023,7 @@ class Tan(Function):
             raise ValueError("Tangent is not defined for values where cosine is zero.")
         return float(np.tan(value))
 
-    def _derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
+    def _outer_derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
         return Pow.build(Cos(operand), Constant(-2))
 
 
@@ -1043,7 +1037,7 @@ class Sqrt(Function):
     def _numeric(value: RealNumber) -> Number:
         return float(np.sqrt(value))
 
-    def _derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
+    def _outer_derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
         return Constant(0.5) * Pow.build(operand, Constant(-0.5))
 
 
@@ -1052,7 +1046,7 @@ class Abs(Function):
     """Absolute value of an expression.
 
     ``Abs`` is not differentiable at zero and there is no ``sign`` node to express its derivative
-    away from zero, so :meth:`Expression.diff` raises on it.
+    away from zero, so :meth:`Expression.derivative` raises on it.
     """
 
     NAME = "abs"
@@ -1061,7 +1055,7 @@ class Abs(Function):
     def _numeric(value: RealNumber) -> Number:
         return float(abs(value))
 
-    def _derivative(self, operand: Expression) -> Expression:
+    def _outer_derivative(self, operand: Expression) -> Expression:
         raise NotSupportedOperation(f"The derivative of {type(self).__name__} is not supported.")
 
 

@@ -583,7 +583,7 @@ class BaseVariable(Expression, ABC):
     def degree(self) -> int:
         return 1
 
-    def diff(self, symbol: BaseVariable) -> Expression:
+    def derivative(self, symbol: BaseVariable) -> Expression:
         return Constant(1) if self == symbol else Constant(0)
 
     def _sort_key(self) -> tuple:

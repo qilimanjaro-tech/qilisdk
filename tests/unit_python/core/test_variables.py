@@ -904,7 +904,7 @@ class DummyMap(Function):
     def _numeric(value: Number) -> Number:
         return value
 
-    def _derivative(self, operand: Expression) -> Expression:
+    def _outer_derivative(self, operand: Expression) -> Expression:
         return Constant(1)
 
 
@@ -1178,7 +1178,7 @@ def test_abs_map():
 
     derivable = Abs(p)
     with pytest.raises(NotSupportedOperation, match=r"The derivative of Abs is not supported."):
-        derivable.diff(p)
+        derivable.derivative(p)
 
 
 def test_tan_map():
