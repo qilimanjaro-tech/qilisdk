@@ -71,7 +71,8 @@ class SabreLayoutPass(CircuitTranspilerPass):
     """
     A SABRE-style initial layout pass (no SWAP insertion).
     It computes a good logical→physical qubit mapping for a given coupling graph
-    and returns a *new* Circuit with all gates retargeted to the chosen physical qubits.
+    and, unless ``apply_layout`` is ``False``, returns a *new* Circuit with all gates
+    retargeted to the chosen physical qubits.
 
     Key features
     ------------
@@ -102,10 +103,18 @@ class SabreLayoutPass(CircuitTranspilerPass):
         a swap *would* be applied during simulation.
     decay_lambda : float
         Decay multiplier applied each iteration to gradually forget old penalties.
+    apply_layout : bool
+        Whether to return the circuit retargeted onto the chosen physical qubits.
+        When ``False`` the pass only records the layout and returns the input
+        circuit untouched, leaving it to a following router such as
+        ``SabreSwapPass`` to apply the mapping. Use ``False`` when this pass is
+        paired with a router that reads ``context.initial_layout``, otherwise the
+        layout is applied twice.
 
     Results
     -------
-    - Returns a *new* Circuit with all gates retargeted to physical qubits.
+    - Returns a *new* Circuit with all gates retargeted to physical qubits, unless
+      ``apply_layout`` is ``False``.
     - Exposes `last_layout` (list[int]) mapping logical → physical.
       Also `last_score` as a diagnostic (lower is better).
 
@@ -131,6 +140,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         beta: float = 0.5,
         decay_delta: float = 0.001,
         decay_lambda: float = 0.99,
+        apply_layout: bool = True,
     ) -> None:
         """Initialize a SABRE layout pass.
 
@@ -142,6 +152,9 @@ class SabreLayoutPass(CircuitTranspilerPass):
             beta (float): Weight assigned to look-ahead cost.
             decay_delta (float): Increment applied to decay on selected swap endpoints.
             decay_lambda (float): Per-iteration decay factor for penalties.
+            apply_layout (bool): Whether to retarget the circuit onto the chosen physical
+                qubits. Set to ``False`` when a following router applies
+                ``context.initial_layout`` itself.
         """
         self.topology: PyGraph[int, None] = build_topology_graph(topology)
         self.num_trials = max(1, int(num_trials))
@@ -150,6 +163,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         self.beta = float(beta)
         self.decay_delta = float(decay_delta)
         self.decay_lambda = float(decay_lambda)
+        self.apply_layout = bool(apply_layout)
 
         self.last_layout: list[int] | None = None
         self.last_score: float | None = None
@@ -163,7 +177,8 @@ class SabreLayoutPass(CircuitTranspilerPass):
             circuit (Circuit): Logical circuit to place onto physical qubits.
 
         Returns:
-            Circuit: New circuit retargeted according to the selected layout.
+            Circuit: New circuit retargeted according to the selected layout, or ``circuit``
+            unchanged when ``apply_layout`` is ``False``.
 
         Raises:
             ValueError: If the topology is empty or has fewer physical qubits than required by ``circuit``.
@@ -204,6 +219,9 @@ class SabreLayoutPass(CircuitTranspilerPass):
             self.last_score = 0.0
             if self.context is not None:
                 self.context.initial_layout = self.last_layout
+                self.context.layout_applied = self.apply_layout
+            if not self.apply_layout:
+                return circuit
             return self._retarget_circuit(circuit, layout, max_physical_label_plus_one)
 
         # Multi-trial SABRE simulation; keep the best layout according to final cost.
@@ -232,8 +250,16 @@ class SabreLayoutPass(CircuitTranspilerPass):
 
         if self.context is not None:
             self.context.initial_layout = self.last_layout or []
+            self.context.layout_applied = self.apply_layout
 
-        new_circuit = self._retarget_circuit(circuit, best_layout, max_physical_label_plus_one)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
+        # When the layout is not applied here, a following router applies
+        # context.initial_layout instead. Applying it in both places composes the
+        # mapping with itself and scrambles the placement.
+        new_circuit = (
+            self._retarget_circuit(circuit, best_layout, max_physical_label_plus_one)  # type: ignore[arg-type]  # ty:ignore[invalid-argument-type]
+            if self.apply_layout
+            else circuit
+        )
 
         self.append_circuit_to_context(new_circuit)
 
