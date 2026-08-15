@@ -25,8 +25,8 @@ The public entry point is :class:`Expression`, the abstract base of every node:
 Construction *canonicalizes* (a cheap, total normalization: flattening, combining like terms/powers,
 folding constants, eliminating identities, ordering operands deterministically). Canonical form is
 the sole definition of ``==``/``hash`` -- equal expressions are structurally identical and equality
-is order-independent for ``+`` and ``*`` (``x + y == y + x``). Semantic rewrites -- :meth:`expand`,
-:meth:`simplify`, :meth:`diff` -- are explicit and never participate in equality.
+is order-independent for ``+`` and ``*`` (``x + y == y + x``). Semantic rewrites -- :meth:`expand` and
+:meth:`diff` -- are explicit and never participate in equality.
 """
 
 from __future__ import annotations
@@ -65,6 +65,9 @@ _RANK_FUNCTION = 5
 def _float_if_real(value: Number) -> Number:
     """Collapse a complex value with negligible imaginary part to a real value.
 
+    Used when *storing* a number, so an ``int`` stays an ``int`` and ``Constant(2)`` still prints as
+    ``2``. Compare :func:`_finalize`, which widens every real to ``float`` for evaluation results.
+
     Returns:
         Number: the real value if the imaginary part is negligible, otherwise ``value`` unchanged.
     """
@@ -92,6 +95,9 @@ def _assert_real(value: Number) -> RealNumber:
 
 def _finalize(value: Number) -> Number:
     """Normalize a numeric evaluation result.
+
+    Like :func:`_float_if_real` but always widens a real to ``float``, so ``evaluate()`` returns a
+    consistent numeric type instead of leaking whether the arithmetic happened to stay integral.
 
     Returns:
         Number: a ``float`` for (near-)real values, otherwise the complex value unchanged.
@@ -244,9 +250,7 @@ def _mul_expand(left: Expression, right: Expression) -> Expression:
 class Expression(ABC):
     """Abstract base of every node in the expression tree."""
 
-    _TOL = _TOL
-
-    # ------------------------------------------------------------------ markers
+    # ---- markers ----
     @property
     def is_idempotent_under_mul(self) -> bool:
         """Whether ``self * self == self`` (true only for ``BinaryVariable``)."""
@@ -257,7 +261,7 @@ class Expression(ABC):
         """Whether this expression is a :class:`~qilisdk.core.variables.Parameter` leaf."""
         return False
 
-    # ------------------------------------------------------------------ abstract core
+    # ---- abstract core ----
     @abstractmethod
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
         """Numerically evaluate the expression given an assignment of symbols to values."""
@@ -275,6 +279,17 @@ class Expression(ABC):
     def diff(self, symbol: BaseVariable) -> Expression:
         """Symbolic derivative with respect to ``symbol``."""
 
+    def derivative(self, symbol: BaseVariable) -> Expression:
+        """Symbolic derivative with respect to ``symbol``.
+
+        Spelled-out alias of :meth:`diff`, which is the name SymPy uses. Both are supported; pick
+        whichever reads better in your code.
+
+        Returns:
+            Expression: the derivative of this expression with respect to ``symbol``.
+        """
+        return self.diff(symbol)
+
     @abstractmethod
     def _sort_key(self) -> tuple:
         """A total-order key used to order operands deterministically and define equality.
@@ -289,11 +304,7 @@ class Expression(ABC):
     @abstractmethod
     def _compute_hash(self) -> int: ...
 
-    # ------------------------------------------------------------------ shared semantics
-    def simplify(self) -> Expression:
-        """Return a semantically-equal but possibly simpler expression (opt-in, not used by ``==``)."""
-        return self
-
+    # ---- shared semantics ----
     def expand(self) -> Expression:
         """Distribute products over sums.
 
@@ -379,7 +390,7 @@ class Expression(ABC):
         """
         return [self]
 
-    # ------------------------------------------------------------------ identity
+    # ---- identity ----
     def __hash__(self) -> int:
         if self._hash_cache is None:
             self._hash_cache = self._compute_hash()
@@ -405,7 +416,7 @@ class Expression(ABC):
         self.__dict__.update(state)
         self._hash_cache = None
 
-    # ------------------------------------------------------------------ arithmetic
+    # ---- arithmetic ----
     def __add__(self, other: object) -> Expression:
         rhs = _coerce(other)
         return NotImplemented if rhs is None else Add.build((self, rhs))
@@ -435,7 +446,7 @@ class Expression(ABC):
 
     def __truediv__(self, other: object) -> Expression:
         if isinstance(other, (int, float)):
-            if abs(other) < self._TOL:
+            if abs(other) < _TOL:
                 raise ValueError(_DIVISION_MESSAGE)
             return Mul.build((Constant(1.0 / other), self))
         rhs = _coerce(other)
@@ -520,7 +531,7 @@ class Add(Expression):
 
     def __init__(self, args: tuple[Expression, ...]) -> None:
         # Trusting constructor: ``args`` must already be canonical (flattened, like-terms combined,
-        # at most one Constant, length >= 2, deterministically sorted). Use ``_build`` to normalize.
+        # at most one Constant, length >= 2, deterministically sorted). Use ``build`` to normalize.
         self._args: tuple[Expression, ...] = tuple(args)
         self._hash_cache: int | None = None
 
@@ -588,9 +599,6 @@ class Add(Expression):
     def expand(self) -> Expression:
         return Add.build(tuple(term.expand() for term in self._args))
 
-    def simplify(self) -> Expression:
-        return Add.build(tuple(term.simplify() for term in self._args))
-
     def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
         if self in mapping:
             return super().substitute(mapping)
@@ -644,7 +652,7 @@ class Mul(Expression):
     """
 
     def __init__(self, args: tuple[Expression, ...]) -> None:
-        # Trusting constructor: ``args`` must already be canonical. Use ``_build`` to normalize.
+        # Trusting constructor: ``args`` must already be canonical. Use ``build`` to normalize.
         self._args: tuple[Expression, ...] = tuple(args)
         self._hash_cache: int | None = None
 
@@ -711,9 +719,6 @@ class Mul(Expression):
         for factor in self._args:
             result = _mul_expand(result, factor.expand())
         return result
-
-    def simplify(self) -> Expression:
-        return Mul.build(tuple(factor.simplify() for factor in self._args))
 
     def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
         if self in mapping:
@@ -836,9 +841,6 @@ class Pow(Expression):
             return result
         return Pow.build(base, self._exp)
 
-    def simplify(self) -> Expression:
-        return Pow.build(self._base.simplify(), self._exp.simplify())
-
     def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
         if self in mapping:
             return super().substitute(mapping)
@@ -860,7 +862,9 @@ class Pow(Expression):
         return qili_hash("Pow", self._base, self._exp)
 
     def __repr__(self) -> str:
-        base = f"({self._base!r})" if isinstance(self._base, (Add, Mul)) else repr(self._base)
+        # ``**`` is right-associative in Python, so a Pow base needs parentheses too: without them
+        # ``(x**2)**0.5`` would print as ``x**2**0.5``, which reads back as ``x**(2**0.5)``.
+        base = f"({self._base!r})" if isinstance(self._base, (Add, Mul, Pow)) else repr(self._base)
         exp = f"({self._exp!r})" if isinstance(self._exp, (Add, Mul)) else repr(self._exp)
         return f"{base}**{exp}"
 
@@ -927,9 +931,6 @@ class Function(Expression, ABC):
     def expand(self) -> Expression:
         return type(self)(self._arg.expand())
 
-    def simplify(self) -> Expression:
-        return type(self)(self._arg.simplify())
-
     def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
         if self in mapping:
             return super().substitute(mapping)
@@ -948,7 +949,7 @@ class Function(Expression, ABC):
         return type(self)(self._arg)
 
     def __repr__(self) -> str:
-        return f"{self.NAME}({self._arg!r})"
+        return f"{type(self).__name__}({self._arg!r})"
 
     @classmethod
     def to_yaml(cls, representer, node):  # ruff: ignore[missing-type-function-argument, missing-return-type-class-method]
@@ -1061,7 +1062,7 @@ class Abs(Function):
         return float(abs(value))
 
     def _derivative(self, operand: Expression) -> Expression:
-        raise NotSupportedOperation(f"The derivative of {self.NAME} is not supported.")
+        raise NotSupportedOperation(f"The derivative of {type(self).__name__} is not supported.")
 
 
 def Inv(arg: object) -> Expression:

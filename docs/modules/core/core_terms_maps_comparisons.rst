@@ -36,12 +36,10 @@ For example:
     e3: -1 + b + 2 * x
     e4: 3 - (4 + 2 * x + 3 * x**2) + 2 * x
 
-Construction *canonicalizes* the expression (flattening nested sums/products, combining like terms
-and powers, folding constants, ordering operands deterministically), which is why the numeric
-constant is printed first and ``x + y`` equals ``y + x``. Canonicalization is intentionally cheap:
-products are **not** distributed over sums, so ``e4`` keeps the factored ``- (4 + 2 * x + 3 * x**2)``
-sub-expression. Use :meth:`~qilisdk.core.expression.Expression.expand` to distribute, and
-:meth:`~qilisdk.core.expression.Expression.simplify` to request a simpler (but semantically equal) form:
+Upon construction we canonicalize the expression (flattening nested sums/products, combining like
+terms, ordering things etc.), ensuring that ``x + y + 1`` equals ``y + 1 + x``. Products are **not**
+distributed over sums, so ``e4`` keeps the factored ``- (4 + 2 * x + 3 * x**2)`` sub-expression. Use
+:meth:`~qilisdk.core.expression.Expression.expand` to distribute:
 
 .. code-block:: python
 
@@ -76,9 +74,9 @@ Expressions can be evaluated by providing values for the involved variables via
 Inspecting and differentiating expressions
 ===========================================
 
-An :class:`~qilisdk.core.expression.Expression` exposes a small introspection API. You can list the
+An :class:`~qilisdk.core.expression.Expression` exposes a number of helper functions. You can list the
 named leaves it depends on, isolate just the free :class:`~qilisdk.core.variables.Parameter` leaves,
-read its polynomial :attr:`~qilisdk.core.expression.Expression.degree`, and take a symbolic
+read its polynomial :attr:`~qilisdk.core.expression.Expression.degree`, or take a symbolic
 derivative with :meth:`~qilisdk.core.expression.Expression.diff`:
 
 .. code-block:: python
@@ -109,13 +107,9 @@ Mathematical Functions
 ======================
 
 Non-polynomial operations are represented by :class:`~qilisdk.core.expression.Function`, the abstract
-base for the unary maths functions. Its concrete subclasses
-:class:`~qilisdk.core.expression.Sin`, :class:`~qilisdk.core.expression.Cos`,
-:class:`~qilisdk.core.expression.Exp`, :class:`~qilisdk.core.expression.Log`,
-:class:`~qilisdk.core.expression.Tan`, :class:`~qilisdk.core.expression.Sqrt` and
-:class:`~qilisdk.core.expression.Abs` each wrap a single
+base for the unary maths functions. Each of its concrete subclasses (listed below) wraps a single
 :class:`~qilisdk.core.expression.Expression` operand (a :class:`~qilisdk.core.variables.Parameter`,
-any other variable, or a compound expression) and defer numeric evaluation until values are provided.
+any other variable, or a compound expression) and defers numeric evaluation until values are provided.
 
 .. code-block:: python
 
@@ -125,7 +119,7 @@ any other variable, or a compound expression) and defer numeric evaluation until
     theta = Parameter("theta", 0.5)
     expr = Sin(theta) + Cos(2 * theta)
 
-    print(expr)                # cos(2 * theta) + sin(theta)
+    print(expr)                # Cos(2 * theta) + Sin(theta)
     print(expr.evaluate({}))   # uses theta.value automatically
 
     # You can also supply a different value at evaluation time:
@@ -135,7 +129,7 @@ any other variable, or a compound expression) and defer numeric evaluation until
 
 ::
 
-    cos(2 * theta) + sin(theta)
+    Cos(2 * theta) + Sin(theta)
     1.0197278444723428
     0.4253241482607541
 
@@ -151,16 +145,16 @@ applied automatically), and evaluated. Wrapping a numeric constant folds eagerly
 
     theta = Parameter("theta", 0.5)
 
-    print(Sin(theta).diff(theta))   # d/dtheta sin(theta) == cos(theta)
-    print(Exp(theta).diff(theta))   # d/dtheta exp(theta) == exp(theta)
+    print(Sin(theta).diff(theta))   # d/dtheta Sin(theta) == Cos(theta)
+    print(Exp(theta).diff(theta))   # d/dtheta Exp(theta) == Exp(theta)
     print(Cos(0))                   # folds to a numeric constant
 
 **Output**:
 
 ::
 
-    cos(theta)
-    exp(theta)
+    Cos(theta)
+    Exp(theta)
     1.0
 
 These functions compose naturally with the rest of the expression tree, so you can include them in
@@ -181,7 +175,7 @@ The available function nodes are:
 ``sign`` node to write its derivative with, so :meth:`~qilisdk.core.expression.Expression.diff`
 raises on it.
 
-Powers are not functions. Use the ``**`` operator, which builds a
+For powers, use the ``**`` operator, which builds a
 :class:`~qilisdk.core.expression.Pow` node and accepts a fractional or symbolic exponent.
 :func:`~qilisdk.core.expression.Inv` is a shorthand for ``x ** -1``, so ``Inv(x)``, ``1 / x`` and
 ``x ** -1`` are all the same expression:

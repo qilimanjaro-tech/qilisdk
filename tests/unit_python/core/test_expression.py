@@ -217,10 +217,10 @@ def test_yaml_round_trip(params, expr_factory):
     assert isinstance(restored, Expression)
 
 
-def test_simplify_does_not_affect_equality(params):
+def test_expand_does_not_affect_equality(params):
     x, _, _ = params
     expr = x * (x + 1)
-    # simplify/expand may differ structurally from the unexpanded form
+    # expand may differ structurally from the unexpanded form
     assert expr.expand() != expr
     # but evaluating both agrees
     assert expr.evaluate({x: 4.0}) == expr.expand().evaluate({x: 4.0})
@@ -266,7 +266,7 @@ def test_diff_with_symbolic_exponent(params):
 def test_diff_of_abs_is_not_supported(params):
     x, _, _ = params
     expr = Abs(x)
-    with pytest.raises(NotSupportedOperation, match=r"The derivative of abs is not supported."):
+    with pytest.raises(NotSupportedOperation, match=r"The derivative of Abs is not supported."):
         expr.diff(x)
 
 
@@ -276,19 +276,16 @@ def test_diff_of_a_constant_and_an_unrelated_symbol(params):
     assert Sin(y).diff(x) == Constant(0)
 
 
-# --------------------------------------------------------------------------- simplify
-def test_simplify_recurses_into_every_node_type(params):
+# --------------------------------------------------------------------------- canonicalization on construction
+def test_construction_already_normalizes_every_node_type(params):
     x, y, _ = params
-    assert (Sin(x * 1) + 0).simplify() == Sin(x)
-    assert ((x + 0) * (y * 1)).simplify() == x * y
-    assert ((x + 0) ** (y * 1)).simplify() == x**y
-    assert (x - x).simplify() == Constant(0)
-
-
-def test_simplify_leaves_semantics_untouched(params):
-    x, y, _ = params
-    expr = Sin(x) ** 2 + Cos(x) ** 2 + x * y
-    assert expr.simplify().evaluate({x: 0.3, y: 1.5}) == pytest.approx(expr.evaluate({x: 0.3, y: 1.5}))
+    # There is no separate simplify() pass: building the node is what normalizes it.
+    assert (Sin(x * 1) + 0) == Sin(x)
+    assert ((x + 0) * (y * 1)) == x * y
+    assert ((x + 0) ** (y * 1)) == x**y
+    assert (x - x) == Constant(0)
+    assert (2 * x + 3 * x) == 5 * x
+    assert (x / x) == Constant(1)
 
 
 # --------------------------------------------------------------------------- substitute
@@ -456,7 +453,7 @@ def test_sums_print_negative_terms_with_a_minus(params):
     assert repr(x - y) == "x - y"
     assert repr(x + y) == "x + y"
     assert repr(-x - y) == "-x - y"
-    assert repr(x - Sin(y)) == "x - sin(y)"
+    assert repr(x - Sin(y)) == "x - Sin(y)"
     # A coefficient of exactly -1 reads as a leading minus, other coefficients keep the product.
     assert repr(-x) == "-x"
     assert repr(-2 * x) == "-2 * x"
@@ -471,3 +468,26 @@ def test_a_subtracted_sum_keeps_its_parentheses(params):
     # and the printed form still agrees with what the expression evaluates to
     expr = x - (y + z)
     assert expr.evaluate({x: 5.0, y: 2.0, z: 1.0}) == 5.0 - (2.0 + 1.0)
+
+
+def test_a_power_of_a_power_keeps_its_parentheses(params):
+    x, _, _ = params
+    # ``**`` is right-associative, so "x**2**0.5" would read back as x**(2**0.5).
+    assert repr((x**2) ** 0.5) == "(x**2)**0.5"
+    assert repr(x ** (2**0.5)) == "x**1.4142135623730951"
+    assert ((x**2) ** 0.5).evaluate({x: 9.0}) == pytest.approx(9.0)
+
+
+def test_functions_print_the_name_you_construct_them_with(params):
+    x, _, _ = params
+    assert repr(Sin(x)) == "Sin(x)"
+    assert repr(Sqrt(x)) == "Sqrt(x)"
+    assert repr(Abs(x)) == "Abs(x)"
+    assert repr(Sin(x) ** 2 + Cos(x)) == "Sin(x)**2 + Cos(x)"
+
+
+def test_derivative_is_an_alias_of_diff(params):
+    x, _, _ = params
+    assert Sin(x).derivative(x) == Sin(x).diff(x)
+    assert (x**3).derivative(x) == (x**3).diff(x)
+    assert (x**3).derivative(x) == 3 * x**2

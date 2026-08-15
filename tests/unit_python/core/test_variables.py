@@ -331,13 +331,11 @@ def test_arithmetic_and_comparisons():
     assert t2 == Constant(0)
 
 
-def test_term_constant_and_simplify():
+def test_constant_folding_and_empty_sum():
     # a sum of constants folds into a single Constant
     t = Add.build((Constant(1), Constant(2), Constant(3)))
     assert isinstance(t, Constant)
     assert t == Constant(6)
-    # simplify keeps it semantically equal
-    assert t.simplify() == Constant(6)
     ct = EQ(t, 6)
     zero = Constant(0)
     assert ct.lhs == zero
@@ -916,15 +914,15 @@ def test_mathematical_map():
     term = 2 * b + p
 
     dummy_map = DummyMap(b)
-    assert str(dummy_map) == "dummy_map(b)"
+    assert str(dummy_map) == "DummyMap(b)"
     assert dummy_map.evaluate({b: 0}) == 0
 
     dummy_map = DummyMap(p)
-    assert str(dummy_map) == "dummy_map(p)"
+    assert str(dummy_map) == "DummyMap(p)"
     assert dummy_map.evaluate({}) == 1
 
     dummy_map = DummyMap(term)
-    assert str(dummy_map) == f"dummy_map({term})"
+    assert str(dummy_map) == f"DummyMap({term})"
     assert dummy_map.evaluate({b: 1}) == 3
 
     # a numeric operand folds to a Constant; a non-numeric one is rejected
@@ -941,15 +939,15 @@ def test_sin_map():
     term = 2 * b + p
 
     sin_map = Sin(b)
-    assert str(sin_map) == "sin(b)"
+    assert str(sin_map) == "Sin(b)"
     assert sin_map.evaluate({b: 0}) == np.sin(0)
 
     sin_map = Sin(p)
-    assert str(sin_map) == "sin(p)"
+    assert str(sin_map) == "Sin(p)"
     assert sin_map.evaluate({}) == np.sin(1)
 
     sin_map = Sin(term)
-    assert str(sin_map) == f"sin({term})"
+    assert str(sin_map) == f"Sin({term})"
     assert sin_map.evaluate({b: 1}) == np.sin(3)
 
     assert isinstance(copy(sin_map), Sin)
@@ -961,15 +959,15 @@ def test_cos_map():
     term = 2 * b + p
 
     cos_map = Cos(b)
-    assert str(cos_map) == "cos(b)"
+    assert str(cos_map) == "Cos(b)"
     assert cos_map.evaluate({b: 0}) == np.cos(0)
 
     cos_map = Cos(p)
-    assert str(cos_map) == "cos(p)"
+    assert str(cos_map) == "Cos(p)"
     assert cos_map.evaluate({}) == np.cos(1)
 
     cos_map = Cos(term)
-    assert str(cos_map) == f"cos({term})"
+    assert str(cos_map) == f"Cos({term})"
     assert cos_map.evaluate({b: 1}) == np.cos(3)
 
     assert isinstance(copy(cos_map), Cos)
@@ -981,15 +979,15 @@ def test_sqrt_map():
     term = 2 * b + p
 
     sqrt_map = Sqrt(b)
-    assert str(sqrt_map) == "sqrt(b)"
+    assert str(sqrt_map) == "Sqrt(b)"
     assert sqrt_map.evaluate({b: 0}) == np.sqrt(0)
 
     sqrt_map = Sqrt(p)
-    assert str(sqrt_map) == "sqrt(p)"
+    assert str(sqrt_map) == "Sqrt(p)"
     assert sqrt_map.evaluate({}) == np.sqrt(1)
 
     sqrt_map = Sqrt(term)
-    assert str(sqrt_map) == f"sqrt({term})"
+    assert str(sqrt_map) == f"Sqrt({term})"
     assert sqrt_map.evaluate({b: 1}) == np.sqrt(3)
 
     assert isinstance(copy(sqrt_map), Sqrt)
@@ -1001,15 +999,15 @@ def test_log_map():
     term = 2 * b + p
 
     log_map = Log(b)
-    assert str(log_map) == "log(b)"
+    assert str(log_map) == "Log(b)"
     assert log_map.evaluate({b: 1}) == np.log(1)
 
     log_map = Log(p)
-    assert str(log_map) == "log(p)"
+    assert str(log_map) == "Log(p)"
     assert log_map.evaluate({}) == np.log(1)
 
     log_map = Log(term)
-    assert str(log_map) == f"log({term})"
+    assert str(log_map) == f"Log({term})"
     assert log_map.evaluate({b: 1}) == np.log(3)
 
     assert isinstance(copy(log_map), Log)
@@ -1065,15 +1063,15 @@ def test_exp_map():
     term = 2 * b + p
 
     exp_map = Exp(b)
-    assert str(exp_map) == "exp(b)"
+    assert str(exp_map) == "Exp(b)"
     assert exp_map.evaluate({b: 1}) == np.exp(1)
 
     exp_map = Exp(p)
-    assert str(exp_map) == "exp(p)"
+    assert str(exp_map) == "Exp(p)"
     assert exp_map.evaluate({}) == np.exp(1)
 
     exp_map = Exp(term)
-    assert str(exp_map) == f"exp({term})"
+    assert str(exp_map) == f"Exp({term})"
     assert exp_map.evaluate({b: 1}) == np.exp(3)
 
     assert isinstance(copy(exp_map), Exp)
@@ -1169,17 +1167,17 @@ def test_abs_map():
     term = 2 * p
 
     abs_map = Abs(p)
-    assert str(abs_map) == "abs(p)"
+    assert str(abs_map) == "Abs(p)"
     assert abs_map.evaluate({}) == 1
 
     abs_map = Abs(term)
-    assert str(abs_map) == f"abs({term})"
+    assert str(abs_map) == f"Abs({term})"
     assert abs_map.evaluate({}) == 2
 
     assert isinstance(copy(abs_map), Abs)
 
     derivable = Abs(p)
-    with pytest.raises(NotSupportedOperation, match=r"The derivative of abs is not supported."):
+    with pytest.raises(NotSupportedOperation, match=r"The derivative of Abs is not supported."):
         derivable.diff(p)
 
 
@@ -1189,15 +1187,15 @@ def test_tan_map():
     term = 2 * b + p
 
     tan_map = Tan(b)
-    assert str(tan_map) == "tan(b)"
+    assert str(tan_map) == "Tan(b)"
     assert tan_map.evaluate({b: 0}) == np.tan(0)
 
     tan_map = Tan(p)
-    assert str(tan_map) == "tan(p)"
+    assert str(tan_map) == "Tan(p)"
     assert tan_map.evaluate({}) == np.tan(1)
 
     tan_map = Tan(term)
-    assert str(tan_map) == f"tan({term})"
+    assert str(tan_map) == f"Tan({term})"
     assert tan_map.evaluate({b: 1}) == np.tan(3)
 
     assert isinstance(copy(tan_map), Tan)

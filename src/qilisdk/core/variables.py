@@ -575,7 +575,7 @@ class BaseVariable(Expression, ABC):
         self._domain = domain
         self.set_bounds(bounds[0], bounds[1])
 
-    # ------------------------------------------------------------------ Expression interface
+    # ---- Expression interface ----
     def free_symbols(self) -> set[BaseVariable]:
         return {self}
 
