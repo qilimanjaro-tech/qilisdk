@@ -56,6 +56,7 @@ using cudaDeviceSynchronize_t = int (*)();
 using cublasCreate_t = int (*)(void**);
 using cublasDestroy_t = int (*)(void*);
 using cublasDgemm_t = int (*)(void* handle, int transa, int transb, int m, int n, int k, const double* alpha, const double* A, int lda, const double* B, int ldb, const double* beta, double* C, int ldc);
+using cublasDsyrk_t = int (*)(void* handle, int uplo, int trans, int n, int k, const double* alpha, const double* A, int lda, const double* beta, double* C, int ldc);
 using cublasDgemv_t = int (*)(void* handle, int trans, int m, int n, const double* alpha, const double* A, int lda, const double* x, int incx, const double* beta, double* y, int incy);
 using cublasDscal_t = int (*)(void* handle, int n, const double* alpha, double* x, int incx);
 using cublasDaxpy_t = int (*)(void* handle, int n, const double* alpha, const double* x, int incx, double* y, int incy);
@@ -89,6 +90,7 @@ struct CudaApi {
     cublasCreate_t cublasCreate = nullptr;
     cublasDestroy_t cublasDestroy = nullptr;
     cublasDgemm_t cublasDgemm = nullptr;
+    cublasDsyrk_t cublasDsyrk = nullptr;
     cublasDgemv_t cublasDgemv = nullptr;
     cublasDscal_t cublasDscal = nullptr;
     cublasDaxpy_t cublasDaxpy = nullptr;
@@ -244,6 +246,7 @@ const CudaApi& probe() {
         ok &= resolve(a.h_cublas, "cublasCreate_v2", a.cublasCreate);
         ok &= resolve(a.h_cublas, "cublasDestroy_v2", a.cublasDestroy);
         ok &= resolve(a.h_cublas, "cublasDgemm_v2", a.cublasDgemm);
+        ok &= resolve(a.h_cublas, "cublasDsyrk_v2", a.cublasDsyrk);
         ok &= resolve(a.h_cublas, "cublasDgemv_v2", a.cublasDgemv);
         ok &= resolve(a.h_cublas, "cublasDscal_v2", a.cublasDscal);
         ok &= resolve(a.h_cublas, "cublasDaxpy_v2", a.cublasDaxpy);
@@ -300,22 +303,75 @@ std::mutex& gpu_mutex() {
     return m;
 }
 
-// RAII wrapper for a device buffer, automatically freed on destruction
-// (RAII = Resource Acquisition Is Initialization, basicially it's a way of alllocating the GPU memory
-// so that it is automatically freed when the object goes out of scope)
-struct DeviceBuffer {
-    const CudaApi& api;
-    void* ptr = nullptr;
-    explicit DeviceBuffer(const CudaApi& a) : api(a) {}
-    bool alloc(std::size_t bytes) { return api.cudaMalloc(&ptr, bytes) == kCudaSuccess; }
-    ~DeviceBuffer() {
-        if (ptr) {
-            api.cudaFree(ptr);
+// Persistent, grow-on-demand pool of the device buffers sr_solve needs.
+//
+// sr_solve runs once per ODE right-hand-side evaluation, i.e. many times per
+// time evolution at identical problem sizes. Allocating and freeing the ~9
+// device buffers on every call (the previous per-call RAII approach) put a
+// cudaMalloc / cudaFree pair for each buffer on the critical path of every
+// solve. Instead we keep a single workspace that only (re)allocates a buffer
+// when a larger size is requested, so steady-state solves perform ZERO device
+// allocations.
+//
+// Access is always serialized by gpu_mutex() (sr_solve holds it for its whole
+// body), so a single shared instance needs no further locking. Buffers grow
+// monotonically and are intentionally never torn down — they live for the
+// process, exactly like the cuBLAS / cuSOLVER handles created in probe().
+struct DevicePool {
+    struct Buffer {
+        void* ptr = nullptr;
+        std::size_t capacity = 0;  // bytes currently allocated
+    };
+
+    const CudaApi* api = nullptr;
+    Buffer O, ones, omean, M, El_re, El_im, B, work, info;
+
+    // Ensure `buf` holds at least `bytes`, reallocating (never shrinking) if not.
+    // Returns false if a required (re)allocation fails.
+    bool ensure(Buffer& buf, std::size_t bytes) {
+        if (bytes <= buf.capacity) {
+            return true;
+        }
+        // Allocate the larger replacement BEFORE releasing the old buffer, so an
+        // out-of-memory failure on growth leaves the existing (still-valid,
+        // smaller) buffer intact for the caller's CPU fallback instead of
+        // discarding it.
+        void* fresh = nullptr;
+        if (api->cudaMalloc(&fresh, bytes) != kCudaSuccess) {
+            return false;
+        }
+        if (buf.ptr) {
+            api->cudaFree(buf.ptr);
+        }
+        buf.ptr = fresh;
+        buf.capacity = bytes;
+        return true;
+    }
+};
+
+// The single reused device workspace. Guarded by gpu_mutex(); see DevicePool.
+DevicePool& gpu_pool() {
+    static DevicePool pool;
+    return pool;
+}
+
+// Minimum problem "work" (~ N_s·p², the Gram-matrix flop count) below which the
+// GPU path is declined in favour of the CPU. Small problems can't amortise the
+// GPU's fixed overhead (kernel launches, H2D/D2H, synchronisation) and, on a
+// consumer GPU, the 1/64-rate FP64 units, so Eigen on the CPU is faster there.
+// Default calibrated on a consumer GPU (RTX 3050 Laptop); override (e.g. lower
+// it on a datacenter GPU, or set 0 to disable gating) via QILISDK_GPU_MIN_WORK.
+// Re-read on every call (like QILISDK_DISABLE_GPU) so it can be toggled at
+// runtime, e.g. by tests that want to exercise the GPU path at small sizes.
+double gpu_min_work() {
+    if (const char* env = std::getenv("QILISDK_GPU_MIN_WORK")) {
+        const double v = std::atof(env);
+        if (v >= 0.0) {
+            return v;
         }
     }
-    DeviceBuffer(const DeviceBuffer&) = delete;
-    DeviceBuffer& operator=(const DeviceBuffer&) = delete;
-};
+    return 1.5e8;
+}
 
 }  // namespace
 
@@ -363,8 +419,13 @@ bool sr_solve(const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double epsil
     if (N_s <= 0 || p <= 0 || static_cast<int>(El.size()) != N_s) {
         return false;
     }
-    if (!api.cublasDgemv || !api.cublasDscal || !api.cublasDaxpy || !api.cublasDsyr) {
-        return false;  // resident path needs the level-1/2 BLAS symbols
+    // Size gate: decline problems too small to beat the CPU, so the caller falls
+    // back to Eigen (see gpu_min_work). Work ~ N_s·p² is the Gram-matrix flops.
+    if (static_cast<double>(N_s) * p * p < gpu_min_work()) {
+        return false;
+    }
+    if (!api.cublasDsyrk || !api.cublasDgemv || !api.cublasDscal || !api.cublasDaxpy || !api.cublasDsyr) {
+        return false;  // resident path needs the level-1/2/3 BLAS symbols
     }
     std::lock_guard<std::mutex> guard(gpu_mutex());
 
@@ -380,36 +441,43 @@ bool sr_solve(const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double epsil
     const double neg_inv_Ns = -inv_Ns;
     const std::size_t szd = sizeof(double);
 
-    // Copy everything to GPU
-    DeviceBuffer dO(api), dOnes(api), dOmean(api), dM(api), dElr(api), dEli(api), dB(api), dWork(api), dInfo(api);
-    if (!dO.alloc(szd * static_cast<std::size_t>(N_s) * p) || !dOnes.alloc(szd * static_cast<std::size_t>(ones_len)) || !dOmean.alloc(szd * static_cast<std::size_t>(p)) || !dM.alloc(szd * static_cast<std::size_t>(p) * p) || !dElr.alloc(szd * static_cast<std::size_t>(N_s)) || !dEli.alloc(szd * static_cast<std::size_t>(N_s)) || !dB.alloc(szd * static_cast<std::size_t>(p) * 2) || !dInfo.alloc(sizeof(int))) {
+    // Acquire the persistent device workspace. It (re)allocates only when a
+    // larger size is needed, so repeated same-size solves do no device
+    // allocation at all. All access is under gpu_mutex(), held above.
+    DevicePool& pool = gpu_pool();
+    pool.api = &api;
+    if (!pool.ensure(pool.O, szd * static_cast<std::size_t>(N_s) * p) || !pool.ensure(pool.ones, szd * static_cast<std::size_t>(ones_len)) || !pool.ensure(pool.omean, szd * static_cast<std::size_t>(p)) || !pool.ensure(pool.M, szd * static_cast<std::size_t>(p) * p) || !pool.ensure(pool.El_re, szd * static_cast<std::size_t>(N_s)) || !pool.ensure(pool.El_im, szd * static_cast<std::size_t>(N_s)) || !pool.ensure(pool.B, szd * static_cast<std::size_t>(p) * 2) || !pool.ensure(pool.info, sizeof(int))) {
         return false;
     }
-    if (api.cudaMemcpy(dO.ptr, O.data(), szd * static_cast<std::size_t>(N_s) * p, kMemcpyHostToDevice) != kCudaSuccess || api.cudaMemcpy(dOnes.ptr, ones.data(), szd * static_cast<std::size_t>(ones_len), kMemcpyHostToDevice) != kCudaSuccess || api.cudaMemcpy(dElr.ptr, El_re.data(), szd * static_cast<std::size_t>(N_s), kMemcpyHostToDevice) != kCudaSuccess || api.cudaMemcpy(dEli.ptr, El_im.data(), szd * static_cast<std::size_t>(N_s), kMemcpyHostToDevice) != kCudaSuccess) {
+    if (api.cudaMemcpy(pool.O.ptr, O.data(), szd * static_cast<std::size_t>(N_s) * p, kMemcpyHostToDevice) != kCudaSuccess || api.cudaMemcpy(pool.ones.ptr, ones.data(), szd * static_cast<std::size_t>(ones_len), kMemcpyHostToDevice) != kCudaSuccess || api.cudaMemcpy(pool.El_re.ptr, El_re.data(), szd * static_cast<std::size_t>(N_s), kMemcpyHostToDevice) != kCudaSuccess || api.cudaMemcpy(pool.El_im.ptr, El_im.data(), szd * static_cast<std::size_t>(N_s), kMemcpyHostToDevice) != kCudaSuccess) {
         return false;
     }
 
     // Run the various routines
-    auto* O_d = static_cast<double*>(dO.ptr);
-    auto* ones_d = static_cast<double*>(dOnes.ptr);
-    auto* omean_d = static_cast<double*>(dOmean.ptr);
-    auto* M_d = static_cast<double*>(dM.ptr);
-    auto* B_d = static_cast<double*>(dB.ptr);
+    auto* O_d = static_cast<double*>(pool.O.ptr);
+    auto* ones_d = static_cast<double*>(pool.ones.ptr);
+    auto* omean_d = static_cast<double*>(pool.omean.ptr);
+    auto* M_d = static_cast<double*>(pool.M.ptr);
+    auto* B_d = static_cast<double*>(pool.B.ptr);
     void* H = api.cublas_handle;
     bool ok = true;
     // ō = (1/N_s) Oᵀ·1
     ok &= api.cublasDgemv(H, kCublasOpT, N_s, p, &inv_Ns, O_d, N_s, ones_d, 1, &zero, omean_d, 1) == kCublasStatusSuccess;
-    // M = OᵀO ; M /= N_s ; M -= ōōᵀ (lower) ; M += εI
-    ok &= api.cublasDgemm(H, kCublasOpT, kCublasOpN, p, p, N_s, &one, O_d, N_s, O_d, N_s, &zero, M_d, p) == kCublasStatusSuccess;
-    ok &= api.cublasDscal(H, p * p, &inv_Ns, M_d, 1) == kCublasStatusSuccess;
+    // M = (1/N_s) OᵀO (lower triangle only) ; M -= ōōᵀ (lower) ; M += εI
+    // dsyrk computes the symmetric rank-k product directly into the lower
+    // triangle at half the flops of a full gemm, and folds the 1/N_s scale into
+    // alpha (so no separate dscal). Only the lower triangle is ever read below
+    // (dsyr lower, potrf/potrs lower), so leaving the upper triangle untouched
+    // is correct.
+    ok &= api.cublasDsyrk(H, kFillModeLower, kCublasOpT, p, N_s, &inv_Ns, O_d, N_s, &zero, M_d, p) == kCublasStatusSuccess;
     ok &= api.cublasDsyr(H, kFillModeLower, p, &neg_one, omean_d, 1, M_d, p) == kCublasStatusSuccess;
     ok &= api.cublasDaxpy(H, p, &epsilon, ones_d, 1, M_d, p + 1) == kCublasStatusSuccess;  // diagonal stride p+1
     // V_re = -(Oᵀ El_re / N_s - El_mean_re·ō)  -> B column 0
-    ok &= api.cublasDgemv(H, kCublasOpT, N_s, p, &one, O_d, N_s, static_cast<double*>(dElr.ptr), 1, &zero, B_d, 1) == kCublasStatusSuccess;
+    ok &= api.cublasDgemv(H, kCublasOpT, N_s, p, &one, O_d, N_s, static_cast<double*>(pool.El_re.ptr), 1, &zero, B_d, 1) == kCublasStatusSuccess;
     ok &= api.cublasDscal(H, p, &neg_inv_Ns, B_d, 1) == kCublasStatusSuccess;
     ok &= api.cublasDaxpy(H, p, &El_mean_re, omean_d, 1, B_d, 1) == kCublasStatusSuccess;
     // V_im -> B column 1
-    ok &= api.cublasDgemv(H, kCublasOpT, N_s, p, &one, O_d, N_s, static_cast<double*>(dEli.ptr), 1, &zero, B_d + p, 1) == kCublasStatusSuccess;
+    ok &= api.cublasDgemv(H, kCublasOpT, N_s, p, &one, O_d, N_s, static_cast<double*>(pool.El_im.ptr), 1, &zero, B_d + p, 1) == kCublasStatusSuccess;
     ok &= api.cublasDscal(H, p, &neg_inv_Ns, B_d + p, 1) == kCublasStatusSuccess;
     ok &= api.cublasDaxpy(H, p, &El_mean_im, omean_d, 1, B_d + p, 1) == kCublasStatusSuccess;
     if (!ok) {
@@ -421,20 +489,20 @@ bool sr_solve(const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double epsil
     if (api.cusolverDnDpotrf_bufferSize(api.cusolver_handle, kFillModeLower, p, M_d, p, &lwork) != kCusolverStatusSuccess) {
         return false;
     }
-    if (lwork > 0 && !dWork.alloc(szd * static_cast<std::size_t>(lwork))) {
+    if (lwork > 0 && !pool.ensure(pool.work, szd * static_cast<std::size_t>(lwork))) {
         return false;
     }
     int host_info = 0;
-    if (api.cusolverDnDpotrf(api.cusolver_handle, kFillModeLower, p, M_d, p, static_cast<double*>(dWork.ptr), lwork, static_cast<int*>(dInfo.ptr)) != kCusolverStatusSuccess) {
+    if (api.cusolverDnDpotrf(api.cusolver_handle, kFillModeLower, p, M_d, p, static_cast<double*>(pool.work.ptr), lwork, static_cast<int*>(pool.info.ptr)) != kCusolverStatusSuccess) {
         return false;
     }
-    if (api.cudaMemcpy(&host_info, dInfo.ptr, sizeof(int), kMemcpyDeviceToHost) != kCudaSuccess || host_info != 0) {
+    if (api.cudaMemcpy(&host_info, pool.info.ptr, sizeof(int), kMemcpyDeviceToHost) != kCudaSuccess || host_info != 0) {
         return false;  // M not SPD -> caller falls back to Eigen
     }
-    if (api.cusolverDnDpotrs(api.cusolver_handle, kFillModeLower, p, 2, M_d, p, B_d, p, static_cast<int*>(dInfo.ptr)) != kCusolverStatusSuccess) {
+    if (api.cusolverDnDpotrs(api.cusolver_handle, kFillModeLower, p, 2, M_d, p, B_d, p, static_cast<int*>(pool.info.ptr)) != kCusolverStatusSuccess) {
         return false;
     }
-    if (api.cudaMemcpy(&host_info, dInfo.ptr, sizeof(int), kMemcpyDeviceToHost) != kCudaSuccess || host_info != 0) {
+    if (api.cudaMemcpy(&host_info, pool.info.ptr, sizeof(int), kMemcpyDeviceToHost) != kCudaSuccess || host_info != 0) {
         return false;
     }
     if (api.cudaDeviceSynchronize() != kCudaSuccess) {
@@ -443,7 +511,7 @@ bool sr_solve(const Eigen::MatrixXd& O, const Eigen::VectorXcd& El, double epsil
 
     // Read back only adot (the two solution columns are the real/imag parts).
     Eigen::MatrixXd Bres(p, 2);
-    if (api.cudaMemcpy(Bres.data(), dB.ptr, szd * static_cast<std::size_t>(p) * 2, kMemcpyDeviceToHost) != kCudaSuccess) {
+    if (api.cudaMemcpy(Bres.data(), pool.B.ptr, szd * static_cast<std::size_t>(p) * 2, kMemcpyDeviceToHost) != kCudaSuccess) {
         return false;
     }
     adot.resize(p);
