@@ -277,12 +277,7 @@ class Expression(ABC):
 
     @abstractmethod
     def derivative(self, symbol: BaseVariable) -> Expression:
-        """Symbolic derivative with respect to ``symbol``.
-
-        This started out as ``diff``, the name SymPy uses, but was renamed on review: we avoid
-        abbreviations, and ``diff`` reads as a difference elsewhere in the stack (``numpy.diff``
-        computes successive differences, not a derivative).
-        """
+        """Symbolic derivative with respect to ``symbol``."""
 
     @abstractmethod
     def _sort_key(self) -> tuple:

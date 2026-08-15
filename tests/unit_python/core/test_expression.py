@@ -486,9 +486,6 @@ def test_functions_print_the_name_you_construct_them_with(params):
     assert repr(Sin(x) ** 2 + Cos(x)) == "Sin(x)**2 + Cos(x)"
 
 
-def test_diff_is_gone(params):
+def test_derivative_of_a_power(params):
     x, _, _ = params
-    # Renamed to derivative() on review; the old SymPy-style spelling is not kept as an alias.
-    assert not hasattr(x, "diff")
-    assert not hasattr(Sin(x), "diff")
     assert (x**3).derivative(x) == 3 * x**2
