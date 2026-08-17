@@ -274,7 +274,7 @@ class Encoding(ABC):
 
     @staticmethod
     @abstractmethod
-    def encoding_constraint(var: Variable, precision: float = 1e-2) -> ComparisonTerm:
+    def encoding_constraint(var: Variable, precision: float = 1e-2) -> ComparisonTerm | None:
         """Given a continuous variable return a Constraint Term that ensures that the encoding is respected.
 
         Args:
@@ -283,7 +283,8 @@ class Encoding(ABC):
                                 the variable domain is Domain.Real)
 
         Returns:
-            Constraint Term: a constraint term that ensures the encoding is respected.
+            Constraint Term | None: a constraint term that ensures the encoding is respected, or None if the
+                                encoding needs no constraint because every binary string is a valid encoding.
         """
 
     @staticmethod
@@ -420,8 +421,9 @@ class Bitwise(Encoding):
         return out
 
     @staticmethod
-    def encoding_constraint(var: Variable, precision: float = 1e-2) -> ComparisonTerm:
-        raise NotImplementedError("Bitwise encoding constraints are not supported at the moment")
+    def encoding_constraint(var: Variable, precision: float = 1e-2) -> ComparisonTerm | None:
+        # The Bitwise encoding needs no constraint
+        return None
 
     @staticmethod
     def num_binary_equivalent(var: "Variable", precision: float = 1e-2) -> int:
@@ -1127,11 +1129,12 @@ class Variable(BaseVariable):
         """
         return self.encoding.check_valid(binary_list)
 
-    def encoding_constraint(self) -> ComparisonTerm:
+    def encoding_constraint(self) -> ComparisonTerm | None:
         """Given a continuous variable return a Comparison Term that ensures that the encoding is respected.
 
         Returns:
-            ComparisonTerm: a Comparison Term that ensures the encoding is respected.
+            ComparisonTerm | None: a Comparison Term that ensures the encoding is respected, or None if the
+                variable's encoding needs no constraint (every binary string is a valid encoding).
         """
         return self.encoding.encoding_constraint(self, precision=self._precision)
 
