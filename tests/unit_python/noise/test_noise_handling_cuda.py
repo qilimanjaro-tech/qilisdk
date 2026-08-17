@@ -25,6 +25,7 @@ from qilisdk.backends.cuda_backend import (
     _compose_kraus,
     _embed_operator,
     _kraus_matrices,
+    _to_builtin_cuda_noise,
     cudaq,
 )
 from qilisdk.core import Parameter
@@ -189,6 +190,27 @@ def test_noise_model_to_cudaq_keeps_builtin_channels():
     noise_model.add(PhaseFlip(probability=0.1), qubits=[0])
     cuda_noise_model = backend._noise_model_to_cudaq(noise_model)
     assert _gate_channel(cuda_noise_model, "x", [0]).noise_type == cudaq.NoiseModelType.Unknown
+
+    # Noise CUDA-Q has no named channel for goes through the generic path.
+    assert _to_builtin_cuda_noise(AmplitudeDamping(t1=1.0)) is None
+    noise_model = NoiseModel()
+    noise_model.add(AmplitudeDamping(t1=1.0))
+    cuda_noise_model = backend._noise_model_to_cudaq(noise_model)
+    assert _gate_channel(cuda_noise_model, "x", [0]).noise_type == cudaq.NoiseModelType.Unknown
+
+
+def test_noise_model_to_cudaq_ignores_noise_without_kraus_operators():
+    backend = CudaBackend()
+    noise_model = NoiseModel()
+    noise_model.add(ReadoutAssignment(p01=0.1, p10=0.1))
+    noise_model.add(BitFlip(probability=1.0), qubits=[0])
+    cuda_noise_model = backend._noise_model_to_cudaq(noise_model)
+
+    # Readout errors are applied to the samples, not as a gate channel, so only the bit flip is
+    # left on the gate.
+    flip = np.array([[0, 1], [1, 0]], dtype=np.complex128)
+    identity = np.eye(2, dtype=np.complex128)
+    assert np.allclose(_channel_operators(cuda_noise_model, "x", [0, 1])[0], np.kron(identity, flip))
 
 
 def test_noise_model_to_cudaq_skips_unplaceable_channels():
