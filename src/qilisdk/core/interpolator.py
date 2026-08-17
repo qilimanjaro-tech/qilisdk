@@ -227,6 +227,17 @@ class Interpolator(Parameterizable):
         return self._time_scale_cache
 
     @property
+    def extrapolate(self) -> bool:
+        """
+        Return whether coefficients are extrapolated outside the defined time range.
+
+        Returns:
+            bool: ``True`` if the first/last segment slope is extended, ``False`` if the first/last coefficient is
+                held constant.
+        """
+        return self._extrapolate
+
+    @property
     def tlist(self) -> list[PARAMETERIZED_NUMBER]:
         """
         Return the (possibly rescaled) list of time points used for interpolation.
@@ -544,11 +555,16 @@ class Interpolator(Parameterizable):
             time_step (float): Time at which to retrieve the coefficient.
 
         Returns:
-            Number | Term | Parameter: Coefficient expression for the previous time point.
+            Number | Term | Parameter: Coefficient expression for the previous time point. Times before the first
+            point hold the first coefficient constant, consistent with ``LINEAR``.
         """
         self._tlist = self._generate_tlist()
         prev_indx = bisect_right(self._tlist, time_step, key=self._get_value) - 1
-        prev_indx = -1 if prev_indx >= len(self._tlist) else prev_indx
+        if prev_indx < 0:
+            self._warn_no_extrapolation()
+            prev_indx = 0
+        elif time_step > self._get_value(self._tlist[-1]):
+            self._warn_no_extrapolation()
         prev_time_step = self._tlist[prev_indx]
         return self._time_dict[prev_time_step]
 

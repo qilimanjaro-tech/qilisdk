@@ -562,6 +562,46 @@ def test_interpolator_extrapolates_when_requested(monkeypatch):
     assert not warnings
 
 
+def test_step_interpolator_holds_endpoints_outside_range(monkeypatch):
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    interp = Interpolator({2: 1.0, 4: 0.0}, Interpolation.STEP)
+
+    # STEP agrees with LINEAR outside the range: the first/last coefficient is held, not wrapped around
+    assert interp[0] == 1.0
+    assert interp[1] == 1.0
+    assert interp[6] == 0.0
+    assert interp[100] == 0.0
+
+    assert len(warnings) == 1
+    assert "assumed constant outside its defined time range" in warnings[0]
+
+
+def test_step_interpolator_ignores_extrapolate(monkeypatch):
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    # extrapolation is only meaningful for LINEAR, so STEP still holds the endpoints constant
+    interp = Interpolator({2: 1.0, 4: 0.0}, Interpolation.STEP, extrapolate=True)
+
+    assert interp.extrapolate
+    assert interp[0] == 1.0
+    assert interp[6] == 0.0
+    assert len(warnings) == 1
+
+
+def test_step_interpolator_single_point_holds_without_warning(monkeypatch):
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    interp = Interpolator({2: 1.5}, Interpolation.STEP)
+
+    assert interp[0] == 1.5
+    assert interp[10] == 1.5
+    assert not warnings
+
+
 def test_interpolator_single_point_holds_without_warning(monkeypatch):
     warnings = []
     monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
