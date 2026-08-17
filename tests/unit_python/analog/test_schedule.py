@@ -813,6 +813,24 @@ def test_calculate_eigenvalues():
     assert np.allclose(eigenvalues[-1], evals_h2)
 
 
+def test_calculate_eigenvalues_pads_to_full_register():
+    # The driver acts on a single qubit while the problem acts on two, so at t=0 (where the
+    # problem coefficient vanishes) the summed Hamiltonian only covers one qubit. The spectrum
+    # must still be that of the full two qubit register at every time step.
+    H1 = PauliX(0).to_hamiltonian()
+    H2 = PauliZ(0) * PauliZ(1)
+    sched = Schedule.linear(H1, H2, total_time=10, dt=1)
+    levels = 4
+    eigenvalues, eigenstates = sched.eig(levels=levels)
+
+    assert all(len(evs) == levels for evs in eigenvalues)
+    assert all(len(states) == levels for states in eigenstates)
+
+    # At the first step the spectrum is that of H1 padded with an idle qubit.
+    evals_h1 = np.sort(np.real(H1.to_qtensor(total_nqubits=2).eigenvalues))
+    assert np.allclose(eigenvalues[0], evals_h1[:levels])
+
+
 def test_schedule_constant():
     dt = 1
     H1 = PauliZ(0).to_hamiltonian()
@@ -909,7 +927,7 @@ def test_calculate_eigenvalues_with_too_many_qubits_runs_but_warns(monkeypatch):
     warnings = []
     monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
 
-    monkeypatch.setattr(Hamiltonian, "to_qtensor", lambda self: DummyQTensor(nqubits=8))
+    monkeypatch.setattr(Hamiltonian, "to_qtensor", lambda self, total_nqubits=None: DummyQTensor(nqubits=8))
     nqubits = 8
     H1 = sum(X(i) for i in range(nqubits))
     H2 = sum(Z(i) for i in range(nqubits))
