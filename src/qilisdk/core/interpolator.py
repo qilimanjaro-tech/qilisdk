@@ -531,7 +531,9 @@ class Interpolator(Parameterizable):
             return
         self._warned_extrapolation = True
         logger.warning(
-            "[Interpolator] At least one Schedule coefficient is being assumed constant outside its defined time range."
+            "[Interpolator] Coefficient assumed constant outside its defined time range: [{},  {}].",
+            self._get_value(self._tlist[0]),
+            self._get_value(self._tlist[-1]),
         )
 
     def _get_coefficient_expression_step(self, time_step: float) -> Number | Term | Parameter:

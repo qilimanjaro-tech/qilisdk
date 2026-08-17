@@ -123,6 +123,13 @@ class Schedule(Parameterizable):
             coeff = copy(coefficients[ham])
             if isinstance(coeff, Interpolator):
                 self._coefficients[ham] = coeff
+                if extrapolate != coeff.extrapolate:
+                    logger.warning(
+                        "[Schedule] The Schedule has extrapolate set to {} but the provided Interpolator for Hamiltonian '{}' has extrapolate set to {}. Using the Interpolator's setting.",
+                        extrapolate,
+                        ham,
+                        coeff.extrapolate,
+                    )
             elif isinstance(coeff, dict):
                 self._coefficients[ham] = Interpolator(
                     coeff, interpolation, nsamples=int(1 / dt), extrapolate=extrapolate
@@ -454,6 +461,13 @@ class Schedule(Parameterizable):
             raise ValueError(f"Can't add Hamiltonian because label {label} is already associated with a Hamiltonian.")
         self._hamiltonians[label] = hamiltonian
         self._coefficients[label] = coefficients
+        if self._extrapolate != coefficients.extrapolate:
+            logger.warning(
+                "[Schedule] The Schedule has extrapolate set to {} but the provided Interpolator for Hamiltonian '{}' has extrapolate set to {}. Using the Interpolator's setting.",
+                self._extrapolate,
+                label,
+                coefficients.extrapolate,
+            )
 
     @overload
     def add_hamiltonian(
