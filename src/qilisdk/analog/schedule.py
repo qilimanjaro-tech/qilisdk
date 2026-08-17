@@ -688,7 +688,7 @@ class Schedule(Parameterizable):
             full_hamiltonian = sum(self.coefficients[h][float(t)] * self.hamiltonians[h] for h in self.hamiltonians)
             if not isinstance(full_hamiltonian, Hamiltonian):
                 raise ValueError(f"Expected full_hamiltonian to be a Hamiltonian, got {type(full_hamiltonian)}")
-            as_qtensor = full_hamiltonian.to_qtensor()
+            as_qtensor = full_hamiltonian.to_qtensor(total_nqubits=self.nqubits)
             vals, vecs = as_qtensor.eig()
 
             full_eigenvalues.append([float(ev.real) for ev in vals[:levels]])
