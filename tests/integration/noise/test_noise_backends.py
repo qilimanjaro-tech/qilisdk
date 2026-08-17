@@ -34,7 +34,7 @@ from qilisdk.core import Parameter, ket
 from qilisdk.core.interpolator import Interpolation
 from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.gates import RX, H, I, X, Z
+from qilisdk.digital.gates import CNOT, RX, SWAP, H, I, X, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation
 from qilisdk.noise import (
     AmplitudeDamping,
@@ -78,6 +78,62 @@ def test_qilisim_backend_bit_flip_two_qubits_sampling(backend_class):
 
     backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
     result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
+
+    assert result.get_samples() == {"01": 100}
+
+
+# These only cover the CUDA backend: the matching QiliSim fix lives on its own branch.
+@pytest.mark.parametrize("gate", [SWAP(0, 1), CNOT(0, 1)])
+def test_cuda_backend_per_qubit_noise_on_multi_qubit_gate(gate):
+    # Noise attached to a single qubit must be applied to that qubit alone, whether it is a target
+    # or a control of the gate, and must not spread to the gate's other qubits.
+    circuit = Circuit(nqubits=2)
+    circuit.add(gate)
+
+    noise_model = NoiseModel()
+    noise_model.add(BitFlip(probability=1.0), qubits=[0])
+
+    backend = CudaBackend(noise_model=noise_model)
+    result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
+
+    assert result.get_samples() == {"10": 100}
+
+
+def test_cuda_backend_per_qubit_noise_skips_untouched_gates():
+    # The gate does not act on the noisy qubit, so no noise is applied at all.
+    circuit = Circuit(nqubits=2)
+    circuit.add(X(1))
+
+    noise_model = NoiseModel()
+    noise_model.add(BitFlip(probability=1.0), qubits=[0])
+
+    backend = CudaBackend(noise_model=noise_model)
+    result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
+
+    assert result.get_samples() == {"01": 100}
+
+
+def test_cuda_backend_global_noise_on_multi_qubit_gate():
+    # Global noise applies independently to every qubit the gate acts on, flipping both of them.
+    circuit = Circuit(nqubits=2)
+    circuit.add(SWAP(0, 1))
+
+    noise_model = NoiseModel()
+    noise_model.add(BitFlip(probability=1.0))
+
+    backend = CudaBackend(noise_model=noise_model)
+    result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
+
+    assert result.get_samples() == {"11": 100}
+
+
+def test_cuda_backend_swap_without_noise_is_unchanged():
+    # Without a noise model the SWAP gate keeps using the CUDA-Q built-in operation.
+    circuit = Circuit(nqubits=2)
+    circuit.add(X(0))
+    circuit.add(SWAP(0, 1))
+
+    result = CudaBackend().execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
     assert result.get_samples() == {"01": 100}
 
