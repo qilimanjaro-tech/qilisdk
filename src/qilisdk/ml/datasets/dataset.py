@@ -15,13 +15,15 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterator, TypeAlias, TypeVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, TypeVar, cast
 
 import numpy as np
 
 from qilisdk.settings import get_settings
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
+
     from numpy.typing import NDArray
 
     from qilisdk.utils.visualization.dataset_renderers import Transform
