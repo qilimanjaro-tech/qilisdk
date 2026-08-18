@@ -135,13 +135,3 @@ def test_digital_propagation_initial_state_initial_state():
     initial_state = InitialState.ONE
     functional = DigitalPropagation(circuit=circuit, initial_state=initial_state)
     assert functional.initial_state == initial_state
-
-
-def test_digital_propagation_circuit_initial_state():
-    circuit = Circuit(1)
-    circuit.add(RX(0, theta=np.pi / 2))
-    initial_state = Circuit(1)
-    initial_state.add(RZ(0, phi=np.pi / 4))
-    functional = DigitalPropagation(circuit=circuit, initial_state=initial_state)
-    assert functional.initial_state == InitialState.ZERO
-    assert functional.circuit == initial_state + circuit

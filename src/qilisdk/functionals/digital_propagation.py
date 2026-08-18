@@ -51,23 +51,16 @@ class DigitalPropagation(PrimitiveFunctional):
     def __init__(
         self,
         circuit: Circuit,
-        initial_state: QTensor | InitialState | Circuit = InitialState.ZERO,
+        initial_state: QTensor | InitialState = InitialState.ZERO,
     ) -> None:
         """
         Args:
             circuit (Circuit): Circuit to propagate.
-            initial_state (QTensor | InitialState | Circuit): Quantum state used as the simulation starting point.
+            initial_state (QTensor | InitialState): Quantum state used as the simulation starting point.
         """
         super().__init__()
-        # Circuit init just prepends it, that way if it's parameterized it will be handled correctly
-        if isinstance(initial_state, Circuit):
-            self.initial_state = InitialState.ZERO
-            self.circuit = initial_state
-            self.circuit.append(circuit)
-        # Otherwise we leave it as is and let the backend handle it
-        else:
-            self.initial_state = initial_state
-            self.circuit = circuit
+        self.initial_state = initial_state
+        self.circuit = circuit
         logger.debug("[DigitalPropagation] Created DigitalPropagation over circuit with {} qubits", circuit.nqubits)
 
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
