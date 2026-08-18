@@ -421,10 +421,7 @@ AnnealingResultCpp SimulatedAnnealingCpp::anneal(int num_reads, int num_sweeps, 
     std::vector<double> energies(static_cast<std::size_t>(num_reads));
 
 #if defined(_OPENMP)
-    if (num_threads > 0) {
-        omp_set_num_threads(num_threads);
-    }
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static) num_threads(num_threads > 0 ? num_threads : omp_get_max_threads())
 #endif
     for (int read = 0; read < num_reads; ++read) {
         // Each read gets its own generator, so that the result does not depend on the thread count
