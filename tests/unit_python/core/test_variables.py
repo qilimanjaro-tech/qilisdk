@@ -358,8 +358,9 @@ def test_term_to_list_and_unfold_parentheses():
 
 
 def test_encoding_constraint_not_implemented():
+    var = Variable("v3", Domain.INTEGER, bounds=(0, 1))
     with pytest.raises(NotImplementedError):
-        Bitwise.encoding_constraint(Variable("v3", Domain.INTEGER, bounds=(0, 1)))
+        Bitwise.encoding_constraint(var)
     # OneHot and DomainWall constraints produce ComparisonTerm
     var = Variable("v4", Domain.INTEGER, bounds=(0, 2), encoding=DomainWall)
     cons = DomainWall.encoding_constraint(var)
