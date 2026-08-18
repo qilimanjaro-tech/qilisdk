@@ -584,6 +584,36 @@ def test_schedule_add_hamiltonian_from_interpolator():
         sched.add_hamiltonian("H1", H1, coefficients=inter)
 
 
+def test_schedule_warns_on_interpolator_extrapolate_mismatch(monkeypatch):
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    H1 = PauliZ(0).to_hamiltonian()
+    inter = Interpolator({0: 0, 10: 10}, Interpolation.LINEAR, extrapolate=True)
+
+    # the Interpolator's own setting wins over the Schedule's, but the user is told about it
+    sched = Schedule(dt=1, hamiltonians={"H1": H1}, coefficients={"H1": inter}, extrapolate=False)
+    assert sched.coefficients["H1"].extrapolate
+    assert len(warnings) == 1
+    assert "extrapolate set to" in warnings[0]
+
+    # same check on the add_hamiltonian path
+    sched2 = Schedule(dt=1, extrapolate=False)
+    sched2.add_hamiltonian("H1", H1, coefficients=Interpolator({0: 0, 10: 10}, extrapolate=True))
+    assert sched2.coefficients["H1"].extrapolate
+    assert len(warnings) == 2
+
+
+def test_schedule_no_warning_when_extrapolate_matches(monkeypatch):
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    H1 = PauliZ(0).to_hamiltonian()
+    inter = Interpolator({0: 0, 10: 10}, Interpolation.LINEAR, extrapolate=True)
+    Schedule(dt=1, hamiltonians={"H1": H1}, coefficients={"H1": inter}, extrapolate=True)
+    assert not warnings
+
+
 def test_add_bad_hamiltonian():
     dt = 1
     sched = Schedule(dt=dt)
@@ -783,6 +813,24 @@ def test_calculate_eigenvalues():
     assert np.allclose(eigenvalues[-1], evals_h2)
 
 
+def test_calculate_eigenvalues_pads_to_full_register():
+    # The driver acts on a single qubit while the problem acts on two, so at t=0 (where the
+    # problem coefficient vanishes) the summed Hamiltonian only covers one qubit. The spectrum
+    # must still be that of the full two qubit register at every time step.
+    H1 = PauliX(0).to_hamiltonian()
+    H2 = PauliZ(0) * PauliZ(1)
+    sched = Schedule.linear(H1, H2, total_time=10, dt=1)
+    levels = 4
+    eigenvalues, eigenstates = sched.eig(levels=levels)
+
+    assert all(len(evs) == levels for evs in eigenvalues)
+    assert all(len(states) == levels for states in eigenstates)
+
+    # At the first step the spectrum is that of H1 padded with an idle qubit.
+    evals_h1 = np.sort(np.real(H1.to_qtensor(total_nqubits=2).eigenvalues))
+    assert np.allclose(eigenvalues[0], evals_h1[:levels])
+
+
 def test_schedule_constant():
     dt = 1
     H1 = PauliZ(0).to_hamiltonian()
@@ -879,7 +927,7 @@ def test_calculate_eigenvalues_with_too_many_qubits_runs_but_warns(monkeypatch):
     warnings = []
     monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
 
-    monkeypatch.setattr(Hamiltonian, "to_qtensor", lambda self: DummyQTensor(nqubits=8))
+    monkeypatch.setattr(Hamiltonian, "to_qtensor", lambda self, total_nqubits=None: DummyQTensor(nqubits=8))
     nqubits = 8
     H1 = sum(X(i) for i in range(nqubits))
     H2 = sum(Z(i) for i in range(nqubits))
@@ -895,3 +943,32 @@ def test_schedule_without_max_time_throws():
     H2 = PauliZ(0).to_hamiltonian()
     with pytest.raises(ValueError, match=r"Total time must be provided at initialization."):
         Schedule(dt=1, hamiltonians={"driver": H1, "problem": H2})
+
+
+def _driver_problem_schedule(**kwargs) -> Schedule:
+    return Schedule(
+        hamiltonians={"driver": PauliX(0).to_hamiltonian(), "problem": PauliZ(0).to_hamiltonian()},
+        coefficients={"driver": {0.0: 1.0, 2.0: 0.0}, "problem": {0.0: 0.0, 10.0: 1.0}},
+        dt=1.0,
+        **kwargs,
+    )
+
+
+def test_schedule_holds_coefficients_defined_over_a_shorter_window(monkeypatch):
+    """A coefficient that ends before T stays at its final value instead of being extrapolated."""
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    sched = _driver_problem_schedule()
+
+    assert _isclose(sched.coefficients["driver"][4.0], 0.0)
+    assert _isclose(sched.coefficients["driver"][10.0], 0.0)
+    assert sched[10.0] == PauliZ(0).to_hamiltonian()
+    assert any("assumed constant outside its defined time range" in w for w in warnings)
+
+
+def test_schedule_extrapolate_extends_the_last_segment():
+    sched = _driver_problem_schedule(extrapolate=True)
+
+    assert _isclose(sched.coefficients["driver"][4.0], -1.0)
+    assert _isclose(sched.coefficients["driver"][10.0], -4.0)

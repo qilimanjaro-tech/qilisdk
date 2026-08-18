@@ -79,7 +79,9 @@ class SabreSwapPass(CircuitTranspilerPass):
         ``PyGraph`` whose node indices are physical qubits.
     initial_layout : list[int] | None
         Logical -> physical mapping to start from (e.g., from SabreLayoutPass.last_layout).
-        If None, uses the lowest-indexed physical qubits provided by the coupling graph.
+        If None, falls back to ``context.initial_layout`` when a layout pass recorded one
+        without applying it, and otherwise uses the lowest-indexed physical qubits
+        provided by the coupling graph.
 
     Heuristic (SABRE-style)
     -----------------------
@@ -178,7 +180,9 @@ class SabreSwapPass(CircuitTranspilerPass):
         layout_hint: list[int] | None = None
         if self.initial_layout is not None:
             layout_hint = list(self.initial_layout)
-        elif self.context is not None and self.context.initial_layout:
+        elif self.context is not None and self.context.initial_layout and not self.context.layout_applied:
+            # A layout pass that already retargeted the circuit leaves it in physical
+            # coordinates, so re-applying its mapping here would compose it with itself.
             layout_hint = list(self.context.initial_layout)
 
         for attempt in range(max_attempt_count):
@@ -205,16 +209,13 @@ class SabreSwapPass(CircuitTranspilerPass):
             self.last_final_layout = final_layout
 
             if self.context is not None:
-                if layout_hint:
-                    final_layout_map: LayoutMap = {
-                        logical_qubit: self.last_final_layout[logical_qubit] for logical_qubit in sorted(layout_hint)
-                    }
-                else:
-                    final_layout_map = {
-                        logical_qubit: self.last_final_layout[logical_qubit]
-                        for logical_qubit in range(len(final_layout))
-                    }
+                # Keys are always logical qubits. Indexing by the layout hint would key
+                # the map on physical labels and can run past the end of final_layout.
+                final_layout_map: LayoutMap = {
+                    logical_qubit: final_layout[logical_qubit] for logical_qubit in range(len(final_layout))
+                }
                 self.context.final_layout = final_layout_map
+                self.context.layout_applied = True
                 self.context.metrics["swap_count"] = self.last_swap_count
 
             self.append_circuit_to_context(routed_circuit)
