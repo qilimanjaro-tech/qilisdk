@@ -1964,7 +1964,6 @@ class QUBO(Model):
         out._lagrange_multipliers = copy.copy(self._lagrange_multipliers)
 
         out.continuous_vars = copy.copy(self.continuous_vars)
-        out.__qubo_objective = copy.copy(self.__qubo_objective)
         out._linearizer = copy.copy(self._linearizer)
 
         for label, constraint in self._encoding_constraints.items():
