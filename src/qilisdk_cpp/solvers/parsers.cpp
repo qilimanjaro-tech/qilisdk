@@ -247,7 +247,7 @@ py::object solve_with_simulated_annealing(const py::object& qubo, int num_reads,
     py::object results;
     if (py::len(qubo.attr("constraints")) == 0) {
         py::dict objective_values;
-        objective_values[qubo.attr("objective").attr("label")] = result.energy;
+        objective_values[qubo.attr("objective").attr("label")] = annealer.energy(result.state);
         results = std::move(objective_values);
     } else {
         results = qubo.attr("evaluate")(sample);
