@@ -160,7 +160,7 @@ Example, using the adaptive integrator:
 Digital simulation methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There are currently two digital simulation methods available. The first is a statevector simulator, which can be configured through the options:
+There are currently three digital simulation methods available. The first is a statevector simulator, which can be configured through the options:
 
 .. list-table::
    :header-rows: 1
@@ -206,6 +206,29 @@ at the cost of being slower if the circuit contains many non-Clifford gates. It 
 
     backend = QiliSim(
         digital_simulation_method=DigitalMethod.stabilizer(max_states=100),
+    )
+
+The third is a matrix product state simulator, which represents the state as a chain of tensors and contracts it exactly.
+Its cost grows with the entanglement the circuit generates rather than with the qubit count, so weakly entangling circuits on
+many qubits are cheap. It supports one- and two-qubit gates, and has the following options:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 35 65
+
+   * - Option
+     - Meaning
+   * - ``max_bond_dimension``
+     - Largest bond dimension kept. Circuits whose entanglement stays below this are simulated exactly, otherwise the state is approximate.
+   * - ``truncation_cutoff``
+     - Singular values below this fraction of the largest are discarded.
+
+.. code-block:: python
+
+    from qilisdk.backends import DigitalMethod, QiliSim
+
+    backend = QiliSim(
+        digital_simulation_method=DigitalMethod.mps(max_bond_dimension=64),
     )
 
 Execution and Monte Carlo
@@ -298,4 +321,6 @@ These require the ``cuda`` extra to be installed:
     * - :meth:`DigitalMethod.statevector() <qilisdk.backends.backend_config.DigitalMethod.statevector>`
       - |n|
     * - :meth:`DigitalMethod.stabilizer() <qilisdk.backends.backend_config.DigitalMethod.stabilizer>`
+      - |n|
+    * - :meth:`DigitalMethod.mps() <qilisdk.backends.backend_config.DigitalMethod.mps>`
       - |n|

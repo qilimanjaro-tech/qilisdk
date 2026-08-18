@@ -115,7 +115,7 @@ class MPSState {
     void set_truncation_cutoff(Real c) { truncation_cutoff = c; }
     int get_nqubits() const { return nqubits; }
     const MPSTensor& get_site_tensor(int q) const { return sites[q]; }
-    int get_bond_dimension(int bond) const;  // bond `b` joins qubits b and b+1
+    int get_bond_dimension(int bond) const;
     int get_max_bond_dimension_used() const;
     Real get_truncation_error() const { return total_truncation_error; }
 

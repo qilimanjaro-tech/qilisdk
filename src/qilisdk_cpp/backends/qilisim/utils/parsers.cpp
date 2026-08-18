@@ -91,24 +91,95 @@ py::object construct_result_object(const StabilizerStateSum& state, const py::ob
     return ReadoutCompositeResults.attr("from_list")(results);
 }
 
-namespace {
-// QSDK-05 / QSDK-06 (CWE-125 / CWE-787): reject out-of-range qubit indices at
-// the C++ trust boundary. The Python layer only guards the upper bound and is
-// bypassed by deserialization (ruamel reconstructs Circuit / Gate / Pauli
-// objects without re-running __init__), so an unvalidated index (e.g. -1)
-// otherwise reaches the matrix-free kernels (undefined shift -> wild mask ->
-// out-of-bounds state access) and the measurement vector (out-of-bounds write).
+py::object construct_result_object(const MPSState& state, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
+    /*
+    Construct a result object for a given MPSState and readout.
+
+    Args:
+        state (MPSState&): The MPSState for which to construct the result.
+        readout (py::object): A list with readout
+        noise_model_cpp (NoiseModelCpp&): The noise model, used only for readout error.
+        n_qubits (int): The number of qubits in the circuit.
+        config (QiliSimConfig): The simulation configuration.
+        qubits_to_measure (std::vector<bool>&): Which qubits to report.
+
+    Returns:
+        py::object: The result object for the given state and readout.
+
+    Raises:
+        py::value_error: If an unsupported readout method is provided.
+    */
+    state.set_seed(static_cast<uint64_t>(config.get_seed()));
+    py::list results;
+    for (py::handle ro_handle : readout) {
+        py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
+        if (py::isinstance(ro, SamplingReadout)) {
+            int nshots = ro.attr("nshots").cast<int>();
+            bool expand_samples = ro.attr("expand_samples").cast<bool>();
+            std::map<std::string, int> counts = filter_counts(apply_readout_error(state.sample(nshots), noise_model_cpp, n_qubits), qubits_to_measure);
+            py::dict samples_py;
+            for (const auto& pair : counts) {
+                samples_py[py::cast(pair.first)] = py::cast(pair.second);
+            }
+            py::list qubits_to_measure_list;
+            for (size_t i = 0; i < qubits_to_measure.size(); ++i) {
+                if (qubits_to_measure[i]) {
+                    qubits_to_measure_list.append(i);
+                }
+            }
+            results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples_py, "qubits_to_measure"_a = qubits_to_measure_list, "nqubits"_a = n_qubits, "expand_samples"_a = expand_samples));
+        } else if (py::isinstance(ro, ExpectationReadout)) {
+            std::vector<MatrixFreeHamiltonian> observables = parse_observables_matrix_free(n_qubits, ro.attr("observables"));
+            py::list expectations_py;
+            for (const auto& obs : observables) {
+                expectations_py.append(py::cast(std::complex<double>(state.expectation_value(obs), 0.0)));
+            }
+            results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py));
+        } else if (py::isinstance(ro, StateTomographyReadout)) {
+            std::string method = ro.attr("method").cast<std::string>();
+            if (method != "exact") {
+                throw py::value_error("State Tomography methods that are not exact are not supported yet.");
+            }
+            DenseMatrix final_state_dense = state.as_dense();
+            py::array final_state_numpy = to_numpy(final_state_dense);
+            results.append(StateTomographyReadoutResult("state"_a = QTensor(final_state_numpy)));
+        } else {
+            std::string ro_repr = py::repr(ro).cast<std::string>();
+            throw py::value_error("Unsupported Readout Method for MPS backend: " + ro_repr);
+        }
+    }
+    return ReadoutCompositeResults.attr("from_list")(results);
+}
+
 inline void validate_qubit_index(int qubit, int nqubits, const char* context) {
+    /*
+    Make sure the qubit index is within the valid range [0, nqubits).
+
+    Args:
+        qubit (int): The qubit index to validate.
+        nqubits (int): The total number of qubits in the system.
+        context (const char*): A string describing the context in which the validation is being performed.
+
+    Raises:
+        py::value_error: If the qubit index is out of range.
+    */
     if (qubit < 0 || qubit >= nqubits) {
         throw py::value_error("Qubit index " + std::to_string(qubit) + " is out of range [0, " + std::to_string(nqubits) + ") for " + context + ".");
     }
 }
 
-// Build the per-step sqrt(rate(t)) multiplier used to scale a base jump operator across an analog
-// evolution. A constant rate yields a constant series; a callable rate(t) is evaluated at every time
-// point in step_list. Validates that each rate value is a finite, non-negative real number (negative
-// rates are unphysical and would make sqrt(rate) NaN, silently poisoning the evolution).
 inline std::vector<double> make_sqrt_rate_series(py::handle rate, const std::vector<double>& step_list, double atol) {
+    /*
+    Construct a series of sqrt(rate(t)) values for a given rate function or constant rate.
+
+    Args:
+        rate (py::handle): A callable Python object representing the time-dependent rate function, or a constant rate value.
+        step_list (const std::vector<double>&): A vector of time points at which to evaluate the rate function.
+        atol (double): An absolute tolerance value used to validate the rate values.
+
+    Returns:
+        std::vector<double>: A vector of sqrt(rate(t)) values corresponding to each time point in step_list.
+    */
     if (!PyCallable_Check(rate.ptr())) {
         double value = rate.cast<double>();
         if (!std::isfinite(value) || value < -atol) {
@@ -137,11 +208,21 @@ inline std::vector<double> make_sqrt_rate_series(py::handle rate, const std::vec
     return series;
 }
 
-// Resolve the Lindblad jump operators (base, unscaled) and their per-step sqrt(rate) series for a
-// noise pass. Constant-rate passes use jump_operators_with_rates (rate folded into the operator) and
-// get an empty series; time-dependent passes return the base operators with an explicit series.
-// Throws if the pass carries a time-dependent rate but no time axis (step_list) is available.
 inline void collect_lindblad_jumps(py::handle py_noise_pass, double dt, double atol, const std::vector<double>* step_list, std::vector<SparseMatrix>& jump_operators, std::vector<std::vector<double>>& jump_rate_series) {
+    /*
+    Collect the Lindblad jump operators and their corresponding sqrt(rate) series from a noise pass.
+
+    Args:
+        py_noise_pass (py::handle): A Python object representing the noise pass, which may be a Lindblad generator.
+        dt (double): The time step size for the simulation.
+        atol (double): An absolute tolerance value used to validate the rate values.
+        step_list (const std::vector<double>*): A pointer to a vector of time points at which to evaluate the rate function. Can be nullptr for constant-rate passes.
+        jump_operators (std::vector<SparseMatrix>&): A reference to a vector where the collected jump operators will be stored.
+        jump_rate_series (std::vector<std::vector<double>>&): A reference to a vector of vectors where the corresponding sqrt(rate) series will be stored.
+
+    Raises:
+        py::value_error: If the noise pass has a time-dependent rate but no time axis (step_list) is provided, or if the rate values are invalid.
+    */
     py::object lindblad_gen;
     if (py::isinstance(py_noise_pass, SupportsStaticLindblad)) {
         lindblad_gen = py_noise_pass.attr("as_lindblad")();
@@ -151,29 +232,30 @@ inline void collect_lindblad_jumps(py::handle py_noise_pass, double dt, double a
         return;
     }
 
-    // is_time_dependent may be absent on duck-typed Lindblad generators that predate the feature;
-    // treat a missing attribute as constant (the historical behavior).
+    // Treat a missing attribute as constant
     bool time_dependent = py::hasattr(lindblad_gen, "is_time_dependent") && lindblad_gen.attr("is_time_dependent").cast<bool>();
     if (time_dependent && step_list == nullptr) {
         throw py::value_error("Time-dependent Lindblad rates are not supported for digital/gate-based propagation; use the analog evolution of QiliSim.");
     }
 
+    // If it's a constant-rate pass, we can just grab the jump operators and their rates directly
     if (!time_dependent) {
         for (auto& lindblad_op : lindblad_gen.attr("jump_operators_with_rates")) {
             jump_operators.push_back(from_spmatrix(lindblad_op.attr("data"), atol));
-            jump_rate_series.emplace_back();  // constant rate already folded in
+            jump_rate_series.emplace_back();
         }
         return;
     }
 
+    // Meanwhile if it's a time-dependent pass, we need to evaluate the rate function at each time step
     py::list base_ops = lindblad_gen.attr("jump_operators").cast<py::list>();
     py::list rates = lindblad_gen.attr("rates").cast<py::list>();
     for (size_t i = 0; i < base_ops.size(); ++i) {
         jump_operators.push_back(from_spmatrix(base_ops[i].attr("data"), atol));
         jump_rate_series.push_back(make_sqrt_rate_series(rates[i], *step_list, atol));
     }
+
 }
-}  // namespace
 
 py::object construct_result_object(const ExponentialAnsatz& state, const py::object& readout, int n_qubits) {
     /*
@@ -982,6 +1064,46 @@ StabilizerStateSum parse_initial_state_stabilizer(const py::object& initial_stat
     return StabilizerStateSum(nqubits);
 }
 
+MPSState parse_initial_state_mps(const py::object& initial_state, int nqubits) {
+    /*
+    Extract the initial state as an MPSState from an InitialState object.
+
+    Only product states are supported: they are the states an MPS can hold at bond
+    dimension 1, and the circuit is what is meant to grow the entanglement from there.
+
+    Args:
+        initial_state (py::object): The initial state as an InitialState object or None.
+        nqubits (int): The number of qubits.
+
+    Returns:
+        MPSState: The initial state as an MPSState.
+
+    Raises:
+        py::value_error: If the initial state is not an InitialState or None.
+    */
+    if (initial_state.is_none()) {
+        return MPSState(nqubits);
+    }
+    if (!py::isinstance(initial_state, InitialState)) {
+        throw py::value_error("Initial state type not recognized for the MPS backend. Only InitialState or None are supported.");
+    }
+    std::string name = initial_state.attr("name").cast<std::string>();
+    if (name == "ONE") {
+        return MPSState(nqubits, std::string(static_cast<size_t>(nqubits), '1'));
+    }
+    if (name == "UNIFORM") {
+        MPSState state(nqubits);
+        DenseMatrix hadamard(2, 2);
+        hadamard << 1.0, 1.0, 1.0, -1.0;
+        hadamard /= std::sqrt(2.0);
+        for (int q = 0; q < nqubits; ++q) {
+            state.apply_one_site(hadamard, q);
+        }
+        return state;
+    }
+    return MPSState(nqubits);
+}
+
 std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::object& noise_model) {
     /*
     Extract gates from a circuit object.
@@ -1236,6 +1358,12 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     }
     if (solver_params.contains("stabilizer_max_states")) {
         config.set_stabilizer_max_states(solver_params["stabilizer_max_states"].cast<int>());
+    }
+    if (solver_params.contains("mps_max_bond_dimension")) {
+        config.set_mps_max_bond_dimension(solver_params["mps_max_bond_dimension"].cast<int>());
+    }
+    if (solver_params.contains("mps_truncation_cutoff")) {
+        config.set_mps_truncation_cutoff(solver_params["mps_truncation_cutoff"].cast<double>());
     }
     if (config.get_num_threads() <= 0) {
         config.set_num_threads(1);

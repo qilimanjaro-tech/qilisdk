@@ -106,6 +106,25 @@ def test_stabilizer_method_creates_okay():
     assert method.stabilizer_max_states == 50
 
 
+def test_mps_method_creates_okay():
+    method = DigitalMethod.mps(max_bond_dimension=32, truncation_cutoff=1e-8)
+    assert method.digital_method == "mps"
+    assert method.mps_max_bond_dimension == 32
+    assert np.isclose(method.mps_truncation_cutoff, 1e-8)
+
+    # The settings reach the backend configuration the C++ layer reads
+    config = QiliSim(digital_simulation_method=method).get_config()
+    assert config["digital_method"] == "mps"
+    assert config["mps_max_bond_dimension"] == 32
+    assert np.isclose(config["mps_truncation_cutoff"], 1e-8)
+
+    # A bond dimension has to be a positive number of states to keep
+    with pytest.raises(ValidationError):
+        DigitalMethod(mps_max_bond_dimension=0)
+    with pytest.raises(ValidationError):
+        DigitalMethod(mps_truncation_cutoff=-1e-3)
+
+
 def test_adaptive_creates_okay():
     method = AnalogMethod.adaptive_integrator(tol=1e-2)
     assert method.evolution_method == "integrate_rk45_matrix_free"

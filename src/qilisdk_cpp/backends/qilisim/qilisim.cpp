@@ -27,6 +27,7 @@
 #include "qilisim.h"
 #include "representations/exponential_ansatz.h"
 #include "representations/matrix_free_hamiltonian.h"
+#include "representations/tensor_network.h"
 #include "utils/matrix_utils.h"
 #include "utils/parsers.h"
 #include "utils/random.h"
@@ -112,6 +113,17 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
 
         // Construct the final result object
         result = construct_result_object(state_stabilizer, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
+
+    } else if (config.get_digital_method() == "mps") {
+        // Parse the initial state as a matrix product state
+        MPSState initial_state_mps = parse_initial_state_mps(initial_state, n_qubits);
+        MPSState state_mps = initial_state_mps;
+
+        // Run the simulation
+        sampling_mps(gates, n_qubits, initial_state_mps, noise_model_cpp, state_mps, config, readout);
+
+        // Construct the final result object
+        result = construct_result_object(state_mps, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
 
     } else {
         // Parse the initial state
@@ -420,9 +432,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 } else if (config.get_digital_method() == "statevector") {
                     sampling(gates, n_qubits, state.sparseView(), noise_model_cpp, state, intermediate_results, config, readout);
                 } else {
-                    // GCOV_EXCL_START (config.validate() rejects any other sampling method before reaching here)
-                    throw py::value_error("Unsupported sampling method for reservoirs: " + config.get_digital_method());
-                    // GCOV_EXCL_STOP
+                    throw py::value_error("Unsupported sampling method for reservoirs: " + config.get_digital_method()); // GCOV_EXCL_LINE
                 }
 
                 // If we have a time evolution layer

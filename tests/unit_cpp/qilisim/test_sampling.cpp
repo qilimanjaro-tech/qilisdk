@@ -1079,4 +1079,63 @@ TEST_F(SamplingTest, Stabilizer_MonteCarlo_IgnoredWithWarning) {
     EXPECT_EQ(final_state.sample(1).begin()->first, "1");  // X|0> = |1>
 }
 
+// The MPS simulator ignores noise models, warning the user. The circuit still runs.
+TEST_F(SamplingTest, MPS_NoiseModel_IgnoredWithWarning) {
+    int n = 1;
+    std::vector<Gate> gates = {makeX(0)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    NoiseModelCpp nm = symmetricReadoutNoise(n, 0.1);  // non-empty -> triggers the warning
+    EXPECT_NO_THROW(sampling_mps(gates, n, initial, nm, final_state, cfg, readout));
+    EXPECT_EQ(final_state.sample(1).begin()->first, "1");  // X|0> = |1>
+}
+
+// The MPS simulator ignores Monte Carlo sampling, warning the user. The circuit still runs.
+TEST_F(SamplingTest, MPS_MonteCarlo_IgnoredWithWarning) {
+    int n = 1;
+    std::vector<Gate> gates = {makeX(0)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);  // triggers the warning
+    EXPECT_NO_THROW(sampling_mps(gates, n, initial, noNoise, final_state, cfgMC, readout));
+    EXPECT_EQ(final_state.sample(1).begin()->first, "1");
+}
+
+// Measurements are skipped and single-qubit runs are merged, so the outcome is unaffected.
+TEST_F(SamplingTest, MPS_MeasurementsAndSingleQubitMerging) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeM(0), makeX(0), makeX(0), makeM(1)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    QiliSimConfig cfgMerge = cfg;
+    cfgMerge.set_combine_single_qubit_gates(true);
+    cfgMerge.set_normalize_after_gate(true);
+    EXPECT_NO_THROW(sampling_mps(gates, n, initial, noNoise, final_state, cfgMerge, readout));
+    EXPECT_EQ(final_state.sample(1).begin()->first, "10");
+    EXPECT_NEAR(final_state.get_truncation_error(), 0.0, 1e-12);
+}
+
+// A bond dimension of one cannot hold a Bell state, so the discarded weight is warned about.
+TEST_F(SamplingTest, MPS_TruncationWarnsWhenSignificant) {
+    int n = 2;
+    std::vector<Gate> gates = {makeH(0), Gate("X", pauliX2(), {0}, {1}, {})};
+    MPSState initial(n);
+    MPSState final_state(n);
+    QiliSimConfig cfgTight = cfg;
+    cfgTight.set_mps_max_bond_dimension(1);
+    cfgTight.set_mps_truncation_cutoff(1e-12);
+    EXPECT_NO_THROW(sampling_mps(gates, n, initial, noNoise, final_state, cfgTight, readout));
+    EXPECT_GT(final_state.get_truncation_error(), 0.0);
+    EXPECT_EQ(final_state.get_max_bond_dimension_used(), 1);
+}
+
+// The circuit and the state must agree on how many qubits there are.
+TEST_F(SamplingTest, MPS_QubitCountMismatchThrows) {
+    std::vector<Gate> gates = {makeX(0)};
+    MPSState initial(2);
+    MPSState final_state(2);
+    EXPECT_THROW(sampling_mps(gates, 3, initial, noNoise, final_state, cfg, readout), py::value_error);
+}
+
 // GCOV_EXCL_BR_STOP

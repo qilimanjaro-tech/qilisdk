@@ -26,7 +26,7 @@ from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core.qtensor import InitialState, QTensor, expect_val, ket
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
+from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, Controlled, H, M, S, T, X, Y, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.noise import AmplitudeDamping, Dephasing, NoiseModel
@@ -897,6 +897,133 @@ def test_adaptive_integrator_supported_in_reservoir():
     state = _dense_state(result.get_state())
     assert np.all(np.isfinite(state))
     assert abs(np.trace(state) - 1.0) < 1e-6
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# MPS backend integration tests
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+def _mps_backend(max_bond_dimension: int = 64, seed: int = 42) -> QiliSim:
+    return QiliSim(
+        digital_simulation_method=DigitalMethod.mps(max_bond_dimension=max_bond_dimension),
+        execution_config=ExecutionConfig(seed=seed, num_threads=1),
+    )
+
+
+def _entangling_circuit(nqubits: int = 5) -> Circuit:
+    """A circuit with enough entanglement that the bond dimension actually grows."""
+    rng = random.Random(7)
+    circuit = Circuit(nqubits=nqubits)
+    for _ in range(3):
+        for q in range(nqubits):
+            circuit.add(RY(q, theta=rng.uniform(0, 2 * np.pi)))
+            circuit.add(RZ(q, phi=rng.uniform(0, 2 * np.pi)))
+        for q in range(nqubits - 1):
+            circuit.add(CNOT(q, q + 1))
+    return circuit
+
+
+def test_mps_matches_statevector_state_and_expectations():
+    """With no bond-dimension pressure the MPS is exact, so it must agree with the statevector."""
+    circuit = _entangling_circuit()
+    # A long-range CNOT, which the MPS has to route with swaps, and a non-Clifford gate
+    circuit.add(CNOT(0, 4))
+    circuit.add(T(2))
+    observables = [pauli_z(0), pauli_z(0) * pauli_z(3), pauli_x(1) * pauli_z(4)]
+    readout = Readout().with_state_tomography().with_expectation(observables=observables)
+
+    mps = _mps_backend().execute(DigitalPropagation(circuit=circuit), readout=readout)
+    statevector = QiliSim(
+        digital_simulation_method=DigitalMethod.statevector(),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    ).execute(DigitalPropagation(circuit=circuit), readout=readout)
+
+    assert np.allclose(_dense_state(mps.get_state()), _dense_state(statevector.get_state()), atol=1e-9)
+    for got, want in zip(mps.get_expectation_values(), statevector.get_expectation_values(), strict=True):
+        assert np.isclose(complex(got), complex(want), atol=1e-9)
+
+
+def test_mps_ghz_sampling():
+    """H + CNOTs give a GHZ state, which an MPS holds at bond dimension two."""
+    circuit = Circuit(nqubits=4)
+    circuit.add(H(0))
+    for q in range(3):
+        circuit.add(CNOT(q, q + 1))
+    result = _mps_backend().execute(DigitalPropagation(circuit=circuit), readout=Readout().with_sampling(nshots=500))
+    samples = result.get_samples()
+    assert set(samples.keys()) <= {"0000", "1111"}, f"Unexpected outcomes: {samples}"
+    assert samples.get("0000", 0) > 0
+    assert samples.get("1111", 0) > 0
+
+
+def test_mps_sampling_matches_statevector_distribution():
+    """Sampling an MPS is exact, so the shot distribution must track the statevector's."""
+    circuit = _entangling_circuit(nqubits=4)
+    readout = Readout().with_sampling(nshots=8000)
+    mps = _mps_backend().execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples()
+    statevector = (
+        QiliSim(
+            digital_simulation_method=DigitalMethod.statevector(),
+            execution_config=ExecutionConfig(seed=7, num_threads=1),
+        )
+        .execute(DigitalPropagation(circuit=circuit), readout=readout)
+        .get_samples()
+    )
+    for outcome in set(mps) | set(statevector):
+        assert abs(mps.get(outcome, 0) - statevector.get(outcome, 0)) / 8000 < 0.03, f"outcome {outcome}"
+
+
+def test_mps_deterministic_circuit_with_measurements():
+    """X gates plus measurements give a deterministic outcome on the measured qubits."""
+    circuit = Circuit(nqubits=3)
+    circuit.add(X(0))
+    circuit.add(X(2))
+    circuit.add(M(0))
+    circuit.add(M(2))
+    result = _mps_backend().execute(DigitalPropagation(circuit=circuit), readout=Readout().with_sampling(nshots=50))
+    samples = result.get_samples()
+    assert list(samples.keys()) == ["1_1"]
+    assert samples["1_1"] == 50
+
+
+def test_mps_initial_states():
+    """The MPS backend starts from any of the product InitialStates."""
+    backend = _mps_backend()
+    readout = Readout().with_state_tomography().to_list()
+    for initial_state, expected in (
+        (InitialState.ZERO, [1, 0, 0, 0]),
+        (InitialState.ONE, [0, 0, 0, 1]),
+        (InitialState.UNIFORM, [0.5, 0.5, 0.5, 0.5]),
+    ):
+        result = backend._execute_digital_propagation(
+            DigitalPropagation(circuit=Circuit(nqubits=2)), readout, initial_state
+        )
+        assert np.allclose(_dense_state(result.get_state()).ravel(), expected, atol=1e-12)
+
+
+def test_mps_truncation_degrades_gracefully():
+    """A bond dimension of one cannot hold a Bell state, but the run still completes."""
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    result = _mps_backend(max_bond_dimension=1).execute(
+        DigitalPropagation(circuit=circuit), readout=Readout().with_state_tomography()
+    )
+    state = _dense_state(result.get_state()).ravel()
+    assert np.all(np.isfinite(state))
+    # Forced to stay a product state, the best it can do is one of the two branches, and
+    # the state is renormalized so it is still a physical state to read out from
+    assert np.isclose(np.linalg.norm(state), 1.0, atol=1e-9)
+    assert max(abs(state)) > 0.99
+
+
+def test_mps_rejects_gates_on_more_than_two_qubits():
+    """Three-qubit gates need decomposing first, and say so rather than silently misbehaving."""
+    circuit = Circuit(nqubits=3)
+    circuit.add(Controlled(0, 1, basic_gate=X(2)))
+    with pytest.raises(ValueError, match="one- and two-qubit gates"):
+        _mps_backend().execute(DigitalPropagation(circuit=circuit), readout=Readout().with_sampling(nshots=10))
 
 
 # ──────────────────────────────────────────────────────────────────────────────

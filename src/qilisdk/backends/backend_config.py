@@ -413,6 +413,16 @@ class DigitalMethod(BaseSimulatorConfig):
         default=100,
         description="Maximum number of stabilizer states to track when using the stabilizer digital simulation method. Set to zero or less for unlimited.",
     )
+    mps_max_bond_dimension: int = Field(
+        default=64,
+        gt=0,
+        description="Largest bond dimension kept when using the MPS digital simulation method. Larger values are more accurate but cost memory and runtime.",
+    )
+    mps_truncation_cutoff: float = Field(
+        default=1e-10,
+        ge=0.0,
+        description="Singular values smaller than this fraction of the largest are discarded when using the MPS digital simulation method.",
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return digital simulation settings in backend-compatible key names."""
@@ -424,6 +434,8 @@ class DigitalMethod(BaseSimulatorConfig):
             "fuse_gates": self.fuse_gates,
             "max_fused_qubits": self.max_fused_qubits,
             "stabilizer_max_states": self.stabilizer_max_states,
+            "mps_max_bond_dimension": self.mps_max_bond_dimension,
+            "mps_truncation_cutoff": self.mps_truncation_cutoff,
         }
         return d
 
@@ -473,6 +485,35 @@ class DigitalMethod(BaseSimulatorConfig):
             fuse_gates=fuse_gates,
             max_fused_qubits=max_fused_qubits,
             matrix_free=matrix_free,
+        )
+
+    @classmethod
+    def mps(cls, max_bond_dimension: int = 64, truncation_cutoff: float = 1e-10) -> DigitalMethod:
+        """Return a matrix-product-state simulation configuration.
+
+        The circuit is applied to an MPS and contracted exactly, so the memory cost grows
+        with the entanglement the circuit generates rather than with the qubit count. Only
+        the singular values discarded at ``max_bond_dimension`` are approximate, and the
+        total weight discarded is reported as a warning when it becomes significant.
+
+        Args:
+            max_bond_dimension (int): Largest bond dimension to keep. Circuits whose
+                entanglement stays below this are simulated exactly.
+            truncation_cutoff (float): Singular values below this fraction of the largest
+                are discarded regardless of the bond dimension.
+
+        Returns:
+            DigitalMethod: Configured MPS digital configuration.
+        """
+        logger.debug(
+            "[BackendConfig] Configuring MPS digital method (max_bond_dimension={}, truncation_cutoff={})",
+            max_bond_dimension,
+            truncation_cutoff,
+        )
+        return DigitalMethod(
+            digital_method="mps",
+            mps_max_bond_dimension=max_bond_dimension,
+            mps_truncation_cutoff=truncation_cutoff,
         )
 
     @classmethod
