@@ -584,6 +584,36 @@ def test_schedule_add_hamiltonian_from_interpolator():
         sched.add_hamiltonian("H1", H1, coefficients=inter)
 
 
+def test_schedule_warns_on_interpolator_extrapolate_mismatch(monkeypatch):
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    H1 = PauliZ(0).to_hamiltonian()
+    inter = Interpolator({0: 0, 10: 10}, Interpolation.LINEAR, extrapolate=True)
+
+    # the Interpolator's own setting wins over the Schedule's, but the user is told about it
+    sched = Schedule(dt=1, hamiltonians={"H1": H1}, coefficients={"H1": inter}, extrapolate=False)
+    assert sched.coefficients["H1"].extrapolate
+    assert len(warnings) == 1
+    assert "extrapolate set to" in warnings[0]
+
+    # same check on the add_hamiltonian path
+    sched2 = Schedule(dt=1, extrapolate=False)
+    sched2.add_hamiltonian("H1", H1, coefficients=Interpolator({0: 0, 10: 10}, extrapolate=True))
+    assert sched2.coefficients["H1"].extrapolate
+    assert len(warnings) == 2
+
+
+def test_schedule_no_warning_when_extrapolate_matches(monkeypatch):
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    H1 = PauliZ(0).to_hamiltonian()
+    inter = Interpolator({0: 0, 10: 10}, Interpolation.LINEAR, extrapolate=True)
+    Schedule(dt=1, hamiltonians={"H1": H1}, coefficients={"H1": inter}, extrapolate=True)
+    assert not warnings
+
+
 def test_add_bad_hamiltonian():
     dt = 1
     sched = Schedule(dt=dt)
@@ -963,3 +993,30 @@ def test_tlist_of_an_empty_schedule_is_the_single_initial_time():
     assert sched.T == 0
     assert sched.tlist == [0.0]
     assert sched.dt == 1.0
+    
+def _driver_problem_schedule(**kwargs) -> Schedule:
+    return Schedule(
+        hamiltonians={"driver": PauliX(0).to_hamiltonian(), "problem": PauliZ(0).to_hamiltonian()},
+        coefficients={"driver": {0.0: 1.0, 2.0: 0.0}, "problem": {0.0: 0.0, 10.0: 1.0}},
+        dt=1.0,
+        **kwargs,
+    )
+
+def test_schedule_holds_coefficients_defined_over_a_shorter_window(monkeypatch):
+    """A coefficient that ends before T stays at its final value instead of being extrapolated."""
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    sched = _driver_problem_schedule()
+
+    assert _isclose(sched.coefficients["driver"][4.0], 0.0)
+    assert _isclose(sched.coefficients["driver"][10.0], 0.0)
+    assert sched[10.0] == PauliZ(0).to_hamiltonian()
+    assert any("assumed constant outside its defined time range" in w for w in warnings)
+
+
+def test_schedule_extrapolate_extends_the_last_segment():
+    sched = _driver_problem_schedule(extrapolate=True)
+
+    assert _isclose(sched.coefficients["driver"][4.0], -1.0)
+    assert _isclose(sched.coefficients["driver"][10.0], -4.0)

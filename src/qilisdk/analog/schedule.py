@@ -78,6 +78,7 @@ class Schedule(Parameterizable):
         dt: float = _DEFAULT_DT,
         total_time: PARAMETERIZED_NUMBER | None = None,
         interpolation: Interpolation = Interpolation.LINEAR,
+        extrapolate: bool = False,
     ) -> None:
         """Create a Schedule that assigns time-dependent coefficients to Hamiltonians.
 
@@ -87,6 +88,7 @@ class Schedule(Parameterizable):
             dt (float): Time resolution used for sampling callable/interval definitions and plotting. Must be positive.
             total_time (float | Parameter | Term | None): Optional maximum time that rescales all defined time points proportionally.
             interpolation (Interpolation): How to interpolate between provided time points (``LINEAR`` or ``STEP``).
+            extrapolate (bool): Whether to extrapolate coefficients outside their defined time points.
 
         Raises:
             ValueError: if the coefficients reference an undefined hamiltonian.
@@ -96,7 +98,8 @@ class Schedule(Parameterizable):
 
         self._hamiltonians = hamiltonians if hamiltonians is not None else {}
         self._coefficients: dict[str, Interpolator] = {}
-        self._interpolation = None
+        self._interpolation = interpolation
+        self._extrapolate = extrapolate
         self._current_time: Parameter = Parameter(_TIME_PARAMETER_NAME, 0, Domain.REAL)
         self.iter_time_step = 0
         self._max_time: PARAMETERIZED_NUMBER | None = None
@@ -114,13 +117,24 @@ class Schedule(Parameterizable):
         for ham, hamiltonian in self._hamiltonians.items():
             # Build hamiltonian schedule
             if ham not in coefficients:
-                self._coefficients[ham] = Interpolator({0: 1}, interpolation=interpolation, nsamples=int(1 / dt))
+                self._coefficients[ham] = Interpolator(
+                    {0: 1}, interpolation=interpolation, nsamples=int(1 / dt), extrapolate=extrapolate
+                )
                 continue
             coeff = copy(coefficients[ham])
             if isinstance(coeff, Interpolator):
                 self._coefficients[ham] = coeff
+                if extrapolate != coeff.extrapolate:
+                    logger.warning(
+                        "[Schedule] The Schedule has extrapolate set to {} but the provided Interpolator for Hamiltonian '{}' has extrapolate set to {}. Using the Interpolator's setting.",
+                        extrapolate,
+                        ham,
+                        coeff.extrapolate,
+                    )
             elif isinstance(coeff, dict):
-                self._coefficients[ham] = Interpolator(coeff, interpolation, nsamples=int(1 / dt))
+                self._coefficients[ham] = Interpolator(
+                    coeff, interpolation, nsamples=int(1 / dt), extrapolate=extrapolate
+                )
 
         if total_time is not None:
             self.scale_max_time(total_time)
@@ -481,7 +495,9 @@ class Schedule(Parameterizable):
         if label in self._hamiltonians:
             raise ValueError(f"Can't add Hamiltonian because label {label} is already associated with a Hamiltonian.")
         self._hamiltonians[label] = hamiltonian
-        self._coefficients[label] = Interpolator(coefficients, interpolation, nsamples=int(1 / self._dt))
+        self._coefficients[label] = Interpolator(
+            coefficients, interpolation, nsamples=int(1 / self.dt), extrapolate=self._extrapolate
+        )
 
     def _add_hamiltonian_from_interpolator(
         self, label: str, hamiltonian: Hamiltonian, coefficients: Interpolator
@@ -490,6 +506,13 @@ class Schedule(Parameterizable):
             raise ValueError(f"Can't add Hamiltonian because label {label} is already associated with a Hamiltonian.")
         self._hamiltonians[label] = hamiltonian
         self._coefficients[label] = coefficients
+        if self._extrapolate != coefficients.extrapolate:
+            logger.warning(
+                "[Schedule] The Schedule has extrapolate set to {} but the provided Interpolator for Hamiltonian '{}' has extrapolate set to {}. Using the Interpolator's setting.",
+                self._extrapolate,
+                label,
+                coefficients.extrapolate,
+            )
 
     @overload
     def add_hamiltonian(
@@ -534,7 +557,7 @@ class Schedule(Parameterizable):
     ) -> None:
         if new_coefficients is not None:
             self._coefficients[label] = Interpolator(
-                new_coefficients, interpolation, nsamples=int(1 / self._dt)
+                new_coefficients, interpolation, nsamples=int(1 / self.dt), extrapolate=self._extrapolate
             )  # TODO (ameer): allow for partial updates of the coefficients
 
     def _update_hamiltonian_from_interpolator(self, label: str, new_coefficients: Interpolator | None = None) -> None:
