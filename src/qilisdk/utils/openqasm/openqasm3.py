@@ -14,6 +14,7 @@
 import math
 from copy import copy
 from pathlib import Path
+from typing import Any
 
 from loguru import logger
 from numpy import e, pi
@@ -148,7 +149,7 @@ class OpenQasmParser:
 
     def __init__(self) -> None:
         self.reg_name_to_start_end = {}
-        self.var_list = {}
+        self.var_list: dict[str, dict[str, Any]] = {}
         self.custom_gate_definitions = {}
         self.subroutine_definitions = {}
         self.gates_to_add = []
@@ -645,7 +646,7 @@ class OpenQasmParser:
             elif var_type in {"float", "angle", "duration", "stretch"}:
                 self.var_list[var_name]["value"] = float(self.var_list[var_name]["value"])
             elif var_type == "complex":
-                self.var_list[var_name]["value"] = complex(self.var_list[var_name]["value"])  # ty: ignore[invalid-assignment]
+                self.var_list[var_name]["value"] = complex(self.var_list[var_name]["value"])
             elif var_type == "bool":
                 self.var_list[var_name]["value"] = bool(self.var_list[var_name]["value"])
 
@@ -666,7 +667,7 @@ class OpenQasmParser:
             reg_size = self._evaluate_expression(statement.size)
         if isinstance(reg_size, int):
             self.reg_name_to_start_end[reg_name] = (self.nqubits, self.nqubits + reg_size - 1)
-            self.var_list[reg_name] = {"size": reg_size, "value": 0, "type": "qubit"}  # ty: ignore[invalid-assignment]
+            self.var_list[reg_name] = {"size": reg_size, "value": 0, "type": "qubit"}
             self.nqubits = max(self.nqubits, self.nqubits + reg_size)
 
     def _handle_statement_classical_declaration(self, statement: ClassicalDeclaration | ConstantDeclaration) -> None:
@@ -714,7 +715,7 @@ class OpenQasmParser:
             "size": var_size,
             "value": var_value,
             "type": var_type,
-        }  # ty: ignore[invalid-assignment]
+        }
         self._cast_to_type(var_name)
 
     def _handle_statement_classical_assignment(self, statement: ClassicalAssignment) -> None:
@@ -724,7 +725,7 @@ class OpenQasmParser:
         # Depending on the assignment type
         if not isinstance(var_name, Identifier):
             if statement.op == AssignmentOperator["="]:
-                self.var_list[var_name]["value"] = new_value  # ty: ignore[invalid-assignment]
+                self.var_list[var_name]["value"] = new_value
             elif statement.op == AssignmentOperator["+="] and not isinstance(new_value, (str, list)):
                 self.var_list[var_name]["value"] += new_value
             elif statement.op == AssignmentOperator["-="] and not isinstance(new_value, (str, list)):
@@ -926,7 +927,7 @@ class OpenQasmParser:
             "size": loop_var_size,
             "value": 0,
             "type": loop_var_type,
-        }  # ty: ignore[invalid-assignment]
+        }
 
         # Loop through the values and process the body with the loop variable set to the current value
         res = None
@@ -1075,7 +1076,7 @@ class OpenQasmParser:
                 "size": 1,
                 "value": new_param,
                 "type": "parameter",
-            }  # ty: ignore[invalid-assignment]
+            }
 
         # Otherwise raise an error for now - we can add more statement types later
         elif not isinstance(statement, (Include, AliasStatement)):
