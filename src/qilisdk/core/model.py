@@ -1711,6 +1711,10 @@ class QUBO(Model):
         self._objective = Objective(label=label, term=term, sense=sense)
         self.__qubo_objective_needs_refresh = True
 
+    def set_lagrange_multiplier(self, constraint_label: str, lagrange_multiplier: float) -> None:
+        super().set_lagrange_multiplier(constraint_label, lagrange_multiplier)
+        self.__qubo_objective_needs_refresh = True
+
     def _check_variables(self, term: Term | ComparisonTerm, lagrange_multiplier: RealNumber = 100) -> None:
         """checks if the variables in the provided term are valid to be used in a QUBO model. Moreover, we add all the
         encoding constraint for supported continuous variables.
