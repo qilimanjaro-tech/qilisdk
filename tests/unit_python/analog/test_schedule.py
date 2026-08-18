@@ -993,7 +993,8 @@ def test_tlist_of_an_empty_schedule_is_the_single_initial_time():
     assert sched.T == 0
     assert sched.tlist == [0.0]
     assert sched.dt == 1.0
-    
+
+
 def _driver_problem_schedule(**kwargs) -> Schedule:
     return Schedule(
         hamiltonians={"driver": PauliX(0).to_hamiltonian(), "problem": PauliZ(0).to_hamiltonian()},
@@ -1001,6 +1002,7 @@ def _driver_problem_schedule(**kwargs) -> Schedule:
         dt=1.0,
         **kwargs,
     )
+
 
 def test_schedule_holds_coefficients_defined_over_a_shorter_window(monkeypatch):
     """A coefficient that ends before T stays at its final value instead of being extrapolated."""

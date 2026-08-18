@@ -494,9 +494,10 @@ class Schedule(Parameterizable):
     ) -> None:
         if label in self._hamiltonians:
             raise ValueError(f"Can't add Hamiltonian because label {label} is already associated with a Hamiltonian.")
+        nsamples = int(1 / self.dt)
         self._hamiltonians[label] = hamiltonian
         self._coefficients[label] = Interpolator(
-            coefficients, interpolation, nsamples=int(1 / self.dt), extrapolate=self._extrapolate
+            coefficients, interpolation, nsamples=nsamples, extrapolate=self._extrapolate
         )
 
     def _add_hamiltonian_from_interpolator(
