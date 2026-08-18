@@ -356,10 +356,12 @@ def test_term_to_list_and_unfold_parentheses():
     assert t == u
     assert u * u == (2 * a + 2 * b) * (2 * a + 2 * b)
 
+
 def test_encoding_constraint_not_needed_for_bitwise():
     # The Bitwise encoding has no invalid binary strings, so it needs no encoding constraint.
     assert Bitwise.encoding_constraint(Variable("v3", Domain.INTEGER, bounds=(0, 1))) is None
     assert Variable("v3b", Domain.POSITIVE_INTEGER, bounds=(0, 5)).encoding_constraint() is None
+
 
 def test_encoding_constraint_not_implemented():
     var = Variable("v3", Domain.INTEGER, bounds=(0, 1))
