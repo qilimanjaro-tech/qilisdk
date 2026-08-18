@@ -290,9 +290,9 @@ def test_execute_basic_gate_handler(mock_set_target, mock_sample, mock_make_kern
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"00": 1000})
 @patch("cudaq.set_target")
-def test_execute_swap_with_noise_uses_custom_operation(mock_set_target, mock_sample, mock_make_kernel):
+def test_execute_swap_with_noise_uses_custom_operation(mock_set_target, mock_sample, mock_make_kernel, monkeypatch):
     # CUDA-Q takes no noise channel on its built-in swap, so a noisy backend emits the custom one.
-    dummy_make_kernel.main_kernel = DummyKernel()
+    monkeypatch.setattr(dummy_make_kernel, "main_kernel", DummyKernel())
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=0.1))
     backend = CudaBackend(noise_model=noise_model)

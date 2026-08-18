@@ -13,9 +13,10 @@
 # limitations under the License.
 from __future__ import annotations
 
+from collections.abc import Callable
 from copy import copy
 from enum import Enum
-from typing import TYPE_CHECKING, Callable, Type, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Type, TypeAlias, TypeVar
 
 import cudaq
 import numpy as np
@@ -760,7 +761,8 @@ class CudaBackend(Backend):
         channels: dict[tuple[int, ...], cudaq.KrausChannel] = {}
 
         def callback(qubits: list[int], parameters: list[float]) -> cudaq.KrausChannel:
-            del parameters  # The noise attached to a gate does not depend on its parameter values.
+            # The noise attached to a gate does not depend on its parameter values.
+            del parameters
             gate_qubits = tuple(qubits)
             if gate_qubits not in channels:
                 channels[gate_qubits] = CudaBackend._build_kraus_channel(relevant_noise, gate_qubits, gate_name)
