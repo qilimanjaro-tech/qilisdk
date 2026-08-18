@@ -1,4 +1,4 @@
-# Copyright 2025 Qilimanjaro Quantum Tech
+# Copyright 2026 Qilimanjaro Quantum Tech
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,17 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Machine-learning utilities for QiliSDK.
 
-from .style import CircuitStyle, DatasetStyle, HamiltonianStyle, QTensorStyle, ScheduleStyle
-from .themes import Theme, dark, light
-
-__all__ = [
-    "CircuitStyle",
-    "DatasetStyle",
-    "HamiltonianStyle",
-    "QTensorStyle",
-    "ScheduleStyle",
-    "Theme",
-    "dark",
-    "light",
-]
+This subpackage currently exposes :mod:`qilisdk.ml.datasets`, a collection of
+equation-based dataset generators that are useful as benchmarks for quantum
+reservoir computing and other time-series models.
+"""
