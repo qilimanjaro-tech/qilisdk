@@ -21,32 +21,39 @@
 
 namespace {
 
-void append_expanded_sets(std::vector<std::vector<SparseMatrix>>& out, const std::vector<std::vector<SparseMatrix>>& sets, const std::vector<int>& qubits, int nqubits) {
+void append_expanded_sets(std::vector<std::vector<SparseMatrix>>& out, const std::vector<std::vector<SparseMatrix>>& sets, const std::vector<int>& qubits, int nqubits, bool allow_full_register) {
     /*
     Expand each Kraus operator set onto the full register and append the results.
 
     A single-qubit set is applied independently to every qubit in `qubits`, producing one expanded
-    set per qubit. A set that already spans the whole register is appended unchanged.
+    set per qubit. A set that already spans the whole register is appended unchanged, but only if
+    `allow_full_register` is true: for noise attached to a specific qubit, a whole-register set is
+    ambiguous (it is not clear how many times it should be applied) and is rejected instead.
 
     Args:
         out (std::vector<std::vector<SparseMatrix>>&): The list the expanded sets are appended to.
         sets (std::vector<std::vector<SparseMatrix>>): The Kraus operator sets to expand.
         qubits (std::vector<int>): The qubits the sets are attached to.
         nqubits (int): The total number of qubits.
+        allow_full_register (bool): Whether a set spanning the whole register is accepted.
 
     Raises:
-        py::value_error: If a set acts on more than one qubit but not on the whole register.
+        py::value_error: If a set acts on more than one qubit but not on the whole register, or if
+            it spans the whole register when `allow_full_register` is false.
     */
     for (const auto& set : sets) {
         if (set.empty()) {
             continue;  // GCOV_EXCL_LINE
         }
         const int set_qubits = static_cast<int>(std::log2(set.front().rows()));
-        if (set_qubits == nqubits) {
+        if (set_qubits == nqubits && allow_full_register) {
             out.push_back(set);
             continue;
         }
         if (set_qubits != 1) {
+            if (!allow_full_register) {
+                throw py::value_error("Kraus operators attached to a specific qubit must act on a single qubit.");
+            }
             throw py::value_error("Kraus operators must act either on a single qubit or on the whole register.");
         }
         for (int qubit : qubits) {
@@ -253,7 +260,7 @@ std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operato
     Returns:
         std::vector<std::vector<SparseMatrix>>: The list of relevant Kraus operators.
     */
-    
+
     // The list of operators to fill
     std::vector<std::vector<SparseMatrix>> relevant_operators;
 
@@ -261,29 +268,27 @@ std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operato
     const std::string gate_key = make_gate_key(gate_name, num_controls);
 
     // Add global Kraus operators, applied to each qubit the gate acts on
-    append_expanded_sets(relevant_operators, cached_kraus_operators_global, gate_qubits, nqubits);
+    append_expanded_sets(relevant_operators, cached_kraus_operators_global, gate_qubits, nqubits, true);
 
     // Add per-gate Kraus operators, applied to each qubit the gate acts on
     auto gate_it = cached_kraus_operators_per_gate.find(gate_key);
     if (gate_it != cached_kraus_operators_per_gate.end()) {
-        append_expanded_sets(relevant_operators, gate_it->second, gate_qubits, nqubits);
+        append_expanded_sets(relevant_operators, gate_it->second, gate_qubits, nqubits, true);
     }
 
     // For both types of per-qubit noise
     for (int qubit : gate_qubits) {
-
         // Add per-qubit Kraus operators, applied only to the qubit they are attached to
         auto qubit_it = cached_kraus_operators_per_qubit.find(qubit);
         if (qubit_it != cached_kraus_operators_per_qubit.end()) {
-            append_expanded_sets(relevant_operators, qubit_it->second, {qubit}, nqubits);
+            append_expanded_sets(relevant_operators, qubit_it->second, {qubit}, nqubits, false);
         }
 
         // Add per-gate-per-qubit Kraus operators, applied only to the qubit they are attached to
         auto gate_qubit_it = cached_kraus_operators_per_gate_qubit.find(std::make_pair(gate_key, qubit));
         if (gate_qubit_it != cached_kraus_operators_per_gate_qubit.end()) {
-            append_expanded_sets(relevant_operators, gate_qubit_it->second, {qubit}, nqubits);
+            append_expanded_sets(relevant_operators, gate_qubit_it->second, {qubit}, nqubits, false);
         }
-
     }
 
     return relevant_operators;

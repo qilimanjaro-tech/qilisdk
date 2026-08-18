@@ -15,8 +15,8 @@
 // GCOV_EXCL_BR_START
 
 #include <gtest/gtest.h>
-#include "../../../src/qilisdk_cpp/libs/pybind.h"
 #include "../../../src/qilisdk_cpp/backends/qilisim/noise/noise_model.h"
+#include "../../../src/qilisdk_cpp/libs/pybind.h"
 
 TEST(NoiseModel, GetRelevantKrausOperators) {
     NoiseModelCpp model;
@@ -83,6 +83,21 @@ TEST(NoiseModel, MultiQubitKrausOperatorsMustSpanTheRegister) {
 
     // Acting on more than one qubit but less than the register is ambiguous.
     EXPECT_THROW(model.get_relevant_kraus_operators("SWAP", 0, {0, 1}, 3), py::value_error);
+}
+
+TEST(NoiseModel, PerQubitKrausOperatorsMustBeSingleQubit) {
+    // A whole-register set attached to a specific qubit is ambiguous: it would be applied once per
+    // qubit it was attached to, so it is rejected rather than silently applied several times.
+    SparseMatrix two_qubit_op(4, 4);
+    two_qubit_op.setIdentity();
+
+    NoiseModelCpp per_qubit_model;
+    per_qubit_model.add_kraus_operators_per_qubit(0, {two_qubit_op});
+    EXPECT_THROW(per_qubit_model.get_relevant_kraus_operators("SWAP", 0, {0, 1}, 2), py::value_error);
+
+    NoiseModelCpp per_gate_qubit_model;
+    per_gate_qubit_model.add_kraus_operators_per_gate_qubit(NoiseModelCpp::make_gate_key("SWAP", 0), 0, {two_qubit_op});
+    EXPECT_THROW(per_gate_qubit_model.get_relevant_kraus_operators("SWAP", 0, {0, 1}, 2), py::value_error);
 }
 
 TEST(NoiseModel, TimeDependentJumpRateSeries) {
