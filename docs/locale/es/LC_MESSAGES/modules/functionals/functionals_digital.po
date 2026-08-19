@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-19 15:26+0200\n"
+"POT-Creation-Date: 2026-08-19 15:53+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -69,17 +69,20 @@ msgstr ""
 msgid ""
 "**initial_state** (:class:`~qilisdk.core.qtensor.QTensor` or "
 ":class:`~qilisdk.core.qtensor.InitialState`, optional): The initial state"
-" of the circuit. If not provided, the zero state is used."
+" of the circuit. If not provided, the zero state is used. Note that this "
+"is only used for simulation, on real devices this is ignored for now."
 msgstr ""
 "**initial_state** (:class:`~qilisdk.core.qtensor.QTensor` o "
-":class:`~qilisdk.core.qtensor.InitialState`, opcional): El estado inicial "
-"del circuito. Si no se proporciona, se utiliza el estado cero."
+":class:`~qilisdk.core.qtensor.InitialState`, opcional): El estado inicial"
+" del circuito. Si no se proporciona, se utiliza el estado cero. Tenga en "
+"cuenta que solo se usa en simulación; en dispositivos reales se ignora por "
+"ahora."
 
-#: ../../modules/functionals/functionals_digital.rst:19
+#: ../../modules/functionals/functionals_digital.rst:20
 msgid "**Returns**"
 msgstr "**Retorna**"
 
-#: ../../modules/functionals/functionals_digital.rst:21
+#: ../../modules/functionals/functionals_digital.rst:22
 msgid ""
 ":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access "
 "shot counts"
@@ -87,7 +90,7 @@ msgstr ""
 ":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Accede "
 "a los conteos de shots"
 
-#: ../../modules/functionals/functionals_digital.rst:22
+#: ../../modules/functionals/functionals_digital.rst:23
 msgid ""
 "via "
 ":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_samples`"
@@ -97,7 +100,7 @@ msgstr ""
 ":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_samples`"
 " y"
 
-#: ../../modules/functionals/functionals_digital.rst:23
+#: ../../modules/functionals/functionals_digital.rst:24
 msgid ""
 "probabilities via "
 ":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_probabilities`."
@@ -105,11 +108,11 @@ msgstr ""
 "probabilidades mediante "
 ":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_probabilities`."
 
-#: ../../modules/functionals/functionals_digital.rst:25
+#: ../../modules/functionals/functionals_digital.rst:26
 msgid "**Usage Example**"
 msgstr "**Ejemplo de uso**"
 
-#: ../../modules/functionals/functionals_digital.rst:44
+#: ../../modules/functionals/functionals_digital.rst:45
 msgid ""
 "This functional can be executed on any backend that supports digital "
 "circuits. For example, we can execute it on the CUDA backend:"
@@ -117,7 +120,7 @@ msgstr ""
 "Este functional puede ejecutarse en cualquier backend que soporte "
 "circuitos digitales. Por ejemplo, puede ejecutarse en el backend de CUDA:"
 
-#: ../../modules/functionals/functionals_digital.rst:57
+#: ../../modules/functionals/functionals_digital.rst:58
 msgid "**Output**"
 msgstr "**Salida**"
 

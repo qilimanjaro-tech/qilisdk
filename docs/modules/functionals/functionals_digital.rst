@@ -14,7 +14,8 @@ Measurement details such as the number of shots are specified separately via rea
 
 - **circuit** (:class:`~qilisdk.digital.circuit.Circuit`): Circuit to be propagated.
 - **initial_state** (:class:`~qilisdk.core.qtensor.QTensor` or :class:`~qilisdk.core.qtensor.InitialState`, optional):
-  The initial state of the circuit. If not provided, the zero state is used.
+  The initial state of the circuit. If not provided, the zero state is used. Note that this is only used for simulation,
+  on real devices this is ignored for now.
 
 **Returns**
 

@@ -32,6 +32,10 @@ class DigitalPropagation(PrimitiveFunctional):
     The circuit is executed and results are returned based on the :class:`~qilisdk.readout.Readout`
     passed to :meth:`~qilisdk.backends.Backend.execute`.
 
+    Note:
+        ``initial_state`` is only used by simulator backends. When the functional is executed on
+        hardware, the initial state is ignored and the circuit is propagated from the zero state.
+
     Example:
         .. code-block:: python
 
@@ -57,6 +61,7 @@ class DigitalPropagation(PrimitiveFunctional):
         Args:
             circuit (Circuit): Circuit to propagate.
             initial_state (QTensor | InitialState): Quantum state used as the simulation starting point.
+                Ignored when the functional is executed on hardware.
         """
         super().__init__()
         self.initial_state = initial_state

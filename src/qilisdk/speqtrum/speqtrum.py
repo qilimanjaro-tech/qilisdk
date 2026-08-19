@@ -25,6 +25,7 @@ import httpx
 from loguru import logger
 from pydantic import TypeAdapter, ValidationError
 
+from qilisdk.core.qtensor import InitialState
 from qilisdk.experiments import ExperimentFunctional
 from qilisdk.functionals import (
     AnalogEvolution,
@@ -741,6 +742,11 @@ class SpeQtrum:
         Returns:
             JobHandle[FunctionalResult]: A handle for tracking the submitted job.
         """
+        if functional.initial_state is not InitialState.ZERO:
+            logger.warning(
+                "[SpeQtrum] DigitalPropagation was submitted with a custom initial state, which is not supported "
+                "on hardware and will be ignored. The circuit will be executed starting from the zero state."
+            )
         payload = ExecutePayload(
             type=ExecuteType.DIGITAL_PROPAGATION,
             digital_propagation_payload=DigitalPropagationPayload(digital_propagation=functional, readout=readout),
