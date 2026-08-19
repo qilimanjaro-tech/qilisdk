@@ -998,12 +998,13 @@ def test_check_variables_rejects_spin_variable():
     q = QUBO(label="test")
     s = SpinVariable("s")
 
+    con = EQ(s, 1)
     with pytest.raises(
         ValueError,
         match=r"QUBO models are not supported for variables that are not in the binary, positive integer,"
         r" integer or real domains\.",
     ):
-        q._check_variables(EQ(s, 1))
+        q._check_variables(con)
 
 
 @pytest.mark.parametrize(
@@ -1678,16 +1679,18 @@ def test_check_variables_rejects_unbounded_variables(domain):
     q = QUBO("test")
     x = Variable("x", domain)
 
+    con = EQ(x, 1)
     with pytest.raises(ValueError, match=r"Variable x spans too many values"):
-        q._check_variables(EQ(x, 1))
+        q._check_variables(con)
 
 
 def test_check_variables_rejects_real_variable_whose_precision_is_too_fine():
     q = QUBO("test")
     x = Variable("x", Domain.REAL, bounds=(0, 1), precision=1e-15)
 
+    con = EQ(x, 1)
     with pytest.raises(ValueError, match=r"Variable x spans too many values"):
-        q._check_variables(EQ(x, 1))
+        q._check_variables(con)
 
 
 def test_check_variables_accepts_a_real_variable_with_a_workable_precision():
