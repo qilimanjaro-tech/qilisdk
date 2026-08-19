@@ -240,7 +240,7 @@ def test_arithmetic_and_comparisons():
 
     t = a + b
 
-    assert t * a == a.__rmul__(t)  # noqa: PLC2801
+    assert t * a == a.__rmul__(t)  # ruff: ignore[unnecessary-dunder-call]
 
     t = -a
 
@@ -262,7 +262,7 @@ def test_arithmetic_and_comparisons():
     assert val == 2 + 1 * 2 - 3
 
     # test division by zero
-    with pytest.raises(ValueError):  # noqa: PT011
+    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         _ = a / 0
     # test unsupported rtruediv
     with pytest.raises(NotSupportedOperation):
@@ -357,9 +357,10 @@ def test_term_to_list_and_unfold_parentheses():
     assert u * u == (2 * a + 2 * b) * (2 * a + 2 * b)
 
 
-def test_encoding_constraint_not_implemented():
-    with pytest.raises(NotImplementedError):
-        Bitwise.encoding_constraint(Variable("v3", Domain.INTEGER, bounds=(0, 1)))
+def test_encoding_constraint_not_needed_for_bitwise():
+    # The Bitwise encoding has no invalid binary strings, so it needs no encoding constraint.
+    assert Bitwise.encoding_constraint(Variable("v3", Domain.INTEGER, bounds=(0, 1))) is None
+    assert Variable("v3b", Domain.POSITIVE_INTEGER, bounds=(0, 5)).encoding_constraint() is None
     # OneHot and DomainWall constraints produce ComparisonTerm
     var = Variable("v4", Domain.INTEGER, bounds=(0, 2), encoding=DomainWall)
     cons = DomainWall.encoding_constraint(var)
@@ -1313,6 +1314,54 @@ def test_pow_map():
         Pow(p, -1).evaluate({p: 0})
 
 
+def test_different_mathematical_maps_of_same_argument_are_not_equal():
+    p = Parameter("p", 0.5)
+
+    sin_a, sin_b = Sin(p), Sin(p)
+    assert sin_a == sin_b
+    assert hash(sin_a) == hash(sin_b)
+
+    for lhs, rhs in [(Sin(p), Cos(p)), (Sin(p), Tan(p)), (Exp(p), Log(p)), (Sqrt(p), Inv(p)), (Inv(p), Abs(p))]:
+        assert lhs != rhs
+        assert hash(lhs) != hash(rhs)
+
+    assert Sin(p) != DummyMap(p)
+    assert hash(Sin(p)) != hash(DummyMap(p))
+
+    b = BinaryVariable("b")
+    term = 2 * b + p
+    assert Sin(term) != Cos(term)
+    assert Sin(b) != Cos(b)
+
+
+def test_pow_maps_with_different_exponents_are_not_equal():
+    p = Parameter("p", 2)
+
+    squared_a, squared_b = Pow(p, 2), Pow(p, 2)
+    assert squared_a == squared_b
+    assert hash(squared_a) == hash(squared_b)
+
+    assert Pow(p, 2) != Pow(p, 3)
+    assert hash(Pow(p, 2)) != hash(Pow(p, 3))
+
+
+def test_sum_of_different_mathematical_maps_is_not_merged():
+    p = Parameter("p", 0.5)
+
+    term = Sin(p) + Cos(p)
+    assert len(term) == 2
+    assert np.isclose(_assert_real(term.evaluate({})), np.sin(0.5) + np.cos(0.5))
+
+    # Maps of the same kind must still be merged.
+    same_kind = Sin(p) + Sin(p)
+    assert len(same_kind) == 1
+    assert np.isclose(_assert_real(same_kind.evaluate({})), 2 * np.sin(0.5))
+
+    pow_term = Pow(p, 2) + Pow(p, 3)
+    assert len(pow_term) == 2
+    assert np.isclose(_assert_real(pow_term.evaluate({})), 0.5**2 + 0.5**3)
+
+
 def test_abs_map():
     p = Parameter("p", -1)
     term = 2 * p
@@ -1411,21 +1460,21 @@ def test_base_variable():
     with pytest.raises(TypeError):
         _ = not_number + a
     assert (a + np_generic) == (a + 1.0)
-    assert (a.__radd__(np_generic)) == (1.0 + a)  # noqa: PLC2801
+    assert (a.__radd__(np_generic)) == (1.0 + a)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(TypeError):
         _ = a - not_number
     with pytest.raises(TypeError):
         _ = not_number - a
     assert (a - np_generic) == (a - 1.0)
-    assert (a.__rsub__(np_generic)) == (1.0 - a)  # noqa: PLC2801
+    assert (a.__rsub__(np_generic)) == (1.0 - a)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(TypeError):
         _ = a * not_number
     with pytest.raises(TypeError):
         _ = not_number * a
     assert (a * np_generic) == (1.0 * a)
-    assert (a.__rmul__(np_generic)) == (1.0 * a)  # noqa: PLC2801
+    assert (a.__rmul__(np_generic)) == (1.0 * a)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(NotImplementedError, match="Only division by real numbers"):
         _ = a / not_number
@@ -1545,21 +1594,21 @@ def test_term_arithmetic():
     with pytest.raises(TypeError):
         _ = not_number + t
     assert (t + np_generic) == (t + 1.0)
-    assert (t.__radd__(np_generic)) == (1.0 + t)  # noqa: PLC2801
+    assert (t.__radd__(np_generic)) == (1.0 + t)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(TypeError):
         _ = t - not_number
     with pytest.raises(TypeError):
         _ = not_number - t
     assert (t - np_generic) == (t - 1.0)
-    assert (t.__rsub__(np_generic)) == (1.0 - t)  # noqa: PLC2801
+    assert (t.__rsub__(np_generic)) == (1.0 - t)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(TypeError):
         _ = t * not_number
     with pytest.raises(TypeError):
         _ = not_number * t
     assert (t * np_generic) == (t * 1.0)
-    assert (t.__rmul__(np_generic)) == (1.0 * t)  # noqa: PLC2801
+    assert (t.__rmul__(np_generic)) == (1.0 * t)  # ruff: ignore[unnecessary-dunder-call]
 
     with pytest.raises(NotImplementedError, match="Only division by"):
         _ = t / not_number

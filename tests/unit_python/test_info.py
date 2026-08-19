@@ -17,7 +17,7 @@ import subprocess
 import sys
 from unittest.mock import MagicMock, patch
 
-from loguru_caplog import loguru_caplog as caplog  # noqa: F401
+from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 
 from qilisdk import about
 
@@ -45,7 +45,6 @@ def test_about(monkeypatch):
 
 
 def test_about_fake_gpu(monkeypatch):
-
     _monkeypatch_all(monkeypatch)
 
     fake_gpu = MagicMock()
@@ -59,7 +58,6 @@ def test_about_fake_gpu(monkeypatch):
 
 
 def test_about_bad_gpu(monkeypatch):
-
     _monkeypatch_all(monkeypatch)
 
     fake_gpu = MagicMock()
@@ -74,7 +72,6 @@ def test_about_bad_gpu(monkeypatch):
 
 
 def test_about_subprocess_fails(monkeypatch):
-
     _monkeypatch_all(monkeypatch)
 
     fake_check_output = MagicMock(side_effect=subprocess.CalledProcessError(1, "cmd"))
@@ -102,10 +99,10 @@ def test_about_bad_imports(monkeypatch):
         },
     ):
         # Re-import about so it runs with the patched sys.modules
-        import qilisdk  # noqa: PLC0415
+        import qilisdk  # ruff: ignore[import-outside-top-level]
 
         importlib.reload(qilisdk)
-        from qilisdk import about  # noqa: PLC0415
+        from qilisdk import about  # ruff: ignore[import-outside-top-level]
 
         about_str = about()
 
@@ -116,7 +113,6 @@ def test_about_bad_imports(monkeypatch):
 
 
 def test_about_qilisim_bad_init(monkeypatch):
-
     _monkeypatch_all(monkeypatch)
 
     fake_qilisim = MagicMock()
@@ -131,10 +127,10 @@ def test_about_qilisim_bad_init(monkeypatch):
             "qilisdk.core.qtensor": fake_qtensor,
         },
     ):
-        import qilisdk  # noqa: PLC0415
+        import qilisdk  # ruff: ignore[import-outside-top-level]
 
         importlib.reload(qilisdk)
-        from qilisdk import about  # noqa: PLC0415
+        from qilisdk import about  # ruff: ignore[import-outside-top-level]
 
         about_str = about()
     assert "QiliSim Import: Failed with error:" in about_str
@@ -142,7 +138,6 @@ def test_about_qilisim_bad_init(monkeypatch):
 
 
 def test_about_gpp_but_no_openmp(monkeypatch):
-
     _monkeypatch_all(monkeypatch)
 
     # Simulate g++ present but no OpenMP support
@@ -158,7 +153,6 @@ def test_about_gpp_but_no_openmp(monkeypatch):
 
 
 def test_gpu_but_no_nvidia_smi(monkeypatch):
-
     _monkeypatch_all(monkeypatch)
 
     fake_gpu = MagicMock()

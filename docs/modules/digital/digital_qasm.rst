@@ -20,9 +20,25 @@ OpenQASM 3.0 via the following entry-points in :mod:`qilisdk.utils.openqasm`:
 
 The ``openqasm3`` dependency is optional; install it with the ``openqasm`` extra:
 
-.. code-block:: bash
+.. tabs::
 
-    pip install qilisdk[openqasm]
+    .. group-tab:: Linux
+
+        .. code-block:: bash
+
+            pip install qilisdk[openqasm]
+
+    .. group-tab:: Mac OSX
+
+        .. code-block:: bash
+
+            pip install "qilisdk[openqasm]"
+
+    .. group-tab:: Windows
+
+        .. code-block:: bash
+
+            pip install qilisdk[openqasm]
 
 Quick start
 ^^^^^^^^^^^

@@ -274,7 +274,7 @@ class Encoding(ABC):
 
     @staticmethod
     @abstractmethod
-    def encoding_constraint(var: Variable, precision: float = 1e-2) -> ComparisonTerm:
+    def encoding_constraint(var: Variable, precision: float = 1e-2) -> ComparisonTerm | None:
         """Given a continuous variable return a Constraint Term that ensures that the encoding is respected.
 
         Args:
@@ -283,7 +283,8 @@ class Encoding(ABC):
                                 the variable domain is Domain.Real)
 
         Returns:
-            Constraint Term: a constraint term that ensures the encoding is respected.
+            Constraint Term | None: a constraint term that ensures the encoding is respected, or None if the
+                                encoding needs no constraint because every binary string is a valid encoding.
         """
 
     @staticmethod
@@ -420,8 +421,9 @@ class Bitwise(Encoding):
         return out
 
     @staticmethod
-    def encoding_constraint(var: Variable, precision: float = 1e-2) -> ComparisonTerm:
-        raise NotImplementedError("Bitwise encoding constraints are not supported at the moment")
+    def encoding_constraint(var: Variable, precision: float = 1e-2) -> ComparisonTerm | None:
+        # The Bitwise encoding needs no constraint
+        return None
 
     @staticmethod
     def num_binary_equivalent(var: "Variable", precision: float = 1e-2) -> int:
@@ -945,7 +947,7 @@ class BinaryVariable(BaseVariable):
     def __init__(self, label: str) -> None:
         super().__init__(label=label, domain=Domain.BINARY)
 
-    def num_binary_equivalent(self) -> int:  # noqa: PLR6301
+    def num_binary_equivalent(self) -> int:  # ruff: ignore[no-self-use]
         return 1
 
     def evaluate(self, value: list[int] | RealNumber) -> RealNumber:
@@ -976,7 +978,7 @@ class SpinVariable(BaseVariable):
     def __init__(self, label: str) -> None:
         super().__init__(label=label, domain=Domain.SPIN, bounds=(-1, 1))
 
-    def num_binary_equivalent(self) -> int:  # noqa: PLR6301
+    def num_binary_equivalent(self) -> int:  # ruff: ignore[no-self-use]
         return 1
 
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
@@ -1127,11 +1129,12 @@ class Variable(BaseVariable):
         """
         return self.encoding.check_valid(binary_list)
 
-    def encoding_constraint(self) -> ComparisonTerm:
+    def encoding_constraint(self) -> ComparisonTerm | None:
         """Given a continuous variable return a Comparison Term that ensures that the encoding is respected.
 
         Returns:
-            ComparisonTerm: a Comparison Term that ensures the encoding is respected.
+            ComparisonTerm | None: a Comparison Term that ensures the encoding is respected, or None if the
+                variable's encoding needs no constraint (every binary string is a valid encoding).
         """
         return self.encoding.encoding_constraint(self, precision=self._precision)
 
@@ -1191,7 +1194,7 @@ class Parameter(BaseVariable):
             value = cast("RealNumber", value.item())
         self._value = value
 
-    def num_binary_equivalent(self) -> int:  # noqa: PLR6301
+    def num_binary_equivalent(self) -> int:  # ruff: ignore[no-self-use]
         """
         Returns:
         int: the number of binary variables that are needed to represent this variable in the given encoding.
@@ -1235,7 +1238,7 @@ class Parameter(BaseVariable):
         super().set_bounds(lower_bound, upper_bound)
 
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
-        if len(bounds) != 2:  # noqa: PLR2004
+        if len(bounds) != 2:  # ruff: ignore[magic-value-comparison]
             raise ValueError(
                 "Invalid bounds provided: the bounds need to be a tuple with the format (lower_bound, upper_bound)"
             )
@@ -1345,7 +1348,7 @@ class Term:
                     coeff = complex(1.0)
                     if e_copy.operation == Operation.MUL and self.CONST in e_copy:
                         coeff = e_copy.pop(self.CONST)
-                    simple_e = e_copy._simplify()  # noqa: SLF001
+                    simple_e = e_copy._simplify()  # ruff: ignore[private-member-access]
                     simple_e = self.CONST if isinstance(simple_e, Term) and len(simple_e) == 0 else simple_e
                     if simple_e in self:
                         if isinstance(simple_e, BaseVariable) and self._is_constant(simple_e):
@@ -2010,6 +2013,9 @@ class MathematicalMap(Term, ABC):
     @abstractmethod
     def _apply_mathematical_map(self, value: Number) -> Number: ...
 
+    def __hash__(self) -> int:
+        return qili_hash(self.operation.value, self._elements, type(self).__qualname__)
+
     def evaluate(self, var_values: Mapping[BaseVariable, list[int] | RealNumber]) -> Number:
         value: Number = 0
 
@@ -2034,7 +2040,7 @@ class Sin(MathematicalMap):
 
     MATH_SYMBOL = "sin"
 
-    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+    def _apply_mathematical_map(self, value: Number) -> Number:  # ruff: ignore[no-self-use]
         return float(np.sin(_assert_real(value)))
 
     def __copy__(self) -> Sin:
@@ -2046,7 +2052,7 @@ class Cos(MathematicalMap):
 
     MATH_SYMBOL = "cos"
 
-    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+    def _apply_mathematical_map(self, value: Number) -> Number:  # ruff: ignore[no-self-use]
         return float(np.cos(_assert_real(value)))
 
     def __copy__(self) -> Cos:
@@ -2058,7 +2064,7 @@ class Tan(MathematicalMap):
 
     MATH_SYMBOL = "tan"
 
-    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+    def _apply_mathematical_map(self, value: Number) -> Number:  # ruff: ignore[no-self-use]
         if abs(np.cos(_assert_real(value))) < get_settings().atol:
             raise ValueError("Tangent is not defined for values where cosine is zero.")
         return float(np.tan(_assert_real(value)))
@@ -2072,7 +2078,7 @@ class Exp(MathematicalMap):
 
     MATH_SYMBOL = "exp"
 
-    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+    def _apply_mathematical_map(self, value: Number) -> Number:  # ruff: ignore[no-self-use]
         return float(np.exp(_assert_real(value)))
 
     def __copy__(self) -> Exp:
@@ -2084,7 +2090,7 @@ class Log(MathematicalMap):
 
     MATH_SYMBOL = "log"
 
-    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+    def _apply_mathematical_map(self, value: Number) -> Number:  # ruff: ignore[no-self-use]
         return float(np.log(_assert_real(value)))
 
     def __copy__(self) -> Log:
@@ -2114,6 +2120,9 @@ class Pow(MathematicalMap):
         result = value**self._exponent
         return result
 
+    def __hash__(self) -> int:
+        return qili_hash(self.operation.value, self._elements, type(self).__qualname__, self._exponent)
+
     def __copy__(self) -> Pow:
         return Pow(super().__copy__(), self._exponent)
 
@@ -2128,7 +2137,7 @@ class Sqrt(MathematicalMap):
 
     MATH_SYMBOL = "sqrt"
 
-    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+    def _apply_mathematical_map(self, value: Number) -> Number:  # ruff: ignore[no-self-use]
         return float(np.sqrt(_assert_real(value)))
 
     def __copy__(self) -> Sqrt:
@@ -2140,7 +2149,7 @@ class Inv(MathematicalMap):
 
     MATH_SYMBOL = "inv"
 
-    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+    def _apply_mathematical_map(self, value: Number) -> Number:  # ruff: ignore[no-self-use]
         if abs(value) < get_settings().atol:
             raise ValueError(_DIVISION_MESSAGE)
         return float(1 / _assert_real(value))
@@ -2154,7 +2163,7 @@ class Abs(MathematicalMap):
 
     MATH_SYMBOL = "abs"
 
-    def _apply_mathematical_map(self, value: Number) -> Number:  # noqa: PLR6301
+    def _apply_mathematical_map(self, value: Number) -> Number:  # ruff: ignore[no-self-use]
         return float(abs(_assert_real(value)))
 
     def __copy__(self) -> Abs:

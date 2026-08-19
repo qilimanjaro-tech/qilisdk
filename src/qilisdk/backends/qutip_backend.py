@@ -64,12 +64,12 @@ class QutipI(SingleQubitGate):
      [0. 1.]]
     """
 
-    def __init__(self, targets, **kwargs) -> None:  # noqa: ANN001, ANN003
+    def __init__(self, targets, **kwargs) -> None:  # ruff: ignore[missing-type-function-argument, missing-type-kwargs]
         super().__init__(targets=targets, **kwargs)
         self.name = "I"
         self.latex_str = r"I"
 
-    def get_compact_qobj(self):  # noqa: ANN201, PLR6301
+    def get_compact_qobj(self):  # ruff: ignore[missing-return-type-undocumented-public-function, no-self-use]
         return qeye(2) if not is_qutip5 else qeye(2, dtype="dense")
 
 
@@ -495,7 +495,7 @@ class QutipBackend(Backend):
                 handler(qutip_circuit, gate, *qubits)
         return qutip_circuit
 
-    def _handle_controlled(self, circuit: QubitCircuit, gate: Controlled) -> None:  # noqa: PLR6301
+    def _handle_controlled(self, circuit: QubitCircuit, gate: Controlled) -> None:  # ruff: ignore[no-self-use]
         """Handle a controlled gate operation by registering a custom QuTiP gate.
 
         For non-native controlled gates the block-matrix is constructed
@@ -527,7 +527,7 @@ class QutipBackend(Backend):
                 circuit.user_gates[gate_name] = qutip_controlled_gate
             circuit.add_gate(gate_name, targets=[*gate.control_qubits, *gate.target_qubits])
 
-    def _handle_adjoint(self, circuit: QubitCircuit, gate: Adjoint) -> None:  # noqa: PLR6301
+    def _handle_adjoint(self, circuit: QubitCircuit, gate: Adjoint) -> None:  # ruff: ignore[no-self-use]
         """Handle an adjoint (inverse) gate operation.
 
         Registers a custom QuTiP gate whose unitary is the adjoint of the

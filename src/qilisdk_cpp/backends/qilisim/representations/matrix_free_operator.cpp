@@ -82,7 +82,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Left) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
                 long offset = k & offset_mask;
@@ -93,7 +93,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Right) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
                 long offset = k & offset_mask;
@@ -147,7 +147,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Left) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
                 long offset = k & offset_mask;
@@ -160,7 +160,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Right) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
                 long offset = k & offset_mask;
@@ -217,7 +217,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Left) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long r = 0; r < half; ++r) {
                 long offset = r & offset_mask;
@@ -227,7 +227,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Right) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long c = 0; c < half; ++c) {
                 long offset = c & offset_mask;
@@ -279,7 +279,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Left) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
                 long offset = k & offset_mask;
@@ -293,7 +293,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Right) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < half; ++k) {
                 long offset = k & offset_mask;
@@ -353,7 +353,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Left) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long r = 0; r < half; ++r) {
                 long offset = r & offset_mask;
@@ -363,7 +363,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Right) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long c = 0; c < half; ++c) {
                 long offset = c & offset_mask;
@@ -411,7 +411,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Left) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long r = 0; r < half; ++r) {
                 long offset = r & offset_mask;
@@ -421,7 +421,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Right) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long c = 0; c < half; ++c) {
                 long offset = c & offset_mask;
@@ -538,7 +538,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Left) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long i = 0; i < long(dim); ++i) {
                 if (i & control_mask) {
@@ -550,7 +550,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Right) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long i = 0; i < dim; ++i) {
                 if (i & control_mask) {
@@ -612,7 +612,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Left) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long i = 0; i < long(dim); ++i) {
                 if ((i & control_mask) == control_mask) {
@@ -624,7 +624,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Right) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long i = 0; i < dim; ++i) {
                 if ((i & control_mask) == control_mask) {
@@ -683,7 +683,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Left) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long i = 0; i < long(dim); ++i) {
                 if (i & control_mask) {
@@ -695,7 +695,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Right) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long i = 0; i < long(dim); ++i) {
                 if (i & control_mask) {
@@ -756,7 +756,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Left) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < long(half); ++k) {
                 long offset = k & offset_mask;
@@ -773,7 +773,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
         } else if (application_type == MatrixFreeApplicationType::Right) {
             DenseMatrix base_matrix_conj = base_matrix.conjugate().transpose();
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < long(half); ++k) {
                 long offset = k & offset_mask;
@@ -845,7 +845,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
             }
         } else if (application_type == MatrixFreeApplicationType::Left) {
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < long(half); ++k) {
                 long offset = k & offset_mask;
@@ -860,7 +860,7 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
         } else if (application_type == MatrixFreeApplicationType::Right) {
             DenseMatrix base_matrix_conj = base_matrix.conjugate().transpose();
 #if defined(_OPENMP)
-#pragma omp for schedule(static)
+#pragma omp parallel for schedule(static)
 #endif
             for (long k = 0; k < long(half); ++k) {
                 long offset = k & offset_mask;

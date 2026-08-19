@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-02 18:14+0200\n"
+"POT-Creation-Date: 2026-07-31 12:47+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -61,8 +61,8 @@ msgstr ""
 " trata de minimizar o maximizar. Ejemplo:"
 
 #: ../../modules/core/core_model.rst:47 ../../modules/core/core_model.rst:73
-#: ../../modules/core/core_model.rst:101 ../../modules/core/core_model.rst:157
-#: ../../modules/core/core_model.rst:174
+#: ../../modules/core/core_model.rst:101 ../../modules/core/core_model.rst:166
+#: ../../modules/core/core_model.rst:183
 msgid "**Output**:"
 msgstr "**Salida**:"
 
@@ -106,13 +106,13 @@ msgstr ""
 
 #: ../../modules/core/core_model.rst:127
 msgid ""
-":func:`Model.random_ising(num_variables, coefficient_range, label, "
-"seed)<qilisdk.core.model.Model.random_ising>` - Constructs a random Ising"
-" model with specified parameters."
+":func:`Model.ising(edges, couplings, fields, "
+"label)<qilisdk.core.model.Model.ising>` - Constructs an Ising problem for"
+" a given weighted graph."
 msgstr ""
-":func:`Model.random_ising(num_variables, coefficient_range, label, "
-"seed)<qilisdk.core.model.Model.random_ising>` - Construye un modelo de "
-"Ising aleatorio con los parámetros especificados."
+":func:`Model.ising(edges, couplings, fields, "
+"label)<qilisdk.core.model.Model.ising>` - Construye un problema de Ising "
+"para un grafo con pesos dado."
 
 #: ../../modules/core/core_model.rst:128
 msgid ""
@@ -166,14 +166,83 @@ msgstr ""
 "Construye un problema de factorización para un entero dado."
 
 #: ../../modules/core/core_model.rst:134
+msgid ""
+"Each of these (except factoring) also has a random counterpart, useful "
+"for generating problems for testing and benchmarking:"
+msgstr ""
+"Cada uno de estos (excepto la factorización) también tiene una "
+"contraparte aleatoria, útil para generar problemas de prueba y de "
+"evaluación de rendimiento:"
+
+#: ../../modules/core/core_model.rst:137
+msgid ""
+":func:`Model.random_ising(num_variables, edge_probability, "
+"coefficient_range, label, seed)<qilisdk.core.model.Model.random_ising>` -"
+" Constructs a random Ising model, fully connected by default."
+msgstr ""
+":func:`Model.random_ising(num_variables, edge_probability, "
+"coefficient_range, label, seed)<qilisdk.core.model.Model.random_ising>` -"
+" Construye un modelo de Ising aleatorio, completamente conectado por "
+"defecto."
+
+#: ../../modules/core/core_model.rst:138
+msgid ""
+":func:`Model.random_knapsack(num_items, value_range, weight_range, "
+"capacity_ratio, label, seed, "
+"lagrange_multiplier)<qilisdk.core.model.Model.random_knapsack>` - "
+"Constructs a knapsack problem with random values and weights."
+msgstr ""
+":func:`Model.random_knapsack(num_items, value_range, weight_range, "
+"capacity_ratio, label, seed, "
+"lagrange_multiplier)<qilisdk.core.model.Model.random_knapsack>` - "
+"Construye un problema de la mochila con valores y pesos aleatorios."
+
+#: ../../modules/core/core_model.rst:139
+msgid ""
+":func:`Model.random_max_cut(num_nodes, edge_probability, weight_range, "
+"label, seed)<qilisdk.core.model.Model.random_max_cut>` - Constructs a max"
+" cut problem on a random connected graph."
+msgstr ""
+":func:`Model.random_max_cut(num_nodes, edge_probability, weight_range, "
+"label, seed)<qilisdk.core.model.Model.random_max_cut>` - Construye un "
+"problema de corte máximo sobre un grafo conexo aleatorio."
+
+#: ../../modules/core/core_model.rst:140
+msgid ""
+":func:`Model.random_graph_coloring(num_nodes, num_colors, "
+"edge_probability, label, seed, "
+"lagrange_multiplier)<qilisdk.core.model.Model.random_graph_coloring>` - "
+"Constructs a graph coloring problem on a random connected graph."
+msgstr ""
+":func:`Model.random_graph_coloring(num_nodes, num_colors, "
+"edge_probability, label, seed, "
+"lagrange_multiplier)<qilisdk.core.model.Model.random_graph_coloring>` - "
+"Construye un problema de coloreado de grafos sobre un grafo conexo "
+"aleatorio."
+
+#: ../../modules/core/core_model.rst:141
+msgid ""
+":func:`Model.random_travelling_salesman(num_cities, edge_probability, "
+"distance_range, label, seed, "
+"lagrange_multiplier)<qilisdk.core.model.Model.random_travelling_salesman>`"
+" - Constructs a travelling salesman problem with random distances, on a "
+"complete graph by default."
+msgstr ""
+":func:`Model.random_travelling_salesman(num_cities, edge_probability, "
+"distance_range, label, seed, "
+"lagrange_multiplier)<qilisdk.core.model.Model.random_travelling_salesman>`"
+" - Construye un problema del viajante de comercio con distancias "
+"aleatorias, sobre un grafo completo por defecto."
+
+#: ../../modules/core/core_model.rst:143
 msgid "For instance, to create a knapsack problem:"
 msgstr "Por ejemplo, para crear un problema de la mochila:"
 
-#: ../../modules/core/core_model.rst:147
+#: ../../modules/core/core_model.rst:156
 msgid "Evaluating a Model"
 msgstr "Evaluar un modelo"
 
-#: ../../modules/core/core_model.rst:149
+#: ../../modules/core/core_model.rst:158
 msgid ""
 "To evaluate a :class:`~qilisdk.core.model.Model`, provide values for all "
 "involved variables:"
@@ -181,7 +250,7 @@ msgstr ""
 "Para evaluar un :class:`~qilisdk.core.model.Model`, proporcione valores "
 "para todas las variables implicadas:"
 
-#: ../../modules/core/core_model.rst:163
+#: ../../modules/core/core_model.rst:172
 msgid ""
 "The evaluation returns a dictionary with values for the objective and "
 "constraints. A constraint returns `0.0` if satisfied, or its Lagrange "
@@ -191,15 +260,15 @@ msgstr ""
 "restricciones. Una restricción devuelve `0.0` si se satisface, o su "
 "multiplicador de Lagrange si se viola."
 
-#: ../../modules/core/core_model.rst:166
+#: ../../modules/core/core_model.rst:175
 msgid "For example:"
 msgstr "Por ejemplo:"
 
-#: ../../modules/core/core_model.rst:182
+#: ../../modules/core/core_model.rst:191
 msgid "Solving a Model Classically"
 msgstr "Resolver un modelo de forma clásica"
 
-#: ../../modules/core/core_model.rst:184
+#: ../../modules/core/core_model.rst:193
 msgid ""
 "To help demonstrate the limits of classical solvers, a variety of "
 "wrappers to different solvers are provided:"
@@ -207,7 +276,7 @@ msgstr ""
 "Para ayudar a demostrar los límites de los solucionadores clásicos, se "
 "proporcionan varios envoltorios para diferentes solucionadores:"
 
-#: ../../modules/core/core_model.rst:186
+#: ../../modules/core/core_model.rst:195
 msgid ""
 ":class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver`"
 " - A brute-force solver that evaluates all possible solutions."
@@ -216,7 +285,7 @@ msgstr ""
 " - Un solucionador de fuerza bruta que evalúa todas las soluciones "
 "posibles."
 
-#: ../../modules/core/core_model.rst:187
+#: ../../modules/core/core_model.rst:196
 msgid ""
 ":class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver` - A "
 "solver that uses one of SciPy's `optimize` routines to find a solution."
@@ -225,17 +294,17 @@ msgstr ""
 "solucionador que utiliza una de las rutinas `optimize` de SciPy para "
 "encontrar una solución."
 
-#: ../../modules/core/core_model.rst:188
+#: ../../modules/core/core_model.rst:197
 msgid ""
 ":class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` - A "
 "wrapper to SCIP, a mixed-integer programming solver. This requires the "
-"SCIP extra (i.e. `pip install qilisdk[scip]`)."
+"SCIP extra (i.e. ``pip install \"qilisdk[scip]\"``)."
 msgstr ""
 ":class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` - Un "
 "envoltorio para SCIP, un solucionador de programación entera mixta. Esto "
-"requiere el extra de SCIP (es decir, `pip install qilisdk[scip]`)."
+"requiere el extra de SCIP (es decir, ``pip install \"qilisdk[scip]\"``)."
 
-#: ../../modules/core/core_model.rst:190
+#: ../../modules/core/core_model.rst:199
 msgid "These can be used as follows:"
 msgstr "Se pueden utilizar de la siguiente manera:"
 

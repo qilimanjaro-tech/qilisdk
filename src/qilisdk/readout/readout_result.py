@@ -306,7 +306,6 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
         return heapq.nlargest(n, self._probabilities.items(), key=operator.itemgetter(1))
 
     def __repr__(self) -> str:
-
         return f"Sampling Results: (\n\tnshots={sum(self.samples.values())},\n\tsamples={pformat(self.samples)}\n)\n\n"
 
     __str__ = __repr__
@@ -341,7 +340,7 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
     def from_state(cls, expectation_readout: ExpectationReadout, state: QTensor) -> Self:
         try:
             expectation_values: list[int | float] = [
-                _assert_real((expect_val(o, state)))
+                _assert_real((expect_val(o, state, expectation_readout.nshots)))
                 for o in expectation_readout.expanded_observables(nqubits=state.nqubits)
             ]
         except ValueError:

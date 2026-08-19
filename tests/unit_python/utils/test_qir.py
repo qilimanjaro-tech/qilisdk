@@ -16,7 +16,7 @@ import pytest
 
 pyqir = pytest.importorskip("pyqir")
 
-from qilisdk.digital import (  # noqa: E402
+from qilisdk.digital import (  # ruff: ignore[module-import-not-at-top-of-file]
     CNOT,
     CZ,
     RX,
@@ -35,7 +35,12 @@ from qilisdk.digital import (  # noqa: E402
     Y,
     Z,
 )
-from qilisdk.utils.qir import from_qir, from_qir_file, to_qir, to_qir_file  # noqa: E402
+from qilisdk.utils.qir import (  # ruff: ignore[module-import-not-at-top-of-file]
+    from_qir,
+    from_qir_file,
+    to_qir,
+    to_qir_file,
+)
 
 
 def _summarize(circuit: Circuit) -> list[tuple]:

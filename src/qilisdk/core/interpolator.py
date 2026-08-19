@@ -104,6 +104,7 @@ class Interpolator(Parameterizable):
         time_dict: TimeDict,
         interpolation: Interpolation = Interpolation.LINEAR,
         nsamples: int = 100,
+        extrapolate: bool = False,
     ) -> None:
         """Initialize an interpolator over discrete points or intervals.
 
@@ -111,6 +112,10 @@ class Interpolator(Parameterizable):
             time_dict (TimeDict): Mapping from time points or intervals to coefficients or callables.
             interpolation (Interpolation): Interpolation rule between provided points (``LINEAR`` or ``STEP``).
             nsamples (int): Number of samples used to expand interval definitions.
+            extrapolate (bool): How to evaluate times outside the defined range. If ``False`` (the default) the
+                first and last coefficients are held constant outside the range, and a warning is issued the first
+                time this happens. If ``True``, the slope of the first/last linear segment is extended instead
+                (only meaningful for ``LINEAR`` interpolation).
 
         Raises:
             ValueError: If the time intervals contain a number of points different than 2.
@@ -122,6 +127,8 @@ class Interpolator(Parameterizable):
             interpolation,
         )
         self._interpolation = interpolation
+        self._extrapolate = extrapolate
+        self._warned_extrapolation = False
         self._time_dict: dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER] = {}
         self._current_time = Parameter("t", 0)
         self._total_time: float | None = None
@@ -135,22 +142,14 @@ class Interpolator(Parameterizable):
 
         fixed_times: list[PARAMETERIZED_NUMBER | tuple[float, float]] = sorted(
             time_dict.keys(),
-            key=lambda t: self._get_value(
-                min(t, key=self._get_value)  # ty:ignore[no-matching-overload]
-                if isinstance(t, tuple)
-                else self._get_value(t)
-            ),
+            key=lambda t: self._get_value(min(t, key=self._get_value) if isinstance(t, tuple) else self._get_value(t)),
         )
 
         for i in range(len(fixed_times) - 1):
             ti: PARAMETERIZED_NUMBER | tuple[float, float] = fixed_times[i]
             tj: PARAMETERIZED_NUMBER | tuple[float, float] = fixed_times[i + 1]
-            t0 = (
-                self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])  # ty:ignore[invalid-argument-type]
-            )
-            t1 = (
-                self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])  # ty:ignore[invalid-argument-type]
-            )
+            t0 = self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])
+            t1 = self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])
             if abs(t0 - t1) < get_settings().atol:
                 raise ValueError(f"The time point {t0} is defined twice.")
             if t0 > t1:
@@ -158,12 +157,12 @@ class Interpolator(Parameterizable):
 
         for time, coefficient in time_dict.items():
             if isinstance(time, tuple):
-                if len(time) != 2:  # noqa: PLR2004
+                if len(time) != 2:  # ruff: ignore[magic-value-comparison]
                     raise ValueError(
                         f"time intervals need to be defined by two points, but this interval was provided: {time}"
                     )
-                self.add_time_point(time[0], coefficient)  # ty:ignore[invalid-argument-type]
-                self.add_time_point(time[1], coefficient)  # ty:ignore[invalid-argument-type]
+                self.add_time_point(time[0], coefficient)
+                self.add_time_point(time[1], coefficient)
             else:
                 self.add_time_point(time, coefficient)
         self._tlist = self._generate_tlist()
@@ -171,7 +170,7 @@ class Interpolator(Parameterizable):
         time_insertion_list = sorted(
             [k for item in time_dict for k in (item if isinstance(item, tuple) else (item,))],
             key=self._get_value,
-        )  # ty:ignore[no-matching-overload]
+        )
         l = len(time_insertion_list)
         for i in range(l):
             t = time_insertion_list[i]
@@ -226,6 +225,17 @@ class Interpolator(Parameterizable):
                 self._time_scale_cache = 1.0
 
         return self._time_scale_cache
+
+    @property
+    def extrapolate(self) -> bool:
+        """
+        Return whether coefficients are extrapolated outside the defined time range.
+
+        Returns:
+            bool: ``True`` if the first/last segment slope is extended, ``False`` if the first/last coefficient is
+                held constant.
+        """
+        return self._extrapolate
 
     @property
     def tlist(self) -> list[PARAMETERIZED_NUMBER]:
@@ -475,7 +485,7 @@ class Interpolator(Parameterizable):
             float: Evaluated coefficient.
         """
         logger.trace("[Interpolator] Evaluating coefficient at t={}", time_step)
-        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)  # ty:ignore[invalid-assignment]
+        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
         val = self.get_coefficient_expression(time_step=time_step)
 
         if self._max_time is not None:
@@ -498,7 +508,7 @@ class Interpolator(Parameterizable):
         Raises:
             ValueError: If the interpolation mode is unsupported or evaluation fails.
         """
-        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)  # ty:ignore[invalid-assignment]
+        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
 
         # generate the tlist
         self._tlist = self._generate_tlist()
@@ -524,6 +534,19 @@ class Interpolator(Parameterizable):
         self._cached_time[time_step * factor] = result
         return result
 
+    def _warn_no_extrapolation(self) -> None:
+        """
+        Warn (once per interpolator) that a coefficient is being evaluated outside its defined time range without extrapolation.
+        """
+        if self._warned_extrapolation or self._tlist is None or len(self._tlist) < 2:  # ruff: ignore[magic-value-comparison]
+            return
+        self._warned_extrapolation = True
+        logger.warning(
+            "[Interpolator] Coefficient assumed constant outside its defined time range: [{},  {}].",
+            self._get_value(self._tlist[0]),
+            self._get_value(self._tlist[-1]),
+        )
+
     def _get_coefficient_expression_step(self, time_step: float) -> Number | Term | Parameter:
         """
         Return the step-interpolated coefficient expression for ``time_step``.
@@ -532,11 +555,16 @@ class Interpolator(Parameterizable):
             time_step (float): Time at which to retrieve the coefficient.
 
         Returns:
-            Number | Term | Parameter: Coefficient expression for the previous time point.
+            Number | Term | Parameter: Coefficient expression for the previous time point. Times before the first
+            point hold the first coefficient constant, consistent with ``LINEAR``.
         """
         self._tlist = self._generate_tlist()
         prev_indx = bisect_right(self._tlist, time_step, key=self._get_value) - 1
-        prev_indx = -1 if prev_indx >= len(self._tlist) else prev_indx
+        if prev_indx < 0:
+            self._warn_no_extrapolation()
+            prev_indx = 0
+        elif time_step > self._get_value(self._tlist[-1]):
+            self._warn_no_extrapolation()
         prev_time_step = self._tlist[prev_indx]
         return self._time_dict[prev_time_step]
 
@@ -587,16 +615,18 @@ class Interpolator(Parameterizable):
         next_expr = self._time_dict[next_idx] if has_next else 0
 
         if not has_prev and has_next:
-            if len(self._tlist) == 1:
-                return next_expr
             first_idx = self._tlist[0]
+            if len(self._tlist) == 1 or not self._extrapolate:
+                self._warn_no_extrapolation()
+                return self._time_dict[first_idx]
             second_idx = self._tlist[1]
             return _linear_value(first_idx, self._time_dict[first_idx], second_idx, self._time_dict[second_idx])
 
         if not has_next and has_prev:
-            if len(self._tlist) == 1:
-                return prev_expr
             last_idx = self._tlist[-1]
+            if len(self._tlist) == 1 or not self._extrapolate:
+                self._warn_no_extrapolation()
+                return self._time_dict[last_idx]
             penultimate_idx = self._tlist[-2]
             return _linear_value(penultimate_idx, self._time_dict[penultimate_idx], last_idx, self._time_dict[last_idx])
 

@@ -131,7 +131,7 @@ class QiliSim(Backend):
 
         # If GPU acceleration is requested, preload the CUDA libraries
         if execution_config.gpu:
-            from ._gpu import preload_cuda_libraries  # noqa: PLC0415
+            from ._gpu import preload_cuda_libraries  # ruff: ignore[import-outside-top-level]
 
             if not preload_cuda_libraries():
                 logger.debug(
