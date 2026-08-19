@@ -27,7 +27,7 @@
 #include "qilisim.h"
 #include "representations/exponential_ansatz.h"
 #include "representations/matrix_free_hamiltonian.h"
-#include "representations/tensor_network.h"
+#include "representations/mps.h"
 #include "utils/matrix_utils.h"
 #include "utils/parsers.h"
 #include "utils/random.h"

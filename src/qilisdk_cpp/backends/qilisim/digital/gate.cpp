@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+#include <stdexcept>
+
 #include "gate.h"
 
 // GCOV_EXCL_BR_START
@@ -275,6 +278,72 @@ SparseMatrix Gate::get_full_matrix(int num_qubits) const {
     } else {
         return base_to_full(base_matrix, num_qubits, control_qubits, target_qubits);
     }
+}
+
+DenseMatrix Gate::get_local_matrix() const {
+    /*
+    Build the dense matrix of the gate over just the qubits it acts on, ordered by
+    ascending qubit index with the lowest index the most significant.
+
+    A gate stores its matrix in its own qubit order (controls first, then targets),
+    so we build the matrix on a register of exactly that many qubits and then
+    permute the index bits into ascending order.
+
+    Returns:
+        DenseMatrix: The 2^k x 2^k matrix over the gate's k qubits.
+
+    Raises:
+        std::invalid_argument: If the gate names the same qubit more than once.
+    */
+    std::vector<int> gate_order = get_qubits();
+    int k = static_cast<int>(gate_order.size());
+
+    // Build the matrix on a k-qubit register, laid out in the gate's own qubit order
+    std::vector<int> controls;
+    std::vector<int> targets;
+    for (size_t i = 0; i < control_qubits.size(); ++i) {
+        controls.push_back(static_cast<int>(i));
+    }
+    for (size_t i = 0; i < target_qubits.size(); ++i) {
+        targets.push_back(static_cast<int>(controls.size() + i));
+    }
+    Gate local(gate_type, base_matrix, controls, targets, parameters);
+    DenseMatrix matrix = DenseMatrix(local.get_full_matrix(k));
+
+    // Where each of the gate's own qubit slots ends up once sorted by qubit index
+    std::vector<int> sorted = gate_order;
+    std::sort(sorted.begin(), sorted.end());
+    if (std::adjacent_find(sorted.begin(), sorted.end()) != sorted.end()) {
+        throw std::invalid_argument("Gate " + get_name() + " names the same qubit more than once");
+    }
+    std::vector<int> destination(k);
+    bool already_ascending = true;
+    for (int i = 0; i < k; ++i) {
+        destination[i] = static_cast<int>(std::lower_bound(sorted.begin(), sorted.end(), gate_order[i]) - sorted.begin());
+        already_ascending = already_ascending && destination[i] == i;
+    }
+    if (already_ascending) {
+        return matrix;
+    }
+
+    // Rewrite every basis index by moving each qubit's bit to its sorted position
+    int dim = 1 << k;
+    std::vector<int> reordered_index(dim, 0);
+    for (int index = 0; index < dim; ++index) {
+        int mapped = 0;
+        for (int i = 0; i < k; ++i) {
+            int bit = (index >> (k - 1 - i)) & 1;
+            mapped |= bit << (k - 1 - destination[i]);
+        }
+        reordered_index[index] = mapped;
+    }
+    DenseMatrix reordered(dim, dim);
+    for (int row = 0; row < dim; ++row) {
+        for (int col = 0; col < dim; ++col) {
+            reordered(reordered_index[row], reordered_index[col]) = matrix(row, col);
+        }
+    }
+    return reordered;
 }
 
 int Gate::get_nqubits() const {

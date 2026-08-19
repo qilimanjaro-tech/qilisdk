@@ -25,7 +25,8 @@
 
 #include "../../../src/qilisdk_cpp/backends/qilisim/digital/gate.h"
 #include "../../../src/qilisdk_cpp/backends/qilisim/representations/matrix_free_hamiltonian.h"
-#include "../../../src/qilisdk_cpp/backends/qilisim/representations/tensor_network.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/representations/mps.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/representations/tensor.h"
 
 namespace {
 
@@ -283,7 +284,7 @@ TEST(TensorTest, ContractsAgainstAnExplicitReference) {
     // Contracting every leg leaves a scalar
     Tensor full = a.contract(a, {0, 1, 2}, {0, 1, 2});
     EXPECT_EQ(full.rank(), 0);
-    EXPECT_NEAR(std::abs(full(std::vector<int>{}) - a.trace_all_with(a)), 0.0, 1e-12);
+    EXPECT_NEAR(std::abs(full(std::vector<int>{}) - a.contract_all(a)), 0.0, 1e-12);
 
     EXPECT_THROW(a.contract(b, {1}, {0, 1}), std::invalid_argument);
     EXPECT_THROW(a.contract(b, {0}, {0}), std::invalid_argument);
@@ -345,8 +346,8 @@ TEST(TensorTest, ElementwiseHelpers) {
     EXPECT_NEAR(t.norm(), std::sqrt(2.0 + 4.0 + 1.0 + 1.0), 1e-12);
 
     Tensor other({2, 2}, {1.0, 1.0, 1.0, 1.0});
-    EXPECT_NEAR(std::abs(t.trace_all_with(other) - Complex(4.0, 0.0)), 0.0, 1e-12);
-    EXPECT_THROW(t.trace_all_with(Tensor({4})), std::invalid_argument);
+    EXPECT_NEAR(std::abs(t.contract_all(other) - Complex(4.0, 0.0)), 0.0, 1e-12);
+    EXPECT_THROW(t.contract_all(Tensor({4})), std::invalid_argument);
 
     t.scale(Complex(0.0, 2.0));
     EXPECT_EQ(t(std::vector<int>{0, 0}), Complex(-2.0, 2.0));

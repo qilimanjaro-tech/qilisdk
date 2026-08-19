@@ -21,7 +21,7 @@
 #include "../representations/exponential_ansatz.h"
 #include "../representations/matrix_free_hamiltonian.h"
 #include "../representations/stabilizer_state.h"
-#include "../representations/tensor_network.h"
+#include "../representations/mps.h"
 
 // GCOV_EXCL_BR_START
 

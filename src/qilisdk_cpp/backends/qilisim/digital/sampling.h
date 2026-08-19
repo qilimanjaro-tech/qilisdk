@@ -23,7 +23,7 @@
 #include "../noise/noise_model.h"
 #include "../representations/matrix_free_operator.h"
 #include "../representations/stabilizer_state.h"
-#include "../representations/tensor_network.h"
+#include "../representations/mps.h"
 
 // Helper functions for sampling.cpp
 void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCol& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories = nullptr);

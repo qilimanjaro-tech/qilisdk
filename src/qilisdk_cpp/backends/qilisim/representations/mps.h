@@ -22,58 +22,10 @@
 
 #include "../../../libs/eigen.h"
 #include "../digital/gate.h"
-#include "../representations/matrix_free_hamiltonian.h"
+#include "matrix_free_hamiltonian.h"
+#include "tensor.h"
 
 // GCOV_EXCL_BR_START
-
-class Tensor {
-   protected:
-    std::vector<int> shape;
-    std::vector<Complex> data;
-    int64_t flat_index(const std::vector<int>& index) const;
-
-   public:
-    
-    // Constructors
-    Tensor() = default;
-    explicit Tensor(const std::vector<int>& shape);
-    Tensor(const std::vector<int>& shape, const std::vector<Complex>& values);
-
-    // Various ways to access the shape and data
-    int rank() const { return static_cast<int>(shape.size()); }
-    int64_t size() const { return static_cast<int64_t>(data.size()); }
-    int extent(int leg) const { return shape[leg]; }
-    const std::vector<int>& get_shape() const { return shape; }
-    const std::vector<Complex>& raw() const { return data; }
-    std::vector<Complex>& raw() { return data; }
-    Complex operator()(const std::vector<int>& index) const { return data[flat_index(index)]; }
-    Complex& operator()(const std::vector<int>& index) { return data[flat_index(index)]; }
-
-    // Leg manipulation
-    Tensor permute(const std::vector<int>& perm) const;
-    void reshape(const std::vector<int>& new_shape);
-    Tensor fuse(const std::vector<std::vector<int>>& groups) const;
-
-    // Matrix views
-    Eigen::Map<const DenseMatrix> matrix_view(int nrow_legs) const;
-    Eigen::Map<DenseMatrix> matrix_view(int nrow_legs);
-    DenseMatrix as_matrix(const std::vector<int>& row_legs) const;
-    static Tensor from_matrix(const DenseMatrix& m, const std::vector<int>& shape);
-
-    // Contracts two tensors along the given legs
-    Tensor contract(const Tensor& other, const std::vector<int>& legs_a, const std::vector<int>& legs_b) const;
-
-    // Truncated SVD
-    void split(const std::vector<int>& left_legs, int max_bond_dimension, Real cutoff, Tensor& left, RealVector& singular_values, Tensor& right, Real* truncation_error = nullptr) const;
-
-    // Reductions
-    Tensor conjugate() const;
-    Real norm() const;
-    void scale(Complex factor);
-    void set_zero();
-    bool has_nan() const;
-
-};
 
 class MPSTensor : public Tensor {
    public:
@@ -101,9 +53,10 @@ class MPSState {
     Real total_truncation_error = 0.0;
     mutable std::mt19937_64 rng{std::random_device{}()};
     Real split_two_site(int q, const Tensor& theta, int keep_centre_on);
+    static DenseMatrix transfer_step(const DenseMatrix& environment, const MPSTensor& site, const DenseMatrix& op);
+    static DenseMatrix transfer_step(const DenseMatrix& environment, const MPSTensor& site);
 
    public:
-    
     // Constructors
     explicit MPSState(int nqubits);
     MPSState(int nqubits, const std::string& b);
@@ -135,7 +88,6 @@ class MPSState {
     std::string sample(std::mt19937_64& engine) const;
     std::map<std::string, int> sample(int nshots) const;
     DenseMatrix as_dense() const;
-
 };
 
 std::ostream& operator<<(std::ostream& os, const MPSState& state);
