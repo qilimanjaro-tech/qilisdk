@@ -62,7 +62,7 @@ def test_no_seed():
     backend = QiliSim(execution_config=ExecutionConfig(seed=None, num_threads=1))
     seed = backend.get_config()["seed"]
     assert isinstance(seed, int)
-    assert 0 <= seed < 2**15
+    assert 0 <= seed < 2**31 - 1
 
 
 @pytest.mark.parametrize("method", digital_methods)
@@ -132,6 +132,73 @@ def test_seed_different(method):
     assert result1.get_samples() != result2.get_samples()
 
 
+@pytest.mark.parametrize("method", digital_methods)
+def test_seed_different_between_calls_on_one_backend(method):
+    # The seed is a root seed, not a per-call seed: repeating an execution on one backend has
+    # to give fresh randomness, otherwise anything measuring statistical spread sees zero variance.
+    for seed in (42, None):
+        backend = QiliSim(execution_config=ExecutionConfig(seed=seed, num_threads=1), digital_simulation_method=method)
+        circuit = Circuit(nqubits=2)
+        circuit.add(H(0))
+        circuit.add(H(1))
+        readout = Readout().with_sampling(nshots=500)
+        samples = [
+            backend.execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples() for _ in range(3)
+        ]
+        assert samples[0] != samples[1]
+        assert samples[1] != samples[2]
+        assert samples[0] != samples[2]
+
+
+@pytest.mark.parametrize("method", digital_methods)
+def test_seed_reproduces_whole_sequence_of_calls(method):
+    # An explicit seed must reproduce the entire sequence of executions, not just the first one.
+    def run_sequence():
+        backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
+        circuit = Circuit(nqubits=2)
+        circuit.add(H(0))
+        circuit.add(H(1))
+        readout = Readout().with_sampling(nshots=500)
+        return [backend.execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples() for _ in range(4)]
+
+    first_run = run_sequence()
+    second_run = run_sequence()
+    assert first_run == second_run
+
+
+def test_reset_seed_rewinds_the_stream():
+    # reset_seed puts the backend's random stream back to where it started, so the next
+    # execution repeats the first one.
+    backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    circuit.add(H(1))
+    readout = Readout().with_sampling(nshots=500)
+
+    first = backend.execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples()
+    backend.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    backend.qili_sim.reset_seed(42)
+    assert backend.execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples() == first
+
+
+@pytest.mark.parametrize("method", digital_methods)
+def test_intermediate_and_final_draws_are_independent(method):
+    # Mid-circuit and final sampling used to share the seed, making them perfectly correlated.
+    backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    circuit.add(M(0))
+    circuit.add(X(1))
+    circuit.add(M(0))
+    circuit.add(M(1))
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=Readout().with_sampling(nshots=1000))
+
+    intermediate = result.intermediate_results[0].get_samples()
+    final = result.get_samples()
+    # Same marginal distribution on qubit 0, but drawn from independent streams
+    assert sorted(intermediate.values()) != sorted(final.values())
+
+
 @pytest.mark.parametrize("method", analog_methods)
 def test_row_vec_ordering(method):
     dt = 0.5
@@ -183,9 +250,11 @@ def test_monte_carlo_time_evolution(method):
     mix = 0.2
     psi0 = ((1 - mix) * psi0 + mix * psi1).unit()
 
+    # 100 trajectories give this estimator a standard deviation of ~0.05, which is most of the
+    # tolerance below; use enough trajectories that the check does not depend on the draw.
     backend = QiliSim(
         analog_simulation_method=method,
-        execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=_MONTE_CARLO_CONFIG),
+        execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=MonteCarloConfig(trajectories=2000)),
     )
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),

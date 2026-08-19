@@ -1916,8 +1916,10 @@ _traj_ro_samp = [SamplingReadout(nshots=500)]
     config.set_seed(11);
     std::vector<bool> qubits_to_measure = {true, true};
 
-    // Same outcome probabilities and same seed, so the counts must agree exactly
+    // Same outcome probabilities and same seed, so the counts must agree exactly. The seed stream
+    // advances with every draw, so it is reset in between to give both calls the same seed.
     py::dict from_trajectories = construct_result_object(trajectories, readout, noise_model_cpp, 2, config, qubits_to_measure, true).attr("sampling").attr("samples");
+    config.set_seed(11);
     py::dict from_density_matrix = construct_result_object(trajectories_to_density_matrix(trajectories), readout, noise_model_cpp, 2, config, qubits_to_measure).attr("sampling").attr("samples");
     EXPECT_TRUE(from_trajectories.equal(from_density_matrix));
 }
