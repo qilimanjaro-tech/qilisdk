@@ -44,10 +44,6 @@ class MPSTensor : public Tensor {
 };
 
 class MPSState {
-   public:
-    // Safeguard to make sure we don't accidentally try to materialize a huge MPS
-    static constexpr int MAX_DENSE_QUBITS = 24;
-
    private:
     int nqubits = 0;
     std::vector<MPSTensor> sites;
@@ -56,11 +52,13 @@ class MPSState {
     Real truncation_cutoff = 1e-10;
     Real total_truncation_error = 0.0;
     mutable std::mt19937_64 rng{std::random_device{}()};
-    Real split_two_site(int q, const Tensor& theta, int keep_centre_on);
     static DenseMatrix transfer_step(const DenseMatrix& environment, const MPSTensor& site, const DenseMatrix& op);
     static DenseMatrix transfer_step(const DenseMatrix& environment, const MPSTensor& site);
 
    public:
+    // Safeguard to make sure we don't accidentally try to materialize a huge MPS
+    static constexpr int MAX_DENSE_QUBITS = 24;
+
     // Constructors
     explicit MPSState(int nqubits);
     MPSState(int nqubits, const std::string& b);
@@ -79,6 +77,7 @@ class MPSState {
     Real apply_gate(const Gate& gate);
     Real apply_one_site(const DenseMatrix& u, int q);
     Real apply_two_site(const DenseMatrix& u, int q);
+    Real split_two_site(int q, const Tensor& theta, int keep_centre_on);
     void normalize();
     void move_centre(int q);
 

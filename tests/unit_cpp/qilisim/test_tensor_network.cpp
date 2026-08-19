@@ -56,6 +56,16 @@ DenseMatrix pauli_x_matrix() {
     return x;
 }
 
+// CNOT with the first qubit of the pair the control, i.e. the most significant index
+DenseMatrix cnot_matrix() {
+    DenseMatrix cnot = DenseMatrix::Zero(4, 4);
+    cnot(0, 0) = 1.0;
+    cnot(1, 1) = 1.0;
+    cnot(2, 3) = 1.0;
+    cnot(3, 2) = 1.0;
+    return cnot;
+}
+
 DenseMatrix pauli_z_matrix() {
     DenseMatrix z = DenseMatrix::Zero(2, 2);
     z(0, 0) = 1.0;
@@ -749,6 +759,57 @@ TEST(MPSStateTest, AsDenseRefusesHugeRegisters) {
     EXPECT_THROW(huge.as_dense(), std::runtime_error);
 }
 
+TEST(MPSStateTest, SplitTwoSiteKeepsTheCentreOnEitherSite) {
+    /*
+    apply_two_site always leaves the centre on the right of the pair, so drive
+    split_two_site directly to cover both choices. The physical state is the same either
+    way, only the gauge differs, so each arm is checked by which site comes out canonical.
+    */
+
+    // A Bell block over the pair, legs (left bond, physical q, physical q + 1, right bond),
+    // so the buffer is column major over (p0 + 2 * p1)
+    Real amplitude = 1.0 / std::sqrt(2.0);
+    Tensor theta({1, 2, 2, 1}, {amplitude, 0.0, 0.0, amplitude});
+
+    // Centre on the right, which is what apply_two_site does
+    MPSState right_centred(2);
+    EXPECT_NEAR(right_centred.split_two_site(0, theta, 1), 0.0, 1e-15);
+    EXPECT_EQ(right_centred.get_bond_dimension(0), 2);
+
+    // Centre on the left, the arm no other caller reaches
+    MPSState left_centred(2);
+    EXPECT_NEAR(left_centred.split_two_site(0, theta, 0), 0.0, 1e-15);
+    EXPECT_EQ(left_centred.get_bond_dimension(0), 2);
+
+    // Both hold the same physical state
+    for (const std::string& b : {"00", "01", "10", "11"}) {
+        Complex expected = (b == "00" || b == "11") ? Complex(amplitude, 0.0) : Complex(0.0, 0.0);
+        EXPECT_NEAR(std::abs(right_centred.amplitude(b) - expected), 0.0, 1e-12) << "bitstring " << b;
+        EXPECT_NEAR(std::abs(left_centred.amplitude(b) - expected), 0.0, 1e-12) << "bitstring " << b;
+    }
+    EXPECT_NEAR(right_centred.norm(), 1.0, 1e-12);
+    EXPECT_NEAR(left_centred.norm(), 1.0, 1e-12);
+
+    // Centre on the right means site 0 is left canonical, sum_p A^p dagger A^p = I
+    const MPSTensor& left_site = right_centred.get_site_tensor(0);
+    DenseMatrix left_gram = DenseMatrix::Zero(left_site.right(), left_site.right());
+    for (int p = 0; p < MPSTensor::PHYSICAL_DIMENSION; ++p) {
+        left_gram += left_site.physical_slice(p).adjoint() * left_site.physical_slice(p);
+    }
+    EXPECT_NEAR((left_gram - DenseMatrix::Identity(left_gram.rows(), left_gram.cols())).norm(), 0.0, 1e-12);
+
+    // Centre on the left means site 1 is right canonical instead, sum_p A^p A^p dagger = I
+    const MPSTensor& right_site = left_centred.get_site_tensor(1);
+    DenseMatrix right_gram = DenseMatrix::Zero(right_site.left(), right_site.left());
+    for (int p = 0; p < MPSTensor::PHYSICAL_DIMENSION; ++p) {
+        right_gram += right_site.physical_slice(p) * right_site.physical_slice(p).adjoint();
+    }
+    EXPECT_NEAR((right_gram - DenseMatrix::Identity(right_gram.rows(), right_gram.cols())).norm(), 0.0, 1e-12);
+
+    // Truncation error accumulates on the state, and an exact split discards nothing
+    EXPECT_NEAR(left_centred.get_truncation_error(), 0.0, 1e-15);
+}
+
 TEST(MPSStateTest, StreamsASummary) {
     MPSState state(2);
     state.apply_one_site(hadamard(), 0);
@@ -757,6 +818,20 @@ TEST(MPSStateTest, StreamsASummary) {
     EXPECT_NE(os.str().find("nqubits=2"), std::string::npos);
     EXPECT_NE(os.str().find("bond_dimensions="), std::string::npos);
     EXPECT_NE(os.str().find("truncation_error="), std::string::npos);
+
+    // A single bond needs no separator, so three qubits to exercise the comma between bonds
+    MPSState chain(3);
+    std::ostringstream chain_os;
+    chain_os << chain;
+    EXPECT_NE(chain_os.str().find("nqubits=3"), std::string::npos);
+    EXPECT_NE(chain_os.str().find("bond_dimensions=[1, 1]"), std::string::npos);
+
+    // Entangling the first pair grows only that bond, so the two entries differ
+    chain.apply_one_site(hadamard(), 0);
+    chain.apply_two_site(cnot_matrix(), 0);
+    std::ostringstream entangled_os;
+    entangled_os << chain;
+    EXPECT_NE(entangled_os.str().find("bond_dimensions=[2, 1]"), std::string::npos);
 }
 
 // GCOV_EXCL_BR_STOP
