@@ -300,14 +300,14 @@ Tensor Tensor::permute(const std::vector<int>& perm) const {
         seen[leg] = true;
     }
 
+    // Create the new empty tensor with the permuted shape
     std::vector<int> new_shape(perm.size());
     for (size_t leg = 0; leg < perm.size(); ++leg) {
         new_shape[leg] = shape[perm[leg]];
     }
     Tensor out(new_shape);
 
-    // Walk the destination buffer in memory order, carrying the matching source
-    // offset along as an odometer over the destination legs (leg 0 fastest).
+    // Walk the destination buffer in memory order
     std::vector<int64_t> source_stride(shape.size());
     int64_t stride = 1;
     for (size_t leg = 0; leg < shape.size(); ++leg) {
@@ -333,7 +333,11 @@ Tensor Tensor::permute(const std::vector<int>& perm) const {
 
 void Tensor::reshape(const std::vector<int>& new_shape) {
     /*
-    Reinterpret the same buffer under a new shape. Metadata only, no copy.
+    Reinterpret the same buffer under a new shape.
+    Only changes the metadata, data isn't moved unlike permute.
+
+    For example, a rank-3 tensor with shape [2, 3, 4] can be reshaped into a rank-2 
+    tensor with shape [6, 4] or a rank-1 tensor with shape [24].
 
     Args:
         new_shape (std::vector<int>&): The new extent of each leg.
@@ -351,6 +355,9 @@ Tensor Tensor::fuse(const std::vector<std::vector<int>>& groups) const {
     /*
     Fuse each group of legs into a single leg, in the order the groups are given.
     Every leg must appear in exactly one group.
+
+    For example, a rank-4 tensor with shape [2, 3, 5, 7] can be fused into a rank-2
+    tensor with shape [6, 35] by passing groups = [[0, 1], [2, 3]].
 
     Args:
         groups (std::vector<std::vector<int>>&): The legs making up each fused leg.
@@ -371,7 +378,6 @@ Tensor Tensor::fuse(const std::vector<std::vector<int>>& groups) const {
         }
         new_shape.push_back(static_cast<int>(extent));
     }
-    // permute is what checks that the groups really do partition the legs
     Tensor out = permute(perm);
     out.reshape(new_shape);
     return out;
@@ -380,7 +386,7 @@ Tensor Tensor::fuse(const std::vector<std::vector<int>>& groups) const {
 Eigen::Map<const DenseMatrix> Tensor::matrix_view(int nrow_legs) const {
     /*
     View the tensor as a matrix whose rows are the first `nrow_legs` legs and whose
-    columns are the rest. Zero-copy: this grouping is already the memory layout.
+    columns are the rest. This doesn't copy anything, as this is just a view of the underlying buffer.
 
     Args:
         nrow_legs (int): How many leading legs make up the rows.
@@ -402,6 +408,16 @@ Eigen::Map<const DenseMatrix> Tensor::matrix_view(int nrow_legs) const {
 }
 
 Eigen::Map<DenseMatrix> Tensor::matrix_view(int nrow_legs) {
+    /*
+    View the tensor as a matrix whose rows are the first `nrow_legs` legs and whose
+    columns are the rest. This doesn't copy anything, as this is just a view of the underlying buffer.
+
+    Args:
+        nrow_legs (int): How many leading legs make up the rows.
+
+    Returns:
+        Eigen::Map<DenseMatrix>: The matrix view.
+    */
     if (nrow_legs < 0 || nrow_legs > rank()) {
         throw std::out_of_range("Cannot take " + std::to_string(nrow_legs) + " row legs from a rank-" + std::to_string(rank()) + " tensor");
     }
@@ -480,14 +496,18 @@ Tensor Tensor::contract(const Tensor& other, const std::vector<int>& legs_a, con
         }
     }
 
+    // Permute both tensors so the contracted legs are adjacent
     std::vector<int> perm_a = keep_a;
     perm_a.insert(perm_a.end(), legs_a.begin(), legs_a.end());
     std::vector<int> perm_b = legs_b;
     perm_b.insert(perm_b.end(), keep_b.begin(), keep_b.end());
     Tensor a = permute(perm_a);
     Tensor b = other.permute(perm_b);
+    
+    // Do the contraction as a single matrix product
     DenseMatrix product = a.matrix_view(static_cast<int>(keep_a.size())) * b.matrix_view(static_cast<int>(legs_b.size()));
 
+    // Reshape the result
     std::vector<int> out_shape;
     for (int leg : keep_a) {
         out_shape.push_back(shape[leg]);
@@ -496,6 +516,7 @@ Tensor Tensor::contract(const Tensor& other, const std::vector<int>& legs_a, con
         out_shape.push_back(other.shape[leg]);
     }
     return from_matrix(product, out_shape);
+
 }
 
 void Tensor::split(const std::vector<int>& left_legs, int max_bond_dimension, Real cutoff, Tensor& left, RealVector& singular_values, Tensor& right, Real* truncation_error) const {
@@ -506,8 +527,10 @@ void Tensor::split(const std::vector<int>& left_legs, int max_bond_dimension, Re
     caller can decide which side absorbs them.
 
     Singular values below `cutoff` times the largest are dropped, then at most
-    `max_bond_dimension` are kept (pass 0 or less for no cap). At least one is always
-    kept, so a bond never vanishes.
+    `max_bond_dimension` are kept (pass 0 or less for no cap).
+
+    For example, a rank-4 tensor with shape [2, 3, 5, 7] can be split into a rank-3
+    tensor with shape [2, 3, k] and a rank-3 tensor with shape [k, 5, 7] for some k <= 5.
 
     Args:
         left_legs (std::vector<int>&): The legs that end up on the left of the bond.
@@ -519,6 +542,8 @@ void Tensor::split(const std::vector<int>& left_legs, int max_bond_dimension, Re
         truncation_error (Real*): Output if not null, the discarded weight as a
             fraction of the total sum of squared singular values.
     */
+    
+    // Do the SVD
     std::vector<int> right_legs = remaining_legs(rank(), left_legs);
     DenseMatrix matrix = as_matrix(left_legs);
     Eigen::BDCSVD<DenseMatrix, Eigen::ComputeThinU | Eigen::ComputeThinV> svd(matrix);
@@ -538,6 +563,7 @@ void Tensor::split(const std::vector<int>& left_legs, int max_bond_dimension, Re
         keep = 1;
     }
 
+    // Keep track of the total truncation error
     if (truncation_error != nullptr) {
         Real total_weight = values.squaredNorm();
         Real kept_weight = values.head(keep).squaredNorm();
@@ -545,6 +571,7 @@ void Tensor::split(const std::vector<int>& left_legs, int max_bond_dimension, Re
     }
     singular_values = values.head(keep);
 
+    // Reshape everything
     std::vector<int> left_shape;
     for (int leg : left_legs) {
         left_shape.push_back(shape[leg]);
@@ -560,6 +587,12 @@ void Tensor::split(const std::vector<int>& left_legs, int max_bond_dimension, Re
 }
 
 Tensor Tensor::conjugate() const {
+    /*
+    Return a new tensor with the same shape and the complex conjugate of every value.
+
+    Returns:
+        Tensor: The conjugated tensor.
+    */
     Tensor out = *this;
     for (Complex& value : out.data) {
         value = std::conj(value);
@@ -567,31 +600,13 @@ Tensor Tensor::conjugate() const {
     return out;
 }
 
-Complex Tensor::trace_all_with(const Tensor& other) const {
+Real Tensor::norm() const {
     /*
-    Contract every leg of *this against the matching leg of `other`, without
-    conjugating either. Both tensors must have the same shape.
-
-    Args:
-        other (Tensor&): The tensor to contract against.
+    Return the Frobenius norm of the tensor.
 
     Returns:
-        Complex: The resulting scalar.
-
-    Raises:
-        std::invalid_argument: If the shapes differ.
+        Real: The Frobenius norm.
     */
-    if (shape != other.shape) {
-        throw std::invalid_argument("Cannot trace two tensors of different shapes against each other");
-    }
-    Complex total = 0.0;
-    for (size_t i = 0; i < data.size(); ++i) {
-        total += data[i] * other.data[i];
-    }
-    return total;
-}
-
-Real Tensor::norm() const {
     Real total = 0.0;
     for (const Complex& value : data) {
         total += std::norm(value);
@@ -600,16 +615,31 @@ Real Tensor::norm() const {
 }
 
 void Tensor::scale(Complex factor) {
+    /*
+    Scale every element of the tensor by a complex factor.
+
+    Args:
+        factor (Complex): The scaling factor.
+    */
     for (Complex& value : data) {
         value *= factor;
     }
 }
 
 void Tensor::set_zero() {
+    /*
+    Set every element of the tensor to zero.
+    */
     std::fill(data.begin(), data.end(), Complex(0.0, 0.0));
 }
 
 bool Tensor::has_nan() const {
+    /*
+    Check if the tensor contains any NaN values.
+
+    Returns:
+        bool: True if any element is NaN, False otherwise.
+    */
     for (const Complex& value : data) {
         if (std::isnan(value.real()) || std::isnan(value.imag())) {
             return true;
@@ -618,14 +648,9 @@ bool Tensor::has_nan() const {
     return false;
 }
 
-// ---------------------------------------------------------------------------
-// MPSTensor
-// ---------------------------------------------------------------------------
-
+// Constructors
 MPSTensor::MPSTensor(int left, int right) : Tensor({left, PHYSICAL_DIMENSION, right}) {}
-
 MPSTensor::MPSTensor(int left, int right, const std::vector<Complex>& values) : Tensor({left, PHYSICAL_DIMENSION, right}, values) {}
-
 MPSTensor::MPSTensor(const Tensor& t) : Tensor(t) {
     /*
     Adopt the result of a generic tensor operation as a site tensor.
@@ -643,9 +668,16 @@ MPSTensor::MPSTensor(const Tensor& t) : Tensor(t) {
 
 Eigen::Map<const DenseMatrix, 0, Eigen::OuterStride<>> MPSTensor::physical_slice(int p) const {
     /*
-    The left x right matrix at one physical index. Zero-copy: consecutive physical
-    indices sit one bond block apart in the column-major buffer, so this is a plain
-    strided view.
+    The left x right matrix at one physical index.
+
+    For example, say we have a rank-3 tensor with shape [2, 3, 4]. Then physical_slice(1) is the 2x4 matrix
+
+        [[A_{0,1,0}, A_{0,1,1}, A_{0,1,2}, A_{0,1,3}],
+         [A_{1,1,0}, A_{1,1,1}, A_{1,1,2}, A_{1,1,3}]]
+
+    where the first index is the left leg and the second is the right leg.
+
+    Basically it's the view of the tensor where we fix the middle index to p, and the other two indices are free.
 
     Args:
         p (int): The physical index.
@@ -662,12 +694,8 @@ Eigen::Map<const DenseMatrix, 0, Eigen::OuterStride<>> MPSTensor::physical_slice
     return Eigen::Map<const DenseMatrix, 0, Eigen::OuterStride<>>(data.data() + static_cast<int64_t>(p) * shape[0], shape[0], shape[2], Eigen::OuterStride<>(shape[0] * PHYSICAL_DIMENSION));
 }
 
-// ---------------------------------------------------------------------------
-// MPSState
-// ---------------------------------------------------------------------------
-
+// Constructors
 MPSState::MPSState(int nqubits) : MPSState(nqubits, std::string(nqubits > 0 ? nqubits : 0, '0')) {}
-
 MPSState::MPSState(int nqubits, const std::string& b) : nqubits(nqubits) {
     /*
     Build the product state |b>, every bond dimension 1.
@@ -716,6 +744,12 @@ int MPSState::get_bond_dimension(int bond) const {
 }
 
 int MPSState::get_max_bond_dimension_used() const {
+    /*
+    Get the maximum bond dimension used in the MPS.
+
+    Returns:
+        int: The largest bond dimension.
+    */
     int largest = 1;
     for (int bond = 0; bond < nqubits - 1; ++bond) {
         largest = std::max(largest, sites[bond].right());
@@ -727,6 +761,16 @@ void MPSState::move_centre(int q) {
     /*
     Move the orthogonality centre to qubit `q`, QR sweeping one site at a time. Exact:
     the state is unchanged, only its gauge.
+
+    For example, if the centre is on qubit 0 and we move it to qubit 2, we do
+
+        A_0 A_1 A_2 -> Q R A_2 -> Q (R A_2) = A'_0 A'_1 A'_2
+
+    where the new site tensors are
+
+        A'_0 = Q
+        A'_1 = R A_2
+        A'_2 = I
 
     Args:
         q (int): The qubit to centre on.
@@ -778,7 +822,7 @@ Real MPSState::apply_one_site(const DenseMatrix& u, int q) {
         q (int): The qubit to apply it to.
 
     Returns:
-        Real: Always zero, so callers can accumulate errors uniformly.
+        Real: The truncation error, which is always 0.0 for a single-qubit gate.
 
     Raises:
         std::invalid_argument: If u is not 2 x 2.
@@ -832,8 +876,7 @@ Real MPSState::apply_two_site(const DenseMatrix& u, int q) {
     // Legs of the block: (left bond, physical q, physical q + 1, right bond)
     Tensor block = sites[q].contract(sites[q + 1], {2}, {0});
 
-    // Fusing legs column-major puts the leading leg fastest, so to get the gate's
-    // index order (qubit q most significant) the physical legs go in reverse.
+    // Need to permute the legs to match the order of the gate matrix
     Tensor fused = block.permute({2, 1, 0, 3});
     Tensor applied = Tensor::from_matrix(DenseMatrix(u * fused.matrix_view(2)), fused.get_shape());
     return split_two_site(q, applied.permute({2, 1, 0, 3}), q + 1);
@@ -858,8 +901,7 @@ Real MPSState::split_two_site(int q, const Tensor& theta, int keep_centre_on) {
     Real error = 0.0;
     theta.split({0, 1}, max_bond_dimension, truncation_cutoff, left, singular_values, right, &error);
 
-    // The SVD hands back bare isometries, so whichever site becomes the centre takes
-    // the singular values with it
+    // Whichever site becomes the centre takes the singular values with it
     int bond = static_cast<int>(singular_values.size());
     if (keep_centre_on == q) {
         Eigen::Map<DenseMatrix> matrix = left.matrix_view(2);
@@ -882,10 +924,9 @@ Real MPSState::split_two_site(int q, const Tensor& theta, int keep_centre_on) {
 
 Real MPSState::apply_gate(const Gate& gate) {
     /*
-    Apply a gate to the state. One- and two-qubit gates are supported; a two-qubit
-    gate on non-adjacent qubits is routed by swapping the far qubit down the chain,
-    applying the gate, and swapping back, so the caller does not have to care about
-    the layout.
+    Apply a gate to the state. One- and two-qubit gates are supported. 
+    A two-qubit gate on non-adjacent qubits is routed by swapping down the chain,
+    applying the gate, and swapping back.
 
     Args:
         gate (Gate&): The gate to apply.
@@ -910,9 +951,12 @@ Real MPSState::apply_gate(const Gate& gate) {
         throw std::invalid_argument("The MPS simulator supports one- and two-qubit gates only, but " + gate.get_id() + " acts on " + std::to_string(qubits.size()) + " qubits");
     }
 
+    // Get the matrix and see which qubit is further down the chain
     DenseMatrix u = local_gate_matrix(gate);
     int low = std::min(qubits[0], qubits[1]);
     int high = std::max(qubits[0], qubits[1]);
+    
+    // If they happen to be adjacent, just apply the two-site gate directly
     if (high == low + 1) {
         return apply_two_site(u, low);
     }
@@ -945,12 +989,25 @@ void MPSState::normalize() {
 }
 
 Real MPSState::norm() const {
+    /*
+    The Frobenius norm of the state, sqrt(<psi|psi>).
+
+    Returns:
+        Real: The norm.
+    */
     return std::sqrt(std::max(Real(0), overlap(*this).real()));
 }
 
 Complex MPSState::overlap(const MPSState& other) const {
     /*
     The exact overlap <this|other>, by sweeping the transfer matrix along the chain.
+
+    Basically we start with a 1x1 environment, then sweep it along the chain, 
+    multiplying by each transfer matrix in turn. The final environment is the overlap.
+
+    The transfer matrix at each site is
+
+        T_q = sum_{p_q} A_q^* B_q
 
     Args:
         other (MPSState&): The state to overlap with.
@@ -980,6 +1037,8 @@ Complex MPSState::overlap(const MPSState& other) const {
 Complex MPSState::amplitude(const std::string& b) const {
     /*
     The amplitude <b|psi>, the product of one physical slice per site.
+
+    It does this by doing the same thing as overlap(), but for the fixed bitstring b instead of another MPS.
 
     Args:
         b (std::string&): The bitstring, one character per qubit, qubit 0 first.
@@ -1041,6 +1100,7 @@ Complex MPSState::expectation_value(const DenseMatrix& observable, const std::ve
         throw std::invalid_argument("An observable on " + std::to_string(k) + " qubits must be " + std::to_string(dimension) + " x " + std::to_string(dimension));
     }
 
+    // Sweep the left environment up to the first qubit
     int first = qubits.front();
     int last = qubits.back();
     DenseMatrix environment = DenseMatrix::Ones(1, 1);
@@ -1048,14 +1108,13 @@ Complex MPSState::expectation_value(const DenseMatrix& observable, const std::ve
         environment = transfer_step(environment, sites[q]);
     }
 
-    // Contract the block into one tensor with legs (left bond, physical..., right bond)
+    // Contract the block into one tensor
     Tensor block = sites[first];
     for (int q = first + 1; q <= last; ++q) {
         block = block.contract(sites[q], {block.rank() - 1}, {0});
     }
 
-    // Physical legs to the front in reverse order, so the fused row index has
-    // qubits[0] as its most significant bit, matching the observable
+    // Reorder to match the observable, apply it, then reorder back
     std::vector<int> perm;
     for (int leg = k; leg >= 1; --leg) {
         perm.push_back(leg);
@@ -1080,15 +1139,18 @@ Complex MPSState::expectation_value(const DenseMatrix& observable, const std::ve
     Tensor closed = block.conjugate().contract(half, closed_legs, closed_legs);
     environment = closed.matrix_view(1);
 
+    // Sweep the right environment down to the last qubit
     for (int q = last + 1; q < nqubits; ++q) {
         environment = transfer_step(environment, sites[q]);
     }
 
+    // The final environment is the expectation value, but we need to normalize it by the norm of the state
     Complex denominator = overlap(*this);
     if (denominator == Complex(0.0, 0.0)) {
         throw std::runtime_error("Cannot take an expectation value of an MPS whose norm is zero");
     }
     return environment(0, 0) / denominator;
+
 }
 
 Real MPSState::expectation_value(const MatrixFreeHamiltonian& H) const {
@@ -1128,6 +1190,12 @@ Real MPSState::expectation_value(const MatrixFreeHamiltonian& H) const {
 }
 
 std::string MPSState::sample() const {
+    /*
+    Overload of sample() that uses the internal random engine.
+
+    Returns:
+        std::string: The outcome, one character per qubit, qubit 0 first.
+    */
     return sample(rng);
 }
 
@@ -1146,6 +1214,8 @@ std::string MPSState::sample(std::mt19937_64& engine) const {
     Raises:
         std::runtime_error: If the state has zero norm.
     */
+    
+    // Build the right environments for each site
     std::vector<DenseMatrix> right_environment(nqubits + 1);
     right_environment[nqubits] = DenseMatrix::Ones(1, 1);
     for (int q = nqubits - 1; q >= 0; --q) {
@@ -1157,21 +1227,28 @@ std::string MPSState::sample(std::mt19937_64& engine) const {
         right_environment[q] = next;
     }
 
+    // Build the left environment and sample each qubit in turn
     std::string outcome(nqubits, '0');
     DenseMatrix left_environment = DenseMatrix::Ones(1, 1);
     std::uniform_real_distribution<Real> uniform(0.0, 1.0);
     for (int q = 0; q < nqubits; ++q) {
         const MPSTensor& site = sites[q];
+        
+        // Get the proability of each outcome, this is kind of like a partial trace
         std::array<DenseMatrix, MPSTensor::PHYSICAL_DIMENSION> extended;
         std::array<Real, MPSTensor::PHYSICAL_DIMENSION> weight;
         for (int p = 0; p < MPSTensor::PHYSICAL_DIMENSION; ++p) {
             extended[p] = site.physical_slice(p).adjoint() * left_environment * site.physical_slice(p);
             weight[p] = std::max(Real(0), (extended[p] * right_environment[q + 1]).trace().real());
         }
+        
+        // Get the norm of the conditional distribution
         Real total = weight[0] + weight[1];
         if (!(total > Real(0))) {
             throw std::runtime_error("Cannot sample an MPS whose norm is zero");
         }
+
+        // Sample from these weights
         int outcome_bit = (uniform(engine) * total < weight[0]) ? 0 : 1;
         outcome[q] = outcome_bit == 1 ? '1' : '0';
 
@@ -1206,8 +1283,9 @@ std::map<std::string, int> MPSState::sample(int nshots) const {
 
 DenseMatrix MPSState::as_dense() const {
     /*
-    Contract the whole chain into a statevector. For testing and tomography only:
-    the point of an MPS is not to do this.
+    Contract the whole chain into a statevector.
+
+    Note that this should not be done for big systems, as the statevector can be huge whilst the MPS tiny.
 
     Returns:
         DenseMatrix: The 2^n x 1 statevector, qubit 0 the most significant bit.
@@ -1231,6 +1309,16 @@ DenseMatrix MPSState::as_dense() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const MPSState& state) {  
+    /*
+    Print a summary of the MPS state to an output stream.
+
+    Args:
+        os (std::ostream&): The output stream.
+        state (MPSState&): The MPS state to print.
+
+    Returns:
+        std::ostream&: The output stream.
+    */
     os << "MPSState(nqubits=" << state.get_nqubits() << ", bond_dimensions=[";
     for (int bond = 0; bond + 1 < state.get_nqubits(); ++bond) {
         if (bond > 0) {

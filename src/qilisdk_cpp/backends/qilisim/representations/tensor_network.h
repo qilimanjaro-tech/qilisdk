@@ -68,7 +68,6 @@ class Tensor {
 
     // Reductions
     Tensor conjugate() const;
-    Complex trace_all_with(const Tensor& other) const;
     Real norm() const;
     void scale(Complex factor);
     void set_zero();
