@@ -711,6 +711,9 @@ DenseMatrix MPSState::as_dense() const {
     Raises:
         std::runtime_error: If the register is too large to materialise.
     */
+    if (nqubits > MAX_DENSE_QUBITS) {
+        throw std::runtime_error("Cannot materialise the statevector of a " + std::to_string(nqubits) + " qubit MPS since it would need too much memory");
+    }
     DenseMatrix block = DenseMatrix::Ones(1, 1);
     for (int q = 0; q < nqubits; ++q) {
         int rows = static_cast<int>(block.rows());

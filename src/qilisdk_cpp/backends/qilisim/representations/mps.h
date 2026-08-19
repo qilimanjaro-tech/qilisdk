@@ -44,6 +44,10 @@ class MPSTensor : public Tensor {
 };
 
 class MPSState {
+   public:
+    // Safeguard to make sure we don't accidentally try to materialize a huge MPS
+    static constexpr int MAX_DENSE_QUBITS = 24;
+
    private:
     int nqubits = 0;
     std::vector<MPSTensor> sites;
