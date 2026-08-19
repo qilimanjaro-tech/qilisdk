@@ -47,6 +47,12 @@ if TYPE_CHECKING:
 
 _EMPTY_GRAPH_MSG = "The graph must have at least one edge."
 
+# Everything apart from SPIN because for now they have no binary encoding
+_QUBO_SUPPORTED_DOMAINS = {Domain.BINARY, Domain.POSITIVE_INTEGER, Domain.INTEGER, Domain.REAL}
+
+# Used to prevent unbounded vars from expanding into infinite binary vars
+_MAX_ENCODING_SPAN = 2**32
+
 
 def _validate_undirected_edges(edges: list[tuple[int, int]]) -> None:
     """Validate that ``edges`` describes a simple undirected graph.
@@ -1545,7 +1551,7 @@ class QUBO(Model):
                     f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=Bitwise
                 )
                 slack_terms = slack.to_binary()
-                out = h + slack_terms
+                out = h - slack_terms
                 return (out) ** 2
 
         if term.operation in {
@@ -1607,8 +1613,8 @@ class QUBO(Model):
             ValueError: if a penalization method is provided that is not (&quot;unbalanced&quot;, &quot;slack&quot;)
             ValueError: if unbalanced penalization method is used and not enough parameters are provided.
             ValueError: if the degree of the provided term is larger than 2.
-            ValueError: if the constraint term contains variables that are not from Positive Integers or Binary domains.
-            ValueError: if the constraint term contains variable that do not have 0 as their lower bound.
+            ValueError: if the constraint term contains variables that are not from the binary, positive integer,
+                integer or real domains.
         """
 
         if label in self._constraints:
@@ -1700,6 +1706,27 @@ class QUBO(Model):
         term = self._reduce(term)
         self._objective = Objective(label=label, term=term, sense=sense)
 
+    @staticmethod
+    def _check_encodable_bounds(var: Variable) -> None:
+        """Check that ``var`` spans few enough values to be expanded into binary variables.
+
+        A variable that is left unbounded defaults to the full range of its domain, which no encoding can represent.
+
+        Args:
+            var (Variable): the variable to check.
+
+        Raises:
+            ValueError: if the variable's bounds span more values than ``_MAX_ENCODING_SPAN``.
+        """
+        span = float(var.upper_bound) - float(var.lower_bound)
+        if var.domain is Domain.REAL:
+            span /= var.precision
+        if span > _MAX_ENCODING_SPAN:
+            raise ValueError(
+                f"Variable {var} spans too many values ({span:.3g}) to be encoded into binary variables."
+                " Set tighter bounds on the variable (or a coarser precision for real variables)."
+            )
+
     def _check_variables(self, term: Term | ComparisonTerm, lagrange_multiplier: RealNumber = 100) -> None:
         """checks if the variables in the provided term are valid to be used in a QUBO model. Moreover, we add all the
         encoding constraint for supported continuous variables.
@@ -1708,19 +1735,20 @@ class QUBO(Model):
             term (Term): the term to be checked.
 
         Raises:
-            ValueError: if the constraint term contains variables that are not from Positive Integers or Binary domains.
-            ValueError: if the constraint term contains variable that do not have 0 as their lower bound.
+            ValueError: if the constraint term contains variables that are not from the binary, positive integer,
+                integer or real domains.
+            ValueError: if the constraint term contains a variable whose bounds span too many values to be encoded
+                into binary variables.
         """
         for v in term.variables():
-            if v.domain not in {Domain.POSITIVE_INTEGER, Domain.BINARY}:
+            if v.domain not in _QUBO_SUPPORTED_DOMAINS:
                 raise ValueError(
-                    "QUBO models are not supported for variables that are not in the positive integers or binary domains."
+                    "QUBO models are not supported for variables that are not in the binary, positive integer,"
+                    f" integer or real domains. But variable {v} is in the {v.domain.value}."
                 )
-            if v.lower_bound != 0:
-                raise ValueError(
-                    f"All variables must have a lower bound of 0. But variable {v} has a lower bound of {v.lower_bound}"
-                )
-            if isinstance(v, Variable) and v.domain is Domain.POSITIVE_INTEGER and v.label not in self.continuous_vars:
+            if isinstance(v, Variable):
+                self._check_encodable_bounds(v)
+            if isinstance(v, Variable) and v.domain is not Domain.BINARY and v.label not in self.continuous_vars:
                 self.continuous_vars[v.label] = v
                 encoding_constraint = v.encoding_constraint()
                 if encoding_constraint is not None:
