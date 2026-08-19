@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-08-19 15:26+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -34,12 +34,13 @@ msgid ""
 "through helper methods such as "
 ":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`."
 msgstr ""
-"El funcional :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` "
+"El funcional "
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` "
 "propaga un circuit quàntic digital a través del backend. Com que és una "
-"subclasse de :class:`~qilisdk.functionals.functional.PrimitiveFunctional`, "
-"qualsevol paràmetre simbòlic exposat pel "
-":class:`~qilisdk.digital.circuit.Circuit` subjacent es pot consultar o "
-"actualitzar mitjançant mètodes d'ajuda com "
+"subclasse de "
+":class:`~qilisdk.functionals.functional.PrimitiveFunctional`, qualsevol "
+"paràmetre simbòlic exposat pel :class:`~qilisdk.digital.circuit.Circuit` "
+"subjacent es pot consultar o actualitzar mitjançant mètodes d'ajuda com "
 ":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`."
 
 #: ../../modules/functionals/functionals_digital.rst:10
@@ -48,8 +49,8 @@ msgid ""
 "via readout objects passed to "
 ":meth:`~qilisdk.backends.backend.Backend.execute`."
 msgstr ""
-"Els detalls de mesura, com el nombre de shots, s'especifiquen per separat "
-"mitjançant objectes de lectura passats a "
+"Els detalls de mesura, com el nombre de shots, s'especifiquen per separat"
+" mitjançant objectes de lectura passats a "
 ":meth:`~qilisdk.backends.backend.Backend.execute`."
 
 #: ../../modules/functionals/functionals_digital.rst:13
@@ -61,31 +62,42 @@ msgid ""
 "**circuit** (:class:`~qilisdk.digital.circuit.Circuit`): Circuit to be "
 "propagated."
 msgstr ""
-"**circuit** (:class:`~qilisdk.digital.circuit.Circuit`): Circuit a propagar."
+"**circuit** (:class:`~qilisdk.digital.circuit.Circuit`): Circuit a "
+"propagar."
 
-#: ../../modules/functionals/functionals_digital.rst:17
+#: ../../modules/functionals/functionals_digital.rst:16
+msgid ""
+"**initial_state** (:class:`~qilisdk.core.qtensor.QTensor` or "
+":class:`~qilisdk.core.qtensor.InitialState`, optional): The initial state"
+" of the circuit. If not provided, the zero state is used."
+msgstr ""
+"**initial_state** (:class:`~qilisdk.core.qtensor.QTensor` o "
+":class:`~qilisdk.core.qtensor.InitialState`, opcional): L'estat inicial "
+"del circuit. Si no es proporciona, s'utilitza l'estat zero."
+
+#: ../../modules/functionals/functionals_digital.rst:19
 msgid "**Returns**"
 msgstr "**Retorna**"
 
-#: ../../modules/functionals/functionals_digital.rst:19
+#: ../../modules/functionals/functionals_digital.rst:21
 msgid ""
 ":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access "
 "shot counts"
 msgstr ""
-":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Accediu "
-"als comptadors de shots"
+":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Accediu"
+" als comptadors de shots"
 
-#: ../../modules/functionals/functionals_digital.rst:20
+#: ../../modules/functionals/functionals_digital.rst:22
 msgid ""
 "via "
 ":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_samples`"
 " and"
 msgstr ""
 "mitjançant "
-":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_samples` "
-"i"
+":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_samples`"
+" i"
 
-#: ../../modules/functionals/functionals_digital.rst:21
+#: ../../modules/functionals/functionals_digital.rst:23
 msgid ""
 "probabilities via "
 ":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_probabilities`."
@@ -93,18 +105,19 @@ msgstr ""
 "probabilitats mitjançant "
 ":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_probabilities`."
 
-#: ../../modules/functionals/functionals_digital.rst:23
+#: ../../modules/functionals/functionals_digital.rst:25
 msgid "**Usage Example**"
 msgstr "**Exemple d'ús**"
 
-#: ../../modules/functionals/functionals_digital.rst:41
+#: ../../modules/functionals/functionals_digital.rst:44
 msgid ""
 "This functional can be executed on any backend that supports digital "
 "circuits. For example, we can execute it on the CUDA backend:"
 msgstr ""
-"Aquest funcional es pot executar en qualsevol backend que admeti circuits "
-"digitals. Per exemple, podem executar-lo al backend CUDA:"
+"Aquest funcional es pot executar en qualsevol backend que admeti circuits"
+" digitals. Per exemple, podem executar-lo al backend CUDA:"
 
-#: ../../modules/functionals/functionals_digital.rst:54
+#: ../../modules/functionals/functionals_digital.rst:57
 msgid "**Output**"
 msgstr "**Sortida**"
+

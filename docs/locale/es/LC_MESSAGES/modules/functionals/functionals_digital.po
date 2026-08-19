@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-08-19 15:26+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -34,10 +34,11 @@ msgid ""
 "through helper methods such as "
 ":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`."
 msgstr ""
-"El funcional :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` "
+"El funcional "
+":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation` "
 "propaga un circuito cuántico digital a través del backend. Al ser una "
-"subclase de :class:`~qilisdk.functionals.functional.PrimitiveFunctional`, "
-"cualquier parámetro simbólico expuesto por el "
+"subclase de :class:`~qilisdk.functionals.functional.PrimitiveFunctional`,"
+" cualquier parámetro simbólico expuesto por el "
 ":class:`~qilisdk.digital.circuit.Circuit` subyacente puede consultarse o "
 "actualizarse mediante métodos auxiliares como "
 ":meth:`~qilisdk.core.parameterizable.Parameterizable.get_parameter_names`."
@@ -64,11 +65,21 @@ msgstr ""
 "**circuit** (:class:`~qilisdk.digital.circuit.Circuit`): Circuito a "
 "propagar."
 
-#: ../../modules/functionals/functionals_digital.rst:17
+#: ../../modules/functionals/functionals_digital.rst:16
+msgid ""
+"**initial_state** (:class:`~qilisdk.core.qtensor.QTensor` or "
+":class:`~qilisdk.core.qtensor.InitialState`, optional): The initial state"
+" of the circuit. If not provided, the zero state is used."
+msgstr ""
+"**initial_state** (:class:`~qilisdk.core.qtensor.QTensor` o "
+":class:`~qilisdk.core.qtensor.InitialState`, opcional): El estado inicial "
+"del circuito. Si no se proporciona, se utiliza el estado cero."
+
+#: ../../modules/functionals/functionals_digital.rst:19
 msgid "**Returns**"
 msgstr "**Retorna**"
 
-#: ../../modules/functionals/functionals_digital.rst:19
+#: ../../modules/functionals/functionals_digital.rst:21
 msgid ""
 ":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Access "
 "shot counts"
@@ -76,7 +87,7 @@ msgstr ""
 ":class:`~qilisdk.functionals.functional_result.FunctionalResult`: Accede "
 "a los conteos de shots"
 
-#: ../../modules/functionals/functionals_digital.rst:20
+#: ../../modules/functionals/functionals_digital.rst:22
 msgid ""
 "via "
 ":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_samples`"
@@ -86,7 +97,7 @@ msgstr ""
 ":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_samples`"
 " y"
 
-#: ../../modules/functionals/functionals_digital.rst:21
+#: ../../modules/functionals/functionals_digital.rst:23
 msgid ""
 "probabilities via "
 ":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_probabilities`."
@@ -94,11 +105,11 @@ msgstr ""
 "probabilidades mediante "
 ":meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_probabilities`."
 
-#: ../../modules/functionals/functionals_digital.rst:23
+#: ../../modules/functionals/functionals_digital.rst:25
 msgid "**Usage Example**"
 msgstr "**Ejemplo de uso**"
 
-#: ../../modules/functionals/functionals_digital.rst:41
+#: ../../modules/functionals/functionals_digital.rst:44
 msgid ""
 "This functional can be executed on any backend that supports digital "
 "circuits. For example, we can execute it on the CUDA backend:"
@@ -106,6 +117,7 @@ msgstr ""
 "Este functional puede ejecutarse en cualquier backend que soporte "
 "circuitos digitales. Por ejemplo, puede ejecutarse en el backend de CUDA:"
 
-#: ../../modules/functionals/functionals_digital.rst:54
+#: ../../modules/functionals/functionals_digital.rst:57
 msgid "**Output**"
 msgstr "**Salida**"
+

@@ -13,6 +13,8 @@ Measurement details such as the number of shots are specified separately via rea
 **Parameters**
 
 - **circuit** (:class:`~qilisdk.digital.circuit.Circuit`): Circuit to be propagated.
+- **initial_state** (:class:`~qilisdk.core.qtensor.QTensor` or :class:`~qilisdk.core.qtensor.InitialState`, optional):
+  The initial state of the circuit. If not provided, the zero state is used.
 
 **Returns**
 
@@ -27,6 +29,7 @@ Measurement details such as the number of shots are specified separately via rea
     import numpy as np
     from qilisdk.digital import Circuit, H, RX, CNOT
     from qilisdk.functionals import DigitalPropagation
+    from qilisdk.core import InitialState
 
     # Create a 2-qubit circuit
     circuit = Circuit(2)
@@ -35,7 +38,7 @@ Measurement details such as the number of shots are specified separately via rea
     circuit.add(CNOT(0, 1))
 
     # Initialize the DigitalPropagation functional
-    digital_propagation = DigitalPropagation(circuit)
+    digital_propagation = DigitalPropagation(circuit, initial_state=InitialState.ZERO)
 
 
 This functional can be executed on any backend that supports digital circuits. For example, we can execute it on the CUDA backend:
