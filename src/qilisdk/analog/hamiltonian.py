@@ -17,8 +17,8 @@ import copy
 import re
 from abc import ABC
 from collections import defaultdict
-from itertools import product
-from typing import TYPE_CHECKING, Callable, ClassVar
+from itertools import combinations, product
+from typing import TYPE_CHECKING, Callable, ClassVar, TypeAlias
 
 import numpy as np
 from loguru import logger
@@ -233,6 +233,60 @@ class PauliI(PauliOperator):
 
 
 _PAULI_CLASS_BY_NAME: dict[str, type[PauliOperator]] = {cls._NAME: cls for cls in (PauliI, PauliX, PauliY, PauliZ)}
+
+
+# Wrapping a lattice direction into a ring only adds a new bond once it spans at least 3 sites;
+# below that the wrap-around bond would duplicate one the open lattice already has.
+_MIN_PERIODIC_EXTENT = 3
+
+# Coefficients of the model constructors, either one value shared by every term or one value per term
+Coefficient: TypeAlias = float | list[float]
+
+
+def _validate_nqubits(nqubits: int, minimum: int = 1, label: str = "") -> None:
+    """
+    Validate the number of qubits given for a certain Hamiltonian constructor.
+
+    Args:
+        nqubits (int): the qubit count to validate.
+        minimum (int, optional): the smallest count the model can be built on, e.g. 2 for a model
+            with two-qubit couplings. Defaults to 1.
+        label (str, optional): the model name, used in the error message. Defaults to "".
+
+    Raises:
+        ValueError: if ``nqubits`` is not greater than zero.
+        ValueError: if ``nqubits`` is below ``minimum``.
+    """
+    if nqubits <= 0:
+        raise ValueError(f"nqubits must be greater than zero, got {nqubits}.")
+    if nqubits < minimum:
+        raise ValueError(f"{label} Hamiltonians need at least {minimum} qubits, got {nqubits}.")
+
+
+def _coefficients(coefficient: Coefficient, count: int, name: str) -> list[complex]:
+    """
+    Expand the coefficient of a group of Hamiltonian terms into one value per term.
+
+    A plain number gives the same value to every term, while a list gives each term the value at its
+    own position.
+
+    Args:
+        coefficient (Coefficient): the value shared by every term, or one value per term.
+        count (int): the number of terms the coefficient weights.
+        name (str): the argument name, used in the error message.
+
+    Returns:
+        list[complex]: the coefficient of each term, in the order the terms are generated.
+
+    Raises:
+        ValueError: if a list is given whose length does not match the number of terms.
+    """
+    if isinstance(coefficient, (list, tuple)):
+        if len(coefficient) != count:
+            raise ValueError(f"{name} must hold one coefficient per term, got {len(coefficient)} for {count} terms.")
+        return [complex(value) for value in coefficient]
+    return [complex(coefficient)] * count
+
 
 # Cache sparse single-qubit matrices once per dtype to avoid rebuilding them for every term.
 _SINGLE_QUBIT_SPARSE: dict[tuple[str, np.dtype], csr_matrix] = {}
@@ -632,6 +686,391 @@ class Hamiltonian(Parameterizable):
         return partitions
 
     @classmethod
+    def transverse_field(cls, nqubits: int, x_coefficient: Coefficient = 1.0) -> Hamiltonian:
+        """
+        Build a transverse field, :math:`\\sum_i h_i\\, X_i`.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.transverse_field(nqubits=2, x_coefficient=1.3)
+                # 1.3 X(0) + 1.3 X(1)
+
+                H = Hamiltonian.transverse_field(nqubits=2, x_coefficient=[1.3, 0.7])
+                # 1.3 X(0) + 0.7 X(1)
+
+        Args:
+            nqubits (int): the number of qubits the Hamiltonian acts on.
+            x_coefficient (Coefficient, optional): the field strength on every qubit, or a list
+                holding the strength of each qubit in turn. Defaults to 1.0.
+
+        Returns:
+            Hamiltonian: the transverse-field Hamiltonian.
+
+        Raises:
+            ValueError: if ``nqubits`` is not greater than zero.
+            ValueError: if a list of coefficients does not hold one value per term.
+        """
+        _validate_nqubits(nqubits)
+        logger.debug("[Hamiltonian] Building transverse field over {} qubits", nqubits)
+        x = _coefficients(x_coefficient, nqubits, "x_coefficient")
+        return cls({(_get_pauli("X", qubit),): x[qubit] for qubit in range(nqubits)})
+
+    @classmethod
+    def longitudinal_field(cls, nqubits: int, z_coefficient: Coefficient = 1.0) -> Hamiltonian:
+        """
+        Build a longitudinal field, :math:`\\sum_i h_i\\, Z_i`.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.longitudinal_field(nqubits=2, z_coefficient=1.3)
+                # 1.3 Z(0) + 1.3 Z(1)
+
+                H = Hamiltonian.longitudinal_field(nqubits=2, z_coefficient=[1.3, 0.7])
+                # 1.3 Z(0) + 0.7 Z(1)
+
+        Args:
+            nqubits (int): the number of qubits the Hamiltonian acts on.
+            z_coefficient (Coefficient, optional): the field strength on every qubit, or a list
+                holding the strength of each qubit in turn. Defaults to 1.0.
+
+        Returns:
+            Hamiltonian: the longitudinal-field Hamiltonian.
+
+        Raises:
+            ValueError: if ``nqubits`` is not greater than zero.
+            ValueError: if a list of coefficients does not hold one value per term.
+        """
+        _validate_nqubits(nqubits)
+        logger.debug("[Hamiltonian] Building longitudinal field over {} qubits", nqubits)
+        z = _coefficients(z_coefficient, nqubits, "z_coefficient")
+        return cls({(_get_pauli("Z", qubit),): z[qubit] for qubit in range(nqubits)})
+
+    @classmethod
+    def ising(
+        cls,
+        nqubits: int,
+        zz_coefficient: Coefficient = 1.0,
+        z_coefficient: Coefficient = 0.0,
+    ) -> Hamiltonian:
+        """
+        Build an all-to-all Ising Hamiltonian, :math:`\\sum_{i<j} J_{ij}\\, Z_i Z_j + \\sum_i h_i\\, Z_i`.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.ising(nqubits=2, zz_coefficient=2.0)
+                # 2 Z(0) Z(1)
+
+        Args:
+            nqubits (int): the number of qubits the Hamiltonian acts on. Must be at least 2.
+            zz_coefficient (Coefficient, optional): the coupling on every pair of qubits, or a list
+                holding the coupling of each pair in turn, ordered as ``(0, 1), (0, 2), ..., (1, 2),
+                ...``. Defaults to 1.0.
+            z_coefficient (Coefficient, optional): the longitudinal field on every qubit, or a list
+                holding the field of each qubit in turn. Defaults to 0.0, which leaves the field out
+                entirely.
+
+        Returns:
+            Hamiltonian: the Ising Hamiltonian.
+
+        Raises:
+            ValueError: if ``nqubits`` is less than 2.
+            ValueError: if a list of coefficients does not hold one value per term.
+        """
+        _validate_nqubits(nqubits, minimum=2, label="Ising")
+        logger.debug("[Hamiltonian] Building Ising model over {} qubits", nqubits)
+        pairs = list(combinations(range(nqubits), 2))
+        zz = _coefficients(zz_coefficient, len(pairs), "zz_coefficient")
+        z = _coefficients(z_coefficient, nqubits, "z_coefficient")
+        elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = {
+            (_get_pauli("Z", first), _get_pauli("Z", second)): coefficient
+            for (first, second), coefficient in zip(pairs, zz, strict=True)
+        }
+        elements.update({(_get_pauli("Z", qubit),): z[qubit] for qubit in range(nqubits)})
+        return cls(elements)
+
+    @classmethod
+    def ising_chain(
+        cls,
+        nqubits: int,
+        zz_coefficient: Coefficient = 1.0,
+        z_coefficient: Coefficient = 0.0,
+        periodic: bool = False,
+    ) -> Hamiltonian:
+        """
+        Build a 1D nearest-neighbour Ising chain, :math:`\\sum_i J_i\\, Z_i Z_{i+1} + \\sum_i h_i\\, Z_i`.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.ising_chain(nqubits=3, zz_coefficient=2.0)
+                # 2 Z(0) Z(1) + 2 Z(1) Z(2)
+
+                # Closing the chain into a ring adds the bond between the two ends.
+                H = Hamiltonian.ising_chain(nqubits=3, zz_coefficient=2.0, periodic=True)
+                # 2 Z(0) Z(1) + 2 Z(1) Z(2) + 2 Z(0) Z(2)
+
+        Args:
+            nqubits (int): the number of qubits in the chain. Must be at least 2.
+            zz_coefficient (Coefficient, optional): the coupling on every bond, or a list holding the
+                coupling of each bond in turn, ordered along the chain and ending with the
+                wrap-around bond when ``periodic`` is set. Defaults to 1.0.
+            z_coefficient (Coefficient, optional): the longitudinal field on every qubit, or a list
+                holding the field of each qubit in turn. Defaults to 0.0, which leaves the field out
+                entirely.
+            periodic (bool, optional): whether to close the chain into a ring by coupling the last
+                qubit back to the first. Ignored for fewer than 3 qubits, where the ring bond would
+                duplicate the one bond the chain already has. Defaults to False.
+
+        Returns:
+            Hamiltonian: the Ising chain Hamiltonian.
+
+        Raises:
+            ValueError: if ``nqubits`` is less than 2.
+            ValueError: if a list of coefficients does not hold one value per term.
+        """
+        _validate_nqubits(nqubits, minimum=2, label="Ising chain")
+        logger.debug("[Hamiltonian] Building Ising chain over {} qubits (periodic={})", nqubits, periodic)
+        bonds = [(qubit, qubit + 1) for qubit in range(nqubits - 1)]
+        if periodic and nqubits >= _MIN_PERIODIC_EXTENT:
+            bonds.append((0, nqubits - 1))
+        zz = _coefficients(zz_coefficient, len(bonds), "zz_coefficient")
+        z = _coefficients(z_coefficient, nqubits, "z_coefficient")
+        elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = {
+            (_get_pauli("Z", first), _get_pauli("Z", second)): coefficient
+            for (first, second), coefficient in zip(bonds, zz, strict=True)
+        }
+        elements.update({(_get_pauli("Z", qubit),): z[qubit] for qubit in range(nqubits)})
+        return cls(elements)
+
+    @classmethod
+    def ising_grid(
+        cls,
+        rows: int,
+        columns: int,
+        zz_coefficient: Coefficient = 1.0,
+        z_coefficient: Coefficient = 0.0,
+        periodic: bool = False,
+    ) -> Hamiltonian:
+        """
+        Build a 2D nearest-neighbour Ising model on a ``rows`` x ``columns`` square lattice.
+
+        Qubits are numbered in row-major order, so the qubit at ``(row, column)`` has index
+        ``row * columns + column``, and the Hamiltonian acts on ``rows * columns`` qubits. Each qubit
+        is coupled to its neighbour to the right and its neighbour below, giving the usual square
+        lattice.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                # A 2x2 lattice: qubits 0 1 on the top row, 2 3 on the bottom.
+                H = Hamiltonian.ising_grid(rows=2, columns=2)
+                # Z(0) Z(1) + Z(0) Z(2) + Z(1) Z(3) + Z(2) Z(3)
+
+        Args:
+            rows (int): the number of lattice rows.
+            columns (int): the number of lattice columns.
+            zz_coefficient (Coefficient, optional): the coupling on every bond, or a list holding the
+                coupling of each bond in turn, ordered by the site each bond starts from in row-major
+                order and, within a site, giving its horizontal bond before its vertical one.
+                Defaults to 1.0.
+            z_coefficient (Coefficient, optional): the longitudinal field on every qubit, or a list
+                holding the field of each qubit in turn. Defaults to 0.0, which leaves the field out
+                entirely.
+            periodic (bool, optional): whether to wrap the lattice into a torus by coupling each edge
+                back to the opposite one. Wrapping is skipped along any direction shorter than 3
+                sites, where it would duplicate an existing bond. Defaults to False.
+
+        Returns:
+            Hamiltonian: the Ising grid Hamiltonian.
+
+        Raises:
+            ValueError: if ``rows`` or ``columns`` is not greater than zero.
+            ValueError: if the lattice holds fewer than 2 qubits.
+            ValueError: if a list of coefficients does not hold one value per term.
+        """
+        if rows <= 0:
+            raise ValueError(f"rows must be greater than zero, got {rows}.")
+        if columns <= 0:
+            raise ValueError(f"columns must be greater than zero, got {columns}.")
+        nqubits = rows * columns
+        _validate_nqubits(nqubits, minimum=2, label="Ising grid")
+        logger.debug("[Hamiltonian] Building {}x{} Ising grid (periodic={})", rows, columns, periodic)
+
+        def index(row: int, column: int) -> int:
+            return row * columns + column
+
+        bonds: list[tuple[int, int]] = []
+        for row in range(rows):
+            for column in range(columns):
+                if column + 1 < columns:
+                    bonds.append((index(row, column), index(row, column + 1)))
+                elif periodic and columns >= _MIN_PERIODIC_EXTENT:
+                    bonds.append((index(row, 0), index(row, column)))
+                if row + 1 < rows:
+                    bonds.append((index(row, column), index(row + 1, column)))
+                elif periodic and rows >= _MIN_PERIODIC_EXTENT:
+                    bonds.append((index(0, column), index(row, column)))
+
+        zz = _coefficients(zz_coefficient, len(bonds), "zz_coefficient")
+        z = _coefficients(z_coefficient, nqubits, "z_coefficient")
+        elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = {
+            (_get_pauli("Z", first), _get_pauli("Z", second)): coefficient
+            for (first, second), coefficient in zip(bonds, zz, strict=True)
+        }
+        elements.update({(_get_pauli("Z", qubit),): z[qubit] for qubit in range(nqubits)})
+        return cls(elements)
+
+    @classmethod
+    def transverse_field_ising(
+        cls,
+        nqubits: int,
+        x_coefficient: Coefficient = 1.0,
+        zz_coefficient: Coefficient = 1.0,
+        z_coefficient: Coefficient = 0.0,
+    ) -> Hamiltonian:
+        """
+        Build an all-to-all transverse-field Ising Hamiltonian.
+
+        .. math::
+
+            H = \\sum_{i<j} J_{ij}\\, Z_i Z_j + \\sum_i h^x_i\\, X_i + \\sum_i h^z_i\\, Z_i
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.transverse_field_ising(nqubits=2, x_coefficient=1.3, zz_coefficient=-2)
+                # 1.3 X(0) + 1.3 X(1) - 2 Z(0) Z(1)
+
+        Args:
+            nqubits (int): the number of qubits the Hamiltonian acts on. Must be at least 2.
+            x_coefficient (Coefficient, optional): the transverse field on every qubit, or a list
+                holding the field of each qubit in turn. Defaults to 1.0.
+            zz_coefficient (Coefficient, optional): the coupling on every pair of qubits, or a list
+                holding the coupling of each pair in turn, ordered as ``(0, 1), (0, 2), ..., (1, 2),
+                ...``. Defaults to 1.0.
+            z_coefficient (Coefficient, optional): the longitudinal field on every qubit, or a list
+                holding the field of each qubit in turn. Defaults to 0.0, which leaves the field out
+                entirely.
+
+        Returns:
+            Hamiltonian: the transverse-field Ising Hamiltonian.
+
+        Raises:
+            ValueError: if ``nqubits`` is less than 2.
+            ValueError: if a list of coefficients does not hold one value per term.
+        """
+        _validate_nqubits(nqubits, minimum=2, label="Transverse-field Ising")
+        logger.debug("[Hamiltonian] Building transverse-field Ising model over {} qubits", nqubits)
+        pairs = list(combinations(range(nqubits), 2))
+        x = _coefficients(x_coefficient, nqubits, "x_coefficient")
+        zz = _coefficients(zz_coefficient, len(pairs), "zz_coefficient")
+        z = _coefficients(z_coefficient, nqubits, "z_coefficient")
+        elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = {
+            (_get_pauli("X", qubit),): x[qubit] for qubit in range(nqubits)
+        }
+        elements.update(
+            {
+                (_get_pauli("Z", first), _get_pauli("Z", second)): coefficient
+                for (first, second), coefficient in zip(pairs, zz, strict=True)
+            }
+        )
+        elements.update({(_get_pauli("Z", qubit),): z[qubit] for qubit in range(nqubits)})
+        return cls(elements)
+
+    @classmethod
+    def heisenberg(
+        cls,
+        nqubits: int,
+        xx_coefficient: Coefficient = 1.0,
+        yy_coefficient: Coefficient | None = None,
+        zz_coefficient: Coefficient | None = None,
+        z_coefficient: Coefficient = 0.0,
+    ) -> Hamiltonian:
+        """
+        Build an all-to-all Heisenberg Hamiltonian.
+
+        .. math::
+
+            H = \\sum_{i<j} \\left( J^x_{ij} X_i X_j + J^y_{ij} Y_i Y_j + J^z_{ij} Z_i Z_j \\right)
+                + \\sum_i h_i\\, Z_i
+
+        Leaving ``yy_coefficient`` and ``zz_coefficient`` at their defaults gives the isotropic XXX
+        model; setting ``zz_coefficient`` alone gives the XXZ model; setting all three independently
+        gives the fully anisotropic XYZ model.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                # Isotropic XXX model.
+                H = Hamiltonian.heisenberg(nqubits=2, xx_coefficient=0.5)
+                # 0.5 X(0) X(1) + 0.5 Y(0) Y(1) + 0.5 Z(0) Z(1)
+
+                # XXZ model with an anisotropic ZZ coupling.
+                H = Hamiltonian.heisenberg(nqubits=2, xx_coefficient=1.0, zz_coefficient=0.3)
+
+                # A disordered field, set qubit by qubit.
+                H = Hamiltonian.heisenberg(nqubits=3, xx_coefficient=1.0, z_coefficient=[-1.2, 0.4, 2.7])
+
+        Args:
+            nqubits (int): the number of qubits the Hamiltonian acts on. Must be at least 2.
+            xx_coefficient (Coefficient, optional): the ``XX`` coupling on every pair of qubits, or a
+                list holding the coupling of each pair in turn, ordered as ``(0, 1), (0, 2), ...,
+                (1, 2), ...``. Defaults to 1.0.
+            yy_coefficient (Coefficient, optional): the ``YY`` coupling, given the same way as
+                ``xx_coefficient``. Defaults to None, which reuses ``xx_coefficient``.
+            zz_coefficient (Coefficient, optional): the ``ZZ`` coupling, given the same way as
+                ``xx_coefficient``. Defaults to None, which reuses ``xx_coefficient``.
+            z_coefficient (Coefficient, optional): the longitudinal field on every qubit, or a list
+                holding the field of each qubit in turn. Defaults to 0.0, which leaves the field out
+                entirely.
+
+        Returns:
+            Hamiltonian: the Heisenberg Hamiltonian.
+
+        Raises:
+            ValueError: if ``nqubits`` is less than 2.
+            ValueError: if a list of coefficients does not hold one value per term.
+        """
+        _validate_nqubits(nqubits, minimum=2, label="Heisenberg")
+        if yy_coefficient is None:
+            yy_coefficient = xx_coefficient
+        if zz_coefficient is None:
+            zz_coefficient = xx_coefficient
+        logger.debug("[Hamiltonian] Building Heisenberg model over {} qubits", nqubits)
+        pairs = list(combinations(range(nqubits), 2))
+        xx = _coefficients(xx_coefficient, len(pairs), "xx_coefficient")
+        yy = _coefficients(yy_coefficient, len(pairs), "yy_coefficient")
+        zz = _coefficients(zz_coefficient, len(pairs), "zz_coefficient")
+        z = _coefficients(z_coefficient, nqubits, "z_coefficient")
+        elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = {}
+        for axis, couplings in (("X", xx), ("Y", yy), ("Z", zz)):
+            elements.update(
+                {
+                    (_get_pauli(axis, first), _get_pauli(axis, second)): coefficient
+                    for (first, second), coefficient in zip(pairs, couplings, strict=True)
+                }
+            )
+        elements.update({(_get_pauli("Z", qubit),): z[qubit] for qubit in range(nqubits)})
+        return cls(elements)
+
+    @classmethod
     def from_qtensor(cls, tensor: QTensor, tol: float | None = None, prune: float | None = None) -> Hamiltonian:
         """
         Expand a qtensor (dense operator) on n qubits into a sum of Pauli strings,
@@ -644,7 +1083,7 @@ class Hamiltonian(Parameterizable):
         Returns:
             Hamiltonian: Sum_{P in {I,X,Y,Z}^{⊗ n}} c_P * P  with c_P = Tr(qt * P) / 2^n
 
-        Raises
+        Raises:
             ValueError: If the input is not square, not a power-of-two dimension, or not Hermitian w.r.t. `tol`.
         """
         if tol is None:
