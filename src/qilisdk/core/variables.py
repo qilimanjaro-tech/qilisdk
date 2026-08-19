@@ -431,6 +431,10 @@ class Bitwise(Encoding):
         if var.domain is Domain.REAL:
             bounds = (bounds[0] / precision, bounds[1] / precision)
 
+        # Vars with fixed value should be represented by a single (unused) binary variable
+        if bounds[1] - bounds[0] == 0:
+            return 1
+
         n_binary = int(np.floor(np.log2(np.abs(bounds[1] - bounds[0]))))
 
         return n_binary + 1
@@ -1071,7 +1075,13 @@ class Variable(BaseVariable):
         self._term = None
 
     def __copy__(self) -> Variable:
-        return Variable(label=self.label, domain=self.domain, bounds=self.bounds, encoding=self._encoding)
+        return Variable(
+            label=self.label,
+            domain=self.domain,
+            bounds=self.bounds,
+            encoding=self._encoding,
+            precision=self._precision,
+        )
 
     def __getitem__(self, item: int) -> BaseVariable:
         if self._term is None:

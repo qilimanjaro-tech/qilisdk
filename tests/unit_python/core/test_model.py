@@ -33,6 +33,7 @@ from qilisdk.core.model import (
 )
 from qilisdk.core.variables import (
     EQ,
+    GEQ,
     GT,
     LEQ,
     LT,
@@ -793,19 +794,19 @@ def test_qubo_add_constraint_and_objective_errors():
     # add valid
     q.add_constraint("c", term)
     assert "c" in q.lagrange_multipliers
-    # non-binary domain var
+    # unbounded integer var: not encodable
     y = Variable("y", Domain.INTEGER)
     t2 = ComparisonTerm(lhs=y, rhs=0, operation=ComparisonOperation.EQ)
     q2 = QUBO(label="q4")
-    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
+    with pytest.raises(ValueError, match=r"Variable y spans too many values"):
         q2.add_constraint("c2", t2)
 
 
 # ---------- set_objective QUBO ----------
 def test_qubo_set_objective_errors():
     q = QUBO(label="q5")
-    # non-binary domain
-    y = Variable("y", Domain.REAL, bounds=(0, 1))
+    # unsupported (spin) domain
+    y = SpinVariable("y")
     t = Term(elements=[y], operation=Operation.ADD)
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         q.set_objective(term=t)
@@ -980,43 +981,52 @@ def test_add_constraint_without_transform_to_qubo():
     assert q._constraints["c"].term.rhs == ct.rhs
 
 
-def test_check_variables():
+def test_check_variables_rejects_spin_domain():
     q = QUBO(label="test")
-    x = Variable("x", Domain.INTEGER, encoding=OneHot, bounds=(0, 2))
-
-    ct = EQ(x**2, 1)
-    with pytest.raises(
-        ValueError,
-        match=r"QUBO models are not supported for variables that are not in the positive integers or binary domains.",
-    ):
-        q._check_variables(ct)
-
-    x = Variable("x", Domain.REAL, encoding=OneHot, bounds=(0, 2))
-
-    ct = EQ(x**2, 1)
-    with pytest.raises(
-        ValueError,
-        match=r"QUBO models are not supported for variables that are not in the positive integers or binary domains.",
-    ):
-        q._check_variables(ct)
-
     x = Variable("x", Domain.SPIN, encoding=OneHot, bounds=(-1, 1))
 
     ct = EQ(x**2, 1)
     with pytest.raises(
         ValueError,
-        match=r"QUBO models are not supported for variables that are not in the positive integers or binary domains.",
+        match=r"QUBO models are not supported for variables that are not in the binary, positive integer,"
+        r" integer or real domains\. But variable x is in the Spin Domain\.",
     ):
         q._check_variables(ct)
 
-    x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(1, 2))
 
-    ct = EQ(x**2, 1)
+def test_check_variables_rejects_spin_variable():
+    q = QUBO(label="test")
+    s = SpinVariable("s")
+
     with pytest.raises(
         ValueError,
-        match=r"All variables must have a lower bound of 0. But variable x has a lower bound of 1",
+        match=r"QUBO models are not supported for variables that are not in the binary, positive integer,"
+        r" integer or real domains\.",
     ):
-        q._check_variables(ct)
+        q._check_variables(EQ(s, 1))
+
+
+@pytest.mark.parametrize(
+    ("domain", "bounds"),
+    [
+        (Domain.POSITIVE_INTEGER, (0, 2)),
+        (Domain.POSITIVE_INTEGER, (1, 5)),
+        (Domain.INTEGER, (-2, 2)),
+        (Domain.INTEGER, (-5, -1)),
+        (Domain.REAL, (1.0, 2.0)),
+        (Domain.REAL, (-1.0, 1.0)),
+        (Domain.BINARY, (0, 1)),
+    ],
+)
+@pytest.mark.parametrize("encoding", [Bitwise, OneHot])
+def test_check_variables_accepts_supported_domains(domain, bounds, encoding):
+    q = QUBO(label="test")
+    x = Variable("x", domain, encoding=encoding, bounds=bounds, precision=1e-1)
+
+    q._check_variables(EQ(x, 1))
+
+    # Binary-domain variables need no encoding, every other supported domain is registered for encoding.
+    assert ("x" in q.continuous_vars) is (domain is not Domain.BINARY)
 
 
 def test_qubo_model_to_qubo():
@@ -1469,3 +1479,221 @@ def test_qubo_copy_includes_encoding_constraints():
     q._encoding_constraints["enc"] = Constraint("enc", EQ(b, 0))
     q2 = copy.copy(q)
     assert "enc" in q2._encoding_constraints
+
+
+# ---------- QUBO conversion of shifted / integer / real variables ----------
+
+
+def _all_bit_assignments(n: int):
+    """Yield every binary string of length ``n`` as a list of 0/1 ints."""
+    for i in range(2**n):
+        yield [(i >> b) & 1 for b in range(n)]
+
+
+def _evaluate_binary_term(term, bits_by_label):
+    """Evaluate a fully binary ``term`` given a ``{label: bit}`` mapping.
+
+    Binary variables that were cancelled out of the term (e.g. the zero-coefficient one-hot slot)
+    are simply absent from ``term.variables()`` and therefore ignored.
+    """
+    return term.evaluate({v: bits_by_label[v.label] for v in term.variables()})
+
+
+@pytest.mark.parametrize(
+    ("domain", "bounds", "precision"),
+    [
+        (Domain.POSITIVE_INTEGER, (1, 5), 1e-2),
+        (Domain.INTEGER, (-2, 2), 1e-2),
+        (Domain.INTEGER, (-5, -1), 1e-2),
+        (Domain.REAL, (1, 2), 1e-1),
+    ],
+)
+def test_to_qubo_uses_the_expansion_the_encoding_produces(domain, bounds, precision):
+    # The model has no constraints and Bitwise needs no encoding constraint, so the QUBO objective
+    # must be exactly the binary expansion of the variable.
+    x = Variable("x", domain, bounds=bounds, encoding=Bitwise, precision=precision)
+    m = Model("m")
+    m.set_objective(x)
+
+    q = m.to_qubo()
+
+    assert q.qubo_objective.term == x.to_binary()
+
+
+def test_to_qubo_real_variable_from_the_docs_example():
+    x = Variable("x", domain=Domain.REAL, bounds=(1, 2), encoding=Bitwise, precision=1e-1)
+    m = Model("m")
+    m.set_objective(x)
+
+    q = m.to_qubo()
+
+    # 4 bits are enough to cover [1, 2] in steps of 0.1, and the offset shows up as the constant.
+    assert len(q.qubo_objective.term.variables()) == x.num_binary_equivalent()
+    assert q.qubo_objective.term.get_constant() == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize(
+    ("domain", "bounds"),
+    [
+        (Domain.POSITIVE_INTEGER, (0, 5)),
+        (Domain.POSITIVE_INTEGER, (1, 5)),
+        (Domain.POSITIVE_INTEGER, (3, 4)),
+        (Domain.INTEGER, (-2, 2)),
+        (Domain.INTEGER, (-5, -1)),
+        (Domain.INTEGER, (-1, 0)),
+    ],
+)
+def test_bitwise_expansion_in_qubo_spans_exactly_the_bounds(domain, bounds):
+    x = Variable("x", domain, bounds=bounds, encoding=Bitwise)
+    m = Model("m")
+    m.set_objective(x)
+    q = m.to_qubo()
+
+    term = q.qubo_objective.term
+    labels = [v.label for v in x.bin_vars]
+    reachable = {_evaluate_binary_term(term, dict(zip(labels, bits))) for bits in _all_bit_assignments(len(labels))}
+
+    assert min(reachable) == bounds[0]
+    assert max(reachable) == bounds[1]
+    assert set(range(bounds[0], bounds[1] + 1)) <= reachable
+
+
+@pytest.mark.parametrize(
+    ("domain", "bounds"),
+    [
+        (Domain.POSITIVE_INTEGER, (2, 6)),
+        (Domain.INTEGER, (-3, 1)),
+        (Domain.INTEGER, (-4, -2)),
+    ],
+)
+def test_qubo_objective_agrees_with_the_original_objective(domain, bounds):
+    # Compare f(x) evaluated on the integer variable against the QUBO objective evaluated on the
+    # corresponding bit string, for every bit string.
+    x = Variable("x", domain, bounds=bounds, encoding=Bitwise)
+    objective = 3 * x + 2
+    m = Model("m")
+    m.set_objective(objective)
+    q = m.to_qubo()
+
+    term = q.qubo_objective.term
+    labels = [v.label for v in x.bin_vars]
+    for bits in _all_bit_assignments(len(labels)):
+        value = x.evaluate(list(bits))
+        assert _evaluate_binary_term(term, dict(zip(labels, bits))) == pytest.approx(3 * value + 2)
+
+
+def test_qubo_with_degenerate_bounds_reduces_to_a_constant():
+    x = Variable("x", Domain.INTEGER, bounds=(3, 3), encoding=Bitwise)
+    m = Model("m")
+    m.set_objective(x)
+    q = m.to_qubo()
+
+    term = q.qubo_objective.term
+    labels = [v.label for v in x.bin_vars]
+    reachable = {_evaluate_binary_term(term, dict(zip(labels, bits))) for bits in _all_bit_assignments(len(labels))}
+    assert reachable == {3}
+
+
+def test_bitwise_shifted_variable_needs_no_encoding_constraint():
+    q = QUBO("test")
+    x = Variable("x", Domain.INTEGER, bounds=(-2, 2), encoding=Bitwise)
+
+    q.set_objective(x + 0)
+
+    assert "x" in q.continuous_vars
+    assert "x_encoding_constraint" not in q._constraints
+
+
+def test_one_hot_shifted_variable_gets_an_encoding_constraint():
+    q = QUBO("test")
+    x = Variable("x", Domain.INTEGER, bounds=(-2, 2), encoding=OneHot)
+
+    q.set_objective(x + 0)
+
+    assert "x" in q.continuous_vars
+    assert "x_encoding_constraint" in q._constraints
+    # One binary per value in [-2, 2].
+    assert x.num_binary_equivalent() == 5
+
+
+def test_encoding_constraint_is_only_added_once_for_a_shifted_variable():
+    q = QUBO("test")
+    x = Variable("x", Domain.INTEGER, bounds=(-2, 2), encoding=OneHot)
+
+    q.set_objective(x + 0)
+    q.add_constraint("c", LEQ(x, 1))
+
+    assert sum(label.startswith("x_encoding_constraint") for label in q._constraints) == 1
+
+
+def test_qubo_constraint_on_a_negative_lower_bound_variable():
+    # x in [-3, 3] with x >= 0: the slack penalty must vanish exactly on the feasible values.
+    x = Variable("x", Domain.INTEGER, bounds=(-3, 3), encoding=Bitwise)
+    m = Model("m")
+    m.set_objective(x + 0)
+    m.add_constraint("c", GEQ(x, 0))
+
+    q = m.to_qubo()
+
+    assert "c" in q._constraints
+    assert len(q.qubo_objective.term.variables()) > len(x.bin_vars)  # a slack was introduced
+
+
+def test_brute_force_solves_a_shifted_integer_model():
+    x = Variable("x", Domain.INTEGER, bounds=(-2, 2), encoding=Bitwise)
+    m = Model("m")
+    m.set_objective(x + 0, sense=ObjectiveSense.MINIMIZE)
+    m.add_constraint("c", GEQ(x, -1))
+
+    _, sample = BruteForceSolver().solve(m)
+
+    assert sample[x] == -1
+
+
+def test_brute_force_solves_a_positive_integer_model_with_nonzero_lower_bound():
+    x = Variable("x", Domain.POSITIVE_INTEGER, bounds=(2, 6), encoding=Bitwise)
+    m = Model("m")
+    m.set_objective(x + 0, sense=ObjectiveSense.MINIMIZE)
+
+    _, sample = BruteForceSolver().solve(m)
+
+    assert sample[x] == 2
+
+
+def test_to_qubo_mixes_binary_and_shifted_integer_variables():
+    b = BinaryVariable("b")
+    x = Variable("x", Domain.INTEGER, bounds=(-1, 1), encoding=Bitwise)
+    m = Model("m")
+    m.set_objective(b + x)
+
+    q = m.to_qubo()
+
+    labels = {v.label for v in q.qubo_objective.term.variables()}
+    assert "b" in labels
+    assert {v.label for v in x.bin_vars} <= labels
+
+
+@pytest.mark.parametrize("domain", [Domain.INTEGER, Domain.POSITIVE_INTEGER, Domain.REAL])
+def test_check_variables_rejects_unbounded_variables(domain):
+    q = QUBO("test")
+    x = Variable("x", domain)
+
+    with pytest.raises(ValueError, match=r"Variable x spans too many values"):
+        q._check_variables(EQ(x, 1))
+
+
+def test_check_variables_rejects_real_variable_whose_precision_is_too_fine():
+    q = QUBO("test")
+    x = Variable("x", Domain.REAL, bounds=(0, 1), precision=1e-15)
+
+    with pytest.raises(ValueError, match=r"Variable x spans too many values"):
+        q._check_variables(EQ(x, 1))
+
+
+def test_check_variables_accepts_a_real_variable_with_a_workable_precision():
+    q = QUBO("test")
+    x = Variable("x", Domain.REAL, bounds=(0, 1), precision=1e-2)
+
+    q._check_variables(EQ(x, 1))
+
+    assert "x" in q.continuous_vars
