@@ -672,7 +672,7 @@ void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& 
     // Log some debug info
     qilisdk::log_debug("[QiliSim, C++] MPS simulation complete: max bond dimension " + std::to_string(state.get_max_bond_dimension_used()) + " of " + std::to_string(config.get_mps_max_bond_dimension()) + ", accumulated truncation error " + std::to_string(state.get_truncation_error()));
     if (state.get_truncation_error() > config.get_adaptive_tol()) {
-        warning("The MPS simulation discarded a total weight of " + std::to_string(state.get_truncation_error()) + "; increase mps_max_bond_dimension for a more accurate result.");
+        warning("The MPS simulation had a total truncation error of " + std::to_string(state.get_truncation_error()) + ", increase mps_max_bond_dimension for a more accurate result.");
     }
 
 }
