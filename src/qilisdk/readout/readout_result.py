@@ -306,7 +306,6 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
         return heapq.nlargest(n, self._probabilities.items(), key=operator.itemgetter(1))
 
     def __repr__(self) -> str:
-
         return f"Sampling Results: (\n\tnshots={sum(self.samples.values())},\n\tsamples={pformat(self.samples)}\n)\n\n"
 
     __str__ = __repr__

@@ -86,3 +86,10 @@ and analog schedules, while others are specific to one or the other:
    :class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`               ✔
    ========================================================================== ==================== ======================
 
+
+Things to note
+------------------
+
+- Global noise acts on all qubits for all gates, including controls.
+- Gate noise applies to all qubits that a gate acts on, so if you put noise on a CNOT, it will apply to both the controls and the targets.
+- Noise applied to a specific qubit will only ever target that qubit, even if the gate applying the noise acts on multiple qubits.
