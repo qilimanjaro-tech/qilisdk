@@ -1697,3 +1697,129 @@ def test_check_variables_accepts_a_real_variable_with_a_workable_precision():
     q._check_variables(EQ(x, 1))
 
     assert "x" in q.continuous_vars
+
+
+# ---------- constraint penalties agree with the feasible set ----------
+
+
+def _min_penalty_by_value(x, comparison, penalization="slack"):
+    """Build a QUBO whose objective is nothing but one constraint's penalty.
+
+    Returns ``{value of x: lowest penalty reachable at that value}``, minimising over every slack and
+    auxiliary binary variable. A correct slack penalty is 0 exactly on the feasible values of ``x``.
+    """
+    m = Model("m")
+    m.set_objective(0 * x)
+    m.add_constraint("c", comparison)
+    term = m.to_qubo(penalization=penalization).qubo_objective.term
+
+    x_term = x.to_binary()
+    bins = sorted(set(term.variables()) | set(x_term.variables()), key=lambda v: v.label)
+    penalties: dict[float, float] = {}
+    for i in range(2 ** len(bins)):
+        assignment = {v: (i >> k) & 1 for k, v in enumerate(bins)}
+        value = x_term.evaluate({v: assignment[v] for v in x_term.variables()})
+        penalty = term.evaluate(assignment)
+        penalties[value] = min(penalties.get(value, float("inf")), penalty)
+    return penalties
+
+
+_STRICT_INEQUALITY_XFAIL = pytest.mark.xfail(
+    reason="strict inequalities are transformed as non-strict ones: `x > 0` does not penalise x == 0",
+    strict=True,
+)
+
+
+@pytest.mark.parametrize(
+    ("name", "operation", "rhs", "feasible"),
+    [
+        ("x >= 0", GEQ, 0, {0, 1, 2, 3}),
+        ("x >= 2", GEQ, 2, {2, 3}),
+        ("x >= -2", GEQ, -2, {-2, -1, 0, 1, 2, 3}),
+        ("x <= 0", LEQ, 0, {-3, -2, -1, 0}),
+        ("x <= -2", LEQ, -2, {-3, -2}),
+        ("x == 1", EQ, 1, {1}),
+        ("x == -2", EQ, -2, {-2}),
+        pytest.param("x > 0", GT, 0, {1, 2, 3}, marks=_STRICT_INEQUALITY_XFAIL),
+        pytest.param("x < 0", LT, 0, {-3, -2, -1}, marks=_STRICT_INEQUALITY_XFAIL),
+    ],
+)
+def test_slack_penalty_vanishes_exactly_on_the_feasible_set(name, operation, rhs, feasible):
+    # The defining property of a slack penalty: zero on every feasible value of x, strictly positive
+    # on every infeasible one. A wrong sign, a wrong slack range or a mirrored comparison all break it.
+    x = Variable("x", Domain.INTEGER, bounds=(-3, 3), encoding=Bitwise)
+
+    penalties = _min_penalty_by_value(x, operation(x, rhs))
+
+    assert set(penalties) == set(range(-3, 4))
+    for value, penalty in sorted(penalties.items()):
+        if value in feasible:
+            assert penalty == pytest.approx(0), f"{name}: feasible x={value} was penalised ({penalty})"
+        else:
+            assert penalty > 0, f"{name}: infeasible x={value} was not penalised"
+
+
+@pytest.mark.parametrize(
+    ("name", "operation", "rhs", "feasible"),
+    [
+        ("x >= 0", GEQ, 0, {0, 1, 2, 3}),
+        ("x >= 2", GEQ, 2, {2, 3}),
+        ("x <= 0", LEQ, 0, {-3, -2, -1, 0}),
+        ("x <= -2", LEQ, -2, {-3, -2}),
+        pytest.param("x > 0", GT, 0, {1, 2, 3}, marks=_STRICT_INEQUALITY_XFAIL),
+        pytest.param("x < 0", LT, 0, {-3, -2, -1}, marks=_STRICT_INEQUALITY_XFAIL),
+    ],
+)
+def test_unbalanced_penalty_is_positive_off_the_feasible_set(name, operation, rhs, feasible):
+    # Unbalanced penalization deliberately does not vanish across the whole feasible set (it keeps
+    # rewarding slack), so only the infeasible half can be pinned down. A mirrored comparison still
+    # shows up here, because the violated values would come out free.
+    x = Variable("x", Domain.INTEGER, bounds=(-3, 3), encoding=Bitwise)
+
+    penalties = _min_penalty_by_value(x, operation(x, rhs), penalization="unbalanced")
+
+    for value, penalty in sorted(penalties.items()):
+        if value not in feasible:
+            assert penalty > 0, f"{name}: infeasible x={value} was not penalised"
+
+
+def test_slack_penalty_does_not_mirror_geq_into_leq():
+    # `x >= 0` and `x <= 0` share a slack construction and differ only by the sign of the slack term,
+    # so a copy-paste between the two branches makes them collapse onto the same penalty.
+    x = Variable("x", Domain.INTEGER, bounds=(-3, 3), encoding=Bitwise)
+
+    geq = _min_penalty_by_value(x, GEQ(x, 0))
+    leq = _min_penalty_by_value(x, LEQ(x, 0))
+
+    assert geq != leq
+    assert geq[3] == pytest.approx(0)
+    assert geq[-3] > 0
+    assert leq[-3] == pytest.approx(0)
+    assert leq[3] > 0
+
+
+@pytest.mark.parametrize(
+    ("domain", "bounds"),
+    [
+        (Domain.POSITIVE_INTEGER, (0, 3)),
+        (Domain.POSITIVE_INTEGER, (2, 5)),
+        (Domain.INTEGER, (-3, 3)),
+        (Domain.INTEGER, (-5, -1)),
+    ],
+)
+@pytest.mark.parametrize("operation", [GEQ, LEQ])
+def test_slack_penalty_matches_feasible_set_across_domains(domain, bounds, operation):
+    # The same property, over shifted and negative ranges: the slack bound is derived from the term's
+    # limits, so an off-by-one there shows up as a feasible value that costs something.
+    lower, upper = bounds
+    threshold = (lower + upper) // 2
+    x = Variable("x", domain, bounds=bounds, encoding=Bitwise)
+
+    penalties = _min_penalty_by_value(x, operation(x, threshold))
+
+    for value, penalty in sorted(penalties.items()):
+        feasible = value >= threshold if operation is GEQ else value <= threshold
+        if feasible:
+            assert penalty == pytest.approx(0), f"feasible x={value} was penalised ({penalty})"
+        else:
+            assert penalty > 0, f"infeasible x={value} was not penalised"

@@ -1551,7 +1551,7 @@ class QUBO(Model):
                     f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=Bitwise
                 )
                 slack_terms = slack.to_binary()
-                out = h + slack_terms
+                out = h - slack_terms
                 return (out) ** 2
 
         if term.operation in {
