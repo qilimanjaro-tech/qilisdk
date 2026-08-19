@@ -439,7 +439,7 @@ class _FakeScheduleWithParam:
     nqubits = 1
     tlist = [0.1, 0.2, 0.3]
     coefficients = {"h0": {0.1: 1.0, 0.2: 1.0, 0.3: 1.0}}
-    _params = {"amp": 1.0}
+    def __init__(self): self._params = {"amp": 1.0}
     def get_parameters(self): return dict(self._params)
     def set_parameters(self, params): self._params.update(params)
 
@@ -464,6 +464,10 @@ _nm_match = NoiseModel()
 _nm_match.global_perturbations["amp"].append(_ScalePert())
     )");
     EXPECT_NO_THROW(sim.execute_analog_evolution(py::globals()["_te_nm_match"], py::list(), py::globals()["_nm_match"], empty_solver_params()));
+
+    // The perturbation is a per-execution draw, so the caller's schedule must be left untouched
+    py::object schedule = py::globals()["_te_nm_match"].attr("schedule");
+    EXPECT_NEAR(schedule.attr("get_parameters")()["amp"].cast<double>(), 1.0, 1e-10);
 }
 
 TEST_F(ExecuteTimeEvolutionTest, HamiltonianCountMismatch_MatrixFree_ThrowsValueError) {
