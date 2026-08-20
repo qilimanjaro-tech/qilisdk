@@ -27,14 +27,12 @@ concurrency:
   group: publish-${{ github.event.release.tag_name || github.ref }}
   cancel-in-progress: false
 
-permissions:
-  contents: read
-
 jobs:
   # Fails in seconds on a bad dispatch, instead of after the wheel builds.
   check-inputs:
     name: Check inputs
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Check the repository input
         if: ${{ (inputs.platform || 'pypi') == 'aws' && !inputs.repository }}
@@ -46,6 +44,8 @@ jobs:
     name: Build wheels (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     needs: [check-inputs]
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -82,6 +82,8 @@ jobs:
     name: Build sdist
     runs-on: ubuntu-latest
     needs: [check-inputs]
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:

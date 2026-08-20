@@ -15,9 +15,6 @@ concurrency:
   group: code-quality-${{ github.head_ref || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-permissions:
-  contents: read
-
 jobs:
   lint:
     name: Lint
@@ -47,7 +44,7 @@ jobs:
       # code, so linting needs neither the extension built nor the dependencies.
       - name: Install the linters
         run: |
-          uv sync --frozen --only-group dev --no-install-project
+          uv sync --frozen --only-group dev --no-install-project --no-build
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
@@ -80,6 +77,9 @@ jobs:
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
+    permissions:
+      contents: read
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -119,6 +119,7 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions: {}
 
     steps:
       - name: Check the results
