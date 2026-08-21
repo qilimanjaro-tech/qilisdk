@@ -33,6 +33,7 @@ from typing import Any
 import pytest
 from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 
+from qilisdk.core.qtensor import InitialState
 from qilisdk.experiments.experiment_functional import ExperimentFunctional
 from qilisdk.experiments.experiment_result import ExperimentResult
 from qilisdk.functionals.analog_evolution import AnalogEvolution
@@ -126,6 +127,8 @@ def test_init_succeeds_with_stub_credentials(monkeypatch):
 
 
 class FakeDigitalPropagation(DigitalPropagation):
+    initial_state = InitialState.ZERO
+
     def __init__(self): ...
 
 
@@ -164,6 +167,30 @@ def test_submit_dispatches_to_digital_propagation_handler(monkeypatch):
     q = speqtrum.SpeQtrum()
     handle = q.submit(FakeDigitalPropagation(), device="some_device", job_name="my_job", readout=Readout())
     assert handle.id == 99
+
+
+def test_submit_digital_propagation_warns_on_custom_initial_state(
+    monkeypatch,
+    caplog,  # ruff: ignore[redefined-while-unused]
+):
+    """A non-default initial state is ignored on hardware, so the user must be warned."""
+
+    class FakeDigitalPropagationWithInitialState(FakeDigitalPropagation):
+        initial_state = InitialState.UNIFORM
+
+    monkeypatch.setattr(speqtrum, "DigitalPropagation", FakeDigitalPropagationWithInitialState)
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    monkeypatch.setattr(
+        speqtrum.SpeQtrum,
+        "_create_client",
+        lambda self: DummyClient(post_payload={"id": 99}),
+        raising=True,
+    )
+    q = speqtrum.SpeQtrum()
+    handle = q.submit(FakeDigitalPropagationWithInitialState(), device="some_device", readout=Readout())
+
+    assert handle.id == 99
+    assert "custom initial state" in caplog.text
 
 
 def test_submit_dispatches_to_variational_program_handler(monkeypatch):
