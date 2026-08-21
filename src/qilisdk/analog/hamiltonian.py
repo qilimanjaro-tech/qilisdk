@@ -714,7 +714,7 @@ class Hamiltonian(Parameterizable):
 
         elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(
             complex
-        )  # TODO (ameer): the parsing doesn't support Expression and Parameters
+        )
 
         # If there's no initial +/- sign, prepend '+ ' for easier splitting
         if not hamiltonian_str.startswith("+") and not hamiltonian_str.startswith("-"):
