@@ -18,7 +18,7 @@ import re
 from abc import ABC
 from collections import defaultdict
 from itertools import product
-from typing import TYPE_CHECKING, Callable, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 from loguru import logger
@@ -36,7 +36,7 @@ from qilisdk.yaml import yaml
 from .exceptions import InvalidHamiltonianOperation
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
 
     from qilisdk.core.variables import Parameter
 
@@ -475,7 +475,7 @@ class Hamiltonian(Parameterizable):
                 H.draw()
         """
         logger.debug("[Hamiltonian] Drawing Hamiltonian with style: {} and filepath: {}", style, filepath)
-        from qilisdk.utils.visualization.hamiltonian_renderers import (  # ruff:ignore[import-outside-top-level]
+        from qilisdk.utils.visualization.hamiltonian_renderers import (  # ruff: ignore[import-outside-top-level]
             MatplotlibHamiltonianRenderer,
         )
 
@@ -660,7 +660,7 @@ class Hamiltonian(Parameterizable):
 
         # Prebuild per-qubit operator “letters” so we can construct full strings quickly
 
-        H = Hamiltonian()  # start additive Hamiltonian expression
+        H = Hamiltonian()
         # Full Pauli basis (includes identity on any subset automatically)
         for word in product((0, 1, 2, 3), repeat=n):
             # Compose the word into a QiliSDK operator acting on the proper qubits
@@ -671,10 +671,10 @@ class Hamiltonian(Parameterizable):
                 op = op * pauli_for[letter](q) if op != 0 else pauli_for[letter](q)
 
             # Convert to dense once; no padding needed because it spans all n qubits
-            P_dense = op.to_qtensor(n).dense()
+            dense_P = op.to_qtensor(n).dense()
 
             # Coefficient c_P = Tr(A P) / 2^n  (P is Hermitian)
-            c = norm * np.trace(A @ P_dense)
+            c = norm * np.trace(A @ dense_P)
 
             # Numerical safety: coefficients should be real for Hermitian A and P
             if abs(c.imag) < tol:
@@ -712,9 +712,7 @@ class Hamiltonian(Parameterizable):
         if hamiltonian_str == "0":
             return cls({})
 
-        elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(
-            complex
-        )
+        elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
 
         # If there's no initial +/- sign, prepend '+ ' for easier splitting
         if not hamiltonian_str.startswith("+") and not hamiltonian_str.startswith("-"):
@@ -767,7 +765,8 @@ class Hamiltonian(Parameterizable):
                 if coeff_str.startswith("(") and coeff_str.endswith(")"):
                     coeff_str = coeff_str[1:-1]
                 coeff_val = complex(coeff_str) * sign
-                words = words[1:]  # consume this word
+                # consume this word
+                words = words[1:]
             else:
                 # No explicit coefficient => ±1
                 coeff_val = complex(sign)
@@ -1110,7 +1109,7 @@ class Hamiltonian(Parameterizable):
 
             # Check if 'other' is purely scalar identity => short-circuit
             if len(other.elements) == 1:
-                ((ops2, c2),) = other._elements.items()  # single item  # ruff: ignore[private-member-access]
+                ((ops2, c2),) = other._elements.items()  # ruff: ignore[private-member-access]
                 if len(ops2) == 1:
                     op2 = ops2[0]
                     if op2.name == "I" and op2.qubit == 0:
