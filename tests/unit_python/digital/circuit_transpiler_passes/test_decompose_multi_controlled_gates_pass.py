@@ -18,6 +18,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
+from qilisdk.core import QTensor
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.circuit_transpiler_passes.decompose_multi_controlled_gates_pass import (
@@ -54,8 +55,8 @@ class _MatrixGate(BasicGate):
     def name(self) -> str:
         return "MatrixGate"
 
-    def _generate_matrix(self) -> np.ndarray:
-        return self._unitary.copy()
+    def _generate_matrix(self) -> QTensor:
+        return QTensor(self._unitary.copy())
 
 
 def _haar_unitary(seed: int) -> np.ndarray:
@@ -276,7 +277,7 @@ def test_decomposition_acts_as_identity_unless_all_controls_are_set(ncontrols: i
     assert np.allclose(inactive_block, np.eye(len(untriggered)), atol=ATOL)
     assert np.allclose(matrix[np.ix_(untriggered, triggered)], 0.0, atol=ATOL)
     assert np.allclose(matrix[np.ix_(triggered, untriggered)], 0.0, atol=ATOL)
-    assert np.allclose(matrix[np.ix_(triggered, triggered)], H(0).matrix, atol=ATOL)
+    assert np.allclose(matrix[np.ix_(triggered, triggered)], H(0).matrix.dense(), atol=ATOL)
 
 
 def test_decomposition_of_a_full_circuit_with_several_multi_controlled_gates() -> None:
@@ -371,9 +372,9 @@ def test_output_preserves_circuit_width_and_surrounding_gates() -> None:
 def test_sqrt_of_gate_squares_back_exactly(factory_name: str, factory) -> None:
     gate = factory(0)
     sqrt_gate, phase = _sqrt_of(gate)
-    square_root = np.exp(1j * phase) * sqrt_gate.matrix
+    square_root = np.exp(1j * phase) * sqrt_gate.matrix.dense()
 
-    assert np.allclose(gate.matrix, square_root @ square_root, atol=ATOL), f"Sqrt failed for {factory_name}"
+    assert np.allclose(gate.matrix.dense(), square_root @ square_root, atol=ATOL), f"Sqrt failed for {factory_name}"
 
 
 @pytest.mark.parametrize(("factory_name", "factory"), ALL_FACTORIES)
@@ -382,17 +383,17 @@ def test_sqrt_of_gate_is_unitary_and_keeps_the_target_qubit(factory_name: str, f
     sqrt_gate, _ = _sqrt_of(gate)
 
     assert sqrt_gate.qubits == (2,), f"Target qubit changed for {factory_name}"
-    assert np.allclose(sqrt_gate.matrix.conj().T @ sqrt_gate.matrix, np.eye(2), atol=ATOL)
+    assert np.allclose(sqrt_gate.matrix.dense().conj().T @ sqrt_gate.matrix.dense(), np.eye(2), atol=ATOL)
 
 
 @pytest.mark.parametrize(("factory_name", "factory"), ALL_FACTORIES)
 def test_adjoint_of_gate_inverts_exactly(factory_name: str, factory) -> None:
     gate = factory(0)
     adjoint_gate, phase = _adjoint_of(gate)
-    inverse = np.exp(1j * phase) * adjoint_gate.matrix
+    inverse = np.exp(1j * phase) * adjoint_gate.matrix.dense()
 
-    assert np.allclose(inverse @ gate.matrix, np.eye(2), atol=ATOL), f"Adjoint failed for {factory_name}"
-    assert np.allclose(gate.matrix @ inverse, np.eye(2), atol=ATOL), f"Adjoint failed for {factory_name}"
+    assert np.allclose(inverse @ gate.matrix.dense(), np.eye(2), atol=ATOL), f"Adjoint failed for {factory_name}"
+    assert np.allclose(gate.matrix.dense() @ inverse, np.eye(2), atol=ATOL), f"Adjoint failed for {factory_name}"
 
 
 @pytest.mark.parametrize(("factory_name", "factory"), ALL_FACTORIES)
@@ -401,9 +402,9 @@ def test_adjoint_of_sqrt_composes_to_the_gate_inverse(factory_name: str, factory
     gate = factory(0)
     sqrt_gate, sqrt_phase = _sqrt_of(gate)
     adjoint_gate, adjoint_phase = _adjoint_of(sqrt_gate)
-    inverse_square_root = np.exp(1j * (adjoint_phase - sqrt_phase)) * adjoint_gate.matrix
+    inverse_square_root = np.exp(1j * (adjoint_phase - sqrt_phase)) * adjoint_gate.matrix.dense()
 
-    assert np.allclose(inverse_square_root @ inverse_square_root, gate.matrix.conj().T, atol=ATOL), (
+    assert np.allclose(inverse_square_root @ inverse_square_root, gate.matrix.dense().conj().T, atol=ATOL), (
         f"sqrt adjoint composition failed for {factory_name}"
     )
 
@@ -414,9 +415,9 @@ def test_double_adjoint_returns_the_original_gate(factory_name: str, factory) ->
     adjoint_gate, phase = _adjoint_of(gate)
     twice_adjoint_gate, twice_phase = _adjoint_of(adjoint_gate)
 
-    assert np.allclose(np.exp(1j * (twice_phase - phase)) * twice_adjoint_gate.matrix, gate.matrix, atol=ATOL), (
-        f"Double adjoint failed for {factory_name}"
-    )
+    assert np.allclose(
+        np.exp(1j * (twice_phase - phase)) * twice_adjoint_gate.matrix.dense(), gate.matrix.dense(), atol=ATOL
+    ), f"Double adjoint failed for {factory_name}"
 
 
 @pytest.mark.parametrize(
@@ -478,17 +479,17 @@ def test_sqrt_of_pauli_x_and_y_reports_the_quarter_turn_phase(factory_name: str,
     sqrt_gate, phase = _sqrt_of(factory(0))
 
     assert np.isclose(phase, math.pi / 4.0), f"Wrong residual phase for {factory_name}"
-    assert not np.allclose(sqrt_gate.matrix @ sqrt_gate.matrix, factory(0).matrix, atol=ATOL)
+    assert not np.allclose(sqrt_gate.matrix.dense() @ sqrt_gate.matrix.dense(), factory(0).matrix.dense(), atol=ATOL)
 
 
 def test_sqrt_of_u2_and_h_report_a_non_zero_phase() -> None:
     """Gates routed through the generic U3 branch generally carry a residual phase; it must not be dropped."""
     for gate in (H(0), U2(0, phi=math.pi / 6.0, gamma=math.pi / 5.0)):
         sqrt_gate, phase = _sqrt_of(gate)
-        square_root = np.exp(1j * phase) * sqrt_gate.matrix
+        square_root = np.exp(1j * phase) * sqrt_gate.matrix.dense()
         assert isinstance(sqrt_gate, U3)
         assert not np.isclose(phase, 0.0)
-        assert np.allclose(square_root @ square_root, gate.matrix, atol=ATOL)
+        assert np.allclose(square_root @ square_root, gate.matrix.dense(), atol=ATOL)
 
 
 # ======================= _phase_on_controls =======================
@@ -641,9 +642,9 @@ def test_wrap_angle():
 @pytest.mark.parametrize(("factory_name", "factory"), GATE_FACTORIES)
 def test_zyz_unitary(factory_name: str, factory) -> None:
     gate = factory(0)
-    unitary = gate.matrix
+    unitary = gate.matrix.dense()
     theta, phi, gamma = _zyz_from_unitary(unitary)
-    reconstructed = U3(0, theta=theta, phi=phi, gamma=gamma).matrix
+    reconstructed = U3(0, theta=theta, phi=phi, gamma=gamma).matrix.dense()
     assert np.allclose(unitary, reconstructed), f"ZYZ reconstruction failed for {factory_name}"
 
 
@@ -662,7 +663,7 @@ def test_adjoint_of_gate(factory_name: str, factory) -> None:
     gate = factory(0)
     adjoint_gate, phase = _adjoint_of(gate)
     # The reported phase must make the factorisation exact, not merely equal up to a global phase.
-    assert np.allclose(gate.matrix.conj().T, np.exp(1j * phase) * adjoint_gate.matrix), (
+    assert np.allclose(gate.matrix.dense().conj().T, np.exp(1j * phase) * adjoint_gate.matrix.dense()), (
         f"Adjoint computation failed for {factory_name}"
     )
 
@@ -671,15 +672,15 @@ def test_adjoint_of_gate(factory_name: str, factory) -> None:
 def test_sqrt_of_gate(factory_name: str, factory) -> None:
     gate = factory(0)
     sqrt_gate, phase = _sqrt_of(gate)
-    square_root = np.exp(1j * phase) * sqrt_gate.matrix
+    square_root = np.exp(1j * phase) * sqrt_gate.matrix.dense()
     # V · V must reproduce the gate exactly; a leftover global phase becomes a relative phase under a control.
-    assert np.allclose(gate.matrix, square_root @ square_root), f"Sqrt computation failed for {factory_name}"
+    assert np.allclose(gate.matrix.dense(), square_root @ square_root), f"Sqrt computation failed for {factory_name}"
 
 
 def test_sqrt_of_gate_errors():
     custom_matrix = np.array([[0, 1], [1, 0]], dtype=complex)  # X gate
     custom_gate = MagicMock(spec=BasicGate)
-    custom_gate.matrix = custom_matrix
+    custom_gate.matrix = QTensor(custom_matrix)
     custom_gate.qubits = (
         0,
         1,
@@ -692,11 +693,11 @@ def test_sqrt_of_gate_errors():
 def test_adjoint_of_generic_gate():
     custom_matrix = np.array([[0, 1], [1, 0]], dtype=complex)  # X gate
     custom_gate = MagicMock(spec=BasicGate)
-    custom_gate.matrix = custom_matrix
+    custom_gate.matrix = QTensor(custom_matrix)
     custom_gate.qubits = (0,)
     custom_gate.nqubits = 1
     adjoint_gate, phase = _adjoint_of(custom_gate)
-    assert np.allclose(custom_matrix.conj().T, np.exp(1j * phase) * adjoint_gate.matrix), (
+    assert np.allclose(custom_matrix.conj().T, np.exp(1j * phase) * adjoint_gate.matrix.dense()), (
         "Adjoint computation failed for generic gate"
     )
 
@@ -704,7 +705,7 @@ def test_adjoint_of_generic_gate():
 def test_adjoint_of_generic_multi_qubit_gate():
     custom_matrix = np.array([[0, 1], [1, 0]], dtype=complex)  # X gate
     custom_gate = MagicMock(spec=BasicGate)
-    custom_gate.matrix = custom_matrix
+    custom_gate.matrix = QTensor(custom_matrix)
     custom_gate.qubits = (
         0,
         1,

@@ -1055,8 +1055,7 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
         // Get the matrix (if it's not a measurement, since those don't have matrices)
         SparseMatrix base_matrix;
         if (gate_type_str != "M") {
-            py::buffer matrix = py_gate.attr("matrix");
-            base_matrix = from_numpy(matrix, atol);
+            base_matrix = from_spmatrix(py_gate.attr("matrix").attr("data"), atol);
         } else {
             base_matrix = SparseMatrix(2, 2);
             base_matrix.coeffRef(0, 0) = 1.0;
