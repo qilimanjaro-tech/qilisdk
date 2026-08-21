@@ -82,8 +82,9 @@ def test_qilisim_backend_bit_flip_two_qubits_sampling(backend_class):
     assert result.get_samples() == {"01": 100}
 
 
+@pytest.mark.parametrize("backend_class", backends)
 @pytest.mark.parametrize("gate", [SWAP(0, 1), CNOT(0, 1)])
-def test_qilisim_backend_per_qubit_noise_on_multi_qubit_gate(gate):
+def test_qilisim_backend_per_qubit_noise_on_multi_qubit_gate(gate, backend_class):
     # Noise attached to a single qubit must be applied to that qubit alone, whether it is a target
     # or a control of the gate, and must not spread to the gate's other qubits.
     circuit = Circuit(nqubits=2)
@@ -92,13 +93,14 @@ def test_qilisim_backend_per_qubit_noise_on_multi_qubit_gate(gate):
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=1.0), qubits=[0])
 
-    backend = QiliSim(noise_model=noise_model, **args_per_backend[QiliSim])
+    backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
     result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
     assert result.get_samples() == {"10": 100}
 
 
-def test_qilisim_backend_per_qubit_noise_skips_untouched_gates():
+@pytest.mark.parametrize("backend_class", backends)
+def test_qilisim_backend_per_qubit_noise_skips_untouched_gates(backend_class):
     # The gate does not act on the noisy qubit, so no noise is applied at all.
     circuit = Circuit(nqubits=2)
     circuit.add(X(1))
@@ -106,13 +108,14 @@ def test_qilisim_backend_per_qubit_noise_skips_untouched_gates():
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=1.0), qubits=[0])
 
-    backend = QiliSim(noise_model=noise_model, **args_per_backend[QiliSim])
+    backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
     result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
     assert result.get_samples() == {"01": 100}
 
 
-def test_qilisim_backend_global_noise_on_multi_qubit_gate():
+@pytest.mark.parametrize("backend_class", backends)
+def test_qilisim_backend_global_noise_on_multi_qubit_gate(backend_class):
     # Global noise applies independently to every qubit the gate acts on, flipping both of them.
     circuit = Circuit(nqubits=2)
     circuit.add(SWAP(0, 1))
@@ -120,10 +123,22 @@ def test_qilisim_backend_global_noise_on_multi_qubit_gate():
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=1.0))
 
-    backend = QiliSim(noise_model=noise_model, **args_per_backend[QiliSim])
+    backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
     result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
     assert result.get_samples() == {"11": 100}
+
+
+def test_cuda_backend_swap_without_noise_is_unchanged():
+    # CUDA-specific: without a noise model the SWAP gate keeps using the CUDA-Q built-in operation
+    # rather than the custom one the noisy path installs.
+    circuit = Circuit(nqubits=2)
+    circuit.add(X(0))
+    circuit.add(SWAP(0, 1))
+
+    result = CudaBackend().execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
+
+    assert result.get_samples() == {"01": 100}
 
 
 @pytest.mark.parametrize("backend_class", backends)
