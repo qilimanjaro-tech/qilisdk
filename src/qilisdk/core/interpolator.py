@@ -107,6 +107,7 @@ class Interpolator(Parameterizable):
         time_dict: TimeDict,
         interpolation: Interpolation = Interpolation.LINEAR,
         nsamples: int = 100,
+        extrapolate: bool = False,
     ) -> None:
         """Initialize an interpolator over discrete points or intervals.
 
@@ -114,6 +115,10 @@ class Interpolator(Parameterizable):
             time_dict (TimeDict): Mapping from time points or intervals to coefficients or callables.
             interpolation (Interpolation): Interpolation rule between provided points (``LINEAR`` or ``STEP``).
             nsamples (int): Number of samples used to expand interval definitions.
+            extrapolate (bool): How to evaluate times outside the defined range. If ``False`` (the default) the
+                first and last coefficients are held constant outside the range, and a warning is issued the first
+                time this happens. If ``True``, the slope of the first/last linear segment is extended instead
+                (only meaningful for ``LINEAR`` interpolation).
 
         Raises:
             ValueError: If the time intervals contain a number of points different than 2.
@@ -126,6 +131,8 @@ class Interpolator(Parameterizable):
         )
         self._interpolation = interpolation
         self._time_dict: dict[ParameterizedNumber, ParameterizedNumber] = {}
+        self._extrapolate = extrapolate
+        self._warned_extrapolation = False
         self._current_time = Parameter("t", 0)
         self._total_time: float | None = None
         self.iter_time_step = 0
@@ -221,6 +228,17 @@ class Interpolator(Parameterizable):
                 self._time_scale_cache = 1.0
 
         return self._time_scale_cache
+
+    @property
+    def extrapolate(self) -> bool:
+        """
+        Return whether coefficients are extrapolated outside the defined time range.
+
+        Returns:
+            bool: ``True`` if the first/last segment slope is extended, ``False`` if the first/last coefficient is
+                held constant.
+        """
+        return self._extrapolate
 
     @property
     def tlist(self) -> list[ParameterizedNumber]:
@@ -519,6 +537,19 @@ class Interpolator(Parameterizable):
         self._cached_time[time_step * factor] = result
         return result
 
+    def _warn_no_extrapolation(self) -> None:
+        """
+        Warn (once per interpolator) that a coefficient is being evaluated outside its defined time range without extrapolation.
+        """
+        if self._warned_extrapolation or self._tlist is None or len(self._tlist) < 2:  # ruff: ignore[magic-value-comparison]
+            return
+        self._warned_extrapolation = True
+        logger.warning(
+            "[Interpolator] Coefficient assumed constant outside its defined time range: [{},  {}].",
+            self._get_value(self._tlist[0]),
+            self._get_value(self._tlist[-1]),
+        )
+
     def _get_coefficient_expression_step(self, time_step: float) -> Number | Expression | Parameter:
         """
         Return the step-interpolated coefficient expression for ``time_step``.
@@ -531,7 +562,11 @@ class Interpolator(Parameterizable):
         """
         self._tlist = self._generate_tlist()
         prev_indx = bisect_right(self._tlist, time_step, key=self._get_value) - 1
-        prev_indx = -1 if prev_indx >= len(self._tlist) else prev_indx
+        if prev_indx < 0:
+            self._warn_no_extrapolation()
+            prev_indx = 0
+        elif time_step > self._get_value(self._tlist[-1]):
+            self._warn_no_extrapolation()
         prev_time_step = self._tlist[prev_indx]
         return self._time_dict[prev_time_step]
 
@@ -582,16 +617,18 @@ class Interpolator(Parameterizable):
         next_expr = self._time_dict[next_idx] if has_next else 0
 
         if not has_prev and has_next:
-            if len(self._tlist) == 1:
-                return next_expr
             first_idx = self._tlist[0]
+            if len(self._tlist) == 1 or not self._extrapolate:
+                self._warn_no_extrapolation()
+                return self._time_dict[first_idx]
             second_idx = self._tlist[1]
             return _linear_value(first_idx, self._time_dict[first_idx], second_idx, self._time_dict[second_idx])
 
         if not has_next and has_prev:
-            if len(self._tlist) == 1:
-                return prev_expr
             last_idx = self._tlist[-1]
+            if len(self._tlist) == 1 or not self._extrapolate:
+                self._warn_no_extrapolation()
+                return self._time_dict[last_idx]
             penultimate_idx = self._tlist[-2]
             return _linear_value(penultimate_idx, self._time_dict[penultimate_idx], last_idx, self._time_dict[last_idx])
 

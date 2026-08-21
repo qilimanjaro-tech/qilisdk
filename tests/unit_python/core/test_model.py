@@ -1016,6 +1016,20 @@ def test_qubo_model_to_qubo():
     assert q.qubo_objective.term == q.to_qubo().qubo_objective.term
 
 
+def test_model_to_qubo_with_default_bitwise_encoding():
+    """A variable with the default (Bitwise) encoding needs no encoding constraint, so to_qubo() must work."""
+    m = Model("m")
+    v = Variable("n", Domain.POSITIVE_INTEGER, bounds=(0, 5))
+    b = BinaryVariable("b")
+    m.set_objective(v + b)
+
+    q = m.to_qubo()
+
+    assert not any(label.endswith("_encoding_constraint") for label in q.lagrange_multipliers)
+    # 3 binary variables encode n in [0, 5], plus b itself.
+    assert len(q.variables()) == 4
+
+
 def test_qubo_model_evaluation():
     m = QUBO("test")
     v = Variable("v", Domain.POSITIVE_INTEGER, (0, 10), encoding=OneHot)

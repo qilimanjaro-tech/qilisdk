@@ -48,6 +48,7 @@ Key arguments
     - or a callable returning a coefficient. This callable can take a parameter ``t`` that will be replaced by time. Moreover, any other parameters passed to this callable need to have a default value or have their value specified in the ``**kwargs``.
 - **interpolation** (:class:`~qilisdk.core.interpolator.Interpolation`): ``LINEAR`` (default) or ``STEP`` behavior between provided points.
 - **total_time** (float | Parameter | Expression | None): Optional max time that rescales all time points while preserving relative positions.
+- **extrapolate** (bool): Whether to extrapolate a coefficient outside its own time points. Default is False, which means that the coefficient will stay constant outside its own time points.
 
 .. note::
 

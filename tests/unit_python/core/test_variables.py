@@ -354,9 +354,10 @@ def test_hobo_num_binary_and_check_valid():
     assert var.evaluate({var: [0, 1, 1]}) == 6
 
 
-def test_encoding_constraint_not_implemented():
-    with pytest.raises(NotImplementedError):
-        Bitwise.encoding_constraint(Variable("v3", Domain.INTEGER, bounds=(0, 1)))
+def test_encoding_constraint_not_needed_for_bitwise():
+    # The Bitwise encoding has no invalid binary strings, so it needs no encoding constraint.
+    assert Bitwise.encoding_constraint(Variable("v3", Domain.INTEGER, bounds=(0, 1))) is None
+    assert Variable("v3b", Domain.POSITIVE_INTEGER, bounds=(0, 5)).encoding_constraint() is None
     # OneHot and DomainWall constraints produce Comparison
     var = Variable("v4", Domain.INTEGER, bounds=(0, 2), encoding=DomainWall)
     cons = DomainWall.encoding_constraint(var)

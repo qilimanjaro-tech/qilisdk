@@ -279,6 +279,7 @@ def test_interpolator_get_coefficient(monkeypatch):
     interp = Interpolator(
         points,
         Interpolation.LINEAR,
+        extrapolate=True,
     )
 
     # make it so we don't cache the time scaling between calls
@@ -302,6 +303,7 @@ def test_interpolator_get_coefficient_expression(monkeypatch):
     interp = Interpolator(
         points,
         Interpolation.LINEAR,
+        extrapolate=True,
     )
     interp.set_max_time(5)
 
@@ -354,6 +356,7 @@ def test_interpolator_get_linear(monkeypatch):
     interp = Interpolator(
         points,
         Interpolation.LINEAR,
+        extrapolate=True,
     )
     interp.set_parameter_values([0, 0])
     with pytest.raises(ValueError, match="Ambiguous evaluation"):
@@ -414,6 +417,7 @@ def test_interpolator_weird(monkeypatch):
     interp = Interpolator(
         points,
         Interpolation.LINEAR,
+        extrapolate=True,
     )
     coeff_1 = interp._get_coefficient_expression_linear(1)
     assert coeff_1 == 1
@@ -529,3 +533,83 @@ def test_add_time_point_with_scaling():
     expected_items = {(0, 0), (2.5, 3), (5, 10)}
     assert set(interp._time_dict.items()) == expected_time_dict
     assert set(interp.items()) == expected_items
+
+
+def test_interpolator_holds_endpoints_outside_range(monkeypatch):
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    interp = Interpolator({2: 1.0, 4: 0.0}, Interpolation.LINEAR)
+
+    # before the first point the first coefficient is held, after the last point the last one is
+    assert interp[0] == 1.0
+    assert interp[1] == 1.0
+    assert interp[6] == 0.0
+    assert interp[100] == 0.0
+
+    # only warned about once, even though the range was left several times
+    assert len(warnings) == 1
+    assert "assumed constant outside its defined time range" in warnings[0]
+
+
+def test_interpolator_extrapolates_when_requested(monkeypatch):
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    interp = Interpolator({2: 1.0, 4: 0.0}, Interpolation.LINEAR, extrapolate=True)
+
+    assert np.isclose(interp[0], 2.0)
+    assert np.isclose(interp[6], -1.0)
+    assert not warnings
+
+
+def test_step_interpolator_holds_endpoints_outside_range(monkeypatch):
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    interp = Interpolator({2: 1.0, 4: 0.0}, Interpolation.STEP)
+
+    # STEP agrees with LINEAR outside the range: the first/last coefficient is held, not wrapped around
+    assert interp[0] == 1.0
+    assert interp[1] == 1.0
+    assert interp[6] == 0.0
+    assert interp[100] == 0.0
+
+    assert len(warnings) == 1
+    assert "assumed constant outside its defined time range" in warnings[0]
+
+
+def test_step_interpolator_ignores_extrapolate(monkeypatch):
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    # extrapolation is only meaningful for LINEAR, so STEP still holds the endpoints constant
+    interp = Interpolator({2: 1.0, 4: 0.0}, Interpolation.STEP, extrapolate=True)
+
+    assert interp.extrapolate
+    assert interp[0] == 1.0
+    assert interp[6] == 0.0
+    assert len(warnings) == 1
+
+
+def test_step_interpolator_single_point_holds_without_warning(monkeypatch):
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    interp = Interpolator({2: 1.5}, Interpolation.STEP)
+
+    assert interp[0] == 1.5
+    assert interp[10] == 1.5
+    assert not warnings
+
+
+def test_interpolator_single_point_holds_without_warning(monkeypatch):
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    interp = Interpolator({2: 1.5}, Interpolation.LINEAR)
+
+    # a single point defines a constant coefficient, so evaluating it anywhere is not worth a warning
+    assert interp[0] == 1.5
+    assert interp[10] == 1.5
+    assert not warnings

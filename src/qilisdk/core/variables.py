@@ -146,8 +146,8 @@ class Encoding(ABC):
 
     @staticmethod
     @abstractmethod
-    def encoding_constraint(var: Variable, precision: float = 1e-2) -> Comparison:
-        """Return a constraint that ensures the encoding is respected."""
+    def encoding_constraint(var: Variable, precision: float = 1e-2) -> Comparison | None:
+        """Return a constraint that ensures the encoding is respected, or None if the encoding needs none."""
 
     @staticmethod
     @abstractmethod
@@ -254,8 +254,9 @@ class Bitwise(Encoding):
         return out
 
     @staticmethod
-    def encoding_constraint(var: Variable, precision: float = 1e-2) -> Comparison:
-        raise NotImplementedError("Bitwise encoding constraints are not supported at the moment")
+    def encoding_constraint(var: Variable, precision: float = 1e-2) -> Comparison | None:
+        # Every binary string is a valid Bitwise encoding, so no constraint is needed.
+        return None
 
     @staticmethod
     def num_binary_equivalent(var: Variable, precision: float = 1e-2) -> int:
@@ -816,8 +817,8 @@ class Variable(BaseVariable):
         """
         return self.encoding.check_valid(binary_list)
 
-    def encoding_constraint(self) -> Comparison:
-        """Return a constraint that ensures the variable's encoding is respected."""
+    def encoding_constraint(self) -> Comparison | None:
+        """Return a constraint that ensures the variable's encoding is respected, or None if it needs none."""
         return self.encoding.encoding_constraint(self, precision=self._precision)
 
 
