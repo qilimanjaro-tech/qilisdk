@@ -278,12 +278,12 @@ def test_model_knapsack_brute_force_solution():
     # items: value=5 weight=3, value=4 weight=2; max_weight=3
     # optimal: b0=1 only (value=5, weight=3); taking both violates constraint (weight=5>3)
     m = Model.knapsack(values=[5, 4], weights=[3, 2], max_weight=3)
-    _, sample = BruteForceSolver().solve(m)
+    result = BruteForceSolver().solve(m)
     by_label = {v.label: v for v in m.variables()}
     b0, b1 = by_label["b0"], by_label["b1"]
-    assert 3 * sample[b0] + 2 * sample[b1] <= 3
-    assert sample[b0] == 1
-    assert sample[b1] == 0
+    assert 3 * result.sample[b0] + 2 * result.sample[b1] <= 3
+    assert result.sample[b0] == 1
+    assert result.sample[b1] == 0
 
 
 def test_model_random_ising_structure():
@@ -333,8 +333,8 @@ def test_model_factoring_basic():
     assert len(m.constraints) == 1
     assert m.constraints[0].label == "factoring"
     # brute-force should find factors (6 = 2*3) with the constraint satisfied (penalty 0)
-    results, _ = BruteForceSolver().solve(m)
-    assert results["factoring"] == 0
+    result = BruteForceSolver().solve(m)
+    assert result.results["factoring"] == 0
 
 
 def test_model_factoring_custom_label():
@@ -413,8 +413,8 @@ def test_model_max_cut_brute_force_solution():
     # Path graph 0-1-2: max cut = 2 (put nodes 0,2 on one side, node 1 on the other).
     # evaluate() negates MAXIMIZE objectives, so brute_force returns the negated value (-2).
     m = Model.max_cut(edges=[(0, 1), (1, 2)])
-    results, _ = BruteForceSolver().solve(m)
-    obj_val = results[m.objective.label]
+    result = BruteForceSolver().solve(m)
+    obj_val = result.objective
     assert obj_val == -2
 
 
@@ -444,12 +444,12 @@ def test_model_graph_coloring_one_color_constraints():
 def test_model_graph_coloring_brute_force_solution():
     # The triangle is 3-colorable, so the optimal conflict objective is 0.
     m = Model.graph_coloring(edges=[(0, 1), (1, 2), (0, 2)], num_colors=3)
-    results, sample = BruteForceSolver().solve(m)
-    assert results[m.objective.label] == 0
+    result = BruteForceSolver().solve(m)
+    assert result.objective == 0
     # every vertex receives exactly one color
     by_label = {v.label: v for v in m.variables()}
     for v in range(3):
-        assert sum(sample[by_label[f"x{v}_{k}"]] for k in range(3)) == 1
+        assert sum(result.sample[by_label[f"x{v}_{k}"]] for k in range(3)) == 1
 
 
 def test_model_travelling_salesman_basic():
@@ -680,35 +680,35 @@ def test_brute_force_minimize():
     m = Model("bf_min")
     x, y = BinaryVariable("x"), BinaryVariable("y")
     m.set_objective(x + 2 * y, sense=ObjectiveSense.MINIMIZE)
-    results, sample = BruteForceSolver().solve(m)
-    assert sample[x] == 0
-    assert sample[y] == 0
-    assert results[m.objective.label] == 0
+    result = BruteForceSolver().solve(m)
+    assert result.sample[x] == 0
+    assert result.sample[y] == 0
+    assert result.objective == 0
 
 
 def test_brute_force_maximize():
     m = Model("bf_max")
     x, y = BinaryVariable("x"), BinaryVariable("y")
     m.set_objective(x + 2 * y, sense=ObjectiveSense.MAXIMIZE)
-    results, sample = BruteForceSolver().solve(m)
-    assert sample[x] == 1
-    assert sample[y] == 1
+    result = BruteForceSolver().solve(m)
+    assert result.sample[x] == 1
+    assert result.sample[y] == 1
     # evaluate() negates MAXIMIZE objectives, so the returned value is -(x + 2y) = -3.
-    assert results[m.objective.label] == -3
+    assert result.objective == -3
 
 
 def test_brute_force_respects_constraints():
     # Without constraint handling, brute_force would greedily pick all items (value=18, weight=14)
     # which violates max_weight=5. The correct answer is b0=1,b1=1 (value=7, weight=5).
     m = Model.knapsack(values=[3, 4, 5, 6], weights=[2, 3, 4, 5], max_weight=5)
-    _, sample = BruteForceSolver().solve(m)
+    result = BruteForceSolver().solve(m)
     by_label = {v.label: v for v in m.variables()}
     b0, b1, b2, b3 = by_label["b0"], by_label["b1"], by_label["b2"], by_label["b3"]
-    assert 2 * sample[b0] + 3 * sample[b1] + 4 * sample[b2] + 5 * sample[b3] <= 5
-    assert sample[b0] == 1
-    assert sample[b1] == 1
-    assert sample[b2] == 0
-    assert sample[b3] == 0
+    assert 2 * result.sample[b0] + 3 * result.sample[b1] + 4 * result.sample[b2] + 5 * result.sample[b3] <= 5
+    assert result.sample[b0] == 1
+    assert result.sample[b1] == 1
+    assert result.sample[b2] == 0
+    assert result.sample[b3] == 0
 
 
 def test_brute_force_returns_evaluate_dict():
@@ -716,18 +716,18 @@ def test_brute_force_returns_evaluate_dict():
     x = BinaryVariable("x")
     m.set_objective(x + 0, sense=ObjectiveSense.MINIMIZE)
     m.add_constraint("must_be_zero", EQ(x, 0))
-    results, _ = BruteForceSolver().solve(m)
-    # results should contain both the objective label and the constraint label
-    assert m.objective.label in results
-    assert "must_be_zero" in results
+    result = BruteForceSolver().solve(m)
+    # result.results should contain both the objective label and the constraint label
+    assert m.objective.label in result.results
+    assert "must_be_zero" in result.results
 
 
 def test_brute_force_with_bounded_variable():
     m = Model("bf_bounded")
     v = Variable("v", Domain.POSITIVE_INTEGER, bounds=(0, 3))
     m.set_objective(v + 0, sense=ObjectiveSense.MINIMIZE)
-    _, sample = BruteForceSolver().solve(m)
-    assert sample[v] == 0
+    result = BruteForceSolver().solve(m)
+    assert result.sample[v] == 0
 
 
 def test_brute_force_raises_for_unsupported_variable():
@@ -1469,3 +1469,95 @@ def test_qubo_copy_includes_encoding_constraints():
     q._encoding_constraints["enc"] = Constraint("enc", EQ(b, 0))
     q2 = copy.copy(q)
     assert "enc" in q2._encoding_constraints
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for the qubo_objective cache. The property memoizes an
+# expensive build and only rebuilds when the objective or the constraints
+# change. These tests populate the cache, then mutate the model, and assert the
+# next read reflects the change (i.e. the cache is not served stale), comparing
+# against an independently, freshly-built QUBO.
+# ---------------------------------------------------------------------------
+
+
+def test_qubo_objective_cache_is_consistent_across_repeated_reads():
+    x = BinaryVariable("x")
+    y = BinaryVariable("y")
+    q = QUBO("q")
+    q.set_objective(2 * x + 3 * y)
+
+    first = q.qubo_objective
+    second = q.qubo_objective
+
+    # repeated reads without mutation must be consistent (and are served from cache)
+    assert first is second
+    assert first.term == second.term
+
+
+def test_qubo_objective_cache_refreshes_after_set_objective():
+    x = BinaryVariable("x")
+    y = BinaryVariable("y")
+
+    q = QUBO("q")
+    q.set_objective(2 * x)
+    before = q.qubo_objective.term  # populate the cache
+
+    q.set_objective(3 * y)  # replacing the objective must invalidate the cache
+    after = q.qubo_objective.term
+
+    assert after != before
+
+    reference = QUBO("ref")
+    reference.set_objective(3 * y)
+    assert after == reference.qubo_objective.term
+
+
+def test_qubo_objective_cache_refreshes_after_add_constraint():
+    x = BinaryVariable("x")
+    y = BinaryVariable("y")
+
+    q = QUBO("q")
+    q.set_objective(x + y)
+    before = q.qubo_objective.term  # populate the cache without any penalties
+
+    q.add_constraint("c", EQ(x + y, 1))  # folds a penalty into the objective
+    after = q.qubo_objective.term
+
+    assert after != before  # the penalty must now be part of the objective
+
+    reference = QUBO("ref")
+    reference.set_objective(x + y)
+    reference.add_constraint("c", EQ(x + y, 1))
+    assert after == reference.qubo_objective.term
+
+
+def test_qubo_objective_cache_reflects_multiple_mutations_in_sequence():
+    x = BinaryVariable("x")
+    y = BinaryVariable("y")
+
+    q = QUBO("q")
+    q.set_objective(x + y)
+    _ = q.qubo_objective  # populate
+    q.add_constraint("c1", EQ(x, 0))
+    _ = q.qubo_objective  # populate again, now with one constraint
+    q.add_constraint("c2", EQ(y, 1))
+    final = q.qubo_objective.term
+
+    reference = QUBO("ref")
+    reference.set_objective(x + y)
+    reference.add_constraint("c1", EQ(x, 0))
+    reference.add_constraint("c2", EQ(y, 1))
+    assert final == reference.qubo_objective.term
+
+
+def test_qubo_objective_cache_matches_uncached_read_on_encoded_variable():
+    # A QUBO with an encoded (integer) variable exercises the already-binary
+    # objective path; the cached read must equal a fresh to_qubo() build.
+    q = QUBO("q")
+    v = Variable("v", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
+    q.set_objective(v + v**2)
+    q.add_constraint("c", EQ(v, 1))
+
+    cached = q.qubo_objective.term
+    assert q.qubo_objective.term == cached  # stable across reads
+    assert cached == q.to_qubo().qubo_objective.term
