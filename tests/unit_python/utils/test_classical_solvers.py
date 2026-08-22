@@ -17,8 +17,9 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
+from qilisdk.core.comparison import EQ
 from qilisdk.core.model import Model, ObjectiveSense
-from qilisdk.core.variables import EQ, BinaryVariable, Domain, Operation, SpinVariable, Term, Variable
+from qilisdk.core.variables import BinaryVariable, Domain, SpinVariable, Variable
 from qilisdk.utils.classical_solvers import BruteForceSolver, ClassicalSolver, ScipySolver
 from qilisdk.utils.classical_solvers.base_solver import _assert_real, _variable_bounds
 from qilisdk.utils.classical_solvers.scipy_solver import _decode_value
@@ -79,7 +80,7 @@ def test_brute_force_integer_variable_enumeration():
 def test_brute_force_unsupported_variable_raises():
     s = SpinVariable("s")
     m = Model("spin_model")
-    m.set_objective(Term([s], Operation.ADD))
+    m.set_objective(s)
     solver = BruteForceSolver()
     with pytest.raises(ValueError, match="not supported"):
         solver.solve(m)
@@ -207,7 +208,7 @@ def test_scipy_solver_real_variable():
 def test_scipy_solver_unsupported_variable_raises():
     s = SpinVariable("s")
     m = Model("spin_model")
-    m.set_objective(Term([s], Operation.ADD))
+    m.set_objective(s)
     solver = ScipySolver()
     with pytest.raises(ValueError, match="not supported"):
         solver.solve(m)

@@ -18,16 +18,16 @@ import re
 from abc import ABC
 from collections import defaultdict
 from itertools import product
-from typing import TYPE_CHECKING, Callable, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 from loguru import logger
 from scipy.sparse import csr_matrix, kron, spmatrix
 
+from qilisdk.core.expression import Expression
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
 from qilisdk.core.types import Number
-from qilisdk.core.variables import BaseVariable, Parameter, Term
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.utils.visualization.style import HamiltonianStyle
@@ -36,10 +36,12 @@ from qilisdk.yaml import yaml
 from .exceptions import InvalidHamiltonianOperation
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
+
+    from qilisdk.core.variables import Parameter
 
 _DIVISION_BY_OPERATORS_MESSAGE = "Division by operators is not supported"
-_GENERIC_VARIABLE_IN_TERM_MESSAGE = "Term provided contains generic variables that are not Parameter."
+_GENERIC_VARIABLE_IN_TERM_MESSAGE = "Expression provided contains generic variables that are not Parameter."
 _GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE = (
     "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
 )
@@ -277,12 +279,14 @@ class Hamiltonian(Parameterizable):
 
     ZERO: int = 0
 
-    def __init__(self, elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] | None = None) -> None:
+    def __init__(
+        self, elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] | None = None
+    ) -> None:
         """
         Build a Hamiltonian from a mapping of Pauli operator products to coefficients.
 
         Args:
-            elements (dict[tuple[PauliOperator, ...], complex | Term | Parameter], optional):
+            elements (dict[tuple[PauliOperator, ...], complex | Expression | Parameter], optional):
                 Mapping from operator tuples to numerical coefficients or symbolic parameters. For example:
 
                 .. code-block:: python
@@ -298,21 +302,14 @@ class Hamiltonian(Parameterizable):
             ValueError: If the provided coefficients include generic variables instead of parameters.
         """
         super().__init__()
-        self._elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(complex)
+        self._elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
         if elements:
             for key, val in elements.items():
-                if isinstance(val, Term):
-                    for v in val.variables():
-                        if isinstance(v, Parameter):
-                            self._add_parameter(v.label, v)
-                        else:
-                            raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
-                elif isinstance(val, BaseVariable):
-                    if isinstance(val, Parameter):
-                        self._add_parameter(val.label, val)
-
-                    else:
+                if isinstance(val, Expression):
+                    if not val.is_parameterized():
                         raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
+                    for parameter in val.free_parameters():
+                        self._add_parameter(parameter.label, parameter)
                 self._elements[key] += val
             self.simplify()
 
@@ -326,12 +323,7 @@ class Hamiltonian(Parameterizable):
     @property
     def elements(self) -> dict[tuple[PauliOperator, ...], complex]:
         """Return the stored operator-coefficient mapping with symbolic terms evaluated."""
-        return {
-            k: (
-                v if isinstance(v, complex) else (v.evaluate({}) if isinstance(v, Term) else v.evaluate())  # ty:ignore[unresolved-attribute]
-            )
-            for k, v in self._elements.items()
-        }
+        return {k: (v if isinstance(v, (int, float, complex)) else v.evaluate({})) for k, v in self._elements.items()}
 
     def simplify(self) -> Hamiltonian:
         """Simplify the Hamiltonian expression by removing near-zero terms and accumulating constant terms.
@@ -483,7 +475,7 @@ class Hamiltonian(Parameterizable):
                 H.draw()
         """
         logger.debug("[Hamiltonian] Drawing Hamiltonian with style: {} and filepath: {}", style, filepath)
-        from qilisdk.utils.visualization.hamiltonian_renderers import (  # ruff:ignore[import-outside-top-level]
+        from qilisdk.utils.visualization.hamiltonian_renderers import (  # ruff: ignore[import-outside-top-level]
             MatplotlibHamiltonianRenderer,
         )
 
@@ -599,18 +591,18 @@ class Hamiltonian(Parameterizable):
 
         return " ".join(parts)
 
-    def get_commuting_partitions(self) -> list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]:
+    def get_commuting_partitions(self) -> list[dict[tuple[PauliOperator, ...], complex | Expression | Parameter]]:
         """
         Split the Hamiltonian into a list of partitions, each containing commuting terms.
 
         For now this is a greedy algorithm, but a smarter graph-coloring approach could be used later.
 
         Returns:
-            list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]:
+            list[dict[tuple[PauliOperator, ...], complex | Expression | Parameter]]:
                 A list of dictionaries, each representing a partition of the Hamiltonian containing commuting terms.
         """
         logger.debug("[Hamiltonian] Partitioning Hamiltonian into commuting groups")
-        partitions: list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]] = []
+        partitions: list[dict[tuple[PauliOperator, ...], complex | Expression | Parameter]] = []
 
         # Check each term with each partition
         for term, coeff in self.elements.items():
@@ -668,7 +660,7 @@ class Hamiltonian(Parameterizable):
 
         # Prebuild per-qubit operator “letters” so we can construct full strings quickly
 
-        H = Hamiltonian()  # start additive Hamiltonian expression
+        H = Hamiltonian()
         # Full Pauli basis (includes identity on any subset automatically)
         for word in product((0, 1, 2, 3), repeat=n):
             # Compose the word into a QiliSDK operator acting on the proper qubits
@@ -679,10 +671,10 @@ class Hamiltonian(Parameterizable):
                 op = op * pauli_for[letter](q) if op != 0 else pauli_for[letter](q)
 
             # Convert to dense once; no padding needed because it spans all n qubits
-            P_dense = op.to_qtensor(n).dense()
+            dense_P = op.to_qtensor(n).dense()
 
             # Coefficient c_P = Tr(A P) / 2^n  (P is Hermitian)
-            c = norm * np.trace(A @ P_dense)
+            c = norm * np.trace(A @ dense_P)
 
             # Numerical safety: coefficients should be real for Hermitian A and P
             if abs(c.imag) < tol:
@@ -720,9 +712,7 @@ class Hamiltonian(Parameterizable):
         if hamiltonian_str == "0":
             return cls({})
 
-        elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(
-            complex
-        )  # TODO (ameer): the parsing doesn't support Term and Parameters
+        elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
 
         # If there's no initial +/- sign, prepend '+ ' for easier splitting
         if not hamiltonian_str.startswith("+") and not hamiltonian_str.startswith("-"):
@@ -775,7 +765,8 @@ class Hamiltonian(Parameterizable):
                 if coeff_str.startswith("(") and coeff_str.endswith(")"):
                     coeff_str = coeff_str[1:-1]
                 coeff_val = complex(coeff_str) * sign
-                words = words[1:]  # consume this word
+                # consume this word
+                words = words[1:]
             else:
                 # No explicit coefficient => ±1
                 coeff_val = complex(sign)
@@ -845,7 +836,7 @@ class Hamiltonian(Parameterizable):
         Returns:
             bool: ``True`` if the two Hamiltonians commute, ``False`` otherwise.
         """
-        residual: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(complex)
+        residual: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
         for ops1, c1 in self._elements.items():
             for ops2, c2 in h._elements.items():
                 if Hamiltonian._pauli_strings_commute(ops1, ops2):
@@ -885,9 +876,7 @@ class Hamiltonian(Parameterizable):
         n = self.nqubits
         d = 2**n
         t = self._elements.get((PauliI(0),), 0)
-        if isinstance(t, Parameter):
-            return t.evaluate() * d
-        if isinstance(t, Term):
+        if isinstance(t, Expression):
             return t.evaluate({}) * d
         return t * d
 
@@ -974,28 +963,28 @@ class Hamiltonian(Parameterizable):
 
     # ------- Public arithmetic operators --------
 
-    def __add__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
+    def __add__(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> Hamiltonian:
         out = copy.copy(self)
-        if isinstance(other, Term) and not other.is_parameterized_term():
+        if isinstance(other, Expression) and not other.is_parameterized():
             raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         out._add_inplace(other)
         return out.simplify()
 
-    def __radd__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
-        if isinstance(other, Term) and not other.is_parameterized_term():
+    def __radd__(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> Hamiltonian:
+        if isinstance(other, Expression) and not other.is_parameterized():
             raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         return self.__add__(other)
 
-    def __sub__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
-        if isinstance(other, Term) and not other.is_parameterized_term():
+    def __sub__(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> Hamiltonian:
+        if isinstance(other, Expression) and not other.is_parameterized():
             raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         out = copy.copy(self)
         out._sub_inplace(other)
         return out.simplify()
 
-    def __rsub__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
+    def __rsub__(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> Hamiltonian:
         # (other - self)
-        if isinstance(other, Term) and not other.is_parameterized_term():
+        if isinstance(other, Expression) and not other.is_parameterized():
             raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         out = copy.copy(other if isinstance(other, Hamiltonian) else Hamiltonian() + other)
         out._sub_inplace(self)
@@ -1004,15 +993,15 @@ class Hamiltonian(Parameterizable):
     def __neg__(self) -> Hamiltonian:
         return -1 * self
 
-    def __mul__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
-        if isinstance(other, Term) and not other.is_parameterized_term():
+    def __mul__(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> Hamiltonian:
+        if isinstance(other, Expression) and not other.is_parameterized():
             raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         out = copy.copy(self)
         out._mul_inplace(other)
         return out.simplify()
 
-    def __rmul__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
-        if isinstance(other, Term) and not other.is_parameterized_term():
+    def __rmul__(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> Hamiltonian:
+        if isinstance(other, Expression) and not other.is_parameterized():
             raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         if isinstance(other, Hamiltonian):
             out = copy.copy(other)
@@ -1034,7 +1023,7 @@ class Hamiltonian(Parameterizable):
     __imul__ = __mul__
     __itruediv__ = __truediv__
 
-    def _add_inplace(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> None:
+    def _add_inplace(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> None:
         if isinstance(other, Hamiltonian):
             # If it's empty, do nothing
             if not other.elements:
@@ -1052,18 +1041,16 @@ class Hamiltonian(Parameterizable):
                 return
             # Add the scalar to (I(0),)
             self._elements[PauliI(0),] += other
-        elif isinstance(other, (Term, Parameter)):
-            if isinstance(other, Term):
-                if not other.is_parameterized_term():
-                    raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
-                self._update_parameters({v.label: v for v in other if isinstance(v, Parameter)})
-            else:
-                self._add_parameter(other.label, other)
+        elif isinstance(other, Expression):
+            if not other.is_parameterized():
+                raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
+            for parameter in other.free_parameters():
+                self._add_parameter(parameter.label, parameter)
             self._elements[PauliI(0),] += other
         else:
             raise InvalidHamiltonianOperation(f"Invalid addition between Hamiltonian and {other.__class__.__name__}.")
 
-    def _sub_inplace(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> None:
+    def _sub_inplace(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> None:
         if isinstance(other, Hamiltonian):
             for key, val in other._elements.items():  # ruff: ignore[private-member-access]
                 self._elements[key] -= val
@@ -1074,20 +1061,18 @@ class Hamiltonian(Parameterizable):
             if abs(other) < get_settings().atol:
                 return
             self._elements[PauliI(0),] -= other
-        elif isinstance(other, (Term, Parameter)):
-            if isinstance(other, Term):
-                if not other.is_parameterized_term():
-                    raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
-                self._update_parameters({v.label: v for v in other if isinstance(v, Parameter)})
-            else:
-                self._add_parameter(other.label, other)
+        elif isinstance(other, Expression):
+            if not other.is_parameterized():
+                raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
+            for parameter in other.free_parameters():
+                self._add_parameter(parameter.label, parameter)
             self._elements[PauliI(0),] -= other
         else:
             raise InvalidHamiltonianOperation(
                 f"Invalid subtraction between Hamiltonian and {other.__class__.__name__}."
             )
 
-    def _mul_inplace(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> None:
+    def _mul_inplace(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> None:
         if isinstance(other, (int, float, complex)):
             # 0 short-circuit
             if abs(other) < get_settings().atol:
@@ -1102,13 +1087,11 @@ class Hamiltonian(Parameterizable):
                 self._elements[k] *= other
             return None
 
-        if isinstance(other, (Term, Parameter)):
-            if isinstance(other, Term):
-                if not other.is_parameterized_term():
-                    raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
-                self._update_parameters({v.label: v for v in other if isinstance(v, Parameter)})
-            else:
-                self._add_parameter(other.label, other)
+        if isinstance(other, Expression):
+            if not other.is_parameterized():
+                raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
+            for parameter in other.free_parameters():
+                self._add_parameter(parameter.label, parameter)
             for k in self._elements:
                 self._elements[k] *= other
             return None
@@ -1126,7 +1109,7 @@ class Hamiltonian(Parameterizable):
 
             # Check if 'other' is purely scalar identity => short-circuit
             if len(other.elements) == 1:
-                ((ops2, c2),) = other._elements.items()  # single item  # ruff: ignore[private-member-access]
+                ((ops2, c2),) = other._elements.items()  # ruff: ignore[private-member-access]
                 if len(ops2) == 1:
                     op2 = ops2[0]
                     if op2.name == "I" and op2.qubit == 0:
@@ -1134,7 +1117,7 @@ class Hamiltonian(Parameterizable):
                         return self._mul_inplace(c2)
 
             # Otherwise, we do the general multiply
-            new_dict: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(complex)
+            new_dict: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
             for ops1, c1 in self._elements.items():
                 for ops2, c2 in other._elements.items():  # ruff: ignore[private-member-access]
                     phase, new_ops = self._multiply_sets(ops1, ops2)
