@@ -45,8 +45,9 @@ class Ansatz(Circuit, ABC):
 @yaml.register_class
 class HardwareEfficientAnsatz(Ansatz):
     """
-    Hardware-efficient ansatz with `(layers + 1)` single-qubit blocks and ``layers``
-    entangling blocks.
+    Hardware-efficient ansatz with ``layers`` entangling blocks and, by default,
+    ``(layers + 1)`` single-qubit blocks: one before each entangling block plus one
+    one at the end, which can be disabled with ``final_rotation_layer=False``.
 
     Example:
         .. code-block:: python
@@ -78,6 +79,7 @@ class HardwareEfficientAnsatz(Ansatz):
         structure: Structure = "grouped",
         one_qubit_gate: Type[U1 | U2 | U3] = U1,
         two_qubit_gate: Type[CZ | CNOT] = CZ,
+        final_rotation_layer: bool = True,
     ) -> None:
         """
         Args:
@@ -91,6 +93,10 @@ class HardwareEfficientAnsatz(Ansatz):
                 interleaves them per qubit. Defaults to ``"grouped"``.
             one_qubit_gate (Type[U1 | U2 | U3], optional): Parameterised single-qubit gate class. Defaults to :class:`U1`.
             two_qubit_gate (Type[CZ | CNOT], optional): Entangling gate class. Defaults to :class:`CZ`.
+            final_rotation_layer (bool, optional): If ``True``, append a trailing single-qubit block after
+                the last entangling block, giving ``(layers + 1)`` parameterised blocks and a circuit that
+                ends on tunable rotations. If ``False``, the circuit ends on an entangling block and has
+                ``layers`` parameterised blocks. Defaults to ``True``.
 
         Raises:
             ValueError: If ``layers`` is negative or the connectivity definition is invalid.
@@ -105,6 +111,7 @@ class HardwareEfficientAnsatz(Ansatz):
         self._structure: Structure = "grouped" if structure.lower() == "grouped" else "interposed"
         self._one_qubit_gate: type[U1 | U2 | U3] = one_qubit_gate
         self._two_qubit_gate: type[CZ | CNOT] = two_qubit_gate
+        self._final_rotation_layer = bool(final_rotation_layer)
 
         self._build_circuit()
 
@@ -132,6 +139,11 @@ class HardwareEfficientAnsatz(Ansatz):
     def two_qubit_gate(self) -> type[CZ | CNOT]:
         """Two-qubit entangling gate class (CZ or CNOT)."""
         return self._two_qubit_gate
+
+    @property
+    def final_rotation_layer(self) -> bool:
+        """Whether a trailing single-qubit block is appended after the last entangling block."""
+        return self._final_rotation_layer
 
     def _normalize_connectivity(self, connectivity: Connectivity) -> list[tuple[int, int]]:
         """
@@ -169,7 +181,7 @@ class HardwareEfficientAnsatz(Ansatz):
     def _parameter_blocks(self) -> Iterator[dict[str, float]]:
         """Yield dictionaries initialised for each parameterised single-qubit gate in build order."""
         names = tuple(self.one_qubit_gate.PARAMETER_NAMES)
-        blocks = (self.layers + 1) * self.nqubits
+        blocks = (self.layers + 1 if self.final_rotation_layer else self.layers) * self.nqubits
 
         zero = dict.fromkeys(names, 0.0)
         for _ in range(blocks):
@@ -204,7 +216,7 @@ class HardwareEfficientAnsatz(Ansatz):
         # Parameter iterator covering all single-qubit blocks, in order
         parameter_iterator = iter(self._parameter_blocks())
 
-        # For each remaining layer: U -> E
+        # For each layer: U -> E
         if self.structure == "grouped":
             for _ in range(self.layers):
                 self._apply_single_qubit_block(parameter_iterator)
@@ -214,6 +226,10 @@ class HardwareEfficientAnsatz(Ansatz):
                 for q in range(self.nqubits):
                     self._apply_single_qubit(q, parameter_iterator)
                     self._apply_entanglers()
+
+        # Trailing single-qubit block so the circuit ends on tunable rotations
+        if self.final_rotation_layer:
+            self._apply_single_qubit_block(parameter_iterator)
 
 
 @yaml.register_class
