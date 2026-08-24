@@ -34,7 +34,7 @@ from qilisdk.core import Parameter, ket
 from qilisdk.core.interpolator import Interpolation
 from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.gates import CNOT, RX, SWAP, H, I, X, Z
+from qilisdk.digital.gates import CNOT, CZ, RX, SWAP, Controlled, H, I, X, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation
 from qilisdk.noise import (
     AmplitudeDamping,
@@ -127,6 +127,42 @@ def test_qilisim_backend_global_noise_on_multi_qubit_gate(backend_class):
     result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
     assert result.get_samples() == {"11": 100}
+
+
+@pytest.mark.parametrize("backend_class", backends)
+@pytest.mark.parametrize(("noisy_gate", "expected"), [(CNOT, {"11": 100}), (X, {"00": 100})])
+def test_per_gate_noise_on_controlled_gate(noisy_gate, expected, backend_class):
+    # A controlled gate is a gate of its own: the noise attached to it applies to every qubit it
+    # acts on, controls included, while the noise attached to its base gate does not apply at all.
+    circuit = Circuit(nqubits=2)
+    circuit.add(CNOT(0, 1))
+
+    noise_model = NoiseModel()
+    noise_model.add(BitFlip(probability=1.0), gate=noisy_gate)
+
+    backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
+    result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
+
+    assert result.get_samples() == expected
+
+
+@pytest.mark.parametrize("backend_class", backends)
+@pytest.mark.parametrize(
+    ("gate", "noisy_gate"), [(CNOT(0, 1), CNOT), (Controlled(0, basic_gate=X(1)), CNOT), (CZ(0, 1), CZ)]
+)
+def test_per_gate_per_qubit_noise_on_controlled_gate(gate, noisy_gate, backend_class):
+    # A controlled gate written as a generic Controlled is the same gate as its named type, and the
+    # noise attached to one of its qubits stays on that qubit, control included.
+    circuit = Circuit(nqubits=2)
+    circuit.add(gate)
+
+    noise_model = NoiseModel()
+    noise_model.add(BitFlip(probability=1.0), gate=noisy_gate, qubits=[0])
+
+    backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
+    result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
+
+    assert result.get_samples() == {"10": 100}
 
 
 def test_cuda_backend_swap_without_noise_is_unchanged():
