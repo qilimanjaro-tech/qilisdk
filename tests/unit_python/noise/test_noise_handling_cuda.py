@@ -21,10 +21,10 @@ pytest.importorskip("cudaq", reason="CUDA noise tests require the 'cudaq' option
 
 from qilisdk.analog import PauliX as pauli_x
 from qilisdk.analog import Schedule
-from qilisdk.backends.cuda_backend import CudaBackend, _to_cuda_noise, cudaq
+from qilisdk.backends.cuda_backend import _SWAP_OP_NAME, CudaBackend, _to_cuda_noise, cudaq
 from qilisdk.core import Parameter
 from qilisdk.core.qtensor import QTensor
-from qilisdk.digital import CNOT, RX, U1, Circuit, X
+from qilisdk.digital import CNOT, CZ, RX, SWAP, U1, Circuit, X
 from qilisdk.noise import (
     AmplitudeDamping,
     BitFlip,
@@ -115,6 +115,42 @@ def test_noise_model_to_cudaq_on_multi_qubit_gates():
     # amplitude damping is, and so is the bit flip, on the qubit it is attached to.
     assert len(cuda_noise_model.get_channels("x", [0])) == 2
     assert len(cuda_noise_model.get_channels("x", [1])) == 1
+
+
+def test_noise_model_to_cudaq_on_qubit_of_multi_qubit_gates():
+    backend = CudaBackend()
+    noise_model = NoiseModel()
+    noise_model.add(BitFlip(probability=1.0), qubits=[0])
+    noise_model.add(PhaseFlip(probability=1.0), gate=CZ)
+    circuit = Circuit(3)
+    circuit.add(X(1))
+    circuit.add(CNOT(0, 1))
+    circuit.add(CZ(1, 0))
+    circuit.add(SWAP(1, 2))
+    cuda_noise_model = backend._noise_model_to_cudaq(noise_model, circuit)
+
+    flip = np.array([[0, 1], [1, 0]], dtype=np.complex128)
+    identity = np.eye(2, dtype=np.complex128)
+
+    # On a multi-qubit gate the noise is embedded at the position of the qubit it is attached to,
+    # control included, and CUDA-Q orders the qubits of a channel with the gate's first qubit as the
+    # last tensor factor. The CNOT has qubit 0 as its control, so first, and the CZ as its target.
+    for gate_name, gate_qubits, expected in (
+        ("x", [0, 1], np.kron(identity, flip)),
+        ("z", [1, 0], np.kron(flip, identity)),
+    ):
+        channels = cuda_noise_model.get_channels(gate_name, gate_qubits)
+        assert len(channels) == 1
+        assert np.allclose(np.array(channels[0].get_ops()[0]), expected)
+
+    # The gates that do not act on the noisy qubit are left alone.
+    assert cuda_noise_model.get_channels(_SWAP_OP_NAME, [1, 2]) == []
+
+    # A plain z only gets the bit flip of its qubit: the phase flip is attached to the CZ, which
+    # CUDA-Q takes as a z with one control qubit.
+    plain_z_channels = cuda_noise_model.get_channels("z", [0])
+    assert len(plain_z_channels) == 1
+    assert plain_z_channels[0].noise_type == cudaq.NoiseModelType.BitFlipChannel
 
 
 def test_noise_model_to_cudaq_on_gate_without_cuda_operation(caplog):  # ruff: ignore[redefined-while-unused]
