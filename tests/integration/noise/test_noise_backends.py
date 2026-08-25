@@ -165,6 +165,24 @@ def test_per_gate_per_qubit_noise_on_controlled_gate(gate, noisy_gate, backend_c
     assert result.get_samples() == {"10": 100}
 
 
+def test_cuda_backend_multi_qubit_channel_on_a_multi_qubit_gate():
+    # CUDA-specific: a Kraus channel acting on as many qubits as a gate is applied to that gate,
+    # rather than only to a gate spanning the whole register.
+    flip_both = np.zeros((4, 4))
+    flip_both[0, 3] = flip_both[3, 0] = flip_both[1, 2] = flip_both[2, 1] = 1
+    circuit = Circuit(nqubits=3)
+    circuit.add(CNOT(0, 1))
+
+    noise_model = NoiseModel()
+    noise_model.add(KrausChannel(operators=[QTensor(flip_both)]))
+
+    result = CudaBackend(noise_model=noise_model).execute(
+        DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100)
+    )
+
+    assert result.get_samples() == {"110": 100}
+
+
 def test_cuda_backend_swap_without_noise_is_unchanged():
     # CUDA-specific: without a noise model the SWAP gate keeps using the CUDA-Q built-in operation
     # rather than the custom one the noisy path installs.

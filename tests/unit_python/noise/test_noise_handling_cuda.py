@@ -109,10 +109,10 @@ def test_noise_model_to_cudaq_on_multi_qubit_gates():
     circuit.add(CNOT(0, 1))
     cuda_noise_model = backend._noise_model_to_cudaq(noise_model, circuit)
 
-    # CUDA-Q sees the CNOT as an x on the control and the target, and only noise with single-qubit
-    # Kraus operators can be placed on each of them: the readout error has no Kraus operators at all,
-    # and the Kraus channel attached to the CNOT acts on two qubits, so neither is registered. The
-    # amplitude damping is, and so is the bit flip, on the qubit it is attached to.
+    # CUDA-Q sees the CNOT as an x on the control and the target, and takes a channel on both of them
+    # at once: the amplitude damping is embedded on each of them, and the two-qubit Kraus channel
+    # attached to the CNOT is applied as it is, neither of which shows up on a plain x. The readout
+    # error has no Kraus operators, so it is not applied to a gate at all.
     assert len(cuda_noise_model.get_channels("x", [0])) == 2
     assert len(cuda_noise_model.get_channels("x", [1])) == 1
 
@@ -161,6 +161,32 @@ def test_noise_model_to_cudaq_on_gate_without_cuda_operation(caplog):  # ruff: i
 
     # CUDA-Q has no u1 operation to attach a channel to, so the noise is dropped and reported.
     assert "Ignoring the noise on gate 'U1'" in caplog.text
+
+
+def test_noise_model_to_cudaq_warns_when_a_channel_cannot_be_embedded(caplog):  # ruff: ignore[redefined-while-unused]
+    backend = CudaBackend()
+    noise_model = NoiseModel()
+    noise_model.add(KrausChannel(operators=[QTensor(np.eye(8))]), gate=CNOT)
+    circuit = Circuit(3)
+    circuit.add(CNOT(0, 1))
+    backend._noise_model_to_cudaq(noise_model, circuit)
+
+    # A three-qubit channel fits neither a single qubit of the CNOT nor the gate as a whole, so it is
+    # skipped, both when the channel is built and when the gate it was meant for is registered.
+    assert "does not act on a single qubit, cannot embed in multi-qubit gate" in caplog.text
+    assert "cannot embed in multi-qubit gate X" in caplog.text
+
+
+def test_noise_model_to_cudaq_warns_when_a_channel_has_no_kraus_operators(caplog):  # ruff: ignore[redefined-while-unused]
+    backend = CudaBackend()
+    noise_model = NoiseModel()
+    noise_model.add(ReadoutAssignment(p01=0.1, p10=0.1))
+    circuit = Circuit(2)
+    circuit.add(CNOT(0, 1))
+    backend._noise_model_to_cudaq(noise_model, circuit)
+
+    # A readout error defines no Kraus operators, so there is nothing to embed in the CNOT.
+    assert "does not define Kraus operators or they do not act on a single qubit" in caplog.text
 
 
 def test_bad_kraus():
