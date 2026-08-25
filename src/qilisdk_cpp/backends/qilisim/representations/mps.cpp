@@ -22,6 +22,37 @@
 
 // GCOV_EXCL_BR_START
 
+namespace {
+
+bool is_unitary(const DenseMatrix& u) {
+    /*
+    Whether a gate matrix is unitary, and so leaves the canonical form of every site
+    tensor it is applied to intact.
+
+    Args:
+        u (DenseMatrix&): The matrix to check.
+
+    Returns:
+        bool: True if u times its adjoint is the identity.
+    */
+    return DenseMatrix(u * u.adjoint()).isApprox(DenseMatrix::Identity(u.rows(), u.cols()));
+}
+
+int swap_pair_index(int index) {
+    /*
+    Swap the two physical indices packed into one, mapping p + 2 q to q + 2 p.
+
+    Args:
+        index (int): The packed pair index.
+
+    Returns:
+        int: The same pair with the two halves exchanged.
+    */
+    return (index >> 1) + 2 * (index & 1);
+}
+
+}  // namespace
+
 // Constructors
 MPSTensor::MPSTensor(int left, int right) : Tensor({left, PHYSICAL_DIMENSION, right}) {}
 MPSTensor::MPSTensor(int left, int right, const std::vector<Complex>& values) : Tensor({left, PHYSICAL_DIMENSION, right}, values) {}
@@ -257,7 +288,10 @@ Real MPSState::apply_one_site(const DenseMatrix& u, int q) {
     if (q < 0 || q >= nqubits) {
         throw std::out_of_range("Qubit " + std::to_string(q) + " is out of range for a " + std::to_string(nqubits) + " qubit MPS");
     }
-    move_centre(q);
+    // Only non-unitary gates can break the canonical form, so only move the centre if necessary
+    if (!is_unitary(u)) {
+        move_centre(q);
+    }
     MPSTensor& site = sites[q];
     DenseMatrix mixed_zero = u(0, 0) * site.physical_slice(0) + u(0, 1) * site.physical_slice(1);
     DenseMatrix mixed_one = u(1, 0) * site.physical_slice(0) + u(1, 1) * site.physical_slice(1);
@@ -276,16 +310,11 @@ Real MPSState::apply_two_site(const DenseMatrix& u, int q, bool keep_centre_left
     significant index of u. The pair is contracted into one block, the gate applied,
     and the block split again with a truncated SVD.
 
-    The split leaves the orthogonality centre on one of the two sites, and the caller
-    gets to say which. Either choice is exact, so this is purely about where the next
-    gate wants the centre: leaving it behind on the side the sweep is heading towards
-    saves move_centre a QR step per gate.
-
     Args:
         u (DenseMatrix&): The 4 x 4 matrix to apply.
         q (int): The left qubit of the pair.
-        keep_centre_left (bool): Leave the centre on q rather than q + 1, which is what
-            a right-to-left sweep wants.
+        keep_centre_left (bool): Leave the orthogonality centre on q rather than on
+            q + 1. Either choice leaves the same state.
 
     Returns:
         Real: The discarded weight from the SVD.
@@ -306,10 +335,23 @@ Real MPSState::apply_two_site(const DenseMatrix& u, int q, bool keep_centre_left
     // Legs of the block: (left bond, physical q, physical q + 1, right bond)
     Tensor block = sites[q].contract(sites[q + 1], {2}, {0});
 
-    // Need to permute the legs to match the order of the gate matrix
-    Tensor fused = block.permute({2, 1, 0, 3});
-    Tensor applied = Tensor::from_matrix(DenseMatrix(u * fused.matrix_view(2)), fused.get_shape());
-    return split_two_site(q, applied.permute({2, 1, 0, 3}), keep_centre_left ? q : q + 1);
+    // The block runs qubit q's index fastest and the gate runs it slowest, so relabel the gate rather than move the block
+    DenseMatrix relabelled(pair_dimension, pair_dimension);
+    for (int row = 0; row < pair_dimension; ++row) {
+        for (int column = 0; column < pair_dimension; ++column) {
+            relabelled(row, column) = u(swap_pair_index(row), swap_pair_index(column));
+        }
+    }
+
+    // Each right-bond slice is then a contiguous left x 4 matrix, so the gate goes on in place
+    int left_bond = block.extent(0);
+    int right_bond = block.extent(3);
+    Complex* values = block.raw().data();
+    for (int r = 0; r < right_bond; ++r) {
+        Eigen::Map<DenseMatrix> slice(values + static_cast<int64_t>(pair_dimension) * left_bond * r, left_bond, pair_dimension);
+        slice = slice * relabelled.transpose();
+    }
+    return split_two_site(q, block, keep_centre_left ? q : q + 1);
 }
 
 Real MPSState::split_two_site(int q, const Tensor& theta, int keep_centre_on) {
@@ -357,11 +399,6 @@ Real MPSState::apply_gate(const Gate& gate) {
     Apply a gate to the state. One- and two-qubit gates are supported.
     A two-qubit gate on non-adjacent qubits is routed by swapping down the chain,
     applying the gate, and swapping back.
-
-    The walk down runs right to left, so each swap wants the centre one site to the left
-    of where the last one left it, and asks to be left on the left of its pair. The walk
-    back up runs the other way, where the default right-hand centre is already where the
-    next swap needs it.
 
     Args:
         gate (Gate&): The gate to apply.

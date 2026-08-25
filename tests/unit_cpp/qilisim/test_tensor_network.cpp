@@ -296,6 +296,25 @@ TEST(TensorTest, ContractsAgainstAnExplicitReference) {
     EXPECT_EQ(full.rank(), 0);
     EXPECT_NEAR(std::abs(full(std::vector<int>{}) - a.contract_all(a)), 0.0, 1e-12);
 
+    // Contracting against a leg that is not the other tensor's first has to reorder it
+    Tensor d({4, 3});
+    for (Complex& value : d.raw()) {
+        value = Complex(uniform(engine), uniform(engine));
+    }
+    Tensor e = a.contract(d, {1}, {1});
+    ASSERT_EQ(e.get_shape(), std::vector<int>({2, 2, 4}));
+    for (int i = 0; i < 2; ++i) {
+        for (int k = 0; k < 2; ++k) {
+            for (int l = 0; l < 4; ++l) {
+                Complex expected = 0.0;
+                for (int j = 0; j < 3; ++j) {
+                    expected += a(std::vector<int>{i, j, k}) * d(std::vector<int>{l, j});
+                }
+                EXPECT_NEAR(std::abs(e(std::vector<int>{i, k, l}) - expected), 0.0, 1e-12);
+            }
+        }
+    }
+
     EXPECT_THROW(a.contract(b, {1}, {0, 1}), std::invalid_argument);
     EXPECT_THROW(a.contract(b, {0}, {0}), std::invalid_argument);
     EXPECT_THROW(a.contract(b, {5}, {0}), std::out_of_range);
@@ -340,6 +359,17 @@ TEST(TensorTest, SplitFactorisesAndReportsDiscardedWeight) {
     // A cutoff above every singular value still keeps one, so a bond never vanishes
     t.split({0}, 0, 2.0, capped_left, capped_values, capped_right, &capped_error);
     EXPECT_EQ(capped_values.size(), 1);
+
+    // Splitting on a leg that is not the leading one has to reorder before factorising
+    Tensor trailing_left;
+    Tensor trailing_right;
+    RealVector trailing_values;
+    t.split({1}, 0, 0.0, trailing_left, trailing_values, trailing_right);
+    EXPECT_EQ(trailing_values.size(), 2);
+    ASSERT_EQ(trailing_left.get_shape(), std::vector<int>({3, 2}));
+    ASSERT_EQ(trailing_right.get_shape(), std::vector<int>({2, 2}));
+    DenseMatrix trailing = trailing_left.matrix_view(1) * trailing_values.cast<Complex>().asDiagonal() * trailing_right.matrix_view(1);
+    EXPECT_NEAR((trailing - t.as_matrix({1})).norm(), 0.0, 1e-12);
 
     // A zero tensor has no weight at all to discard
     Tensor zeros({2, 2});

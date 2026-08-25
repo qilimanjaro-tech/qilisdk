@@ -94,6 +94,24 @@ std::vector<int> remaining_legs(int rank, const std::vector<int>& legs) {
     return rest;
 }
 
+bool is_identity_permutation(const std::vector<int>& perm) {
+    /*
+    Whether a permutation leaves every leg where it is.
+
+    Args:
+        perm (std::vector<int>&): The source leg for each destination leg.
+
+    Returns:
+        bool: True if perm is the identity.
+    */
+    for (size_t leg = 0; leg < perm.size(); ++leg) {
+        if (perm[leg] != static_cast<int>(leg)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void orthonormalize(Eigen::Ref<DenseMatrix> columns) {
     /*
     Re-orthonormalise the columns of an already nearly-orthonormal block, in place, by
@@ -184,6 +202,11 @@ Tensor Tensor::permute(const std::vector<int>& perm) const {
             throw std::invalid_argument("Permutation names leg " + std::to_string(leg) + " more than once");
         }
         seen[leg] = true;
+    }
+
+    // Nothing is going anywhere, so skip the odometer
+    if (is_identity_permutation(perm)) {
+        return *this;
     }
 
     // Create the new empty tensor with the permuted shape
@@ -356,8 +379,11 @@ Tensor Tensor::from_matrix(const DenseMatrix& m, const std::vector<int>& shape) 
     if (static_cast<int64_t>(m.size()) != shape_product(shape)) {
         throw std::invalid_argument("Cannot read a tensor holding " + std::to_string(shape_product(shape)) + " elements from a matrix of " + std::to_string(m.size()));
     }
-    Tensor out(shape);
-    std::copy(m.data(), m.data() + m.size(), out.data.begin());
+    // Reserve and insert rather than the shape constructor, which would zero-fill a buffer we immediately overwrite
+    Tensor out;
+    out.shape = shape;
+    out.data.reserve(static_cast<size_t>(m.size()));
+    out.data.insert(out.data.end(), m.data(), m.data() + m.size());
     return out;
 }
 
@@ -399,11 +425,21 @@ Tensor Tensor::contract(const Tensor& other, const std::vector<int>& legs_a, con
     perm_a.insert(perm_a.end(), legs_a.begin(), legs_a.end());
     std::vector<int> perm_b = legs_b;
     perm_b.insert(perm_b.end(), keep_b.begin(), keep_b.end());
-    Tensor a = permute(perm_a);
-    Tensor b = other.permute(perm_b);
+    Tensor permuted_a;
+    Tensor permuted_b;
+    const Tensor* a = this;
+    const Tensor* b = &other;
+    if (!is_identity_permutation(perm_a)) {
+        permuted_a = permute(perm_a);
+        a = &permuted_a;
+    }
+    if (!is_identity_permutation(perm_b)) {
+        permuted_b = other.permute(perm_b);
+        b = &permuted_b;
+    }
 
     // Do the contraction as a single matrix product
-    DenseMatrix product = a.matrix_view(static_cast<int>(keep_a.size())) * b.matrix_view(static_cast<int>(legs_b.size()));
+    DenseMatrix product = a->matrix_view(static_cast<int>(keep_a.size())) * b->matrix_view(static_cast<int>(legs_b.size()));
 
     // Reshape the result
     std::vector<int> out_shape;
@@ -469,19 +505,29 @@ void Tensor::split(const std::vector<int>& left_legs, int max_bond_dimension, Re
 
     // Check whether we should get singular values from A^H A or A A^H
     std::vector<int> right_legs = remaining_legs(rank(), left_legs);
-    DenseMatrix matrix = as_matrix(left_legs);
+    std::vector<int> row_legs_first = left_legs;
+    row_legs_first.insert(row_legs_first.end(), right_legs.begin(), right_legs.end());
+    Tensor reordered;
+    const Tensor* source = this;
+    if (!is_identity_permutation(row_legs_first)) {
+        reordered = permute(row_legs_first);
+        source = &reordered;
+    }
+    Eigen::Map<const DenseMatrix> matrix = source->matrix_view(static_cast<int>(left_legs.size()));
     const Eigen::Index rows = matrix.rows();
     const Eigen::Index cols = matrix.cols();
     const Eigen::Index available_index = std::min(rows, cols);
     const bool gram_on_the_right = (cols <= rows);
     int available = static_cast<int>(available_index);
 
-    // Get the eigenvalues of the Gram matrix, which are the singular values squared
+    // Get the eigenvalues of the Gram matrix, which are the singular values squared, filling only the triangle read
     DenseMatrix left_factor;
     DenseMatrix right_factor;
     RealVector values(available_index);
     if (gram_on_the_right) {
-        Eigen::SelfAdjointEigenSolver<DenseMatrix> gram(DenseMatrix(matrix.adjoint() * matrix));
+        DenseMatrix product = DenseMatrix::Zero(cols, cols);
+        product.selfadjointView<Eigen::Lower>().rankUpdate(matrix.adjoint());
+        Eigen::SelfAdjointEigenSolver<DenseMatrix> gram(product);
         right_factor.resize(cols, available_index);
         for (Eigen::Index i = 0; i < available_index; ++i) {
             values(i) = std::sqrt(std::max(Real(0), gram.eigenvalues()(available_index - 1 - i)));
@@ -489,7 +535,9 @@ void Tensor::split(const std::vector<int>& left_legs, int max_bond_dimension, Re
         }
         left_factor = matrix * right_factor;
     } else {
-        Eigen::SelfAdjointEigenSolver<DenseMatrix> gram(DenseMatrix(matrix * matrix.adjoint()));
+        DenseMatrix product = DenseMatrix::Zero(rows, rows);
+        product.selfadjointView<Eigen::Lower>().rankUpdate(matrix);
+        Eigen::SelfAdjointEigenSolver<DenseMatrix> gram(product);
         left_factor.resize(rows, available_index);
         for (Eigen::Index i = 0; i < available_index; ++i) {
             values(i) = std::sqrt(std::max(Real(0), gram.eigenvalues()(available_index - 1 - i)));
