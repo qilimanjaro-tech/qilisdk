@@ -11,22 +11,20 @@ on:
       - "synchronize"
       - "ready_for_review"
 
+concurrency:
+  group: code-quality-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  code-quality:
-    name: Code Quality for Python ${{ matrix.python-version }}
+  lint:
+    name: Lint
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
-    env:
-      HOME_REPO: /home/repo
-
-    strategy:
-      matrix:
-        python-version:
-          - "3.11"
-          - "3.12"
-          - "3.13"
+    permissions:
+      contents: read
+      pull-requests: write  # cpp-linter posts its report as a PR comment
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -40,13 +38,13 @@ jobs:
           cache-dependency-glob: |
             **/pyproject.toml
             **/uv.lock
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.13"
 
-      - name: Install the project
+      # Ruff takes its target version from pyproject.toml and never imports the
+      # code, so linting needs neither the extension built nor the dependencies.
+      - name: Install the linters
         run: |
-          uv sync --frozen --group dev --extra all-cu13 \
-            -Ccmake.build-type=Debug \
-            -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0
+          uv sync --frozen --only-group dev --no-install-project --no-build
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
@@ -55,9 +53,6 @@ jobs:
 
       - name: Format
         run: ruff format --diff --output-format=github .
-
-      - name: Type Checking
-        run: ty check --output-format=github
 
       - name: Cpp Linter
         uses: cpp-linter/cpp-linter-action@cab1143a2c149bc41e85b070a9de81716974c18f  # v2.21.0
@@ -68,3 +63,65 @@ jobs:
           style: 'file'
           tidy-checks: ''
           thread-comments: ${{ github.event_name == 'pull_request' && 'update' }}
+
+      # clang-tidy has no compile database here, so it reports missing system
+      # headers as errors and cannot gate anything. Formatting can, and does.
+      - name: Check formatting
+        if: steps.linter.outputs.clang-format-checks-failed > 0
+        run: |
+          echo "::error::clang-format wants to reformat some of the changed files, see the Cpp Linter step"
+          exit 1
+
+  types:
+    name: Types
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            **/pyproject.toml
+            **/uv.lock
+          python-version: "3.13"
+
+      - name: Install the project
+        run: |
+          uv sync --frozen --group dev --extra all-cu13 \
+            -Ccmake.build-type=Debug \
+            -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0
+          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      # ty resolves the standard library for the version it is told to assume, so
+      # one environment covers every version we support.
+      - name: Type Checking
+        run: |
+          for version in 3.11 3.12 3.13; do
+            echo "::group::ty check --python-version $version"
+            ty check --output-format=github --python-version "$version"
+            echo "::endgroup::"
+          done
+
+  code-quality:
+    name: Code Quality
+    needs: [lint, types]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+
+    steps:
+      - name: Check the results
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
