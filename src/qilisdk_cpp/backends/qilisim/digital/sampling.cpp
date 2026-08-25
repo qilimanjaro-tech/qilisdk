@@ -635,6 +635,15 @@ void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& 
     std::vector<Gate> optimized_gates = gates;
     if (config.get_combine_single_qubit_gates()) {
         optimized_gates = combine_single_qubit_gates(optimized_gates);
+        qilisdk::log_debug("[Sampling, C++] Combined single-qubit gates: " + std::to_string(gates.size()) + " -> " + std::to_string(optimized_gates.size()) + " gates");
+    }
+
+    // For an MPS, we only fuse two-qubits gates, since memory bandwidth isn't a bottleneck as in statevector
+    const int mps_max_fused_qubits = 2;
+    if (config.get_fuse_gates()) {
+        size_t before_fusion = optimized_gates.size();
+        optimized_gates = fuse_gates(optimized_gates, mps_max_fused_qubits);
+        qilisdk::log_debug("[Sampling, C++] Fused gates: " + std::to_string(before_fusion) + " -> " + std::to_string(optimized_gates.size()) + " gates");
     }
 
     // Then we apply each gate

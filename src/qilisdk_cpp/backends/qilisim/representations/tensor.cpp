@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 #include <string>
 
@@ -91,6 +92,31 @@ std::vector<int> remaining_legs(int rank, const std::vector<int>& legs) {
         }
     }
     return rest;
+}
+
+void orthonormalize(Eigen::Ref<DenseMatrix> columns) {
+    /*
+    Re-orthonormalise the columns of an already nearly-orthonormal block, in place, by
+    modified Gram-Schmidt.
+
+    This is a Gram-Schmidt orthonormalisation of the columns of a matrix, but it
+    is done in place and modifies the columns directly. It assumes that the columns are
+    already nearly orthonormal, so it does not check for linear dependence or zero-length
+    columns. It is used to repair numerical drift in a matrix that should be orthonormal, 
+    rather than to orthonormalise an arbitrary set of vectors.
+
+    Args:
+        columns (Eigen::Ref<DenseMatrix>): The block to orthonormalise, modified in place.
+    */
+    for (Eigen::Index i = 0; i < columns.cols(); ++i) {
+        for (Eigen::Index j = 0; j < i; ++j) {
+            columns.col(i) -= columns.col(j) * columns.col(j).dot(columns.col(i));
+        }
+        Real length = columns.col(i).norm();
+        if (length > Real(0)) {
+            columns.col(i) /= length;
+        }
+    }
 }
 
 }  // namespace
@@ -248,6 +274,9 @@ Eigen::Map<const DenseMatrix> Tensor::matrix_view(int nrow_legs) const {
     View the tensor as a matrix whose rows are the first `nrow_legs` legs and whose
     columns are the rest. This doesn't copy anything, as this is just a view of the underlying buffer.
 
+    For example, a rank-4 tensor with shape [2, 3, 5, 7] can be viewed as a matrix with
+    shape [6, 35] by passing nrow_legs = 2.
+
     Args:
         nrow_legs (int): How many leading legs make up the rows.
 
@@ -272,6 +301,9 @@ Eigen::Map<DenseMatrix> Tensor::matrix_view(int nrow_legs) {
     View the tensor as a matrix whose rows are the first `nrow_legs` legs and whose
     columns are the rest. This doesn't copy anything, as this is just a view of the underlying buffer.
 
+    For example, a rank-4 tensor with shape [2, 3, 5, 7] can be viewed as a matrix with
+    shape [6, 35] by passing nrow_legs = 2.
+
     Args:
         nrow_legs (int): How many leading legs make up the rows.
 
@@ -293,6 +325,9 @@ DenseMatrix Tensor::as_matrix(const std::vector<int>& row_legs) const {
     Fuse `row_legs` into the rows and the remaining legs into the columns. Unlike
     matrix_view this permutes when the row legs are not already leading, so prefer
     matrix_view where the leg order is yours to choose.
+
+    For example, a rank-4 tensor with shape [2, 3, 5, 7] can be viewed as a matrix with
+    shape [6, 35] by passing row_legs = [0, 1].
 
     Args:
         row_legs (std::vector<int>&): The legs making up the rows, in order.
@@ -333,6 +368,9 @@ Tensor Tensor::contract(const Tensor& other, const std::vector<int>& legs_a, con
 
     Both operands are permuted so the contracted legs are adjacent and then fed to a
     single gemm, so the cost is one matrix product plus two data movements.
+
+    For example, a rank-4 tensor with shape [2, 3, 5, 7] can be contracted against a rank-3 tensor with shape [7, 11, 13]
+    by passing legs_a = [3] and legs_b = [0], producing a rank-4 tensor with shape [2, 3, 11, 13].
 
     Args:
         other (Tensor&): The tensor to contract against.
@@ -429,16 +467,44 @@ void Tensor::split(const std::vector<int>& left_legs, int max_bond_dimension, Re
             fraction of the total sum of squared singular values.
     */
 
-    // Do the SVD
+    // Check whether we should get singular values from A^H A or A A^H
     std::vector<int> right_legs = remaining_legs(rank(), left_legs);
     DenseMatrix matrix = as_matrix(left_legs);
-    Eigen::BDCSVD<DenseMatrix, Eigen::ComputeThinU | Eigen::ComputeThinV> svd(matrix);
-    const RealVector& values = svd.singularValues();
-    int available = static_cast<int>(values.size());
+    const Eigen::Index rows = matrix.rows();
+    const Eigen::Index cols = matrix.cols();
+    const Eigen::Index available_index = std::min(rows, cols);
+    const bool gram_on_the_right = (cols <= rows);
+    int available = static_cast<int>(available_index);
+
+    // Get the eigenvalues of the Gram matrix, which are the singular values squared
+    DenseMatrix left_factor;
+    DenseMatrix right_factor;
+    RealVector values(available_index);
+    if (gram_on_the_right) {
+        Eigen::SelfAdjointEigenSolver<DenseMatrix> gram(DenseMatrix(matrix.adjoint() * matrix));
+        right_factor.resize(cols, available_index);
+        for (Eigen::Index i = 0; i < available_index; ++i) {
+            values(i) = std::sqrt(std::max(Real(0), gram.eigenvalues()(available_index - 1 - i)));
+            right_factor.col(i) = gram.eigenvectors().col(available_index - 1 - i);
+        }
+        left_factor = matrix * right_factor;
+    } else {
+        Eigen::SelfAdjointEigenSolver<DenseMatrix> gram(DenseMatrix(matrix * matrix.adjoint()));
+        left_factor.resize(rows, available_index);
+        for (Eigen::Index i = 0; i < available_index; ++i) {
+            values(i) = std::sqrt(std::max(Real(0), gram.eigenvalues()(available_index - 1 - i)));
+            left_factor.col(i) = gram.eigenvectors().col(available_index - 1 - i);
+        }
+        right_factor = matrix.adjoint() * left_factor;
+    }
+
+    // Pick out the factor that came through the matrix rather than the eigensolver
+    DenseMatrix& derived = gram_on_the_right ? left_factor : right_factor;
 
     // Drop everything below the relative cutoff, then apply the hard cap
     int keep = 0;
-    Real threshold = cutoff * values(0);
+    Real resolvable = std::sqrt(std::numeric_limits<Real>::epsilon());
+    Real threshold = std::max(cutoff, resolvable) * values(0);
     while (keep < available && values(keep) > threshold) {
         ++keep;
     }
@@ -468,8 +534,12 @@ void Tensor::split(const std::vector<int>& left_legs, int max_bond_dimension, Re
     for (int leg : right_legs) {
         right_shape.push_back(shape[leg]);
     }
-    left = from_matrix(DenseMatrix(svd.matrixU().leftCols(keep)), left_shape);
-    right = from_matrix(DenseMatrix(svd.matrixV().leftCols(keep).adjoint()), right_shape);
+
+    // Turn the kept columns of U S into U, repairing what the Gram matrix cost them
+    orthonormalize(derived.leftCols(keep));
+
+    left = from_matrix(DenseMatrix(left_factor.leftCols(keep)), left_shape);
+    right = from_matrix(DenseMatrix(right_factor.leftCols(keep).adjoint()), right_shape);
 }
 
 Tensor Tensor::conjugate() const {

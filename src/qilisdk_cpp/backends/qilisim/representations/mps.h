@@ -76,7 +76,7 @@ class MPSState {
     // Evolving the state
     Real apply_gate(const Gate& gate);
     Real apply_one_site(const DenseMatrix& u, int q);
-    Real apply_two_site(const DenseMatrix& u, int q);
+    Real apply_two_site(const DenseMatrix& u, int q, bool keep_centre_left = false);
     Real split_two_site(int q, const Tensor& theta, int keep_centre_on);
     void normalize();
     void move_centre(int q);

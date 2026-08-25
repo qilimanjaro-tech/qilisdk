@@ -74,7 +74,11 @@ DenseMatrix MPSState::transfer_step(const DenseMatrix& environment, const MPSTen
 
         E -> sum_p A^{p dagger} E (op A)^p
 
-    Passing the identity gives the plain norm transfer.
+    Here A^p is the site tensor at physical index p, 
+    and (op A)^p is the contraction of the operator with the site tensor on the ket layer.
+
+    This is used in the expectation value calculation, where the environment 
+    is the left or right environment and the operator is the observable.
 
     Args:
         environment (DenseMatrix&): The current environment matrix.
@@ -266,15 +270,22 @@ Real MPSState::apply_one_site(const DenseMatrix& u, int q) {
     return 0.0;
 }
 
-Real MPSState::apply_two_site(const DenseMatrix& u, int q) {
+Real MPSState::apply_two_site(const DenseMatrix& u, int q, bool keep_centre_left) {
     /*
     Apply a two-qubit matrix to the adjacent pair (q, q + 1), with qubit q the most
     significant index of u. The pair is contracted into one block, the gate applied,
     and the block split again with a truncated SVD.
 
+    The split leaves the orthogonality centre on one of the two sites, and the caller
+    gets to say which. Either choice is exact, so this is purely about where the next
+    gate wants the centre: leaving it behind on the side the sweep is heading towards
+    saves move_centre a QR step per gate.
+
     Args:
         u (DenseMatrix&): The 4 x 4 matrix to apply.
         q (int): The left qubit of the pair.
+        keep_centre_left (bool): Leave the centre on q rather than q + 1, which is what
+            a right-to-left sweep wants.
 
     Returns:
         Real: The discarded weight from the SVD.
@@ -298,7 +309,7 @@ Real MPSState::apply_two_site(const DenseMatrix& u, int q) {
     // Need to permute the legs to match the order of the gate matrix
     Tensor fused = block.permute({2, 1, 0, 3});
     Tensor applied = Tensor::from_matrix(DenseMatrix(u * fused.matrix_view(2)), fused.get_shape());
-    return split_two_site(q, applied.permute({2, 1, 0, 3}), q + 1);
+    return split_two_site(q, applied.permute({2, 1, 0, 3}), keep_centre_left ? q : q + 1);
 }
 
 Real MPSState::split_two_site(int q, const Tensor& theta, int keep_centre_on) {
@@ -347,6 +358,11 @@ Real MPSState::apply_gate(const Gate& gate) {
     A two-qubit gate on non-adjacent qubits is routed by swapping down the chain,
     applying the gate, and swapping back.
 
+    The walk down runs right to left, so each swap wants the centre one site to the left
+    of where the last one left it, and asks to be left on the left of its pair. The walk
+    back up runs the other way, where the default right-hand centre is already where the
+    next swap needs it.
+
     Args:
         gate (Gate&): The gate to apply.
 
@@ -383,7 +399,7 @@ Real MPSState::apply_gate(const Gate& gate) {
     // Walk the far qubit down to sit next to the near one, then put it back
     Real error = 0.0;
     for (int site = high - 1; site > low; --site) {
-        error += apply_two_site(SWAP, site);
+        error += apply_two_site(SWAP, site, true);
     }
     error += apply_two_site(u, low);
     for (int site = low + 1; site < high; ++site) {
