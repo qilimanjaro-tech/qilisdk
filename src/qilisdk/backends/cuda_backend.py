@@ -648,6 +648,7 @@ class CudaBackend(Backend):
         all_cuda_gate_names: dict[Type[BasicGate] | Type[Gate], str],
         nqubits: int,
         noise_config: NoiseConfig,
+        multi_qubit_gates: dict[Type[BasicGate] | Type[Gate], int],
     ) -> None:
         """Register a global noise channel on every gate type in the CUDA-Q noise model.
 
@@ -660,9 +661,20 @@ class CudaBackend(Backend):
             nqubits (int): Total number of qubits in the circuit.
             noise_config (NoiseConfig): Gate-timing configuration used to
                 derive Kraus operators for time-dependent noise.
+            multi_qubit_gates (dict[Type[BasicGate] | Type[Gate], int]): Number of qubits of the
+                multi-qubit gates of the circuit, keyed by gate type.
         """
         for gate, gate_name in all_cuda_gate_names.items():
-            if cuda_noise := _to_cuda_noise(noise, noise_config.get_gate_time(gate)):
+            duration = noise_config.get_gate_time(gate)
+
+            # See if we need to handle multi-qubit gates
+            if num_qubits := multi_qubit_gates.get(gate, 0):
+                CudaBackend._add_multi_qubit_noise(noise, gate, gate_name, num_qubits, cuda_noise_model, duration)
+            if gate is SWAP:
+                continue
+
+            # See if we can convert the noise to a CUDA-Q channel
+            if cuda_noise := _to_cuda_noise(noise, duration):
                 # If it's a full size kraus channel, special treatment
                 if isinstance(noise, SupportsStaticKraus) and noise.as_kraus().operators:
                     dim = noise.as_kraus().operators[0].dense().shape[0]
@@ -671,38 +683,36 @@ class CudaBackend(Backend):
                         continue
 
                 # Otherwise, add normally
-                if gate is not SWAP:
-                    cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
-            CudaBackend._add_multi_qubit_noise(
-                noise, gate, gate_name, cuda_noise_model, noise_config.get_gate_time(gate)
-            )
+                cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
 
     @staticmethod
     def _add_multi_qubit_noise(
         noise: Noise,
         gate_type: Type[BasicGate] | Type[Gate],
         gate_name: str,
+        num_qubits: int,
         cuda_noise_model: cudaq.NoiseModel,
         duration: float,
     ) -> None:
-        """Register a noise channel on every qubit of the multi-qubit applications of an operation.
+        """Register a noise channel on every qubit of a gate CUDA-Q applies to more than one.
 
-        CUDA-Q matches a channel by the number of control qubits of the operation and applies it to
-        all of its qubits at once, so a single-qubit channel has to be registered separately, and
-        embedded, for each qubit of a multi-qubit application: the two qubits of a SWAP, and the
-        control and the target of a controlled gate, which CUDA-Q sees as the base operation of the
-        gate applied to both.
+        CUDA-Q applies a channel to all the qubits of a gate at once, so a single-qubit channel has
+        to be registered separately, and embedded, for each qubit of the gate: the two qubits of a
+        SWAP, or the control and the target of a controlled gate, which CUDA-Q sees as the base
+        operation of the gate applied to both and tells apart from the plain gate by the number of
+        control qubits.
 
         Args:
             noise (Noise): The noise channel to register.
             gate_type (Type[BasicGate] | Type[Gate]): The gate type the operation belongs to.
             gate_name (str): The CUDA-Q name of the operation.
+            num_qubits (int): The number of qubits the gate acts on, controls included.
             cuda_noise_model (cudaq.NoiseModel): The target CUDA-Q noise model to modify in place.
             duration (float): Duration of the gate, used for time-dependent Kraus derivation.
         """
-        num_controls = 0 if gate_type is SWAP else 1
-        for position in range(2):
-            if cuda_noise := _to_embedded_cuda_noise(noise, duration, position, 2):
+        num_controls = num_qubits - (2 if gate_type is SWAP else 1)
+        for position in range(num_qubits):
+            if cuda_noise := _to_embedded_cuda_noise(noise, duration, position, num_qubits):
                 cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise, num_controls)
 
     @staticmethod
@@ -712,6 +722,7 @@ class CudaBackend(Backend):
         cuda_noise_model: cudaq.NoiseModel,
         all_cuda_gate_names: dict[Type[BasicGate] | Type[Gate], str],
         noise_config: NoiseConfig,
+        multi_qubit_gates: dict[Type[BasicGate] | Type[Gate], int],
     ) -> None:
         """Register noise channels for a specific gate type on all qubits.
 
@@ -725,11 +736,15 @@ class CudaBackend(Backend):
                 Mapping from gate types to their CUDA-Q string names.
             noise_config (NoiseConfig): Gate-timing configuration used to
                 derive Kraus operators for time-dependent noise.
+            multi_qubit_gates (dict[Type[BasicGate] | Type[Gate], int]): Number of qubits of the
+                multi-qubit gates of the circuit, keyed by gate type.
         """
-        # CUDA-Q sees a controlled gate as its base operation applied to the control and the target,
-        # and matches a channel by the number of controls, so a CNOT is an x with one control qubit
-        # and is told apart from a plain X that way.
-        basic_gate_type = X if gate_type is CNOT else Z if gate_type is CZ else gate_type
+        # In CUDA-Q a CNOT is stored as a controlled X, not a CNOT
+        basic_gate_type = gate_type
+        if gate_type is CNOT:
+            basic_gate_type = X
+        elif gate_type is CZ:
+            basic_gate_type = Z
         gate_name = all_cuda_gate_names.get(basic_gate_type)
         if gate_name is None:
             logger.warning(
@@ -740,10 +755,15 @@ class CudaBackend(Backend):
             return
         duration = noise_config.get_gate_time(gate_type)
         for noise in noises:
-            if basic_gate_type is not gate_type or basic_gate_type is SWAP:
-                CudaBackend._add_multi_qubit_noise(noise, basic_gate_type, gate_name, cuda_noise_model, duration)
-            elif cuda_noise := _to_cuda_noise(noise, duration):
-                cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
+            if basic_gate_type is gate_type and basic_gate_type is not SWAP:
+                if cuda_noise := _to_cuda_noise(noise, duration):
+                    cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
+            # The noise is attached to a gate CUDA-Q applies to more than one qubit, so it is
+            # registered on each of them, embedded, and only if the circuit has such a gate.
+            elif num_qubits := multi_qubit_gates.get(basic_gate_type, 0):
+                CudaBackend._add_multi_qubit_noise(
+                    noise, basic_gate_type, gate_name, num_qubits, cuda_noise_model, duration
+                )
 
     @staticmethod
     def _add_per_qubit_noise(
@@ -771,6 +791,7 @@ class CudaBackend(Backend):
             gate_type (Type[BasicGate] | Type[Gate] | None): The gate type to attach the noise to,
                 or ``None`` to attach it to every gate type.
         """
+        # If we can turn it into a CUDA-Q channel, register it on every gate type
         for noise in noises:
             for gate, gate_name in all_cuda_gate_names.items():
                 if gate_type in {None, gate} and (
@@ -778,19 +799,25 @@ class CudaBackend(Backend):
                 ):
                     cuda_noise_model.add_channel(gate_name, [qubit], cuda_noise)
 
-        # A channel bound to a qubit cannot be registered for arbitrary qubits, because on a
-        # multi-qubit gate it has to be embedded at the position that qubit has in the gate, so it is
-        # registered on the multi-qubit gates of the circuit that act on the qubit.
+        # Check for multi-qubit gates and handle noise for them
         for gate in circuit.gates:
             if len(gate.qubits) < _SINGLE_QUBIT_DIMENSION or qubit not in gate.qubits:
                 continue
-            # A controlled gate can be written either as its named type or as a generic Controlled,
-            # and CUDA-Q sees both as the base operation of the gate applied to control and target.
+
+            # Get the base name of the gate
             basic_gate = gate.basic_gate if isinstance(gate, (Adjoint, Controlled)) else gate
-            named_type = CNOT if isinstance(basic_gate, X) else CZ if isinstance(basic_gate, Z) else type(gate)
+            named_type = type(gate)
+            if isinstance(basic_gate, X):
+                named_type = CNOT
+            elif isinstance(basic_gate, Z):
+                named_type = CZ
             gate_name = all_cuda_gate_names.get(type(basic_gate))
+
+            # Make sure the gate type matches the one we want to attach the noise to
             if gate_name is None or gate_type not in {None, named_type, type(gate)}:
                 continue
+
+            # Add the noise as a Kraus operator spread over the qubits of the gate
             duration = noise_config.get_gate_time(named_type if isinstance(gate, Controlled) else type(gate))
             for noise in noises:
                 if cuda_noise := _to_embedded_cuda_noise(noise, duration, gate.qubits.index(qubit), len(gate.qubits)):
@@ -807,6 +834,8 @@ class CudaBackend(Backend):
         circuit: Circuit,
     ) -> None:
         """Register noise channels for a specific gate type on a specific qubit.
+
+        More or less just a wrapper since this is the same as per-qubit noise, but with a gate type filter.
 
         Args:
             gate_type (Type[BasicGate] | Type[Gate]): The gate type to
@@ -840,23 +869,35 @@ class CudaBackend(Backend):
             cudaq.NoiseModel: The equivalent CUDA-Q noise model.
         """
         nqubits = circuit.nqubits
-        # CUDA-Q names its operations after the gate, except for SWAP, whose built-in operation
-        # cannot carry noise and is replaced by a custom one, and U1 and U2, which CUDA-Q has no
-        # operation for at all.
+
+        # Special gate cases:
+        # - the SWAP in CUDA-Q can't carry noise for some reason, so we build our own
+        # - U1 and U2 don't exist in CUDA-Q and get converted to U3
         all_cuda_gate_names = {
             gate: _SWAP_OP_NAME if gate is SWAP else gate.__name__.lower()
             for gate in self._basic_gate_handlers
             if gate.__name__.lower() not in {"u1", "u2"}
         }
+
+        # Get the list of multi-qubit gates in the circuit
+        multi_qubit_gates = {
+            (type(gate.basic_gate) if isinstance(gate, Controlled) else type(gate)): len(gate.qubits)
+            for gate in circuit.gates
+            if len(gate.qubits) > 1
+        }
         cuda_noise_model = cudaq.NoiseModel()
 
         # Global noise
         for noise in noise_model.global_noise:
-            self._add_global_noise(noise, cuda_noise_model, all_cuda_gate_names, nqubits, noise_model.noise_config)
+            self._add_global_noise(
+                noise, cuda_noise_model, all_cuda_gate_names, nqubits, noise_model.noise_config, multi_qubit_gates
+            )
 
         # Per gate noise
         for gate_type, noises in noise_model.per_gate_noise.items():
-            self._add_per_gate_noise(gate_type, noises, cuda_noise_model, all_cuda_gate_names, noise_model.noise_config)
+            self._add_per_gate_noise(
+                gate_type, noises, cuda_noise_model, all_cuda_gate_names, noise_model.noise_config, multi_qubit_gates
+            )
 
         # Per qubit noise
         for qubit, noises in noise_model.per_qubit_noise.items():
