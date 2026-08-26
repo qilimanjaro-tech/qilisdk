@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 17:03+0200\n"
+"POT-Creation-Date: 2026-08-26 18:11+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -48,10 +48,10 @@ msgid ""
 "get the right command."
 msgstr ""
 "A macOS l'intèrpret d'ordres per defecte és ``zsh``, que tracta els "
-"claudàtors com un patró d'expansió de noms, de manera que els extres s'han "
-"d'escriure entre cometes (``pip install \"qilisdk[qutip]\"``). Seleccioneu "
-"el vostre sistema operatiu a les pestanyes següents per obtenir l'ordre "
-"correcta."
+"claudàtors com un patró d'expansió de noms, de manera que els extres "
+"s'han d'escriure entre cometes (``pip install \"qilisdk[qutip]\"``). "
+"Seleccioneu el vostre sistema operatiu a les pestanyes següents per "
+"obtenir l'ordre correcta."
 
 #: ../../getting_started/installation.rst:19
 msgid ""
@@ -257,10 +257,23 @@ msgstr ""
 "màquina."
 
 #: ../../getting_started/installation.rst:239
+msgid "``-Ccmake.define.no_avx=ON``"
+msgstr "``-Ccmake.define.no_avx=ON``"
+
+#: ../../getting_started/installation.rst:240
+msgid ""
+"Build without the AVX2 and FMA instructions, which are used by default. "
+"Only needed for CPUs from before around 2013, which cannot run them."
+msgstr ""
+"Compila sense les instruccions AVX2 i FMA, que s'usen per defecte. Només "
+"és necessari per a CPUs anteriors al 2013 aproximadament, que no les poden"
+" executar."
+
+#: ../../getting_started/installation.rst:241
 msgid "``-Ccmake.define.single_precision=ON``"
 msgstr "``-Ccmake.define.single_precision=ON``"
 
-#: ../../getting_started/installation.rst:240
+#: ../../getting_started/installation.rst:242
 msgid ""
 "Use single precision (``float``) instead of double precision "
 "(``double``). Slightly faster, but less accurate."
@@ -268,31 +281,31 @@ msgstr ""
 "Utilitza precisió simple (``float``) en lloc de precisió doble "
 "(``double``). Lleugerament més ràpid, però menys precís."
 
-#: ../../getting_started/installation.rst:241
+#: ../../getting_started/installation.rst:243
 msgid "``-Ccmake.build-type=Debug``"
 msgstr "``-Ccmake.build-type=Debug``"
 
-#: ../../getting_started/installation.rst:242
+#: ../../getting_started/installation.rst:244
 msgid "Enable a debug build (no optimizations, debug symbols)."
 msgstr ""
 "Habilita una compilació de depuració (sense optimitzacions, amb símbols "
 "de depuració)."
 
-#: ../../getting_started/installation.rst:243
+#: ../../getting_started/installation.rst:245
 msgid "``-Ccmake.build-type=RelWithDebInfo``"
 msgstr "``-Ccmake.build-type=RelWithDebInfo``"
 
-#: ../../getting_started/installation.rst:244
+#: ../../getting_started/installation.rst:246
 msgid "Enable an optimized debug build (optimizations plus debug symbols)."
 msgstr ""
 "Habilita una compilació de depuració optimitzada (optimitzacions més "
 "símbols de depuració)."
 
-#: ../../getting_started/installation.rst:245
+#: ../../getting_started/installation.rst:247
 msgid "``-Ccmake.build-type=Release``"
 msgstr "``-Ccmake.build-type=Release``"
 
-#: ../../getting_started/installation.rst:246
+#: ../../getting_started/installation.rst:248
 msgid ""
 "Enable a release build (optimizations, no debug symbols). This is the "
 "default."
@@ -300,27 +313,27 @@ msgstr ""
 "Habilita una compilació de llançament (optimitzacions, sense símbols de "
 "depuració). Aquesta és l'opció predeterminada."
 
-#: ../../getting_started/installation.rst:247
+#: ../../getting_started/installation.rst:249
 msgid "``-Ccmake.define.tidy=ON``"
 msgstr "``-Ccmake.define.tidy=ON``"
 
-#: ../../getting_started/installation.rst:248
+#: ../../getting_started/installation.rst:250
 msgid "Run ``clang-tidy`` on the code during compilation."
 msgstr "Executa ``clang-tidy`` sobre el codi durant la compilació."
 
-#: ../../getting_started/installation.rst:249
+#: ../../getting_started/installation.rst:251
 msgid "``-Ccmake.define.verbose=ON``"
 msgstr "``-Ccmake.define.verbose=ON``"
 
-#: ../../getting_started/installation.rst:250
+#: ../../getting_started/installation.rst:252
 msgid "Enable (very) verbose output from the C++ code."
 msgstr "Habilita una sortida (molt) detallada del codi C++."
 
-#: ../../getting_started/installation.rst:251
+#: ../../getting_started/installation.rst:253
 msgid "``-Ccmake.define.tests=ON``"
 msgstr "``-Ccmake.define.tests=ON``"
 
-#: ../../getting_started/installation.rst:252
+#: ../../getting_started/installation.rst:254
 msgid ""
 "Build the C++ test suite, which will then be available as a ``test_cpp`` "
 "executable in the tests directory."
@@ -328,15 +341,15 @@ msgstr ""
 "Compila el conjunt de proves de C++, que després estarà disponible com a "
 "executable ``test_cpp`` al directori de proves."
 
-#: ../../getting_started/installation.rst:253
+#: ../../getting_started/installation.rst:255
 msgid "``-Ccmake.define.coverage=ON``"
 msgstr "``-Ccmake.define.coverage=ON``"
 
-#: ../../getting_started/installation.rst:254
+#: ../../getting_started/installation.rst:256
 msgid "Enable coverage instrumentation flags."
 msgstr "Habilita els indicadors d'instrumentació de cobertura."
 
-#: ../../getting_started/installation.rst:256
+#: ../../getting_started/installation.rst:258
 msgid ""
 "These can be passed to ``uv sync`` by simply appending to the build "
 "command, for example:"
@@ -344,7 +357,7 @@ msgstr ""
 "Aquests es poden passar a ``uv sync`` simplement afegint-los a l'ordre de"
 " compilació, per exemple:"
 
-#: ../../getting_started/installation.rst:262
+#: ../../getting_started/installation.rst:264
 msgid ""
 "You then have an environment with the latest version of QiliSDK "
 "installed. If you want to install other things to the environment you'll "
@@ -353,7 +366,7 @@ msgstr ""
 "Llavors tindreu un entorn amb la darrera versió de QiliSDK instal·lada. "
 "Si voleu instal·lar altres coses a l'entorn, haureu d'usar pip amb uv:"
 
-#: ../../getting_started/installation.rst:269
+#: ../../getting_started/installation.rst:271
 msgid "And then to run a Python script within the environment, you can use:"
 msgstr "I per executar un script de Python dins de l'entorn, podeu usar:"
 

@@ -102,6 +102,21 @@ set_target_properties(qtensor_module PROPERTIES
     INSTALL_RPATH "${RPATH_ORIGIN}"
 )
 
+# Check if we should compile with AVX2 + FMA support (x86-64-v3)
+check_cxx_compiler_flag("-march=x86-64-v3" QILISDK_HAS_X86_64_V3)
+set(QILISDK_USE_X86_64_V3 ${QILISDK_HAS_X86_64_V3})
+if (no_avx)
+    message(STATUS "[QiliSDK C++] Building without AVX2 + FMA as requested")
+    set(QILISDK_USE_X86_64_V3 FALSE)
+elseif (QILISDK_HAS_X86_64_V3 AND NOT CMAKE_CROSSCOMPILING AND CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64|i[3-6]86|x86")
+    include(CheckCXXSourceRuns)
+    check_cxx_source_runs("int main() { return (__builtin_cpu_supports(\"avx2\") && __builtin_cpu_supports(\"fma\")) ? 0 : 1; }" QILISDK_CPU_HAS_AVX2_FMA)
+    if (NOT QILISDK_CPU_HAS_AVX2_FMA)
+        message(STATUS "[QiliSDK C++] This CPU has no AVX2 + FMA, building without them")
+        set(QILISDK_USE_X86_64_V3 FALSE)
+    endif()
+endif()
+
 # List of all modules to build
 set(MODULES_TO_BUILD qilisdk_libs qtensor_module qilisim_module)
 
@@ -123,10 +138,8 @@ foreach(module ${MODULES_TO_BUILD})
         message(STATUS "[QiliSDK C++] Using GCC/Clang specific compile options")
         target_compile_options(${module} PRIVATE -Wall -Wextra -Wpedantic)
 
-        # Enable AVX2 + FMA for 2015+ CPUs
-        include(CheckCXXCompilerFlag)
-        check_cxx_compiler_flag("-march=x86-64-v3" QILISDK_HAS_X86_64_V3)
-        if (QILISDK_HAS_X86_64_V3)
+        # Enable AVX2 + FMA if this build is allowed to
+        if (QILISDK_USE_X86_64_V3)
             message(STATUS "[QiliSDK C++] Targeting x86-64-v3 (AVX2 + FMA)")
             target_compile_options(${module} PRIVATE -march=x86-64-v3)
         endif()
@@ -247,7 +260,7 @@ if (DEFINED tests AND tests STREQUAL "ON")
 
     # The test executable MUST use the same architecture flags as the modules
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        if (QILISDK_HAS_X86_64_V3)
+        if (QILISDK_USE_X86_64_V3)
             target_compile_options(test_cpp PRIVATE -march=x86-64-v3)
         endif()
         if (build_native)
