@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 17:03+0200\n"
+"POT-Creation-Date: 2026-08-26 16:32+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -85,7 +85,7 @@ msgstr ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
 #: ../../modules/backends/backends_qilisim.rst:64
 #: ../../modules/backends/backends_qilisim.rst:67
 #: ../../modules/backends/backends_qilisim.rst:70
-#: ../../modules/backends/backends_qilisim.rst:297
+#: ../../modules/backends/backends_qilisim.rst:324
 msgid "|y|"
 msgstr "|y|"
 
@@ -247,7 +247,7 @@ msgstr ""
 "Hamiltonianos dispersos."
 
 #: ../../modules/backends/backends_qilisim.rst:139
-#: ../../modules/backends/backends_qilisim.rst:296
+#: ../../modules/backends/backends_qilisim.rst:323
 msgid ""
 ":meth:`AnalogMethod.variational_annealing() "
 "<qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`"
@@ -313,7 +313,7 @@ msgstr ""
 "ajuste ``dim`` para el tamaño del subespacio de Krylov."
 
 #: ../../modules/backends/backends_qilisim.rst:148
-#: ../../modules/backends/backends_qilisim.rst:288
+#: ../../modules/backends/backends_qilisim.rst:315
 msgid ""
 ":meth:`AnalogMethod.direct() "
 "<qilisdk.backends.backend_config.AnalogMethod.direct>`"
@@ -341,20 +341,22 @@ msgstr "Métodos de simulación digital"
 
 #: ../../modules/backends/backends_qilisim.rst:163
 msgid ""
-"There are currently two digital simulation methods available. The first "
-"is a statevector simulator, which can be configured through the options:"
+"There are currently three digital simulation methods available. The first"
+" is a statevector simulator, which can be configured through the options:"
 msgstr ""
-"Actualmente hay dos métodos de simulación digital disponibles. El primero"
-" es un simulador de vector de estado, que se puede configurar mediante "
-"las opciones:"
+"Actualmente hay tres métodos de simulación digital disponibles. El "
+"primero es un simulador de vector de estado, que se puede configurar "
+"mediante las opciones:"
 
 #: ../../modules/backends/backends_qilisim.rst:169
 #: ../../modules/backends/backends_qilisim.rst:198
+#: ../../modules/backends/backends_qilisim.rst:219
 msgid "Option"
 msgstr "Opción"
 
 #: ../../modules/backends/backends_qilisim.rst:170
 #: ../../modules/backends/backends_qilisim.rst:199
+#: ../../modules/backends/backends_qilisim.rst:220
 msgid "Meaning"
 msgstr "Significado"
 
@@ -381,6 +383,7 @@ msgstr ""
 "entre ejecuciones."
 
 #: ../../modules/backends/backends_qilisim.rst:175
+#: ../../modules/backends/backends_qilisim.rst:225
 msgid "``combine_single_qubit_gates``"
 msgstr "``combine_single_qubit_gates``"
 
@@ -428,11 +431,66 @@ msgstr ""
 "Número máximo de términos en la suma de estabilizadores. Aumentarlo puede"
 " mejorar la precisión a costa de memoria y tiempo de ejecución."
 
-#: ../../modules/backends/backends_qilisim.rst:212
+#: ../../modules/backends/backends_qilisim.rst:211
+msgid ""
+"The third is a matrix product state simulator, which represents the state"
+" as a chain of tensors and contracts it exactly. Its cost grows with the "
+"entanglement the circuit generates rather than with the qubit count, so "
+"weakly entangling circuits on many qubits are cheap. It supports one- and"
+" two-qubit gates, and has the following options:"
+msgstr ""
+"El tercero es un simulador de estado de producto matricial, que "
+"representa el estado como una cadena de tensores y la contrae de forma "
+"exacta. Su coste crece con el entrelazamiento que genera el circuito y no "
+"con el número de qubits, por lo que los circuitos poco entrelazantes "
+"sobre muchos qubits son baratos. Admite puertas de uno y dos qubits, y "
+"tiene las siguientes opciones:"
+
+#: ../../modules/backends/backends_qilisim.rst:221
+msgid "``max_bond_dimension``"
+msgstr "``max_bond_dimension``"
+
+#: ../../modules/backends/backends_qilisim.rst:222
+msgid ""
+"Largest bond dimension kept. Circuits whose entanglement stays below this"
+" are simulated exactly, otherwise the state is approximate."
+msgstr ""
+"Mayor dimensión de enlace que se conserva. Los circuitos cuyo "
+"entrelazamiento se mantiene por debajo de este valor se simulan de forma "
+"exacta; en caso contrario, el estado es aproximado."
+
+#: ../../modules/backends/backends_qilisim.rst:223
+msgid "``truncation_cutoff``"
+msgstr "``truncation_cutoff``"
+
+#: ../../modules/backends/backends_qilisim.rst:224
+msgid "Singular values below this fraction of the largest are discarded."
+msgstr ""
+"Se descartan los valores singulares por debajo de esta fracción del mayor."
+
+#: ../../modules/backends/backends_qilisim.rst:226
+msgid ""
+"Whether to combine consecutive single-qubit gates on the same qubit into "
+"one operation."
+msgstr ""
+"Si se combinan en una única operación las puertas de un solo qubit "
+"consecutivas sobre el mismo qubit."
+
+#: ../../modules/backends/backends_qilisim.rst:227
+msgid "``fuse_gates``"
+msgstr "``fuse_gates``"
+
+#: ../../modules/backends/backends_qilisim.rst:228
+msgid "Whether to fuse runs of adjacent two-qubit gates into one operation."
+msgstr ""
+"Si se fusionan en una única operación las secuencias de puertas de dos "
+"qubits adyacentes."
+
+#: ../../modules/backends/backends_qilisim.rst:239
 msgid "Execution and Monte Carlo"
 msgstr "Ejecución y Monte Carlo"
 
-#: ../../modules/backends/backends_qilisim.rst:214
+#: ../../modules/backends/backends_qilisim.rst:241
 msgid ""
 ":class:`~qilisdk.backends.backend_config.ExecutionConfig` controls "
 "threading, randomness, and optional Monte Carlo trajectory sampling for "
@@ -442,7 +500,7 @@ msgstr ""
 "hilos, la aleatoriedad y el muestreo opcional de trayectorias Monte Carlo"
 " para simulaciones de sistemas abiertos."
 
-#: ../../modules/backends/backends_qilisim.rst:217
+#: ../../modules/backends/backends_qilisim.rst:244
 msgid ""
 "``num_threads`` controls the number of threads used for parallelization, "
 "defaults to using all available cores."
@@ -450,7 +508,7 @@ msgstr ""
 "``num_threads`` controla el número de hilos usados para la "
 "paralelización; por defecto usa todos los núcleos disponibles."
 
-#: ../../modules/backends/backends_qilisim.rst:218
+#: ../../modules/backends/backends_qilisim.rst:245
 msgid ""
 "``seed`` controls the random number generator seed, defaults to a random "
 "seed."
@@ -458,7 +516,7 @@ msgstr ""
 "``seed`` controla la semilla del generador de números aleatorios; por "
 "defecto se usa una semilla aleatoria."
 
-#: ../../modules/backends/backends_qilisim.rst:219
+#: ../../modules/backends/backends_qilisim.rst:246
 msgid ""
 "``monte_carlo=MonteCarloConfig(trajectories=N)`` enabled Monte Carlo "
 "sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled."
@@ -467,7 +525,7 @@ msgstr ""
 " Carlo con ``N`` trayectorias; si se omite, Monte Carlo queda "
 "desactivado."
 
-#: ../../modules/backends/backends_qilisim.rst:220
+#: ../../modules/backends/backends_qilisim.rst:247
 msgid ""
 "``measurement_collapse`` controls whether measurements collapse the "
 "statevector in place (relevant for mid-circuit measurement and "
@@ -477,7 +535,7 @@ msgstr ""
 " estado in situ (relevante para mediciones en mitad del circuito y "
 "reservorios); por defecto ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:221
+#: ../../modules/backends/backends_qilisim.rst:248
 msgid ""
 "``normalize_state`` controls whether the state should be renormalized - "
 "defaults to ``True``."
@@ -485,7 +543,7 @@ msgstr ""
 "``normalize_state`` controla si el estado debe renormalizarse; por "
 "defecto ``True``."
 
-#: ../../modules/backends/backends_qilisim.rst:222
+#: ../../modules/backends/backends_qilisim.rst:249
 msgid ""
 "``gpu`` controls whether to use GPU acceleration if available - defaults "
 "to ``False``."
@@ -493,11 +551,11 @@ msgstr ""
 "``gpu`` controla si se usa la aceleración por GPU si está disponible; por"
 " defecto ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:240
+#: ../../modules/backends/backends_qilisim.rst:267
 msgid "Noise model support"
 msgstr "Soporte del modelo de ruido"
 
-#: ../../modules/backends/backends_qilisim.rst:242
+#: ../../modules/backends/backends_qilisim.rst:269
 msgid ""
 "Any :class:`~qilisdk.noise.NoiseModel` accepted by the SDK can be passed "
 "directly to the constructor; QiliSim applies it inside the C++ solver, so"
@@ -508,11 +566,11 @@ msgstr ""
 "de C++, de modo que las ejecuciones digitales, analógicas y de reservorio"
 " ven todos los mismos canales de ruido:"
 
-#: ../../modules/backends/backends_qilisim.rst:257
+#: ../../modules/backends/backends_qilisim.rst:284
 msgid "GPU acceleration"
 msgstr "Aceleración por GPU"
 
-#: ../../modules/backends/backends_qilisim.rst:259
+#: ../../modules/backends/backends_qilisim.rst:286
 msgid ""
 "Some simulation methods in QiliSim support GPU acceleration if a CUDA-"
 "capable device is available. These require the ``cuda`` extra to be "
@@ -522,36 +580,37 @@ msgstr ""
 "si hay disponible un dispositivo compatible con CUDA. Estos requieren "
 "instalar el extra ``cuda``:"
 
-#: ../../modules/backends/backends_qilisim.rst:264
+#: ../../modules/backends/backends_qilisim.rst:291
 msgid "Linux"
 msgstr "Linux"
 
-#: ../../modules/backends/backends_qilisim.rst:270
+#: ../../modules/backends/backends_qilisim.rst:297
 msgid "Mac OSX"
 msgstr "Mac OSX"
 
-#: ../../modules/backends/backends_qilisim.rst:276
+#: ../../modules/backends/backends_qilisim.rst:303
 msgid "Windows"
 msgstr "Windows"
 
-#: ../../modules/backends/backends_qilisim.rst:286
+#: ../../modules/backends/backends_qilisim.rst:313
 msgid "Method"
 msgstr "Método"
 
-#: ../../modules/backends/backends_qilisim.rst:287
+#: ../../modules/backends/backends_qilisim.rst:314
 msgid "GPU support"
 msgstr "Soporte de GPU"
 
-#: ../../modules/backends/backends_qilisim.rst:289
-#: ../../modules/backends/backends_qilisim.rst:291
-#: ../../modules/backends/backends_qilisim.rst:293
-#: ../../modules/backends/backends_qilisim.rst:295
-#: ../../modules/backends/backends_qilisim.rst:299
-#: ../../modules/backends/backends_qilisim.rst:301
+#: ../../modules/backends/backends_qilisim.rst:316
+#: ../../modules/backends/backends_qilisim.rst:318
+#: ../../modules/backends/backends_qilisim.rst:320
+#: ../../modules/backends/backends_qilisim.rst:322
+#: ../../modules/backends/backends_qilisim.rst:326
+#: ../../modules/backends/backends_qilisim.rst:328
+#: ../../modules/backends/backends_qilisim.rst:330
 msgid "|n|"
 msgstr "|n|"
 
-#: ../../modules/backends/backends_qilisim.rst:290
+#: ../../modules/backends/backends_qilisim.rst:317
 msgid ""
 ":meth:`AnalogMethod.integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
@@ -559,7 +618,7 @@ msgstr ""
 ":meth:`AnalogMethod.integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
 
-#: ../../modules/backends/backends_qilisim.rst:292
+#: ../../modules/backends/backends_qilisim.rst:319
 msgid ""
 ":meth:`AnalogMethod.adaptive_integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
@@ -567,7 +626,7 @@ msgstr ""
 ":meth:`AnalogMethod.adaptive_integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
 
-#: ../../modules/backends/backends_qilisim.rst:294
+#: ../../modules/backends/backends_qilisim.rst:321
 msgid ""
 ":meth:`AnalogMethod.arnoldi() "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
@@ -575,7 +634,7 @@ msgstr ""
 ":meth:`AnalogMethod.arnoldi() "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
 
-#: ../../modules/backends/backends_qilisim.rst:298
+#: ../../modules/backends/backends_qilisim.rst:325
 msgid ""
 ":meth:`DigitalMethod.statevector() "
 "<qilisdk.backends.backend_config.DigitalMethod.statevector>`"
@@ -583,13 +642,21 @@ msgstr ""
 ":meth:`DigitalMethod.statevector() "
 "<qilisdk.backends.backend_config.DigitalMethod.statevector>`"
 
-#: ../../modules/backends/backends_qilisim.rst:300
+#: ../../modules/backends/backends_qilisim.rst:327
 msgid ""
 ":meth:`DigitalMethod.stabilizer() "
 "<qilisdk.backends.backend_config.DigitalMethod.stabilizer>`"
 msgstr ""
 ":meth:`DigitalMethod.stabilizer() "
 "<qilisdk.backends.backend_config.DigitalMethod.stabilizer>`"
+
+#: ../../modules/backends/backends_qilisim.rst:329
+msgid ""
+":meth:`DigitalMethod.mps() "
+"<qilisdk.backends.backend_config.DigitalMethod.mps>`"
+msgstr ""
+":meth:`DigitalMethod.mps() "
+"<qilisdk.backends.backend_config.DigitalMethod.mps>`"
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Ir a un subtítulo específico de una página."
