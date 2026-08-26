@@ -362,12 +362,13 @@ DenseMatrix Tensor::as_matrix(const std::vector<int>& row_legs) const {
     return fused.matrix_view(1);
 }
 
-Tensor Tensor::from_matrix(const DenseMatrix& m, const std::vector<int>& shape) {
+Tensor Tensor::from_matrix(Eigen::Ref<const DenseMatrix> m, const std::vector<int>& shape) {
     /*
     Reinterpret a column-major matrix as a tensor of the given shape.
 
     Args:
-        m (DenseMatrix&): The matrix holding the values.
+        m (Eigen::Ref<const DenseMatrix>): The matrix holding the values. A contiguous
+            block binds straight through, anything else is evaluated first.
         shape (std::vector<int>&): The shape to give the result.
 
     Returns:
@@ -586,8 +587,10 @@ void Tensor::split(const std::vector<int>& left_legs, int max_bond_dimension, Re
     // Turn the kept columns of U S into U, repairing what the Gram matrix cost them
     orthonormalize(derived.leftCols(keep));
 
-    left = from_matrix(DenseMatrix(left_factor.leftCols(keep)), left_shape);
-    right = from_matrix(DenseMatrix(right_factor.leftCols(keep).adjoint()), right_shape);
+    // The left factor is contiguous so it goes straight through, whilst the right is transposed
+    left = from_matrix(left_factor.leftCols(keep), left_shape);
+    right = Tensor(right_shape);
+    right.matrix_view(1) = right_factor.leftCols(keep).adjoint();
 }
 
 Tensor Tensor::conjugate() const {

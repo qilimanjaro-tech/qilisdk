@@ -332,8 +332,11 @@ Real MPSState::apply_two_site(const DenseMatrix& u, int q, bool keep_centre_left
     }
     move_centre(q);
 
-    // Legs of the block: (left bond, physical q, physical q + 1, right bond)
-    Tensor block = sites[q].contract(sites[q + 1], {2}, {0});
+    // The legs of the block are (left bond, physical q, physical q + 1, right bond)
+    int left_bond = sites[q].left();
+    int right_bond = sites[q + 1].right();
+    Tensor block({left_bond, MPSTensor::PHYSICAL_DIMENSION, MPSTensor::PHYSICAL_DIMENSION, right_bond});
+    block.matrix_view(2).noalias() = sites[q].left_fused() * sites[q + 1].right_fused();
 
     // The block runs qubit q's index fastest and the gate runs it slowest, so relabel the gate rather than move the block
     DenseMatrix relabelled(pair_dimension, pair_dimension);
@@ -344,8 +347,6 @@ Real MPSState::apply_two_site(const DenseMatrix& u, int q, bool keep_centre_left
     }
 
     // Each right-bond slice is then a contiguous left x 4 matrix, so the gate goes on in place
-    int left_bond = block.extent(0);
-    int right_bond = block.extent(3);
     Complex* values = block.raw().data();
     for (int r = 0; r < right_bond; ++r) {
         Eigen::Map<DenseMatrix> slice(values + static_cast<int64_t>(pair_dimension) * left_bond * r, left_bond, pair_dimension);

@@ -52,7 +52,7 @@ class Tensor {
     Eigen::Map<const DenseMatrix> matrix_view(int nrow_legs) const;
     Eigen::Map<DenseMatrix> matrix_view(int nrow_legs);
     DenseMatrix as_matrix(const std::vector<int>& row_legs) const;
-    static Tensor from_matrix(const DenseMatrix& m, const std::vector<int>& shape);
+    static Tensor from_matrix(Eigen::Ref<const DenseMatrix> m, const std::vector<int>& shape);
 
     // Contracts two tensors along the given legs
     Tensor contract(const Tensor& other, const std::vector<int>& legs_a, const std::vector<int>& legs_b) const;
