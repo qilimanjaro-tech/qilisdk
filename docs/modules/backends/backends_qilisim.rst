@@ -222,6 +222,10 @@ many qubits are cheap. It supports one- and two-qubit gates, and has the followi
      - Largest bond dimension kept. Circuits whose entanglement stays below this are simulated exactly, otherwise the state is approximate.
    * - ``truncation_cutoff``
      - Singular values below this fraction of the largest are discarded.
+   * - ``combine_single_qubit_gates``
+     - Whether to combine consecutive single-qubit gates on the same qubit into one operation.
+   * - ``fuse_gates``
+     - Whether to fuse runs of adjacent two-qubit gates into one operation.
 
 .. code-block:: python
 

@@ -17,6 +17,7 @@ import pytest
 
 pytest.importorskip("qilisim_module", reason="QiliSim integration tests require the 'qilisim_module' C++ extension")
 
+import itertools
 import random
 
 from qilisdk.analog.hamiltonian import X as pauli_x
@@ -26,7 +27,26 @@ from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core.qtensor import InitialState, QTensor, expect_val, ket
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, Controlled, H, M, S, T, X, Y, Z
+from qilisdk.digital import (
+    CNOT,
+    RX,
+    RY,
+    RZ,
+    SWAP,
+    U1,
+    U2,
+    U3,
+    Circuit,
+    Controlled,
+    H,
+    M,
+    S,
+    T,
+    TrotterizedSchedule,
+    X,
+    Y,
+    Z,
+)
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.noise import AmplitudeDamping, Dephasing, NoiseModel
@@ -43,10 +63,13 @@ analog_methods = [
 ]
 digital_methods = [DigitalMethod.statevector(matrix_free=False), DigitalMethod.statevector(matrix_free=True)]
 
+# The MPS simulator ignores noise and Monte Carlo, so it only joins the tests that use neither
+digital_methods_with_mps = [*digital_methods, DigitalMethod.mps(max_bond_dimension=64)]
+
 _MONTE_CARLO_CONFIG = MonteCarloConfig(trajectories=100)
 
 
-@pytest.mark.parametrize("method", digital_methods)
+@pytest.mark.parametrize("method", digital_methods_with_mps)
 def test_seed_same(method):
     backend1 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
     backend2 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
@@ -120,7 +143,7 @@ def test_monte_carlo_mid_circuit_readout(method):
         )
 
 
-@pytest.mark.parametrize("method", digital_methods)
+@pytest.mark.parametrize("method", digital_methods_with_mps)
 def test_seed_different(method):
     backend1 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
     backend2 = QiliSim(execution_config=ExecutionConfig(seed=43, num_threads=1), digital_simulation_method=method)
@@ -295,7 +318,7 @@ def test_arnoldi_matrix_free_matches_explicit_matrix(initial_state, noise):
     np.testing.assert_allclose(mf_ev, explicit_ev, atol=1e-9)
 
 
-@pytest.mark.parametrize("method", digital_methods)
+@pytest.mark.parametrize("method", digital_methods_with_mps)
 def test_exponential_gates(method):
     backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
     circuit = Circuit(nqubits=1)
@@ -904,9 +927,9 @@ def test_adaptive_integrator_supported_in_reservoir():
 # ──────────────────────────────────────────────────────────────────────────────
 
 
-def _mps_backend(max_bond_dimension: int = 64, seed: int = 42) -> QiliSim:
+def _mps_backend(max_bond_dimension: int = 64, seed: int = 42, **method_kwargs) -> QiliSim:
     return QiliSim(
-        digital_simulation_method=DigitalMethod.mps(max_bond_dimension=max_bond_dimension),
+        digital_simulation_method=DigitalMethod.mps(max_bond_dimension=max_bond_dimension, **method_kwargs),
         execution_config=ExecutionConfig(seed=seed, num_threads=1),
     )
 
@@ -1024,6 +1047,280 @@ def test_mps_rejects_gates_on_more_than_two_qubits():
     circuit.add(Controlled(0, 1, basic_gate=X(2)))
     with pytest.raises(ValueError, match="one- and two-qubit gates"):
         _mps_backend().execute(DigitalPropagation(circuit=circuit), readout=Readout().with_sampling(nshots=10))
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# MPS accuracy against the statevector
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+def _statevector_backend(seed=42):
+    """The reference every MPS test is measured against.
+
+    This deliberately pins matrix_free=False rather than taking the default. The matrix-free
+    statevector kernel mishandles a SWAP gate whose lower qubit is not 0, so it cannot be trusted
+    as a reference here. See test_matrix_free_statevector_swap_gate_is_wrong below.
+    """
+    return QiliSim(
+        execution_config=ExecutionConfig(seed=seed, num_threads=1),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=False),
+    )
+
+
+def _final_state(backend, circuit):
+    result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_state_tomography())
+    return result.get_state().dense().flatten()
+
+
+def _fidelity(left, right):
+    return abs(np.vdot(left, right)) ** 2
+
+
+def _chain_circuit(nqubits, layers, seed):
+    """Entangles along the chain, which is the structure an MPS is built to hold."""
+    rng = random.Random(seed)
+    circuit = Circuit(nqubits=nqubits)
+    for qubit in range(nqubits):
+        circuit.add(H(qubit))
+    for _ in range(layers):
+        for qubit in range(nqubits - 1):
+            circuit.add(CNOT(qubit, qubit + 1))
+            circuit.add(RY(qubit + 1, theta=rng.uniform(0.2, 2.8)))
+            circuit.add(RZ(qubit, phi=rng.uniform(0.2, 2.8)))
+    return circuit
+
+
+@pytest.mark.parametrize("nqubits", [1, 2, 3, 5, 8])
+def test_mps_matches_statevector_for_chain_circuits(nqubits):
+    circuit = _chain_circuit(nqubits, layers=2, seed=nqubits)
+    np.testing.assert_allclose(
+        _final_state(_mps_backend(), circuit), _final_state(_statevector_backend(), circuit), atol=1e-10
+    )
+
+
+@pytest.mark.parametrize("seed", [1, 2, 3])
+def test_mps_matches_statevector_expectation_values(seed):
+    circuit = _chain_circuit(nqubits=6, layers=2, seed=seed)
+    observables = [
+        pauli_z(0),
+        pauli_x(3),
+        pauli_y(5),
+        pauli_z(0) * pauli_z(1),
+        pauli_x(2) * pauli_x(4),
+        sum(pauli_z(i) * pauli_z(i + 1) for i in range(5)),
+    ]
+    readout = Readout().with_expectation(observables)
+    mps = _mps_backend().execute(DigitalPropagation(circuit=circuit), readout).get_expectation_values()
+    exact = _statevector_backend().execute(DigitalPropagation(circuit=circuit), readout).get_expectation_values()
+    np.testing.assert_allclose(mps, exact, atol=1e-10)
+
+
+@pytest.mark.parametrize(
+    "gate",
+    [
+        X(0),
+        Y(0),
+        Z(0),
+        H(0),
+        S(0),
+        T(0),
+        RX(0, theta=0.7),
+        RY(0, theta=1.3),
+        RZ(0, phi=2.1),
+        U1(0, phi=0.5),
+        U2(0, phi=0.4, gamma=1.1),
+        U3(0, theta=0.9, phi=0.3, gamma=1.7),
+    ],
+)
+def test_mps_single_qubit_gates_match_statevector(gate):
+    """A one-qubit gate is applied without moving the orthogonality centre when it is unitary, so
+    every gate in the basis set has to leave the same state the statevector does."""
+    circuit = Circuit(nqubits=3)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    circuit.add(CNOT(1, 2))
+    circuit.add(gate)
+    np.testing.assert_allclose(
+        _final_state(_mps_backend(), circuit), _final_state(_statevector_backend(), circuit), atol=1e-10
+    )
+
+
+@pytest.mark.parametrize(("control", "target"), [(0, 1), (1, 0), (0, 5), (5, 0), (2, 4), (4, 2), (0, 3), (3, 1)])
+def test_mps_two_qubit_gates_at_any_distance_and_order(control, target):
+    """Non-adjacent pairs are routed with swaps and a reversed pair has to reorder the gate matrix,
+    so both directions and several spans need to agree with the statevector."""
+    circuit = Circuit(nqubits=6)
+    for qubit in range(6):
+        circuit.add(H(qubit))
+    circuit.add(RZ(target, phi=0.8))
+    circuit.add(CNOT(control, target))
+    circuit.add(RY(control, theta=1.1))
+    circuit.add(CNOT(control, target))
+    np.testing.assert_allclose(
+        _final_state(_mps_backend(), circuit), _final_state(_statevector_backend(), circuit), atol=1e-10
+    )
+
+
+@pytest.mark.parametrize(("qubit_a", "qubit_b"), [(0, 1), (0, 4), (4, 0), (1, 3)])
+def test_mps_swap_gates_match_statevector(qubit_a, qubit_b):
+    circuit = _chain_circuit(nqubits=5, layers=1, seed=4)
+    circuit.add(SWAP(qubit_a, qubit_b))
+    np.testing.assert_allclose(
+        _final_state(_mps_backend(), circuit), _final_state(_statevector_backend(), circuit), atol=1e-10
+    )
+
+
+@pytest.mark.parametrize("nqubits", [2, 4, 7])
+def test_mps_ghz_state_is_exact(nqubits):
+    """A GHZ state needs only a bond of 2, so the MPS holds it exactly whatever the cap."""
+    circuit = Circuit(nqubits=nqubits)
+    circuit.add(H(0))
+    for qubit in range(nqubits - 1):
+        circuit.add(CNOT(qubit, qubit + 1))
+    state = _final_state(_mps_backend(max_bond_dimension=2), circuit)
+    expected = np.zeros(2**nqubits, dtype=complex)
+    expected[0] = expected[-1] = 1 / np.sqrt(2)
+    np.testing.assert_allclose(state, expected, atol=1e-12)
+
+
+def test_mps_product_circuit_is_exact_at_bond_dimension_one():
+    """A circuit that never entangles stays a product state, so a bond of 1 loses nothing."""
+    circuit = Circuit(nqubits=6)
+    for qubit in range(6):
+        circuit.add(H(qubit))
+        circuit.add(RZ(qubit, phi=0.3 * (qubit + 1)))
+        circuit.add(RX(qubit, theta=0.2 * (qubit + 1)))
+    np.testing.assert_allclose(
+        _final_state(_mps_backend(max_bond_dimension=1), circuit),
+        _final_state(_statevector_backend(), circuit),
+        atol=1e-10,
+    )
+
+
+def test_mps_fidelity_improves_with_bond_dimension():
+    """Truncation is the only approximation in the method, so raising the cap must never make the
+    state worse, and a large enough cap has to reproduce the statevector exactly."""
+    circuit = _chain_circuit(nqubits=8, layers=3, seed=7)
+    exact = _final_state(_statevector_backend(), circuit)
+    fidelities = [
+        _fidelity(exact, _final_state(_mps_backend(max_bond_dimension=chi), circuit)) for chi in [1, 2, 4, 8, 16]
+    ]
+    for lower, higher in itertools.pairwise(fidelities):
+        assert higher >= lower - 1e-12
+    assert fidelities[0] < 0.9
+    np.testing.assert_allclose(fidelities[-1], 1.0, atol=1e-10)
+
+
+@pytest.mark.parametrize("max_bond_dimension", [1, 2, 3, 5])
+def test_mps_state_stays_normalised_under_truncation(max_bond_dimension):
+    """Truncation throws weight away, so the state has to be renormalised or every expectation
+    value drifts towards zero as the cap is tightened."""
+    circuit = _chain_circuit(nqubits=7, layers=3, seed=13)
+    state = _final_state(_mps_backend(max_bond_dimension=max_bond_dimension), circuit)
+    np.testing.assert_allclose(np.linalg.norm(state), 1.0, atol=1e-10)
+
+
+def test_mps_truncation_cutoff_alone_keeps_the_state_exact():
+    """A cutoff far below the weight actually present must not discard anything."""
+    circuit = _chain_circuit(nqubits=6, layers=2, seed=5)
+    np.testing.assert_allclose(
+        _final_state(_mps_backend(max_bond_dimension=64, truncation_cutoff=1e-14), circuit),
+        _final_state(_statevector_backend(), circuit),
+        atol=1e-10,
+    )
+
+
+@pytest.mark.parametrize("fuse_gates", [True, False])
+@pytest.mark.parametrize("combine_single_qubit_gates", [True, False])
+def test_mps_circuit_optimizations_do_not_change_the_result(fuse_gates, combine_single_qubit_gates):
+    """Fusing pairs and combining single-qubit runs rewrite the gate list before it reaches the MPS,
+    so every combination has to land on the same state."""
+    circuit = _chain_circuit(nqubits=6, layers=2, seed=17)
+    circuit.add(CNOT(0, 5))
+    circuit.add(RZ(5, phi=0.9))
+    circuit.add(CNOT(0, 5))
+    state = _final_state(
+        _mps_backend(fuse_gates=fuse_gates, combine_single_qubit_gates=combine_single_qubit_gates), circuit
+    )
+    np.testing.assert_allclose(state, _final_state(_statevector_backend(), circuit), atol=1e-10)
+
+
+def test_mps_trotterized_schedule_matches_statevector():
+    """The workload the MPS method exists for: a Trotterised anneal, whose wrap-around coupling
+    forces the longest swap route in the chain."""
+    nqubits, total_time, steps = 6, 4.0, 20
+    h_x = -sum(pauli_x(i) for i in range(nqubits))
+    h_z = sum(pauli_z(i) * pauli_z((i + 1) % nqubits) for i in range(nqubits))
+    circuit = TrotterizedSchedule(Schedule.linear(h_x, h_z, total_time, total_time / steps))
+    initial = Circuit(circuit.nqubits)
+    for qubit in range(circuit.nqubits):
+        initial.add(H(qubit))
+    circuit.prepend(initial)
+    readout = Readout().with_expectation([h_z])
+    mps = _mps_backend().execute(DigitalPropagation(circuit=circuit), readout).get_expectation_values()
+    exact = _statevector_backend().execute(DigitalPropagation(circuit=circuit), readout).get_expectation_values()
+    np.testing.assert_allclose(mps, exact, atol=1e-8)
+
+
+def test_mps_state_tomography_matches_statevector():
+    circuit = _chain_circuit(nqubits=4, layers=2, seed=21)
+    mps = _mps_backend().execute(DigitalPropagation(circuit=circuit), Readout().with_state_tomography()).get_state()
+    exact = (
+        _statevector_backend()
+        .execute(DigitalPropagation(circuit=circuit), Readout().with_state_tomography())
+        .get_state()
+    )
+    assert mps.shape == exact.shape
+    np.testing.assert_allclose(mps.dense(), exact.dense(), atol=1e-10)
+
+
+def test_mps_rejects_a_density_matrix_initial_state():
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    backend = _mps_backend()
+    with pytest.raises(ValueError, match="MPS backend"):
+        backend._execute_digital_propagation(
+            DigitalPropagation(circuit=circuit),
+            readout=[SamplingReadout(nshots=8)],
+            initial_state=ket(0, 0).to_density_matrix(),
+        )
+
+
+@pytest.mark.parametrize(("qubit_a", "qubit_b"), [(1, 2), (2, 3), (1, 3)])
+@pytest.mark.xfail(
+    reason="The matrix-free statevector kernel leaves a SWAP whose lower qubit is not 0 as a no-op", strict=True
+)
+def test_matrix_free_statevector_swap_gate_is_wrong(qubit_a, qubit_b):
+    """Found by cross-checking the MPS method against the statevector one.
+
+    SWAP(a, b) with a > 0 is silently skipped by the matrix-free kernel. The explicit-matrix
+    statevector, the MPS method and the Qutip backend all agree on the correct answer, so this is a
+    defect in that one kernel rather than a disagreement about conventions.
+    """
+    circuit = Circuit(nqubits=4)
+    circuit.add(X(qubit_a))
+    circuit.add(SWAP(qubit_a, qubit_b))
+    matrix_free = QiliSim(
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=True),
+    )
+    np.testing.assert_allclose(
+        _final_state(matrix_free, circuit), _final_state(_statevector_backend(), circuit), atol=1e-10
+    )
+
+
+def test_mps_ignores_mid_circuit_measurements():
+    """Documents a current limitation: the MPS method skips M gates, so unlike the statevector it
+    neither collapses the state nor reports intermediate results. Update this test when that changes."""
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    circuit.add(M(0))
+    circuit.add(CNOT(0, 1))
+    circuit.add(M(0, 1))
+    mps = _mps_backend().execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=64))
+    exact = _statevector_backend().execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=64))
+    assert len(mps.intermediate_results) == 0
+    assert len(exact.intermediate_results) > 0
 
 
 # ──────────────────────────────────────────────────────────────────────────────

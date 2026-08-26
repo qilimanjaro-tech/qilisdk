@@ -125,6 +125,22 @@ def test_mps_method_creates_okay():
         DigitalMethod(mps_truncation_cutoff=-1e-3)
 
 
+def test_mps_method_circuit_optimization_flags():
+    """The MPS path reads both optimization flags in the C++ layer, so they have to be reachable
+    from the factory and default to on, as they do for the statevector method."""
+    default = DigitalMethod.mps()
+    assert default.combine_single_qubit_gates is True
+    assert default.fuse_gates is True
+
+    method = DigitalMethod.mps(max_bond_dimension=16, combine_single_qubit_gates=False, fuse_gates=False)
+    assert method.combine_single_qubit_gates is False
+    assert method.fuse_gates is False
+
+    config = QiliSim(digital_simulation_method=method).get_config()
+    assert config["combine_single_qubit_gates"] is False
+    assert config["fuse_gates"] is False
+
+
 def test_mps_method_executes_a_circuit():
     """The "mps" digital method has its own dispatch arm in the C++ layer, which only a real
     execution reaches, so drive a circuit through it rather than only checking that the

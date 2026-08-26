@@ -488,7 +488,13 @@ class DigitalMethod(BaseSimulatorConfig):
         )
 
     @classmethod
-    def mps(cls, max_bond_dimension: int = 64, truncation_cutoff: float = 1e-10) -> DigitalMethod:
+    def mps(
+        cls,
+        max_bond_dimension: int = 64,
+        truncation_cutoff: float = 1e-10,
+        combine_single_qubit_gates: bool = True,
+        fuse_gates: bool = True,
+    ) -> DigitalMethod:
         """Return a matrix-product-state simulation configuration.
 
         The circuit is applied to an MPS and contracted exactly, so the memory cost grows
@@ -501,19 +507,30 @@ class DigitalMethod(BaseSimulatorConfig):
                 entanglement stays below this are simulated exactly.
             truncation_cutoff (float): Singular values below this fraction of the largest
                 are discarded regardless of the bond dimension.
+            combine_single_qubit_gates (bool): Whether to combine consecutive single-qubit gates into a single
+                operation. Defaults to ``True``.
+            fuse_gates (bool): Whether to fuse runs of adjacent gates into a single dense operation. An MPS applies
+                one- and two-qubit gates only, so blocks never span more than a pair and there is no depth to tune,
+                but fusing a distant pair means routing it with swaps once instead of once per gate in the block.
+                Defaults to ``True``.
 
         Returns:
             DigitalMethod: Configured MPS digital configuration.
         """
         logger.debug(
-            "[BackendConfig] Configuring MPS digital method (max_bond_dimension={}, truncation_cutoff={})",
+            "[BackendConfig] Configuring MPS digital method (max_bond_dimension={}, truncation_cutoff={}, "
+            "combine_single_qubit_gates={}, fuse_gates={})",
             max_bond_dimension,
             truncation_cutoff,
+            combine_single_qubit_gates,
+            fuse_gates,
         )
         return DigitalMethod(
             digital_method="mps",
             mps_max_bond_dimension=max_bond_dimension,
             mps_truncation_cutoff=truncation_cutoff,
+            combine_single_qubit_gates=combine_single_qubit_gates,
+            fuse_gates=fuse_gates,
         )
 
     @classmethod
