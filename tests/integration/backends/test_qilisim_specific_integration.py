@@ -1045,8 +1045,11 @@ def test_mps_rejects_gates_on_more_than_two_qubits():
     """Three-qubit gates need decomposing first, and say so rather than silently misbehaving."""
     circuit = Circuit(nqubits=3)
     circuit.add(Controlled(0, 1, basic_gate=X(2)))
+    backend = _mps_backend()
+    propagation = DigitalPropagation(circuit=circuit)
+    readout = Readout().with_sampling(nshots=10)
     with pytest.raises(ValueError, match="one- and two-qubit gates"):
-        _mps_backend().execute(DigitalPropagation(circuit=circuit), readout=Readout().with_sampling(nshots=10))
+        backend.execute(propagation, readout=readout)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1275,15 +1278,16 @@ def test_mps_state_tomography_matches_statevector():
 
 
 def test_mps_rejects_a_density_matrix_initial_state():
+    """An MPS holds a pure state, so a mixed one has to be turned away rather than silently
+    collapsed to something else."""
     circuit = Circuit(nqubits=2)
     circuit.add(H(0))
     backend = _mps_backend()
+    propagation = DigitalPropagation(circuit=circuit)
+    readout = [SamplingReadout(nshots=8)]
+    density_matrix = ket(0, 0).to_density_matrix()
     with pytest.raises(ValueError, match="MPS backend"):
-        backend._execute_digital_propagation(
-            DigitalPropagation(circuit=circuit),
-            readout=[SamplingReadout(nshots=8)],
-            initial_state=ket(0, 0).to_density_matrix(),
-        )
+        backend._execute_digital_propagation(propagation, readout=readout, initial_state=density_matrix)
 
 
 @pytest.mark.parametrize(("qubit_a", "qubit_b"), [(1, 2), (2, 3), (1, 3)])
