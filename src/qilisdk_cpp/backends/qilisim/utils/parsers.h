@@ -20,8 +20,8 @@
 #include "../noise/noise_model.h"
 #include "../representations/exponential_ansatz.h"
 #include "../representations/matrix_free_hamiltonian.h"
-#include "../representations/stabilizer_state.h"
 #include "../representations/mps.h"
+#include "../representations/stabilizer_state.h"
 
 // GCOV_EXCL_BR_START
 

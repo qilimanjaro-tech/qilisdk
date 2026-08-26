@@ -615,7 +615,7 @@ void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& 
     if (initial_state.get_nqubits() != n_qubits) {
         throw py::value_error("The initial MPS has " + std::to_string(initial_state.get_nqubits()) + " qubits but the circuit has " + std::to_string(n_qubits) + ".");
     }
-    
+
     // Noisey MPS is not supported
     if (!noise_model_cpp.is_empty()) {
         warning("Noise models are not supported in the MPS simulator. Noise will be ignored.");
@@ -648,15 +648,14 @@ void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& 
 
     // Then we apply each gate
     for (size_t i = 0; i < optimized_gates.size(); ++i) {
-
         // Ignore measurements
         if (optimized_gates[i].get_name() == "M") {
             continue;
         }
-        
+
         // Apply the gate
         state.apply_gate(optimized_gates[i]);
-        
+
         // Normalize
         if (config.get_normalize_state() && config.get_normalize_after_gate()) {
             state.normalize();
@@ -683,7 +682,6 @@ void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& 
     if (state.get_truncation_error() > config.get_adaptive_tol()) {
         warning("The MPS simulation had a total truncation error of " + std::to_string(state.get_truncation_error()) + ", increase mps_max_bond_dimension for a more accurate result.");
     }
-
 }
 
 // GCOV_EXCL_BR_STOP

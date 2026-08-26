@@ -254,7 +254,6 @@ inline void collect_lindblad_jumps(py::handle py_noise_pass, double dt, double a
         jump_operators.push_back(from_spmatrix(base_ops[i].attr("data"), atol));
         jump_rate_series.push_back(make_sqrt_rate_series(rates[i], *step_list, atol));
     }
-
 }
 
 py::object construct_result_object(const ExponentialAnsatz& state, const py::object& readout, int n_qubits) {

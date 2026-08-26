@@ -105,10 +105,10 @@ DenseMatrix MPSState::transfer_step(const DenseMatrix& environment, const MPSTen
 
         E -> sum_p A^{p dagger} E (op A)^p
 
-    Here A^p is the site tensor at physical index p, 
+    Here A^p is the site tensor at physical index p,
     and (op A)^p is the contraction of the operator with the site tensor on the ket layer.
 
-    This is used in the expectation value calculation, where the environment 
+    This is used in the expectation value calculation, where the environment
     is the left or right environment and the operator is the observable.
 
     Args:

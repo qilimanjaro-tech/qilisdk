@@ -432,7 +432,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 } else if (config.get_digital_method() == "statevector") {
                     sampling(gates, n_qubits, state.sparseView(), noise_model_cpp, state, intermediate_results, config, readout);
                 } else {
-                    throw py::value_error("Unsupported sampling method for reservoirs: " + config.get_digital_method()); // GCOV_EXCL_LINE
+                    throw py::value_error("Unsupported sampling method for reservoirs: " + config.get_digital_method());  // GCOV_EXCL_LINE
                 }
 
                 // If we have a time evolution layer

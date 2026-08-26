@@ -120,7 +120,7 @@ void orthonormalize(Eigen::Ref<DenseMatrix> columns) {
     This is a Gram-Schmidt orthonormalisation of the columns of a matrix, but it
     is done in place and modifies the columns directly. It assumes that the columns are
     already nearly orthonormal, so it does not check for linear dependence or zero-length
-    columns. It is used to repair numerical drift in a matrix that should be orthonormal, 
+    columns. It is used to repair numerical drift in a matrix that should be orthonormal,
     rather than to orthonormalise an arbitrary set of vectors.
 
     Args:
@@ -458,7 +458,7 @@ Complex Tensor::contract_all(const Tensor& other) const {
     Contract every leg of *this against the matching leg of `other`, which is the sum
     over every element of the product of the two tensors.
 
-    Neither side is conjugated, so you need to conjugate the bra 
+    Neither side is conjugated, so you need to conjugate the bra
     side yourself if you want the actual inner product.
 
     Args:
