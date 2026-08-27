@@ -157,9 +157,10 @@ def test_derivative_of_a_function_without_the_symbol_is_zero(params):
     x, y, _ = params
     # Abs has no derivative, but nothing has to be differentiated when x does not occur in it.
     assert (Abs(y) + 1).derivative(x) == Constant(0)
-    assert (Abs(y) * x).derivative(x) == Abs(y)
+    abs_y = Abs(y)
+    assert (abs_y * x).derivative(x) == abs_y
     with pytest.raises(NotSupportedOperation, match="derivative of Abs"):
-        Abs(y).derivative(y)
+        abs_y.derivative(y)
 
 
 def test_functions_survive_copying(params):
