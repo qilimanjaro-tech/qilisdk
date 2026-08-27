@@ -75,11 +75,12 @@ def about() -> str:
     try:
         gpu_query = subprocess.check_output(
             ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"],  # ruff: ignore[start-process-with-partial-path]
-            stderr=subprocess.STDOUT,
+            stderr=subprocess.DEVNULL,
         ).decode()
-        name, _, vram = gpu_query.strip().splitlines()[0].partition(",")
-        gpu_name = name.strip()
-        gpu_vram = round(int(vram) / 1024)
+        name, separator, vram = gpu_query.strip().splitlines()[0].partition(",")
+        if separator:
+            gpu_name = name.strip()
+            gpu_vram = round(int(vram) / 1024)
     except (subprocess.CalledProcessError, FileNotFoundError, IndexError, ValueError):
         pass
     try:
