@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any
+from typing import Any, TypeAlias
 
+from pyscipopt import Expr
 from pyscipopt import Model as ScipModel
 from pyscipopt.recipes.nonlinear import set_nonlinear_objective
 
@@ -25,8 +26,11 @@ from qilisdk.core.variables import BaseVariable, BinaryVariable, Domain, Number,
 
 from .base_solver import ClassicalSolver, _assert_real, _variable_bounds
 
+# What SCIP accepts as an operand: one of its expressions (``Variable`` is an ``Expr``) or a plain number.
+ScipExpr: TypeAlias = Expr | float
 
-def _expression_to_scip_expr(expression: Expression, var_exprs: dict[BaseVariable, Any]) -> Any:  # ruff: ignore[any-type]
+
+def _expression_to_scip_expr(expression: Expression, var_exprs: dict[BaseVariable, ScipExpr]) -> ScipExpr:
     """
     Convert a QiliSDK :class:`~qilisdk.core.Expression` to a SCIP expression, using the provided
     mapping of model variables to SCIP expressions.
@@ -46,12 +50,12 @@ def _expression_to_scip_expr(expression: Expression, var_exprs: dict[BaseVariabl
     if isinstance(expression, BaseVariable):
         return var_exprs[expression]
     if isinstance(expression, Add):
-        total: Any = 0.0
+        total: ScipExpr = 0.0
         for arg in expression.args:
             total += _expression_to_scip_expr(arg, var_exprs)
         return total
     if isinstance(expression, Mul):
-        product: Any = 1.0
+        product: ScipExpr = 1.0
         for arg in expression.args:
             product *= _expression_to_scip_expr(arg, var_exprs)
         return product
@@ -122,7 +126,7 @@ class ScipSolver(ClassicalSolver):
 
         # Build a SCIP variable (and its algebraic expression) for every model variable.
         scip_vars: dict[BaseVariable, Any] = {}
-        var_exprs: dict[BaseVariable, Any] = {}
+        var_exprs: dict[BaseVariable, ScipExpr] = {}
         for v in model.variables():
             if isinstance(v, BinaryVariable):
                 scip_var = scip_model.addVar(name=v.label, vtype="B")

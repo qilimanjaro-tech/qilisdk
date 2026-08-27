@@ -32,7 +32,7 @@ is order-independent for ``+`` and ``*`` (``x + y == y + x``). Semantic rewrites
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import numpy as np
 
@@ -54,8 +54,9 @@ _DIVISION_MESSAGE = "Division by zero is not allowed in an Expression."
 # Leading element of ``_sort_key``. It groups operands by node kind so that a canonical ``Add`` or
 # ``Mul`` always lists constants first, then symbols, then compound nodes, whatever order the user
 # wrote them in. The exact numbers only matter relative to each other.
+# ``_RANK_VARIABLE`` is the rank assigned by ``BaseVariable`` in ``qilisdk.core.variables``.
 _RANK_CONSTANT = 0
-_RANK_VARIABLE = 1  # assigned by BaseVariable in qilisdk.core.variables
+_RANK_VARIABLE = 1
 _RANK_POW = 2
 _RANK_MUL = 3
 _RANK_ADD = 4
@@ -466,12 +467,8 @@ class Constant(Expression):
     """A numeric literal leaf. Replaces the old ``Term.CONST`` sentinel."""
 
     def __init__(self, value: Number) -> None:
-        raw: Any = value
-        if isinstance(raw, np.generic):
-            raw = raw.item()
-        if isinstance(raw, bool):
-            raw = int(raw)
-        self._value: Number = _float_if_real(raw)
+        raw: Number = value.item() if isinstance(value, np.generic) else value
+        self._value: Number = _float_if_real(int(raw) if isinstance(raw, bool) else raw)
         self._hash_cache: int | None = None
 
     @property

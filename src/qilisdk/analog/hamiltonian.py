@@ -1072,64 +1072,70 @@ class Hamiltonian(Parameterizable):
                 f"Invalid subtraction between Hamiltonian and {other.__class__.__name__}."
             )
 
-    def _mul_inplace(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> None:
-        if isinstance(other, (int, float, complex)):
-            # 0 short-circuit
-            if abs(other) < get_settings().atol:
-                # everything becomes 0
-                self._elements.clear()
-                return None
-            # 1 short-circuit
-            if other == 1:
-                return None
-            # scale all coefficients
-            for k in self._elements:
-                self._elements[k] *= other
-            return None
+    def _scale_inplace(self, factor: Number | Expression | Parameter) -> None:
+        """Multiply every coefficient by a scalar factor.
 
-        if isinstance(other, Expression):
-            if not other.is_parameterized():
+        Raises:
+            ValueError: if ``factor`` is a symbolic expression that is not fully parameterized.
+        """
+        if isinstance(factor, (int, float, complex)):
+            # 0 and 1 short-circuits
+            if abs(factor) < get_settings().atol:
+                self._elements.clear()
+                return
+            if factor == 1:
+                return
+        else:
+            if not factor.is_parameterized():
                 raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
-            for parameter in other.free_parameters():
+            for parameter in factor.free_parameters():
                 self._add_parameter(parameter.label, parameter)
-            for k in self._elements:
-                self._elements[k] *= other
+        for k in self._elements:
+            self._elements[k] *= factor
+
+    @staticmethod
+    def _identity_coefficient(other: Hamiltonian) -> complex | Expression | Parameter | None:
+        """Return the coefficient of ``other`` if it is a scalar times the identity, ``None`` otherwise."""
+        if len(other._elements) != 1:
             return None
+        ((ops, coefficient),) = other._elements.items()
+        if len(ops) == 1 and ops[0].name == "I" and ops[0].qubit == 0:
+            return coefficient
+        return None
+
+    def _mul_inplace(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> None:
+        if isinstance(other, (int, float, complex, Expression)):
+            self._scale_inplace(other)
+            return
 
         if isinstance(other, PauliOperator):
             # Convert single PauliOperator -> Hamiltonian with 1 key
-            # Then do the single-key Hamiltonian path below
             other = other.to_hamiltonian()
 
-        if isinstance(other, Hamiltonian):
-            if not other.elements:
-                # Multiply by "0" Hamiltonian => 0
-                self._elements.clear()
-                return None
-
-            # Check if 'other' is purely scalar identity => short-circuit
-            if len(other.elements) == 1:
-                ((ops2, c2),) = other._elements.items()  # ruff: ignore[private-member-access]
-                if len(ops2) == 1:
-                    op2 = ops2[0]
-                    if op2.name == "I" and op2.qubit == 0:
-                        # effectively scalar c2
-                        return self._mul_inplace(c2)
-
-            # Otherwise, we do the general multiply
-            new_dict: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
-            for ops1, c1 in self._elements.items():
-                for ops2, c2 in other._elements.items():  # ruff: ignore[private-member-access]
-                    phase, new_ops = self._multiply_sets(ops1, ops2)
-                    new_dict[new_ops] += phase * c1 * c2
-            self._elements = new_dict
-            self._update_parameters(other._parameters)  # ruff: ignore[private-member-access]
-
-        else:
+        if not isinstance(other, Hamiltonian):
             raise InvalidHamiltonianOperation(
                 f"Invalid multiplication between Hamiltonian and {other.__class__.__name__}."
             )
-        return None
+
+        if not other._elements:  # ruff: ignore[private-member-access]
+            # Multiply by "0" Hamiltonian => 0
+            self._elements.clear()
+            return
+
+        # A scalar multiple of the identity is just a rescaling
+        coefficient = self._identity_coefficient(other)
+        if coefficient is not None:
+            self._scale_inplace(coefficient)
+            return
+
+        # Otherwise, we do the general multiply
+        new_dict: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
+        for ops1, c1 in self._elements.items():
+            for ops2, c2 in other._elements.items():  # ruff: ignore[private-member-access]
+                phase, new_ops = self._multiply_sets(ops1, ops2)
+                new_dict[new_ops] += phase * c1 * c2
+        self._elements = new_dict
+        self._update_parameters(other._parameters)  # ruff: ignore[private-member-access]
 
     def _div_inplace(self, other: Number | PauliOperator | Hamiltonian) -> None:
         # Only valid for scalars

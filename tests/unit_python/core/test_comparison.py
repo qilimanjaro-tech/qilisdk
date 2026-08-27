@@ -191,6 +191,7 @@ def test_copy_and_yaml_round_trip():
 
 def test_comparisons_of_different_operations_are_not_equal():
     x = Variable("x", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
-    assert LEQ(x, 3) != GEQ(x, 3)
-    assert LEQ(x, 3) == LEQ(x, 3)
-    assert LEQ(x, 3) != "not a comparison"
+    leq = LEQ(x, 3)
+    assert leq != GEQ(x, 3)
+    assert leq == LEQ(x, 3)
+    assert leq != "not a comparison"
