@@ -14,7 +14,9 @@
 
 """Tests for the :mod:`qilisdk.core.expression` expression-tree AST."""
 
+import copy
 import math
+import pickle
 
 import numpy as np
 import pytest
@@ -149,6 +151,22 @@ def test_diff_rules(params):
     assert (x * y).derivative(x) == y
     assert (x**2).derivative(x) == (2 * x)
     assert (x + y).derivative(x) == Constant(1)
+
+
+def test_derivative_of_a_function_without_the_symbol_is_zero(params):
+    x, y, _ = params
+    # Abs has no derivative, but nothing has to be differentiated when x does not occur in it.
+    assert (Abs(y) + 1).derivative(x) == Constant(0)
+    assert (Abs(y) * x).derivative(x) == Abs(y)
+    with pytest.raises(NotSupportedOperation, match="derivative of Abs"):
+        Abs(y).derivative(y)
+
+
+def test_functions_survive_copying(params):
+    x, _, _ = params
+    expr = Sin(x) ** 2 + Cos(x)
+    assert copy.deepcopy(expr) == expr
+    assert pickle.loads(pickle.dumps(expr)) == expr
 
 
 def test_diff_chain_rule(params):

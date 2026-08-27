@@ -907,6 +907,8 @@ class Function(Expression, ABC):
         return 0
 
     def derivative(self, symbol: BaseVariable) -> Expression:
+        if symbol not in self.free_symbols():
+            return Constant(0)
         return Mul.build((self._outer_derivative(self._arg), self._arg.derivative(symbol)))
 
     def expand(self) -> Expression:
@@ -925,6 +927,10 @@ class Function(Expression, ABC):
 
     def _compute_hash(self) -> int:
         return qili_hash(self.NAME, self._arg)
+
+    def __getnewargs__(self) -> tuple[Expression]:
+        # __new__ needs the operand, so copy and pickle must hand it back.
+        return (self._arg,)
 
     def __copy__(self) -> Expression:
         return type(self)(self._arg)

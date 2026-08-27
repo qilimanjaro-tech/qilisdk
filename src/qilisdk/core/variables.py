@@ -692,7 +692,7 @@ class Variable(BaseVariable):
     def __init__(
         self,
         label: str,
-        domain: Domain,
+        domain: Domain = Domain.INTEGER,
         bounds: tuple[float | None, float | None] = (None, None),
         encoding: type[Encoding] = Bitwise,
         precision: float = 1e-2,
@@ -701,7 +701,8 @@ class Variable(BaseVariable):
 
         Args:
             label (str): The name of the variable.
-            domain (Domain): The domain of the values this variable can take.
+            domain (Domain, optional): The domain of the values this variable can take. Defaults to
+                Domain.INTEGER, which is much cheaper to binarize than Domain.REAL.
             bounds (tuple[float | None, float | None], optional): the (lower, upper) bounds, both
                 included. ``None`` selects the domain's extreme. Defaults to (None, None).
             encoding (type[Encoding], optional): the binary encoding. Defaults to Bitwise.

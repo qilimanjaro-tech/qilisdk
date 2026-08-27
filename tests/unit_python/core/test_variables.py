@@ -189,6 +189,10 @@ def test_variable_bounds_validation():
         Variable("z", Domain.INTEGER, bounds=(5, 3))
 
 
+def test_variable_defaults_to_the_integer_domain():
+    assert Variable("x").domain == Domain.INTEGER
+
+
 def test_set_bounds():
     v = Variable("x", Domain.POSITIVE_INTEGER)
     v.set_bounds(2, 5)
