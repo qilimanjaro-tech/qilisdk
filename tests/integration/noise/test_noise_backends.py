@@ -36,6 +36,7 @@ from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.gates import CNOT, RX, SWAP, H, I, X, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.noise import (
     AmplitudeDamping,
     BitFlip,
@@ -357,6 +358,69 @@ def test_qilisim_backend_schedule_parameter_perturbation(backend_class):
     )
 
     assert np.real_if_close(result.get_expectation_values()[0]) < -0.8
+
+
+@pytest.mark.parametrize("backend_class", backends)
+def test_gate_parameter_perturbation_does_not_mutate_circuit(backend_class):
+    # A perturbation is a per-execution draw, so it must never be written back into the
+    # caller's circuit, otherwise repeated executions perturb the already perturbed value.
+    circuit = Circuit(nqubits=1)
+    circuit.add(RX(0, theta=0.5))
+    functional = DigitalPropagation(circuit)
+
+    noise_model = NoiseModel()
+    noise_model.add(OffsetPerturbation(offset=0.1), gate=RX, parameter="theta")
+
+    backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
+    for _ in range(3):
+        backend.execute(functional, readout=Readout().with_sampling(nshots=10))
+        assert circuit.gates[0].get_parameters() == {"theta": 0.5}
+
+
+@pytest.mark.parametrize("backend_class", backends)
+def test_schedule_parameter_perturbation_does_not_mutate_schedule(backend_class):
+    coupling = Parameter("g", 0.5)
+    schedule = Schedule(
+        hamiltonians={"hz": coupling * PauliZ(0)},
+        coefficients={"hz": {0.0: 1.0, 1.0: 1.0}},
+        dt=0.1,
+        interpolation=Interpolation.LINEAR,
+    )
+    analog_evolution = AnalogEvolution(schedule=schedule, initial_state=(ket(0) + ket(1)).unit())
+
+    noise_model = NoiseModel()
+    noise_model.add(OffsetPerturbation(offset=0.1), parameter="g")
+
+    backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
+    for _ in range(3):
+        backend.execute(analog_evolution, readout=Readout().with_expectation(observables=[PauliX(0)]))
+        assert schedule.get_parameters() == {"g": 0.5}
+
+
+def test_reservoir_parameter_perturbation_does_not_mutate_layer():
+    # Same guarantee for the reservoir path, where a schedule is perturbed once per layer.
+    coupling = Parameter("g", 0.5)
+    schedule = Schedule(
+        hamiltonians={"hz": coupling * PauliZ(0)},
+        coefficients={"hz": {0.0: 1.0, 1.0: 1.0}},
+        dt=0.1,
+        interpolation=Interpolation.LINEAR,
+    )
+    encoding = Circuit(1)
+    encoding.add(RX(0, theta=ReservoirInput("u", 0.1)))
+    reservoir = QuantumReservoir(
+        initial_state=QTensor.uniform(1).to_density_matrix(),
+        reservoir_layer=ReservoirLayer(evolution_dynamics=schedule, input_encoding=encoding),
+        input_per_layer=[{"u": 0.2}, {"u": 0.3}],
+    )
+
+    noise_model = NoiseModel()
+    noise_model.add(OffsetPerturbation(offset=0.1), parameter="g")
+
+    backend = QiliSim(noise_model=noise_model, **args_per_backend[QiliSim])
+    backend.execute(reservoir, readout=Readout().with_expectation(observables=[PauliZ(0)]))
+
+    assert schedule.get_parameters() == {"g": 0.5}
 
 
 @pytest.mark.parametrize("backend_class", backends)
