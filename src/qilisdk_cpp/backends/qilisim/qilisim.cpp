@@ -198,6 +198,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
     // Check if we need to perturb the parameters
     py::object schedule = functional.attr("schedule");
     if (!noise_model.is_none()) {
+        schedule = py::module_::import("copy").attr("deepcopy")(schedule);
         py::dict schedule_parameters = schedule.attr("get_parameters")();
         py::dict global_noise_map = noise_model.attr("global_perturbations");
         for (auto item : global_noise_map) {
@@ -216,11 +217,11 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
 
     // Pre-process the Python objects
     py::object initial_state = functional.attr("initial_state");
-    py::object hamiltonians_full = functional.attr("schedule").attr("hamiltonians");
+    py::object hamiltonians_full = schedule.attr("hamiltonians");
     py::list hamiltonians_keys = hamiltonians_full.attr("keys")();
     py::list hamiltonians_values = hamiltonians_full.attr("values")();
-    py::object steps = functional.attr("schedule").attr("tlist");
-    int n_qubits = functional.attr("schedule").attr("nqubits").cast<int>();
+    py::object steps = schedule.attr("tlist");
+    int n_qubits = schedule.attr("nqubits").cast<int>();
 
     // Get parameters
     QiliSimConfig config = parse_solver_params(solver_params);
@@ -439,6 +440,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
             } else if (py::isinstance(step, Schedule)) {
                 // Check if we need to perturb the parameters
                 if (!noise_model.is_none()) {
+                    step = py::module_::import("copy").attr("deepcopy")(step);
                     py::dict schedule_parameters = step.attr("get_parameters")();
                     py::dict global_noise_map = noise_model.attr("global_perturbations");
                     for (auto item : global_noise_map) {
