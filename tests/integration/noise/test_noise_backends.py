@@ -34,7 +34,7 @@ from qilisdk.core import Parameter, ket
 from qilisdk.core.interpolator import Interpolation
 from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.digital.circuit import Circuit
-from qilisdk.digital.gates import CNOT, RX, SWAP, H, I, X, Z
+from qilisdk.digital.gates import CNOT, CZ, RX, SWAP, Controlled, H, I, X, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.noise import (
@@ -83,8 +83,9 @@ def test_qilisim_backend_bit_flip_two_qubits_sampling(backend_class):
     assert result.get_samples() == {"01": 100}
 
 
+@pytest.mark.parametrize("backend_class", backends)
 @pytest.mark.parametrize("gate", [SWAP(0, 1), CNOT(0, 1)])
-def test_qilisim_backend_per_qubit_noise_on_multi_qubit_gate(gate):
+def test_qilisim_backend_per_qubit_noise_on_multi_qubit_gate(gate, backend_class):
     # Noise attached to a single qubit must be applied to that qubit alone, whether it is a target
     # or a control of the gate, and must not spread to the gate's other qubits.
     circuit = Circuit(nqubits=2)
@@ -93,13 +94,14 @@ def test_qilisim_backend_per_qubit_noise_on_multi_qubit_gate(gate):
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=1.0), qubits=[0])
 
-    backend = QiliSim(noise_model=noise_model, **args_per_backend[QiliSim])
+    backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
     result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
     assert result.get_samples() == {"10": 100}
 
 
-def test_qilisim_backend_per_qubit_noise_skips_untouched_gates():
+@pytest.mark.parametrize("backend_class", backends)
+def test_qilisim_backend_per_qubit_noise_skips_untouched_gates(backend_class):
     # The gate does not act on the noisy qubit, so no noise is applied at all.
     circuit = Circuit(nqubits=2)
     circuit.add(X(1))
@@ -107,13 +109,14 @@ def test_qilisim_backend_per_qubit_noise_skips_untouched_gates():
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=1.0), qubits=[0])
 
-    backend = QiliSim(noise_model=noise_model, **args_per_backend[QiliSim])
+    backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
     result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
     assert result.get_samples() == {"01": 100}
 
 
-def test_qilisim_backend_global_noise_on_multi_qubit_gate():
+@pytest.mark.parametrize("backend_class", backends)
+def test_qilisim_backend_global_noise_on_multi_qubit_gate(backend_class):
     # Global noise applies independently to every qubit the gate acts on, flipping both of them.
     circuit = Circuit(nqubits=2)
     circuit.add(SWAP(0, 1))
@@ -121,10 +124,76 @@ def test_qilisim_backend_global_noise_on_multi_qubit_gate():
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=1.0))
 
-    backend = QiliSim(noise_model=noise_model, **args_per_backend[QiliSim])
+    backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
     result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
     assert result.get_samples() == {"11": 100}
+
+
+@pytest.mark.parametrize("backend_class", backends)
+@pytest.mark.parametrize(("noisy_gate", "expected"), [(CNOT, {"11": 100}), (X, {"00": 100})])
+def test_per_gate_noise_on_controlled_gate(noisy_gate, expected, backend_class):
+    # A controlled gate is a gate of its own: the noise attached to it applies to every qubit it
+    # acts on, controls included, while the noise attached to its base gate does not apply at all.
+    circuit = Circuit(nqubits=2)
+    circuit.add(CNOT(0, 1))
+
+    noise_model = NoiseModel()
+    noise_model.add(BitFlip(probability=1.0), gate=noisy_gate)
+
+    backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
+    result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
+
+    assert result.get_samples() == expected
+
+
+@pytest.mark.parametrize("backend_class", backends)
+@pytest.mark.parametrize(
+    ("gate", "noisy_gate"), [(CNOT(0, 1), CNOT), (Controlled(0, basic_gate=X(1)), CNOT), (CZ(0, 1), CZ)]
+)
+def test_per_gate_per_qubit_noise_on_controlled_gate(gate, noisy_gate, backend_class):
+    # A controlled gate written as a generic Controlled is the same gate as its named type, and the
+    # noise attached to one of its qubits stays on that qubit, control included.
+    circuit = Circuit(nqubits=2)
+    circuit.add(gate)
+
+    noise_model = NoiseModel()
+    noise_model.add(BitFlip(probability=1.0), gate=noisy_gate, qubits=[0])
+
+    backend = backend_class(noise_model=noise_model, **args_per_backend[backend_class])
+    result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
+
+    assert result.get_samples() == {"10": 100}
+
+
+def test_cuda_backend_multi_qubit_channel_on_a_multi_qubit_gate():
+    # CUDA-specific: a Kraus channel acting on as many qubits as a gate is applied to that gate,
+    # rather than only to a gate spanning the whole register.
+    flip_both = np.zeros((4, 4))
+    flip_both[0, 3] = flip_both[3, 0] = flip_both[1, 2] = flip_both[2, 1] = 1
+    circuit = Circuit(nqubits=3)
+    circuit.add(CNOT(0, 1))
+
+    noise_model = NoiseModel()
+    noise_model.add(KrausChannel(operators=[QTensor(flip_both)]))
+
+    result = CudaBackend(noise_model=noise_model).execute(
+        DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100)
+    )
+
+    assert result.get_samples() == {"110": 100}
+
+
+def test_cuda_backend_swap_without_noise_is_unchanged():
+    # CUDA-specific: without a noise model the SWAP gate keeps using the CUDA-Q built-in operation
+    # rather than the custom one the noisy path installs.
+    circuit = Circuit(nqubits=2)
+    circuit.add(X(0))
+    circuit.add(SWAP(0, 1))
+
+    result = CudaBackend().execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
+
+    assert result.get_samples() == {"01": 100}
 
 
 @pytest.mark.parametrize("backend_class", backends)
