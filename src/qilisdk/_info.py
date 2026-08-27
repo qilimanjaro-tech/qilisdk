@@ -18,7 +18,6 @@ import sys
 from math import ceil, log2
 
 import cpuinfo
-import gpuq
 import psutil
 
 
@@ -69,24 +68,28 @@ def about() -> str:
     # System info
     cpu_info = cpuinfo.get_cpu_info()
     ram = round(2 ** ceil(log2(psutil.virtual_memory().total / (1024**3))))
-    try:  # This can fail if there are driver issues
-        gpus = gpuq.query()
-    except (RuntimeError, ValueError):
-        gpus = []
-    nvidia_smi_output = None
+    gpu_name = None
+    gpu_vram = None
     cuda_version = "Not Found"
     nvidia_driver_version = "Not Found"
     try:
-        nvidia_smi_output = subprocess.check_output(  # ruff: ignore[subprocess-popen-with-shell-equals-true]
-            ["nvidia-smi | grep 'Driver'"],  # ruff: ignore[start-process-with-partial-path]
-            shell=True,
+        gpu_query = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"],  # ruff: ignore[start-process-with-partial-path]
+            stderr=subprocess.STDOUT,
+        ).decode()
+        name, _, vram = gpu_query.strip().splitlines()[0].partition(",")
+        gpu_name = name.strip()
+        gpu_vram = round(int(vram) / 1024)
+    except (subprocess.CalledProcessError, FileNotFoundError, IndexError, ValueError):
+        pass
+    try:
+        nvidia_smi_output = subprocess.check_output(
+            ["nvidia-smi"],  # ruff: ignore[start-process-with-partial-path]
             stderr=subprocess.STDOUT,
         ).decode()
         cuda_version = nvidia_smi_output.split("CUDA Version:")[-1].split()[0]
         nvidia_driver_version = nvidia_smi_output.split("Driver Version:")[-1].split()[0]
-        nvidia_smi_output = nvidia_smi_output.replace("|", "")
-        nvidia_smi_output = nvidia_smi_output.strip()
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError, IndexError):
         pass
     info += f"Platform: {platform.system()} {platform.release()} ({platform.version()})\n"
     info += f"Processor: {platform.processor()}\n"
@@ -94,8 +97,9 @@ def about() -> str:
     info += f"Number of CPU Cores: {psutil.cpu_count(logical=False)}\n"
     info += f"Number of Logical Processors: {psutil.cpu_count(logical=True)}\n"
     info += f"Available Memory: {ram} GB\n"
-    if gpus:
-        info += f"GPU Info: {gpus[0].name} with {int(gpus[0].total_memory // 1024**3)} GB VRAM\n"
+    if gpu_name is not None:
+        vram_info = f" with {gpu_vram} GB VRAM" if gpu_vram is not None else ""
+        info += f"GPU Info: {gpu_name}{vram_info}\n"
         info += f"CUDA Version: {cuda_version}\n"
         info += f"NVIDIA Driver Version: {nvidia_driver_version}\n"
     else:
