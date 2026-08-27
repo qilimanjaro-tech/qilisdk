@@ -1046,13 +1046,17 @@ def test_inv_is_a_power_of_minus_one():
         Inv(q).evaluate({q: 0})
 
 
-def test_negative_powers_of_a_binary_variable_are_rejected():
+def test_negative_powers_of_a_binary_variable():
     b = BinaryVariable("b")
-    # b is 0 or 1, so 1/b is either 1 or undefined. Reject it at construction rather than at
-    # evaluation, whichever way the user spells it.
-    for build in (lambda: b**-1, lambda: 1 / b, lambda: b / b, lambda: b**-2.5):
-        with pytest.raises(NotSupportedOperation, match=r"Negative powers of a binary variable"):
-            build()
+    # b is 0 or 1, so 1/b is 1 or undefined. Only the zero case is an error, and it is caught at
+    # evaluation, like every other division by zero.
+    assert (b**-1).evaluate({b: 1}) == 1
+    assert (b**-2.5).evaluate({b: 1}) == 1
+    with pytest.raises(ValueError, match=r"Division by zero is not allowed"):
+        (b**-1).evaluate({b: 0})
+
+    assert 1 / b == b**-1
+    assert b / b == Constant(1)
 
     # Positive powers still collapse, because b**n == b.
     assert b**3 == b

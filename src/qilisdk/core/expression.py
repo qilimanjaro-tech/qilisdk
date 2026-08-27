@@ -774,11 +774,6 @@ class Pow(Expression):
                 return base
             if exp.value == 0:
                 return Constant(1)
-            if base.is_idempotent_under_mul and isinstance(exp.value, RealNumber) and exp.value < 0:
-                raise NotSupportedOperation(
-                    f"{base!r} is binary, so {base!r}**{exp.value} is 1/{base!r}, which is undefined when "
-                    f"{base!r} is 0. Negative powers of a binary variable are not supported."
-                )
             if isinstance(base, Constant):
                 return Constant(_safe_pow(base.value, exp.value))
             if isinstance(base, Pow):
