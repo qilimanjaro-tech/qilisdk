@@ -23,17 +23,17 @@ from qilisdk import about
 
 
 def _monkeypatch_all(monkeypatch):
-    fake_getGPUs = MagicMock(return_value=[])
+    fake_query = MagicMock(return_value=[])
     fake_get_cpu_info = MagicMock(return_value={"brand_raw": "Test CPU"})
     fake_virtual_memory = MagicMock(return_value=type("vmem", (object,), {"total": 8 * 1024**3})())
     fake_check_output = MagicMock(return_value=b"test_output")
 
-    monkeypatch.setattr("GPUtil.getGPUs", fake_getGPUs)
+    monkeypatch.setattr("gpuq.query", fake_query)
     monkeypatch.setattr("cpuinfo.get_cpu_info", fake_get_cpu_info)
     monkeypatch.setattr("psutil.virtual_memory", fake_virtual_memory)
     monkeypatch.setattr("subprocess.check_output", fake_check_output)
 
-    return [fake_getGPUs, fake_get_cpu_info, fake_virtual_memory, fake_check_output]
+    return [fake_query, fake_get_cpu_info, fake_virtual_memory, fake_check_output]
 
 
 def test_about(monkeypatch):
@@ -49,9 +49,9 @@ def test_about_fake_gpu(monkeypatch):
 
     fake_gpu = MagicMock()
     fake_gpu.name = "Test GPU"
-    fake_gpu.memoryTotal = 8 * 1024
-    fake_get_gpus = MagicMock(return_value=[fake_gpu])
-    monkeypatch.setattr("GPUtil.getGPUs", fake_get_gpus)
+    fake_gpu.total_memory = 8 * 1024**3
+    fake_query = MagicMock(return_value=[fake_gpu])
+    monkeypatch.setattr("gpuq.query", fake_query)
 
     about_str = about()
     assert "GPU Info: Test GPU" in about_str
@@ -62,10 +62,10 @@ def test_about_bad_gpu(monkeypatch):
 
     fake_gpu = MagicMock()
     fake_gpu.name = "Test GPU"
-    fake_gpu.memoryTotal = 8 * 1024
-    fake_get_gpus = MagicMock(return_value=[fake_gpu])
-    fake_get_gpus.side_effect = ValueError("GPU info retrieval failed")
-    monkeypatch.setattr("GPUtil.getGPUs", fake_get_gpus)
+    fake_gpu.total_memory = 8 * 1024**3
+    fake_query = MagicMock(return_value=[fake_gpu])
+    fake_query.side_effect = RuntimeError("GPU info retrieval failed")
+    monkeypatch.setattr("gpuq.query", fake_query)
 
     about_str = about()
     assert "GPU Info: Not Found" in about_str
@@ -157,9 +157,9 @@ def test_gpu_but_no_nvidia_smi(monkeypatch):
 
     fake_gpu = MagicMock()
     fake_gpu.name = "Test GPU"
-    fake_gpu.memoryTotal = 8 * 1024
-    fake_getGPUs = MagicMock(return_value=[fake_gpu])
-    monkeypatch.setattr("GPUtil.getGPUs", fake_getGPUs)
+    fake_gpu.total_memory = 8 * 1024**3
+    fake_query = MagicMock(return_value=[fake_gpu])
+    monkeypatch.setattr("gpuq.query", fake_query)
 
     # Simulate nvidia-smi command failing
     def fake_check_output(args, **kwargs):

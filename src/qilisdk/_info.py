@@ -18,7 +18,7 @@ import sys
 from math import ceil, log2
 
 import cpuinfo
-import GPUtil
+import gpuq
 import psutil
 
 
@@ -70,8 +70,8 @@ def about() -> str:
     cpu_info = cpuinfo.get_cpu_info()
     ram = round(2 ** ceil(log2(psutil.virtual_memory().total / (1024**3))))
     try:  # This can fail if there are driver issues
-        gpus = GPUtil.getGPUs()
-    except ValueError:
+        gpus = gpuq.query()
+    except (RuntimeError, ValueError):
         gpus = []
     nvidia_smi_output = None
     cuda_version = "Not Found"
@@ -95,7 +95,7 @@ def about() -> str:
     info += f"Number of Logical Processors: {psutil.cpu_count(logical=True)}\n"
     info += f"Available Memory: {ram} GB\n"
     if gpus:
-        info += f"GPU Info: {gpus[0].name} with {int(gpus[0].memoryTotal // 1024)} GB VRAM\n"
+        info += f"GPU Info: {gpus[0].name} with {int(gpus[0].total_memory // 1024**3)} GB VRAM\n"
         info += f"CUDA Version: {cuda_version}\n"
         info += f"NVIDIA Driver Version: {nvidia_driver_version}\n"
     else:
