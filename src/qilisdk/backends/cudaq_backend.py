@@ -17,7 +17,7 @@ import warnings
 from collections.abc import Callable
 from copy import copy
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Type, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Type, TypeAlias, TypeVar
 
 import cudaq
 import numpy as np
@@ -1482,7 +1482,7 @@ _DEPRECATED_SYMBOLS: dict[str, str] = {
 }
 
 
-def __getattr__(name: str) -> Any:  # ruff: ignore[any-type]
+def __getattr__(name: str) -> type[CudaqBackend | CudaqSamplingMethod]:
     """Resolve a superseded symbol name to its replacement, warning on use (PEP 562).
 
     Args:

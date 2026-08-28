@@ -278,9 +278,11 @@ def test_matrix_product_state(mock_sample, mock_make_kernel, mock_set_target):
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"00": 1000})
 @patch("cudaq.set_target")
-def test_execute_basic_gate_handler(mock_set_target, mock_sample, mock_make_kernel, gate_instance, expected_call):
+def test_execute_basic_gate_handler(
+    mock_set_target, mock_sample, mock_make_kernel, gate_instance, expected_call, monkeypatch
+):
     # Reset the main dummy kernel for a clean slate.
-    dummy_make_kernel.main_kernel = DummyKernel()
+    monkeypatch.setattr(dummy_make_kernel, "main_kernel", DummyKernel())
     backend = CudaqBackend()
     circuit = Circuit(nqubits=2)
     circuit._gates.append(gate_instance)
@@ -312,8 +314,8 @@ def test_execute_swap_with_noise_uses_custom_operation(mock_set_target, mock_sam
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"00": 1000})
 @patch("cudaq.set_target")
-def test_execute_controlled_handler(mock_set_target, mock_sample, mock_make_kernel, gate_instance):
-    dummy_make_kernel.main_kernel = DummyKernel()
+def test_execute_controlled_handler(mock_set_target, mock_sample, mock_make_kernel, gate_instance, monkeypatch):
+    monkeypatch.setattr(dummy_make_kernel, "main_kernel", DummyKernel())
     backend = CudaqBackend()
     circuit = Circuit(nqubits=2)
     controlled_gate = Controlled(1, basic_gate=gate_instance)
@@ -329,8 +331,8 @@ def test_execute_controlled_handler(mock_set_target, mock_sample, mock_make_kern
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
-def test_execute_adjoint_handler(mock_set_target, mock_sample, mock_make_kernel, gate_instance):
-    dummy_make_kernel.main_kernel = DummyKernel()
+def test_execute_adjoint_handler(mock_set_target, mock_sample, mock_make_kernel, gate_instance, monkeypatch):
+    monkeypatch.setattr(dummy_make_kernel, "main_kernel", DummyKernel())
     backend = CudaqBackend()
     circuit = Circuit(nqubits=1)
     adjoint_gate = Adjoint(gate_instance)
@@ -346,8 +348,8 @@ def test_execute_adjoint_handler(mock_set_target, mock_sample, mock_make_kernel,
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"00": 1000})
 @patch("cudaq.set_target")
-def test_execute_measurement_full(mock_set_target, mock_sample, mock_make_kernel):
-    dummy_make_kernel.main_kernel = DummyKernel()
+def test_execute_measurement_full(mock_set_target, mock_sample, mock_make_kernel, monkeypatch):
+    monkeypatch.setattr(dummy_make_kernel, "main_kernel", DummyKernel())
     backend = CudaqBackend()
     circuit = Circuit(nqubits=2)
     measurement_gate = M(0, 1)
@@ -361,8 +363,8 @@ def test_execute_measurement_full(mock_set_target, mock_sample, mock_make_kernel
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"00": 1000})
 @patch("cudaq.set_target")
-def test_execute_measurement_partial(mock_set_target, mock_sample, mock_make_kernel):
-    dummy_make_kernel.main_kernel = DummyKernel()
+def test_execute_measurement_partial(mock_set_target, mock_sample, mock_make_kernel, monkeypatch):
+    monkeypatch.setattr(dummy_make_kernel, "main_kernel", DummyKernel())
     backend = CudaqBackend()
     circuit = Circuit(nqubits=3)
     measurement_gate = M(1, 2)
@@ -376,8 +378,10 @@ def test_execute_measurement_partial(mock_set_target, mock_sample, mock_make_ker
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
-def test_execute_measurement_partial_with_bad_samples_raises(mock_set_target, mock_sample, mock_make_kernel):
-    dummy_make_kernel.main_kernel = DummyKernel()
+def test_execute_measurement_partial_with_bad_samples_raises(
+    mock_set_target, mock_sample, mock_make_kernel, monkeypatch
+):
+    monkeypatch.setattr(dummy_make_kernel, "main_kernel", DummyKernel())
     backend = CudaqBackend()
     circuit = Circuit(nqubits=3)
     measurement_gate = M(1, 2)
@@ -427,8 +431,8 @@ def test_controlled_with_unsupported_basic_gate_raises(monkeypatch):
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"000": 1000})
 @patch("cudaq.set_target")
-def test_controlled_multiple_controls_are_transpiled(mock_set_target, mock_sample, mock_make_kernel):
-    dummy_make_kernel.main_kernel = DummyKernel()
+def test_controlled_multiple_controls_are_transpiled(mock_set_target, mock_sample, mock_make_kernel, monkeypatch):
+    monkeypatch.setattr(dummy_make_kernel, "main_kernel", DummyKernel())
     backend = CudaqBackend()
     circuit = Circuit(nqubits=3)
     controlled_gate = Controlled(0, 1, basic_gate=X(2))
@@ -676,8 +680,8 @@ def test_time_dependent_hamiltonian_cuda_with_noise(mock_cuda_dynamics):
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
-def test_execute_cuda_noise(mock_set_target, mock_sample, mock_make_kernel):
-    dummy_make_kernel.main_kernel = DummyKernel()
+def test_execute_cuda_noise(mock_set_target, mock_sample, mock_make_kernel, monkeypatch):
+    monkeypatch.setattr(dummy_make_kernel, "main_kernel", DummyKernel())
     circuit = Circuit(nqubits=1)
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=0.3))

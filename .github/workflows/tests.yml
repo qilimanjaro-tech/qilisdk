@@ -60,7 +60,7 @@ jobs:
       - name: Install qilisdk with coverage
         if: matrix.python-version == env.COVERAGE_PYTHON
         run: |
-          uv sync --frozen --group dev --extra all-cu13 --reinstall-package qilisdk \
+          uv sync --frozen --group dev --extra all-cu13 --reinstall-package qilisdk --no-build \
             -Ccmake.build-type=Debug \
             -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0 \
             -Ccmake.define.tests=ON \
@@ -71,7 +71,7 @@ jobs:
       - name: Install qilisdk
         if: matrix.python-version != env.COVERAGE_PYTHON
         run: |
-          uv sync --frozen --group dev --extra all-cu13 --reinstall-package qilisdk \
+          uv sync --frozen --group dev --extra all-cu13 --reinstall-package qilisdk --no-build \
             -Ccmake.build-type=Release
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
@@ -140,7 +140,7 @@ jobs:
       # and proves the lower bounds we advertise for the core are real.
       - name: Install qilisdk
         run: |
-          uv sync --resolution lowest-direct --group dev --extra all-cu13 --reinstall-package qilisdk \
+          uv sync --resolution lowest-direct --group dev --extra all-cu13 --reinstall-package qilisdk --no-build \
             -Ccmake.build-type=Release
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
@@ -179,7 +179,7 @@ jobs:
 
       - name: Install qilisdk with the external backends
         run: |
-          uv sync --frozen --group dev --group backends --extra all-cu13 --reinstall-package qilisdk \
+          uv sync --frozen --group dev --group backends --extra all-cu13 --reinstall-package qilisdk --no-build \
             -Ccmake.build-type=Release
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
@@ -232,7 +232,7 @@ jobs:
       # Proves the lower bounds we advertise for CUDA-Q and QuTiP are real.
       - name: Install qilisdk with the external backends
         run: |
-          uv sync --resolution lowest-direct --group dev --group backends --extra all-cu13 --reinstall-package qilisdk \
+          uv sync --resolution lowest-direct --group dev --group backends --extra all-cu13 --reinstall-package qilisdk --no-build \
             -Ccmake.build-type=Release
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
