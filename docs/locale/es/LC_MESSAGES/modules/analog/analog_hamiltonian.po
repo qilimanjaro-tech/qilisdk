@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-13 12:09+0200\n"
+"POT-Creation-Date: 2026-08-14 16:25+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -426,6 +426,86 @@ msgstr ""
 "dibujan:"
 
 #: ../../modules/analog/analog_hamiltonian.rst:186
+msgid ""
+"To save the figure instead of showing it, pass a ``filepath`` (the format"
+" is inferred from the extension):"
+msgstr ""
+"Para guardar la figura en lugar de mostrarla, pase un ``filepath`` (el "
+"formato se deduce de la extensión):"
+
+#: ../../modules/analog/analog_hamiltonian.rst:76
+msgid "Visualizing"
+msgstr "Visualización"
+
+#: ../../modules/analog/analog_hamiltonian.rst:78
+msgid ""
+":meth:`H.draw()<qilisdk.analog.hamiltonian.Hamiltonian.draw>` renders a "
+"Hamiltonian as an interaction graph:"
+msgstr ""
+":meth:`H.draw()<qilisdk.analog.hamiltonian.Hamiltonian.draw>` dibuja un "
+"Hamiltoniano como un grafo de interacciones:"
+
+#: ../../modules/analog/analog_hamiltonian.rst:80
+msgid ""
+"Every qubit is a node, whose disc is split into one slice per local field"
+" acting on it, labelled with its Pauli type."
+msgstr ""
+"Cada qubit es un nodo, cuyo disco se divide en un sector por cada campo "
+"local que actúa sobre él, etiquetado con su tipo de Pauli."
+
+#: ../../modules/analog/analog_hamiltonian.rst:81
+msgid ""
+"Every two-qubit term is an edge between the qubits it couples, drawn with"
+" a line style per coupling type (see the legend)."
+msgstr ""
+"Cada término de dos qubits es una arista entre los qubits que acopla, "
+"dibujada con un estilo de línea por cada tipo de acoplamiento (véase la "
+"leyenda)."
+
+#: ../../modules/analog/analog_hamiltonian.rst:82
+msgid ""
+"Every term acting on three or more qubits is a star-shaped hyperedge "
+"joined at the centroid of the qubits involved."
+msgstr ""
+"Cada término que actúa sobre tres o más qubits es una hiperarista en forma "
+"de estrella unida en el centroide de los qubits implicados."
+
+#: ../../modules/analog/analog_hamiltonian.rst:83
+msgid ""
+"Slice and edge colours encode the coefficient of the corresponding term, "
+"as described by the colour bar."
+msgstr ""
+"Los colores de los sectores y de las aristas codifican el coeficiente del "
+"término correspondiente, según describe la barra de color."
+
+#: ../../modules/analog/analog_hamiltonian.rst:84
+msgid ""
+"A constant (identity) term is annotated below the graph as an energy "
+"offset."
+msgstr ""
+"Un término constante (identidad) se anota debajo del grafo como un "
+"desplazamiento de energía."
+
+#: ../../modules/analog/analog_hamiltonian.rst:96
+msgid ""
+"The appearance is controlled with "
+":class:`~qilisdk.utils.visualization.style.HamiltonianStyle`, which "
+"shares the themes of the circuit and schedule renderers. It selects the "
+"``rustworkx`` layout used to place the qubits (``\"spring\"``, "
+"``\"circular\"``, ``\"shell\"``, ``\"spiral\"`` or ``\"random\"``, or "
+"explicit ``positions``), whether local fields and couplings share a "
+"single colour scale, and which annotations are drawn:"
+msgstr ""
+"La apariencia se controla con "
+":class:`~qilisdk.utils.visualization.style.HamiltonianStyle`, que comparte "
+"los temas de los renderizadores de circuitos y de schedules. Selecciona la "
+"disposición de ``rustworkx`` empleada para situar los qubits "
+"(``\"spring\"``, ``\"circular\"``, ``\"shell\"``, ``\"spiral\"`` o "
+"``\"random\"``, o bien ``positions`` explícitas), si los campos locales y "
+"los acoplamientos comparten una única escala de color, y qué anotaciones "
+"se dibujan:"
+
+#: ../../modules/analog/analog_hamiltonian.rst:119
 msgid ""
 "To save the figure instead of showing it, pass a ``filepath`` (the format"
 " is inferred from the extension):"

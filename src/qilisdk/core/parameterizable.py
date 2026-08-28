@@ -21,7 +21,8 @@ from loguru import logger
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
-    from qilisdk.core.variables import BaseVariable, ComparisonTerm, Parameter
+    from qilisdk.core.comparison import Comparison
+    from qilisdk.core.variables import BaseVariable, Parameter
 
     from .types import RealNumber
 
@@ -36,7 +37,7 @@ class Parameterizable(ABC):
     def __init__(self) -> None:
         super().__init__()
         self._parameters: dict[str, Parameter] = {}
-        self._parameter_constraints: list[ComparisonTerm] = []
+        self._parameter_constraints: list[Comparison] = []
         self._prefix = ""
 
     # Private Methods
@@ -185,16 +186,16 @@ class Parameterizable(ABC):
         """Return the currently configured parameter prefix for this object."""
         return self._prefix
 
-    def add_parameter_constraint(self, constraint: ComparisonTerm) -> None:
+    def add_parameter_constraint(self, constraint: Comparison) -> None:
         """Add a constraint on a single or a set of parameters
 
         Args:
-            constraint (ComparisonTerm): The comparison term to specify the constraint. Only Parameter objects are allowed in the constraint.
+            constraint (Comparison): The comparison term to specify the constraint. Only Parameter objects are allowed in the constraint.
 
         Raises:
             ValueError: If Generic Variables are present in the constraint.
         """
-        if not (constraint.lhs.is_parameterized_term() and constraint.rhs.is_parameterized_term()):
+        if not (constraint.lhs.is_parameterized() and constraint.rhs.is_parameterized()):
             raise ValueError(
                 "The constraint should only contain parameters and having generic variables is not allowed."
             )
@@ -308,11 +309,11 @@ class Parameterizable(ABC):
                 )
             available_parameters[label].set_bounds(bound[0], bound[1])
 
-    def get_constraints(self) -> list[ComparisonTerm]:
+    def get_constraints(self) -> list[Comparison]:
         """Get all constraints on the parameters.
 
         Returns:
-            list[ComparisonTerm]: Comparison terms defined locally and by child parameterizable objects.
+            list[Comparison]: Comparison terms defined locally and by child parameterizable objects.
         """
         constraints = list((self._parameter_constraints or []))
         for child in self._iter_parameter_children():

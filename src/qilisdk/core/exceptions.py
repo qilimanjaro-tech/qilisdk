@@ -27,3 +27,9 @@ class InvalidBoundsError(Exception):
 
 class EvaluationError(Exception):
     """Raised when a symbolic expression cannot be evaluated."""
+
+
+class NonPolynomialError(Exception):
+    """Raised when a polynomial-only operation (e.g. ``degree``) is requested on a
+    non-polynomial expression, such as a symbolic/non-integer power of a variable or a
+    transcendental function of a variable."""

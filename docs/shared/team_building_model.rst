@@ -1,7 +1,8 @@
 .. code-block:: python
 
     from qilisdk.core.model import QUBO, ObjectiveSense
-    from qilisdk.core.variables import BinaryVariable, EQ
+    from qilisdk.core.comparison import EQ
+    from qilisdk.core.variables import BinaryVariable
 
     num_people = 4
     vars = [BinaryVariable(f"x{i}") for i in range(num_people)]
