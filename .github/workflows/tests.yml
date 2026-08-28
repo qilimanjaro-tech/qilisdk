@@ -137,10 +137,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       # The lockfile holds the newest resolution, so this job resolves from scratch
-      # and proves the lower bounds we advertise for the core are real.
+      # and proves the lower bounds we advertise for the core are real. Resolving from
+      # scratch covers every group, and the docs group pulls sphinx-multiversion from
+      # git, so --no-build cannot be used here.
       - name: Install qilisdk
         run: |
-          uv sync --resolution lowest-direct --group dev --extra all-cu13 --reinstall-package qilisdk --no-build \
+          uv sync --resolution lowest-direct --group dev --extra all-cu13 --reinstall-package qilisdk \
             -Ccmake.build-type=Release
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
@@ -229,10 +231,11 @@ jobs:
             **/uv.lock
           python-version: ${{ matrix.python-version }}
 
-      # Proves the lower bounds we advertise for CUDA-Q and QuTiP are real.
+      # Proves the lower bounds we advertise for CUDA-Q and QuTiP are real. As above,
+      # resolving from scratch rules out --no-build.
       - name: Install qilisdk with the external backends
         run: |
-          uv sync --resolution lowest-direct --group dev --group backends --extra all-cu13 --reinstall-package qilisdk --no-build \
+          uv sync --resolution lowest-direct --group dev --group backends --extra all-cu13 --reinstall-package qilisdk \
             -Ccmake.build-type=Release
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
