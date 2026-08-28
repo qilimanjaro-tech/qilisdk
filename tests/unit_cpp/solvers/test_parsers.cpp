@@ -48,7 +48,7 @@ double coefficient_of(const ParsedCostCpp& parsed, const std::vector<std::string
 TEST(SolverParsersTest, ParseQuboReadsTheMonomialsOfTheObjective) {
     py::gil_scoped_acquire gil;
 
-    // Term arithmetic stores the objective expanded, and x is binary so x * x == x, leaving the
+    // The parser multiplies the objective out, and x is binary so x * x == x, leaving the
     // monomials of 3 * (2x + y + x * y) + 2
     py::exec(R"(
         from qilisdk.core.model import QUBO
@@ -135,20 +135,22 @@ TEST(SolverParsersTest, ParseQuboReadsAnObjectiveThatIsASingleProduct) {
     EXPECT_DOUBLE_EQ(parsed.offset, 0.0);
 }
 
-TEST(SolverParsersTest, ParseQuboRejectsAnObjectiveThatWasNotMultipliedOut) {
+TEST(SolverParsersTest, ParseQuboRejectsAMonomialThatIsNotOverVariables) {
     py::gil_scoped_acquire gil;
 
-    // Building the product by hand skips the Term arithmetic that would have multiplied the two sums
-    // out, leaving an objective that is not a sum over its monomials
+    // Swapping the objective in behind set_objective skips the checks that would have rejected a
+    // non-polynomial term, leaving a monomial whose factor is not a variable
     py::exec(R"(
-        from qilisdk.core.model import QUBO
-        from qilisdk.core.variables import BinaryVariable, Operation, Term
-        x, y = BinaryVariable("x"), BinaryVariable("y")
-        nested = QUBO("nested")
-        nested.set_objective(Term([Term([x, y], Operation.ADD), Term([x, 1], Operation.ADD)], Operation.MUL))
+        from qilisdk.core.expression import Sin
+        from qilisdk.core.model import QUBO, Objective
+        from qilisdk.core.variables import BinaryVariable
+        x = BinaryVariable("x")
+        transcendental = QUBO("transcendental")
+        transcendental.set_objective(x)
+        transcendental._objective = Objective("obj", Sin(x))
     )");
 
-    EXPECT_THROW(parse_qubo(py::globals()["nested"]), py::value_error);
+    EXPECT_THROW(parse_qubo(py::globals()["transcendental"]), py::value_error);
 }
 
 TEST(SolverParsersTest, ParseQuboRejectsUnsupportedOperations) {
@@ -158,12 +160,12 @@ TEST(SolverParsersTest, ParseQuboRejectsUnsupportedOperations) {
     // when the objective is set on the QUBO
     py::exec(R"(
         from qilisdk.core.model import QUBO
-        from qilisdk.core.variables import BinaryVariable, Operation, Term
+        from qilisdk.core.variables import BinaryVariable
         a, b = BinaryVariable("a"), BinaryVariable("b")
         divided = QUBO("divided")
     )");
 
-    EXPECT_ANY_THROW(py::exec(R"(divided.set_objective(Term([a, b], Operation.DIV)))"));
+    EXPECT_ANY_THROW(py::exec(R"(divided.set_objective(a / b))"));
 }
 
 TEST(SolverParsersTest, ParseQuboRejectsComplexCoefficients) {

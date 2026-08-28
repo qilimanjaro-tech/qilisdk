@@ -64,7 +64,7 @@ class BruteForceSolver(ClassicalSolver):
                 vals = []
                 for bits_int in range(2**n_bits):
                     bits = [(bits_int >> b) & 1 for b in range(n_bits)]
-                    val = v.evaluate(bits)
+                    val = v.evaluate({v: bits})
                     if val not in seen:
                         seen.add(val)
                         vals.append(val)

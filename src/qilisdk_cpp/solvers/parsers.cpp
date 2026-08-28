@@ -25,11 +25,6 @@
 
 namespace {
 
-// The label Term gives the constant of an expression, i.e. the entry that is not a variable
-std::string constant_label() {
-    return Term.attr("CONST").attr("label").cast<std::string>();
-}
-
 // The tolerance below which we consider a value to be zero
 double settings_atol() {
     return py::module_::import("qilisdk.settings").attr("get_settings")().attr("atol").cast<double>();
@@ -56,24 +51,22 @@ double assert_real(const py::object& number, double atol) {
     return value.real();
 }
 
-void add_monomial(const py::object& monomial, double coefficient, ParsedCostCpp& parsed, std::unordered_map<std::string, int>& indices, const std::string& constant, double atol) {
+void add_monomial(const py::object& monomial, double coefficient, ParsedCostCpp& parsed, std::unordered_map<std::string, int>& indices) {
     /*
-    Add one entry of a QUBO objective to the cost function.
+    Add one monomial of a QUBO objective to the cost function.
 
-    An entry is either a single variable, the constant, or a product of variables, and every variable
-    met is given the next free index.
+    A monomial is a product of powers of variables, which ``Expression.monomial_factors`` hands over
+    as (base, power) pairs, and every variable met is given the next free index.
 
     Args:
-        monomial (py::object&): the variable, constant or product of variables to add.
+        monomial (py::object&): the monomial to add.
         coefficient (double): the coefficient in front of it.
         parsed (ParsedCostCpp&): the cost function being built.
         indices (std::unordered_map<std::string, int>&): the index of each variable, by label.
-        constant (std::string&): the label Term gives to the constant of an expression.
-        atol (double): the tolerance below which an imaginary part is considered negligible.
 
     Raises:
-        py::value_error: if a factor of the product is itself a sum, which only happens for an
-                objective built by nesting Terms by hand rather than with the usual operators.
+        py::value_error: if a factor of the monomial is not a variable, which only happens for an
+                objective built by hand rather than with the usual operators.
     */
 
     // Give a variable the next free index, or return the index it already has, noting the Python
@@ -88,36 +81,18 @@ void add_monomial(const py::object& monomial, double coefficient, ParsedCostCpp&
     };
 
     std::vector<int> variables;
-    if (py::isinstance(monomial, Term)) {
-        // If it's a term, it is a product of factors, which are either variables or the constant
-        for (py::handle factor_handle : monomial) {
-            // Make sure the factor is not a sum, which would be a nested Term and is not allowed in a QUBO
-            const py::object factor = py::reinterpret_borrow<py::object>(factor_handle);
-            if (py::isinstance(factor, Term)) {
-                throw py::value_error("A QUBO objective must be a sum of products of binary variables, but the product " + py::str(monomial).cast<std::string>() + " has the sum " + py::str(factor).cast<std::string>() + " as a factor.");
-            }
-            const std::string label = factor.attr("label").cast<std::string>();
-
-            // A product carries its numeric factor as the constant, so fold that into the coefficient
-            if (label == constant) {
-                coefficient *= assert_real(py::object(monomial[factor]), atol);
-                continue;
-            }
-
-            // The exponent of a factor is irrelevant, since x * x == x for a binary variable
-            variables.push_back(index_of(label, factor));
+    for (py::handle factor_handle : monomial.attr("monomial_factors")()) {
+        // The power of a factor is irrelevant, since x * x == x for a binary variable
+        const py::object base = py::reinterpret_borrow<py::tuple>(factor_handle)[0];
+        if (!py::isinstance(base, BaseVariable)) {
+            throw py::value_error("A QUBO objective must be a sum of products of binary variables, but the monomial " + py::str(monomial).cast<std::string>() + " has the factor " + py::str(base).cast<std::string>() + ", which is not a variable.");
         }
-    } else {
-        // A lone variable, unless it is the constant, whose coefficient is the constant itself
-        const std::string label = monomial.attr("label").cast<std::string>();
-        if (label != constant) {
-            variables.push_back(index_of(label, monomial));
-        }
+        variables.push_back(index_of(base.attr("label").cast<std::string>(), base));
     }
 
-    // If no variables were found, the coefficient is the constant offset
+    // A monomial with no variables left is a plain number, so it belongs in the constant offset
     if (variables.empty()) {
-        parsed.offset += coefficient;
+        parsed.offset += coefficient;  // GCOVR_EXCL_LINE
 
         // Otherwise add the monomial to the cost function
     } else {
@@ -152,9 +127,9 @@ ParsedCostCpp parse_qubo(const py::object& qubo) {
     Read a Python QUBO as the numeric cost function that a classical solver minimizes.
 
     A QUBO objective already folds the model's constraints in as penalties scaled by their Lagrange
-    multipliers, and is stored expanded, as a sum over its monomials: each entry of the objective term
-    maps a variable, the constant, or a product of variables to the coefficient in front of it. So the
-    entries only have to be read out and their variables numbered.
+    multipliers, but it is kept factored, since a product of sums is cheaper to carry around than the
+    sum it multiplies out to. Expanding it gives a sum over its monomials, each of which is read out
+    with its coefficient and has its variables numbered.
 
     Args:
         qubo (py::object&): the QUBO to read.
@@ -177,28 +152,19 @@ ParsedCostCpp parse_qubo(const py::object& qubo) {
     if (objective.is_none()) {
         throw py::value_error("Cannot solve a QUBO that has neither an objective nor any constraints.");  // GCOVR_EXCL_LINE
     }
-    const py::object term = objective.attr("term");
-    const std::string operation = term.attr("operation").attr("value").cast<std::string>();
+    // Multiply the objective out, so that it is a flat sum over the monomials of the cost function
+    const py::object term = objective.attr("term").attr("expand")();
 
     // Parse the objective into a C++ version of the cost function
     ParsedCostCpp parsed;
-    parsed.offset = 0.0;
     std::unordered_map<std::string, int> indices;
-    const std::string constant = constant_label();
     const double atol = settings_atol();
+    parsed.offset = assert_real(term.attr("get_constant")(), atol);
 
-    // If the whole objective is a single product, it's just one monomial
-    if (operation == "*") {
-        add_monomial(term, 1.0, parsed, indices, constant, atol);
-
-        // If it's a sum, we have to process each
-    } else if (operation == "+") {
-        for (py::handle monomial_handle : term) {
-            const py::object monomial = py::reinterpret_borrow<py::object>(monomial_handle);
-            add_monomial(monomial, assert_real(py::object(term[monomial]), atol), parsed, indices, constant, atol);
-        }
-    } else {
-        throw py::value_error("A QUBO objective must be a sum or a product, but got the operation " + operation + ".");  // GCOVR_EXCL_LINE
+    // Every entry of the expanded sum, bar the constant, is a monomial and its coefficient
+    const py::dict coefficients = term.attr("as_coefficients_dict")().cast<py::dict>();
+    for (const auto& item : coefficients) {
+        add_monomial(py::reinterpret_borrow<py::object>(item.first), assert_real(py::reinterpret_borrow<py::object>(item.second), atol), parsed, indices);
     }
     parsed.num_variables = static_cast<int>(parsed.labels.size());
     return parsed;

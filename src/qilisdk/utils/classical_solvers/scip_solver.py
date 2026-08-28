@@ -12,68 +12,58 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any
+from typing import Any, TypeAlias
 
+from pyscipopt import Expr
 from pyscipopt import Model as ScipModel
 from pyscipopt.recipes.nonlinear import set_nonlinear_objective
 
 from qilisdk.core import Model
+from qilisdk.core.comparison import ComparisonOperation
+from qilisdk.core.expression import Add, Constant, Expression, Mul, Pow
 from qilisdk.core.model import ObjectiveSense
-from qilisdk.core.variables import (
-    BaseVariable,
-    BinaryVariable,
-    ComparisonOperation,
-    Domain,
-    Operation,
-    RealNumber,
-    SpinVariable,
-    Term,
-    Variable,
-)
+from qilisdk.core.variables import BaseVariable, BinaryVariable, Domain, RealNumber, SpinVariable, Variable
 
 from .base_solver import ClassicalSolver, ClassicalSolverResult, _assert_real, _variable_bounds
 
+# What SCIP accepts as an operand: one of its expressions (``Variable`` is an ``Expr``) or a plain number.
+ScipExpr: TypeAlias = Expr | float
 
-def _term_to_scip_expr(term: Term, var_exprs: dict[BaseVariable, Any]) -> Any:  # ruff: ignore[any-type]
+
+def _expression_to_scip_expr(expression: Expression, var_exprs: dict[BaseVariable, ScipExpr]) -> ScipExpr:
     """
-    Convert a QiliSDK ``Term`` to a SCIP expression, using the provided mapping of model
-    variables to SCIP expressions.
+    Convert a QiliSDK :class:`~qilisdk.core.Expression` to a SCIP expression, using the provided
+    mapping of model variables to SCIP expressions.
 
     Args:
-        term: The QiliSDK ``Term`` to convert.
+        expression: The QiliSDK ``Expression`` to convert.
         var_exprs: A dictionary mapping each model variable to its corresponding SCIP expression.
 
     Returns:
         The corresponding SCIP expression.
 
     Raises:
-        ValueError: if the term contains an unsupported operation.
+        ValueError: if the expression contains a node SCIP cannot represent here.
     """
-    if len(term) == 0:
-        return 0.0
-    if term.operation is Operation.ADD:
-        expr: Any = 0.0
-        for element in term:
-            coefficient = _assert_real(term[element])
-            if isinstance(element, Term):
-                expr += _term_to_scip_expr(element, var_exprs) * coefficient
-            elif element == Term.CONST:
-                expr += coefficient
-            else:
-                expr += var_exprs[element] * coefficient
-        return expr
-    if term.operation is Operation.MUL:
-        expr = 1.0
-        for element in term:
-            value = _assert_real(term[element])
-            if isinstance(element, Term):
-                expr *= _term_to_scip_expr(element, var_exprs) * value
-            elif element == Term.CONST:
-                expr *= value
-            else:
-                expr *= var_exprs[element] ** round(value)
-        return expr
-    raise ValueError(f"Operation {term.operation.value} is not supported by the SCIP solver.")
+    if isinstance(expression, Constant):
+        return _assert_real(expression.value)
+    if isinstance(expression, BaseVariable):
+        return var_exprs[expression]
+    if isinstance(expression, Add):
+        total: ScipExpr = 0.0
+        for arg in expression.args:
+            total += _expression_to_scip_expr(arg, var_exprs)
+        return total
+    if isinstance(expression, Mul):
+        product: ScipExpr = 1.0
+        for arg in expression.args:
+            product *= _expression_to_scip_expr(arg, var_exprs)
+        return product
+    if isinstance(expression, Pow):
+        if not isinstance(expression.exp, Constant):
+            raise ValueError(f"The symbolic exponent in {expression} is not supported by the SCIP solver.")
+        return _expression_to_scip_expr(expression.base, var_exprs) ** _assert_real(expression.exp.value)
+    raise ValueError(f"The expression {expression} is not supported by the SCIP solver.")
 
 
 def _decode_scip_value(variable: BaseVariable, value: float) -> RealNumber:
@@ -134,7 +124,7 @@ class ScipSolver(ClassicalSolver):
 
         # Build a SCIP variable (and its algebraic expression) for every model variable.
         scip_vars: dict[BaseVariable, Any] = {}
-        var_exprs: dict[BaseVariable, Any] = {}
+        var_exprs: dict[BaseVariable, ScipExpr] = {}
         for v in model.variables():
             if isinstance(v, BinaryVariable):
                 scip_var = scip_model.addVar(name=v.label, vtype="B")
@@ -153,7 +143,7 @@ class ScipSolver(ClassicalSolver):
 
         # Translate the objective, keeping the model's optimization sense
         sense = "maximize" if model.objective.sense is ObjectiveSense.MAXIMIZE else "minimize"
-        objective_expr = _term_to_scip_expr(model.objective.term, var_exprs)
+        objective_expr = _expression_to_scip_expr(model.objective.term, var_exprs)
         try:
             scip_model.setObjective(objective_expr, sense=sense)
         except ValueError:
@@ -161,8 +151,8 @@ class ScipSolver(ClassicalSolver):
 
         # Add each constraint as a hard constraint.
         for constraint in model.constraints:
-            lhs = _term_to_scip_expr(constraint.term.lhs, var_exprs)
-            rhs = _term_to_scip_expr(constraint.term.rhs, var_exprs)
+            lhs = _expression_to_scip_expr(constraint.term.lhs, var_exprs)
+            rhs = _expression_to_scip_expr(constraint.term.rhs, var_exprs)
             operation = constraint.term.operation
             if operation in {ComparisonOperation.LEQ, ComparisonOperation.LT}:
                 scip_model.addCons(lhs <= rhs)
