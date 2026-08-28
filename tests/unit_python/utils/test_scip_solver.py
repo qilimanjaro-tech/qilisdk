@@ -19,22 +19,12 @@ pytest.importorskip("pyscipopt", reason="ScipSolver tests require the 'scip' opt
 
 from pyscipopt import Model as ScipModel
 
+from qilisdk.core.comparison import EQ, GEQ, LEQ, NEQ
+from qilisdk.core.expression import Constant, Sin
 from qilisdk.core.model import Model, ObjectiveSense
-from qilisdk.core.variables import (
-    EQ,
-    GEQ,
-    LEQ,
-    NEQ,
-    BinaryVariable,
-    Domain,
-    Operation,
-    Parameter,
-    SpinVariable,
-    Term,
-    Variable,
-)
+from qilisdk.core.variables import BinaryVariable, Domain, Parameter, SpinVariable, Variable
 from qilisdk.utils.classical_solvers import ScipSolver
-from qilisdk.utils.classical_solvers.scip_solver import _decode_scip_value, _term_to_scip_expr
+from qilisdk.utils.classical_solvers.scip_solver import _decode_scip_value, _expression_to_scip_expr
 
 
 def test_decode_scip_value_spin_maps_to_sign():
@@ -54,26 +44,46 @@ def test_decode_scip_value_real_is_passthrough():
     assert np.isclose(_decode_scip_value(v, 3.7), 3.7)
 
 
-def test_term_to_scip_expr_empty_term_is_zero():
-    assert np.isclose(_term_to_scip_expr(Term([], Operation.ADD), {}), 0.0)
+def test_expression_to_scip_expr_constant_is_its_value():
+    assert np.isclose(_expression_to_scip_expr(Constant(0), {}), 0.0)
+    assert np.isclose(_expression_to_scip_expr(Constant(2.5), {}), 2.5)
 
 
-def test_term_to_scip_expr_unsupported_operation_raises():
+def test_expression_to_scip_expr_unsupported_node_raises():
     x = BinaryVariable("x")
-    term = Term([x], Operation.SUB)
     scip_model = ScipModel("t")
     var_exprs = {x: scip_model.addVar(name="x", vtype="B")}
-    with pytest.raises(ValueError, match="not supported"):
-        _term_to_scip_expr(term, var_exprs)
+    expr = Sin(x)
+    with pytest.raises(ValueError, match="not supported by the SCIP solver"):
+        _expression_to_scip_expr(expr, var_exprs)
 
 
-def test_term_to_scip_expr_handles_nested_mul_term():
-    # A product whose factor is itself a (sub-)term exercises the nested-Term branch of a MUL term.
-    x, y = BinaryVariable("x"), BinaryVariable("y")
+def test_expression_to_scip_expr_symbolic_exponent_raises():
+    x = BinaryVariable("x")
+    p = Parameter("p", 2)
     scip_model = ScipModel("t")
-    var_exprs = {x: scip_model.addVar(name="x", vtype="B"), y: scip_model.addVar(name="y", vtype="B")}
-    outer = Term([Term([x, y], Operation.ADD)], Operation.MUL)
-    assert _term_to_scip_expr(outer, var_exprs) is not None
+    var_exprs = {x: scip_model.addVar(name="x", vtype="B")}
+    with pytest.raises(ValueError, match="symbolic exponent"):
+        _expression_to_scip_expr(x**p, var_exprs)
+
+
+def test_expression_to_scip_expr_handles_nested_product_of_sums():
+    # Mul does not distribute on construction, so a factored sum stays a child of the Mul node.
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+    scip_model = ScipModel("t")
+    var_exprs = {v: scip_model.addVar(name=v.label, vtype="B") for v in (x, y, z)}
+    assert _expression_to_scip_expr((x + y) * z, var_exprs) is not None
+
+
+def test_expression_to_scip_expr_handles_integer_power():
+    x = BinaryVariable("x")
+    v = Variable("v", Domain.INTEGER, bounds=(0, 3))
+    scip_model = ScipModel("t")
+    var_exprs = {
+        x: scip_model.addVar(name="x", vtype="B"),
+        v: scip_model.addVar(name="v", vtype="I", lb=0, ub=3),
+    }
+    assert _expression_to_scip_expr(v**2 + x, var_exprs) is not None
 
 
 def test_scip_solver_minimizes_binary():
@@ -111,7 +121,7 @@ def test_scip_solver_real_variable_stays_continuous():
 def test_scip_solver_spin_variable():
     s = SpinVariable("s")
     m = Model("spin_model")
-    m.set_objective(Term([s], Operation.ADD))
+    m.set_objective(s)
     _, sample = ScipSolver().solve(m)
     assert sample[s] == -1
 
@@ -151,7 +161,7 @@ def test_scip_solver_greater_than_or_equal_constraint():
 def test_scip_solver_unsupported_variable_raises():
     p = Parameter("p", 1.0)
     m = Model("param_model")
-    m.set_objective(Term([p], Operation.ADD))
+    m.set_objective(p)
     solver = ScipSolver()
     with pytest.raises(ValueError, match="not supported for variable"):
         solver.solve(m)
