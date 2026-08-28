@@ -202,7 +202,12 @@ def test_module_dir_is_sorted_and_lists_all_symbols() -> None:
 )
 def test_superseded_names_resolve_and_warn(deprecated: str, replacement: str) -> None:
     """The superseded names still resolve to their replacement, and warn when used."""
-    for module in (backends, importlib.import_module("qilisdk.backends.cudaq_backend")):
+    modules = [backends]
+    if importlib.util.find_spec("cudaq") is not None:
+        # the backend module itself only imports with CUDA-Q present
+        modules.append(importlib.import_module("qilisdk.backends.cudaq_backend"))
+
+    for module in modules:
         with pytest.warns(DeprecationWarning, match=f"{deprecated} is deprecated"):
             resolved = getattr(module, deprecated)
         assert resolved is getattr(module, replacement)

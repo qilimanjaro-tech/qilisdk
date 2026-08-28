@@ -157,7 +157,8 @@ def _to_embedded_cuda_noise(
         matrix = np.array(operator.dense(), dtype=np.complex128)
         if matrix.shape[0] != _SINGLE_QUBIT_DIMENSION:
             logger.warning(
-                "[CudaqBackend] Noise channel {} does not act on a single qubit, cannot embed in multi-qubit gate", noise
+                "[CudaqBackend] Noise channel {} does not act on a single qubit, cannot embed in multi-qubit gate",
+                noise,
             )
             return None
         embedded = np.eye(1, dtype=np.complex128)
@@ -1307,7 +1308,9 @@ class CudaqBackend(Backend):
             UnsupportedGateError: If the number of control qubits is not equal to one or if the basic gate is unsupported.
         """
         if len(gate.control_qubits) != 1:
-            logger.error("[CudaqBackend] Controlled gate with {} control qubits not supported", len(gate.control_qubits))
+            logger.error(
+                "[CudaqBackend] Controlled gate with {} control qubits not supported", len(gate.control_qubits)
+            )
             raise UnsupportedGateError
         target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
         handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
