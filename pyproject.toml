@@ -37,7 +37,6 @@ dependencies = [
     "loguru>=0.7.3",
     "matplotlib>=3.10.5",
     "py-cpuinfo>=9.0.0",
-    "setuptools>=74.1.0",
     "rustworkx>=0.16.0",
     "psutil>=6.1.0",
     # Reads the optional backend requirements so a too-old CUDA-Q or QuTiP is reported clearly.
