@@ -22,17 +22,17 @@ Use these constructors to apply standard single- and two-qubit operations:
   Phase gate (π/2 rotation about Z).  
 - :class:`T(qubit: int)<qilisdk.digital.gates.T>`
   T gate (π/4 rotation about Z).  
-- :class:`RX(qubit: int, theta: float | Parameter | Term)<qilisdk.digital.gates.RX>`
+- :class:`RX(qubit: int, theta: float | Parameter | Expression)<qilisdk.digital.gates.RX>`
   Rotation by angle `theta` around X.  
-- :class:`RY(qubit: int, theta: float | Parameter | Term)<qilisdk.digital.gates.RY>`
+- :class:`RY(qubit: int, theta: float | Parameter | Expression)<qilisdk.digital.gates.RY>`
   Rotation by angle `theta` around Y.  
-- :class:`RZ(qubit: int, phi: float | Parameter | Term)<qilisdk.digital.gates.RZ>`
+- :class:`RZ(qubit: int, phi: float | Parameter | Expression)<qilisdk.digital.gates.RZ>`
   Rotation by angle `phi` around Z.  
-- :class:`U1(qubit: int, *, phi: float | Parameter | Term)<qilisdk.digital.gates.U1>`
+- :class:`U1(qubit: int, *, phi: float | Parameter | Expression)<qilisdk.digital.gates.U1>`
   Phase shift equivalent to RZ plus global phase.  
-- :class:`U2(qubit: int, *, phi: float | Parameter | Term, gamma: float | Parameter | Term)<qilisdk.digital.gates.U2>`
+- :class:`U2(qubit: int, *, phi: float | Parameter | Expression, gamma: float | Parameter | Expression)<qilisdk.digital.gates.U2>`
   π/2 Y-rotation sandwiched by Z-rotations.
-- :class:`U3(qubit: int, *, theta: float | Parameter | Term, phi: float | Parameter | Term, gamma: float | Parameter | Term)<qilisdk.digital.gates.U3>`
+- :class:`U3(qubit: int, *, theta: float | Parameter | Expression, phi: float | Parameter | Expression, gamma: float | Parameter | Expression)<qilisdk.digital.gates.U3>`
   General single-qubit unitary: RZ-RY-RZ decomposition.
 - :class:`SWAP(a: int, b: int)<qilisdk.digital.gates.SWAP>`
   Exchanges the states of qubits ``a`` and ``b``.
