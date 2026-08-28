@@ -630,7 +630,7 @@ class Schedule(Parameterizable):
             MatplotlibScheduleRenderer,
         )
 
-        style = style or ScheduleStyle()
+        style = style or ScheduleStyle(title="Schedule Coefficient")
         renderer = MatplotlibScheduleRenderer(self, style=style)
         renderer.plot()
         if filepath:
@@ -674,7 +674,7 @@ class Schedule(Parameterizable):
                 "[Schedule] Overlaps can't be shown without intermediate states. Setting show_overlaps to False."
             )
             show_overlaps = False
-
+        style = style or ScheduleStyle(title="Schedule Eigenvalues")
         renderer = MatplotlibEigenvalueRenderer(
             self, levels=levels, style=style, intermediate_states=intermediate_states, show_overlaps=show_overlaps
         )
