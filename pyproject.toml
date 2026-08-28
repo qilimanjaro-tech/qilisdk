@@ -26,18 +26,20 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
-    "dill>=0.4.1",
+    "dill>=0.3.9",
     "numpy>=2.3.2",
-    "ruamel-yaml>=0.18.16",
+    "ruamel-yaml>=0.18.7",
     "scipy>=1.16.1",
-    "pydantic>=2.13.3",
-    "pydantic-settings>=2.14.0",
+    # 2.12 is the first release whose pinned pydantic-core has 3.14 wheels.
+    "pydantic>=2.12.0",
+    # Matches the CVE floor in tool.uv.constraint-dependencies below.
+    "pydantic-settings>=2.14.2",
     "loguru>=0.7.3",
-    "matplotlib>=3.10.8",
+    "matplotlib>=3.10.5",
     "py-cpuinfo>=9.0.0",
-    "setuptools>=82.0.1",
-    "rustworkx>=0.17.1",
-    "psutil>=7.2.2",
+    "setuptools>=74.1.0",
+    "rustworkx>=0.16.0",
+    "psutil>=6.1.0",
 ]
 
 [project.optional-dependencies]

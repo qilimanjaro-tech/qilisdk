@@ -3167,12 +3167,12 @@ docs = [
 
 [package.metadata]
 requires-dist = [
-    { name = "dill", specifier = ">=0.4.1" },
+    { name = "dill", specifier = ">=0.3.9" },
     { name = "httpx", marker = "extra == 'speqtrum'", specifier = "==0.28.1" },
     { name = "keyring", marker = "extra == 'speqtrum'", specifier = ">=25.6.0" },
     { name = "keyrings-alt", marker = "extra == 'speqtrum'", specifier = ">=5.0.2" },
     { name = "loguru", specifier = ">=0.7.3" },
-    { name = "matplotlib", specifier = ">=3.10.8" },
+    { name = "matplotlib", specifier = ">=3.10.5" },
     { name = "numpy", specifier = ">=2.3.2" },
     { name = "nvidia-cublas", marker = "extra == 'cuda13'" },
     { name = "nvidia-cublas-cu12", marker = "extra == 'cuda12'" },
@@ -3186,10 +3186,10 @@ requires-dist = [
     { name = "nvidia-nvjitlink-cu12", marker = "extra == 'cuda12'" },
     { name = "openfermion", marker = "extra == 'openfermion'", specifier = ">=1.7.1" },
     { name = "openqasm3", extras = ["parser"], marker = "extra == 'openqasm'", specifier = ">=1.0.1" },
-    { name = "psutil", specifier = ">=7.2.2" },
+    { name = "psutil", specifier = ">=6.1.0" },
     { name = "py-cpuinfo", specifier = ">=9.0.0" },
-    { name = "pydantic", specifier = ">=2.13.3" },
-    { name = "pydantic-settings", specifier = ">=2.14.0" },
+    { name = "pydantic", specifier = ">=2.12.0" },
+    { name = "pydantic-settings", specifier = ">=2.14.2" },
     { name = "pyqir", marker = "extra == 'qir'", specifier = ">=0.12.0" },
     { name = "pyscipopt", marker = "extra == 'scip'", specifier = ">=5.7.0" },
     { name = "qilisdk", extras = ["cuda12"], marker = "extra == 'all'" },
@@ -3211,10 +3211,10 @@ requires-dist = [
     { name = "qilisdk", extras = ["speqtrum"], marker = "extra == 'all'" },
     { name = "qilisdk", extras = ["speqtrum"], marker = "extra == 'all-cu12'" },
     { name = "qilisdk", extras = ["speqtrum"], marker = "extra == 'all-cu13'" },
-    { name = "ruamel-yaml", specifier = ">=0.18.16" },
-    { name = "rustworkx", specifier = ">=0.17.1" },
+    { name = "ruamel-yaml", specifier = ">=0.18.7" },
+    { name = "rustworkx", specifier = ">=0.16.0" },
     { name = "scipy", specifier = ">=1.16.1" },
-    { name = "setuptools", specifier = ">=82.0.1" },
+    { name = "setuptools", specifier = ">=74.1.0" },
 ]
 provides-extras = ["cuda", "cuda12", "cuda13", "speqtrum", "openfermion", "qir", "openqasm", "scip", "all", "all-cu12", "all-cu13"]
 
