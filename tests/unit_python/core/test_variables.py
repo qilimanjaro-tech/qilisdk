@@ -21,51 +21,63 @@ import numpy as np
 import pytest
 from ruamel.yaml import YAML
 
-from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, NotSupportedOperation, OutOfBoundsException
-from qilisdk.core.variables import (
+from qilisdk.core.comparison import (
     EQ,
     GEQ,
     GT,
-    LARGE_BOUND,
     LEQ,
     LT,
+    NEQ,
+    Comparison,
+    ComparisonOperation,
+    Equal,
+    GreaterThan,
+    GreaterThanOrEqual,
+    LessThan,
+    LessThanOrEqual,
+    NotEqual,
+)
+from qilisdk.core.exceptions import (
+    EvaluationError,
+    InvalidBoundsError,
+    NonPolynomialError,
+    NotSupportedOperation,
+    OutOfBoundsException,
+)
+from qilisdk.core.expression import (
+    Abs,
+    Add,
+    Constant,
+    Cos,
+    Exp,
+    Expression,
+    Function,
+    Inv,
+    Log,
+    Mul,
+    Pow,
+    Sin,
+    Sqrt,
+    Tan,
+    _assert_real,
+    _float_if_real,
+)
+from qilisdk.core.variables import (
+    LARGE_BOUND,
     MAX_INT,
     MIN_INT,
-    NEQ,
-    Abs,
     BaseVariable,
     BinaryVariable,
     Bitwise,
-    ComparisonOperation,
-    ComparisonTerm,
-    Cos,
     Domain,
     DomainWall,
-    Equal,
-    Exp,
-    GreaterThan,
-    GreaterThanOrEqual,
-    Inv,
-    LessThan,
-    LessThanOrEqual,
-    Log,
-    MathematicalMap,
-    NotEqual,
     Number,
     OneHot,
-    Operation,
     Parameter,
-    Pow,
-    Sin,
     SpinVariable,
-    Sqrt,
-    Tan,
-    Term,
     Variable,
-    _assert_real,
     _check_output,
     _extract_number,
-    _float_if_real,
 )
 
 
@@ -177,6 +189,10 @@ def test_variable_bounds_validation():
         Variable("z", Domain.INTEGER, bounds=(5, 3))
 
 
+def test_variable_defaults_to_the_integer_domain():
+    assert Variable("x").domain == Domain.INTEGER
+
+
 def test_set_bounds():
     v = Variable("x", Domain.POSITIVE_INTEGER)
     v.set_bounds(2, 5)
@@ -198,15 +214,15 @@ def test_variable_printing():
 def test_binaryvar_evaluate_and_copy():
     b = BinaryVariable("b")
     assert b.num_binary_equivalent() == 1
-    assert b.evaluate([0]) == 0
-    assert b.evaluate([1]) == 1
-    assert b.evaluate(0.0) == 0
-    assert b.evaluate(1) == 1
+    assert b.evaluate({b: [0]}) == 0
+    assert b.evaluate({b: [1]}) == 1
+    assert b.evaluate({b: 0.0}) == 0
+    assert b.evaluate({b: 1}) == 1
     with pytest.raises(EvaluationError):
-        b.evaluate([0, 1])
+        b.evaluate({b: [0, 1]})
 
     with pytest.raises(EvaluationError):
-        b.evaluate(2)
+        b.evaluate({b: 2})
     b2 = copy(b)
     assert isinstance(b2, BinaryVariable)
     assert b2.label == b.label
@@ -217,16 +233,16 @@ def test_binaryvar_evaluate_and_copy():
 def test_spinvar_evaluate():
     s = SpinVariable("s")
     assert s.num_binary_equivalent() == 1
-    assert s.evaluate([1]) == 1
-    assert s.evaluate([0]) == -1
-    assert s.evaluate(1) == 1
-    assert s.evaluate(0) == -1
-    assert s.evaluate(-1) == -1
+    assert s.evaluate({s: [1]}) == 1
+    assert s.evaluate({s: [0]}) == -1
+    assert s.evaluate({s: 1}) == 1
+    assert s.evaluate({s: 0}) == -1
+    assert s.evaluate({s: -1}) == -1
     with pytest.raises(EvaluationError):
-        s.evaluate([0, 1])
+        s.evaluate({s: [0, 1]})
 
     with pytest.raises(EvaluationError):
-        s.evaluate(2)
+        s.evaluate({s: 2})
     b2 = copy(s)
     assert isinstance(b2, SpinVariable)
     assert b2.label == s.label
@@ -247,34 +263,33 @@ def test_arithmetic_and_comparisons():
     assert t.evaluate({a: 1}) == -1
     assert t == -1 * a
 
-    with pytest.raises(NotImplementedError):
-        _ = a / b
+    # division by a variable is now valid and yields a ``Pow`` factor
+    assert (a / b) == Mul.build((a, Pow.build(b, Constant(-1))))
 
     t = a / 2
 
     assert t == (a * 0.5)
 
     t = a + b * 2 - 3
-    # t should be Term
-    assert isinstance(t, Term)
-    # test evaluation with values
-    val = t.evaluate({a: [2], b: [1]})
+    # t should be an Expression (a canonical Add)
+    assert isinstance(t, Add)
+    # test evaluation with values: little-endian bits, so a = 2 is [0, 1, 0] and b = 1 is [1, 0, 0]
+    val = t.evaluate({a: [0, 1, 0], b: [1, 0, 0]})
     assert val == 2 + 1 * 2 - 3
 
     # test division by zero
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         _ = a / 0
-    # test unsupported rtruediv
-    with pytest.raises(NotSupportedOperation):
-        _ = 3 / a
+    # right division / floor division by a variable
+    assert (3 / a) == Mul.build((Constant(3), Pow.build(a, Constant(-1))))
 
     with pytest.raises(NotSupportedOperation):
         _ = 3 // a
 
     # power operations
     t2 = a**2
-    assert isinstance(t2, Term)
-    val = t2.evaluate({a: [2]})
+    assert isinstance(t2, Pow)
+    val = t2.evaluate({a: [0, 1, 0]})
     assert val == 2**2
 
     t2 = a**0
@@ -282,22 +297,21 @@ def test_arithmetic_and_comparisons():
     assert t2.evaluate({}) == 1
 
     t2 = a**1
-    assert isinstance(t2, Term)
-    val = t2.evaluate({a: [2]})
+    assert t2 == a
+    val = t2.evaluate({a: [0, 1, 0]})
     assert val == 2
 
-    # negative power
-    with pytest.raises(NotImplementedError):
-        _ = a**-1
+    # negative power is now valid (returns a ``Pow`` node)
+    assert isinstance(a**-1, Pow)
 
     # comparisons
     c = LT(a, 3)
-    assert isinstance(c, ComparisonTerm)
-    assert c.evaluate({a: [2]})
-    assert not c.evaluate({a: [5]})
-    # bool of comparison when constants
-    c2 = EQ(2 - a, 2 - a)
-    zero = Term([], Operation.ADD)
+    assert isinstance(c, Comparison)
+    assert c.evaluate({a: [0, 1, 0]})  # a = 2
+    assert not c.evaluate({a: [1, 1, 1]})  # a = 5
+    # comparing two equal sides collapses to ``0 <op> 0``
+    c2 = EQ(a, a)
+    zero = Constant(0)
     assert c2.lhs == zero
     assert c2.rhs == zero
     with pytest.raises(TypeError):
@@ -306,32 +320,32 @@ def test_arithmetic_and_comparisons():
     assert a != 0
 
     t = a + b + 2
-    assert 2 - t == -a - b
+    # ``Mul`` does not auto-distribute the ``-1``; equality holds after ``expand``
+    assert (2 - t).expand() == (-a - b).expand()
 
     assert -t == -1 * t
-    assert 0 * t == Term([], Operation.MUL)
+    assert 0 * t == Constant(0)
 
-    t = Term([], Operation.ADD)
+    t = Add.build(())
 
-    assert t * 2 == Term([], Operation.MUL)
-    assert 2 * t == Term([], Operation.MUL)
+    assert t * 2 == Constant(0)
+    assert 2 * t == Constant(0)
 
     t2 = -t * 10
-    assert t2 == Term([], Operation.MUL)
+    assert t2 == Constant(0)
 
 
-def test_term_constant_and_simplify():
-    # constant term
-    t = Term([1, 2, 3], Operation.ADD)
-    # Simplify should keep as Term since len>1
-    s = t._simplify()
-    assert isinstance(s, Term)
+def test_constant_folding_and_empty_sum():
+    # a sum of constants folds into a single Constant
+    t = Add.build((Constant(1), Constant(2), Constant(3)))
+    assert isinstance(t, Constant)
+    assert t == Constant(6)
     ct = EQ(t, 6)
-    zero = Term([0], Operation.ADD)
+    zero = Constant(0)
     assert ct.lhs == zero
     assert ct.rhs == zero
-    # constant with zero elements
-    t0 = Term([], Operation.ADD)
+    # an empty sum is the zero constant
+    t0 = Add.build(())
     assert t0 == zero
 
 
@@ -341,30 +355,17 @@ def test_hobo_num_binary_and_check_valid():
     assert Bitwise.num_binary_equivalent(var) == 3
     assert Bitwise.check_valid([0, 1, 1])[0]
     assert var.check_valid([0, 1, 1])[0]
-    assert var.evaluate([0, 1, 1]) == 6
-
-
-def test_term_to_list_and_unfold_parentheses():
-    # build term with parentheses
-    a = Variable("a", Domain.INTEGER, bounds=(0, 5))
-    b = Variable("b", Domain.INTEGER, bounds=(0, 5))
-    t = (a + b) * 2
-    lst = t.to_list()
-    assert isinstance(lst, list)
-    u = 2 * a + 2 * b
-    assert isinstance(u, Term)
-    assert t == u
-    assert u * u == (2 * a + 2 * b) * (2 * a + 2 * b)
+    assert var.evaluate({var: [0, 1, 1]}) == 6
 
 
 def test_encoding_constraint_not_needed_for_bitwise():
     # The Bitwise encoding has no invalid binary strings, so it needs no encoding constraint.
     assert Bitwise.encoding_constraint(Variable("v3", Domain.INTEGER, bounds=(0, 1))) is None
     assert Variable("v3b", Domain.POSITIVE_INTEGER, bounds=(0, 5)).encoding_constraint() is None
-    # OneHot and DomainWall constraints produce ComparisonTerm
+    # OneHot and DomainWall constraints produce Comparison
     var = Variable("v4", Domain.INTEGER, bounds=(0, 2), encoding=DomainWall)
     cons = DomainWall.encoding_constraint(var)
-    assert isinstance(cons, ComparisonTerm)
+    assert isinstance(cons, Comparison)
 
 
 ##############################
@@ -419,65 +420,65 @@ def test_invalid_bit_string(monkeypatch):
     # OneHot
     x = Variable("x", Domain.INTEGER, (-10, 10), OneHot)
     with pytest.raises(ValueError, match=r"invalid binary string"):
-        x.evaluate([1, 0, 1])
+        x.evaluate({x: [1, 0, 1]})
     with pytest.raises(ValueError, match=r"invalid binary string"):
-        x.evaluate([0, 0, 0])
+        x.evaluate({x: [0, 0, 0]})
     x = Variable("x", Domain.INTEGER, (0, 2), OneHot)
-    x.evaluate([0, 0, 1])
+    x.evaluate({x: [0, 0, 1]})
     with pytest.raises(ValueError, match=r"expected 3 variables but received 5"):
-        x.evaluate([1, 0, 0, 0, 0])
+        x.evaluate({x: [1, 0, 0, 0, 0]})
     with pytest.raises(ValueError, match=r"invalid binary string"):
-        x.evaluate([1, 1, 1])
+        x.evaluate({x: [1, 1, 1]})
     with pytest.raises(ValueError, match=r"invalid binary string"):
-        x.evaluate([1, 1, 1])
+        x.evaluate({x: [1, 1, 1]})
 
     # pretend we inited wrongly
-    monkeypatch.setattr(x, "_term", x.term + x[0])
-    x.evaluate([1, 0, 0])
+    monkeypatch.setattr(x, "_expression", x.expression + x[0])
+    x.evaluate({x: [1, 0, 0]})
 
     # Bitwise
     x = Variable("x", Domain.INTEGER, (0, 2), Bitwise)
-    x.evaluate([0, 0])
+    x.evaluate({x: [0, 0]})
     with pytest.raises(ValueError, match=r"expected 2 variables but received 3"):
-        x.evaluate([1, 0, 0])
-    with pytest.raises(ValueError, match=r"Invalid Value Provided"):
-        x.evaluate("string var")
+        x.evaluate({x: [1, 0, 0]})
+    with pytest.raises(EvaluationError, match=r"unsupported value"):
+        x.evaluate({x: "string var"})
     monkeypatch.setattr(Bitwise, "check_valid", lambda bits: (False, "invalid binary string"))
     with pytest.raises(ValueError, match=r"invalid binary string"):
-        x.evaluate([1, 1])
+        x.evaluate({x: [1, 1]})
 
     # DomainWall
     x = Variable("x", Domain.INTEGER, (0, 10), DomainWall)
     with pytest.raises(ValueError, match=r"invalid binary string"):
-        x.evaluate([1, 0, 1])
+        x.evaluate({x: [1, 0, 1]})
     x = Variable("x", Domain.INTEGER, (0, 2), DomainWall)
-    x.evaluate([1, 1])
+    x.evaluate({x: [1, 1]})
     with pytest.raises(ValueError, match=r"expected 2 variables but received 5"):
-        x.evaluate([1, 0, 0, 0, 0])
+        x.evaluate({x: [1, 0, 0, 0, 0]})
     with pytest.raises(ValueError, match=r"invalid binary string"):
-        x.evaluate([0, 1, 0])
+        x.evaluate({x: [0, 1, 0]})
 
 
 def test_invalid_variable_evaluate():
     x = Variable("x", Domain.POSITIVE_INTEGER, (0, 3))
     with pytest.raises(ValueError, match=r"The value -1 is invalid for the domain Positive Integer Domain"):
-        x.evaluate(-1)
+        x.evaluate({x: -1})
     with pytest.raises(ValueError, match=r"The value 4 is outside the defined bounds \(0, 3\)"):
-        x.evaluate(4)
+        x.evaluate({x: 4})
 
     x.update_variable(Domain.INTEGER, (-1, 3))
     with pytest.raises(ValueError, match=r"The value 1.1 is invalid for the domain Integer Domain"):
-        x.evaluate(1.1)
+        x.evaluate({x: 1.1})
     with pytest.raises(ValueError, match=r"The value 4 is outside the defined bounds \(-1, 3\)"):
-        x.evaluate(4)
+        x.evaluate({x: 4})
 
     x.update_variable(Domain.REAL, (-1, 3))
     with pytest.raises(ValueError, match=r"The value 4 is outside the defined bounds \(-1, 3\)"):
-        x.evaluate(4)
+        x.evaluate({x: 4})
 
     x.update_variable(Domain.BINARY, (0, 1))
     with pytest.raises(ValueError, match=r"The value 2 is invalid for the domain Binary Domain"):
-        x.evaluate(2)
+        x.evaluate({x: 2})
 
 
 def test_encoding_and_evaluate():
@@ -485,16 +486,16 @@ def test_encoding_and_evaluate():
 
     x = Variable("x", Domain.INTEGER, (-10, 10), OneHot)
 
-    assert x.evaluate([1, 0, 0, 0]) == -10
+    assert x.evaluate({x: [1, 0, 0, 0]}) == -10
 
     x = Variable("x", Domain.REAL, (0, 10), OneHot, precision=1)
 
-    assert x.evaluate([1, 0, 0, 0]) == 0
-    assert x.evaluate([1]) == 0
+    assert x.evaluate({x: [1, 0, 0, 0]}) == 0
+    assert x.evaluate({x: [1]}) == 0
 
-    assert x.term == sum(i * x[i] for i in range(x.num_binary_equivalent()))
+    assert x.expression == sum(i * x[i] for i in range(x.num_binary_equivalent()))
     x.set_precision(1e-1)
-    assert x.term == (sum(i * x[i] for i in range(x.num_binary_equivalent())) * 1e-1)
+    assert x.expression == (sum(i * x[i] for i in range(x.num_binary_equivalent())) * 1e-1)
 
     var = Variable("v", Domain.INTEGER, bounds=(0, 2), encoding=OneHot)
     # should have 3 binary vars
@@ -504,7 +505,7 @@ def test_encoding_and_evaluate():
         binary = [1 if j == i else 0 for j in range(3)]
         assert OneHot.check_valid(binary)[0]
         assert var.check_valid(binary)[0]
-        val = var.evaluate(binary)
+        val = var.evaluate({var: binary})
         assert val == i
     # invalid sample
     assert not OneHot.check_valid([0, 0, 0])[0]
@@ -518,7 +519,7 @@ def test_encoding_and_evaluate():
         binary = OneHot._one_hot_encode(i, 31)
         assert OneHot.check_valid(binary)[0]
         assert var.check_valid(binary)[0]
-        val = var.evaluate(binary)
+        val = var.evaluate({var: binary})
         assert math.isclose(val, i * 1e-1 - 1, abs_tol=1e-1)
     # # invalid sample
     assert not OneHot.check_valid([0, 0, 0])[0]
@@ -532,27 +533,27 @@ def test_encoding_and_evaluate():
     # valid samples
     for i in range(30):
         binary = DomainWall._domain_wall_encode(i, 30)
-        val = var.evaluate(binary)
+        val = var.evaluate({var: binary})
         assert math.isclose(val, i * 1e-1 - 1, abs_tol=1e-1)
 
-    assert var.evaluate([1]) == -0.9
-    assert var.evaluate([1, 1]) == -0.8
-    assert var.evaluate([0]) == -1
+    assert var.evaluate({var: [1]}) == -0.9
+    assert var.evaluate({var: [1, 1]}) == -0.8
+    assert var.evaluate({var: [0]}) == -1
 
     # # invalid sample
     assert not DomainWall.check_valid([0, 1, 0])[0]
     assert not var.check_valid([0, 1, 0])[0]
 
     var = Variable("v", Domain.INTEGER, bounds=(0, 2), encoding=DomainWall)
-    assert var.term == sum(var)
+    assert var.expression == sum(var)
 
     # #######################  DomainWall #######################
 
     x = Variable("x", Domain.REAL, (-1, 2), Bitwise, precision=1e-1)
-    assert x.evaluate(-1) == -1
-    assert x.evaluate(-0.5) == -0.5
-    assert x.evaluate([0]) == -1
-    assert x.evaluate([1, 0, 1]) == -0.5
+    assert x.evaluate({x: -1}) == -1
+    assert x.evaluate({x: -0.5}) == -0.5
+    assert x.evaluate({x: [0]}) == -1
+    assert x.evaluate({x: [1, 0, 1]}) == -0.5
 
 
 def test_encoding_constraint():
@@ -627,13 +628,13 @@ def test_setting_bounds():
 def test_to_binary():
     x = BinaryVariable("x")
 
-    assert isinstance(x.to_binary(), Term)
-    assert x.to_binary() == Term([x], Operation.ADD)
+    assert isinstance(x.to_binary(), BinaryVariable)
+    assert x.to_binary() == x
 
     x = SpinVariable("x")
 
-    assert isinstance(x.to_binary(), Term)
-    assert x.to_binary() == Term([x], Operation.ADD)
+    assert isinstance(x.to_binary(), SpinVariable)
+    assert x.to_binary() == x
 
 
 ##############################
@@ -645,52 +646,30 @@ def test_Term_construction():
     b = BinaryVariable("b")
     x = Variable("x", Domain.REAL)
 
-    t = Term([1, 1], operation=Operation.ADD)
-    expected = Term([2], operation=Operation.ADD)
-    assert t == expected
+    # constants fold under addition
+    assert Add.build((Constant(1), Constant(1))) == Constant(2)
+    assert Add.build((Constant(1), Add.build((Constant(1),)))) == Constant(2)
+    assert (Constant(1) + Constant(1)) == Constant(2)
 
-    t = Term([1, Term([1], operation=Operation.ADD)], operation=Operation.ADD)
-    expected = Term([2], operation=Operation.ADD)
-    assert t == expected
+    # binary variables are idempotent under multiplication
+    assert Mul.build((b, b)) == b
+    assert Mul.build((b, Mul.build((b, b)))) == b
 
-    t = Term([Term.CONST, Term.CONST], operation=Operation.ADD)
-    expected = Term([2], operation=Operation.ADD)
-    assert t == expected
+    # like terms combine
+    assert Add.build((x, x)) == 2 * x
+    assert Add.build((x, Add.build((x, b)))) == 2 * x + b
 
-    t = Term([Term.CONST, Term([Term.CONST], operation=Operation.ADD)], operation=Operation.ADD)
-    expected = Term([2], operation=Operation.ADD)
-    assert t == expected
+    # nested constant products fold into the additive constant
+    inner = Mul.build((Constant(3), Constant(1)))
+    assert Add.build((Constant(1), inner)) == Constant(4)
 
-    t = Term([b, b], operation=Operation.MUL)
-    expected = Term([b], operation=Operation.MUL)
-    assert t == expected
+    # nested products with a like variable combine the coefficients
+    inner = Mul.build((Constant(3), x))
+    assert Add.build((x, inner)) == Mul.build((Constant(4), x))
 
-    t = Term([b, Term([b, b], operation=Operation.MUL)], operation=Operation.MUL)
-    expected = Term([b], operation=Operation.MUL)
-    assert t == expected
-
-    t = Term([x, x], operation=Operation.ADD)
-    expected = Term([x], operation=Operation.ADD)
-    expected._elements[x] = 2
-    assert t == expected
-
-    t = Term([x, Term([x, b], operation=Operation.ADD)], operation=Operation.ADD)
-    expected = Term([x, b], operation=Operation.ADD)
-    expected._elements[x] = 2
-    assert t == expected
-
-    _t = Term([3, Term.CONST], operation=Operation.MUL)
-    t = Term([Term.CONST, _t], operation=Operation.ADD)
-
-    assert t == Term([4], Operation.ADD)
-
-    _t = Term([3, x], operation=Operation.MUL)
-    t = Term([x, _t], operation=Operation.ADD)
-
-    assert t == Term([Term([4, x], Operation.MUL)], operation=Operation.ADD)
-
-    with pytest.raises(ValueError, match=r"Term accepts object of types Term or Variable but an object of type"):
-        Term(["s"], operation=Operation.ADD)
+    # non-numeric, non-expression operands are rejected
+    with pytest.raises(TypeError):
+        _ = x + "s"
 
 
 def test_Term_degree():
@@ -713,7 +692,7 @@ def test_Term_degree():
     t = x * y + x
     assert t.degree == 2
 
-    t = Term([Term([4, x**2], Operation.ADD), x], operation=Operation.MUL)
+    t = (4 + x**2) * x
 
     assert t.degree == 3
 
@@ -727,44 +706,10 @@ def test_Term_to_binary():
 
     assert t.to_binary() == t_binary
 
-    t = Term([4, Term([2 * x, 2], Operation.ADD)], Operation.MUL)
+    t = 4 * (2 * x + 2)
     t_binary = 4 * (2 * x.to_binary() + 2)
-    assert t.to_binary()._unfold_parentheses() == t_binary
-
-    t = Term([], operation=Operation.DIV)
-    with pytest.raises(ValueError, match=r"Can not evaluate any operation that is not Addition of Multiplication"):
-        t.to_binary()
-
-    t = Term([], operation=Operation.ADD)
-    t._elements[""] = 1
-    with pytest.raises(ValueError, match=r"Evaluating term with elements of type <class '.*?'> is not supported\."):
-        t.to_binary()
-
-
-def test_apply_operation_on_constants():
-    t = Term([4, 5], operation=Operation.ADD)
-    assert t[Term.CONST] == 9
-
-    t = Term([4, 5], operation=Operation.SUB)
-    assert t[Term.CONST] == -1
-
-    t = Term([4, 5], operation=Operation.MUL)
-    assert t[Term.CONST] == 20
-
-    t = Term([4, 5], operation=Operation.DIV)
-    assert np.isclose(t[Term.CONST], 0.8)
-
-    t = Term([4, 5, 9, 7, 13], operation=Operation.ADD)
-    assert t[Term.CONST] == 38
-
-    t = Term([4, 5, 9, 7, 13], operation=Operation.SUB)
-    assert t[Term.CONST] == -30
-
-    t = Term([4, 5, 9, 7, 13], operation=Operation.MUL)
-    assert t[Term.CONST] == 16380
-
-    t = Term([4, 5, 9, 7, 13], operation=Operation.DIV)
-    assert np.isclose(t[Term.CONST], 0.00097680097)
+    # products of sums are equal only after expansion (Mul does not auto-distribute)
+    assert t.to_binary().expand() == t_binary.expand()
 
 
 def test_Term_variables():
@@ -779,42 +724,6 @@ def test_Term_variables():
     assert y in t.variables()
 
 
-def test_term_pop_error():
-    x = Variable("x", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
-    t = 2 * x + 3
-    t.pop(x)
-    with pytest.raises(KeyError, match=r'item ".*?" not found in the term\.'):
-        t.pop(x)
-
-
-def test_unfold_parentheses():
-    x = Variable("x", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
-
-    t = (2 * x + 1) * (3 * x + 2)
-    expected_t = 6 * x**2 + 7 * x + 2
-
-    assert t == expected_t
-
-    t = (2 * x + 1) ** 2
-    expected_t = 4 * x**2 + 4 * x + 1
-
-    assert t == expected_t
-
-    t = (2 * x**2 + 1) ** 2
-    expected_t = 4 * x**4 + 4 * x**2 + 1
-
-    assert t == expected_t
-
-    t = (2 * x + 1) * x**2
-    expected_t = 2 * x**3 + x**2
-
-    assert t == expected_t
-
-    t = x + 2
-
-    assert t._unfold_parentheses() == t
-
-
 def test_Term_evaluate():
     x = Variable("x", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
     y = Variable("y", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
@@ -823,9 +732,7 @@ def test_Term_evaluate():
 
     assert t.evaluate({x: 3}) == 9
 
-    with pytest.raises(
-        ValueError, match=r"Can not evaluate term because the value of the variable .*? is not provided\."
-    ):
+    with pytest.raises(EvaluationError, match=r"No value was provided to evaluate the variable"):
         t.evaluate({})
 
     t = 2 * x * y + 2 * x + 3 * y
@@ -838,14 +745,13 @@ def test_get_constant():
     x = Variable("x", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
     y = Variable("y", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
 
-    t = Term([x], operation=Operation.MUL)
-    assert t.get_constant() == 1
+    # a bare monomial has no additive constant
+    assert x.get_constant() == 0
+    assert (x * y).get_constant() == 0
 
-    t = Term([x], operation=Operation.ADD)
-    assert t.get_constant() == 0
-
+    # the numeric coefficient of a monomial is not its additive constant
     t = 3 * x
-    assert t.get_constant() == 3
+    assert t.get_constant() == 0
 
     t = 3 * x + 2
     assert t.get_constant() == 2
@@ -865,19 +771,19 @@ def test_Term_printing():
     y = Variable("y", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
 
     t = 2 * x
-    expected_t = "(2) * x"
+    expected_t = "2 * x"
     assert repr(t) == expected_t
 
     t = 2 * x + 1
-    expected_t = "(2) * x + (1)"
+    expected_t = "1 + 2 * x"
     assert repr(t) == expected_t
 
     t = 2 * x + 3 * y
-    expected_t = "(2) * x + (3) * y"
+    expected_t = "2 * x + 3 * y"
     assert repr(t) == expected_t
 
     t = 1 + x
-    expected_t = "x + (1)"
+    expected_t = "1 + x"
     assert repr(t) == expected_t
 
     t = x + 0
@@ -892,20 +798,21 @@ def test_Term_printing():
     expected_t = "x"
     assert repr(t) == expected_t
 
-    t = Term([], Operation.ADD)
+    t = Add.build(())
     expected_t = "0"
     assert repr(t) == expected_t
 
+    # a product of a constant and a sum is kept un-distributed
     t = (x + y) * 3
-    expected_t = "(3.0) * x + (3.0) * y"
+    expected_t = "3 * (x + y)"
     assert repr(t) == expected_t
 
     t = 2 * (x) ** 2
-    expected_t = "(2) * (x^2)"
+    expected_t = "2 * x**2"
     assert repr(t) == expected_t
 
     t = 2 * (x * y) + x
-    expected_t = "(2) * (x * y) + x"
+    expected_t = "x + 2 * x * y"
     assert repr(t) == expected_t
 
     t = x * y * 1
@@ -916,184 +823,39 @@ def test_Term_printing():
     expected_t = "x * y"
     assert repr(t) == expected_t
 
+    # the numeric coefficient prints first, not last
     t = x * y * 2
-    expected_t = "x * y * (2)"
-    assert repr(t) == expected_t
-
-    # test default print
-    t = 1 + x
-    t._elements["test"] = 1
-    expected_t = "x + (1) + test"
+    expected_t = "2 * x * y"
     assert repr(t) == expected_t
 
 
 def test_Term_division():
     x = Variable("x", Domain.REAL)
     t = 2 * x + 2
-    with pytest.raises(NotImplementedError):
-        _ = t / x
+    # division by an expression is now valid and yields a ``Pow`` factor
+    assert (t / x) == Mul.build((t, Pow.build(x, Constant(-1))))
     with pytest.raises(ValueError, match=r"Division by zero is not allowed"):
         _ = t / 0
-    with pytest.raises(NotSupportedOperation):
-        _ = 2 / t
+    # right division by an expression is valid; floor division is not supported
+    assert (2 / t) == Mul.build((Constant(2), Pow.build(t, Constant(-1))))
     with pytest.raises(NotSupportedOperation):
         _ = 2 // t
 
     t /= 2
-    assert t == (x + 1)
+    # division by a number scales without distributing; equal after ``expand``
+    assert t.expand() == (x + 1).expand()
 
 
 def test_Term_power():
     x = Variable("x", Domain.REAL)
     t = 2 * x**2
 
-    assert t**3 == 8 * x**6
+    # raising a product to a power does not auto-distribute; equal after ``expand``
+    assert (t**3).expand() == 8 * x**6
 
     t = 2 * x**2 + 2
 
-    assert t**3 == (8.0) * (x**6) + (24.0) * (x**4) + (24.0) * (x**2) + (8.0)
-
-    t = Term([2], Operation.SUB)
-
-    with pytest.raises(NotImplementedError):
-        _ = t**2
-
-
-##############################
-# Test Comparison Term
-##############################
-
-
-def test_comparison_term_variables():
-    b = BinaryVariable("b")
-    x = Variable("x", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
-    y = Variable("y", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
-
-    t = EQ(x + 2 * x * b, 3 * x * y)
-
-    assert b in t.variables()
-    assert x in t.variables()
-    assert y in t.variables()
-
-
-def test_Comparison_Term_degree():
-    x = Variable("x", Domain.REAL)
-
-    t = EQ(x**2, 3 * x)
-
-    assert t.degree == 2
-
-    t = EQ((2 * x + 1), (3 * x + 4))
-
-    assert t.degree == 1
-
-    t = LT(x * x * x, x**2)
-
-    assert t.degree == 3
-
-    y = Variable("y", Domain.REAL)
-
-    t = GT(x * y, x)
-    assert t.degree == 2
-
-    _t = Term([Term([4, x**2], Operation.ADD), x], operation=Operation.MUL)
-
-    t = EQ(_t, x)
-    assert t.degree == 3
-
-
-def test_type_error_bool():
-    x = Variable("x", Domain.REAL)
-    t = EQ(x, 0)
-
-    with pytest.raises(TypeError):
-        _ = bool(t)
-
-    t = EQ(x, x)
-
-    with pytest.raises(TypeError):
-        _ = bool(t)
-
-
-def test_Comparison_Term_to_binary():
-    b = BinaryVariable("b")
-    x = Variable("x", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
-
-    t = EQ(2 * x * b, 3 * b + 4)
-    t_binary = EQ(2 * x.to_binary() * b, 3 * b + 4)
-
-    assert t.to_binary().lhs == t_binary.lhs
-    assert t.to_binary().rhs == t_binary.rhs
-
-    t = EQ(Term([4, Term([2 * x, 2], Operation.ADD)], Operation.MUL).to_binary()._unfold_parentheses(), 0)
-    t_binary = EQ(4 * (2 * x.to_binary() + 2), 0)
-    assert t.lhs == t_binary.lhs
-    assert t.rhs == t_binary.rhs
-
-    _t = Term([], operation=Operation.ADD)
-    _t._elements[""] = 1
-    with pytest.raises(ValueError, match=r"Term accepts object of types Term or Variable but an object of type "):
-        _ = EQ(_t, 0)
-
-
-def test_Comparison_Term_printing():
-    x = Variable("x", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
-    y = Variable("y", Domain.POSITIVE_INTEGER, (0, 8), Bitwise)
-
-    t = EQ(2 * x, 0)
-    expected_t = "(2) * x == 0"
-
-    assert repr(t) == expected_t
-
-    t = EQ(2 * x, 1)
-    expected_t = "(2) * x == (1)"
-
-    assert repr(t) == expected_t
-
-    t = LT(2 * x, 3 * y)
-    expected_t = "(2) * x + (-3.0) * y < 0"
-
-    assert repr(t) == expected_t
-
-    t = GT(1, x)
-    expected_t = "(-1) * x > (-1)"
-
-    assert repr(t) == expected_t
-
-    t = LT(x + 0, 0)
-    expected_t = "x < 0"
-
-    assert repr(t) == expected_t
-
-    t = GEQ(1 + x - 1, 2)
-    expected_t = "x >= (2)"
-
-    assert repr(t) == expected_t
-
-    t = LEQ(1 * x, -x)
-    expected_t = "(2.0) * x <= 0"
-
-    assert repr(t) == expected_t
-
-    t = EQ(Term([], Operation.ADD), 0)
-    expected_t = "0 == 0"
-
-    assert repr(t) == expected_t
-
-    t = NEQ((x + y) * 3, 3)
-    expected_t = "(3.0) * x + (3.0) * y != (3)"
-
-    assert repr(t) == expected_t
-
-    t = EQ(2 * (x) ** 2, 2)
-    expected_t = "(2) * (x^2) == (2)"
-
-    assert repr(t) == expected_t
-
-    t = LT(2 * (x * y) + x, 5)
-    expected_t = "(2) * (x * y) + x < (5)"
-
-    assert repr(t) == expected_t
+    assert (t**3).expand() == (8.0) * (x**6) + (24.0) * (x**4) + (24.0) * (x**2) + (8.0)
 
 
 ####################
@@ -1138,16 +900,17 @@ def test_parameter_value():
         p.update_variable(Domain.INTEGER, (0, 10))
 
 
-class DummyMap(MathematicalMap):
-    """Apply a sine map to a parameter or term."""
+class DummyMap(Function):
+    """A user-defined identity :class:`Function` (the AST replacement for ``MathematicalMap``)."""
 
-    MATH_SYMBOL = "dummy_map"
+    NAME = "dummy_map"
 
-    def _apply_mathematical_map(self, value: Number) -> Number:
+    @staticmethod
+    def _numeric(value: Number) -> Number:
         return value
 
-    def __copy__(self) -> "DummyMap":
-        return DummyMap(super().__copy__())
+    def _outer_derivative(self, operand: Expression) -> Expression:
+        return Constant(1)
 
 
 def test_mathematical_map():
@@ -1156,19 +919,21 @@ def test_mathematical_map():
     term = 2 * b + p
 
     dummy_map = DummyMap(b)
-    assert str(dummy_map) == "dummy_map[b]"
+    assert str(dummy_map) == "DummyMap(b)"
     assert dummy_map.evaluate({b: 0}) == 0
 
     dummy_map = DummyMap(p)
-    assert str(dummy_map) == "dummy_map[p]"
+    assert str(dummy_map) == "DummyMap(p)"
     assert dummy_map.evaluate({}) == 1
 
     dummy_map = DummyMap(term)
-    assert str(dummy_map) == f"dummy_map[({term})]"
+    assert str(dummy_map) == f"DummyMap({term})"
     assert dummy_map.evaluate({b: 1}) == 3
 
+    # a numeric operand folds to a Constant; a non-numeric one is rejected
+    assert DummyMap(1) == Constant(1)
     with pytest.raises(TypeError):
-        DummyMap(1)
+        DummyMap("not a number")
 
     assert isinstance(copy(dummy_map), DummyMap)
 
@@ -1179,15 +944,15 @@ def test_sin_map():
     term = 2 * b + p
 
     sin_map = Sin(b)
-    assert str(sin_map) == "sin[b]"
+    assert str(sin_map) == "Sin(b)"
     assert sin_map.evaluate({b: 0}) == np.sin(0)
 
     sin_map = Sin(p)
-    assert str(sin_map) == "sin[p]"
+    assert str(sin_map) == "Sin(p)"
     assert sin_map.evaluate({}) == np.sin(1)
 
     sin_map = Sin(term)
-    assert str(sin_map) == f"sin[({term})]"
+    assert str(sin_map) == f"Sin({term})"
     assert sin_map.evaluate({b: 1}) == np.sin(3)
 
     assert isinstance(copy(sin_map), Sin)
@@ -1199,15 +964,15 @@ def test_cos_map():
     term = 2 * b + p
 
     cos_map = Cos(b)
-    assert str(cos_map) == "cos[b]"
+    assert str(cos_map) == "Cos(b)"
     assert cos_map.evaluate({b: 0}) == np.cos(0)
 
     cos_map = Cos(p)
-    assert str(cos_map) == "cos[p]"
+    assert str(cos_map) == "Cos(p)"
     assert cos_map.evaluate({}) == np.cos(1)
 
     cos_map = Cos(term)
-    assert str(cos_map) == f"cos[({term})]"
+    assert str(cos_map) == f"Cos({term})"
     assert cos_map.evaluate({b: 1}) == np.cos(3)
 
     assert isinstance(copy(cos_map), Cos)
@@ -1219,15 +984,15 @@ def test_sqrt_map():
     term = 2 * b + p
 
     sqrt_map = Sqrt(b)
-    assert str(sqrt_map) == "sqrt[b]"
+    assert str(sqrt_map) == "Sqrt(b)"
     assert sqrt_map.evaluate({b: 0}) == np.sqrt(0)
 
     sqrt_map = Sqrt(p)
-    assert str(sqrt_map) == "sqrt[p]"
+    assert str(sqrt_map) == "Sqrt(p)"
     assert sqrt_map.evaluate({}) == np.sqrt(1)
 
     sqrt_map = Sqrt(term)
-    assert str(sqrt_map) == f"sqrt[({term})]"
+    assert str(sqrt_map) == f"Sqrt({term})"
     assert sqrt_map.evaluate({b: 1}) == np.sqrt(3)
 
     assert isinstance(copy(sqrt_map), Sqrt)
@@ -1239,41 +1004,66 @@ def test_log_map():
     term = 2 * b + p
 
     log_map = Log(b)
-    assert str(log_map) == "log[b]"
+    assert str(log_map) == "Log(b)"
     assert log_map.evaluate({b: 1}) == np.log(1)
 
     log_map = Log(p)
-    assert str(log_map) == "log[p]"
+    assert str(log_map) == "Log(p)"
     assert log_map.evaluate({}) == np.log(1)
 
     log_map = Log(term)
-    assert str(log_map) == f"log[({term})]"
+    assert str(log_map) == f"Log({term})"
     assert log_map.evaluate({b: 1}) == np.log(3)
 
     assert isinstance(copy(log_map), Log)
 
 
-def test_inv_map():
+def test_inv_is_a_power_of_minus_one():
     b = BinaryVariable("b")
     p = Parameter("p", 1)
+    q = Parameter("q", 2)
     term = 2 * b + p
 
-    inv_map = Inv(b)
-    assert str(inv_map) == "inv[b]"
-    assert inv_map.evaluate({b: 1}) == 1
+    # Inv is a helper over Pow, not a node of its own, so 1/x and Inv(x) are the same expression.
+    assert Inv(p) == p**-1
+    assert Inv(p) == 1 / p
+    assert isinstance(Inv(p), Pow)
 
-    inv_map = Inv(p)
-    assert str(inv_map) == "inv[p]"
-    assert inv_map.evaluate({}) == 1
+    assert str(Inv(q)) == "q**-1"
+    assert Inv(q).evaluate({q: 1}) == 1
+
+    assert Inv(p).evaluate({}) == 1
 
     inv_map = Inv(term)
-    assert str(inv_map) == f"inv[({term})]"
+    assert str(inv_map) == f"({term})**-1"
     assert inv_map.evaluate({b: 1}) == 1 / 3
 
-    assert isinstance(copy(inv_map), Inv)
+    assert isinstance(copy(inv_map), Pow)
+
+    # A constant argument is folded on construction.
+    assert Inv(4) == Constant(0.25)
+
+    with pytest.raises(TypeError, match=r"Inv expects an Expression or number"):
+        Inv("not a number")
 
     with pytest.raises(ValueError, match=r"Division by zero is not allowed"):
-        Inv(b).evaluate({b: 0})
+        Inv(q).evaluate({q: 0})
+
+
+def test_negative_powers_of_a_binary_variable():
+    b = BinaryVariable("b")
+    # b is 0 or 1, so 1/b is 1 or undefined. Only the zero case is an error, and it is caught at
+    # evaluation, like every other division by zero.
+    assert (b**-1).evaluate({b: 1}) == 1
+    assert (b**-2.5).evaluate({b: 1}) == 1
+    with pytest.raises(ValueError, match=r"Division by zero is not allowed"):
+        (b**-1).evaluate({b: 0})
+
+    assert 1 / b == b**-1
+    assert b / b == Constant(1)
+
+    # Positive powers still collapse, because b**n == b.
+    assert b**3 == b
 
 
 def test_exp_map():
@@ -1282,36 +1072,50 @@ def test_exp_map():
     term = 2 * b + p
 
     exp_map = Exp(b)
-    assert str(exp_map) == "exp[b]"
+    assert str(exp_map) == "Exp(b)"
     assert exp_map.evaluate({b: 1}) == np.exp(1)
 
     exp_map = Exp(p)
-    assert str(exp_map) == "exp[p]"
+    assert str(exp_map) == "Exp(p)"
     assert exp_map.evaluate({}) == np.exp(1)
 
     exp_map = Exp(term)
-    assert str(exp_map) == f"exp[({term})]"
+    assert str(exp_map) == f"Exp({term})"
     assert exp_map.evaluate({b: 1}) == np.exp(3)
 
     assert isinstance(copy(exp_map), Exp)
 
 
-def test_pow_map():
+def test_pow_node():
     p = Parameter("p", 2)
     term = 2 * p
 
-    pow_map = Pow(p, 3)
-    assert str(pow_map) == "pow[p, 3]"
-    assert pow_map.evaluate({}) == 8
+    pow_node = p**3
+    assert str(pow_node) == "p**3"
+    assert pow_node.evaluate({}) == 8
 
-    pow_map = Pow(term, 3)
-    assert str(pow_map) == f"pow[{term}, 3]"
-    assert pow_map.evaluate({}) == 64
+    pow_node = term**3
+    assert str(pow_node) == f"({term})**3"
+    assert pow_node.evaluate({}) == 64
 
-    assert isinstance(copy(pow_map), Pow)
+    assert isinstance(copy(pow_node), Pow)
 
     with pytest.raises(ValueError, match=r"Division by zero is not allowed"):
-        Pow(p, -1).evaluate({p: 0})
+        (p**-1).evaluate({p: 0})
+
+
+def test_symbolic_and_fractional_exponents():
+    x = Parameter("x", 4)
+    y = Parameter("y", 0.5)
+
+    # None of these were expressible with the old flattened polynomial.
+    assert np.isclose(_assert_real((x**y).evaluate({})), 2.0)
+    assert np.isclose(_assert_real((x**0.5).evaluate({})), 2.0)
+    assert np.isclose(_assert_real((2**y).evaluate({})), np.sqrt(2))
+
+    assert (x**y).free_symbols() == {x, y}
+    with pytest.raises(NonPolynomialError):
+        _ = (x**y).degree
 
 
 def test_different_mathematical_maps_of_same_argument_are_not_equal():
@@ -1334,32 +1138,37 @@ def test_different_mathematical_maps_of_same_argument_are_not_equal():
     assert Sin(b) != Cos(b)
 
 
-def test_pow_maps_with_different_exponents_are_not_equal():
+def test_powers_with_different_exponents_are_not_equal():
     p = Parameter("p", 2)
 
-    squared_a, squared_b = Pow(p, 2), Pow(p, 2)
+    squared_a, squared_b = p**2, p**2
     assert squared_a == squared_b
     assert hash(squared_a) == hash(squared_b)
 
-    assert Pow(p, 2) != Pow(p, 3)
-    assert hash(Pow(p, 2)) != hash(Pow(p, 3))
+    assert p**2 != p**3
+    assert hash(p**2) != hash(p**3)
 
 
 def test_sum_of_different_mathematical_maps_is_not_merged():
     p = Parameter("p", 0.5)
 
     term = Sin(p) + Cos(p)
-    assert len(term) == 2
+    assert len(term.args) == 2
     assert np.isclose(_assert_real(term.evaluate({})), np.sin(0.5) + np.cos(0.5))
 
     # Maps of the same kind must still be merged.
     same_kind = Sin(p) + Sin(p)
-    assert len(same_kind) == 1
+    assert same_kind == 2 * Sin(p)
     assert np.isclose(_assert_real(same_kind.evaluate({})), 2 * np.sin(0.5))
 
-    pow_term = Pow(p, 2) + Pow(p, 3)
-    assert len(pow_term) == 2
+    pow_term = p**2 + p**3
+    assert len(pow_term.args) == 2
     assert np.isclose(_assert_real(pow_term.evaluate({})), 0.5**2 + 0.5**3)
+
+    # A product of the same map is a square, not a doubling. The flattened Term model got this wrong.
+    squared = Sin(p) * Sin(p)
+    assert squared == Sin(p) ** 2
+    assert np.isclose(_assert_real(squared.evaluate({})), np.sin(0.5) ** 2)
 
 
 def test_abs_map():
@@ -1367,14 +1176,18 @@ def test_abs_map():
     term = 2 * p
 
     abs_map = Abs(p)
-    assert str(abs_map) == "abs[p]"
+    assert str(abs_map) == "Abs(p)"
     assert abs_map.evaluate({}) == 1
 
     abs_map = Abs(term)
-    assert str(abs_map) == f"abs[{term}]"
+    assert str(abs_map) == f"Abs({term})"
     assert abs_map.evaluate({}) == 2
 
     assert isinstance(copy(abs_map), Abs)
+
+    derivable = Abs(p)
+    with pytest.raises(NotSupportedOperation, match=r"The derivative of Abs is not supported."):
+        derivable.derivative(p)
 
 
 def test_tan_map():
@@ -1383,15 +1196,15 @@ def test_tan_map():
     term = 2 * b + p
 
     tan_map = Tan(b)
-    assert str(tan_map) == "tan[b]"
+    assert str(tan_map) == "Tan(b)"
     assert tan_map.evaluate({b: 0}) == np.tan(0)
 
     tan_map = Tan(p)
-    assert str(tan_map) == "tan[p]"
+    assert str(tan_map) == "Tan(p)"
     assert tan_map.evaluate({}) == np.tan(1)
 
     tan_map = Tan(term)
-    assert str(tan_map) == f"tan[({term})]"
+    assert str(tan_map) == f"Tan({term})"
     assert tan_map.evaluate({b: 1}) == np.tan(3)
 
     assert isinstance(copy(tan_map), Tan)
@@ -1412,20 +1225,6 @@ def test_domain_yaml(domain):
     loaded = yaml.load(stream)
 
     assert loaded is domain
-
-
-@pytest.mark.parametrize("operation", list(Operation))
-def test_operation(operation):
-    yaml = YAML()
-    yaml.register_class(Operation)
-    stream = StringIO()
-
-    yaml.dump(operation, stream)
-    stream.seek(0)
-
-    loaded = yaml.load(stream)
-
-    assert loaded is operation
 
 
 @pytest.mark.parametrize("comparison_operation", list(ComparisonOperation))
@@ -1476,7 +1275,7 @@ def test_base_variable():
     assert (a * np_generic) == (1.0 * a)
     assert (a.__rmul__(np_generic)) == (1.0 * a)  # ruff: ignore[unnecessary-dunder-call]
 
-    with pytest.raises(NotImplementedError, match="Only division by real numbers"):
+    with pytest.raises(TypeError):
         _ = a / not_number
     assert (a / np_generic) == (a / 1.0)
 
@@ -1484,7 +1283,7 @@ def test_base_variable():
 def test_binary_variable_evaluate(monkeypatch):
     x = BinaryVariable("x")
     monkeypatch.setattr(Domain, "check_value", lambda self, value: (True, ""))
-    assert x.evaluate(2) == 2
+    assert x.evaluate({x: 2}) == 2
 
 
 def test_big_bounds(monkeypatch):
@@ -1496,7 +1295,7 @@ def test_big_bounds(monkeypatch):
 
     monkeypatch.setattr("loguru.logger.warning", log_append)
     x = Variable("x", Domain.REAL, (0, LARGE_BOUND + 1))
-    x.term
+    x.expression
     assert len(out) >= 1
     assert "Encoding variable" in out[0]
 
@@ -1504,16 +1303,16 @@ def test_big_bounds(monkeypatch):
 def test_parameter_evaluate():
     p = Parameter("p", 2, domain=Domain.INTEGER, bounds=(0, 10))
     with pytest.raises(ValueError, match=r"doesn't correspond to the parameter's domain"):
-        p.evaluate(3.5)
+        p.evaluate({p: 3.5})
     with pytest.raises(ValueError, match=r"outside the bound"):
-        p.evaluate(11)
+        p.evaluate({p: 11})
 
     assert p.num_binary_equivalent() == 0
 
     with pytest.raises(NotImplementedError, match=r"with a list"):
-        p.evaluate([1, 0, 0])
+        p.evaluate({p: [1, 0, 0]})
 
-    assert p.to_binary() == Term([2], Operation.ADD)
+    assert p.to_binary() == Constant(2)
 
     with pytest.raises(ValueError, match=r"Invalid bounds provided"):
         p.update_variable(Domain.BINARY, (0, 1, 2))
@@ -1545,27 +1344,31 @@ def test_parameter_comparisons():
 
 
 def test_empty_term():
-    t = Term([], Operation.ADD)
+    t = Add.build(())
+    assert t == Constant(0)
     assert t.evaluate({}) == 0
 
 
-def test_term_evaluate_invalid_variable(monkeypatch):
+def test_term_evaluate_invalid_variable():
     x = Parameter("x", 2)
     term = 2 * x + 3
-    with pytest.raises(ValueError, match=r"value with a list is not supported"):
+    with pytest.raises(NotImplementedError, match=r"with a list is not supported"):
         term.evaluate({x: [1]})
 
-    # test that if somehow in the evaulate we get a integer, that it's returned as a float
-    monkeypatch.setattr(Term, "_apply_operation_on_constants", lambda self, val: 5)
-    assert term.evaluate({x: 2}) == 5
+    # a (near-)real evaluation result is returned as a float
+    v = Variable("v", Domain.REAL)
+    real_result = (2 * v).evaluate({v: 3})
+    assert real_result == 6
+    assert isinstance(real_result, float)
 
-    # test that if somehow in the evaulate we get a complex with no imag part, that the real part is returned
-    monkeypatch.setattr(Term, "_apply_operation_on_constants", lambda self, val: 5 + 0j)
-    assert term.evaluate({x: 2}) == 5
+    # a complex result whose imaginary part is negligible collapses to a real float
+    collapsed = (complex(2, 0) * v).evaluate({v: 3})
+    assert collapsed == 6
+    assert isinstance(collapsed, float)
 
-    # test that if somehow in the evaulate we get a complex, that the full thing is returned
-    monkeypatch.setattr(Term, "_apply_operation_on_constants", lambda self, val: 5 + 5j)
-    assert term.evaluate({x: 2}) == 5 + 5j
+    # a genuinely complex result is returned in full
+    complex_result = (2j * v).evaluate({v: 3})
+    assert complex_result == 6j
 
 
 def test_is_parameterized_term():
@@ -1576,10 +1379,10 @@ def test_is_parameterized_term():
     term2 = 2 * p + 3
     term3 = 2 * x + 3
     term4 = 2 * b + 3 * p + x
-    assert not term1.is_parameterized_term()
-    assert term2.is_parameterized_term()
-    assert not term3.is_parameterized_term()
-    assert not term4.is_parameterized_term()
+    assert not term1.is_parameterized()
+    assert term2.is_parameterized()
+    assert not term3.is_parameterized()
+    assert not term4.is_parameterized()
 
 
 def test_term_arithmetic():
@@ -1610,29 +1413,32 @@ def test_term_arithmetic():
     assert (t * np_generic) == (t * 1.0)
     assert (t.__rmul__(np_generic)) == (1.0 * t)  # ruff: ignore[unnecessary-dunder-call]
 
-    with pytest.raises(NotImplementedError, match="Only division by"):
+    with pytest.raises(TypeError):
         _ = t / not_number
     assert (t / np_generic) == (t / 1.0)
 
-    with pytest.raises(ValueError, match="Only integer exponents"):
-        _ = t**2.5
+    # non-integer exponents are now valid and produce a ``Pow`` node
+    assert isinstance(t**2.5, Pow)
 
 
 def test_strange_comparison_terms():
-    comp = ComparisonTerm(2, 3, ComparisonOperation.LEQ)
-    assert comp.to_list() == [-1]
+    # ``2 <= 3`` normalizes to ``0 <= 1`` (the constant moves to the right-hand side)
+    comp = Comparison(2, 3, ComparisonOperation.LEQ)
+    assert comp.lhs == Constant(0)
+    assert comp.rhs == Constant(1)
+    assert comp.evaluate({})
 
 
 def test_bad_comparison_operation():
     class DummyComparisonOperation(Enum):
         DUMMY = "DUMMY"
 
-    comp = ComparisonTerm(2, 3, DummyComparisonOperation.DUMMY)
+    comp = Comparison(2, 3, DummyComparisonOperation.DUMMY)
     with pytest.raises(ValueError, match="Unsupported Operation"):
         comp.evaluate({})
 
 
-def test_complex_comparison_term_evaluate(monkeypatch):
+def test_complex_comparison_term_evaluate():
     v = Variable("v", Domain.REAL)
     lhs_real = v * 2
     lhs_imag = v * 2j
@@ -1644,11 +1450,7 @@ def test_complex_comparison_term_evaluate(monkeypatch):
         EQ(lhs_imag, rhs_real).evaluate({v: 1})
     with pytest.raises(ValueError, match="evaluating inequality constraints"):
         EQ(lhs_real, rhs_imag).evaluate({v: 1})
-    monkeypatch.setattr(
-        Term,
-        "evaluate",
-        lambda self, value_dict: complex(self.get_constant(), 0),
-    )
+    # complex operands whose imaginary parts are negligible collapse to reals and compare cleanly
     assert not EQ(lhs_almost_imag, rhs_almost_imag).evaluate({v: 1})
 
 
@@ -1705,12 +1507,12 @@ def test_comparison_term_hash_consistency():
 def test_check_output():
     x = Variable("x", Domain.INTEGER, (0, 3))
     assert _check_output(x, 3) == 3
-    with pytest.raises(ValueError, match=r"outside the variable domain"):
+    with pytest.raises(ValueError, match=r"is not real"):
         _check_output(x, "test")
     assert _check_output(x, complex(3, 0)) == 3
 
     b = Variable("b", Domain.BINARY)
-    with pytest.raises(ValueError, match=r"violates the domain"):
+    with pytest.raises(ValueError, match=r"violates the Binary Domain"):
         _check_output(b, 4.4)
 
 
@@ -1731,7 +1533,7 @@ def test_assert_real():
     assert _assert_real(3) == 3
     assert np.isclose(_assert_real(3.5), 3.5)
     assert np.isclose(_assert_real(complex(3, 0)), 3.0)
-    with pytest.raises(ValueError, match=r"Only Real values"):
+    with pytest.raises(ValueError, match=r"Only real values"):
         _ = _assert_real(complex(3, 2))
 
 

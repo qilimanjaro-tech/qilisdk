@@ -21,7 +21,7 @@ import pytest
 
 import qilisdk.utils.visualization.circuit_renderers
 from qilisdk.core import Parameter
-from qilisdk.core.variables import LEQ
+from qilisdk.core.comparison import LEQ
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X
 from qilisdk.digital.circuit import _apply_gate_left
 from qilisdk.digital.exceptions import GateHasNoMatrixError, QubitOutOfRangeError

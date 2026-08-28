@@ -35,7 +35,6 @@ dependencies = [
     "matplotlib>=3.10.8",
     "py-cpuinfo>=9.0.0",
     "setuptools>=82.0.1",
-    "gputil>=1.4.0",
     "rustworkx>=0.17.1",
     "psutil>=7.2.2",
 ]
@@ -219,7 +218,6 @@ exclude = ["tests"]
 [tool.ruff]
 line-length = 120
 output-format = "concise"
-target-version = "py313"
 
 [tool.ruff.lint]
 preview = true
