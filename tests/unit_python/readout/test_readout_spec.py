@@ -80,5 +80,5 @@ class TestWithSamplingDoesNotMutateReceiver:
 
     def test_duplicate_sampling_on_the_same_specification_still_raises(self):
         spec = Readout().with_sampling(nshots=100)
-        with pytest.raises(ValueError, match="Sampling readout already set in this specification."):
+        with pytest.raises(ValueError, match=r"Sampling readout already set in this specification."):
             spec.with_sampling(nshots=200)
