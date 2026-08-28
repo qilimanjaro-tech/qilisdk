@@ -23,12 +23,13 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 dependencies = [
     "dill>=0.4.1",
-    "numpy>=2.3",
+    "numpy>=2.3.2",
     "ruamel-yaml>=0.18.16",
-    "scipy>=1.15",
+    "scipy>=1.16.1",
     "pydantic>=2.13.3",
     "pydantic-settings>=2.14.0",
     "loguru>=0.7.3",
@@ -43,10 +44,9 @@ dependencies = [
 cuda = [
     "qilisdk[cuda12]"
 ]
+# GPU support for QiliSim: CUDA math libraries (cuBLAS/cuSOLVER) loaded at runtime
+# via dlopen by the QiliSim C++ shim. cusolver pulls in cusparse + nvjitlink.
 cuda12 = [
-    "cuda-quantum-cu12==0.15.1",
-    # CUDA math libraries used by the QiliSim C++ GPU shim (cuBLAS/cuSOLVER),
-    # loaded at runtime via dlopen. cusolver pulls in cusparse + nvjitlink.
     "nvidia-cuda-runtime-cu12",
     "nvidia-cublas-cu12",
     "nvidia-cusolver-cu12",
@@ -54,9 +54,6 @@ cuda12 = [
     "nvidia-nvjitlink-cu12",
 ]
 cuda13 = [
-    "cuda-quantum-cu13==0.15.1",
-    # CUDA math libraries used by the QiliSim C++ GPU shim (cuBLAS/cuSOLVER),
-    # loaded at runtime via dlopen. cusolver pulls in cusparse + nvjitlink.
     "nvidia-cuda-runtime",
     "nvidia-cublas",
     "nvidia-cusolver",
@@ -68,26 +65,23 @@ speqtrum = [
     "keyring>=25.6.0",
     "keyrings-alt>=5.0.2",
 ]
-qutip = [
-    "qutip>=5.2.3",
-    "qutip-qip>=0.4.1",
-]
 openfermion = [
     "openfermion>=1.7.1",
 ]
 qir = [
-    "pyqir>=0.10.0",
+    # ptr_id, which the QIR importer needs, landed in 0.12.0.
+    "pyqir>=0.12.0",
 ]
 openqasm = [
     "openqasm3[parser]>=1.0.1",
 ]
 scip = [
-    "pyscipopt>=5.0.0",
+    # First release with cp314 wheels, older ones build SCIP from source there.
+    "pyscipopt>=5.7.0",
 ]
 all = [
     "qilisdk[cuda12]",
     "qilisdk[speqtrum]",
-    "qilisdk[qutip]",
     "qilisdk[openfermion]",
     "qilisdk[qir]",
     "qilisdk[openqasm]",
@@ -96,7 +90,6 @@ all = [
 all-cu12 = [
     "qilisdk[cuda12]",
     "qilisdk[speqtrum]",
-    "qilisdk[qutip]",
     "qilisdk[openfermion]",
     "qilisdk[qir]",
     "qilisdk[openqasm]",
@@ -105,7 +98,6 @@ all-cu12 = [
 all-cu13 = [
     "qilisdk[cuda13]",
     "qilisdk[speqtrum]",
-    "qilisdk[qutip]",
     "qilisdk[openfermion]",
     "qilisdk[qir]",
     "qilisdk[openqasm]",
@@ -113,6 +105,14 @@ all-cu13 = [
 ]
 
 [dependency-groups]
+# Optional backends we test against but do not distribute: CUDA-Q powers CudaBackend
+# and qutip powers QutipBackend, both installed by the user.
+backends = [
+    # CUDA-Q has no wheels for 3.14 yet, so CudaBackend is untested there.
+    "cuda-quantum-cu13>=0.14.0; python_version < '3.14'",
+    "qutip>=5.2.2",
+    "qutip-qip>=0.4.0",
+]
 dev = [
     "hypothesis>=6.152.4",
     "ipykernel>=7.2.0",
@@ -311,14 +311,6 @@ convention = "google"
 [tool.ruff.format]
 docstring-code-format = true
 docstring-code-line-length = "dynamic"
-
-[tool.pytest.ini_options]
-markers = [
-    "core: tests that only exercise the core library",
-    "cuda: tests that require the cuda extra",
-    "qutip: tests that require the qutip extra",
-    "speqtrum: tests that require the speqtrum extra"
-]
 
 [tool.towncrier]
 package = "qilisdk"

@@ -83,11 +83,11 @@ def test_optional_stub_any_generates_programmatic_hint() -> None:
             DependencyGroup(dists=["definitely-not-installed-cu12"], extra="cuda12"),
             DependencyGroup(dists=["definitely-not-installed-cu13"], extra="cuda13"),
         ],
-        symbols=[Symbol(path="unused", name="CudaBackend")],
+        symbols=[Symbol(path="unused", name="CudaqBackend")],
     )
 
     imported = import_optional_dependencies(feature)
-    symbol = imported.symbols["CudaBackend"]
+    symbol = imported.symbols["CudaqBackend"]
 
     with pytest.raises(OptionalDependencyError) as excinfo:
         symbol()
@@ -96,6 +96,18 @@ def test_optional_stub_any_generates_programmatic_hint() -> None:
     assert "pip install qilisdk[cuda12]" in msg
     assert "pip install qilisdk[cuda13]" in msg
     assert " or " in msg
+
+
+def test_backend_features_point_at_upstream_distributions() -> None:
+    from qilisdk._optionals import _default_install_hint  # ruff: ignore[import-outside-top-level]
+    from qilisdk.backends import OPTIONAL_FEATURES  # ruff: ignore[import-outside-top-level]
+
+    hints = {feature.name: _default_install_hint(feature) for feature in OPTIONAL_FEATURES}
+
+    assert "cuda-quantum-cu12" in hints["cudaq"]
+    assert "cuda-quantum-cu13" in hints["cudaq"]
+    assert "qutip qutip-qip" in hints["qutip"]
+    assert not any("qilisdk[" in hint for hint in hints.values())
 
 
 def test_version_not_found(monkeypatch):

@@ -21,7 +21,7 @@ pytest.importorskip("cudaq", reason="CUDA noise tests require the 'cudaq' option
 
 from qilisdk.analog import PauliX as pauli_x
 from qilisdk.analog import Schedule
-from qilisdk.backends.cuda_backend import _SWAP_OP_NAME, CudaBackend, _to_cuda_noise, cudaq
+from qilisdk.backends.cudaq_backend import _SWAP_OP_NAME, CudaqBackend, _to_cuda_noise, cudaq
 from qilisdk.core import Parameter
 from qilisdk.core.qtensor import QTensor
 from qilisdk.digital import CNOT, CZ, RX, SWAP, U1, Circuit, X
@@ -60,7 +60,7 @@ def test_handle_readout_errors():
     noise_model = NoiseModel()
     noise_model.add(ReadoutAssignment(p01=0.0, p10=1.0))
     noise_model.add(ReadoutAssignment(p01=1.0, p10=0.0), qubits=[1])
-    adjusted_results = CudaBackend._handle_readout_errors(cudaq_results, noise_model, nqubits=2)
+    adjusted_results = CudaqBackend._handle_readout_errors(cudaq_results, noise_model, nqubits=2)
     assert adjusted_results != cudaq_results
     total_counts = sum(adjusted_results.values())
     assert total_counts == 100
@@ -71,12 +71,12 @@ def test_handle_readout_errors():
 def test_no_readout_errors():
     cudaq_results = {"01": 100}
     noise_model = NoiseModel()
-    adjusted_results = CudaBackend._handle_readout_errors(cudaq_results, noise_model, nqubits=2)
+    adjusted_results = CudaqBackend._handle_readout_errors(cudaq_results, noise_model, nqubits=2)
     assert adjusted_results == cudaq_results
 
 
 def test_noise_model_to_cudaq():
-    backend = CudaBackend()
+    backend = CudaqBackend()
     noise_model = NoiseModel()
     single_qubit_kraus = KrausChannel(
         operators=[
@@ -99,7 +99,7 @@ def test_noise_model_to_cudaq():
 
 
 def test_noise_model_to_cudaq_on_multi_qubit_gates():
-    backend = CudaBackend()
+    backend = CudaqBackend()
     noise_model = NoiseModel()
     noise_model.add(ReadoutAssignment(p01=0.1, p10=0.1))
     noise_model.add(AmplitudeDamping(t1=1.0))
@@ -118,7 +118,7 @@ def test_noise_model_to_cudaq_on_multi_qubit_gates():
 
 
 def test_noise_model_to_cudaq_on_qubit_of_multi_qubit_gates():
-    backend = CudaBackend()
+    backend = CudaqBackend()
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=1.0), qubits=[0])
     noise_model.add(PhaseFlip(probability=1.0), gate=CZ)
@@ -154,7 +154,7 @@ def test_noise_model_to_cudaq_on_qubit_of_multi_qubit_gates():
 
 
 def test_noise_model_to_cudaq_on_gate_without_cuda_operation(caplog):  # ruff: ignore[redefined-while-unused]
-    backend = CudaBackend()
+    backend = CudaqBackend()
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=1.0), gate=U1)
     backend._noise_model_to_cudaq(noise_model, circuit=Circuit(1))
@@ -164,7 +164,7 @@ def test_noise_model_to_cudaq_on_gate_without_cuda_operation(caplog):  # ruff: i
 
 
 def test_noise_model_to_cudaq_warns_when_a_channel_cannot_be_embedded(caplog):  # ruff: ignore[redefined-while-unused]
-    backend = CudaBackend()
+    backend = CudaqBackend()
     noise_model = NoiseModel()
     noise_model.add(KrausChannel(operators=[QTensor(np.eye(8))]), gate=CNOT)
     circuit = Circuit(3)
@@ -178,7 +178,7 @@ def test_noise_model_to_cudaq_warns_when_a_channel_cannot_be_embedded(caplog):  
 
 
 def test_noise_model_to_cudaq_warns_when_a_channel_has_no_kraus_operators(caplog):  # ruff: ignore[redefined-while-unused]
-    backend = CudaBackend()
+    backend = CudaqBackend()
     noise_model = NoiseModel()
     noise_model.add(ReadoutAssignment(p01=0.1, p10=0.1))
     circuit = Circuit(2)
@@ -200,7 +200,7 @@ def test_bad_kraus():
 
 
 def test_parameter_perturbations():
-    backend = CudaBackend()
+    backend = CudaqBackend()
     noise_model = NoiseModel()
 
     circuit = Circuit(1)
@@ -223,7 +223,7 @@ def test_parameter_perturbations():
 
 
 def test_parameter_perturbations_errors():
-    backend = CudaBackend()
+    backend = CudaqBackend()
     noise_model = NoiseModel()
 
     circuit = Circuit(1)
@@ -249,7 +249,7 @@ def test_parameter_perturbations_errors():
 
 
 def test_schedule_parameter_perturbations():
-    backend = CudaBackend()
+    backend = CudaqBackend()
     dt = 1
     param1 = Parameter("test1", 0.5)
     schedule = Schedule(
@@ -265,7 +265,7 @@ def test_schedule_parameter_perturbations():
 
 
 def test_noise_model_to_cudaq_dynamics():
-    backend = CudaBackend()
+    backend = CudaqBackend()
     noise_model = NoiseModel()
     ham_noise = 0.1 * pauli_x(0)
     time_derived_lindblad = PauliChannel(pX=0.2, pY=0.0, pZ=0.0)
@@ -291,7 +291,7 @@ def test_noise_model_to_cudaq_dynamics():
 
 
 def test_global_single_qubit_lindblad_uses_single_degree_operator(monkeypatch):
-    backend = CudaBackend()
+    backend = CudaqBackend()
     noise_model = NoiseModel()
     noise_model.add(Dephasing(t_phi=1.0))
 
@@ -307,8 +307,8 @@ def test_global_single_qubit_lindblad_uses_single_degree_operator(monkeypatch):
         instantiate_calls.append((id, degree_list))
         return object()
 
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.operators.define", fake_define)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.operators.instantiate", fake_instantiate)
+    monkeypatch.setattr("qilisdk.backends.cudaq_backend.operators.define", fake_define)
+    monkeypatch.setattr("qilisdk.backends.cudaq_backend.operators.instantiate", fake_instantiate)
 
     jump_operators, hamiltonian_deltas = backend._noise_model_to_cudaq_dynamics(noise_model, nqubits=2, dt=1.0)
 

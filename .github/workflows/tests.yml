@@ -34,7 +34,7 @@ jobs:
       matrix:
         # Nothing in src/ branches on the Python version, so a PR runs the oldest
         # and the newest version we support and main fills in the middle.
-        python-version: ${{ github.event_name == 'push' && fromJSON('["3.11", "3.12", "3.13"]') || fromJSON('["3.11", "3.13"]') }}
+        python-version: ${{ github.event_name == 'push' && fromJSON('["3.11", "3.12", "3.13", "3.14"]') || fromJSON('["3.11", "3.14"]') }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -53,7 +53,7 @@ jobs:
       - name: Install qilisdk with coverage
         if: matrix.python-version == env.COVERAGE_PYTHON
         run: |
-          uv sync --frozen --group dev --extra all-cu13 --reinstall-package qilisdk \
+          uv sync --frozen --group dev --group backends --extra all-cu13 --reinstall-package qilisdk \
             -Ccmake.build-type=Debug \
             -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0 \
             -Ccmake.define.tests=ON \
@@ -64,7 +64,7 @@ jobs:
       - name: Install qilisdk
         if: matrix.python-version != env.COVERAGE_PYTHON
         run: |
-          uv sync --frozen --group dev --extra all-cu13 --reinstall-package qilisdk \
+          uv sync --frozen --group dev --group backends --extra all-cu13 --reinstall-package qilisdk \
             -Ccmake.build-type=Release
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
@@ -101,9 +101,50 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  lowest:
+    name: Testing the lowest dependency versions for Python ${{ matrix.python-version }}
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ${{ github.event_name == 'push' && fromJSON('["3.11", "3.12", "3.13", "3.14"]') || fromJSON('["3.11", "3.14"]') }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            **/pyproject.toml
+            **/uv.lock
+          python-version: ${{ matrix.python-version }}
+
+      # The lockfile holds the newest resolution, so this job resolves from scratch
+      # and proves the lower bounds we advertise are real, the optional backend
+      # frameworks included.
+      - name: Install qilisdk
+        run: |
+          uv sync --resolution lowest-direct --group dev --group backends --extra all-cu13 --reinstall-package qilisdk \
+            -Ccmake.build-type=Release
+          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Run Python tests
+        run: pytest -n auto tests/unit_python/
+
   all-tests:
     name: Tests
-    needs: [tests]
+    needs: [tests, lowest]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

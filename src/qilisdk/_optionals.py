@@ -41,7 +41,7 @@ class DependencyGroup:
     """One alternative group of distributions that satisfies a feature."""
 
     dists: list[str]
-    extra: str  # the extra the user should install if this group is missing
+    extra: str = ""  # the extra the user should install if this group is missing, if any
 
 
 @dataclass(frozen=True)
@@ -121,10 +121,11 @@ class _OptionalDependencyStub:
             symbol_name=f"{self._symbol_name}.{name}",
             feature_name=self._feature_name,
             import_error=self._import_error,
+            install_hint=self._install_hint,
         )
 
     def __repr__(self) -> str:
-        return f"<missing optional dependency: {self._symbol_name} (extra '{self._feature_name}')>"
+        return f"<missing optional dependency: {self._symbol_name} (feature {self._feature_name!r})>"
 
 
 def _group_installed(dists: list[str]) -> tuple[bool, list[str]]:
@@ -153,9 +154,9 @@ def _default_install_hint(feature: OptionalFeature) -> str:
             return options
         return f"`pip install qilisdk[{feature.name}]`"
 
-    # ALL: single extra name is typically the feature name
-    # If you use group.extra for ALL too, you can prefer it here.
-    return f"`pip install qilisdk[{feature.name}]`"
+    # ALL: the group names the extra to install, and falls back to the feature name.
+    extra = next((g.extra for g in feature.dependency_groups if g.extra), feature.name)
+    return f"`pip install qilisdk[{extra}]`"
 
 
 def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:

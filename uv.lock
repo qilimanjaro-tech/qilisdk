@@ -3,28 +3,28 @@ revision = 3
 requires-python = ">=3.11"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'darwin'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'darwin'",
-    "python_full_version < '3.12' and sys_platform == 'darwin'",
     "python_full_version >= '3.14' and platform_machine != 'aarch64' and sys_platform == 'win32'",
     "python_full_version >= '3.14' and platform_machine != 'aarch64' and sys_platform == 'emscripten'",
     "python_full_version >= '3.14' and platform_machine != 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform == 'win32'",
-    "python_full_version < '3.12' and platform_machine != 'aarch64' and sys_platform == 'win32'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform == 'emscripten'",
-    "python_full_version < '3.12' and platform_machine != 'aarch64' and sys_platform == 'emscripten'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version < '3.12' and platform_machine != 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version >= '3.14' and platform_machine == 'aarch64' and sys_platform == 'win32'",
     "python_full_version >= '3.14' and platform_machine == 'aarch64' and sys_platform == 'emscripten'",
     "python_full_version >= '3.14' and platform_machine == 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform == 'win32'",
-    "python_full_version < '3.12' and platform_machine == 'aarch64' and sys_platform == 'win32'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform == 'emscripten'",
-    "python_full_version < '3.12' and platform_machine == 'aarch64' and sys_platform == 'emscripten'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32'",
-    "python_full_version < '3.12' and platform_machine == 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32'",
     "python_full_version >= '3.14' and platform_machine == 'aarch64' and sys_platform == 'linux'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'darwin'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform == 'linux'",
+    "python_full_version < '3.12' and sys_platform == 'darwin'",
+    "python_full_version < '3.12' and platform_machine != 'aarch64' and sys_platform == 'win32'",
+    "python_full_version < '3.12' and platform_machine != 'aarch64' and sys_platform == 'emscripten'",
+    "python_full_version < '3.12' and platform_machine != 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.12' and platform_machine == 'aarch64' and sys_platform == 'win32'",
+    "python_full_version < '3.12' and platform_machine == 'aarch64' and sys_platform == 'emscripten'",
+    "python_full_version < '3.12' and platform_machine == 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32'",
     "python_full_version < '3.12' and platform_machine == 'aarch64' and sys_platform == 'linux'",
 ]
 required-markers = [
@@ -699,57 +699,26 @@ wheels = [
 ]
 
 [[package]]
-name = "cuda-quantum-cu12"
-version = "0.15.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "astpretty", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "cudensitymat-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "cupy-cuda12x", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "custatevec-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "cutensornet-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and extra == 'extra-7-qilisdk-all') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-all-cu12') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and extra == 'extra-7-qilisdk-all') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-all-cu12') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-cuda') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "nvidia-cuda-nvrtc-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "nvidia-cuda-runtime-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "nvidia-curand-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "nvidia-cusolver-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "nvidia-cusparse-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "requests", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and extra == 'extra-7-qilisdk-all') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-all-cu12') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and extra == 'extra-7-qilisdk-all') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-all-cu12') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-cuda') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/8e/c7/bbb3307e7502b4640f68d7b3fd732ad8ef58fad0110d2692983519682819/cuda_quantum_cu12-0.15.1-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:77bb78af44566058cff29904c91b5e9bb7ee5e36d4f8aa7301e9b74f07a8f08f", size = 113268313, upload-time = "2026-08-03T17:14:34.539Z" },
-    { url = "https://files.pythonhosted.org/packages/3d/53/4c2fc7996a1a4a0c8db5df30df7758e2bd0dbfbe50db637c40c7158e61db/cuda_quantum_cu12-0.15.1-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:7d084d650b16af9c639d56a515b96a7316abcf621ddf3e1fdb4dde10554e30d7", size = 125873284, upload-time = "2026-08-03T17:14:39.956Z" },
-    { url = "https://files.pythonhosted.org/packages/44/42/3a4d75bda038439beb8a4091206b9c5774492dcaa15e1bf3bd339bc4291d/cuda_quantum_cu12-0.15.1-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:0bfe3f3571b2451c1ca0cf41adfdb6c0861cd5d74b6eff414982a0f48f55b1de", size = 113271780, upload-time = "2026-08-03T17:14:45.751Z" },
-    { url = "https://files.pythonhosted.org/packages/d1/a1/c646cc9d1006c24ee53a37dc3df342b603fc6b6bf323ae1be46e92f45dd5/cuda_quantum_cu12-0.15.1-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:2ddade14524e67b8a83dfbaf0da0e27f4e8b979d96bfa41ca3e73b7e79177219", size = 125876949, upload-time = "2026-08-03T17:14:50.708Z" },
-    { url = "https://files.pythonhosted.org/packages/fa/f9/d5d572c4618b6f85fe5781b2ee3e361e619932ace503ae02bbe517acb3aa/cuda_quantum_cu12-0.15.1-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:de178c4e44990c94f9dcdb06bb35460f0c6103928b8db3a901e04e9057623274", size = 113276156, upload-time = "2026-08-03T17:14:55.498Z" },
-    { url = "https://files.pythonhosted.org/packages/11/f6/88bac5dc23bdd681a121e8009ed8fc23b36c29d7d52385f65980f3bdc9e5/cuda_quantum_cu12-0.15.1-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:002939d9dce108cee6b4260b7c6ad91df0d303857f01aa336fc6487f9edcb144", size = 125880589, upload-time = "2026-08-03T17:15:00.761Z" },
-]
-
-[[package]]
 name = "cuda-quantum-cu13"
 version = "0.15.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "astpretty", marker = "extra == 'extra-7-qilisdk-all-cu13' or extra == 'extra-7-qilisdk-cuda13'" },
-    { name = "cudensitymat-cu13", marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "cupy-cuda13x", marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "custatevec-cu13", marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "cutensornet-cu13", marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cublas", marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cuda-nvrtc", marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cuda-runtime", marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-curand", marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cusolver", marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cusparse", marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "requests", marker = "extra == 'extra-7-qilisdk-all-cu13' or extra == 'extra-7-qilisdk-cuda13'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "astpretty", marker = "python_full_version < '3.14' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "cudensitymat-cu13", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "cupy-cuda13x", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "custatevec-cu13", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "cutensornet-cu13", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and python_full_version < '3.14') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-cublas", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-cuda-nvrtc", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-cuda-runtime", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-curand", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-cusolver", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-cusparse", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "requests", marker = "python_full_version < '3.14' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and python_full_version < '3.14') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2c/49/c89be5aabc14d85225b1213440bd0ad7ef88ddd4577fca87af6bbf216fee/cuda_quantum_cu13-0.15.1-cp311-cp311-macosx_13_0_arm64.whl", hash = "sha256:74b56e2840817ef6a233a14cd1248682130bfc0ffbed7bdcb1937c0704d2d035", size = 86576042, upload-time = "2026-08-03T17:15:05.4Z" },
@@ -764,25 +733,12 @@ wheels = [
 ]
 
 [[package]]
-name = "cudensitymat-cu12"
-version = "0.5.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "cutensor-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "cutensornet-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/18/17/2af6a937b4cec0d4d0f52b0118841a81d9b3a43c945a34cb711fafecaca9/cudensitymat_cu12-0.5.2-py3-none-manylinux2014_aarch64.whl", hash = "sha256:378a90436c3ee13bd55b45d9ced390dd68008e4e722e4c6713432a9b7ef8be88", size = 18701564, upload-time = "2026-04-30T23:56:01.181Z" },
-    { url = "https://files.pythonhosted.org/packages/66/b8/44231de69d6b740acaa1efb4107fc39d41ab081592d50e393c0ea69575d1/cudensitymat_cu12-0.5.2-py3-none-manylinux2014_x86_64.whl", hash = "sha256:c3f7c685da3b77a0df3e94161c1e59904f42eca85d2af77e56d99ac8931236b6", size = 18720020, upload-time = "2026-04-30T23:51:51.541Z" },
-]
-
-[[package]]
 name = "cudensitymat-cu13"
 version = "0.5.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cutensor-cu13", marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "cutensornet-cu13", marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "cutensor-cu13", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "cutensornet-cu13", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/80/35/d315cddc6b5acf7f275b2d306b4f9cd197dc35deaed4719d9fc86850ec9f/cudensitymat_cu13-0.5.2-py3-none-manylinux2014_aarch64.whl", hash = "sha256:ec3c22e98e472622eac7d3701572c38a859e992f5719ef38d818e0c9da788477", size = 15808498, upload-time = "2026-04-30T23:57:57.021Z" },
@@ -790,34 +746,13 @@ wheels = [
 ]
 
 [[package]]
-name = "cupy-cuda12x"
-version = "13.6.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "fastrlock", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and extra == 'extra-7-qilisdk-all') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-all-cu12') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and extra == 'extra-7-qilisdk-all') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-all-cu12') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-cuda') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/54/64/71c6e08f76c06639e5112f69ee3bc1129be00054ad5f906d7fd3138af579/cupy_cuda12x-13.6.0-cp311-cp311-manylinux2014_aarch64.whl", hash = "sha256:c790d012fd4d86872b9c89af9f5f15d91c30b8e3a4aa4dd04c2610f45f06ac44", size = 128016458, upload-time = "2025-08-18T08:24:26.394Z" },
-    { url = "https://files.pythonhosted.org/packages/fc/d9/5c5077243cd92368c3eccecdbf91d76db15db338169042ffd1647533c6b1/cupy_cuda12x-13.6.0-cp311-cp311-manylinux2014_x86_64.whl", hash = "sha256:77ba6745a130d880c962e687e4e146ebbb9014f290b0a80dbc4e4634eb5c3b48", size = 113039337, upload-time = "2025-08-18T08:24:31.814Z" },
-    { url = "https://files.pythonhosted.org/packages/88/f5/02bea5cdf108e2a66f98e7d107b4c9a6709e5dbfedf663340e5c11719d83/cupy_cuda12x-13.6.0-cp311-cp311-win_amd64.whl", hash = "sha256:a20b7acdc583643a623c8d8e3efbe0db616fbcf5916e9c99eedf73859b6133af", size = 89885526, upload-time = "2025-08-18T08:24:37.258Z" },
-    { url = "https://files.pythonhosted.org/packages/12/c5/7e7fc4816d0de0154e5d9053242c3a08a0ca8b43ee656a6f7b3b95055a7b/cupy_cuda12x-13.6.0-cp312-cp312-manylinux2014_aarch64.whl", hash = "sha256:a6970ceefe40f9acbede41d7fe17416bd277b1bd2093adcde457b23b578c5a59", size = 127334633, upload-time = "2025-08-18T08:24:43.065Z" },
-    { url = "https://files.pythonhosted.org/packages/e0/95/d7e1295141e7d530674a3cc567e13ed0eb6b81524cb122d797ed996b5bea/cupy_cuda12x-13.6.0-cp312-cp312-manylinux2014_x86_64.whl", hash = "sha256:79b0cacb5e8b190ef409f9e03f06ac8de1b021b0c0dda47674d446f5557e0eb1", size = 112886268, upload-time = "2025-08-18T08:24:49.294Z" },
-    { url = "https://files.pythonhosted.org/packages/ae/8c/14555b63fd78cfac7b88af0094cea0a3cb845d243661ec7da69f7b3ea0de/cupy_cuda12x-13.6.0-cp312-cp312-win_amd64.whl", hash = "sha256:ca06fede7b8b83ca9ad80062544ef2e5bb8d4762d1c4fc3ac8349376de9c8a5e", size = 89785108, upload-time = "2025-08-18T08:24:54.527Z" },
-    { url = "https://files.pythonhosted.org/packages/19/ec/f62cb991f11fb41291c4c15b6936d7b67ffa71ddb344ad6e8894e06ce58d/cupy_cuda12x-13.6.0-cp313-cp313-manylinux2014_aarch64.whl", hash = "sha256:e5426ae3b1b9cf59927481e457a89e3f0b50a35b114a8034ec9110e7a833434c", size = 126904601, upload-time = "2025-08-18T08:24:59.951Z" },
-    { url = "https://files.pythonhosted.org/packages/f8/b8/30127bcdac53a25f94ee201bf4802fcd8d012145567d77c54174d6d01c01/cupy_cuda12x-13.6.0-cp313-cp313-manylinux2014_x86_64.whl", hash = "sha256:52d9e7f83d920da7d81ec2e791c2c2c747fdaa1d7b811971b34865ce6371e98a", size = 112654824, upload-time = "2025-08-18T08:25:05.944Z" },
-    { url = "https://files.pythonhosted.org/packages/72/36/c9e24acb19f039f814faea880b3704a3661edaa6739456b73b27540663e3/cupy_cuda12x-13.6.0-cp313-cp313-win_amd64.whl", hash = "sha256:297b4268f839de67ef7865c2202d3f5a0fb8d20bd43360bc51b6e60cb4406447", size = 89750580, upload-time = "2025-08-18T08:25:10.972Z" },
-]
-
-[[package]]
 name = "cupy-cuda13x"
 version = "13.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "fastrlock", marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version < '3.12' and sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
-    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.12' and sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "fastrlock", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and sys_platform != 'darwin') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version < '3.12' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2e/b4/5c0895ebcb2ea73fd3e783c5ed605fb930b08edc91f823b3f05400995579/cupy_cuda13x-13.6.0-cp311-cp311-manylinux2014_aarch64.whl", hash = "sha256:81948cb0d21da5f0a56aef75bb6b0801486f5898276de2e53d171949422b7c4e", size = 67022616, upload-time = "2025-08-18T08:32:20.301Z" },
@@ -832,31 +767,12 @@ wheels = [
 ]
 
 [[package]]
-name = "custatevec-cu12"
-version = "1.13.1"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/dd/1c/3ca3983b416e9f0f9a4da902d4eb69879969a08bc2db05b4e7854fdd6a61/custatevec_cu12-1.13.1-py3-none-manylinux2014_aarch64.whl", hash = "sha256:ee55f85e81cac11c09fbde3b63e64c309279537efbe9fb91b57d5e35cd3b8073", size = 73147948, upload-time = "2026-04-13T18:21:05.772Z" },
-    { url = "https://files.pythonhosted.org/packages/65/c0/4b092e048b44c6658521bbaaca4a08daf964e3a1de1d8fe024c008fa9343/custatevec_cu12-1.13.1-py3-none-manylinux2014_x86_64.whl", hash = "sha256:359626fd842e53fa0d84912bd7c6e2a891ac8b6ea3e490479fba73805425a410", size = 73152910, upload-time = "2026-04-13T18:10:34.608Z" },
-]
-
-[[package]]
 name = "custatevec-cu13"
 version = "1.13.1"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4c/df/a726ce52085d7d0ff96c89e6c2a4347b59a523994390d8d396c20968525f/custatevec_cu13-1.13.1-py3-none-manylinux2014_aarch64.whl", hash = "sha256:00965de9edfe2c862768e58f9b3ae3593e378c51691993be4800575866bbe34f", size = 58624353, upload-time = "2026-04-13T18:22:58.568Z" },
     { url = "https://files.pythonhosted.org/packages/93/d0/cfe2e3403ebaecf01201d50f7efe2d22dbdc6687120dd88c0e16f79e0332/custatevec_cu13-1.13.1-py3-none-manylinux2014_x86_64.whl", hash = "sha256:c3ab6cbd6f028f96570c753acf0766a74728c9ba2341bd9a2067b8b82bb84845", size = 58750550, upload-time = "2026-04-13T18:11:28.145Z" },
-]
-
-[[package]]
-name = "cutensor-cu12"
-version = "2.7.0"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/87/4f/7744b62f5d0c3ec0e4f1442ecd119343462d6f3a0d025508ace4f319d32a/cutensor_cu12-2.7.0-py3-none-manylinux2014_aarch64.whl", hash = "sha256:4518081e13a22c6fe1d7941ee7b0358f4ad71a1484e2a92563f0d1336476f939", size = 332968151, upload-time = "2026-06-15T21:45:41.944Z" },
-    { url = "https://files.pythonhosted.org/packages/30/0b/c9a0d71cc847c7b90d21ae1062737dbc16104fc2c2219b51ec64752017c4/cutensor_cu12-2.7.0-py3-none-manylinux2014_x86_64.whl", hash = "sha256:ddedf0d94555c457c6c282dd7369c10fd10db22029f3731f1ed9420600188e6d", size = 332959918, upload-time = "2026-06-15T21:47:51.934Z" },
-    { url = "https://files.pythonhosted.org/packages/30/bc/18bd0789acfb9d746b4542c9a794efe5debb21bf7114fb39f16662805c46/cutensor_cu12-2.7.0-py3-none-win_amd64.whl", hash = "sha256:6b5df750a43218a395b0ddc2607623c07f610a10ff2e5a071273d93e568010f0", size = 316268223, upload-time = "2026-06-15T21:49:59.18Z" },
 ]
 
 [[package]]
@@ -870,23 +786,11 @@ wheels = [
 ]
 
 [[package]]
-name = "cutensornet-cu12"
-version = "2.12.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "cutensor-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/21/97630117bc5fd72196915f133bd5de3322cccd893d1ee0a468fe8ae105fd/cutensornet_cu12-2.12.2-py3-none-manylinux2014_aarch64.whl", hash = "sha256:e17cb372d7aa21e8998d6623cfa7d2f94dfd5f127eb520e50ebe91768e0e6005", size = 3099322, upload-time = "2026-04-30T23:31:29.515Z" },
-    { url = "https://files.pythonhosted.org/packages/0f/4b/b47dfe6eda899aa252e197bfe9eb2eb25e6a8fa563588591c715faee88e9/cutensornet_cu12-2.12.2-py3-none-manylinux2014_x86_64.whl", hash = "sha256:1f3fe15974c26da60e5310e786badce3cf2cd3331dbaaf032ab5bc4a5ba61323", size = 3174943, upload-time = "2026-04-30T23:30:31.524Z" },
-]
-
-[[package]]
 name = "cutensornet-cu13"
 version = "2.12.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cutensor-cu13", marker = "(sys_platform != 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform != 'darwin' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "cutensor-cu13", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/a9/59db9aa28e7b54ff7b7f134dd5708c8b5a4ed3b7f5ecb54247092b30019b/cutensornet_cu13-2.12.2-py3-none-manylinux2014_aarch64.whl", hash = "sha256:f0e956fcbbb96eba95df426a6747c2078ee5538cdc18501e77efc2e031b5e0be", size = 2911602, upload-time = "2026-04-30T23:32:22.669Z" },
@@ -2152,20 +2056,20 @@ version = "2.5.2"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'darwin'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'darwin'",
     "python_full_version >= '3.14' and platform_machine != 'aarch64' and sys_platform == 'win32'",
     "python_full_version >= '3.14' and platform_machine != 'aarch64' and sys_platform == 'emscripten'",
     "python_full_version >= '3.14' and platform_machine != 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform == 'win32'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform == 'emscripten'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version >= '3.14' and platform_machine == 'aarch64' and sys_platform == 'win32'",
     "python_full_version >= '3.14' and platform_machine == 'aarch64' and sys_platform == 'emscripten'",
     "python_full_version >= '3.14' and platform_machine == 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32'",
+    "python_full_version >= '3.14' and platform_machine == 'aarch64' and sys_platform == 'linux'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'darwin'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform == 'win32'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform == 'emscripten'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32'",
-    "python_full_version >= '3.14' and platform_machine == 'aarch64' and sys_platform == 'linux'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform == 'linux'",
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/9a/80/db0b4559e57ec36362bedbb05530a87fafbcb6067708c946967a41d449e7/numpy-2.5.2.tar.gz", hash = "sha256:d482d171c406ae88c5b19cad3b6a1c4c5209f886ab74bc44c2c865c23f52d860", size = 20773161, upload-time = "2026-08-09T13:48:27.962Z" }
@@ -2242,7 +2146,7 @@ name = "nvidia-cublas"
 version = "13.6.1.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cuda-nvrtc", marker = "extra == 'extra-7-qilisdk-all-cu13' or extra == 'extra-7-qilisdk-cuda13'" },
+    { name = "nvidia-cuda-nvrtc", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda13')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/42/51/a174a0e79793e528ef4645a9d554e3aa48fd8da3f9c9cf523c0176bb121b/nvidia_cublas-13.6.1.10-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:e05a431062a17cb9b02e2f37e67817b637051ce8fad57b388482c594396ddbb4", size = 518610411, upload-time = "2026-07-30T18:18:32.969Z" },
@@ -2254,7 +2158,7 @@ name = "nvidia-cublas-cu12"
 version = "12.9.2.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cuda-nvrtc-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-cuda-nvrtc-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f7/a2/c96163a0fff1839c0c9548bbdeae7b853b867009e33b9b9264adc238b1cf/nvidia_cublas_cu12-12.9.2.10-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:5572131a59c3eebeeb1c4c8144f772d49372c20124916e072a0e3fc30df421d5", size = 575012079, upload-time = "2026-04-08T18:51:47.303Z" },
@@ -2313,23 +2217,13 @@ wheels = [
 ]
 
 [[package]]
-name = "nvidia-curand-cu12"
-version = "10.3.10.19"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/14/1c/2a45afc614d99558d4a773fa740d8bb5471c8398eeed925fc0fcba020173/nvidia_curand_cu12-10.3.10.19-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:de663377feb1697e1d30ed587b07d5721fdd6d2015c738d7528a6002a6134d37", size = 68292066, upload-time = "2025-05-01T19:39:13.595Z" },
-    { url = "https://files.pythonhosted.org/packages/31/44/193a0e171750ca9f8320626e8a1f2381e4077a65e69e2fb9708bd479e34a/nvidia_curand_cu12-10.3.10.19-py3-none-manylinux_2_27_x86_64.whl", hash = "sha256:49b274db4780d421bd2ccd362e1415c13887c53c214f0d4b761752b8f9f6aa1e", size = 68295626, upload-time = "2025-05-01T19:39:38.885Z" },
-    { url = "https://files.pythonhosted.org/packages/e5/98/1bd66fd09cbe1a5920cb36ba87029d511db7cca93979e635fd431ad3b6c0/nvidia_curand_cu12-10.3.10.19-py3-none-win_amd64.whl", hash = "sha256:e8129e6ac40dc123bd948e33d3e11b4aa617d87a583fa2f21b3210e90c743cde", size = 68774847, upload-time = "2025-05-01T19:48:52.93Z" },
-]
-
-[[package]]
 name = "nvidia-cusolver"
 version = "12.2.6.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas", marker = "extra == 'extra-7-qilisdk-all-cu13' or extra == 'extra-7-qilisdk-cuda13'" },
-    { name = "nvidia-cusparse", marker = "extra == 'extra-7-qilisdk-all-cu13' or extra == 'extra-7-qilisdk-cuda13'" },
-    { name = "nvidia-nvjitlink", marker = "extra == 'extra-7-qilisdk-all-cu13' or extra == 'extra-7-qilisdk-cuda13'" },
+    { name = "nvidia-cublas", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-cusparse", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-nvjitlink", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda13')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/13/bd/61dcd7917f64c9e81a35f939f1bf4ab6535adf712192e915fb472e5bbf6c/nvidia_cusolver-12.2.6.9-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:658ce9e6ed8a321033419fe6e55faf0f245a15aa23669eda03d7f2dcce436d73", size = 267275679, upload-time = "2026-06-29T16:59:54.924Z" },
@@ -2342,9 +2236,9 @@ name = "nvidia-cusolver-cu12"
 version = "11.7.5.82"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "nvidia-cusparse-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
-    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-cusparse-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/03/99/686ff9bf3a82a531c62b1a5c614476e8dfa24a9d89067aeedf3592ee4538/nvidia_cusolver_cu12-11.7.5.82-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:62efa83e4ace59a4c734d052bb72158e888aa7b770e1a5f601682f16fe5b4fd2", size = 337869834, upload-time = "2025-06-05T20:06:53.125Z" },
@@ -2357,7 +2251,7 @@ name = "nvidia-cusparse"
 version = "12.8.2.51"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink", marker = "extra == 'extra-7-qilisdk-all-cu13' or extra == 'extra-7-qilisdk-cuda13'" },
+    { name = "nvidia-nvjitlink", marker = "(python_full_version < '3.14' and sys_platform != 'darwin') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-all-cu13') or (python_full_version >= '3.14' and extra == 'extra-7-qilisdk-cuda13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-all-cu13') or (sys_platform == 'darwin' and extra == 'extra-7-qilisdk-cuda13')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ac/bc/925058f9343d93426864cbb113a3f5cf6db97a7d11642aaf4159b6f0c57a/nvidia_cusparse-12.8.2.51-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:00469fcf62c4d464a1225abd9b20864ecff35e3fbc9fb992572e83d358927755", size = 172868683, upload-time = "2026-06-29T17:01:23.244Z" },
@@ -2370,7 +2264,7 @@ name = "nvidia-cusparse-cu12"
 version = "12.5.10.65"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5e/6f/8710fbd17cdd1d0fc3fea7d36d5b65ce1933611c31e1861da330206b253a/nvidia_cusparse_cu12-12.5.10.65-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:221c73e7482dd93eda44e65ce567c031c07e2f93f6fa0ecd3ba876a195023e83", size = 366359408, upload-time = "2025-06-05T20:07:42.501Z" },
@@ -3156,7 +3050,6 @@ dependencies = [
 
 [package.optional-dependencies]
 all = [
-    { name = "cuda-quantum-cu12" },
     { name = "httpx" },
     { name = "keyring" },
     { name = "keyrings-alt" },
@@ -3166,14 +3059,11 @@ all = [
     { name = "nvidia-cusparse-cu12" },
     { name = "nvidia-nvjitlink-cu12" },
     { name = "openfermion" },
-    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all' or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "pyqir" },
     { name = "pyscipopt" },
-    { name = "qutip" },
-    { name = "qutip-qip" },
 ]
 all-cu12 = [
-    { name = "cuda-quantum-cu12" },
     { name = "httpx" },
     { name = "keyring" },
     { name = "keyrings-alt" },
@@ -3186,11 +3076,8 @@ all-cu12 = [
     { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all-cu12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra != 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra != 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13') or (extra != 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra != 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "pyqir" },
     { name = "pyscipopt" },
-    { name = "qutip" },
-    { name = "qutip-qip" },
 ]
 all-cu13 = [
-    { name = "cuda-quantum-cu13" },
     { name = "httpx" },
     { name = "keyring" },
     { name = "keyrings-alt" },
@@ -3203,11 +3090,8 @@ all-cu13 = [
     { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "pyqir" },
     { name = "pyscipopt" },
-    { name = "qutip" },
-    { name = "qutip-qip" },
 ]
 cuda = [
-    { name = "cuda-quantum-cu12" },
     { name = "nvidia-cublas-cu12" },
     { name = "nvidia-cuda-runtime-cu12" },
     { name = "nvidia-cusolver-cu12" },
@@ -3215,7 +3099,6 @@ cuda = [
     { name = "nvidia-nvjitlink-cu12" },
 ]
 cuda12 = [
-    { name = "cuda-quantum-cu12" },
     { name = "nvidia-cublas-cu12" },
     { name = "nvidia-cuda-runtime-cu12" },
     { name = "nvidia-cusolver-cu12" },
@@ -3223,7 +3106,6 @@ cuda12 = [
     { name = "nvidia-nvjitlink-cu12" },
 ]
 cuda13 = [
-    { name = "cuda-quantum-cu13" },
     { name = "nvidia-cublas" },
     { name = "nvidia-cuda-runtime" },
     { name = "nvidia-cusolver" },
@@ -3239,10 +3121,6 @@ openqasm = [
 qir = [
     { name = "pyqir" },
 ]
-qutip = [
-    { name = "qutip" },
-    { name = "qutip-qip" },
-]
 scip = [
     { name = "pyscipopt" },
 ]
@@ -3253,6 +3131,11 @@ speqtrum = [
 ]
 
 [package.dev-dependencies]
+backends = [
+    { name = "cuda-quantum-cu13", marker = "python_full_version < '3.14' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "qutip" },
+    { name = "qutip-qip" },
+]
 dev = [
     { name = "diff-cover" },
     { name = "gcovr" },
@@ -3284,15 +3167,13 @@ docs = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cuda-quantum-cu12", marker = "extra == 'cuda12'", specifier = "==0.15.1" },
-    { name = "cuda-quantum-cu13", marker = "extra == 'cuda13'", specifier = "==0.15.1" },
     { name = "dill", specifier = ">=0.4.1" },
     { name = "httpx", marker = "extra == 'speqtrum'", specifier = "==0.28.1" },
     { name = "keyring", marker = "extra == 'speqtrum'", specifier = ">=25.6.0" },
     { name = "keyrings-alt", marker = "extra == 'speqtrum'", specifier = ">=5.0.2" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "matplotlib", specifier = ">=3.10.8" },
-    { name = "numpy", specifier = ">=2.3" },
+    { name = "numpy", specifier = ">=2.3.2" },
     { name = "nvidia-cublas", marker = "extra == 'cuda13'" },
     { name = "nvidia-cublas-cu12", marker = "extra == 'cuda12'" },
     { name = "nvidia-cuda-runtime", marker = "extra == 'cuda13'" },
@@ -3309,8 +3190,8 @@ requires-dist = [
     { name = "py-cpuinfo", specifier = ">=9.0.0" },
     { name = "pydantic", specifier = ">=2.13.3" },
     { name = "pydantic-settings", specifier = ">=2.14.0" },
-    { name = "pyqir", marker = "extra == 'qir'", specifier = ">=0.10.0" },
-    { name = "pyscipopt", marker = "extra == 'scip'", specifier = ">=5.0.0" },
+    { name = "pyqir", marker = "extra == 'qir'", specifier = ">=0.12.0" },
+    { name = "pyscipopt", marker = "extra == 'scip'", specifier = ">=5.7.0" },
     { name = "qilisdk", extras = ["cuda12"], marker = "extra == 'all'" },
     { name = "qilisdk", extras = ["cuda12"], marker = "extra == 'all-cu12'" },
     { name = "qilisdk", extras = ["cuda12"], marker = "extra == 'cuda'" },
@@ -3324,25 +3205,25 @@ requires-dist = [
     { name = "qilisdk", extras = ["qir"], marker = "extra == 'all'" },
     { name = "qilisdk", extras = ["qir"], marker = "extra == 'all-cu12'" },
     { name = "qilisdk", extras = ["qir"], marker = "extra == 'all-cu13'" },
-    { name = "qilisdk", extras = ["qutip"], marker = "extra == 'all'" },
-    { name = "qilisdk", extras = ["qutip"], marker = "extra == 'all-cu12'" },
-    { name = "qilisdk", extras = ["qutip"], marker = "extra == 'all-cu13'" },
     { name = "qilisdk", extras = ["scip"], marker = "extra == 'all'" },
     { name = "qilisdk", extras = ["scip"], marker = "extra == 'all-cu12'" },
     { name = "qilisdk", extras = ["scip"], marker = "extra == 'all-cu13'" },
     { name = "qilisdk", extras = ["speqtrum"], marker = "extra == 'all'" },
     { name = "qilisdk", extras = ["speqtrum"], marker = "extra == 'all-cu12'" },
     { name = "qilisdk", extras = ["speqtrum"], marker = "extra == 'all-cu13'" },
-    { name = "qutip", marker = "extra == 'qutip'", specifier = ">=5.2.3" },
-    { name = "qutip-qip", marker = "extra == 'qutip'", specifier = ">=0.4.1" },
     { name = "ruamel-yaml", specifier = ">=0.18.16" },
     { name = "rustworkx", specifier = ">=0.17.1" },
-    { name = "scipy", specifier = ">=1.15" },
+    { name = "scipy", specifier = ">=1.16.1" },
     { name = "setuptools", specifier = ">=82.0.1" },
 ]
-provides-extras = ["cuda", "cuda12", "cuda13", "speqtrum", "qutip", "openfermion", "qir", "openqasm", "scip", "all", "all-cu12", "all-cu13"]
+provides-extras = ["cuda", "cuda12", "cuda13", "speqtrum", "openfermion", "qir", "openqasm", "scip", "all", "all-cu12", "all-cu13"]
 
 [package.metadata.requires-dev]
+backends = [
+    { name = "cuda-quantum-cu13", marker = "python_full_version < '3.14'", specifier = ">=0.14.0" },
+    { name = "qutip", specifier = ">=5.2.2" },
+    { name = "qutip-qip", specifier = ">=0.4.0" },
+]
 dev = [
     { name = "diff-cover", specifier = ">=10.2.1" },
     { name = "gcovr", specifier = ">=8.6" },
@@ -3752,20 +3633,20 @@ version = "1.18.0"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'darwin'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'darwin'",
     "python_full_version >= '3.14' and platform_machine != 'aarch64' and sys_platform == 'win32'",
     "python_full_version >= '3.14' and platform_machine != 'aarch64' and sys_platform == 'emscripten'",
     "python_full_version >= '3.14' and platform_machine != 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform == 'win32'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform == 'emscripten'",
-    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version >= '3.14' and platform_machine == 'aarch64' and sys_platform == 'win32'",
     "python_full_version >= '3.14' and platform_machine == 'aarch64' and sys_platform == 'emscripten'",
     "python_full_version >= '3.14' and platform_machine == 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32'",
+    "python_full_version >= '3.14' and platform_machine == 'aarch64' and sys_platform == 'linux'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and sys_platform == 'darwin'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform == 'win32'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine != 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform == 'win32'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform == 'emscripten'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32'",
-    "python_full_version >= '3.14' and platform_machine == 'aarch64' and sys_platform == 'linux'",
     "python_full_version >= '3.12' and python_full_version < '3.14' and platform_machine == 'aarch64' and sys_platform == 'linux'",
 ]
 dependencies = [

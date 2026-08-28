@@ -19,32 +19,28 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-from qilisdk.analog.hamiltonian import Hamiltonian
-from qilisdk.backends.cuda_backend import _SWAP_OP_NAME, cudaq_to_standard, reverse_bits
-from qilisdk.core import Parameter
-from qilisdk.core.qtensor import InitialState, QTensor, ket
-from qilisdk.functionals.analog_evolution import AnalogEvolution
-from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
-from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, LindbladGenerator, NoiseModel
-from qilisdk.noise.offset_perturbation import OffsetPerturbation
-from qilisdk.readout import ExpectationReadout, Readout, SamplingReadout, StateTomographyReadout
-
 pytest.importorskip(
     "cudaq",
     reason="CUDA backend tests require the 'cuda' optional dependency",
     exc_type=ImportError,
 )
 
-
 from qilisdk.analog import I as pauli_i
 from qilisdk.analog import Schedule
 from qilisdk.analog import X as pauli_x
 from qilisdk.analog import Y as pauli_y
 from qilisdk.analog import Z as pauli_z
-from qilisdk.analog.hamiltonian import PauliI, PauliX, PauliY, PauliZ
-from qilisdk.backends.cuda_backend import CudaBackend, CudaSamplingMethod
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliX, PauliY, PauliZ
+from qilisdk.backends.cudaq_backend import (
+    _SWAP_OP_NAME,
+    CudaqBackend,
+    CudaqSamplingMethod,
+    cudaq_to_standard,
+    reverse_bits,
+)
+from qilisdk.core import Parameter
 from qilisdk.core.model import Model
+from qilisdk.core.qtensor import InitialState, QTensor, ket
 from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
@@ -52,10 +48,16 @@ from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
+from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_propagation import DigitalPropagation
+from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.variational_program import VariationalProgram
+from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, LindbladGenerator, NoiseModel
+from qilisdk.noise.offset_perturbation import OffsetPerturbation
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
+from qilisdk.readout import ExpectationReadout, Readout, SamplingReadout, StateTomographyReadout
 from qilisdk.settings import Precision, get_settings
 
 COMPLEX_DTYPE = get_settings().complex_precision.dtype
@@ -80,9 +82,9 @@ def mock_cuda_dynamics(monkeypatch):
     result.final_state = MagicMock(return_value=np.array([1 / np.sqrt(2), -1 / np.sqrt(2)]))
     evolve = MagicMock(return_value=result)
     state_from_data = MagicMock(return_value=None)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", evolve)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.State.from_data", state_from_data)
+    monkeypatch.setattr("qilisdk.backends.cudaq_backend.evolve", evolve)
+    monkeypatch.setattr("qilisdk.backends.cudaq_backend.cudaq.set_target", lambda target, option=None: None)
+    monkeypatch.setattr("qilisdk.backends.cudaq_backend.State.from_data", state_from_data)
     # this is just a convenient way to return all three mocks
     return SimpleNamespace(evolve=evolve, result=result, state_from_data=state_from_data)
 
@@ -223,7 +225,7 @@ swap_test_case: list[tuple[BasicGate, tuple]] = [(SWAP(0, 1), ("swap", "q0", "q1
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"0": 1000})
 def test_state_vector_no_gpu(mock_sample, mock_make_kernel, mock_set_target, mock_num_gpus):
-    backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
+    backend = CudaqBackend(sampling_method=CudaqSamplingMethod.STATE_VECTOR)
     circuit = Circuit(nqubits=1)
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     mock_set_target.assert_called_with("qpp-cpu")
@@ -236,7 +238,7 @@ def test_state_vector_no_gpu(mock_sample, mock_make_kernel, mock_set_target, moc
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"0": 1000})
 def test_state_vector_with_gpu(mock_sample, mock_make_kernel, mock_set_target, mock_num_gpus):
-    backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
+    backend = CudaqBackend(sampling_method=CudaqSamplingMethod.STATE_VECTOR)
     circuit = Circuit(nqubits=1)
     result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
     float_precision = _get_float_precision()
@@ -249,7 +251,7 @@ def test_state_vector_with_gpu(mock_sample, mock_make_kernel, mock_set_target, m
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"0": 1000})
 def test_tensornet(mock_sample, mock_make_kernel, mock_set_target):
-    backend = CudaBackend(sampling_method=CudaSamplingMethod.TENSOR_NETWORK)
+    backend = CudaqBackend(sampling_method=CudaqSamplingMethod.TENSOR_NETWORK)
     circuit = Circuit(nqubits=1)
     result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
     mock_set_target.assert_called_with("tensornet")
@@ -261,7 +263,7 @@ def test_tensornet(mock_sample, mock_make_kernel, mock_set_target):
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"0": 1000})
 def test_matrix_product_state(mock_sample, mock_make_kernel, mock_set_target):
-    backend = CudaBackend(sampling_method=CudaSamplingMethod.MATRIX_PRODUCT_STATE)
+    backend = CudaqBackend(sampling_method=CudaqSamplingMethod.MATRIX_PRODUCT_STATE)
     circuit = Circuit(nqubits=1)
     result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
     mock_set_target.assert_called_with("tensornet-mps")
@@ -279,7 +281,7 @@ def test_matrix_product_state(mock_sample, mock_make_kernel, mock_set_target):
 def test_execute_basic_gate_handler(mock_set_target, mock_sample, mock_make_kernel, gate_instance, expected_call):
     # Reset the main dummy kernel for a clean slate.
     dummy_make_kernel.main_kernel = DummyKernel()
-    backend = CudaBackend()
+    backend = CudaqBackend()
     circuit = Circuit(nqubits=2)
     circuit._gates.append(gate_instance)
     backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
@@ -295,7 +297,7 @@ def test_execute_swap_with_noise_uses_custom_operation(mock_set_target, mock_sam
     monkeypatch.setattr(dummy_make_kernel, "main_kernel", DummyKernel())
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=0.1))
-    backend = CudaBackend(noise_model=noise_model)
+    backend = CudaqBackend(noise_model=noise_model)
     circuit = Circuit(nqubits=2)
     circuit.add(SWAP(0, 1))
     backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
@@ -312,7 +314,7 @@ def test_execute_swap_with_noise_uses_custom_operation(mock_set_target, mock_sam
 @patch("cudaq.set_target")
 def test_execute_controlled_handler(mock_set_target, mock_sample, mock_make_kernel, gate_instance):
     dummy_make_kernel.main_kernel = DummyKernel()
-    backend = CudaBackend()
+    backend = CudaqBackend()
     circuit = Circuit(nqubits=2)
     controlled_gate = Controlled(1, basic_gate=gate_instance)
     circuit._gates.append(controlled_gate)
@@ -329,7 +331,7 @@ def test_execute_controlled_handler(mock_set_target, mock_sample, mock_make_kern
 @patch("cudaq.set_target")
 def test_execute_adjoint_handler(mock_set_target, mock_sample, mock_make_kernel, gate_instance):
     dummy_make_kernel.main_kernel = DummyKernel()
-    backend = CudaBackend()
+    backend = CudaqBackend()
     circuit = Circuit(nqubits=1)
     adjoint_gate = Adjoint(gate_instance)
     circuit._gates.append(adjoint_gate)
@@ -346,7 +348,7 @@ def test_execute_adjoint_handler(mock_set_target, mock_sample, mock_make_kernel,
 @patch("cudaq.set_target")
 def test_execute_measurement_full(mock_set_target, mock_sample, mock_make_kernel):
     dummy_make_kernel.main_kernel = DummyKernel()
-    backend = CudaBackend()
+    backend = CudaqBackend()
     circuit = Circuit(nqubits=2)
     measurement_gate = M(0, 1)
     circuit._gates.append(measurement_gate)
@@ -361,7 +363,7 @@ def test_execute_measurement_full(mock_set_target, mock_sample, mock_make_kernel
 @patch("cudaq.set_target")
 def test_execute_measurement_partial(mock_set_target, mock_sample, mock_make_kernel):
     dummy_make_kernel.main_kernel = DummyKernel()
-    backend = CudaBackend()
+    backend = CudaqBackend()
     circuit = Circuit(nqubits=3)
     measurement_gate = M(1, 2)
     circuit._gates.append(measurement_gate)
@@ -376,7 +378,7 @@ def test_execute_measurement_partial(mock_set_target, mock_sample, mock_make_ker
 @patch("cudaq.set_target")
 def test_execute_measurement_partial_with_bad_samples_raises(mock_set_target, mock_sample, mock_make_kernel):
     dummy_make_kernel.main_kernel = DummyKernel()
-    backend = CudaBackend()
+    backend = CudaqBackend()
     circuit = Circuit(nqubits=3)
     measurement_gate = M(1, 2)
     circuit._gates.append(measurement_gate)
@@ -393,7 +395,7 @@ def test_execute_measurement_partial_with_bad_samples_raises(mock_set_target, mo
 @patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
 def test_execute_unsupported_gate(mock_set_target, mock_sample, mock_make_kernel):
-    backend = CudaBackend()
+    backend = CudaqBackend()
     circuit = Circuit(nqubits=1)
     circuit._gates.append(DummyGate(0))
     func = DigitalPropagation(circuit)
@@ -412,7 +414,7 @@ def test_controlled_with_unsupported_basic_gate_raises(monkeypatch):
         def _generate_matrix(self):
             return np.eye(2)
 
-    be = CudaBackend()
+    be = CudaqBackend()
     circuit = Circuit(2)  # small helper from Backend superclass
     circuit._gates.append(Controlled(1, basic_gate=BadGate(0)))
 
@@ -427,7 +429,7 @@ def test_controlled_with_unsupported_basic_gate_raises(monkeypatch):
 @patch("cudaq.set_target")
 def test_controlled_multiple_controls_are_transpiled(mock_set_target, mock_sample, mock_make_kernel):
     dummy_make_kernel.main_kernel = DummyKernel()
-    backend = CudaBackend()
+    backend = CudaqBackend()
     circuit = Circuit(nqubits=3)
     controlled_gate = Controlled(0, 1, basic_gate=X(2))
     circuit._gates.append(controlled_gate)
@@ -449,7 +451,7 @@ def test_controlled_multiple_controls_are_transpiled(mock_set_target, mock_sampl
 @patch("cudaq.sample", return_value={"0": 1000})
 @patch("cudaq.set_target")
 def test_adjoint_unsupported_gate_error(mock_set_target, mock_sample, mock_make_kernel):
-    backend = CudaBackend()
+    backend = CudaqBackend()
     circuit = Circuit(nqubits=1)
     adjoint_gate = Adjoint(DummyGate(0))
     circuit._gates.append(adjoint_gate)
@@ -460,7 +462,7 @@ def test_adjoint_unsupported_gate_error(mock_set_target, mock_sample, mock_make_
 
 
 def test_hamiltonian_to_cuda_computes_expected_sum(monkeypatch):
-    be = CudaBackend()
+    be = CudaqBackend()
 
     # Replace the Pauli -> spin handler mapping with predictable numbers
     be._pauli_operator_handlers = {
@@ -515,7 +517,7 @@ def test_parameterized_program_properties_assignment(dummy_optimizer):
 
 
 def test_real_example():
-    backend = CudaBackend()
+    backend = CudaqBackend()
     b = BinaryVariable("b")
     model = Model("test")
     model.set_objective(2 * b - 1)
@@ -532,7 +534,7 @@ def test_real_example():
 
 
 def test_integer_gates():
-    backend = CudaBackend()
+    backend = CudaqBackend()
     circuit = Circuit(1)
     circuit.add(RX(0, theta=1))
     circuit.add(RY(0, theta=1))
@@ -550,7 +552,7 @@ def test_multi_qubit_controls_no_decompose(monkeypatch):
         "qilisdk.digital.circuit_transpiler_passes.DecomposeMultiControlledGatesPass.run", lambda self, circuit: circuit
     )
 
-    backend = CudaBackend()
+    backend = CudaqBackend()
     circuit = Circuit(3)
     gate = Controlled(0, 1, basic_gate=X(2))
     assert gate.control_qubits == (0, 1)
@@ -576,7 +578,7 @@ def test_time_dependent_hamiltonian_cuda(mock_cuda_dynamics):
         pauli_z(0),
     ]
 
-    backend = CudaBackend()
+    backend = CudaqBackend()
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
         Readout().with_expectation(observables=obs).with_state_tomography(),
@@ -597,7 +599,7 @@ def test_time_dependent_hamiltonian_cuda_qtensor_observable(mock_cuda_dynamics):
     psi0 = ket(0)
     obs = [QTensor(np.array([[1, 0], [0, -1]], dtype=np.complex128))]
 
-    backend = CudaBackend()
+    backend = CudaqBackend()
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
         Readout().with_expectation(observables=obs).with_state_tomography(),
@@ -619,7 +621,7 @@ def test_analog_evolution_warns_when_precision_not_fp64(monkeypatch, mock_cuda_d
         hamiltonians={"h1": pauli_x(0), "h2": pauli_z(0)},
         coefficients={"h1": {(0, 100): lambda t: 1 - t / 100}, "h2": {(0, 100): lambda t: t / 100}},
     )
-    backend = CudaBackend()
+    backend = CudaqBackend()
     backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=ket(0)),
         Readout().with_expectation(observables=[pauli_z(0)]),
@@ -629,7 +631,7 @@ def test_analog_evolution_warns_when_precision_not_fp64(monkeypatch, mock_cuda_d
 
 
 def test_qtensor_observable_non_hermitian_raises():
-    backend = CudaBackend()
+    backend = CudaqBackend()
     non_hermitian = QTensor(np.array([[0, 1], [0, 0]], dtype=np.complex128))
 
     with pytest.raises(ValueError, match="must be Hermitian"):
@@ -660,7 +662,7 @@ def test_time_dependent_hamiltonian_cuda_with_noise(mock_cuda_dynamics):
         pauli_z(0),
     ]
 
-    backend = CudaBackend(noise_model=noise_model)
+    backend = CudaqBackend(noise_model=noise_model)
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
         Readout().with_expectation(observables=obs).with_state_tomography(),
@@ -679,7 +681,7 @@ def test_execute_cuda_noise(mock_set_target, mock_sample, mock_make_kernel):
     circuit = Circuit(nqubits=1)
     noise_model = NoiseModel()
     noise_model.add(BitFlip(probability=0.3))
-    backend = CudaBackend(noise_model=NoiseModel())
+    backend = CudaqBackend(noise_model=NoiseModel())
     backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
 
 
@@ -705,7 +707,7 @@ def test_time_dependent_hamiltonian_cuda_noise(mock_cuda_dynamics):
     noise_model.add(LindbladGenerator(jump_operators=[], hamiltonian=pauli_z(0)))
     noise_model.add(OffsetPerturbation(offset=0.1), parameter=param)
 
-    backend = CudaBackend(noise_model=noise_model)
+    backend = CudaqBackend(noise_model=noise_model)
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
         Readout().with_expectation(observables=obs).with_state_tomography(),
@@ -737,7 +739,7 @@ def test_time_evolution_keeps_statevector_outputs_as_columns(mock_cuda_dynamics)
         store_intermediate_results=True,
     )
 
-    backend = CudaBackend()
+    backend = CudaqBackend()
     res = backend.execute(functional, Readout().with_state_tomography())
 
     assert res.get_state() is not None
@@ -766,7 +768,7 @@ def test_time_evolution_preserves_density_matrix_shape(mock_cuda_dynamics):
         store_intermediate_results=True,
     )
 
-    backend = CudaBackend()
+    backend = CudaqBackend()
     res = backend.execute(functional, Readout().with_state_tomography())
 
     assert res.get_state() is not None
@@ -777,7 +779,7 @@ def test_time_evolution_preserves_density_matrix_shape(mock_cuda_dynamics):
 
 
 def test_get_cuda_hamiltonian_raises_with_empty_schedule():
-    backend = CudaBackend()
+    backend = CudaqBackend()
     schedule = Schedule(dt=1.0)
 
     with pytest.raises(ValueError, match="TimeEvolution requires at least one Hamiltonian in the schedule"):
@@ -785,14 +787,14 @@ def test_get_cuda_hamiltonian_raises_with_empty_schedule():
 
 
 def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(monkeypatch):
-    backend = CudaBackend()
+    backend = CudaqBackend()
     functional = _build_quantum_reservoir_functional()
 
     def _mock_execute_analog_evolution(self, f, readout):
         raise ValueError("Reservoir Runtime Error: state repair failed before expectation value computation.")
 
     monkeypatch.setattr(
-        "qilisdk.backends.cuda_backend.CudaBackend._execute_analog_evolution",
+        "qilisdk.backends.cudaq_backend.CudaqBackend._execute_analog_evolution",
         _mock_execute_analog_evolution,
     )
 
@@ -829,14 +831,14 @@ def test_reverse_bits():
 
 
 def test_validate_digital_readout_with_noise_non_sampling_raises():
-    backend = CudaBackend(noise_model=NoiseModel())
+    backend = CudaqBackend(noise_model=NoiseModel())
     read = StateTomographyReadout()
     with pytest.raises(ValueError, match="only the sample readout"):
         backend._validate_digital_readout_with_noise([read])
 
 
 def test_validate_digital_readout_with_noise_multiple_readouts_raises():
-    backend = CudaBackend(noise_model=NoiseModel())
+    backend = CudaqBackend(noise_model=NoiseModel())
     read_10 = SamplingReadout(nshots=10)
     read_20 = SamplingReadout(nshots=20)
     with pytest.raises(ValueError, match="single sampling operation"):
@@ -844,17 +846,17 @@ def test_validate_digital_readout_with_noise_multiple_readouts_raises():
 
 
 def test_validate_digital_readout_with_noise_ok():
-    backend = CudaBackend(noise_model=NoiseModel())
+    backend = CudaqBackend(noise_model=NoiseModel())
     backend._validate_digital_readout_with_noise([SamplingReadout(nshots=10)])
 
 
 def test_sampling_method_property():
-    backend = CudaBackend()
-    assert backend.sampling_method == CudaSamplingMethod.STATE_VECTOR
+    backend = CudaqBackend()
+    assert backend.sampling_method == CudaqSamplingMethod.STATE_VECTOR
 
 
 def test_qtensor_observable_to_hamiltonian_not_operator_raises():
-    backend = CudaBackend()
+    backend = CudaqBackend()
     # A ket is not an operator
     k = ket(0)
     with pytest.raises(ValueError, match="must be an operator"):
@@ -862,7 +864,7 @@ def test_qtensor_observable_to_hamiltonian_not_operator_raises():
 
 
 def test_qtensor_observable_to_hamiltonian_wrong_nqubits_raises():
-    backend = CudaBackend()
+    backend = CudaqBackend()
     obs = QTensor(np.eye(4))  # 2-qubit operator
     with pytest.raises(ValueError, match="acts on 2 qubits but the schedule acts on 1"):
         backend._qtensor_observable_to_hamiltonian(obs, nqubits=1)
@@ -876,7 +878,7 @@ def test_time_dependent_hamiltonian_cuda_initial_state_enum(mock_cuda_dynamics):
         hamiltonians={"h": pauli_z(0)},
         coefficients={"h": {(0, 10): lambda t: 1 - t / 10}},
     )
-    backend = CudaBackend()
+    backend = CudaqBackend()
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=InitialState.UNIFORM),
         Readout().with_state_tomography(),
@@ -890,13 +892,13 @@ def test_qtensor_initial_state_bra_converted_to_ket():
     bra = ket(0).adjoint()
     assert bra.is_bra()
     state_mock = MagicMock()
-    with patch("qilisdk.backends.cuda_backend.State.from_data", state_mock):
-        CudaBackend._qtensor_initial_state_to_cuda(bra)
+    with patch("qilisdk.backends.cudaq_backend.State.from_data", state_mock):
+        CudaqBackend._qtensor_initial_state_to_cuda(bra)
         state_mock.assert_called_once()
 
 
 def test_apply_digital_simulation_method_state_vector_no_gpu(monkeypatch):
-    backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
+    backend = CudaqBackend(sampling_method=CudaqSamplingMethod.STATE_VECTOR)
     mock_set_target = MagicMock()
     mock_num_gpus = MagicMock(return_value=0)
     monkeypatch.setattr("cudaq.set_target", mock_set_target)
@@ -906,7 +908,7 @@ def test_apply_digital_simulation_method_state_vector_no_gpu(monkeypatch):
 
 
 def test_apply_digital_simulation_method_state_vector_with_gpu(monkeypatch):
-    backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR)
+    backend = CudaqBackend(sampling_method=CudaqSamplingMethod.STATE_VECTOR)
     mock_set_target = MagicMock()
     mock_num_gpus = MagicMock(return_value=1)
     monkeypatch.setattr("cudaq.set_target", mock_set_target)
@@ -917,7 +919,7 @@ def test_apply_digital_simulation_method_state_vector_with_gpu(monkeypatch):
 
 
 def test_apply_digital_simulation_method_tensor_network(monkeypatch):
-    backend = CudaBackend(sampling_method=CudaSamplingMethod.TENSOR_NETWORK)
+    backend = CudaqBackend(sampling_method=CudaqSamplingMethod.TENSOR_NETWORK)
     mock_set_target = MagicMock()
     monkeypatch.setattr("cudaq.set_target", mock_set_target)
     backend._apply_digital_simulation_method()
@@ -925,7 +927,7 @@ def test_apply_digital_simulation_method_tensor_network(monkeypatch):
 
 
 def test_apply_digital_simulation_method_matrix_product_state(monkeypatch):
-    backend = CudaBackend(sampling_method=CudaSamplingMethod.MATRIX_PRODUCT_STATE)
+    backend = CudaqBackend(sampling_method=CudaqSamplingMethod.MATRIX_PRODUCT_STATE)
     mock_set_target = MagicMock()
     monkeypatch.setattr("cudaq.set_target", mock_set_target)
     backend._apply_digital_simulation_method()
@@ -933,7 +935,7 @@ def test_apply_digital_simulation_method_matrix_product_state(monkeypatch):
 
 
 def test_apply_digital_simulation_method_state_vector_mgpu_multiple_gpus(monkeypatch):
-    backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR_MGPU)
+    backend = CudaqBackend(sampling_method=CudaqSamplingMethod.STATE_VECTOR_MGPU)
     mock_set_target = MagicMock()
     mock_num_gpus = MagicMock(return_value=4)
     monkeypatch.setattr("cudaq.set_target", mock_set_target)
@@ -944,7 +946,7 @@ def test_apply_digital_simulation_method_state_vector_mgpu_multiple_gpus(monkeyp
 
 
 def test_apply_digital_simulation_method_state_vector_mgpu_single_gpu(monkeypatch):
-    backend = CudaBackend(sampling_method=CudaSamplingMethod.STATE_VECTOR_MGPU)
+    backend = CudaqBackend(sampling_method=CudaqSamplingMethod.STATE_VECTOR_MGPU)
     mock_set_target = MagicMock()
     mock_num_gpus = MagicMock(return_value=1)
     monkeypatch.setattr("cudaq.set_target", mock_set_target)
@@ -955,7 +957,7 @@ def test_apply_digital_simulation_method_state_vector_mgpu_single_gpu(monkeypatc
 
 
 def test_apply_digital_simulation_method_cpu(monkeypatch):
-    backend = CudaBackend(sampling_method=CudaSamplingMethod.CPU)
+    backend = CudaqBackend(sampling_method=CudaqSamplingMethod.CPU)
     mock_set_target = MagicMock()
     monkeypatch.setattr("cudaq.set_target", mock_set_target)
     backend._apply_digital_simulation_method()
@@ -966,53 +968,53 @@ def test_apply_digital_simulation_method_unsupported_method():
     class FakeSamplingMethod(Enum):
         UNSUPPORTED_METHOD = "unsupported_method"
 
-    backend = CudaBackend(sampling_method=FakeSamplingMethod.UNSUPPORTED_METHOD)
+    backend = CudaqBackend(sampling_method=FakeSamplingMethod.UNSUPPORTED_METHOD)
     with pytest.raises(ValueError, match="Unsupported sampling method: unsupported_method"):
         backend._apply_digital_simulation_method()
 
 
-@pytest.mark.parametrize("method", [CudaSamplingMethod.MATRIX_PRODUCT_STATE, CudaSamplingMethod.TENSOR_NETWORK])
+@pytest.mark.parametrize("method", [CudaqSamplingMethod.MATRIX_PRODUCT_STATE, CudaqSamplingMethod.TENSOR_NETWORK])
 def test_expectation_for_methods_raises(monkeypatch, method):
     monkeypatch.setattr("cudaq.make_kernel", dummy_make_kernel)
     monkeypatch.setattr("cudaq.set_target", lambda target: None)
     c = Circuit(nqubits=1)
     f = DigitalPropagation(circuit=c)
     r = Readout().with_expectation(observables=[pauli_z(0)])
-    backend = CudaBackend(sampling_method=method)
+    backend = CudaqBackend(sampling_method=method)
     with pytest.raises(ValueError, match="Only Sampling"):
         backend.execute(f, r)
 
 
-@pytest.mark.parametrize("method", [CudaSamplingMethod.MATRIX_PRODUCT_STATE, CudaSamplingMethod.TENSOR_NETWORK])
+@pytest.mark.parametrize("method", [CudaqSamplingMethod.MATRIX_PRODUCT_STATE, CudaqSamplingMethod.TENSOR_NETWORK])
 def test_tomography_for_methods_raises(monkeypatch, method):
     monkeypatch.setattr("cudaq.make_kernel", dummy_make_kernel)
     monkeypatch.setattr("cudaq.set_target", lambda target: None)
     c = Circuit(nqubits=1)
     f = DigitalPropagation(circuit=c)
     r = Readout().with_state_tomography()
-    backend = CudaBackend(sampling_method=method)
+    backend = CudaqBackend(sampling_method=method)
     with pytest.raises(ValueError, match="Only Sampling"):
         backend.execute(f, r)
 
 
-def test_cuda_backend_rejects_time_dependent_lindblad_rate(monkeypatch):
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", MagicMock())
+def test_cudaq_backend_rejects_time_dependent_lindblad_rate(monkeypatch):
+    monkeypatch.setattr("qilisdk.backends.cudaq_backend.cudaq.set_target", lambda target, option=None: None)
+    monkeypatch.setattr("qilisdk.backends.cudaq_backend.evolve", MagicMock())
 
     noise_model = NoiseModel()
     noise_model.add(LindbladGenerator([QTensor(np.array([[0, 1], [1, 0]]))], rates=[lambda t: 0.1 * t]))
     schedule = Schedule.linear(pauli_z(0), pauli_z(0), 1.0, 0.1)
     functional = AnalogEvolution(schedule=schedule, initial_state=InitialState.ZERO)
 
-    backend = CudaBackend(noise_model=noise_model)
+    backend = CudaqBackend(noise_model=noise_model)
     readout = Readout().with_expectation([pauli_z(0)])
     with pytest.raises(NotImplementedError, match="time-dependent Lindblad rates"):
         backend.execute(functional, readout)
 
 
-def test_cuda_backend_rejects_per_qubit_time_dependent_lindblad_rate(monkeypatch):
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.cudaq.set_target", lambda target, option=None: None)
-    monkeypatch.setattr("qilisdk.backends.cuda_backend.evolve", MagicMock())
+def test_cudaq_backend_rejects_per_qubit_time_dependent_lindblad_rate(monkeypatch):
+    monkeypatch.setattr("qilisdk.backends.cudaq_backend.cudaq.set_target", lambda target, option=None: None)
+    monkeypatch.setattr("qilisdk.backends.cudaq_backend.evolve", MagicMock())
 
     noise_model = NoiseModel()
     noise_model.add(
@@ -1022,7 +1024,7 @@ def test_cuda_backend_rejects_per_qubit_time_dependent_lindblad_rate(monkeypatch
     schedule = Schedule.linear(pauli_z(0), pauli_z(0), 1.0, 0.1)
     functional = AnalogEvolution(schedule=schedule, initial_state=InitialState.ZERO)
 
-    backend = CudaBackend(noise_model=noise_model)
+    backend = CudaqBackend(noise_model=noise_model)
     readout = Readout().with_expectation([pauli_z(0)])
     with pytest.raises(NotImplementedError, match="time-dependent Lindblad rates"):
         backend.execute(functional, readout)
