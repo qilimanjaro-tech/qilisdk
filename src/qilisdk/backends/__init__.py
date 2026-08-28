@@ -38,23 +38,21 @@ OPTIONAL_FEATURES: list[OptionalFeature] = [
         name="cudaq",
         mode=RequirementMode.ANY,
         dependency_groups=[
-            DependencyGroup(dists=["cuda-quantum-cu12"]),
-            DependencyGroup(dists=["cuda-quantum-cu13"]),
+            DependencyGroup(dists=["cuda-quantum-cu12>=0.14.0"]),
+            DependencyGroup(dists=["cuda-quantum-cu13>=0.14.0"]),
         ],
         symbols=[
             Symbol(path="qilisdk.backends.cudaq_backend", name="CudaqBackend"),
             Symbol(path="qilisdk.backends.cudaq_backend", name="CudaqSamplingMethod"),
         ],
-        install_hint="`pip install cuda-quantum-cu12` or `pip install cuda-quantum-cu13`",
     ),
     OptionalFeature(
         name="qutip",
         mode=RequirementMode.ALL,
         dependency_groups=[
-            DependencyGroup(dists=["qutip", "qutip-qip", "matplotlib"]),
+            DependencyGroup(dists=["qutip>=5.2.2", "qutip-qip>=0.4.0"]),
         ],
         symbols=[Symbol(path="qilisdk.backends.qutip_backend", name="QutipBackend")],
-        install_hint="`pip install qutip qutip-qip`",
     ),
 ]
 

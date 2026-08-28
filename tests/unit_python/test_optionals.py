@@ -15,11 +15,15 @@
 from __future__ import annotations
 
 import importlib
+import importlib.metadata
 import sys
+import tomllib
 from importlib.metadata import PackageNotFoundError
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
+from packaging.requirements import Requirement
 
 from qilisdk._optionals import (
     DependencyGroup,
@@ -106,8 +110,119 @@ def test_backend_features_point_at_upstream_distributions() -> None:
 
     assert "cuda-quantum-cu12" in hints["cudaq"]
     assert "cuda-quantum-cu13" in hints["cudaq"]
-    assert "qutip qutip-qip" in hints["qutip"]
+    assert "qutip" in hints["qutip"]
+    assert "qutip-qip" in hints["qutip"]
     assert not any("qilisdk[" in hint for hint in hints.values())
+    # Every requirement reaches the hint verbatim, quoted so a shell keeps the specifier.
+    for feature in OPTIONAL_FEATURES:
+        for group in feature.dependency_groups:
+            for dist in group.dists:
+                assert f'"{dist}"' in hints[feature.name]
+
+
+@pytest.mark.parametrize(
+    "dependency_groups",
+    [
+        [],
+        [DependencyGroup(dists=[])],
+    ],
+)
+@pytest.mark.parametrize("mode", list(RequirementMode))
+def test_hint_falls_back_to_the_feature_name(mode: RequirementMode, dependency_groups: list[DependencyGroup]) -> None:
+    """A feature that names nothing installable still points at its own extra."""
+    from qilisdk._optionals import _default_install_hint  # ruff: ignore[import-outside-top-level]
+
+    feature = OptionalFeature(
+        name="nameless",
+        mode=mode,
+        dependency_groups=dependency_groups,
+        symbols=[Symbol(path="unused", name="Thing")],
+    )
+
+    assert _default_install_hint(feature) == "`pip install qilisdk[nameless]`"
+
+
+def test_outdated_distribution_reports_the_version_it_found() -> None:
+    """An installed but too-old distribution says so, instead of "not installed"."""
+    installed = importlib.metadata.version("numpy")
+    feature = OptionalFeature(
+        name="numpy-feature",
+        mode=RequirementMode.ALL,
+        dependency_groups=[DependencyGroup(dists=["numpy>=999.0.0"])],
+        symbols=[Symbol(path="unused", name="Thing")],
+    )
+
+    imported = import_optional_dependencies(feature)
+
+    with pytest.raises(OptionalDependencyError) as excinfo:
+        imported.symbols["Thing"]()
+
+    message = str(excinfo.value)
+    assert f"numpy>=999.0.0 (found {installed})" in message
+    assert 'pip install "numpy>=999.0.0"' in message
+
+
+def test_missing_and_outdated_alternatives_are_both_reported() -> None:
+    """In ANY mode every alternative that failed is listed, with its own reason."""
+    installed = importlib.metadata.version("numpy")
+    feature = OptionalFeature(
+        name="either",
+        mode=RequirementMode.ANY,
+        dependency_groups=[
+            DependencyGroup(dists=["numpy>=999.0.0"]),
+            DependencyGroup(dists=["definitely-not-installed-dist-xyz"]),
+        ],
+        symbols=[Symbol(path="unused", name="Thing")],
+    )
+
+    imported = import_optional_dependencies(feature)
+
+    with pytest.raises(OptionalDependencyError) as excinfo:
+        imported.symbols["Thing"]()
+
+    message = str(excinfo.value)
+    assert f"numpy>=999.0.0 (found {installed})" in message
+    assert "definitely-not-installed-dist-xyz (not installed)" in message
+
+
+def test_satisfied_floor_resolves_the_symbol() -> None:
+    """A distribution that meets its floor lets the real symbol through."""
+    feature = OptionalFeature(
+        name="numpy-feature",
+        mode=RequirementMode.ALL,
+        dependency_groups=[DependencyGroup(dists=["numpy>=1.0.0"])],
+        symbols=[Symbol(path="qilisdk._optionals", name="OptionalFeature")],
+    )
+
+    imported = import_optional_dependencies(feature)
+
+    assert imported.symbols["OptionalFeature"] is OptionalFeature
+
+
+def test_runtime_floors_match_the_versions_ci_tests() -> None:
+    """The floors enforced at runtime are the ones the backends group installs."""
+    pyproject = Path(__file__).parents[2] / "pyproject.toml"
+    if not pyproject.exists():  # running against an installed wheel
+        pytest.skip("pyproject.toml is not available")
+
+    from qilisdk.backends import OPTIONAL_FEATURES  # ruff: ignore[import-outside-top-level]
+
+    with pyproject.open("rb") as file:
+        tested = {
+            Requirement(spec.split(";")[0]).name: Requirement(spec.split(";")[0]).specifier
+            for spec in tomllib.load(file)["dependency-groups"]["backends"]
+        }
+    enforced = {
+        Requirement(dist).name: Requirement(dist).specifier
+        for feature in OPTIONAL_FEATURES
+        for group in feature.dependency_groups
+        for dist in group.dists
+    }
+
+    shared = tested.keys() & enforced.keys()
+    assert shared, "the backends group and OPTIONAL_FEATURES name no distribution in common"
+    for name in shared:
+        assert enforced[name] == tested[name], f"{name}: runtime requires {enforced[name]}, CI tests {tested[name]}"
 
 
 def test_version_not_found(monkeypatch):

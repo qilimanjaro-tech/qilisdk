@@ -12,10 +12,10 @@ QuTiP is not shipped with QiliSDK, install it yourself and the backend becomes a
 
 .. code-block:: console
 
-    pip install qutip qutip-qip
+    pip install "qutip>=5.2.2" "qutip-qip>=0.4.0"
 
 .. NOTE::
-    ``QutipBackend`` requires QuTiP 5.1.0 or newer and qutip-qip 0.4.0 or newer.
+    ``QutipBackend`` requires QuTiP 5.2.2 or newer and qutip-qip 0.4.0 or newer.
 
 Quick start
 ===========

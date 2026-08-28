@@ -14,7 +14,7 @@ the backend becomes available:
 
 .. code-block:: console
 
-    pip install cuda-quantum-cu12   # or cuda-quantum-cu13
+    pip install "cuda-quantum-cu12>=0.14.0"   # or cuda-quantum-cu13
 
 .. NOTE::
     ``CudaqBackend`` requires CUDA-Q 0.14.0 or newer. CUDA-Q publishes no wheels for Python 3.14, so

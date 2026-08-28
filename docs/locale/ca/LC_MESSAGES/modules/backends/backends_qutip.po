@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 14:44+0300\n"
+"POT-Creation-Date: 2026-08-28 18:47+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -49,10 +49,10 @@ msgstr ""
 
 #: ../../modules/backends/backends_qutip.rst:18
 msgid ""
-"``QutipBackend`` requires QuTiP 5.1.0 or newer and qutip-qip 0.4.0 or "
+"``QutipBackend`` requires QuTiP 5.2.2 or newer and qutip-qip 0.4.0 or "
 "newer."
 msgstr ""
-"``QutipBackend`` requereix QuTiP 5.1.0 o posterior i qutip-qip 0.4.0 o "
+"``QutipBackend`` requereix QuTiP 5.2.2 o posterior i qutip-qip 0.4.0 o "
 "posterior."
 
 #: ../../modules/backends/backends_qutip.rst:21

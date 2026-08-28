@@ -94,8 +94,11 @@ Install the framework yourself and the backend becomes available:
 
 .. code-block:: bash
 
-    pip install cuda-quantum-cu12   # or cuda-quantum-cu13, for CudaqBackend
-    pip install qutip qutip-qip     # for QutipBackend
+    pip install "cuda-quantum-cu12>=0.14.0"       # or cuda-quantum-cu13, for CudaqBackend
+    pip install "qutip>=5.2.2" "qutip-qip>=0.4.0"  # for QutipBackend
+
+QiliSDK checks the installed version when the backend is first used, and tells you what it
+found if it is too old.
 
 .. NOTE::
 

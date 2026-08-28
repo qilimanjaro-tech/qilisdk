@@ -40,6 +40,8 @@ dependencies = [
     "setuptools>=74.1.0",
     "rustworkx>=0.16.0",
     "psutil>=6.1.0",
+    # Reads the optional backend requirements so a too-old CUDA-Q or QuTiP is reported clearly.
+    "packaging>=24.2",
 ]
 
 [project.optional-dependencies]
@@ -107,10 +109,11 @@ all-cu13 = [
 ]
 
 [dependency-groups]
-# Optional backends we test against but do not distribute: CUDA-Q powers CudaBackend
-# and qutip powers QutipBackend, both installed by the user.
+# Optional backends we test against but do not distribute: CUDA-Q powers CudaqBackend
+# and qutip powers QutipBackend, both installed by the user. These floors are mirrored
+# in qilisdk.backends.OPTIONAL_FEATURES, which enforces them at runtime.
 backends = [
-    # CUDA-Q has no wheels for 3.14 yet, so CudaBackend is untested there.
+    # CUDA-Q has no wheels for 3.14 yet, so CudaqBackend is untested there.
     "cuda-quantum-cu13>=0.14.0; python_version < '3.14'",
     "qutip>=5.2.2",
     "qutip-qip>=0.4.0",
