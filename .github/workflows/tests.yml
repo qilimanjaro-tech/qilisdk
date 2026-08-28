@@ -16,8 +16,9 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  # The version that carries coverage and the C++ suite.
-  COVERAGE_PYTHON: "3.13"
+  # The version that carries coverage and the C++ suite. It has to be in every
+  # job's matrix, pull request ones included, or nothing gets uploaded.
+  COVERAGE_PYTHON: "3.11"
   # Tests that need CUDA-Q or QuTiP installed. They run in their own jobs, since
   # neither framework publishes wheels for every Python version we support.
   EXTERNAL_BACKEND_TESTS: >-
