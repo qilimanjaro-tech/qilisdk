@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 11:56+0200\n"
+"POT-Creation-Date: 2026-08-28 14:44+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -68,8 +68,8 @@ msgid "✔"
 msgstr "✔"
 
 #: ../../modules/noise/noise_overview.rst:18
-msgid ":class:`~qilisdk.backends.cuda_backend.CudaBackend`"
-msgstr ":class:`~qilisdk.backends.cuda_backend.CudaBackend`"
+msgid ":class:`~qilisdk.backends.cudaq_backend.CudaqBackend`"
+msgstr ":class:`~qilisdk.backends.cudaq_backend.CudaqBackend`"
 
 #: ../../modules/noise/noise_overview.rst:20
 msgid ":class:`~qilisdk.backends.qutip_backend.QutipBackend`"
@@ -172,21 +172,24 @@ msgstr "Aspectes a tenir en compte"
 
 #: ../../modules/noise/noise_overview.rst:93
 msgid "Global noise acts on all qubits for all gates, including controls."
-msgstr "El soroll global actua sobre tots els qubits per a totes les portes, inclosos "
-"els controls."
+msgstr ""
+"El soroll global actua sobre tots els qubits per a totes les portes, "
+"inclosos els controls."
 
 #: ../../modules/noise/noise_overview.rst:94
 msgid ""
 "Gate noise applies to all qubits that a gate acts on, so if you put noise"
 " on a CNOT, it will apply to both the controls and the targets."
-msgstr "El soroll de porta s'aplica a tots els qubits sobre els quals actua la porta, "
-"de manera que si poseu soroll en una CNOT, s'aplicarà tant als controls com "
-"als objectius."
+msgstr ""
+"El soroll de porta s'aplica a tots els qubits sobre els quals actua la "
+"porta, de manera que si poseu soroll en una CNOT, s'aplicarà tant als "
+"controls com als objectius."
 
 #: ../../modules/noise/noise_overview.rst:95
 msgid ""
 "Noise applied to a specific qubit will only ever target that qubit, even "
 "if the gate applying the noise acts on multiple qubits."
-msgstr "El soroll aplicat a un qubit concret només afectarà aquest qubit, encara que "
-"la porta que aplica el soroll actuï sobre diversos qubits."
+msgstr ""
+"El soroll aplicat a un qubit concret només afectarà aquest qubit, encara "
+"que la porta que aplica el soroll actuï sobre diversos qubits."
 

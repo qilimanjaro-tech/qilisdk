@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 17:03+0200\n"
+"POT-Creation-Date: 2026-08-28 14:44+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -44,106 +44,111 @@ msgstr "**Extres opcionals**"
 msgid ""
 "On macOS the default shell is ``zsh``, which treats square brackets as a "
 "globbing pattern, so the extras must be quoted (``pip install "
-"\"qilisdk[qutip]\"``). Select your operating system in the tabs below to "
-"get the right command."
+"\"qilisdk[cuda12]\"``). Select your operating system in the tabs below to"
+" get the right command."
 msgstr ""
 "A macOS l'intèrpret d'ordres per defecte és ``zsh``, que tracta els "
-"claudàtors com un patró d'expansió de noms, de manera que els extres s'han "
-"d'escriure entre cometes (``pip install \"qilisdk[qutip]\"``). Seleccioneu "
-"el vostre sistema operatiu a les pestanyes següents per obtenir l'ordre "
-"correcta."
+"claudàtors com un patró d'expansió de noms, de manera que els extres "
+"s'han d'escriure entre cometes (``pip install \"qilisdk[cuda12]\"``). "
+"Seleccioneu el vostre sistema operatiu a les pestanyes següents per "
+"obtenir l'ordre correcta."
 
 #: ../../getting_started/installation.rst:19
 msgid ""
-"**CUDA acceleration** (NVIDIA GPU support with "
-":mod:`~qilisdk.backends.cuda_backend.CudaBackend`):"
+"**CUDA acceleration** (NVIDIA GPU support for "
+":mod:`~qilisdk.backends.qilisim.QiliSim`):"
 msgstr ""
-"**Acceleració CUDA** (suport de GPU NVIDIA amb "
-":mod:`~qilisdk.backends.cuda_backend.CudaBackend`):"
+"**Acceleració CUDA** (suport de GPU NVIDIA per a "
+":mod:`~qilisdk.backends.qilisim.QiliSim`):"
 
 #: ../../getting_started/installation.rst:23
 #: ../../getting_started/installation.rst:49
 #: ../../getting_started/installation.rst:71
-#: ../../getting_started/installation.rst:93
-#: ../../getting_started/installation.rst:136
-#: ../../getting_started/installation.rst:162
-#: ../../getting_started/installation.rst:197
+#: ../../getting_started/installation.rst:125
+#: ../../getting_started/installation.rst:151
+#: ../../getting_started/installation.rst:186
 msgid "Linux"
 msgstr "Linux"
 
 #: ../../getting_started/installation.rst:29
 #: ../../getting_started/installation.rst:55
 #: ../../getting_started/installation.rst:77
-#: ../../getting_started/installation.rst:99
-#: ../../getting_started/installation.rst:143
-#: ../../getting_started/installation.rst:168
-#: ../../getting_started/installation.rst:203
+#: ../../getting_started/installation.rst:132
+#: ../../getting_started/installation.rst:157
+#: ../../getting_started/installation.rst:192
 msgid "Mac OSX"
 msgstr "Mac OSX"
 
 #: ../../getting_started/installation.rst:35
 #: ../../getting_started/installation.rst:61
 #: ../../getting_started/installation.rst:83
-#: ../../getting_started/installation.rst:105
-#: ../../getting_started/installation.rst:150
-#: ../../getting_started/installation.rst:174
-#: ../../getting_started/installation.rst:209
+#: ../../getting_started/installation.rst:139
+#: ../../getting_started/installation.rst:163
+#: ../../getting_started/installation.rst:198
 msgid "Windows"
 msgstr "Windows"
 
 #: ../../getting_started/installation.rst:42
 msgid ""
-"The CUDA backend requires a CUDA accelerated GPU to be available on your "
-"system and proper drivers to be installed. More information can be found "
-"on their official website: https://nvidia.github.io/cuda-"
-"quantum/latest/using/quick_start.html#install-cuda-q"
+"Use the ``cuda13`` extra instead if your drivers are on CUDA 13. Either "
+"way a CUDA accelerated GPU must be available on your system with proper "
+"drivers installed."
 msgstr ""
-"El backend CUDA requereix una GPU amb acceleració CUDA disponible al "
-"vostre sistema i els controladors adequats instal·lats. Podeu trobar més "
-"informació al seu lloc web oficial: https://nvidia.github.io/cuda-"
-"quantum/latest/using/quick_start.html#install-cuda-q"
+"Utilitzeu l'extra ``cuda13`` en el seu lloc si els vostres controladors "
+"són de CUDA 13. En qualsevol cas, el vostre sistema ha de disposar d'una "
+"GPU amb acceleració CUDA i dels controladors corresponents instal·lats."
 
 #: ../../getting_started/installation.rst:45
-msgid ""
-"**Qutip CPU backend** (CPU simulation with "
-":mod:`~qilisdk.backends.qutip_backend.QutipBackend`):"
-msgstr ""
-"**Backend CPU de Qutip** (simulació per CPU amb "
-":mod:`~qilisdk.backends.qutip_backend.QutipBackend`):"
-
-#: ../../getting_started/installation.rst:67
 msgid "**SpeQtrum** (cloud submission via :class:`~qilisdk.speqtrum`):"
 msgstr "**SpeQtrum** (enviament al núvol via :class:`~qilisdk.speqtrum`):"
 
-#: ../../getting_started/installation.rst:89
+#: ../../getting_started/installation.rst:67
 msgid "You can combine extras:"
 msgstr "Podeu combinar extres:"
 
-#: ../../getting_started/installation.rst:113
+#: ../../getting_started/installation.rst:89
+msgid "**Optional backends**"
+msgstr "**Backends opcionals**"
+
+#: ../../getting_started/installation.rst:91
+msgid ""
+":mod:`~qilisdk.backends.cudaq_backend.CudaqBackend` and "
+":mod:`~qilisdk.backends.qutip_backend.QutipBackend` run on third-party "
+"frameworks that QiliSDK does not distribute, so they are not covered by "
+"any extra. Install the framework yourself and the backend becomes "
+"available:"
+msgstr ""
+":mod:`~qilisdk.backends.cudaq_backend.CudaqBackend` i "
+":mod:`~qilisdk.backends.qutip_backend.QutipBackend` funcionen sobre "
+"frameworks de tercers que QiliSDK no distribueix, de manera que cap "
+"extra no els cobreix. Instal·leu el framework vosaltres mateixos i el "
+"backend quedarà disponible:"
+
+#: ../../getting_started/installation.rst:102
 msgid "QiliSDK requires a python version 3.11 or higher."
 msgstr "QiliSDK requereix una versió de Python 3.11 o superior."
 
-#: ../../getting_started/installation.rst:115
+#: ../../getting_started/installation.rst:104
 msgid "Minimum OS requirements:"
 msgstr "Requisits mínims del sistema operatiu:"
 
-#: ../../getting_started/installation.rst:116
+#: ../../getting_started/installation.rst:105
 msgid "Linux: Ubuntu 22.04 or higher"
 msgstr "Linux: Ubuntu 22.04 o superior"
 
-#: ../../getting_started/installation.rst:117
+#: ../../getting_started/installation.rst:106
 msgid "Windows: Windows 11 or higher"
 msgstr "Windows: Windows 11 o superior"
 
-#: ../../getting_started/installation.rst:118
+#: ../../getting_started/installation.rst:107
 msgid "MacOS: MacOS 14 or higher"
 msgstr "MacOS: MacOS 14 o superior"
 
-#: ../../getting_started/installation.rst:121
+#: ../../getting_started/installation.rst:110
 msgid "Compiling From Source"
 msgstr "Compilar des del codi font"
 
-#: ../../getting_started/installation.rst:123
+#: ../../getting_started/installation.rst:112
 msgid ""
 "The above method will install the pre-built binaries of QiliSDK of the "
 "most recent release. If you want to get the newest features (those that "
@@ -158,7 +163,7 @@ msgstr ""
 "recomana per a la majoria d'usuaris, i no garantim que el codi més recent"
 " sigui estable."
 
-#: ../../getting_started/installation.rst:127
+#: ../../getting_started/installation.rst:116
 msgid ""
 "Support for Windows is limited, so we recommend using WSL, which can be "
 "installed as per `this guide <https://learn.microsoft.com/en-"
@@ -175,7 +180,7 @@ msgstr ""
 "deshabiliten certes funcions del codi (especialment alguns bucles "
 "paral·lelitzats)."
 
-#: ../../getting_started/installation.rst:132
+#: ../../getting_started/installation.rst:121
 msgid ""
 "First, make sure you have Python, pip, git, cmake and a C++ compiler "
 "installed:"
@@ -183,15 +188,15 @@ msgstr ""
 "Primer, assegureu-vos de tenir instal·lats Python, pip, git, cmake i un "
 "compilador de C++:"
 
-#: ../../getting_started/installation.rst:152
+#: ../../getting_started/installation.rst:141
 msgid "Install Python via the Microsoft Store."
 msgstr "Instal·leu Python a través de la Microsoft Store."
 
-#: ../../getting_started/installation.rst:154
+#: ../../getting_started/installation.rst:143
 msgid "Install Git via https://git-scm.com/install/windows."
 msgstr "Instal·leu Git des de https://git-scm.com/install/windows."
 
-#: ../../getting_started/installation.rst:156
+#: ../../getting_started/installation.rst:145
 msgid ""
 "Install C++ build tools by installing the \"C/C++ Extension Pack\" "
 "extension for VSCode."
@@ -199,27 +204,27 @@ msgstr ""
 "Instal·leu les eines de compilació de C++ instal·lant l'extensió \"C/C++ "
 "Extension Pack\" per a VSCode."
 
-#: ../../getting_started/installation.rst:158
+#: ../../getting_started/installation.rst:147
 msgid "Install uv globally with:"
 msgstr "Instal·leu uv globalment amb:"
 
-#: ../../getting_started/installation.rst:180
+#: ../../getting_started/installation.rst:169
 msgid "Then, clone (i.e. download) and enter the repository:"
 msgstr "Després, cloneu (és a dir, descarregueu) i accediu al repositori:"
 
-#: ../../getting_started/installation.rst:187
+#: ../../getting_started/installation.rst:176
 msgid "Create a new virtual environment using uv:"
 msgstr "Creeu un nou entorn virtual usant uv:"
 
-#: ../../getting_started/installation.rst:193
+#: ../../getting_started/installation.rst:182
 msgid "Then activate the environment:"
 msgstr "Després activeu l'entorn:"
 
-#: ../../getting_started/installation.rst:217
+#: ../../getting_started/installation.rst:206
 msgid "To then install QiliSDK into this new environment, run:"
 msgstr "Per instal·lar QiliSDK en aquest nou entorn, executeu:"
 
-#: ../../getting_started/installation.rst:223
+#: ../../getting_started/installation.rst:212
 msgid ""
 "If you want to install with extras, you can run the following, adjusting "
 "as needed:"
@@ -227,7 +232,7 @@ msgstr ""
 "Si voleu instal·lar amb extras, podeu executar el següent, ajustant "
 "segons calgui:"
 
-#: ../../getting_started/installation.rst:229
+#: ../../getting_started/installation.rst:218
 msgid ""
 "There are also a number of extra compile flags that can be set to "
 "enable/disable certain features:"
@@ -235,19 +240,19 @@ msgstr ""
 "També hi ha una sèrie d'indicadors de compilació addicionals que es poden"
 " establir per habilitar/deshabilitar certes funcions:"
 
-#: ../../getting_started/installation.rst:235
+#: ../../getting_started/installation.rst:224
 msgid "Flag"
 msgstr "Indicador"
 
-#: ../../getting_started/installation.rst:236
+#: ../../getting_started/installation.rst:225
 msgid "What it does"
 msgstr "Què fa"
 
-#: ../../getting_started/installation.rst:237
+#: ../../getting_started/installation.rst:226
 msgid "``-Ccmake.define.build_native=ON``"
 msgstr "``-Ccmake.define.build_native=ON``"
 
-#: ../../getting_started/installation.rst:238
+#: ../../getting_started/installation.rst:227
 msgid ""
 "Build for the architecture of the current machine for increased "
 "performance. Only recommended if you are building for your own machine."
@@ -256,11 +261,11 @@ msgstr ""
 "rendiment. Només es recomana si esteu compilant per a la vostra pròpia "
 "màquina."
 
-#: ../../getting_started/installation.rst:239
+#: ../../getting_started/installation.rst:228
 msgid "``-Ccmake.define.single_precision=ON``"
 msgstr "``-Ccmake.define.single_precision=ON``"
 
-#: ../../getting_started/installation.rst:240
+#: ../../getting_started/installation.rst:229
 msgid ""
 "Use single precision (``float``) instead of double precision "
 "(``double``). Slightly faster, but less accurate."
@@ -268,31 +273,31 @@ msgstr ""
 "Utilitza precisió simple (``float``) en lloc de precisió doble "
 "(``double``). Lleugerament més ràpid, però menys precís."
 
-#: ../../getting_started/installation.rst:241
+#: ../../getting_started/installation.rst:230
 msgid "``-Ccmake.build-type=Debug``"
 msgstr "``-Ccmake.build-type=Debug``"
 
-#: ../../getting_started/installation.rst:242
+#: ../../getting_started/installation.rst:231
 msgid "Enable a debug build (no optimizations, debug symbols)."
 msgstr ""
 "Habilita una compilació de depuració (sense optimitzacions, amb símbols "
 "de depuració)."
 
-#: ../../getting_started/installation.rst:243
+#: ../../getting_started/installation.rst:232
 msgid "``-Ccmake.build-type=RelWithDebInfo``"
 msgstr "``-Ccmake.build-type=RelWithDebInfo``"
 
-#: ../../getting_started/installation.rst:244
+#: ../../getting_started/installation.rst:233
 msgid "Enable an optimized debug build (optimizations plus debug symbols)."
 msgstr ""
 "Habilita una compilació de depuració optimitzada (optimitzacions més "
 "símbols de depuració)."
 
-#: ../../getting_started/installation.rst:245
+#: ../../getting_started/installation.rst:234
 msgid "``-Ccmake.build-type=Release``"
 msgstr "``-Ccmake.build-type=Release``"
 
-#: ../../getting_started/installation.rst:246
+#: ../../getting_started/installation.rst:235
 msgid ""
 "Enable a release build (optimizations, no debug symbols). This is the "
 "default."
@@ -300,27 +305,27 @@ msgstr ""
 "Habilita una compilació de llançament (optimitzacions, sense símbols de "
 "depuració). Aquesta és l'opció predeterminada."
 
-#: ../../getting_started/installation.rst:247
+#: ../../getting_started/installation.rst:236
 msgid "``-Ccmake.define.tidy=ON``"
 msgstr "``-Ccmake.define.tidy=ON``"
 
-#: ../../getting_started/installation.rst:248
+#: ../../getting_started/installation.rst:237
 msgid "Run ``clang-tidy`` on the code during compilation."
 msgstr "Executa ``clang-tidy`` sobre el codi durant la compilació."
 
-#: ../../getting_started/installation.rst:249
+#: ../../getting_started/installation.rst:238
 msgid "``-Ccmake.define.verbose=ON``"
 msgstr "``-Ccmake.define.verbose=ON``"
 
-#: ../../getting_started/installation.rst:250
+#: ../../getting_started/installation.rst:239
 msgid "Enable (very) verbose output from the C++ code."
 msgstr "Habilita una sortida (molt) detallada del codi C++."
 
-#: ../../getting_started/installation.rst:251
+#: ../../getting_started/installation.rst:240
 msgid "``-Ccmake.define.tests=ON``"
 msgstr "``-Ccmake.define.tests=ON``"
 
-#: ../../getting_started/installation.rst:252
+#: ../../getting_started/installation.rst:241
 msgid ""
 "Build the C++ test suite, which will then be available as a ``test_cpp`` "
 "executable in the tests directory."
@@ -328,15 +333,15 @@ msgstr ""
 "Compila el conjunt de proves de C++, que després estarà disponible com a "
 "executable ``test_cpp`` al directori de proves."
 
-#: ../../getting_started/installation.rst:253
+#: ../../getting_started/installation.rst:242
 msgid "``-Ccmake.define.coverage=ON``"
 msgstr "``-Ccmake.define.coverage=ON``"
 
-#: ../../getting_started/installation.rst:254
+#: ../../getting_started/installation.rst:243
 msgid "Enable coverage instrumentation flags."
 msgstr "Habilita els indicadors d'instrumentació de cobertura."
 
-#: ../../getting_started/installation.rst:256
+#: ../../getting_started/installation.rst:245
 msgid ""
 "These can be passed to ``uv sync`` by simply appending to the build "
 "command, for example:"
@@ -344,7 +349,7 @@ msgstr ""
 "Aquests es poden passar a ``uv sync`` simplement afegint-los a l'ordre de"
 " compilació, per exemple:"
 
-#: ../../getting_started/installation.rst:262
+#: ../../getting_started/installation.rst:251
 msgid ""
 "You then have an environment with the latest version of QiliSDK "
 "installed. If you want to install other things to the environment you'll "
@@ -353,7 +358,7 @@ msgstr ""
 "Llavors tindreu un entorn amb la darrera versió de QiliSDK instal·lada. "
 "Si voleu instal·lar altres coses a l'entorn, haureu d'usar pip amb uv:"
 
-#: ../../getting_started/installation.rst:269
+#: ../../getting_started/installation.rst:258
 msgid "And then to run a Python script within the environment, you can use:"
 msgstr "I per executar un script de Python dins de l'entorn, podeu usar:"
 
@@ -389,4 +394,29 @@ msgstr "I per executar un script de Python dins de l'entorn, podeu usar:"
 
 #~ msgid "The available flags are:"
 #~ msgstr "Els indicadors disponibles són:"
+
+#~ msgid ""
+#~ "The CUDA backend requires a CUDA "
+#~ "accelerated GPU to be available on "
+#~ "your system and proper drivers to "
+#~ "be installed. More information can be"
+#~ " found on their official website: "
+#~ "https://nvidia.github.io/cuda-"
+#~ "quantum/latest/using/quick_start.html#install-cuda-q"
+#~ msgstr ""
+#~ "El backend CUDA requereix una GPU "
+#~ "amb acceleració CUDA disponible al "
+#~ "vostre sistema i els controladors "
+#~ "adequats instal·lats. Podeu trobar més "
+#~ "informació al seu lloc web oficial: "
+#~ "https://nvidia.github.io/cuda-"
+#~ "quantum/latest/using/quick_start.html#install-cuda-q"
+
+#~ msgid ""
+#~ "**Qutip CPU backend** (CPU simulation "
+#~ "with :mod:`~qilisdk.backends.qutip_backend.QutipBackend`):"
+#~ msgstr ""
+#~ "**Backend CPU de Qutip** (simulació per"
+#~ " CPU amb "
+#~ ":mod:`~qilisdk.backends.qutip_backend.QutipBackend`):"
 
