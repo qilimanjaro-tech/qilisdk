@@ -1648,6 +1648,9 @@ TEST(ParseGates, ParameterPerturbationAppliedGlobalNoise) {
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_NEAR(result[0].get_parameters()[0].second, 0.6, 1e-10);
+
+    // The perturbation is a per-execution draw, so the gate itself must be left untouched
+    EXPECT_NEAR(fake_circuit.attr("gates")[py::int_(0)].attr("_theta").cast<double>(), 0.5, 1e-10);
 }
 
 TEST(ParseGates, ParameterPerturbationAppliedPerGate) {
@@ -1692,6 +1695,9 @@ TEST(ParseGates, ParameterPerturbationAppliedPerGate) {
 
     ASSERT_EQ(result.size(), 1u);
     EXPECT_NEAR(result[0].get_parameters()[0].second, 0.5, 1e-10);
+
+    // Same for per-gate perturbations: the original value stays on the gate
+    EXPECT_NEAR(fake_circuit.attr("gates")[py::int_(0)].attr("_theta").cast<double>(), 0.25, 1e-10);
 }
 
 TEST(ParseSolverParams, EmptyDictReturnsDefaults) {

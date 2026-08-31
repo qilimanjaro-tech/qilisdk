@@ -20,7 +20,7 @@ import numpy as np
 import pytest
 
 from qilisdk.analog.hamiltonian import Hamiltonian
-from qilisdk.backends.cuda_backend import cudaq_to_standard, reverse_bits
+from qilisdk.backends.cuda_backend import _SWAP_OP_NAME, cudaq_to_standard, reverse_bits
 from qilisdk.core import Parameter
 from qilisdk.core.qtensor import InitialState, QTensor, ket
 from qilisdk.functionals.analog_evolution import AnalogEvolution
@@ -135,6 +135,9 @@ class DummyKernel:
 
     def swap(self, qubit_0, qubit_1):
         self.calls.append(("swap", qubit_0, qubit_1))
+
+    def qilisdk_swap(self, qubit_0, qubit_1):
+        self.calls.append((_SWAP_OP_NAME, qubit_0, qubit_1))
 
     def control(self, target_kernel, control_qubit, target_qubit):
         self.calls.append(("control", control_qubit, target_qubit))
@@ -282,6 +285,23 @@ def test_execute_basic_gate_handler(mock_set_target, mock_sample, mock_make_kern
     backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
     calls = dummy_make_kernel.main_kernel.calls
     assert expected_call in calls
+
+
+@patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
+@patch("cudaq.sample", return_value={"00": 1000})
+@patch("cudaq.set_target")
+def test_execute_swap_with_noise_uses_custom_operation(mock_set_target, mock_sample, mock_make_kernel, monkeypatch):
+    # CUDA-Q takes no noise channel on its built-in swap, so a noisy backend emits the custom one.
+    monkeypatch.setattr(dummy_make_kernel, "main_kernel", DummyKernel())
+    noise_model = NoiseModel()
+    noise_model.add(BitFlip(probability=0.1))
+    backend = CudaBackend(noise_model=noise_model)
+    circuit = Circuit(nqubits=2)
+    circuit.add(SWAP(0, 1))
+    backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
+    calls = dummy_make_kernel.main_kernel.calls
+    assert (_SWAP_OP_NAME, "q0", "q1") in calls
+    assert ("swap", "q0", "q1") not in calls
 
 
 # --- Parameterized tests for controlled gate execution ---

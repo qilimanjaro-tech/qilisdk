@@ -21,6 +21,8 @@ import pytest
 
 import qilisdk.core.model as model_module
 from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.comparison import EQ, GT, LEQ, LT, NEQ, Comparison, ComparisonOperation
+from qilisdk.core.expression import Constant, Expression, Sin
 from qilisdk.core.model import (
     QUBO,
     Constraint,
@@ -31,23 +33,7 @@ from qilisdk.core.model import (
     _Linearizer,
     _validate_undirected_edges,
 )
-from qilisdk.core.variables import (
-    EQ,
-    GT,
-    LEQ,
-    LT,
-    NEQ,
-    BinaryVariable,
-    Bitwise,
-    ComparisonOperation,
-    ComparisonTerm,
-    Domain,
-    OneHot,
-    Operation,
-    SpinVariable,
-    Term,
-    Variable,
-)
+from qilisdk.core.variables import BinaryVariable, Bitwise, Domain, OneHot, SpinVariable, Variable
 from qilisdk.utils.classical_solvers import BruteForceSolver
 
 
@@ -67,7 +53,7 @@ def test_slackcounter_singleton_and_increment():
 # ---------- Constraint ----------
 def test_constraint_init_and_repr():
     var = Variable("x", Domain.BINARY)
-    ct = ComparisonTerm(lhs=var, rhs=0, operation=ComparisonOperation.GEQ)
+    ct = Comparison(lhs=var, rhs=0, operation=ComparisonOperation.GEQ)
     cons = Constraint(label="c1", term=ct)
     assert cons.label == "c1"
     assert cons.term is ct
@@ -77,19 +63,19 @@ def test_constraint_init_and_repr():
     assert cons.degree == max(ct.lhs.degree, ct.rhs.degree)
     # errors
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
-        Constraint(label="bad", term=Term([0], Operation.ADD))
+        Constraint(label="bad", term=Constant(0))
 
 
 def test_constraint_variables():
     var = Variable("x", Domain.INTEGER)
-    ct = ComparisonTerm(lhs=var + 1, rhs=2, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var + 1, rhs=2, operation=ComparisonOperation.EQ)
     cons = Constraint(label="c1", term=ct)
     var_list = cons.variables()
     assert len(var_list) == 1
     assert var in var_list
 
     var2 = Variable("x2", Domain.INTEGER)
-    ct = ComparisonTerm(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
     cons2 = Constraint(label="c1", term=ct)
     var_list = cons2.variables()
     assert len(var_list) == 2
@@ -97,7 +83,7 @@ def test_constraint_variables():
 
 def test_constraint_copy():
     var = Variable("x", Domain.INTEGER)
-    ct = ComparisonTerm(lhs=var + 1, rhs=2, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var + 1, rhs=2, operation=ComparisonOperation.EQ)
     cons = Constraint(label="c1", term=ct)
     cons2 = copy.copy(cons)
 
@@ -110,7 +96,7 @@ def test_constraint_copy():
 # ---------- Objective ----------
 def test_objective_init_and_copy_and_errors():
     var = Variable("b", Domain.BINARY)
-    t = Term(elements=[var], operation=Operation.ADD)
+    t = var
     obj = Objective(label="o1", term=t, sense=ObjectiveSense.MAXIMIZE)
     obj2 = Objective(label="o2", term=var, sense=ObjectiveSense.MAXIMIZE)
     assert obj.label == "o1"
@@ -130,7 +116,7 @@ def test_objective_init_and_copy_and_errors():
     assert obj3.sense == obj.sense
     # errors
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
-        Objective(label="bad", term=123, sense=ObjectiveSense.MINIMIZE)
+        Objective(label="bad", term="not-an-expression", sense=ObjectiveSense.MINIMIZE)
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         Objective(label="bad", term=t, sense="wrong")
 
@@ -159,7 +145,7 @@ def simple_model():
 def test_model_add_duplicate_constraint(simple_model):
     m = simple_model
     var = Variable("x", Domain.BINARY)
-    ct = ComparisonTerm(lhs=var, rhs=0, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var, rhs=0, operation=ComparisonOperation.EQ)
     m.add_constraint("c", ct)
     assert len(m.encoding_constraints) == 0
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
@@ -169,7 +155,7 @@ def test_model_add_duplicate_constraint(simple_model):
 def test_model_lagrange_multipliers(simple_model):
     m = simple_model
     var = Variable("x", Domain.BINARY)
-    ct = ComparisonTerm(lhs=var, rhs=0, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var, rhs=0, operation=ComparisonOperation.EQ)
     m.add_constraint("c", ct, lagrange_multiplier=10)
     assert m.lagrange_multipliers["c"] == 10
     m.set_lagrange_multiplier("c", 20)
@@ -181,7 +167,7 @@ def test_model_lagrange_multipliers(simple_model):
 def test_model_set_objective_and_repr(simple_model):
     m = simple_model
     var = Variable("y", Domain.BINARY)
-    t = Term(elements=[var], operation=Operation.ADD)
+    t = var
     m.set_objective(term=t, label="obj1", sense=ObjectiveSense.MINIMIZE)
     assert m.objective.label == "obj1"
     assert m.objective.term == t
@@ -191,7 +177,7 @@ def test_model_set_objective_and_repr(simple_model):
     assert "subject to the constraint" not in s
 
     var2 = Variable("x2", Domain.INTEGER)
-    ct = ComparisonTerm(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
     cons1 = Constraint(label="cons1", term=ct)
 
     m.add_constraint("cons1", ct)
@@ -207,7 +193,7 @@ def test_model_variables(simple_model):
     t = var + 1
 
     var2 = Variable("x2", Domain.INTEGER)
-    ct = ComparisonTerm(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
 
     m.set_objective(t)
     assert len(m.variables()) == 1
@@ -221,7 +207,7 @@ def test_model_copy(simple_model):
     t = var + 1
 
     var2 = Variable("x2", Domain.INTEGER)
-    ct = ComparisonTerm(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
+    ct = Comparison(lhs=var + var2, rhs=2 - var, operation=ComparisonOperation.EQ)
 
     m.set_objective(t)
     m.add_constraint("cons1", ct)
@@ -278,12 +264,12 @@ def test_model_knapsack_brute_force_solution():
     # items: value=5 weight=3, value=4 weight=2; max_weight=3
     # optimal: b0=1 only (value=5, weight=3); taking both violates constraint (weight=5>3)
     m = Model.knapsack(values=[5, 4], weights=[3, 2], max_weight=3)
-    _, sample = BruteForceSolver().solve(m)
+    result = BruteForceSolver().solve(m)
     by_label = {v.label: v for v in m.variables()}
     b0, b1 = by_label["b0"], by_label["b1"]
-    assert 3 * sample[b0] + 2 * sample[b1] <= 3
-    assert sample[b0] == 1
-    assert sample[b1] == 0
+    assert 3 * result.sample[b0] + 2 * result.sample[b1] <= 3
+    assert result.sample[b0] == 1
+    assert result.sample[b1] == 0
 
 
 def test_model_random_ising_structure():
@@ -310,20 +296,20 @@ def test_model_random_ising_different_seeds_differ():
 def test_model_random_ising_is_fully_connected_by_default():
     # 5 fields + one coupling per pair of nodes.
     m = Model.random_ising(num_variables=5)
-    assert len(m.objective.term) == 5 + 10
+    assert len(m.objective.term.as_coefficients_dict()) == 5 + 10
 
 
 def test_model_random_ising_sparse():
     # With no extra edges the couplings are those of a spanning tree, i.e. num_variables - 1.
     m = Model.random_ising(num_variables=5, edge_probability=0.0)
     assert len(m.variables()) == 5
-    assert len(m.objective.term) == 5 + 4
+    assert len(m.objective.term.as_coefficients_dict()) == 5 + 4
 
 
 def test_model_random_ising_single_variable():
     m = Model.random_ising(num_variables=1)
     assert len(m.variables()) == 1
-    assert len(m.objective.term) == 1
+    assert len(m.objective.term.as_coefficients_dict()) == 1
 
 
 def test_model_factoring_basic():
@@ -333,8 +319,8 @@ def test_model_factoring_basic():
     assert len(m.constraints) == 1
     assert m.constraints[0].label == "factoring"
     # brute-force should find factors (6 = 2*3) with the constraint satisfied (penalty 0)
-    results, _ = BruteForceSolver().solve(m)
-    assert results["factoring"] == 0
+    result = BruteForceSolver().solve(m)
+    assert result.results["factoring"] == 0
 
 
 def test_model_factoring_custom_label():
@@ -413,8 +399,8 @@ def test_model_max_cut_brute_force_solution():
     # Path graph 0-1-2: max cut = 2 (put nodes 0,2 on one side, node 1 on the other).
     # evaluate() negates MAXIMIZE objectives, so brute_force returns the negated value (-2).
     m = Model.max_cut(edges=[(0, 1), (1, 2)])
-    results, _ = BruteForceSolver().solve(m)
-    obj_val = results[m.objective.label]
+    result = BruteForceSolver().solve(m)
+    obj_val = result.objective
     assert obj_val == -2
 
 
@@ -444,12 +430,12 @@ def test_model_graph_coloring_one_color_constraints():
 def test_model_graph_coloring_brute_force_solution():
     # The triangle is 3-colorable, so the optimal conflict objective is 0.
     m = Model.graph_coloring(edges=[(0, 1), (1, 2), (0, 2)], num_colors=3)
-    results, sample = BruteForceSolver().solve(m)
-    assert results[m.objective.label] == 0
+    result = BruteForceSolver().solve(m)
+    assert result.objective == 0
     # every vertex receives exactly one color
     by_label = {v.label: v for v in m.variables()}
     for v in range(3):
-        assert sum(sample[by_label[f"x{v}_{k}"]] for k in range(3)) == 1
+        assert sum(result.sample[by_label[f"x{v}_{k}"]] for k in range(3)) == 1
 
 
 def test_model_travelling_salesman_basic():
@@ -653,7 +639,7 @@ def test_model_random_travelling_salesman_sparse():
     m = Model.random_travelling_salesman(num_cities=4, edge_probability=0.0)
     assert len(m.variables()) == 16
     assert len(m.constraints) == 8
-    assert len(m.objective.term) == 3 * 4 * 2  # edges * positions * both orientations
+    assert len(m.objective.term.as_coefficients_dict()) == 3 * 4 * 2  # edges * positions * both orientations
 
 
 def test_random_connected_edges_is_connected():
@@ -680,35 +666,35 @@ def test_brute_force_minimize():
     m = Model("bf_min")
     x, y = BinaryVariable("x"), BinaryVariable("y")
     m.set_objective(x + 2 * y, sense=ObjectiveSense.MINIMIZE)
-    results, sample = BruteForceSolver().solve(m)
-    assert sample[x] == 0
-    assert sample[y] == 0
-    assert results[m.objective.label] == 0
+    result = BruteForceSolver().solve(m)
+    assert result.sample[x] == 0
+    assert result.sample[y] == 0
+    assert result.objective == 0
 
 
 def test_brute_force_maximize():
     m = Model("bf_max")
     x, y = BinaryVariable("x"), BinaryVariable("y")
     m.set_objective(x + 2 * y, sense=ObjectiveSense.MAXIMIZE)
-    results, sample = BruteForceSolver().solve(m)
-    assert sample[x] == 1
-    assert sample[y] == 1
+    result = BruteForceSolver().solve(m)
+    assert result.sample[x] == 1
+    assert result.sample[y] == 1
     # evaluate() negates MAXIMIZE objectives, so the returned value is -(x + 2y) = -3.
-    assert results[m.objective.label] == -3
+    assert result.objective == -3
 
 
 def test_brute_force_respects_constraints():
     # Without constraint handling, brute_force would greedily pick all items (value=18, weight=14)
     # which violates max_weight=5. The correct answer is b0=1,b1=1 (value=7, weight=5).
     m = Model.knapsack(values=[3, 4, 5, 6], weights=[2, 3, 4, 5], max_weight=5)
-    _, sample = BruteForceSolver().solve(m)
+    result = BruteForceSolver().solve(m)
     by_label = {v.label: v for v in m.variables()}
     b0, b1, b2, b3 = by_label["b0"], by_label["b1"], by_label["b2"], by_label["b3"]
-    assert 2 * sample[b0] + 3 * sample[b1] + 4 * sample[b2] + 5 * sample[b3] <= 5
-    assert sample[b0] == 1
-    assert sample[b1] == 1
-    assert sample[b2] == 0
-    assert sample[b3] == 0
+    assert 2 * result.sample[b0] + 3 * result.sample[b1] + 4 * result.sample[b2] + 5 * result.sample[b3] <= 5
+    assert result.sample[b0] == 1
+    assert result.sample[b1] == 1
+    assert result.sample[b2] == 0
+    assert result.sample[b3] == 0
 
 
 def test_brute_force_returns_evaluate_dict():
@@ -716,18 +702,18 @@ def test_brute_force_returns_evaluate_dict():
     x = BinaryVariable("x")
     m.set_objective(x + 0, sense=ObjectiveSense.MINIMIZE)
     m.add_constraint("must_be_zero", EQ(x, 0))
-    results, _ = BruteForceSolver().solve(m)
-    # results should contain both the objective label and the constraint label
-    assert m.objective.label in results
-    assert "must_be_zero" in results
+    result = BruteForceSolver().solve(m)
+    # result.results should contain both the objective label and the constraint label
+    assert m.objective.label in result.results
+    assert "must_be_zero" in result.results
 
 
 def test_brute_force_with_bounded_variable():
     m = Model("bf_bounded")
     v = Variable("v", Domain.POSITIVE_INTEGER, bounds=(0, 3))
     m.set_objective(v + 0, sense=ObjectiveSense.MINIMIZE)
-    _, sample = BruteForceSolver().solve(m)
-    assert sample[v] == 0
+    result = BruteForceSolver().solve(m)
+    assert result.sample[v] == 0
 
 
 def test_brute_force_raises_for_unsupported_variable():
@@ -762,7 +748,7 @@ def test_qubo_check_valid_constraint_always_feasible_and_unsat():
     q = QUBO(label="q2")
     v = BinaryVariable("b2")
     # always feasible: term 0 >= 0
-    h = ComparisonTerm(lhs=v, rhs=v, operation=ComparisonOperation.GEQ)
+    h = Comparison(lhs=v, rhs=v, operation=ComparisonOperation.GEQ)
     slack = q._check_valid_constraint("c1", h.lhs - h.rhs, h.operation)
     assert slack is None
     # unsatisfiable: v > 2
@@ -786,7 +772,7 @@ def test_qubo_check_valid_constraint_always_feasible_and_unsat():
 def test_qubo_add_constraint_and_objective_errors():
     q = QUBO(label="q3")
     x = BinaryVariable("x")
-    term = ComparisonTerm(lhs=x, rhs=0, operation=ComparisonOperation.EQ)
+    term = Comparison(lhs=x, rhs=0, operation=ComparisonOperation.EQ)
     # invalid penalization
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         q.add_constraint("c", term, penalization="bad")
@@ -795,7 +781,7 @@ def test_qubo_add_constraint_and_objective_errors():
     assert "c" in q.lagrange_multipliers
     # non-binary domain var
     y = Variable("y", Domain.INTEGER)
-    t2 = ComparisonTerm(lhs=y, rhs=0, operation=ComparisonOperation.EQ)
+    t2 = Comparison(lhs=y, rhs=0, operation=ComparisonOperation.EQ)
     q2 = QUBO(label="q4")
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         q2.add_constraint("c2", t2)
@@ -806,12 +792,12 @@ def test_qubo_set_objective_errors():
     q = QUBO(label="q5")
     # non-binary domain
     y = Variable("y", Domain.REAL, bounds=(0, 1))
-    t = Term(elements=[y], operation=Operation.ADD)
+    t = y
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         q.set_objective(term=t)
     # valid binary
     b = BinaryVariable("b3")
-    t2 = Term(elements=[b], operation=Operation.ADD)
+    t2 = b
     q.set_objective(term=t2, label="o2", sense=ObjectiveSense.MAXIMIZE)
     assert q.objective.label == "o2"
     assert q.qubo_objective.sense.value == ObjectiveSense.MINIMIZE.value  # always stored as minimize
@@ -841,14 +827,14 @@ def test_qubo_transform_unbalanced_penalization():
     q.add_constraint("c", ct, penalization="unbalanced", parameters=(2, 1))
 
     h = ct.lhs - ct.rhs
-    assert q._constraints["c"].lhs - q._constraints["c"].rhs == (-2 * h + h**2).to_binary()
+    assert (q._constraints["c"].lhs - q._constraints["c"].rhs).expand() == (-2 * h + h**2).to_binary().expand()
 
     ct = LT(x, 5)
 
     q.add_constraint("c2", ct, penalization="unbalanced", parameters=(2, 1))
 
     h = ct.rhs - ct.lhs
-    assert q._constraints["c2"].lhs - q._constraints["c2"].rhs == (-2 * h + h**2).to_binary()
+    assert (q._constraints["c2"].lhs - q._constraints["c2"].rhs).expand() == (-2 * h + h**2).to_binary().expand()
 
 
 def test_qubo_transform_slack_penalization():
@@ -1117,7 +1103,7 @@ def test_model_evaluate():
 def test_complex_constraint_raises():
     q = QUBO(label="test")
     x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
-    complex_constraint = ComparisonTerm(lhs=2 * x + 1j, rhs=1, operation=ComparisonOperation.EQ)
+    complex_constraint = Comparison(lhs=2 * x + 1j, rhs=1, operation=ComparisonOperation.EQ)
     with pytest.raises(ValueError, match=r"Complex values"):
         q.add_constraint("c", complex_constraint)
 
@@ -1140,11 +1126,10 @@ def test_qubo_from_model():
 def test_parse_term_unsupported_element(monkeypatch):
     x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
     bad_objective = MagicMock()
-    bad_objective.term = Term(elements=[x, 3], operation=Operation.SUB)
+    bad_objective.term = Sin(x)
     bad_objective.variables = MagicMock(return_value=[x])
     monkeypatch.setattr(QUBO, "qubo_objective", bad_objective)
     q = QUBO(label="test")
-    Term(elements=[x, 3], operation=Operation.SUB)
     with pytest.raises(ValueError, match=r"is not supported"):
         q.to_hamiltonian()
 
@@ -1301,21 +1286,17 @@ def test_model_knapsack_zero_items():
 
 
 def test_model_knapsack_empty_objective_guard(monkeypatch):
-    # The objective term is always a Term for non-empty inputs; force the
-    # defensive `not isinstance(obj, Term)` guard by making `Term` unrecognized.
-    class _FakeTerm:
-        def __init__(self, *args, **kwargs):
-            pass
-
-    monkeypatch.setattr(model_module, "Term", _FakeTerm)
+    # The objective is always an Expression for non-empty inputs; force the defensive
+    # `not isinstance(obj, Expression)` guard by making the summation return a bare number.
+    monkeypatch.setattr(model_module, "sum", lambda *args, **kwargs: 0, raising=False)
     with pytest.raises(ValueError, match=r"objective term is empty"):
         Model.knapsack(values=[1, 2], weights=[1, 1], max_weight=1)
 
 
 def test_model_travelling_salesman_numeric_objective_guard(monkeypatch):
-    # The distance objective is always a Term; force the defensive numeric-objective
-    # guard by making the real Term type be treated as a Number.
-    monkeypatch.setattr(model_module, "Number", Term)
+    # The distance objective is always an Expression; force the defensive numeric-objective
+    # guard by treating Expression as a Number.
+    monkeypatch.setattr(model_module, "Number", Expression)
     with pytest.raises(ValueError, match="at least one edge"):
         Model.travelling_salesman(edges=[(0, 1)], distances=[1.0])
 
@@ -1378,12 +1359,11 @@ def test_compute_lower_upper_limits_mul_negative_coefficient():
     assert upper == 0
 
 
-def test_compute_lower_upper_limits_unsupported_operation():
+def test_compute_lower_upper_limits_complex_coefficient_raises():
     q = QUBO("test")
     b = BinaryVariable("b")
-    sub_term = Term([b, 1], Operation.SUB)
-    with pytest.raises(ValueError, match=r"Operation .* in constraint is not supported"):
-        q._compute_lower_and_upper_limits(sub_term)
+    with pytest.raises(ValueError, match=r"Complex values encountered in the constraint"):
+        q._compute_lower_and_upper_limits(1j * b)
 
 
 def test_qubo_set_objective_cubic_without_linearizer_raises():
@@ -1393,64 +1373,57 @@ def test_qubo_set_objective_cubic_without_linearizer_raises():
         q.set_objective(x * y * z)
 
 
-def test_linearizer_reduce_nested_add_element():
-    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
-    inner = x + y
-    outer = Term([inner, z], Operation.ADD)
-    linearizer = _Linearizer()
-    result = linearizer.reduce(outer)
-    assert result.degree <= 2
-
-
-def test_linearizer_reduce_returns_non_add_non_mul_term_unchanged():
-    b = BinaryVariable("b")
-    sub_term = Term([b, 1], Operation.SUB)
-    linearizer = _Linearizer()
-    result = linearizer.reduce(sub_term)
-    assert result is sub_term
-
-
-def test_linearizer_reduce_monomial_nested_sub_term_raises():
+def test_linearizer_reduce_expands_nested_sums():
     x, y, z, w = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z"), BinaryVariable("w")
-    inner_add = x + y
-    nested_mul = Term([inner_add, z, w], Operation.MUL)
+    # Mul no longer auto-distributes, so reduce() has to expand before it can see the monomials.
+    linearizer = _Linearizer()
+    result = linearizer.reduce((x + y) * z * w)
+    assert result.degree <= 2
+    assert result == linearizer.reduce(x * z * w + y * z * w)
+
+
+def test_linearizer_reduce_returns_non_expression_unchanged():
+    linearizer = _Linearizer()
+    assert linearizer.reduce("not an expression") == "not an expression"
+
+
+def test_linearizer_reduce_monomial_rejects_unexpanded_sum():
+    x, y, z, w = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z"), BinaryVariable("w")
+    # _reduce_monomial expects a monomial. A factored sum only reaches it if expand() was skipped.
     linearizer = _Linearizer()
     with pytest.raises(ValueError, match=r"does not support nested sub-term"):
-        linearizer._reduce_monomial(nested_mul)
+        linearizer._reduce_monomial((x + y) * z * w)
 
 
-def test_linearizer_reduce_add_with_nested_add_sub_term():
-    x, y, z, w = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z"), BinaryVariable("w")
-    cubic = x * y * z
-    inner_add = cubic + w
-    outer_add = Term([inner_add, w], Operation.ADD)
+def test_linearizer_reduce_monomial_rejects_non_binary_variable():
+    x, y = BinaryVariable("x"), BinaryVariable("y")
+    v = Variable("v", Domain.INTEGER, bounds=(0, 3))
     linearizer = _Linearizer()
-    result = linearizer.reduce(outer_add)
+    with pytest.raises(ValueError, match=r"only operates on binary-encoded terms"):
+        linearizer._reduce_monomial(x * y * v)
+
+
+def test_linearizer_reduce_add_with_cubic_and_linear_terms():
+    x, y, z, w = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z"), BinaryVariable("w")
+    linearizer = _Linearizer()
+    result = linearizer.reduce(x * y * z + w)
     assert result.degree <= 2
 
 
-def test_linearizer_reduce_add_with_preserved_sub_term_element():
-    # Line 897: ADD term containing a non-MUL Term hits coeff * self.reduce(element).
-    # SUB sub-terms are NOT flattened by Term.__init__ (unlike same-operation ADD terms),
-    # so the SUB Term survives as a dict key and is seen by the reduce loop.
+def test_linearizer_reduce_keeps_the_additive_constant():
     x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
-    sub_term = Term([x, y], Operation.SUB)
-    outer = Term([sub_term, z], Operation.ADD)
     linearizer = _Linearizer()
-    result = linearizer.reduce(outer)
-    assert isinstance(result, Term)
-    assert result.operation == Operation.ADD
+    result = linearizer.reduce(x * y * z + 7)
+    assert result.degree <= 2
+    assert result.get_constant() == 7
 
 
-def test_linearizer_reduce_monomial_wraps_constant_in_term():
+def test_linearizer_reduce_monomial_returns_low_degree_monomials_unchanged():
+    x, y = BinaryVariable("x"), BinaryVariable("y")
     linearizer = _Linearizer()
-    mock_monomial = MagicMock()
-    mock_monomial.operation = Operation.MUL
-    mock_monomial.degree = 3
-    mock_monomial.__iter__ = MagicMock(return_value=iter([]))  # no elements → variables stays []
-    result = linearizer._reduce_monomial(mock_monomial)
-    assert isinstance(result, Term)
-    assert result.operation == Operation.MUL
+    for monomial in (Constant(5), x, x * y, 3 * x * y):
+        assert linearizer._reduce_monomial(monomial) is monomial
+    assert not linearizer.substitutions
 
 
 def test_compute_lower_upper_limits_add_negative_coefficient():
@@ -1469,3 +1442,95 @@ def test_qubo_copy_includes_encoding_constraints():
     q._encoding_constraints["enc"] = Constraint("enc", EQ(b, 0))
     q2 = copy.copy(q)
     assert "enc" in q2._encoding_constraints
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for the qubo_objective cache. The property memoizes an
+# expensive build and only rebuilds when the objective or the constraints
+# change. These tests populate the cache, then mutate the model, and assert the
+# next read reflects the change (i.e. the cache is not served stale), comparing
+# against an independently, freshly-built QUBO.
+# ---------------------------------------------------------------------------
+
+
+def test_qubo_objective_cache_is_consistent_across_repeated_reads():
+    x = BinaryVariable("x")
+    y = BinaryVariable("y")
+    q = QUBO("q")
+    q.set_objective(2 * x + 3 * y)
+
+    first = q.qubo_objective
+    second = q.qubo_objective
+
+    # repeated reads without mutation must be consistent (and are served from cache)
+    assert first is second
+    assert first.term == second.term
+
+
+def test_qubo_objective_cache_refreshes_after_set_objective():
+    x = BinaryVariable("x")
+    y = BinaryVariable("y")
+
+    q = QUBO("q")
+    q.set_objective(2 * x)
+    before = q.qubo_objective.term  # populate the cache
+
+    q.set_objective(3 * y)  # replacing the objective must invalidate the cache
+    after = q.qubo_objective.term
+
+    assert after != before
+
+    reference = QUBO("ref")
+    reference.set_objective(3 * y)
+    assert after == reference.qubo_objective.term
+
+
+def test_qubo_objective_cache_refreshes_after_add_constraint():
+    x = BinaryVariable("x")
+    y = BinaryVariable("y")
+
+    q = QUBO("q")
+    q.set_objective(x + y)
+    before = q.qubo_objective.term  # populate the cache without any penalties
+
+    q.add_constraint("c", EQ(x + y, 1))  # folds a penalty into the objective
+    after = q.qubo_objective.term
+
+    assert after != before  # the penalty must now be part of the objective
+
+    reference = QUBO("ref")
+    reference.set_objective(x + y)
+    reference.add_constraint("c", EQ(x + y, 1))
+    assert after == reference.qubo_objective.term
+
+
+def test_qubo_objective_cache_reflects_multiple_mutations_in_sequence():
+    x = BinaryVariable("x")
+    y = BinaryVariable("y")
+
+    q = QUBO("q")
+    q.set_objective(x + y)
+    _ = q.qubo_objective  # populate
+    q.add_constraint("c1", EQ(x, 0))
+    _ = q.qubo_objective  # populate again, now with one constraint
+    q.add_constraint("c2", EQ(y, 1))
+    final = q.qubo_objective.term
+
+    reference = QUBO("ref")
+    reference.set_objective(x + y)
+    reference.add_constraint("c1", EQ(x, 0))
+    reference.add_constraint("c2", EQ(y, 1))
+    assert final == reference.qubo_objective.term
+
+
+def test_qubo_objective_cache_matches_uncached_read_on_encoded_variable():
+    # A QUBO with an encoded (integer) variable exercises the already-binary
+    # objective path; the cached read must equal a fresh to_qubo() build.
+    q = QUBO("q")
+    v = Variable("v", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
+    q.set_objective(v + v**2)
+    q.add_constraint("c", EQ(v, 1))
+
+    cached = q.qubo_objective.term
+    assert q.qubo_objective.term == cached  # stable across reads
+    assert cached == q.to_qubo().qubo_objective.term
