@@ -25,7 +25,7 @@ from typing_extensions import Self
 from qilisdk.core.expression import Expression
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
-from qilisdk.core.variables import Parameter, Term
+from qilisdk.core.variables import Parameter
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
