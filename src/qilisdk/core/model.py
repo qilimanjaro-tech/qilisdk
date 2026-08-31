@@ -1343,6 +1343,7 @@ class QUBO(Model):
         super().__init__(label)
         self.continuous_vars: dict[str, Variable] = {}
         self.__qubo_objective: Objective | None = None
+        self.__qubo_objective_needs_refresh: bool = True
         self._linearizer: _Linearizer | None = None
 
     def _reduce(self, term: Expression) -> Expression:
@@ -1368,9 +1369,14 @@ class QUBO(Model):
         Returns:
             Objective | None: The QUBO objective (factoring in the constraints and objective of the model). If the objective and constraints are not defined in the model, this property returns None.
         """
+        if not self.__qubo_objective_needs_refresh:
+            return self.__qubo_objective
         self.__qubo_objective = None
         if self.objective is not None:
-            self._build_qubo_objective(self.objective.term, self.objective.label, self.objective.sense)
+            # The objective is already binary (set_objective binarises it), so skip that conversion
+            self._build_qubo_objective(
+                self.objective.term, self.objective.label, self.objective.sense, already_binary=True
+            )
         for constraint in self.constraints:
             if constraint.label in self.lagrange_multipliers:
                 self._build_qubo_objective(
@@ -1381,6 +1387,7 @@ class QUBO(Model):
                 self._build_qubo_objective(
                     constraint.term.lhs - constraint.term.rhs
                 )  # I don't think this line can be reached.
+        self.__qubo_objective_needs_refresh = False
         return self.__qubo_objective
 
     def __repr__(self) -> str:
@@ -1600,6 +1607,9 @@ class QUBO(Model):
         if label in self._constraints:
             raise ValueError((f'Constraint "{label}" already exists:\n \t\t{self._constraints[label]}'))
 
+        # Adding a constraint changes the QUBO objective, so we need a refresh
+        self.__qubo_objective_needs_refresh = True
+
         lower_penalization = penalization.lower()
 
         if lower_penalization not in {"unbalanced", "slack"}:
@@ -1687,6 +1697,11 @@ class QUBO(Model):
         term = term.to_binary()
         term = self._reduce(term)
         self._objective = Objective(label=label, term=term, sense=sense)
+        self.__qubo_objective_needs_refresh = True
+
+    def set_lagrange_multiplier(self, constraint_label: str, lagrange_multiplier: float) -> None:
+        super().set_lagrange_multiplier(constraint_label, lagrange_multiplier)
+        self.__qubo_objective_needs_refresh = True
 
     def _check_variables(self, term: Expression | Comparison, lagrange_multiplier: RealNumber = 100) -> None:
         """checks if the variables in the provided term are valid to be used in a QUBO model. Moreover, we add all the
@@ -1718,7 +1733,11 @@ class QUBO(Model):
                     )
 
     def _build_qubo_objective(
-        self, term: Expression, label: str | None = None, sense: ObjectiveSense = ObjectiveSense.MINIMIZE
+        self,
+        term: Expression,
+        label: str | None = None,
+        sense: ObjectiveSense = ObjectiveSense.MINIMIZE,
+        already_binary: bool = False,
     ) -> None:
         """updates the internal qubo objective term.
 
@@ -1728,8 +1747,12 @@ class QUBO(Model):
                                             Defaults to None.
             sense (ObjectiveSense, optional): The optimization sense of the model's objective.
                                                 Defaults to ObjectiveSense.MINIMIZE.
+            already_binary (bool, optional): set when ``term`` is already in binary form (e.g. the
+                                                QUBO objective, which is binarised in set_objective),
+                                                to skip the costly ``to_binary`` rebuild.
+                                                Defaults to False.
         """
-        term = copy.copy(term.to_binary())
+        term = copy.copy(term) if already_binary else copy.copy(term.to_binary())
         if self.__qubo_objective is None:
             self.__qubo_objective = Objective(
                 label=label if label is not None else "obj",
@@ -1929,7 +1952,6 @@ class QUBO(Model):
         out._lagrange_multipliers = copy.copy(self._lagrange_multipliers)
 
         out.continuous_vars = copy.copy(self.continuous_vars)
-        out.__qubo_objective = copy.copy(self.__qubo_objective)
         out._linearizer = copy.copy(self._linearizer)
 
         for label, constraint in self._encoding_constraints.items():
