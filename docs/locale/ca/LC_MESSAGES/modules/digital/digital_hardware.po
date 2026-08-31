@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-05 15:18+0200\n"
+"POT-Creation-Date: 2026-08-10 12:20+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -63,8 +63,8 @@ msgid ""
 ":class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, "
 ":class:`~qilisdk.digital.gates.U3`)."
 msgstr ""
-"**one_qubit_gate**: Trieu la porta parametritzada d'un sol qubit (p. ex., "
-":class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, "
+"**one_qubit_gate**: Trieu la porta parametritzada d'un sol qubit (p. ex.,"
+" :class:`~qilisdk.digital.gates.U1`, :class:`~qilisdk.digital.gates.U2`, "
 ":class:`~qilisdk.digital.gates.U3`)."
 
 #: ../../modules/digital/digital_hardware.rst:15
@@ -93,14 +93,25 @@ msgstr ""
 msgid "``interposed``: Interleaves single and two-qubit gates."
 msgstr "``interposed``: Intercala les portes d'un sol qubit i de dos qubits."
 
-#: ../../modules/digital/digital_hardware.rst:22
+#: ../../modules/digital/digital_hardware.rst:20
+msgid ""
+"**final_rotation_layer**: If ``True`` (the default), a trailing single-"
+"qubit block is appended after the last entangling block, so the circuit "
+"has ``(layers + 1)`` parameterized blocks and ends on tunable rotations. "
+"If ``False``, the circuit has ``layers`` parameterized blocks and ends on"
+" an entangling block."
+msgstr ""
+
+#: ../../modules/digital/digital_hardware.rst:25
 msgid "**Example**"
 msgstr "**Exemple**"
 
-#: ../../modules/digital/digital_hardware.rst:41
+#: ../../modules/digital/digital_hardware.rst:44
 msgid ""
 "This ansatz can then be used as a circuit. For example, we can execute "
 "this ansatz using QuTiP backend (need to be installed separately):"
 msgstr ""
-"Aquest ansatz es pot utilitzar com un circuit. Per exemple, podem executar "
-"aquest ansatz amb el backend QuTiP (cal instal·lar-lo per separat):"
+"Aquest ansatz es pot utilitzar com un circuit. Per exemple, podem "
+"executar aquest ansatz amb el backend QuTiP (cal instal·lar-lo per "
+"separat):"
+
