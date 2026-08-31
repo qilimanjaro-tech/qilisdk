@@ -103,7 +103,7 @@ _QASM3_CNOT_NQUBITS = 2
 _QASM3_CONTROL_MODIFIERS = frozenset({"ctrl", "negctrl"})
 
 # A valid OpenQASM 3.0 gate name, which every gate name is checked against before being written out.
-_QASM3_GATE_NAME = re.compile(r"[A-Za-z][A-Za-z0-9_]*")
+_QASM3_GATE_NAME = re.compile(r"[A-Za-z]\w*", re.ASCII)
 
 
 class OpenQasmParser:

@@ -83,7 +83,7 @@ _REVERSE_QASM2_ADJOINT_MAP: dict[str, type[BasicGate]] = {name: gate for gate, n
 _QASM2_TOFFOLI_NQUBITS = 3
 
 # A valid OpenQASM 2.0 gate name, which every gate name is checked against before being written out.
-_QASM2_GATE_NAME = re.compile(r"[a-z][A-Za-z0-9_]*")
+_QASM2_GATE_NAME = re.compile(r"[a-z]\w*", re.ASCII)
 
 _ALLOWED_QASM2_FUNCTIONS = {
     "sin": math.sin,
@@ -202,8 +202,6 @@ def _parse_qasm2_gate_line(line: str) -> tuple[str, str | None, str] | None:
                     raise ValueError(f"Parameter expression nesting deeper than {_MAX_DEPTH} levels is not supported.")
             elif char == ")":
                 depth -= 1
-                if depth < 0:
-                    raise ValueError(f"Invalid gate syntax: {line}")
                 if depth == 0:
                     closing_index = index
                     break
