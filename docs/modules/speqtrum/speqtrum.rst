@@ -175,7 +175,8 @@ function) and submit it as any other functional.
 .. code-block:: python
 
     from qilisdk.core.model import Model, ObjectiveSense
-    from qilisdk.core.variables import BinaryVariable, LEQ
+    from qilisdk.core.comparison import LEQ
+    from qilisdk.core.variables import BinaryVariable
     from qilisdk.cost_functions import ModelCostFunction
     from qilisdk.digital import CNOT, HardwareEfficientAnsatz, U2
     from qilisdk.functionals import DigitalPropagation
