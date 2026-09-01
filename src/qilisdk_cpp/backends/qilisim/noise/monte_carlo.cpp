@@ -14,6 +14,12 @@
 
 #include "monte_carlo.h"
 
+#include <atomic>
+#include <limits>
+#include <string>
+
+#include "../../../libs/logging.h"
+
 // GCOV_EXCL_BR_START
 
 namespace {
@@ -130,6 +136,71 @@ double max_jump_rate_bound(const SparseMatrix& drift) {
         largest_row_sum = std::max(largest_row_sum, row_sum);
     }
     return 2.0 * largest_row_sum;
+}
+
+std::pair<double, double> schedule_step_extremes(const std::vector<double>& step_list) {
+    /*
+    Find the shortest and longest step of a schedule. The first time point is measured from t = 0, and
+    gaps of zero (a schedule whose first point is t = 0, for instance) are ignored.
+
+    Args:
+        step_list (std::vector<double>): The schedule time points.
+
+    Returns:
+        std::pair<double, double>: The shortest and longest step. If the schedule has no step at all,
+            the shortest is infinite and the longest is zero, so neither bounds anything.
+    */
+    double shortest = std::numeric_limits<double>::infinity();
+    double longest = 0.0;
+    double previous = 0.0;
+    for (double time_point : step_list) {
+        const double gap = time_point - previous;
+        previous = time_point;
+        if (gap <= 0.0) {
+            continue;
+        }
+        shortest = std::min(shortest, gap);
+        longest = std::max(longest, gap);
+    }
+    return {shortest, longest};
+}
+
+namespace {
+
+// Whether the under-resolved jump warning has already been emitted in this process
+std::atomic<bool> jump_resolution_warning_emitted{false};
+
+}  // namespace
+
+void warn_if_jumps_underresolved(const SparseMatrix& jump_drift, const std::vector<double>& step_list, double max_expected_jumps_per_step) {
+    /*
+    Warn when the schedule is too coarse to resolve the quantum jumps. Jumps are placed at the end of
+    the step in which they happen, so the statistics are only accurate while at most one jump is
+    likely per step. The rate used here is an upper bound, so this only fires when the step is clearly
+    too long. The warning is emitted at most once per process, since workloads such as quantum
+    reservoirs run many evolutions with the same schedule and would otherwise repeat it endlessly.
+
+    Args:
+        jump_drift (SparseMatrix): The drift operator D of the effective Hamiltonian.
+        step_list (std::vector<double>): The schedule time points.
+        max_expected_jumps_per_step (double): How many jumps per step are tolerated before warning.
+    */
+    const double longest_dt = schedule_step_extremes(step_list).second;
+    const double expected_jumps = max_jump_rate_bound(jump_drift) * longest_dt;
+    if (expected_jumps <= max_expected_jumps_per_step) {
+        return;
+    }
+    if (jump_resolution_warning_emitted.exchange(true)) {
+        return;
+    }
+    qilisdk::log_warning("[QiliSim, C++] The schedule steps are long compared to the noise rates (up to " + std::to_string(expected_jumps) + " jumps per step), so the Monte Carlo jumps are poorly resolved in time. Reduce the schedule dt for accurate results, or raise max_expected_jumps_per_step to silence this warning. It is only reported once per process.");
+}
+
+void reset_jump_resolution_warning() {
+    /*
+    Re-arm the once-per-process under-resolved jump warning. Only used by the tests.
+    */
+    jump_resolution_warning_emitted.store(false);
 }
 
 TrajectoryUnraveling::TrajectoryUnraveling(int seed) : base_seed(seed) {

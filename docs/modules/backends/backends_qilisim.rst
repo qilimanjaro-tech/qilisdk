@@ -217,6 +217,7 @@ optional Monte Carlo trajectory sampling for open-system simulations.
 - ``num_threads`` controls the number of threads used for parallelization, defaults to using all available cores.
 - ``seed`` controls the random number generator seed, defaults to a random seed.
 - ``monte_carlo=MonteCarloConfig(trajectories=N)`` enables Monte Carlo sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled.
+- ``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` sets how many quantum jumps per schedule step are tolerated before a warning is displayed.
 - ``measurement_collapse`` controls whether measurements collapse the statevector in place (relevant for mid-circuit measurement and reservoirs) - defaults to ``False``.
 - ``normalize_state`` controls whether the state should be renormalized - defaults to ``True``.
 - ``gpu`` controls whether to use GPU acceleration if available - defaults to ``False``.
@@ -229,12 +230,23 @@ optional Monte Carlo trajectory sampling for open-system simulations.
         execution_config=ExecutionConfig(
             num_threads=8,
             seed=42,
-            monte_carlo=MonteCarloConfig(trajectories=500),
+            monte_carlo=MonteCarloConfig(trajectories=500, max_expected_jumps_per_step=0.5),
             measurement_collapse=True,
             normalize_state=False,
             gpu=True,
         ),
     )
+
+.. note::
+
+   Monte Carlo results are statistical, so two things control their quality:
+
+   - **Number of trajectories.** The statistical error of any estimate falls as
+     :math:`1/\sqrt{N}`, so a noisy run needs more trajectories.
+   - **Schedule step size.** If using noise, quantum jumps are applied at the end of the schedule step,
+     so a step must be short enough that at most one jump is likely within it. This also controls
+     the general quality of the simulation as with all simulation methods, doing things in smaller steps
+     improves overall accuracy.
 
 Noise model support
 -------------------

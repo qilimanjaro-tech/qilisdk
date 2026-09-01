@@ -43,6 +43,10 @@ TEST(QilisimConfig, BadValidateThrows) {
     EXPECT_ANY_THROW(config.validate());
 
     config = default_config;
+    config.set_max_expected_jumps_per_step(0.0);
+    EXPECT_ANY_THROW(config.validate());
+
+    config = default_config;
     config.set_num_threads(-2);
     EXPECT_ANY_THROW(config.validate());
 

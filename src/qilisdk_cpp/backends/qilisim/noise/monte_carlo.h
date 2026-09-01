@@ -14,6 +14,7 @@
 #pragma once
 
 #include <cstdint>
+#include <utility>
 #include <vector>
 #include "../../../libs/eigen.h"
 
@@ -22,6 +23,9 @@
 SparseMatrix jump_drift_operator(const std::vector<SparseMatrix>& jump_operators);
 SparseMatrix effective_hamiltonian(const SparseMatrix& hamiltonian, const SparseMatrix& drift);
 double max_jump_rate_bound(const SparseMatrix& drift);
+std::pair<double, double> schedule_step_extremes(const std::vector<double>& step_list);
+void warn_if_jumps_underresolved(const SparseMatrix& jump_drift, const std::vector<double>& step_list, double max_expected_jumps_per_step);
+void reset_jump_resolution_warning();
 
 class TrajectoryUnraveling {
    private:

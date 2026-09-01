@@ -71,6 +71,11 @@ class MonteCarloConfig(BaseSimulatorConfig):
     Args:
         trajectories (int): Number of Monte Carlo trajectories to simulate
             when Monte Carlo mode is enabled. Defaults to ``100``.
+        max_expected_jumps_per_step (float): How many quantum jumps are tolerated in a single
+            schedule step before a warning is logged. Jumps are applied at the end of the step in
+            which they occur, so the trajectory statistics are only faithful while at most one jump
+            per step is likely. Defaults to ``0.5``; raise it to silence the warning, lower it to be
+            told about coarser schedules.
     """
 
     trajectories: int = Field(
@@ -78,10 +83,18 @@ class MonteCarloConfig(BaseSimulatorConfig):
         gt=0,
         description="Number of Monte Carlo trajectories to simulate when Monte Carlo mode is enabled.",
     )
+    max_expected_jumps_per_step: float = Field(
+        default=0.5,
+        gt=0,
+        description="Expected quantum jumps per schedule step above which a warning about the schedule being too coarse is logged (once per process).",
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return Monte Carlo settings in backend-compatible key names."""
-        return {"num_monte_carlo_trajectories": self.trajectories}
+        return {
+            "num_monte_carlo_trajectories": self.trajectories,
+            "max_expected_jumps_per_step": self.max_expected_jumps_per_step,
+        }
 
 
 class AnalogMethod(BaseSimulatorConfig):

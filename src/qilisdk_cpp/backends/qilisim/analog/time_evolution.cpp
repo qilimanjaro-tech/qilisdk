@@ -14,9 +14,6 @@
 
 #include "time_evolution.h"
 
-#include <limits>
-#include <utility>
-
 #include "../../../libs/logging.h"
 #include "../noise/monte_carlo.h"
 #include "../noise/noise_model.h"
@@ -25,55 +22,6 @@
 #include "iterations.h"
 
 // GCOV_EXCL_BR_START
-
-namespace {
-
-std::pair<double, double> schedule_step_extremes(const std::vector<double>& step_list) {
-    /*
-    Find the shortest and longest step of a schedule. The first time point is measured from t = 0, and
-    gaps of zero (a schedule whose first point is t = 0, for instance) are ignored.
-
-    Args:
-        step_list (std::vector<double>): The schedule time points.
-
-    Returns:
-        std::pair<double, double>: The shortest and longest step. If the schedule has no step at all,
-            the shortest is infinite and the longest is zero, so neither bounds anything.
-    */
-    double shortest = std::numeric_limits<double>::infinity();
-    double longest = 0.0;
-    double previous = 0.0;
-    for (double time_point : step_list) {
-        const double gap = time_point - previous;
-        previous = time_point;
-        if (gap <= 0.0) {
-            continue;
-        }
-        shortest = std::min(shortest, gap);
-        longest = std::max(longest, gap);
-    }
-    return {shortest, longest};
-}
-
-void warn_if_jumps_underresolved(const SparseMatrix& jump_drift, const std::vector<double>& step_list) {
-    /*
-    Warn when the schedule is too coarse to resolve the quantum jumps. Jumps are placed at the end of
-    the step in which they happen, so the statistics are only accurate while at most one jump is
-    likely per step. The rate used here is an upper bound, so this only fires when the step is clearly
-    too long.
-
-    Args:
-        jump_drift (SparseMatrix): The drift operator D of the effective Hamiltonian.
-        step_list (std::vector<double>): The schedule time points.
-    */
-    const double longest_dt = schedule_step_extremes(step_list).second;
-    const double expected_jumps = max_jump_rate_bound(jump_drift) * longest_dt;
-    if (expected_jumps > 0.5) {
-        qilisdk::log_warning("[QiliSim, C++] The schedule steps are long compared to the noise rates (up to " + std::to_string(expected_jumps) + " jumps per step), so the Monte Carlo jumps are poorly resolved in time. Reduce the schedule dt for accurate results.");
-    }
-}
-
-}  // namespace
 
 void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos, bool* output_is_trajectories) {
     /*
@@ -184,7 +132,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     if (use_jump_unraveling) {
         jump_drift = jump_drift_operator(jump_operators);
         qilisdk::log_debug("[QiliSim, C++] Unravelling " + std::to_string(jump_operators.size()) + " jump operators over " + std::to_string(rho_0.cols()) + " Monte Carlo trajectories");
-        warn_if_jumps_underresolved(jump_drift, step_list);
+        warn_if_jumps_underresolved(jump_drift, step_list, config.get_max_expected_jumps_per_step());
     }
 
     // Init rho_0
@@ -397,7 +345,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     if (use_jump_unraveling) {
         jump_drift = jump_drift_operator(jump_operators);
         qilisdk::log_debug("[QiliSim, C++] Unravelling " + std::to_string(jump_operators.size()) + " jump operators over " + std::to_string(rho_0.cols()) + " Monte Carlo trajectories");
-        warn_if_jumps_underresolved(jump_drift, step_list);
+        warn_if_jumps_underresolved(jump_drift, step_list, config.get_max_expected_jumps_per_step());
     }
     const SparseMatrix* jump_drift_ptr = use_jump_unraveling ? &jump_drift : nullptr;
     const std::vector<SparseMatrix>& integrator_jumps = use_jump_unraveling ? no_jumps : jump_operators;

@@ -15,12 +15,19 @@
 // GCOV_EXCL_BR_START
 
 #include <gtest/gtest.h>
+#include <pybind11/embed.h>
 
 #include <cmath>
 #include <complex>
+#include <functional>
+#include <string>
 #include <vector>
 
 #include "../../../src/qilisdk_cpp/backends/qilisim/noise/monte_carlo.h"
+#include "../../../src/qilisdk_cpp/libs/logging.h"
+#include "../../../src/qilisdk_cpp/libs/pybind.h"
+
+namespace py = pybind11;
 
 namespace {
 
@@ -54,6 +61,23 @@ DenseMatrix excitedTrajectories(long n) {
     DenseMatrix trajectories = DenseMatrix::Zero(2, n);
     trajectories.row(1).setOnes();
     return trajectories;
+}
+
+bool containsString(const std::string& haystack, const std::string& needle) {
+    return haystack.find(needle) != std::string::npos;
+}
+
+// Run `emit` with a sink attached to the logger, and return every warning it produced
+py::list captureWarnings(const std::function<void()>& emit) {
+    py::list records;
+    logger.attr("remove")();
+    auto sink = py::cpp_function([records](py::object message) mutable { records.append(py::str(message)); });
+    logger.attr("add")(sink, py::arg("format") = "{message}", py::arg("level") = "WARNING");
+    qilisdk::refresh_log_level();
+    emit();
+    logger.attr("remove")();
+    qilisdk::refresh_log_level();
+    return records;
 }
 
 // The Kraus operators of amplitude damping with jump probability p
@@ -277,6 +301,73 @@ TEST(TrajectoryUnravelingKrausTest, CollapsedTrajectoryThrows) {
     TrajectoryUnraveling unraveling(17);
     DenseMatrix trajectories = DenseMatrix::Zero(2, 2);
     EXPECT_ANY_THROW(unraveling.apply_kraus(trajectories, dampingKraus(0.5)));
+}
+
+TEST(JumpResolutionWarningTest, WarnsOnceForACoarseSchedule) {
+    // A drift whose jump rate makes each of these steps carry far more than one jump
+    const SparseMatrix drift = jump_drift_operator({dampingJump(100.0)});
+    const std::vector<double> coarse_schedule = {0.0, 1.0, 2.0};
+    reset_jump_resolution_warning();
+
+    // Repeat the evolution the way a reservoir would, and expect a single warning for the lot
+    py::list records = captureWarnings([&]() {
+        for (int repeat = 0; repeat < 10; ++repeat) {
+            warn_if_jumps_underresolved(drift, coarse_schedule, 0.5);
+        }
+    });
+
+    ASSERT_EQ(py::len(records), 1u);
+    EXPECT_TRUE(containsString(records[0].cast<std::string>(), "poorly resolved in time"));
+}
+
+TEST(JumpResolutionWarningTest, StaysSilentForAFineSchedule) {
+    const SparseMatrix drift = jump_drift_operator({dampingJump(1.0)});
+    const std::vector<double> fine_schedule = {0.0, 1e-3, 2e-3};
+    reset_jump_resolution_warning();
+
+    py::list records = captureWarnings([&]() { warn_if_jumps_underresolved(drift, fine_schedule, 0.5); });
+
+    EXPECT_EQ(py::len(records), 0u);
+}
+
+TEST(JumpResolutionWarningTest, ThresholdDecidesWhetherTheScheduleIsTooCoarse) {
+    // Two jumps per step: 2 * (largest row sum of D = 0.5) * dt, with dt = 2
+    const SparseMatrix drift = jump_drift_operator({dampingJump(1.0)});
+    const std::vector<double> schedule = {0.0, 2.0};
+
+    reset_jump_resolution_warning();
+    py::list tolerant = captureWarnings([&]() { warn_if_jumps_underresolved(drift, schedule, 5.0); });
+    EXPECT_EQ(py::len(tolerant), 0u);
+
+    reset_jump_resolution_warning();
+    py::list strict = captureWarnings([&]() { warn_if_jumps_underresolved(drift, schedule, 0.1); });
+    EXPECT_EQ(py::len(strict), 1u);
+}
+
+TEST(JumpResolutionWarningTest, WarningStateSurvivesADifferentDrift) {
+    const SparseMatrix strong = jump_drift_operator({dampingJump(100.0)});
+    const SparseMatrix weak = jump_drift_operator({dampingJump(50.0)});
+    const std::vector<double> coarse_schedule = {0.0, 1.0};
+    reset_jump_resolution_warning();
+
+    py::list records = captureWarnings([&]() {
+        warn_if_jumps_underresolved(strong, coarse_schedule, 0.5);
+        warn_if_jumps_underresolved(weak, coarse_schedule, 0.5);
+    });
+
+    EXPECT_EQ(py::len(records), 1u);
+}
+
+TEST(ScheduleStepExtremesTest, IgnoresNonPositiveGaps) {
+    const std::pair<double, double> extremes = schedule_step_extremes({0.0, 1.0, 1.0, 4.0});
+    EXPECT_NEAR(extremes.first, 1.0, kTol);
+    EXPECT_NEAR(extremes.second, 3.0, kTol);
+}
+
+TEST(ScheduleStepExtremesTest, AnEmptyScheduleBoundsNothing) {
+    const std::pair<double, double> extremes = schedule_step_extremes({});
+    EXPECT_TRUE(std::isinf(extremes.first));
+    EXPECT_EQ(extremes.second, 0.0);
 }
 
 // GCOV_EXCL_BR_STOP
