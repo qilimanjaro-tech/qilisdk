@@ -75,7 +75,7 @@ To run the integration tests (bigger tests which use the full QiliSDK stack and 
 pytest tests/integration
 ```
 
-To run the CUDA, qutip, and SpeQtrum backend tests, install the optional extras first (e.g., `uv sync --all-groups --extra all-cu13`).
+To run the CUDA, qutip, and SpeQtrum backend tests, install the optional dependencies first (e.g., `uv sync --all-groups --extra all-cu13`).
 
 To run the C++ tests, you first need to recompile with C++ testing enabled:
 ```bash

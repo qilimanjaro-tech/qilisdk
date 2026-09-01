@@ -34,7 +34,7 @@ jobs:
         # Linux, and main builds the full set. Release wheels are covered by
         # cibuildwheel in publish.yml.
         os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest, windows-latest]
-        python-version: ${{ github.event_name == 'push' && fromJSON('["3.11", "3.12", "3.13"]') || fromJSON('["3.13"]') }}
+        python-version: ${{ github.event_name == 'push' && fromJSON('["3.11", "3.12", "3.13", "3.14"]') || fromJSON('["3.14"]') }}
         include:
           - os: ubuntu-latest
             python-version: "3.11"

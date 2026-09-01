@@ -15,7 +15,7 @@ each of which is then applied during simulation.
    ========================================================================== ============================
    :class:`~qilisdk.backends.qilisim.QiliSim`                                 ✔                                
    -------------------------------------------------------------------------- ----------------------------
-   :class:`~qilisdk.backends.cuda_backend.CudaBackend`                        ✔                                
+   :class:`~qilisdk.backends.cudaq_backend.CudaqBackend`                        ✔                                
    -------------------------------------------------------------------------- ---------------------------- 
    :class:`~qilisdk.backends.qutip_backend.QutipBackend`                      ✕ 
    ========================================================================== ============================ 
@@ -33,7 +33,7 @@ For example, to create a simple circuit and then simulate it with a CUDA backend
     from qilisdk.digital import X, Circuit
     from qilisdk.functionals import DigitalPropagation
     from qilisdk.readout import Readout
-    from qilisdk.backends import CudaBackend
+    from qilisdk.backends import CudaqBackend
 
     # Define the random circuit and functional
     c = Circuit(nqubits=2)
@@ -46,7 +46,7 @@ For example, to create a simple circuit and then simulate it with a CUDA backend
     nm.add(BitFlip(probability=0.5), gate=X, qubits=[1])
 
     # Execute with CUDA backend
-    backend_cuda = CudaBackend(noise_model=nm)
+    backend_cuda = CudaqBackend(noise_model=nm)
     res = backend_cuda.execute(functional, readout=Readout().with_sampling(nshots=1000))
     print(res)
 

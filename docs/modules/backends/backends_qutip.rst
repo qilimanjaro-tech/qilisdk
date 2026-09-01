@@ -8,25 +8,14 @@ development, CI pipelines and educational notebooks.
 Installation
 ============
 
-.. tabs::
+QuTiP is not shipped with QiliSDK, install it yourself and the backend becomes available:
 
-    .. group-tab:: Linux
+.. code-block:: console
 
-        .. code-block:: console
+    pip install "qutip>=5.2.2" "qutip-qip>=0.4.0"
 
-            pip install qilisdk[qutip]
-
-    .. group-tab:: Mac OSX
-
-        .. code-block:: console
-
-            pip install "qilisdk[qutip]"
-
-    .. group-tab:: Windows
-
-        .. code-block:: console
-
-            pip install qilisdk[qutip]
+.. NOTE::
+    ``QutipBackend`` requires QuTiP 5.2.2 or newer and qutip-qip 0.4.0 or newer.
 
 Quick start
 ===========
@@ -120,4 +109,4 @@ QutipBackend has a single constructor option:
 
    QutipBackend does **not** accept a :class:`~qilisdk.noise.NoiseModel`. For noisy digital or
    analog simulations use :class:`~qilisdk.backends.qilisim.QiliSim` or
-   :class:`~qilisdk.backends.cuda_backend.CudaBackend` instead.
+   :class:`~qilisdk.backends.cudaq_backend.CudaqBackend` instead.
