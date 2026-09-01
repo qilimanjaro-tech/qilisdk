@@ -109,6 +109,8 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  # Not the lowest Python version, the lowest dependency versions: uv resolves every
+  # direct dependency down to the floor our bounds allow, so a wrong floor fails here.
   core-tests-lowest:
     name: Testing the core at the lowest dependency versions for Python ${{ matrix.python-version }}
     if: github.event.pull_request.draft == false
@@ -204,6 +206,7 @@ jobs:
           disable_search: true
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  # As above, the floors of CUDA-Q, QuTiP and qutip-qip, which OPTIONAL_FEATURES enforces.
   external-backends-lowest:
     name: Testing the external backends at the lowest dependency versions for Python ${{ matrix.python-version }}
     if: github.event.pull_request.draft == false
