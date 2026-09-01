@@ -1,11 +1,15 @@
-Terms, Maps and Comparisons
----------------------------------
+Expressions, Functions and Comparisons
+--------------------------------------
 
-Terms
-==========
+Expressions
+===========
 
-:class:`Variables<qilisdk.core.variables.Variable>` can be combined algebraically to form expressions 
-known as :class:`Terms<qilisdk.core.variables.Term>`. For example:
+:class:`Variables<qilisdk.core.variables.Variable>` can be combined algebraically with the usual
+Python operators (``+``, ``-``, ``*``, ``/``, ``**``) to build a symbolic
+:class:`~qilisdk.core.expression.Expression`. Every leaf (a variable, parameter or numeric constant)
+and every operator node (:class:`~qilisdk.core.expression.Add`, :class:`~qilisdk.core.expression.Mul`,
+:class:`~qilisdk.core.expression.Pow`) is itself an ``Expression``, so expressions compose freely.
+For example:
 
 .. code-block:: python
 
@@ -14,29 +18,45 @@ known as :class:`Terms<qilisdk.core.variables.Term>`. For example:
     s = SpinVariable("s")
     b = BinaryVariable("b")
 
-    t1 = 2 * x + 3
-    print("t1:", t1)
-    t2 = 3 * x**2 + 2 * x + 4
-    print("t2:", t2)
-    t3 = 2 * x + b - 1
-    print("t3:", t3)
-    t4 = t1 - t2
-    print("t4:", t4)
+    e1 = 2 * x + 3
+    print("e1:", e1)
+    e2 = 3 * x**2 + 2 * x + 4
+    print("e2:", e2)
+    e3 = 2 * x + b - 1
+    print("e3:", e3)
+    e4 = e1 - e2
+    print("e4:", e4)
 
 **Output**:
 
 ::
 
-    t1: (2) * x + (3)
-    t2: (3) * (x^2) + (2) * x + (4)
-    t3: (2) * x + b + (-1)
-    t4: (-1.0) + (-3.0) * (x^2)
+    e1: 3 + 2 * x
+    e2: 4 + 2 * x + 3 * x**2
+    e3: -1 + b + 2 * x
+    e4: 3 - (4 + 2 * x + 3 * x**2) + 2 * x
 
-Terms can be evaluated by providing values for the involved variables:
+Upon construction we canonicalize the expression (flattening nested sums/products, combining like
+terms, ordering things etc.), ensuring that ``x + y + 1`` equals ``y + 1 + x``. Products are **not**
+distributed over sums, so ``e4`` keeps the factored ``- (4 + 2 * x + 3 * x**2)`` sub-expression. Use
+:meth:`~qilisdk.core.expression.Expression.expand` to distribute:
 
 .. code-block:: python
 
-    t3.evaluate({
+    print(e4.expand())          # distribute the product over the sum
+
+**Output**:
+
+::
+
+    -1 - 3 * x**2
+
+Expressions can be evaluated by providing values for the involved variables via
+:meth:`~qilisdk.core.expression.Expression.evaluate`:
+
+.. code-block:: python
+
+    e3.evaluate({
         x: 1.5,
         b: 0
     })
@@ -49,51 +69,146 @@ Terms can be evaluated by providing values for the involved variables:
 
 .. warning::
 
-    To evaluate a term, all participating variables must be assigned valid values within their respective domains and bounds.
+    To evaluate an expression, all participating variables must be assigned valid values within their respective domains and bounds.
 
+Inspecting and differentiating expressions
+===========================================
 
-Mathematical Maps
-===============================
-
-Use :class:`~qilisdk.core.variables.MathematicalMap` helpers to apply common
-functions to a parameter or term while keeping expressions symbolic.
-Each wraps a :class:`~qilisdk.core.variables.Parameter`, :class:`~qilisdk.core.variables.Term`,
-or any other base variable and defers evaluation until values are provided.
+An :class:`~qilisdk.core.expression.Expression` exposes a number of helper functions. You can list the
+named leaves it depends on, isolate just the free :class:`~qilisdk.core.variables.Parameter` leaves,
+read its polynomial :attr:`~qilisdk.core.expression.Expression.degree`, or take a symbolic
+derivative with :meth:`~qilisdk.core.expression.Expression.derivative`:
 
 .. code-block:: python
 
-    from qilisdk.core.variables import Parameter, Sin, Cos
+    from qilisdk.core.variables import Parameter, Variable, Domain
+
+    a = Parameter("a", value=2.0)
+    y = Variable("y", domain=Domain.REAL, bounds=(0, 5))
+
+    expr = a * y**2 + 3 * y
+
+    print(expr.variables())          # named leaves, sorted by label
+    print(expr.free_parameters())    # only the Parameter leaves
+    print(expr.degree)               # highest polynomial degree (a and y both count)
+    print(expr.derivative(y))              # symbolic d/dy
+
+**Output**:
+
+::
+
+    [a, y]
+    {a}
+    3
+    3 + 2 * a * y
+
+
+Mathematical Functions
+======================
+
+Non-polynomial operations are represented by :class:`~qilisdk.core.expression.Function`, the abstract
+base for the unary maths functions. Each of its concrete subclasses (listed below) wraps a single
+:class:`~qilisdk.core.expression.Expression` operand (a :class:`~qilisdk.core.variables.Parameter`,
+any other variable, or a compound expression) and defers numeric evaluation until values are provided.
+
+.. code-block:: python
+
+    from qilisdk.core.expression import Cos, Sin
+    from qilisdk.core.variables import Parameter
 
     theta = Parameter("theta", 0.5)
     expr = Sin(theta) + Cos(2 * theta)
 
-    print(expr) # prints: "sin[theta] + cos[(2) * theta]"
-    print(expr.evaluate({})) # prints: "0.5" (using default parameter values)
+    print(expr)                # Cos(2 * theta) + Sin(theta)
+    print(expr.evaluate({}))   # uses theta.value automatically
 
     # You can also supply a different value at evaluation time:
     print(expr.evaluate({theta: 1.0}))
 
-These maps compose naturally with other terms, so you can include them in
-constraints or objectives and rely on the same evaluation and encoding rules
-as other symbolic expressions.
+**Output**:
 
-The list of possible mathematical maps includes:
+::
 
-- :class:`~qilisdk.core.variables.Abs` for absolute value
-- :class:`~qilisdk.core.variables.Exp` for exponential
-- :class:`~qilisdk.core.variables.Log` for logarithm
-- :class:`~qilisdk.core.variables.Pow` for power functions
-- :class:`~qilisdk.core.variables.Sqrt` for square root
-- :class:`~qilisdk.core.variables.Inv` for inverse
-- :class:`~qilisdk.core.variables.Sin` for sine
-- :class:`~qilisdk.core.variables.Cos` for cosine
-- :class:`~qilisdk.core.variables.Tan` for tangent
+    Cos(2 * theta) + Sin(theta)
+    1.0197278444723428
+    0.4253241482607541
 
-Comparison Terms
-=======================
+Because every function is a regular ``Expression`` node, it participates in the same algebra: it can
+be added to or multiplied with other expressions, differentiated symbolically (the chain rule is
+applied automatically), and evaluated. Wrapping a numeric constant folds eagerly to a
+:class:`~qilisdk.core.expression.Constant`:
 
-Each :class:`~qilisdk.core.variables.ComparisonTerm` defines a constraint using mathematical comparisons. 
-Use the following operators to construct them:
+.. code-block:: python
+
+    from qilisdk.core.expression import Cos, Exp, Sin
+    from qilisdk.core.variables import Parameter
+
+    theta = Parameter("theta", 0.5)
+
+    print(Sin(theta).derivative(theta))   # d/dtheta Sin(theta) == Cos(theta)
+    print(Exp(theta).derivative(theta))   # d/dtheta Exp(theta) == Exp(theta)
+    print(Cos(0))                   # folds to a numeric constant
+
+**Output**:
+
+::
+
+    Cos(theta)
+    Exp(theta)
+    1.0
+
+These functions compose naturally with the rest of the expression tree, so you can include them in
+constraints, objectives, or schedule coefficients and rely on the same evaluation and encoding rules
+as any other symbolic expression.
+
+The available function nodes are:
+
+- :class:`~qilisdk.core.expression.Sin` for sine
+- :class:`~qilisdk.core.expression.Cos` for cosine
+- :class:`~qilisdk.core.expression.Tan` for tangent
+- :class:`~qilisdk.core.expression.Exp` for exponential
+- :class:`~qilisdk.core.expression.Log` for logarithm
+- :class:`~qilisdk.core.expression.Sqrt` for square root
+- :class:`~qilisdk.core.expression.Abs` for absolute value
+
+``Abs`` is the one function with no derivative: it is not differentiable at zero and there is no
+``sign`` node to write its derivative with, so :meth:`~qilisdk.core.expression.Expression.derivative`
+raises on it.
+
+For powers, use the ``**`` operator, which builds a
+:class:`~qilisdk.core.expression.Pow` node and accepts a fractional or symbolic exponent.
+:func:`~qilisdk.core.expression.Inv` is a shorthand for ``x ** -1``, so ``Inv(x)``, ``1 / x`` and
+``x ** -1`` are all the same expression:
+
+.. code-block:: python
+
+    from qilisdk.core.expression import Inv
+    from qilisdk.core.variables import Parameter
+
+    x, y = Parameter("x", 4.0), Parameter("y", 0.5)
+
+    print(x**y)                       # symbolic exponent
+    print((x**y).evaluate({}))
+    print(Inv(x) == 1 / x == x**-1)
+
+**Output**:
+
+::
+
+    x**y
+    2.0
+    True
+
+To write your own function, subclass :class:`~qilisdk.core.expression.Function` with a ``NAME``, a
+numeric kernel and a derivative. Everything else (canonicalization, equality, ``derivative``, ``expand``,
+``substitute``, serialization) comes from the base class.
+
+Comparisons
+===========
+
+A :class:`~qilisdk.core.comparison.Comparison` relates two expressions and is what a
+:class:`~qilisdk.core.model.Constraint` is built from. It is not an ``Expression`` itself.
+Use the following operators to construct one:
 
 .. list-table::
    :class: longtable
@@ -104,23 +219,23 @@ Use the following operators to construct them:
      - QiliSDK Method
      - Alias
    * - Equality
-     - :meth:`Equal(lhs, rhs)<qilisdk.core.variables.Equal>`
-     - :meth:`EQ(lhs, rhs)<qilisdk.core.variables.EQ>`
+     - :meth:`Equal(lhs, rhs)<qilisdk.core.comparison.Equal>`
+     - :meth:`EQ(lhs, rhs)<qilisdk.core.comparison.EQ>`
    * - Not Equal
-     - :meth:`NotEqual(lhs, rhs)<qilisdk.core.variables.NotEqual>`
-     - :meth:`NEQ(lhs, rhs)<qilisdk.core.variables.NEQ>`
+     - :meth:`NotEqual(lhs, rhs)<qilisdk.core.comparison.NotEqual>`
+     - :meth:`NEQ(lhs, rhs)<qilisdk.core.comparison.NEQ>`
    * - Less Than
-     - :meth:`LessThan(lhs, rhs)<qilisdk.core.variables.LessThan>`
-     - :meth:`LT(lhs, rhs)<qilisdk.core.variables.LT>`
+     - :meth:`LessThan(lhs, rhs)<qilisdk.core.comparison.LessThan>`
+     - :meth:`LT(lhs, rhs)<qilisdk.core.comparison.LT>`
    * - Less Than or Equal
-     - :meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.variables.LessThanOrEqual>`
-     - :meth:`LEQ(lhs, rhs)<qilisdk.core.variables.LEQ>`
+     - :meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.comparison.LessThanOrEqual>`
+     - :meth:`LEQ(lhs, rhs)<qilisdk.core.comparison.LEQ>`
    * - Greater Than
-     - :meth:`GreaterThan(lhs, rhs)<qilisdk.core.variables.GreaterThan>`
-     - :meth:`GT(lhs, rhs)<qilisdk.core.variables.GT>`
+     - :meth:`GreaterThan(lhs, rhs)<qilisdk.core.comparison.GreaterThan>`
+     - :meth:`GT(lhs, rhs)<qilisdk.core.comparison.GT>`
    * - Greater Than or Equal
-     - :meth:`GreaterThanOrEqual(lhs, rhs)<qilisdk.core.variables.GreaterThanOrEqual>`
-     - :meth:`GEQ(lhs, rhs)<qilisdk.core.variables.GEQ>`
+     - :meth:`GreaterThanOrEqual(lhs, rhs)<qilisdk.core.comparison.GreaterThanOrEqual>`
+     - :meth:`GEQ(lhs, rhs)<qilisdk.core.comparison.GEQ>`
 
 *Note*: `lhs` and `rhs` refer to the left-hand side and right-hand side expressions, respectively.
 
@@ -128,15 +243,16 @@ Example:
 
 .. code-block:: python
 
-    from qilisdk.core.variables import BinaryVariable, LT
+    from qilisdk.core.comparison import LT
+    from qilisdk.core.variables import BinaryVariable
     x = BinaryVariable("x")
-    LT(2 * x - 1, 1)
+    print(LT(2 * x - 1, 1))
 
 **Output**:
 
 ::
 
-    (2) * x < (2.0)
+    2 * x < 2
 
 When a comparison term is created, constants are automatically moved to the right-hand side, and variable terms to the left-hand side.
 

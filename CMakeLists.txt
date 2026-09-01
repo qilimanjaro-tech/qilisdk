@@ -117,8 +117,18 @@ elseif (QILISDK_HAS_X86_64_V3 AND NOT CMAKE_CROSSCOMPILING AND CMAKE_HOST_SYSTEM
     endif()
 endif()
 
+# Classical solvers
+pybind11_add_module(solvers_module SHARED src/qilisdk_cpp/solvers/solvers_bindings.cpp)
+file(GLOB SOLVERS_SOURCES src/qilisdk_cpp/solvers/*.cpp)
+target_sources(solvers_module PRIVATE ${SOLVERS_SOURCES})
+target_link_libraries(solvers_module PRIVATE qilisdk_libs)
+set_target_properties(solvers_module PROPERTIES
+    BUILD_RPATH "${RPATH_ORIGIN}"
+    INSTALL_RPATH "${RPATH_ORIGIN}"
+)
+
 # List of all modules to build
-set(MODULES_TO_BUILD qilisdk_libs qtensor_module qilisim_module)
+set(MODULES_TO_BUILD qilisdk_libs qtensor_module qilisim_module solvers_module)
 
 # For each module
 foreach(module ${MODULES_TO_BUILD})
