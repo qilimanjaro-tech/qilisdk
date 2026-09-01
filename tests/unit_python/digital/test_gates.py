@@ -18,7 +18,8 @@ from hypothesis import example, given, strategies
 from numpy.testing import assert_allclose
 from scipy.linalg import expm
 
-from qilisdk.core.variables import Domain, Parameter, Term, Variable
+from qilisdk.core.expression import Expression
+from qilisdk.core.variables import Domain, Parameter, Variable
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNameError, ParametersNotEqualError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled, Exponential, Gate, GateNotParameterizedError
@@ -139,7 +140,7 @@ def test_rx_gate(angle: float):
 
 def test_rx_gate_term():
     """
-    Create an RX gate with a Term object as the angle parameter.
+    Create an RX gate with a Expression object as the angle parameter.
     """
     qubit = 2
     angle = np.pi
@@ -181,7 +182,7 @@ def test_ry_gate(angle: float):
 
 def test_ry_gate_term():
     """
-    Create an RY gate with a Term object as the angle parameter.
+    Create an RY gate with a Expression object as the angle parameter.
     """
     qubit = 3
     angle = np.pi
@@ -220,7 +221,7 @@ def test_rz_gate(angle: float):
 
 def test_rz_gate_term():
     """
-    Create an RZ gate with a Term object as the angle parameter.
+    Create an RZ gate with a Expression object as the angle parameter.
     """
     qubit = 3
     angle = np.pi
@@ -260,7 +261,7 @@ def test_u1_gate(angle: float):
 
 def test_u1_gate_term():
     """
-    Create a U1 gate with a Term object as the angle parameter.
+    Create a U1 gate with a Expression object as the angle parameter.
     """
     qubit = 5
     angle = np.pi
@@ -327,7 +328,7 @@ def test_u2_gate(phi, gamma):
 
 def test_u2_gate_term():
     """
-    Create a U2 gate with Term objects as the angle parameters.
+    Create a U2 gate with Expression objects as the angle parameters.
     """
     qubit = 7
     phi = np.pi / 2
@@ -408,7 +409,7 @@ def test_u3_gate(theta, phi, gamma):
 
 def test_u3_gate_term():
     """
-    Create a U3 gate with Term objects as the angle parameters.
+    Create a U3 gate with Expression objects as the angle parameters.
     """
     qubit = 8
     theta = np.pi / 2
@@ -872,7 +873,7 @@ class CustomGate(BasicGate):
     def __init__(
         self,
         target_qubits: tuple[int, ...],
-        parameter_transforms: dict[str, Term] | None = None,
+        parameter_transforms: dict[str, Expression] | None = None,
         parameters: dict[str, Parameter] | None = None,
     ):
         super().__init__(target_qubits=target_qubits, parameter_transforms=parameter_transforms, parameters=parameters)
@@ -990,7 +991,7 @@ def test_param_gate_given_variable():
     qubit = 0
     var = Variable("theta", Domain.REAL, (0.0, 1.0))
     term = var * 2.0 + 1
-    with pytest.raises(ValueError, match="must contain a Parameter"):
+    with pytest.raises(ValueError, match="must contain only Parameters"):
         RX(qubit, theta=term)
 
 
@@ -1050,3 +1051,85 @@ def test_gate_not_equals_circuit():
     gate = RX(qubit, theta=np.pi / 2)
     circuit = Circuit(1)
     assert gate != circuit
+
+
+# ------------------------------------------------------------------------------
+# Hashing
+# ------------------------------------------------------------------------------
+def test_hash_gate_without_matrix():
+    """Gates that have no matrix (e.g. M) must still be hashable."""
+    with pytest.raises(GateHasNoMatrixError):
+        _ = M(0).matrix
+    assert isinstance(hash(M(0)), int)
+
+
+def test_hash_circuit_containing_measurement():
+    """Regression: hashing a circuit with a measurement used to raise GateHasNoMatrixError."""
+    circuit = Circuit(1)
+    circuit.add([H(0), M(0)])
+    assert isinstance(hash(circuit), int)
+
+
+@pytest.mark.parametrize(
+    ("gate1", "gate2"),
+    [
+        (RX(0, theta=np.pi / 2), RX(0, theta=np.pi / 2)),
+        (H(0), H(0)),
+        (M(0), M(0)),
+    ],
+)
+def test_equal_gates_hash_equal(gate1: Gate, gate2: Gate):
+    assert gate1 == gate2
+    assert hash(gate1) == hash(gate2)
+
+
+@pytest.mark.parametrize(
+    ("gate1", "gate2"),
+    [
+        (RX(0, theta=0.1), RX(0, theta=0.2)),  # same gate and qubit, different parameter value
+        (RX(0, theta=0.1), RX(1, theta=0.1)),  # same gate and parameter value, different qubit
+        (RX(0, theta=0.1), RY(0, theta=0.1)),  # same qubit and parameter value, different gate
+        (H(0), M(0)),  # different gates, neither parameterized
+    ],
+)
+def test_different_gates_hash_differently(gate1: Gate, gate2: Gate):
+    assert gate1 != gate2
+    assert hash(gate1) != hash(gate2)
+
+
+def test_hash_distinguishes_parameter_values_not_names():
+    """Two U2 gates whose parameter values are swapped must not collide."""
+    gate1 = U2(0, phi=0.1, gamma=0.2)
+    gate2 = U2(0, phi=0.2, gamma=0.1)
+    assert gate1 != gate2
+    assert hash(gate1) != hash(gate2)
+
+
+@pytest.mark.parametrize(
+    ("atol", "expected_equal"),
+    [
+        (1e-2, True),  # difference of 1e-3 is within tolerance
+        (1e-10, False),  # difference of 1e-3 is far outside tolerance
+    ],
+)
+def test_atol_affects_equality_and_hash(monkeypatch, atol: float, expected_equal: bool):
+    """``atol`` drives both ``__eq__`` and ``__hash__``, so the two stay consistent."""
+    monkeypatch.setattr(get_settings(), "atol", atol)
+    gate1 = RX(0, theta=0.0)
+    gate2 = RX(0, theta=1e-3)
+    assert (gate1 == gate2) is expected_equal
+    assert (hash(gate1) == hash(gate2)) is expected_equal
+
+
+def test_loosening_atol_merges_previously_distinct_hashes(monkeypatch):
+    """Widening the tolerance makes nearby gates compare — and therefore hash — as one."""
+    gate1 = RX(0, theta=0.0)
+    gate2 = RX(0, theta=1e-6)
+
+    monkeypatch.setattr(get_settings(), "atol", 1e-10)
+    assert gate1 != gate2
+    assert hash(gate1) != hash(gate2)
+
+    monkeypatch.setattr(get_settings(), "atol", 1e-4)
+    assert gate1 == gate2
+    assert hash(gate1) == hash(gate2)

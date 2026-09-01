@@ -22,6 +22,13 @@ from .themes import Theme, light
 
 _DEFAULT_FONT_PATH = Path(__file__).parent / "PlusJakartaSans-SemiBold.ttf"
 
+# Descriptions of the fields shared by several of the styles below
+_FIGSIZE_DESCRIPTION = "Figure size in inches (width, height)."
+_TIGHT_LAYOUT_DESCRIPTION = "Whether to use matplotlib's tight_layout for figure spacing."
+_TITLE_FONTSIZE_DESCRIPTION = "Font size for the plot title."
+_LEGEND_FONTSIZE_DESCRIPTION = "Font size for legend text."
+_LEGEND_FRAME_DESCRIPTION = "Whether to draw a frame around the legend."
+
 
 class Style(BaseModel):
     # --- FontProperties-mapped fields (mirror matplotlib.font_manager.FontProperties) ---
@@ -139,13 +146,100 @@ class CircuitStyle(Style):
     )
 
 
+class HamiltonianStyle(Style):
+    """All visual parameters controlling the appearance of a Hamiltonian interaction graph."""
+
+    # Figure
+    figsize: Optional[tuple] = Field(default=(7, 6), description=_FIGSIZE_DESCRIPTION)
+    tight_layout: bool = Field(default=True, description=_TIGHT_LAYOUT_DESCRIPTION)
+    title_fontsize: int = Field(default=16, description=_TITLE_FONTSIZE_DESCRIPTION)
+
+    # Graph layout
+    layout: Literal["spring", "circular", "shell", "spiral", "random"] = Field(
+        default="spring",
+        description="Rustworkx layout algorithm used to position the qubit nodes.",
+    )
+    layout_seed: int = Field(default=42, description="Seed for the randomized layouts ('spring' and 'random').")
+    positions: Optional[dict[int, tuple[float, float]]] = Field(
+        default=None,
+        description="Explicit qubit positions, keyed by qubit index. Overrides `layout` when provided.",
+    )
+
+    # Nodes
+    node_radius: float = Field(
+        default=0.3,
+        description="Node radius as a fraction of the smallest distance between two nodes in the layout.",
+    )
+    min_node_radius: float = Field(
+        default=0.05, description="Lower bound on the node radius, in normalized layout units."
+    )
+    show_qubit_labels: bool = Field(default=True, description="Whether to label each node with its qubit index.")
+    qubit_label_fontsize: int = Field(default=11, description="Font size for the qubit index labels.")
+    show_field_labels: bool = Field(
+        default=True, description="Whether to write the Pauli type inside each local-field slice of a node."
+    )
+    field_label_fontsize: int = Field(default=10, description="Font size for the local-field labels inside the nodes.")
+
+    # Couplings
+    coupling_linewidth: float = Field(default=2.5, description="Line width of the coupling edges.")
+    coupling_curvature: float = Field(
+        default=0.3,
+        description="Curvature offset between parallel edges when several coupling types share the same qubit pair.",
+    )
+    coupling_line_styles: dict[str, Any] = Field(
+        default_factory=lambda: {"ZZ": "-", "XX": "--", "YY": "-.", "XZ": ":", "ZX": ":"},
+        description="Matplotlib line style per coupling type. Types not listed cycle through the remaining styles.",
+    )
+    default_coupling_line_styles: list[Any] = Field(
+        default_factory=lambda: ["-", "--", "-.", ":", (0, (3, 1, 1, 1, 1, 1))],
+        description="Line styles cycled through for coupling types missing from `coupling_line_styles`.",
+    )
+    show_coupling_labels: bool = Field(
+        default=False,
+        description="Whether to annotate each coupling edge with its Pauli type. Off by default, since the legend already maps line styles to coupling types.",
+    )
+    coupling_label_fontsize: int = Field(default=9, description="Font size for the coupling type labels.")
+    show_multi_body: bool = Field(
+        default=True,
+        description="Whether to draw terms acting on three or more qubits as a star-shaped hyperedge.",
+    )
+
+    # Colour scale
+    colormap: str | None = Field(
+        default=None,
+        description="Name of a matplotlib colormap for the coefficient strengths. Defaults to a theme gradient.",
+    )
+    show_colorbar: bool = Field(default=True, description="Whether to draw the coefficient strength colour bar.")
+    colorbar_shrink: float = Field(default=0.75, description="Fraction of the axes height taken up by the colour bar.")
+    colorbar_label: str | None = Field(
+        default=None, description="Label of the colour bar. Defaults to 'coefficient' (or '|coefficient|')."
+    )
+    separate_color_scales: bool = Field(
+        default=False,
+        description="Whether local fields and couplings get their own colour scale (and colour bar) instead of a shared one.",
+    )
+
+    # Legend
+    show_legend: bool = Field(
+        default=True, description="Whether to draw a legend mapping coupling types to their line style."
+    )
+    legend_loc: str = Field(default="upper right", description="Location of the coupling type legend.")
+    legend_fontsize: int = Field(default=10, description=_LEGEND_FONTSIZE_DESCRIPTION)
+    legend_frame: bool = Field(default=True, description=_LEGEND_FRAME_DESCRIPTION)
+
+    # Misc
+    show_identity_offset: bool = Field(
+        default=True, description="Whether to annotate the constant (identity) energy offset of the Hamiltonian."
+    )
+
+
 class ScheduleStyle(Style):
     """
     Customization options for matplotlib schedule plots, with theme support.
     """
 
     # Figure and axes
-    figsize: Optional[tuple] = Field(default=(8, 5), description="Figure size in inches (width, height).")
+    figsize: Optional[tuple] = Field(default=(8, 5), description=_FIGSIZE_DESCRIPTION)
     grid: bool = Field(default=True, description="Whether to show grid lines on the plot.")
     grid_style: dict[str, Any] = Field(
         default_factory=lambda: {"linestyle": "--", "color": "#e0e0e0", "alpha": 0.7},
@@ -153,7 +247,7 @@ class ScheduleStyle(Style):
     )
 
     # Title and labels
-    title_fontsize: int = Field(default=16, description="Font size for the plot title.")
+    title_fontsize: int = Field(default=16, description=_TITLE_FONTSIZE_DESCRIPTION)
     xlabel: str = Field(default="time", description="Label for the x-axis.")
     ylabel: str = Field(default="coefficient value", description="Label for the y-axis.")
     label_fontsize: int = Field(default=14, description="Font size for axis labels.")
@@ -162,8 +256,8 @@ class ScheduleStyle(Style):
     legend_loc: str = Field(
         default="best", description="Location of the legend (matplotlib string, e.g. 'best', 'upper right')."
     )
-    legend_fontsize: int = Field(default=12, description="Font size for legend text.")
-    legend_frame: bool = Field(default=True, description="Whether to draw a frame around the legend.")
+    legend_fontsize: int = Field(default=12, description=_LEGEND_FONTSIZE_DESCRIPTION)
+    legend_frame: bool = Field(default=True, description=_LEGEND_FRAME_DESCRIPTION)
 
     # Line style
     line_styles: dict[str, dict[str, Any]] = Field(
@@ -189,4 +283,74 @@ class ScheduleStyle(Style):
     )
 
     # Misc
-    tight_layout: bool = Field(default=True, description="Whether to use matplotlib's tight_layout for figure spacing.")
+    tight_layout: bool = Field(default=True, description=_TIGHT_LAYOUT_DESCRIPTION)
+
+
+class DatasetStyle(Style):
+    """
+    Customization options for matplotlib dataset plots, with theme support.
+
+    Controls only the *appearance* of a dataset plot (theme, fonts, colours,
+    grid, markers, ...). The *kind* of plot (``"1d"``, ``"2d"`` or ``"3d"``) is
+    selected separately via the ``style`` argument of :meth:`Dataset.draw`.
+    """
+
+    # Figure and axes
+    figsize: Optional[tuple] = Field(default=(8, 5), description=_FIGSIZE_DESCRIPTION)
+    grid: bool = Field(default=True, description="Whether to show grid lines on the plot.")
+    grid_style: dict[str, Any] = Field(
+        default_factory=lambda: {"linestyle": "--", "color": "#e0e0e0", "alpha": 0.7},
+        description="Style dictionary for grid lines (linestyle, color, alpha, etc.).",
+    )
+
+    # Title and labels
+    title_fontsize: int = Field(default=16, description=_TITLE_FONTSIZE_DESCRIPTION)
+    label_fontsize: int = Field(default=14, description="Font size for axis labels.")
+    xlabel: Optional[str] = Field(
+        default=None, description="Override for the x-axis label (None uses a sensible default)."
+    )
+    ylabel: Optional[str] = Field(
+        default=None, description="Override for the y-axis label (None uses a sensible default)."
+    )
+    zlabel: Optional[str] = Field(
+        default=None, description="Override for the z-axis label (None uses a sensible default)."
+    )
+
+    # Legend
+    legend_loc: str = Field(
+        default="best", description="Location of the legend (matplotlib string, e.g. 'best', 'upper right')."
+    )
+    legend_fontsize: int = Field(default=12, description=_LEGEND_FONTSIZE_DESCRIPTION)
+    legend_frame: bool = Field(default=True, description=_LEGEND_FRAME_DESCRIPTION)
+
+    # Trajectory rendering
+    trajectory_style: Literal["scatter", "line"] = Field(
+        default="scatter",
+        description="How to render 2-D/3-D phase portraits: 'scatter' (points coloured by time) or 'line'.",
+    )
+    line_style: dict[str, Any] = Field(
+        default_factory=lambda: {"linestyle": "-", "linewidth": 1.5},
+        description="Line style used for 1-D series and 'line' trajectories.",
+    )
+    marker: Optional[str] = Field(
+        default=None, description="Matplotlib marker for 1-D series data points (e.g. 'o', None for no marker)."
+    )
+    marker_size: float = Field(default=6, description="Marker size for 1-D series markers.")
+    point_size: float = Field(default=6, description="Point size (area) for scatter trajectories.")
+    color_by_time: bool = Field(
+        default=True, description="Colour 2-D/3-D scatter trajectories by time index using a theme gradient."
+    )
+    colorbar: bool = Field(default=True, description="Show a colour bar for time when colouring trajectories by time.")
+
+    # Delay embedding
+    delay: int = Field(
+        default=1,
+        description="Delay (in samples) used to embed lower-dimensional series into a 2-D/3-D phase portrait.",
+    )
+
+    # Ticks
+    xtick_fontsize: int = Field(default=12, description="Font size for x-axis tick labels.")
+    ytick_fontsize: int = Field(default=12, description="Font size for y-axis tick labels.")
+
+    # Misc
+    tight_layout: bool = Field(default=True, description=_TIGHT_LAYOUT_DESCRIPTION)

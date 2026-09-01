@@ -25,6 +25,7 @@ callgrind*
 perf.*
 *.annotation
 python3*.json
+*.speedscope
 
 # Virtual environments
 .venv
@@ -55,3 +56,6 @@ sphinx.log
 # Code Coverage
 junit.xml
 coverage.xml
+
+# CodeGraph
+.codegraph/*

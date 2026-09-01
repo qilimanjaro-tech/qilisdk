@@ -17,11 +17,33 @@
 import math
 import re
 
+import numpy as np
 import pytest
 
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import CNOT, CZ, RX, RY, RZ, U1, U2, U3, H, M, S, T, X, Y, Z
+from qilisdk.digital.gates import (
+    CNOT,
+    CZ,
+    RX,
+    RY,
+    RZ,
+    SWAP,
+    U1,
+    U2,
+    U3,
+    Adjoint,
+    Controlled,
+    Exponential,
+    H,
+    I,
+    M,
+    S,
+    T,
+    X,
+    Y,
+    Z,
+)
 from qilisdk.utils.openqasm import from_qasm2, from_qasm2_file, to_qasm2, to_qasm2_file
 from qilisdk.utils.openqasm import openqasm2 as openqasm2_utils
 
@@ -467,3 +489,215 @@ def test_parse_qasm2_gate_line_branches():
 
     with pytest.raises(ValueError, match="Unclosed parameter expression"):
         openqasm2_utils._parse_qasm2_gate_line("rx(pi/2 q[0];")
+
+
+# --- Register names other than "q" and "c" (SDK-455) ---
+def test_from_qasm2_honours_custom_register_names():
+    """Measurements of registers not named "q" and "c" must be imported, not silently dropped."""
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            'include "qelib1.inc";',
+            "qreg qubits[2];",
+            "creg meas[2];",
+            "h qubits[0];",
+            "measure qubits[0] -> meas[0];",
+            "measure qubits[1] -> meas[1];",
+        ]
+    )
+    circuit = from_qasm2(qasm_str)
+    assert circuit.nqubits == 2
+    assert [gate.name for gate in circuit.gates] == ["H", "M", "M"]
+    assert circuit.gates[1].qubits == (0,)
+    assert circuit.gates[2].qubits == (1,)
+
+
+def test_from_qasm2_honours_custom_register_names_when_measuring_everything():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg qubits[2];",
+            "creg meas[2];",
+            "measure qubits -> meas;",
+        ]
+    )
+    circuit = from_qasm2(qasm_str)
+    assert [gate.name for gate in circuit.gates] == ["M"]
+    assert circuit.gates[0].qubits == (0, 1)
+
+
+def test_from_qasm2_rejects_undeclared_quantum_register_in_measurement():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg q[1];",
+            "creg c[1];",
+            "measure other[0] -> c[0];",
+        ]
+    )
+    with pytest.raises(ValueError, match="Undeclared quantum register 'other'"):
+        from_qasm2(qasm_str)
+
+
+def test_from_qasm2_rejects_undeclared_classical_register_in_measurement():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg q[1];",
+            "creg c[1];",
+            "measure q[0] -> other[0];",
+        ]
+    )
+    with pytest.raises(ValueError, match="Undeclared classical register 'other'"):
+        from_qasm2(qasm_str)
+
+
+def test_from_qasm2_rejects_malformed_measurement():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg q[1];",
+            "creg c[1];",
+            "measure q[0];",
+        ]
+    )
+    with pytest.raises(ValueError, match="Invalid measurement instruction"):
+        from_qasm2(qasm_str)
+
+
+def test_from_qasm2_rejects_gate_on_undeclared_register():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg q[1];",
+            "h other[0];",
+        ]
+    )
+    with pytest.raises(ValueError, match="do not refer to the quantum register 'q'"):
+        from_qasm2(qasm_str)
+
+
+def test_from_qasm2_rejects_a_second_quantum_register():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg a[1];",
+            "qreg b[1];",
+        ]
+    )
+    with pytest.raises(ValueError, match="Only a single quantum register is supported"):
+        from_qasm2(qasm_str)
+
+
+# --- Adjoint gates, which OpenQASM 2.0 has no inverse modifier for (SDK-455) ---
+@pytest.mark.parametrize(
+    ("gate", "expected_line"),
+    [
+        (Adjoint(S(0)), "sdg q[0];"),
+        (Adjoint(T(0)), "tdg q[0];"),
+        (Adjoint(H(0)), "h q[0];"),
+        (Adjoint(I(0)), "id q[0];"),
+        (Adjoint(SWAP(0, 1)), "swap q[0], q[1];"),
+        (Adjoint(CNOT(0, 1)), "cx q[0], q[1];"),
+        (Adjoint(CZ(0, 1)), "cz q[0], q[1];"),
+        (Adjoint(Adjoint(S(0))), "s q[0];"),
+        (Adjoint(RX(0, theta=0.5)), "rx(-0.5) q[0];"),
+        (Adjoint(RZ(0, phi=0.5)), "rz(-0.5) q[0];"),
+        (Adjoint(U1(0, phi=0.5)), "u1(-0.5) q[0];"),
+        (Adjoint(U3(0, theta=0.1, phi=0.2, gamma=0.3)), "u3(-0.1, -0.3, -0.2) q[0];"),
+        (Adjoint(U2(0, phi=0.2, gamma=0.3)), f"u3({-math.pi / 2}, -0.3, -0.2) q[0];"),
+    ],
+)
+def test_to_qasm2_never_exports_an_adjoint_dagger(gate, expected_line):
+    """The unicode dagger of an adjoint gate name is not valid OpenQASM 2.0 and must never be written out."""
+    circuit = Circuit(2)
+    circuit.add(gate)
+    qasm_str = to_qasm2(circuit)
+    assert "†" not in qasm_str
+    assert qasm_str.splitlines()[-1] == expected_line
+
+
+@pytest.mark.parametrize(
+    "gate",
+    [
+        Adjoint(S(0)),
+        Adjoint(T(0)),
+        Adjoint(RX(0, theta=0.5)),
+        Adjoint(U3(0, theta=0.1, phi=0.2, gamma=0.3)),
+        Adjoint(U2(0, phi=0.2, gamma=0.3)),
+        Adjoint(CNOT(0, 1)),
+    ],
+)
+def test_qasm2_round_trip_preserves_an_adjoint_matrix(gate):
+    """An adjoint gate must come back as the same unitary, rather than as the gate it is the adjoint of."""
+    circuit = Circuit(2)
+    circuit.add(gate)
+    reconstructed = from_qasm2(to_qasm2(circuit))
+    assert len(reconstructed.gates) == 1
+    assert np.allclose(reconstructed.gates[0].matrix, gate.matrix)
+
+
+@pytest.mark.parametrize(
+    "gate",
+    [
+        Adjoint(Controlled(0, basic_gate=H(1))),
+        Controlled(0, basic_gate=Adjoint(S(1))),
+        Exponential(X(0)),
+    ],
+)
+def test_to_qasm2_raises_on_gates_it_cannot_name(gate):
+    circuit = Circuit(2)
+    circuit.add(gate)
+    with pytest.raises(UnsupportedGateError, match="Cannot express"):
+        to_qasm2(circuit)
+
+
+def test_from_qasm2_rejects_an_unparseable_gate_name():
+    """A dagger written by an older QiliSDK must not be silently truncated to the gate it is the adjoint of."""
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg q[1];",
+            "s† q[0];",
+        ]
+    )
+    with pytest.raises(ValueError, match="Invalid gate name"):
+        from_qasm2(qasm_str)
+
+
+@pytest.mark.parametrize(("qasm_name", "gate"), [("sdg", S(0)), ("tdg", T(0))])
+def test_from_qasm2_reads_dagger_gate_names(qasm_name, gate):
+    circuit = from_qasm2("\n".join(["OPENQASM 2.0;", "qreg q[1];", f"{qasm_name} q[0];"]))
+    assert len(circuit.gates) == 1
+    assert np.allclose(circuit.gates[0].matrix, Adjoint(gate).matrix)
+
+
+# --- Gates of our own that could not be re-imported (SDK-455) ---
+@pytest.mark.parametrize(
+    ("gate", "expected_line"),
+    [
+        (I(0), "id q[0];"),
+        (SWAP(0, 1), "swap q[0], q[1];"),
+        (Controlled(1, basic_gate=Controlled(2, basic_gate=X(0))), "ccx q[1], q[2], q[0];"),
+    ],
+)
+def test_qasm2_round_trip_of_our_own_gates(gate, expected_line):
+    circuit = Circuit(3)
+    circuit.add(gate)
+    qasm_str = to_qasm2(circuit)
+    assert qasm_str.splitlines()[-1] == expected_line
+    reconstructed = from_qasm2(qasm_str)
+    assert len(reconstructed.gates) == 1
+    assert reconstructed.gates[0].name == gate.name
+    assert reconstructed.gates[0].qubits == gate.qubits
+
+
+def test_from_qasm2_still_reads_the_identity_written_as_i():
+    circuit = from_qasm2("\n".join(["OPENQASM 2.0;", "qreg q[1];", "i q[0];"]))
+    assert [gate.name for gate in circuit.gates] == ["I"]
+
+
+def test_from_qasm2_rejects_a_toffoli_on_the_wrong_number_of_qubits():
+    qasm_str = "\n".join(["OPENQASM 2.0;", "qreg q[2];", "ccx q[0], q[1];"])
+    with pytest.raises(UnsupportedGateError, match="acts on three qubits, got 2"):
+        from_qasm2(qasm_str)

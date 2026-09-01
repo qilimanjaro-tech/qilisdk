@@ -214,7 +214,7 @@ def test_invalid_multiplication_operation():
     ],
 )
 def test_hamiltonian_rmul(hamiltonian_rhs, hamiltonian_lhs, expected_hamiltonian):
-    assert hamiltonian_lhs.__rmul__(hamiltonian_rhs) == expected_hamiltonian  # noqa: PLC2801
+    assert hamiltonian_lhs.__rmul__(hamiltonian_rhs) == expected_hamiltonian  # ruff: ignore[unnecessary-dunder-call]
 
 
 class MockPauli(PauliOperator):
@@ -760,22 +760,22 @@ def test_hamiltonian_term_arithmetic():
 
     H = X(0) + Y(1)
 
-    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+    with pytest.raises(ValueError, match="Expression provided contains generic variables"):
         _ = H + term
 
-    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+    with pytest.raises(ValueError, match="Expression provided contains generic variables"):
         _ = term + H
 
-    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+    with pytest.raises(ValueError, match="Expression provided contains generic variables"):
         _ = H - term
 
-    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+    with pytest.raises(ValueError, match="Expression provided contains generic variables"):
         _ = term - H
 
-    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+    with pytest.raises(ValueError, match="Expression provided contains generic variables"):
         _ = H * term
 
-    with pytest.raises(ValueError, match="Term provided contains generic variables"):
+    with pytest.raises(ValueError, match="Expression provided contains generic variables"):
         _ = term * H
 
 
@@ -855,3 +855,32 @@ def test_pauli_operator_rejects_negative_qubit():
     """QSDK-05: a Pauli operator must reject a negative qubit at construction."""
     with pytest.raises(ValueError, match="non-negative"):
         PauliX(-1)
+
+
+def test_hamiltonian_draw(monkeypatch):
+    calls = []
+
+    class DummyRenderer:
+        def __init__(self, *a, **kw):
+            calls.append("init")
+
+        def plot(self, *a, **kw):
+            calls.append("plot")
+
+        def save(self, *a, **kw):
+            calls.append("save")
+
+        def show(self):
+            calls.append("show")
+
+    monkeypatch.setattr(
+        "qilisdk.utils.visualization.hamiltonian_renderers.MatplotlibHamiltonianRenderer", DummyRenderer
+    )
+
+    H = X(0) + Z(0) * Z(1)
+    H.draw()
+    assert calls == ["init", "plot", "show"]
+
+    calls.clear()
+    H.draw(filepath="dummy_path.png")
+    assert calls == ["init", "plot", "save"]

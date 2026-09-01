@@ -22,8 +22,9 @@ from loguru import logger
 from scipy.linalg import expm
 from typing_extensions import Self
 
+from qilisdk.core.expression import Expression
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import Parameter, Term
+from qilisdk.core.variables import Parameter
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
@@ -37,6 +38,8 @@ from .exceptions import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from qilisdk.core.interpolator import ParameterizedNumber
 
 TBasicGate = TypeVar("TBasicGate", bound="BasicGate")
 
@@ -250,11 +253,14 @@ class Gate(Parameterizable, ABC):
         return (
             self.name == other.name
             and self.qubits == other.qubits
-            and np.allclose(self.get_parameter_values(), other.get_parameter_values())
+            and np.allclose(self.get_parameter_values(), other.get_parameter_values(), atol=get_settings().atol)
         )
 
     def __hash__(self) -> int:
-        return qili_hash((self.name, self.qubits, self.matrix, tuple(self.get_parameters())))
+        atol = get_settings().atol
+        ndecimals = int(-np.log10(atol))
+        rounded_values = tuple(round(value, ndecimals) for value in self.get_parameter_values())
+        return qili_hash((self.name, self.qubits, rounded_values))
 
 
 @yaml.register_class
@@ -267,14 +273,14 @@ class BasicGate(Gate):
         self,
         target_qubits: tuple[int, ...],
         parameters: dict[str, Parameter] | None = None,
-        parameter_transforms: dict[str, Term] | None = None,
+        parameter_transforms: dict[str, Expression] | None = None,
     ) -> None:
         """Build a basic gate.
 
         Args:
             target_qubits (tuple[int, ...]): Qubit indices the gate acts on. Duplicate indices are rejected.
             parameters (dict[str, Parameter] | None): Optional parameter objects keyed by label for parameterized gates.
-            parameter_transforms (dict[str, Term] | None): Optional symbolic transforms keyed by parameter name.
+            parameter_transforms (dict[str, Expression] | None): Optional symbolic transforms keyed by parameter name.
 
         Raises:
             ValueError: if duplicate target qubits are found.
@@ -289,12 +295,12 @@ class BasicGate(Gate):
 
         self._target_qubits: tuple[int, ...] = target_qubits
         self._parameters: dict[str, Parameter] = parameters or {}
-        self._parameter_transforms: dict[str, Term] = parameter_transforms or {}
+        self._parameter_transforms: dict[str, Expression] = parameter_transforms or {}
 
         # Check the transforms
         for term in self._parameter_transforms:
             # Ensure it's a parameterized term (i.e. no variables)
-            if not self._parameter_transforms[term].is_parameterized_term():
+            if not self._parameter_transforms[term].is_parameterized():
                 raise ValueError(
                     f"Parameter transform '{term}' must be a parameterized term containing only Parameters."
                 )
@@ -463,25 +469,27 @@ class Controlled(Modified[TBasicGate]):
     def __init__(self, *control_qubits: int, basic_gate: TBasicGate | Controlled[TBasicGate]) -> None:
         logger.trace("[Gates] Constructing Controlled gate with control qubits {}", control_qubits)
         # If doing Controlled of another Controlled, combine into one with all control qubits.
-        if isinstance(basic_gate, Controlled) and isinstance(basic_gate.basic_gate, Gate):
+        if isinstance(basic_gate, Controlled):
             control_qubits += basic_gate.control_qubits
-            basic_gate = basic_gate.basic_gate
+            inner_gate = basic_gate.basic_gate
+        else:
+            inner_gate = basic_gate
 
-        super().__init__(basic_gate=basic_gate)
+        super().__init__(basic_gate=inner_gate)
 
         # Check for duplicate integers in control_qubits.
         if len(control_qubits) != len(set(control_qubits)):
             raise ValueError("Duplicate control qubits found.")
 
         # Check if any integer in control_qubits is also in unitary_gate.target_qubits.
-        if set(control_qubits) & set(basic_gate.target_qubits):
+        if set(control_qubits) & set(inner_gate.target_qubits):
             raise ValueError("Some control qubits are the same as unitary gate's target qubits.")
 
         # Make sure we have some control qubits
         if len(control_qubits) == 0:
             raise ValueError("At least one control qubit must be specified.")
 
-        self._control_qubits = control_qubits + basic_gate.control_qubits
+        self._control_qubits = control_qubits + inner_gate.control_qubits
 
     def _generate_matrix(self) -> np.ndarray:
         logger.trace("[Gates] Generating Controlled matrix for {} on {} qubits", self.name, self.nqubits)
@@ -620,7 +628,7 @@ class I(BasicGate):
     def name(self) -> str:
         return "I"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return np.array([[1, 0], [0, 1]], dtype=_complex_dtype())
 
 
@@ -652,7 +660,7 @@ class X(BasicGate):
     def name(self) -> str:
         return "X"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return np.array([[0, 1], [1, 0]], dtype=_complex_dtype())
 
 
@@ -684,7 +692,7 @@ class Y(BasicGate):
     def name(self) -> str:
         return "Y"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return np.array([[0, -1j], [1j, 0]], dtype=_complex_dtype())
 
 
@@ -716,7 +724,7 @@ class Z(BasicGate):
     def name(self) -> str:
         return "Z"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return np.array([[1, 0], [0, -1]], dtype=_complex_dtype())
 
 
@@ -748,7 +756,7 @@ class H(BasicGate):
     def name(self) -> str:
         return "H"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=_complex_dtype())
 
 
@@ -780,7 +788,7 @@ class S(BasicGate):
     def name(self) -> str:
         return "S"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return np.array([[1, 0], [0, 1j]], dtype=_complex_dtype())
 
 
@@ -812,32 +820,35 @@ class T(BasicGate):
     def name(self) -> str:
         return "T"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=_complex_dtype())
 
 
 def _process_param(
     name: str,
-    value: float | Parameter | Term,
+    value: ParameterizedNumber,
     params_to_init: dict[str, Parameter],
-    terms_to_init: dict[str, Term],
+    terms_to_init: dict[str, Expression],
 ) -> None:
     """
     Process a parameter value and update the params_to_init and terms_to_init dictionaries.
     Args:
         name (str): The name of the parameter.
-        value (float | Parameter | Term): The value of the parameter.
+        value (ParameterizedNumber): The value of the parameter — a float or an Expression whose
+            free leaves are all Parameters (the parameter-only invariant of ParameterizedNumber).
         params_to_init (dict[str, Parameter]): The dictionary to initialize parameters.
-        terms_to_init (dict[str, Term]): The dictionary to initialize terms.
+        terms_to_init (dict[str, Expression]): The dictionary to initialize terms.
     Raises:
-        ValueError: If a Term is provided that contains Variables instead of Parameters.
+        ValueError: If an Expression is provided that references decision Variables instead of
+            Parameters. This is the runtime check for the parameter-only invariant that
+            ParameterizedNumber documents but the type system cannot enforce.
     """
     logger.trace("[Gates] Processing parameter {}", name)
     if isinstance(value, Parameter):
         params_to_init[name] = value
-    elif isinstance(value, Term):
-        if not value.is_parameterized_term() and len(value.variables()) > 0:
-            raise ValueError(f"RX gate Term '{name}' must contain a Parameter and not Variables.")
+    elif isinstance(value, Expression):
+        if not value.is_parameterized() and len(value.variables()) > 0:
+            raise ValueError(f"Gate Expression '{name}' must contain only Parameters, not Variables.")
         for param in value.variables():
             if isinstance(param, Parameter):
                 params_to_init[param.label] = param
@@ -864,19 +875,19 @@ class RX(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
-    def __init__(self, qubit: int, *, theta: float | Parameter | Term) -> None:
+    def __init__(self, qubit: int, *, theta: ParameterizedNumber) -> None:
         """
         Initialize an RX gate.
 
         Args:
             qubit (int): The target qubit index for the rotation.
-            theta (float | Parameter | Term): The rotation angle (polar) in radians.
+            theta (ParameterizedNumber): The rotation angle (polar) in radians.
 
         """
 
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
-        terms_to_init: dict[str, Term] = {}
+        terms_to_init: dict[str, Expression] = {}
 
         # Process the parameters
         _process_param("theta", theta, params_to_init, terms_to_init)
@@ -926,19 +937,19 @@ class RY(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
-    def __init__(self, qubit: int, *, theta: float | Parameter | Term) -> None:
+    def __init__(self, qubit: int, *, theta: ParameterizedNumber) -> None:
         """
         Initialize an RY gate.
 
         Args:
             qubit (int): The target qubit index for the rotation.
-            theta (float | Parameter | Term): The rotation angle (polar) in radians.
+            theta (ParameterizedNumber): The rotation angle (polar) in radians.
 
         """
 
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
-        terms_to_init: dict[str, Term] = {}
+        terms_to_init: dict[str, Expression] = {}
 
         # Process the parameters
         _process_param("theta", theta, params_to_init, terms_to_init)
@@ -996,19 +1007,19 @@ class RZ(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
-    def __init__(self, qubit: int, *, phi: float | Parameter | Term) -> None:
+    def __init__(self, qubit: int, *, phi: ParameterizedNumber) -> None:
         """
         Initialize an RZ gate.
 
         Args:
             qubit (int): The target qubit index for the rotation.
-            phi (float | Parameter | Term): The rotation angle (azimuthal) in radians.
+            phi (ParameterizedNumber): The rotation angle (azimuthal) in radians.
 
         """
 
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
-        terms_to_init: dict[str, Term] = {}
+        terms_to_init: dict[str, Expression] = {}
 
         # Process the parameters
         _process_param("phi", phi, params_to_init, terms_to_init)
@@ -1061,17 +1072,17 @@ class U1(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
-    def __init__(self, qubit: int, *, phi: float | Parameter | Term) -> None:
+    def __init__(self, qubit: int, *, phi: ParameterizedNumber) -> None:
         """
         Initialize a U1 gate.
 
         Args:
             qubit (int): The target qubit index for the U1 gate.
-            phi (float | Parameter | Term): The phase to add, or equivalently the rotation angle (azimuthal) in radians.
+            phi (ParameterizedNumber): The phase to add, or equivalently the rotation angle (azimuthal) in radians.
         """
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
-        terms_to_init: dict[str, Term] = {}
+        terms_to_init: dict[str, Expression] = {}
 
         # Process the parameters
         _process_param("phi", phi, params_to_init, terms_to_init)
@@ -1127,19 +1138,19 @@ class U2(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi", "gamma"]
 
-    def __init__(self, qubit: int, *, phi: float | Parameter | Term, gamma: float | Parameter | Term) -> None:
+    def __init__(self, qubit: int, *, phi: ParameterizedNumber, gamma: ParameterizedNumber) -> None:
         """
         Initialize a U2 gate.
 
         Args:
             qubit (int): The target qubit index for the U2 gate.
-            phi (float | Parameter | Term): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
-            gamma (float | Parameter | Term): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
+            phi (ParameterizedNumber): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
+            gamma (ParameterizedNumber): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
 
         """
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
-        terms_to_init: dict[str, Term] = {}
+        terms_to_init: dict[str, Expression] = {}
 
         # Process the parameters
         _process_param("phi", phi, params_to_init, terms_to_init)
@@ -1217,24 +1228,24 @@ class U3(BasicGate):
         self,
         qubit: int,
         *,
-        theta: float | Parameter | Term,
-        phi: float | Parameter | Term,
-        gamma: float | Parameter | Term,
+        theta: ParameterizedNumber,
+        phi: ParameterizedNumber,
+        gamma: ParameterizedNumber,
     ) -> None:
         """
         Initialize a U3 gate.
 
         Args:
             qubit (int): The target qubit index for the U3 gate.
-            theta (float | Parameter | Term): The rotation angle (polar), in between both phase rotations (azimuthal).
-            phi (float | Parameter | Term): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
-            gamma (float | Parameter | Term): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
+            theta (ParameterizedNumber): The rotation angle (polar), in between both phase rotations (azimuthal).
+            phi (ParameterizedNumber): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
+            gamma (ParameterizedNumber): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
 
         """
 
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
-        terms_to_init: dict[str, Term] = {}
+        terms_to_init: dict[str, Expression] = {}
 
         # Process the parameters
         _process_param("theta", theta, params_to_init, terms_to_init)
@@ -1371,5 +1382,5 @@ class SWAP(BasicGate):
     def name(self) -> str:
         return "SWAP"
 
-    def _generate_matrix(self) -> np.ndarray:  # noqa: PLR6301
+    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
         return np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=_complex_dtype())

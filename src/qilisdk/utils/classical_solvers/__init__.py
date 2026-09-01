@@ -23,11 +23,18 @@ from qilisdk._optionals import (
     import_optional_dependencies,
 )
 
-from .base_solver import ClassicalSolver
+from .base_solver import ClassicalSolver, ClassicalSolverResult
 from .brute_force_solver import BruteForceSolver
 from .scipy_solver import ScipySolver
+from .simulated_annealing_solver import SimulatedAnnealingSolver
 
-__all__ = ["BruteForceSolver", "ClassicalSolver", "ScipySolver"]
+__all__ = [
+    "BruteForceSolver",
+    "ClassicalSolver",
+    "ClassicalSolverResult",
+    "ScipySolver",
+    "SimulatedAnnealingSolver",
+]
 
 # ScipSolver relies on the optional ``pyscipopt`` dependency
 OPTIONAL_FEATURES: list[OptionalFeature] = [
@@ -43,4 +50,4 @@ for feature in OPTIONAL_FEATURES:
     imported_feature: ImportedFeature = import_optional_dependencies(feature)
     for symbol_name, symbol_obj in imported_feature.symbols.items():
         setattr(current_module, symbol_name, symbol_obj)
-        __all__ += [symbol_name]  # noqa: PLE0604
+        __all__ += [symbol_name]  # ruff: ignore[invalid-all-object]

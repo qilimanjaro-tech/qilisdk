@@ -924,6 +924,10 @@ class QTensor:
 
         For state vectors, this corresponds to :math:`⟨\\psi|O|\\psi⟩`. For operators, it corresponds to :math:`\\text{tr}(\\rho O)`.
 
+        With nshots > 0 the expectation value is estimated with shot noise. A QTensor observable is measured in its own
+        eigenbasis, computing and caching its eigendecomposition if needed, whereas a Hamiltonian observable is handled
+        matrix-free by measuring each of its Pauli terms with nshots shots.
+
         Args:
             other (QTensor | Hamiltonian): The other QTensor or Hamiltonian to compute the expectation value with.
             nshots (int, optional): The number of shots to use for a stochastic estimation of the expectation value. If 0 or negative, the exact expectation value is computed using the trace formula.
@@ -970,7 +974,9 @@ class QTensor:
             filepath (str | None): Destination file path for the rendered figure.
                 If ``None``, the figure is not saved.
         """
-        from qilisdk.utils.visualization.qtensor_renderers import MatplotlibQTensorRenderer  # noqa: PLC0415
+        from qilisdk.utils.visualization.qtensor_renderers import (  # ruff:ignore[import-outside-top-level]
+            MatplotlibQTensorRenderer,
+        )
 
         renderer = MatplotlibQTensorRenderer(self, style=style)
         renderer.plot()
@@ -1005,18 +1011,19 @@ def bra(*state: int) -> QTensor:
     return QTensor.bra(*state)
 
 
-def expect_val(operator: QTensor | Hamiltonian, state: QTensor) -> complex:
+def expect_val(operator: QTensor | Hamiltonian, state: QTensor, nshots: int = 0) -> complex:
     """
     Wrapper for backwards compatibility: see QTensor.expectation_value().
 
     Args:
         state (QTensor): The state vector or density matrix to compute the expectation value with respect to.
         operator (QTensor): The operator for which to compute the expectation value.
+        nshots (int, optional): The number of shots to use for a stochastic estimation of the expectation value. If 0 or negative, the exact expectation value is computed using the trace formula.
 
     Returns:
         complex: The computed expectation value, which may be a complex number.
     """
-    return state.expectation_value(operator)
+    return state.expectation_value(operator, nshots)
 
 
 def tensor_prod(states: list[QTensor]) -> QTensor:

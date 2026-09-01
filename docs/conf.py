@@ -6,9 +6,11 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import datetime
 import operator
 import os
 import posixpath
+import shutil
 import sys
 from dataclasses import asdict
 from pathlib import Path
@@ -23,10 +25,22 @@ from sphinxawesome_theme.postprocess import Icons
 # -- Path setup ---------------------------------------------------------------
 sys.path.insert(0, str((Path(__file__).resolve().parent / "../src").resolve()))
 
+# -- Pandoc setup -------------------------------------------------------------
+# nbsphinx converts notebooks with nbconvert, which finds pandoc through
+# shutil.which(). The `pypandoc-binary` wheel bundles the binary inside the
+# package rather than installing it system-wide, so fall back to that copy when
+# no pandoc is on PATH (a system pandoc, e.g. in CI, still takes precedence).
+if shutil.which("pandoc") is None:
+    import pypandoc
+
+    _bundled_pandoc = Path(pypandoc.__file__).parent / "files"
+    if shutil.which("pandoc", path=str(_bundled_pandoc)):
+        os.environ["PATH"] = f"{os.environ.get('PATH', '')}{os.pathsep}{_bundled_pandoc}"
+
 # -- Project information -----------------------------------------------------
 
 project = "QiliSDK"
-copyright = "2025, Qilimanjaro Quantum Tech"
+copyright = f"{datetime.datetime.now(tz=datetime.timezone.utc).year}, Qilimanjaro Quantum Tech"
 author = "Qilimanjaro Quantum Tech"
 
 # -- General configuration ---------------------------------------------------
