@@ -290,8 +290,6 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
 
                 // If we have measurement_collapse enabled, apply the measurement and collapse the state
                 if (config.get_measurement_collapse()) {
-                    // Collapsing the trajectories keeps the ensemble, so no conversion to a
-                    // density matrix is needed and state_is_trajectories still holds.
                     if (state_is_trajectories) {
                         state = collapse_trajectories(state, measured_qubit_mask(qubits_to_measure_after_gate), config.get_seed() + 7919 * (i + 1));
                     } else {
@@ -516,8 +514,6 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
 
                 // If we have measurement_collapse enabled, apply the measurement and collapse the state
                 if (config.get_measurement_collapse()) {
-                    // Collapsing the trajectories keeps the ensemble, so no conversion to a
-                    // density matrix is needed and state_is_trajectories still holds.
                     if (state_is_trajectories) {
                         state = collapse_trajectories(state, measured_qubit_mask(qubits_to_measure_after_gate), config.get_seed() + 7919 * (i + 1));
                     } else {
