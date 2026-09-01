@@ -20,9 +20,32 @@ from loguru import logger
 
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Gate, H, M, S, T, X, Y, Z
+from qilisdk.digital.gates import (
+    CNOT,
+    CZ,
+    RX,
+    RY,
+    RZ,
+    SWAP,
+    U1,
+    U2,
+    U3,
+    Adjoint,
+    BasicGate,
+    Controlled,
+    Gate,
+    H,
+    I,
+    M,
+    S,
+    T,
+    X,
+    Y,
+    Z,
+)
 
 OPENQASM2_MAP: dict[type[Gate], str] = {
+    I: "id",
     X: "x",
     Y: "y",
     Z: "z",
@@ -37,7 +60,30 @@ OPENQASM2_MAP: dict[type[Gate], str] = {
     U3: "u3",
     CNOT: "cx",
     CZ: "cz",
+    SWAP: "swap",
 }
+
+# Gate names accepted on import on top of those in OPENQASM2_MAP, here the identity as QiliSDK used to export it.
+_QASM2_IMPORT_ALIASES: dict[str, type[Gate]] = {"i": I}
+
+# OpenQASM 2.0 has no inverse modifier, so the adjoint of these gates is written under a dedicated name instead.
+_QASM2_ADJOINT_MAP: dict[type[BasicGate], str] = {S: "sdg", T: "tdg"}
+
+# Gates that are their own adjoint, and so are written out unchanged.
+_QASM2_SELF_ADJOINT: frozenset[type[Gate]] = frozenset({I, X, Y, Z, H, CNOT, CZ, SWAP})
+
+# Gates whose adjoint is the same gate with every parameter negated.
+_QASM2_NEGATED_ADJOINT: frozenset[type[Gate]] = frozenset({RX, RY, RZ, U1})
+
+# Lookups from an OpenQASM 2.0 gate name to the gate, or to the gate whose adjoint it is.
+_REVERSE_QASM2_MAP: dict[str, type[Gate]] = {name: gate for gate, name in OPENQASM2_MAP.items()} | _QASM2_IMPORT_ALIASES
+_REVERSE_QASM2_ADJOINT_MAP: dict[str, type[BasicGate]] = {name: gate for gate, name in _QASM2_ADJOINT_MAP.items()}
+
+# The Toffoli gate is the only gate acting on more than two qubits that is supported.
+_QASM2_TOFFOLI_NQUBITS = 3
+
+# A valid OpenQASM 2.0 gate name, which every gate name is checked against before being written out.
+_QASM2_GATE_NAME = re.compile(r"[a-z]\w*", re.ASCII)
 
 _ALLOWED_QASM2_FUNCTIONS = {
     "sin": math.sin,
@@ -120,6 +166,7 @@ def _evaluate_qasm2_ast(node: ast.AST, original_expr: str) -> float:
 
 def _parse_qasm2_gate_line(line: str) -> tuple[str, str | None, str] | None:
     """Parse a QASM gate line with bounded parenthesis nesting.
+
     Returns:
         tuple[str, str | None, str] | None: the gate name, the string representing the parameter if available, and the rest.
 
@@ -137,8 +184,13 @@ def _parse_qasm2_gate_line(line: str) -> tuple[str, str | None, str] | None:
     if name_match is None:
         return None
     gate_name = name_match.group(1)
-    rest = body[name_match.end() :].strip()
 
+    # Anything other than a parameter list or a separator after the name means the name itself is malformed.
+    separator = body[name_match.end() : name_match.end() + 1]
+    if separator not in {"", "(", " ", "\t"}:
+        raise ValueError(f"Invalid gate name in: {line}")
+
+    rest = body[name_match.end() :].strip()
     params_str = None
     if rest.startswith("("):
         depth = 0
@@ -150,8 +202,6 @@ def _parse_qasm2_gate_line(line: str) -> tuple[str, str | None, str] | None:
                     raise ValueError(f"Parameter expression nesting deeper than {_MAX_DEPTH} levels is not supported.")
             elif char == ")":
                 depth -= 1
-                if depth < 0:
-                    raise ValueError(f"Invalid gate syntax: {line}")
                 if depth == 0:
                     closing_index = index
                     break
@@ -167,12 +217,55 @@ def _parse_qasm2_gate_line(line: str) -> tuple[str, str | None, str] | None:
     return gate_name, params_str, rest
 
 
+def _qasm2_name_and_parameters(gate: Gate) -> tuple[str, list[float]]:
+    """Resolve the OpenQASM 2.0 name and parameters of a gate.
+
+    OpenQASM 2.0 has no inverse modifier, so the adjoint of a gate has to be expressed as another gate instead.
+
+    Args:
+        gate: the gate to export.
+
+    Raises:
+        UnsupportedGateError: if the gate cannot be expressed in OpenQASM 2.0.
+
+    Returns:
+        tuple[str, list[float]]: the OpenQASM 2.0 gate name, and the parameters to export it with.
+    """
+    if isinstance(gate, Adjoint):
+        inner = gate.basic_gate
+        inner_type = type(inner)
+        if isinstance(inner, Adjoint):
+            # The adjoint of an adjoint is the gate itself.
+            return _qasm2_name_and_parameters(inner.basic_gate)
+        if inner_type in _QASM2_ADJOINT_MAP:
+            return _QASM2_ADJOINT_MAP[inner_type], []
+        if inner_type in _QASM2_SELF_ADJOINT:
+            return OPENQASM2_MAP[inner_type], []
+        if inner_type in _QASM2_NEGATED_ADJOINT:
+            return OPENQASM2_MAP[inner_type], [-value for value in inner.get_parameter_values()]
+        if inner_type is U3:
+            theta, phi, gamma = inner.get_parameter_values()
+            return "u3", [-theta, -gamma, -phi]
+        if inner_type is U2:
+            phi, gamma = inner.get_parameter_values()
+            return "u3", [-math.pi / 2, -gamma, -phi]
+        raise UnsupportedGateError(f"Cannot express the adjoint of the {inner.name} gate in OpenQASM 2.0.")
+
+    name = OPENQASM2_MAP.get(type(gate), gate.name.lower())
+    if _QASM2_GATE_NAME.fullmatch(name) is None:
+        raise UnsupportedGateError(f"Cannot express the {gate.name} gate in OpenQASM 2.0.")
+    return name, gate.get_parameter_values() if gate.is_parameterized else []
+
+
 def to_qasm2(circuit: Circuit) -> str:
     """
     Convert the circuit to an OpenQASM 2.0 formatted string.
 
     Args:
         circuit: The circuit to convert to OpenQASM 2.0.
+
+    Raises:
+        UnsupportedGateError: If a gate of the circuit cannot be expressed in OpenQASM 2.0.
 
     Returns:
         str: The OpenQASM 2.0 representation of the circuit.
@@ -200,14 +293,15 @@ def to_qasm2(circuit: Circuit) -> str:
                 qasm_lines.extend(measurements)
         else:
             # Map the internal gate name to its QASM equivalent.
-            qasm_name = OPENQASM2_MAP.get(type(gate), gate.name.lower())
+            qasm_name, parameters = _qasm2_name_and_parameters(gate)
             # Format parameter string, if any.
-            param_str = ""
-            if gate.is_parameterized:
-                parameters = ", ".join(str(p) for p in gate.get_parameter_values())
-                param_str = f"({parameters})"
+            param_str = f"({', '.join(str(p) for p in parameters)})" if parameters else ""
+            # An adjoint does not expose the control qubits of the gate it wraps, so take the qubits from that gate.
+            gate_to_export = gate
+            while isinstance(gate_to_export, Adjoint):
+                gate_to_export = gate_to_export.basic_gate
             # Format qubit operands.
-            qubit_str = ", ".join(f"q[{q}]" for q in gate.qubits)
+            qubit_str = ", ".join(f"q[{q}]" for q in gate_to_export.qubits)
             qasm_lines.append(f"{qasm_name}{param_str} {qubit_str};")
 
     return "\n".join(qasm_lines)
@@ -232,22 +326,24 @@ def from_qasm2(qasm_str: str) -> Circuit:
     Parse an OpenQASM 2.0 string and create a corresponding Circuit instance.
 
     This parser supports the following instructions:
-        - Quantum register declaration (e.g., "qreg q[3];")
-        - Classical register declaration (ignored)
-        - Gate instructions (one-qubit and two-qubit gates)
+        - Quantum register declaration (e.g., "qreg q[3];"), of which there may be only one
+        - Classical register declaration (e.g., "creg c[3];")
+        - Gate instructions (one-qubit and two-qubit gates, plus the three-qubit "ccx" gate)
         - Measurement instructions (e.g., "measure q[0] -> c[0];")
+
+    The registers may be given any name, and any instruction that refers to a register that was never declared
+    raises rather than being skipped.
 
     Args:
         qasm_str (str): The QASM string to parse.
 
     Returns:
         Circuit: The constructed Circuit object.
-    """  # noqa: DOC501
+    """  # ruff: ignore[docstring-missing-exception]
     logger.info("[OpenQASM2] Importing circuit from OpenQASM 2.0")
-    # Mapping from QASM gate names (lowercase) to internal gate names.
-    reverse_qasm2_map = {v: k for k, v in OPENQASM2_MAP.items()}
-
     circuit = None
+    qreg_name = ""
+    creg_names: set[str] = set()
     lines = qasm_str.splitlines()
     logger.debug("[OpenQASM2] Parsing {} lines of OpenQASM 2.0", len(lines))
     for raw_line in lines:
@@ -257,79 +353,94 @@ def from_qasm2(qasm_str: str) -> Circuit:
             line = line.split("//", 1)[0].strip()
         if not line or line.startswith("//"):
             continue
+
         # Skip header and include lines.
         if line.startswith(("OPENQASM", "include")):
             continue
+
         # Parse quantum register declaration.
         if line.startswith("qreg"):
             # e.g., "qreg q[3];"
-            m = re.match(r"qreg\s+\w+\[(\d+)\];", line)
+            m = re.match(r"qreg\s+(\w+)\s*\[(\d+)\]\s*;", line)
             if m:
-                nqubits = int(m.group(1))
-                circuit = Circuit(nqubits)
+                if circuit is not None:
+                    raise ValueError("Only a single quantum register is supported.")
+                qreg_name = m.group(1)
+                circuit = Circuit(int(m.group(2)))
             continue
-        # Skip classical register declaration.
+
+        # Parse classical register declaration, whose name is needed to recognise measurements.
         if line.startswith("creg"):
+            # e.g., "creg c[3];"
+            m = re.match(r"creg\s+(\w+)\s*\[\d+\]\s*;", line)
+            if m:
+                creg_names.add(m.group(1))
             continue
+
         # Process measurement instructions.
         if line.startswith("measure"):
+            if circuit is None:
+                raise ValueError("Quantum register must be declared before measurement.")
             # e.g., "measure q[0] -> c[0];"
-            m = re.match(r"measure\s+q\[(\d+)\]\s*->\s*c\[\d+\];", line)
-            if m:
+            m = re.fullmatch(r"measure\s+(\w+)\s*\[(\d+)\]\s*->\s*(\w+)\s*\[\d+\]\s*;", line)
+            if m is not None:
                 # TODO(vyron): Check consecutive lines of measurement and combine into single M.
-                q_index = int(m.group(1))
-                if circuit is None:
-                    raise ValueError("Quantum register must be declared before measurement.")
-                circuit.add(M(q_index))
+                quantum_name, classical_name, measured = m.group(1), m.group(3), (int(m.group(2)),)
             else:
-                # Special case: "measure q -> c;" means measure all qubits
-                m_all = re.match(r"measure\s+q\s*->\s*c\s*;", line)
-                if m_all:
-                    if circuit is None:
-                        raise ValueError("Quantum register must be declared before measurement.")
-                    circuit.add(M(*list(range(circuit.nqubits))))
+                # Special case: "measure q -> c;" means measure all qubits.
+                m = re.fullmatch(r"measure\s+(\w+)\s*->\s*(\w+)\s*;", line)
+                if m is None:
+                    raise ValueError(f"Invalid measurement instruction: {line}")
+                quantum_name, classical_name, measured = m.group(1), m.group(2), tuple(range(circuit.nqubits))
+            if quantum_name != qreg_name:
+                raise ValueError(f"Undeclared quantum register '{quantum_name}' in measurement: {line}")
+            if classical_name not in creg_names:
+                raise ValueError(f"Undeclared classical register '{classical_name}' in measurement: {line}")
+            circuit.add(M(*measured))
             continue
+
         # Process gate instructions.
         gate_data = _parse_qasm2_gate_line(line)
         if gate_data:
             qasm_gate_name, params_str, operands_str = gate_data
+            if circuit is None:
+                raise ValueError("Quantum register must be declared before adding gates.")
+            gate_name = qasm_gate_name.lower()
 
-            # Convert QASM gate name to internal gate name.
-            gate_class = reverse_qasm2_map.get(qasm_gate_name.lower())
-            if gate_class is None:
-                raise UnsupportedGateError(f"Unknown gate: {qasm_gate_name}")
-
-            # Extract qubit indices.
-            qubit_matches = re.findall(r"q\[(\d+)\]", operands_str)
-            qubits = [int(q) for q in qubit_matches]
+            # Extract qubit indices, which have to belong to the declared quantum register.
+            qubits = [int(index) for index in re.findall(rf"{re.escape(qreg_name)}\s*\[(\d+)\]", operands_str)]
+            if not qubits:
+                raise ValueError(f"Gate operands do not refer to the quantum register '{qreg_name}': {line}")
 
             # Parse parameters, if any.
             parameters = []
             if params_str:
                 parameters = [_evaluate_qasm2_expression(p) for p in params_str.split(",") if p.strip()]
 
-            # Instantiate the gate based on the number of qubits.
-            # For one-qubit gates.
-            if len(qubits) == 1:
-                if gate_class.PARAMETER_NAMES:
-                    # Build a dictionary of parameter names to values.
-                    param_dict = {name: parameters[i] for i, name in enumerate(gate_class.PARAMETER_NAMES)}
-                    gate_instance = gate_class(qubits[0], **param_dict)  # ty: ignore[too-many-positional-arguments]
-                else:
-                    gate_instance = gate_class(qubits[0])  # ty: ignore[too-many-positional-arguments]
-            # For two-qubit gates.
-            elif len(qubits) == 2:  # noqa: PLR2004
-                if gate_class.PARAMETER_NAMES:
-                    param_dict = {name: parameters[i] for i, name in enumerate(gate_class.PARAMETER_NAMES)}
-                    gate_instance = gate_class(qubits[0], qubits[1], **param_dict)  # ty: ignore[too-many-positional-arguments]
-                else:
-                    gate_instance = gate_class(qubits[0], qubits[1])  # ty: ignore[too-many-positional-arguments]
-            else:
+            # The Toffoli gate is the only supported gate acting on more than two qubits.
+            if gate_name == "ccx":
+                if len(qubits) != _QASM2_TOFFOLI_NQUBITS:
+                    raise UnsupportedGateError(f"The ccx gate acts on three qubits, got {len(qubits)}.")
+                circuit.add(Controlled(qubits[0], qubits[1], basic_gate=X(qubits[2])))
+                continue
+            if len(qubits) not in {1, 2}:
                 raise UnsupportedGateError("Only one- and two-qubit gates are supported.")
 
-            if circuit is None:
-                raise ValueError("Quantum register must be declared before adding gates.")
-            circuit.add(gate_instance)
+            # Gates that OpenQASM 2.0 names in place of an inverse modifier, such as "sdg" for the adjoint of S.
+            adjoint_of = _REVERSE_QASM2_ADJOINT_MAP.get(gate_name)
+            if adjoint_of is not None:
+                circuit.add(Adjoint(adjoint_of(qubits[0])))  # ty: ignore[invalid-argument-type]
+                continue
+
+            # Convert QASM gate name to internal gate name.
+            gate_class = _REVERSE_QASM2_MAP.get(gate_name)
+            if gate_class is None:
+                raise UnsupportedGateError(f"Unknown gate: {qasm_gate_name}")
+
+            # Build a dictionary of parameter names to values.
+            param_dict = {name: parameters[i] for i, name in enumerate(gate_class.PARAMETER_NAMES)}
+            circuit.add(gate_class(*qubits, **param_dict))
+
     if circuit is None:
         raise ValueError("No quantum register declaration found in QASM.")
     logger.debug("[OpenQASM2] Imported circuit with {} qubits and {} gates", circuit.nqubits, len(circuit.gates))

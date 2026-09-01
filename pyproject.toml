@@ -26,19 +26,15 @@ classifiers = [
 ]
 dependencies = [
     "dill>=0.4.1",
-    "numpy>=2.3,<2.4.1; sys_platform == 'darwin'",
-    "numpy>=2.4.1; sys_platform != 'darwin'",
+    "numpy>=2.3",
     "ruamel-yaml>=0.18.16",
-    "scipy>=1.16.3; sys_platform == 'darwin'",
-    "scipy>=1.15,<1.16.3; sys_platform != 'darwin'",
+    "scipy>=1.15",
     "pydantic>=2.13.3",
     "pydantic-settings>=2.14.0",
     "loguru>=0.7.3",
     "matplotlib>=3.10.8",
     "py-cpuinfo>=9.0.0",
     "setuptools>=82.0.1",
-    "gputil>=1.4.0",
-    "mkl-service>=2.6.1; sys_platform != 'darwin' and platform_machine != 'aarch64'",
     "rustworkx>=0.17.1",
     "psutil>=7.2.2",
 ]
@@ -48,7 +44,7 @@ cuda = [
     "qilisdk[cuda12]"
 ]
 cuda12 = [
-    "cuda-quantum-cu12==0.14.2",
+    "cuda-quantum-cu12==0.15.1",
     # CUDA math libraries used by the QiliSim C++ GPU shim (cuBLAS/cuSOLVER),
     # loaded at runtime via dlopen. cusolver pulls in cusparse + nvjitlink.
     "nvidia-cuda-runtime-cu12",
@@ -58,7 +54,7 @@ cuda12 = [
     "nvidia-nvjitlink-cu12",
 ]
 cuda13 = [
-    "cuda-quantum-cu13==0.14.2",
+    "cuda-quantum-cu13==0.15.1",
     # CUDA math libraries used by the QiliSim C++ GPU shim (cuBLAS/cuSOLVER),
     # loaded at runtime via dlopen. cusolver pulls in cusparse + nvjitlink.
     "nvidia-cuda-runtime",
@@ -122,6 +118,7 @@ dev = [
     "ipykernel>=7.2.0",
     "pytest>=9.0.3",
     "pytest-sugar>=1.1.1",
+    "pytest-xdist>=3.8.0",
     "ruff>=0.15.12",
     "towncrier>=25.8.0",
     "loguru-caplog>=0.2.0",
@@ -131,16 +128,16 @@ dev = [
     "diff-cover>=10.2.1",
 ]
 docs = [
-    "astroid<3.2",
+    "astroid<4.4",
     "nbsphinx>=0.9.7",
-    "pypandoc>=1.15",
+    "pypandoc-binary>=1.15",
     "sphinx==8.2.3",
     "sphinx-autoapi>=3.4.0",
     "sphinx-automodapi>=0.20.0",
     "sphinx-design>=0.7.0",
     "sphinx-mdinclude>=0.6.2",
     "sphinx-multiversion==0.2.4",
-    "sphinxawesome-theme==5.3.2",
+    "sphinxawesome-theme==6.0.5",
     "sphinx-intl",
     "sphinx-tabs>=3.5.0",
 ]
@@ -179,29 +176,9 @@ conflicts = [
 
 [tool.uv.sources]
 sphinx-multiversion = { git = "https://github.com/sphinx-contrib/multiversion", branch = "main"}
-numpy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin' and platform_machine != 'aarch64'" }]
-scipy = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin' and platform_machine != 'aarch64'" }]
-mkl-service = [{ index = "numpy-mkl", marker = "sys_platform != 'darwin' and platform_machine != 'aarch64'" }]
-
-[[tool.uv.index]]
-name = "numpy-mkl"
-url = "https://urob.github.io/numpy-mkl"
-explicit = true
-
-[[tool.uv.index]]
-name = "speqtrum"
-url = "https://api.pyx.dev/simple/qilimanjaro/speqtrum"
-publish-url = "https://api.pyx.dev/v1/upload/qilimanjaro/speqtrum"
-explicit = true
-
-[[tool.uv.index]]
-name = "euroqcs"
-url = "https://api.pyx.dev/simple/qilimanjaro/euroqcs"
-publish-url = "https://api.pyx.dev/v1/upload/qilimanjaro/euroqcs"
-explicit = true
 
 [build-system]
-requires = ["scikit-build-core", "pybind11>=2.13,<3"]
+requires = ["scikit-build-core", "pybind11>=2.13,<4"]
 build-backend = "scikit_build_core.build"
 
 [tool.scikit-build.sdist]
@@ -241,7 +218,6 @@ exclude = ["tests"]
 [tool.ruff]
 line-length = 120
 output-format = "concise"
-target-version = "py313"
 
 [tool.ruff.lint]
 preview = true
@@ -285,45 +261,45 @@ select = [
     "RUF"
 ]
 ignore = [
-    "S311",
-    "E111",
-    "E114",
-    "E117",
-    "E501",
-    "E742",
-    "D206",
-    "D300",
-    "Q000",
-    "Q001",
-    "Q002",
-    "Q003",
-    "COM812",
-    "COM819",
-    "ISC001",
-    "ISC002",
-    "E741",
-    "W191",
-    "RET504",
-    "SIM117",
-    "PLC0414",
-    "PLC2701",
-    "PLR0904",
-    "PLR0911",
-    "PLR0912",
-    "PLR0913",
-    "PLR0914",
-    "PLR0915",
-    "PLR0917",
-    "PLR1702",
-    "TD003",
-    "DOC502",
-    "RUF067"
+    "suspicious-non-cryptographic-random-usage",
+    "indentation-with-invalid-multiple",
+    "indentation-with-invalid-multiple-comment",
+    "over-indented",
+    "line-too-long",
+    "ambiguous-class-name",
+    "docstring-tab-indentation",
+    "triple-single-quotes",
+    "bad-quotes-inline-string",
+    "bad-quotes-multiline-string",
+    "bad-quotes-docstring",
+    "avoidable-escaped-quote",
+    "missing-trailing-comma",
+    "prohibited-trailing-comma",
+    "single-line-implicit-string-concatenation",
+    "multi-line-implicit-string-concatenation",
+    "ambiguous-variable-name",
+    "tab-indentation",
+    "unnecessary-assign",
+    "multiple-with-statements",
+    "useless-import-alias",
+    "import-private-name",
+    "too-many-public-methods",
+    "too-many-return-statements",
+    "too-many-branches",
+    "too-many-arguments",
+    "too-many-locals",
+    "too-many-statements",
+    "too-many-positional-arguments",
+    "too-many-nested-blocks",
+    "missing-todo-link",
+    "docstring-extraneous-exception",
+    "non-empty-init-module"
 ]
 dummy-variable-rgx = "^_$"
 exclude = [".tmp", "docs/*"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["ANN", "S", "CPY", "SLF001", "PLR", "DOC", "RUF012", "RUF069"]
+"tests/*" = ["ANN", "S", "CPY", "private-member-access", "PLR", "DOC", "mutable-class-default", "float-equality-comparison"]
 
 [tool.ruff.lint.flake8-annotations]
 allow-star-arg-any = true

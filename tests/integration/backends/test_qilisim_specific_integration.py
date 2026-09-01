@@ -25,12 +25,12 @@ from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
-from qilisdk.core.qtensor import InitialState, QTensor, ket
+from qilisdk.core.qtensor import InitialState, QTensor, expect_val, ket
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.noise import AmplitudeDamping, Dephasing, Depolarizing, NoiseModel
-from qilisdk.readout import Readout, SamplingReadout
+from qilisdk.readout import ExpectationReadout, Readout, SamplingReadout, StateTomographyReadout
 
 random.seed(42)
 
@@ -85,6 +85,39 @@ def test_monte_carlo_circuit(method):
     samples = result.get_samples()
     assert "0" in samples
     assert "1" in samples
+
+
+@pytest.mark.parametrize("method", digital_methods)
+def test_monte_carlo_mid_circuit_readout(method):
+    """Mid-circuit readouts under Monte Carlo are evaluated on the trajectory ensemble, so their
+    expectation values must match the density matrix that ensemble averages to."""
+    p = 0.3
+    initial_state = (ket(0, 0).to_density_matrix() * (1 - p) + ket(1, 1).to_density_matrix() * p).unit()
+    backend = QiliSim(
+        digital_simulation_method=method,
+        execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=MonteCarloConfig(trajectories=32)),
+    )
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    circuit.add(M(0))
+    circuit.add(CNOT(0, 1))
+    circuit.add(M(0))
+    circuit.add(M(1))
+
+    observables = [pauli_z(0), pauli_x(1), pauli_z(0) * pauli_z(1)]
+    result = backend._execute_digital_propagation(
+        DigitalPropagation(circuit=circuit),
+        readout=[ExpectationReadout(observables=observables), StateTomographyReadout()],
+        initial_state=initial_state,
+    )
+
+    assert len(result.intermediate_results) > 0
+    for step in [*result.intermediate_results, result.readout_results]:
+        np.testing.assert_allclose(
+            step.expectation_values.expectation_values,
+            [expect_val(observable, step.state_tomography.state).real for observable in observables],
+            atol=1e-10,
+        )
 
 
 @pytest.mark.parametrize("method", digital_methods)
@@ -163,6 +196,51 @@ def test_monte_carlo_time_evolution(method):
     expect_z = res.get_expectation_values()[0]
     assert res.get_state().shape == (2, 2)
     assert np.isclose(expect_z, -0.8, rtol=1e-1)
+
+
+@pytest.mark.parametrize("method", analog_methods)
+def test_monte_carlo_expectation_values_match_ensemble_density_matrix(method):
+    """Monte Carlo expectation values are averaged over the trajectories rather than computed from
+    the assembled density matrix, so check the two agree for the final state and the intermediates."""
+    dt = 0.1
+    T = 2.0
+    nqubits = 2
+
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={
+            "h1": sum(pauli_x(q) for q in range(nqubits)),
+            "h2": sum(pauli_z(q) for q in range(nqubits)),
+        },
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
+    )
+
+    noise_model = NoiseModel()
+    noise_model.add(AmplitudeDamping(t1=2.0))
+
+    observables = [pauli_z(0), pauli_x(1), pauli_z(0) * pauli_z(1)]
+    backend = QiliSim(
+        analog_simulation_method=method,
+        noise_model=noise_model,
+        execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=MonteCarloConfig(trajectories=32)),
+    )
+    res = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=InitialState.UNIFORM, store_intermediate_results=True),
+        readout=Readout().with_expectation(observables=observables).with_state_tomography(),
+    )
+
+    def _reference(state):
+        return [expect_val(observable, state).real for observable in observables]
+
+    np.testing.assert_allclose(res.get_expectation_values(), _reference(res.get_state()), atol=1e-10)
+
+    assert len(res.intermediate_results) > 0
+    for step in res.intermediate_results:
+        np.testing.assert_allclose(
+            step.expectation_values.expectation_values,
+            _reference(step.state_tomography.state),
+            atol=1e-10,
+        )
 
 
 @pytest.mark.parametrize(
@@ -486,7 +564,6 @@ def _make_many_qubit_annealing_schedule(nqubits):
     ],
 )
 def test_variational_annealing_runs(readout):
-
     backend = QiliSim(
         analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=100, warmups=5),
         execution_config=ExecutionConfig(seed=42, num_threads=1),
@@ -525,7 +602,6 @@ def test_variational_annealing_wrong_initial_state_raises():
 
 
 def test_variational_annealing_non_x_first_hamiltonian_raises():
-
     bad_schedule = Schedule(
         dt=1,
         hamiltonians={"h_z1": pauli_z(0), "h_z2": pauli_z(0)},
@@ -543,7 +619,6 @@ def test_variational_annealing_non_x_first_hamiltonian_raises():
 
 
 def test_variational_annealing_non_z_final_hamiltonian_raises():
-
     bad_schedule = Schedule(
         dt=1,
         hamiltonians={"h_x": pauli_x(0), "h_y": pauli_y(0)},

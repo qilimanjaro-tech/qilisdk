@@ -17,6 +17,8 @@
 #include <gtest/gtest.h>
 
 #include "../../../src/qilisdk_cpp/backends/qilisim/digital/sampling.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/utils/matrix_utils.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/utils/random.h"
 #include "../../../src/qilisdk_cpp/backends/qilisim/utils/sample.h"
 
 #include <algorithm>
@@ -919,6 +921,105 @@ TEST_F(SamplingMonteCarloTest, MidCircuitCollapseWithoutMonteCarloGivesADensityM
     EXPECT_NEAR(std::real(state(0, 0)), 0.5, kTol);
     EXPECT_NEAR(std::real(state(1, 1)), 0.5, kTol);
     EXPECT_NEAR(std::abs(state(0, 1)), 0.0, kTol);
+}
+
+// A caller that passes output_is_trajectories opts into receiving the raw Monte Carlo ensemble
+// (columns are state vectors) instead of the averaged density matrix, so the readouts can be
+// averaged over the trajectories.
+TEST_F(SamplingMonteCarloTest, MonteCarloKeepsTrajectoriesWhenRequested) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0)};
+    DenseMatrix state;
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(8);
+    SparseMatrixCol rho_mixed(2, 2);
+    rho_mixed.insert(0, 0) = cx(0.5, 0);
+    rho_mixed.insert(1, 1) = cx(0.5, 0);
+    rho_mixed.makeCompressed();
+    std::vector<py::object> intermediate_results;
+
+    bool is_trajectories = false;
+    sampling(gates, n, rho_mixed, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+
+    EXPECT_TRUE(is_trajectories);
+    EXPECT_EQ(state.rows(), 2);
+    EXPECT_EQ(state.cols(), 8);
+    EXPECT_NEAR(std::real(trace(trajectories_to_density_matrix(state))), 1.0, 1e-12);
+}
+
+TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloKeepsTrajectoriesWhenRequested) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0)};
+    DenseMatrix state;
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(8);
+    SparseMatrixCol rho_mixed(2, 2);
+    rho_mixed.insert(0, 0) = cx(0.5, 0);
+    rho_mixed.insert(1, 1) = cx(0.5, 0);
+    rho_mixed.makeCompressed();
+    std::vector<py::object> intermediate_results;
+
+    bool is_trajectories = false;
+    sampling_matrix_free(gates, n, rho_mixed, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+
+    EXPECT_TRUE(is_trajectories);
+    EXPECT_EQ(state.rows(), 2);
+    EXPECT_EQ(state.cols(), 8);
+    EXPECT_NEAR(std::real(trace(trajectories_to_density_matrix(state))), 1.0, 1e-12);
+}
+
+// A mid-circuit collapse is unravelled per trajectory, so the ensemble survives it and a caller that
+// asked for the trajectories still gets them back (their average staying a valid density matrix).
+TEST_F(SamplingMonteCarloTest, MidCircuitCollapseKeepsTrajectories) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0), makeM(0), makeH(0)};
+    DenseMatrix state;
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(8);
+    cfgMC.set_measurement_collapse(true);
+    SparseMatrixCol rho_mixed(2, 2);
+    rho_mixed.insert(0, 0) = cx(0.5, 0);
+    rho_mixed.insert(1, 1) = cx(0.5, 0);
+    rho_mixed.makeCompressed();
+    std::vector<py::object> intermediate_results;
+
+    bool is_trajectories = true;
+    sampling(gates, n, rho_mixed, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+
+    EXPECT_TRUE(is_trajectories);
+    EXPECT_EQ(state.rows(), 2);
+    EXPECT_EQ(state.cols(), 8);
+    const DenseMatrix averaged = trajectories_to_density_matrix(state);
+    EXPECT_NEAR(std::real(trace(averaged)), 1.0, 1e-12);
+    EXPECT_TRUE((averaged - averaged.adjoint()).isZero(1e-12));
+}
+
+TEST_F(SamplingMonteCarloTest, MatrixFreeMidCircuitCollapseKeepsTrajectories) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0), makeM(0), makeH(0)};
+    DenseMatrix state;
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(8);
+    cfgMC.set_measurement_collapse(true);
+    SparseMatrixCol rho_mixed(2, 2);
+    rho_mixed.insert(0, 0) = cx(0.5, 0);
+    rho_mixed.insert(1, 1) = cx(0.5, 0);
+    rho_mixed.makeCompressed();
+    std::vector<py::object> intermediate_results;
+
+    bool is_trajectories = true;
+    sampling_matrix_free(gates, n, rho_mixed, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+
+    EXPECT_TRUE(is_trajectories);
+    EXPECT_EQ(state.rows(), 2);
+    EXPECT_EQ(state.cols(), 8);
+    const DenseMatrix averaged = trajectories_to_density_matrix(state);
+    EXPECT_NEAR(std::real(trace(averaged)), 1.0, 1e-12);
+    EXPECT_TRUE((averaged - averaged.adjoint()).isZero(1e-12));
 }
 
 TEST_F(SamplingMatrixFreeTest, BadGate_ThrowsException) {

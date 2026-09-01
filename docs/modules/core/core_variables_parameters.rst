@@ -35,20 +35,20 @@ Continuous variables support indexing, where each index refers to a component of
 
 ::
 
-    (0.1) * x(0) + (0.2) * x(1) + (0.4) * x(2) + (0.30000000000000004) * x(3) + (1.0)
+    0.1 * (10.0 + x(0) + 2 * x(1) + 3.0 * x(3) + 4 * x(2))
 
 To index the first binary variable from the binary representation of x you can write: ``x[0]``.
 Each binary variable configuration generates a float within the bounds, based on the defined precision. For instance:
 
 .. code-block:: python
 
-    x.evaluate([0, 1, 0, 0])
+    x.evaluate({x: [0, 1, 0, 0]})
 
 **Output**:
 
 ::
 
-    1.2
+    1.2000000000000002
 
 Parameters
 ---------------------------------------------

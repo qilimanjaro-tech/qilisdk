@@ -97,7 +97,7 @@ class InterceptHandler(logging.Handler):
     Redirect stdlib 'logging' records to Loguru, optionally filtering by name_prefix.
     """
 
-    def emit(self, record: logging.LogRecord) -> None:  # noqa: PLR6301
+    def emit(self, record: logging.LogRecord) -> None:  # ruff: ignore[no-self-use]
         try:
             level = logger.level(record.levelname).name
         except ValueError:
@@ -116,7 +116,7 @@ def _refresh_cpp_log_level() -> None:
     """
     Notify any already-imported QiliSDK C++ extension modules that the log level changed.
     """
-    for module_name in ("qilisim_module", "qtensor_module"):
+    for module_name in ("qilisim_module", "qtensor_module", "solvers_module"):
         module = sys.modules.get(module_name)
         refresh = getattr(module, "_refresh_log_level", None)
         if refresh is not None:

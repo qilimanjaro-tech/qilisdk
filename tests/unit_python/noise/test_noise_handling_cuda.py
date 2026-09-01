@@ -15,15 +15,16 @@
 
 import numpy as np
 import pytest
+from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 
 pytest.importorskip("cudaq", reason="CUDA noise tests require the 'cudaq' optional dependency")
 
 from qilisdk.analog import PauliX as pauli_x
 from qilisdk.analog import Schedule
-from qilisdk.backends.cuda_backend import CudaBackend, _to_cuda_noise, cudaq
+from qilisdk.backends.cuda_backend import _SWAP_OP_NAME, CudaBackend, _to_cuda_noise, cudaq
 from qilisdk.core import Parameter
 from qilisdk.core.qtensor import QTensor
-from qilisdk.digital import RX, Circuit, X
+from qilisdk.digital import CNOT, CZ, RX, SWAP, U1, Circuit, X
 from qilisdk.noise import (
     AmplitudeDamping,
     BitFlip,
@@ -92,9 +93,100 @@ def test_noise_model_to_cudaq():
     noise_model.add(single_qubit_kraus, qubits=[0], gate=X)
     noise_model.add(single_qubit_kraus, gate=X)
     noise_model.add(two_qubit_kraus)
-    cuda_noise_model = backend._noise_model_to_cudaq(noise_model, nqubits=2)
+    cuda_noise_model = backend._noise_model_to_cudaq(noise_model, circuit=Circuit(2))
     assert len(cuda_noise_model.get_channels("x", [0])) == 3
     assert len(cuda_noise_model.get_channels("x", [1])) == 3
+
+
+def test_noise_model_to_cudaq_on_multi_qubit_gates():
+    backend = CudaBackend()
+    noise_model = NoiseModel()
+    noise_model.add(ReadoutAssignment(p01=0.1, p10=0.1))
+    noise_model.add(AmplitudeDamping(t1=1.0))
+    noise_model.add(KrausChannel(operators=[QTensor(np.eye(4))]), gate=CNOT)
+    noise_model.add(BitFlip(probability=1.0), gate=X, qubits=[0])
+    circuit = Circuit(2)
+    circuit.add(CNOT(0, 1))
+    cuda_noise_model = backend._noise_model_to_cudaq(noise_model, circuit)
+
+    # CUDA-Q sees the CNOT as an x on the control and the target, and takes a channel on both of them
+    # at once: the amplitude damping is embedded on each of them, and the two-qubit Kraus channel
+    # attached to the CNOT is applied as it is, neither of which shows up on a plain x. The readout
+    # error has no Kraus operators, so it is not applied to a gate at all.
+    assert len(cuda_noise_model.get_channels("x", [0])) == 2
+    assert len(cuda_noise_model.get_channels("x", [1])) == 1
+
+
+def test_noise_model_to_cudaq_on_qubit_of_multi_qubit_gates():
+    backend = CudaBackend()
+    noise_model = NoiseModel()
+    noise_model.add(BitFlip(probability=1.0), qubits=[0])
+    noise_model.add(PhaseFlip(probability=1.0), gate=CZ)
+    circuit = Circuit(3)
+    circuit.add(X(1))
+    circuit.add(CNOT(0, 1))
+    circuit.add(CZ(1, 0))
+    circuit.add(SWAP(1, 2))
+    cuda_noise_model = backend._noise_model_to_cudaq(noise_model, circuit)
+
+    flip = np.array([[0, 1], [1, 0]], dtype=np.complex128)
+    identity = np.eye(2, dtype=np.complex128)
+
+    # On a multi-qubit gate the noise is embedded at the position of the qubit it is attached to,
+    # control included, and CUDA-Q orders the qubits of a channel with the gate's first qubit as the
+    # last tensor factor. The CNOT has qubit 0 as its control, so first, and the CZ as its target.
+    for gate_name, gate_qubits, expected in (
+        ("x", [0, 1], np.kron(identity, flip)),
+        ("z", [1, 0], np.kron(flip, identity)),
+    ):
+        channels = cuda_noise_model.get_channels(gate_name, gate_qubits)
+        assert len(channels) == 1
+        assert np.allclose(np.array(channels[0].get_ops()[0]), expected)
+
+    # The gates that do not act on the noisy qubit are left alone.
+    assert cuda_noise_model.get_channels(_SWAP_OP_NAME, [1, 2]) == []
+
+    # A plain z only gets the bit flip of its qubit: the phase flip is attached to the CZ, which
+    # CUDA-Q takes as a z with one control qubit.
+    plain_z_channels = cuda_noise_model.get_channels("z", [0])
+    assert len(plain_z_channels) == 1
+    assert plain_z_channels[0].noise_type == cudaq.NoiseModelType.BitFlipChannel
+
+
+def test_noise_model_to_cudaq_on_gate_without_cuda_operation(caplog):  # ruff: ignore[redefined-while-unused]
+    backend = CudaBackend()
+    noise_model = NoiseModel()
+    noise_model.add(BitFlip(probability=1.0), gate=U1)
+    backend._noise_model_to_cudaq(noise_model, circuit=Circuit(1))
+
+    # CUDA-Q has no u1 operation to attach a channel to, so the noise is dropped and reported.
+    assert "Ignoring the noise on gate 'U1'" in caplog.text
+
+
+def test_noise_model_to_cudaq_warns_when_a_channel_cannot_be_embedded(caplog):  # ruff: ignore[redefined-while-unused]
+    backend = CudaBackend()
+    noise_model = NoiseModel()
+    noise_model.add(KrausChannel(operators=[QTensor(np.eye(8))]), gate=CNOT)
+    circuit = Circuit(3)
+    circuit.add(CNOT(0, 1))
+    backend._noise_model_to_cudaq(noise_model, circuit)
+
+    # A three-qubit channel fits neither a single qubit of the CNOT nor the gate as a whole, so it is
+    # skipped, both when the channel is built and when the gate it was meant for is registered.
+    assert "does not act on a single qubit, cannot embed in multi-qubit gate" in caplog.text
+    assert "cannot embed in multi-qubit gate X" in caplog.text
+
+
+def test_noise_model_to_cudaq_warns_when_a_channel_has_no_kraus_operators(caplog):  # ruff: ignore[redefined-while-unused]
+    backend = CudaBackend()
+    noise_model = NoiseModel()
+    noise_model.add(ReadoutAssignment(p01=0.1, p10=0.1))
+    circuit = Circuit(2)
+    circuit.add(CNOT(0, 1))
+    backend._noise_model_to_cudaq(noise_model, circuit)
+
+    # A readout error defines no Kraus operators, so there is nothing to embed in the CNOT.
+    assert "does not define Kraus operators or they do not act on a single qubit" in caplog.text
 
 
 def test_bad_kraus():

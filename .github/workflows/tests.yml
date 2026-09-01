@@ -11,22 +11,30 @@ on:
       - "synchronize"
       - "ready_for_review"
 
+concurrency:
+  group: tests-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # The version that carries coverage and the C++ suite.
+  COVERAGE_PYTHON: "3.13"
+
 jobs:
   tests:
     name: Testing for Python ${{ matrix.python-version }}
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
 
-    env:
-      HOME_REPO: /home/repo
+    permissions:
+      contents: read
 
     strategy:
+      fail-fast: false
       matrix:
-        python-version:
-          - "3.11"
-          - "3.12"
-          - "3.13"
+        # Nothing in src/ branches on the Python version, so a PR runs the oldest
+        # and the newest version we support and main fills in the middle.
+        python-version: ${{ github.event_name == 'push' && fromJSON('["3.11", "3.12", "3.13"]') || fromJSON('["3.11", "3.13"]') }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -34,7 +42,7 @@ jobs:
           fetch-depth: 1
 
       - name: Install uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
         with:
           enable-cache: true
           cache-dependency-glob: |
@@ -42,39 +50,66 @@ jobs:
             **/uv.lock
           python-version: ${{ matrix.python-version }}
 
-      - name: Install qilisdk
+      - name: Install qilisdk with coverage
+        if: matrix.python-version == env.COVERAGE_PYTHON
         run: |
-          uv -v sync --group dev --extra all-cu13 -Ccmake.define.tests=ON -Ccmake.build-type=Debug -Ccmake.define.coverage=ON --reinstall
+          uv sync --frozen --group dev --extra all-cu13 --reinstall-package qilisdk \
+            -Ccmake.build-type=Debug \
+            -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0 \
+            -Ccmake.define.tests=ON \
+            -Ccmake.define.coverage=ON
+          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Install qilisdk
+        if: matrix.python-version != env.COVERAGE_PYTHON
+        run: |
+          uv sync --frozen --group dev --extra all-cu13 --reinstall-package qilisdk \
+            -Ccmake.build-type=Release
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Run Python tests
-        run: pytest --cov=qilisdk --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy tests/unit_python/
+        if: matrix.python-version != env.COVERAGE_PYTHON
+        run: pytest -n auto tests/unit_python/
+
+      - name: Run Python tests with coverage
+        if: matrix.python-version == env.COVERAGE_PYTHON
+        run: pytest -n auto --cov=qilisdk --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy tests/unit_python/
 
       - name: Run C++ tests
+        if: matrix.python-version == env.COVERAGE_PYTHON
         run: |
           GCOV_PREFIX=$(pwd)/tests/unit_cpp/coverage GCOV_PREFIX_STRIP=5 ./tests/unit_cpp/test_cpp
           gcovr --exclude '.*googletest.*' --exclude '/usr/.*' --gcov-ignore-errors=all --exclude-unreachable-branches --exclude-throw-branches --xml coverage_cpp.xml
 
       - name: Combine coverage reports
+        if: matrix.python-version == env.COVERAGE_PYTHON
         run: gcovr --gcov-ignore-errors=all --xml combined_coverage.xml --cobertura-add-tracefile coverage.xml --cobertura-add-tracefile coverage_cpp.xml
 
-      - name: Output the coverage directory for debugging
-        run: ls -R tests/unit_cpp/coverage/
-
-      - name: Print the working directory for debugging
-        run: pwd
-
       - name: Upload coverage to Codecov
-        if: ${{ matrix.python-version == '3.13' }}
+        if: matrix.python-version == env.COVERAGE_PYTHON
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f  # v7.0.0
         with:
           files: combined_coverage.xml
           disable_search: true
           token: ${{ secrets.CODECOV_TOKEN }}
-      
+
       - name: Upload test results to Codecov
-        if: ${{ !cancelled() && matrix.python-version == '3.13' }}
+        if: ${{ !cancelled() && matrix.python-version == env.COVERAGE_PYTHON }}
         uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3  # v1.2.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+  all-tests:
+    name: Tests
+    needs: [tests]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+
+    steps:
+      - name: Check the results
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

@@ -24,8 +24,10 @@ import numpy as np
 from loguru import logger
 from typing_extensions import TypeAlias
 
+from qilisdk.core.comparison import LEQ
+from qilisdk.core.expression import Expression
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import LEQ, BaseVariable, Parameter, Term
+from qilisdk.core.variables import BaseVariable, Parameter
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
@@ -34,9 +36,12 @@ if TYPE_CHECKING:
 
 _TIME_PARAMETER_NAME = "t"
 
-# type aliases just to keep this short
-PARAMETERIZED_NUMBER: TypeAlias = float | Parameter | Term
-TimeDict = dict[PARAMETERIZED_NUMBER | tuple[float, float], PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]]
+# A real coefficient that may be either a concrete float or a symbolic Expression. The Expression is
+# expected to be parameter-only (its free leaves are Parameters, so .is_parameterized() is True) and
+# to evaluate to a real number. Those two invariants are not expressible in the type system; they are
+# documented here and enforced at construction sites that consume the alias.
+ParameterizedNumber: TypeAlias = float | Expression
+TimeDict = dict[ParameterizedNumber | tuple[float, float], ParameterizedNumber | Callable[..., ParameterizedNumber]]
 
 
 class Interpolation(str, Enum):
@@ -45,18 +50,18 @@ class Interpolation(str, Enum):
 
 
 def _process_callable(
-    function: Callable[[], PARAMETERIZED_NUMBER], current_time: Parameter, **kwargs: Any
-) -> tuple[PARAMETERIZED_NUMBER, dict[str, Parameter]]:
+    function: Callable[[], ParameterizedNumber], current_time: Parameter, **kwargs: Any
+) -> tuple[ParameterizedNumber, dict[str, Parameter]]:
     """
     Evaluate a coefficient-producing callable and collect any parameters it exposes.
 
     Args:
-        function (Callable[..., PARAMETERIZED_NUMBER]): Callable that returns a coefficient expression.
+        function (Callable[..., ParameterizedNumber]): Callable that returns a coefficient expression.
         current_time (Parameter): Time parameter to bind when evaluating the callable.
         **kwargs: Additional keyword arguments passed to the callable.
 
     Returns:
-        tuple[PARAMETERIZED_NUMBER, dict[str, Parameter]]: Evaluated expression and parameters discovered.
+        tuple[ParameterizedNumber, dict[str, Parameter]]: Evaluated expression and parameters discovered.
 
     Raises:
         ValueError: If the callable uses variables other than time or ``Parameter`` instances.
@@ -86,11 +91,9 @@ def _process_callable(
     if _TIME_PARAMETER_NAME in c_params:
         kwargs[_TIME_PARAMETER_NAME] = current_time
     term = function(**kwargs)
-    if isinstance(term, Term) and not all(
-        (isinstance(v, Parameter) or v.label == _TIME_PARAMETER_NAME) for v in term.variables()
+    if isinstance(term, Expression) and not all(
+        (v.is_parameter or v.label == _TIME_PARAMETER_NAME) for v in term.variables()
     ):
-        raise ValueError("function contains variables that are not time. Only Parameters are allowed.")
-    if isinstance(term, BaseVariable) and not (isinstance(term, Parameter) or term.label == _TIME_PARAMETER_NAME):
         raise ValueError("function contains variables that are not time. Only Parameters are allowed.")
     return term, parameters
 
@@ -104,6 +107,7 @@ class Interpolator(Parameterizable):
         time_dict: TimeDict,
         interpolation: Interpolation = Interpolation.LINEAR,
         nsamples: int = 100,
+        extrapolate: bool = False,
     ) -> None:
         """Initialize an interpolator over discrete points or intervals.
 
@@ -111,6 +115,10 @@ class Interpolator(Parameterizable):
             time_dict (TimeDict): Mapping from time points or intervals to coefficients or callables.
             interpolation (Interpolation): Interpolation rule between provided points (``LINEAR`` or ``STEP``).
             nsamples (int): Number of samples used to expand interval definitions.
+            extrapolate (bool): How to evaluate times outside the defined range. If ``False`` (the default) the
+                first and last coefficients are held constant outside the range, and a warning is issued the first
+                time this happens. If ``True``, the slope of the first/last linear segment is extended instead
+                (only meaningful for ``LINEAR`` interpolation).
 
         Raises:
             ValueError: If the time intervals contain a number of points different than 2.
@@ -122,35 +130,29 @@ class Interpolator(Parameterizable):
             interpolation,
         )
         self._interpolation = interpolation
-        self._time_dict: dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER] = {}
+        self._time_dict: dict[ParameterizedNumber, ParameterizedNumber] = {}
+        self._extrapolate = extrapolate
+        self._warned_extrapolation = False
         self._current_time = Parameter("t", 0)
         self._total_time: float | None = None
         self.iter_time_step = 0
         self._cached = False
-        self._cached_time: dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER | Number] = {}
-        self._tlist: list[PARAMETERIZED_NUMBER] | None = None
+        self._cached_time: dict[ParameterizedNumber, ParameterizedNumber | Number] = {}
+        self._tlist: list[ParameterizedNumber] | None = None
         self._fixed_tlist: list[float] | None = None
-        self._max_time: PARAMETERIZED_NUMBER | None = None
+        self._max_time: ParameterizedNumber | None = None
         self._time_scale_cache: float | None = None
 
-        fixed_times: list[PARAMETERIZED_NUMBER | tuple[float, float]] = sorted(
+        fixed_times: list[ParameterizedNumber | tuple[float, float]] = sorted(
             time_dict.keys(),
-            key=lambda t: self._get_value(
-                min(t, key=self._get_value)  # ty:ignore[no-matching-overload]
-                if isinstance(t, tuple)
-                else self._get_value(t)
-            ),
+            key=lambda t: self._get_value(min(t, key=self._get_value) if isinstance(t, tuple) else self._get_value(t)),
         )
 
         for i in range(len(fixed_times) - 1):
-            ti: PARAMETERIZED_NUMBER | tuple[float, float] = fixed_times[i]
-            tj: PARAMETERIZED_NUMBER | tuple[float, float] = fixed_times[i + 1]
-            t0 = (
-                self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])  # ty:ignore[invalid-argument-type]
-            )
-            t1 = (
-                self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])  # ty:ignore[invalid-argument-type]
-            )
+            ti: ParameterizedNumber | tuple[float, float] = fixed_times[i]
+            tj: ParameterizedNumber | tuple[float, float] = fixed_times[i + 1]
+            t0 = self._get_value(ti) if not isinstance(ti, tuple) else self._get_value(ti[1])
+            t1 = self._get_value(tj) if not isinstance(tj, tuple) else self._get_value(tj[0])
             if abs(t0 - t1) < get_settings().atol:
                 raise ValueError(f"The time point {t0} is defined twice.")
             if t0 > t1:
@@ -158,12 +160,12 @@ class Interpolator(Parameterizable):
 
         for time, coefficient in time_dict.items():
             if isinstance(time, tuple):
-                if len(time) != 2:  # noqa: PLR2004
+                if len(time) != 2:  # ruff: ignore[magic-value-comparison]
                     raise ValueError(
                         f"time intervals need to be defined by two points, but this interval was provided: {time}"
                     )
-                self.add_time_point(time[0], coefficient)  # ty:ignore[invalid-argument-type]
-                self.add_time_point(time[1], coefficient)  # ty:ignore[invalid-argument-type]
+                self.add_time_point(time[0], coefficient)
+                self.add_time_point(time[1], coefficient)
             else:
                 self.add_time_point(time, coefficient)
         self._tlist = self._generate_tlist()
@@ -171,11 +173,11 @@ class Interpolator(Parameterizable):
         time_insertion_list = sorted(
             [k for item in time_dict for k in (item if isinstance(item, tuple) else (item,))],
             key=self._get_value,
-        )  # ty:ignore[no-matching-overload]
+        )
         l = len(time_insertion_list)
         for i in range(l):
             t = time_insertion_list[i]
-            if isinstance(t, (Parameter, Term)):
+            if isinstance(t, (Parameter, Expression)):
                 if i > 0:
                     term = LEQ(time_insertion_list[i - 1], t)
                     if term not in self._parameter_constraints:
@@ -185,12 +187,12 @@ class Interpolator(Parameterizable):
                     if term not in self._parameter_constraints:
                         self._parameter_constraints.append(term)
 
-    def _generate_tlist(self) -> list[PARAMETERIZED_NUMBER]:
+    def _generate_tlist(self) -> list[ParameterizedNumber]:
         """
         Generate a sorted list of the registered time keys.
 
         Returns:
-            list[PARAMETERIZED_NUMBER]: Sorted time indices based on their evaluated value.
+            list[ParameterizedNumber]: Sorted time indices based on their evaluated value.
         """
         return sorted((self._time_dict.keys()), key=self._get_value)
 
@@ -228,12 +230,23 @@ class Interpolator(Parameterizable):
         return self._time_scale_cache
 
     @property
-    def tlist(self) -> list[PARAMETERIZED_NUMBER]:
+    def extrapolate(self) -> bool:
+        """
+        Return whether coefficients are extrapolated outside the defined time range.
+
+        Returns:
+            bool: ``True`` if the first/last segment slope is extended, ``False`` if the first/last coefficient is
+                held constant.
+        """
+        return self._extrapolate
+
+    @property
+    def tlist(self) -> list[ParameterizedNumber]:
         """
         Return the (possibly rescaled) list of time points used for interpolation.
 
         Returns:
-            list[PARAMETERIZED_NUMBER]: Interpolation time points, rescaled if ``max_time`` is set.
+            list[ParameterizedNumber]: Interpolation time points, rescaled if ``max_time`` is set.
         """
         if self._tlist is None:
             self._tlist = self._generate_tlist()
@@ -266,12 +279,12 @@ class Interpolator(Parameterizable):
             self._total_time = max(self.fixed_tlist)
         return self._total_time
 
-    def items(self) -> list[tuple[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]:
+    def items(self) -> list[tuple[ParameterizedNumber, ParameterizedNumber]]:
         """
         Return (time, coefficient) pairs, rescaling time if a max is set.
 
         Returns:
-            list[tuple[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]: Time and coefficient pairs.
+            list[tuple[ParameterizedNumber, ParameterizedNumber]]: Time and coefficient pairs.
         """
         if self._max_time is not None:
             return [(k * self._time_scale, v) for k, v in self._time_dict.items()]
@@ -287,22 +300,22 @@ class Interpolator(Parameterizable):
         return [(t, self._get_value(self[t], t)) for t in self.fixed_tlist]
 
     @property
-    def coefficients(self) -> list[PARAMETERIZED_NUMBER]:
+    def coefficients(self) -> list[ParameterizedNumber]:
         """
         Return coefficients in the order of ``tlist`` without evaluation.
 
         Returns:
-            list[PARAMETERIZED_NUMBER]: Coefficients aligned with ``tlist``.
+            list[ParameterizedNumber]: Coefficients aligned with ``tlist``.
         """
         return list(self._time_dict.values())
 
     @property
-    def coefficients_dict(self) -> dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]:
+    def coefficients_dict(self) -> dict[ParameterizedNumber, ParameterizedNumber]:
         """
         Return a shallow copy of the internal time-to-coefficient mapping.
 
         Returns:
-            dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]: Mapping from time to coefficient expressions.
+            dict[ParameterizedNumber, ParameterizedNumber]: Mapping from time to coefficient expressions.
         """
         return copy(self._time_dict)
 
@@ -316,12 +329,12 @@ class Interpolator(Parameterizable):
         """
         return [self._get_value(self[t]) for t in self.fixed_tlist]
 
-    def set_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:
+    def set_max_time(self, max_time: ParameterizedNumber) -> None:
         """
         Rescale all time points to a new maximum duration while keeping relative spacing.
 
         Args:
-            max_time (PARAMETERIZED_NUMBER): Desired maximum time after rescaling.
+            max_time (ParameterizedNumber): Desired maximum time after rescaling.
 
         Raises:
             ValueError: If the max time is set to zero.
@@ -341,12 +354,12 @@ class Interpolator(Parameterizable):
         self._fixed_tlist = None
         self._time_scale_cache = None
 
-    def _get_value(self, value: PARAMETERIZED_NUMBER | complex, t: float | None = None) -> float:
+    def _get_value(self, value: ParameterizedNumber | complex, t: float | None = None) -> float:
         """
         Evaluate a numeric, parameter, or term into a concrete float.
 
         Args:
-            value (PARAMETERIZED_NUMBER | complex): Value or expression to evaluate.
+            value (ParameterizedNumber | complex): Value or expression to evaluate.
             t (float | None): Time value to bind when evaluating time-dependent expressions.
 
         Returns:
@@ -365,45 +378,45 @@ class Interpolator(Parameterizable):
                     raise ValueError("Can't evaluate Parameter because time is not provided.")
                 value.set_value(t)
             return float(value.evaluate())
-        if isinstance(value, Term):
+        if isinstance(value, Expression):
             ctx: Mapping[BaseVariable, list[int] | int | float] = {self._current_time: t} if t is not None else {}
             aux = value.evaluate(ctx)
 
             return aux.real if isinstance(aux, complex) else float(aux)
         raise ValueError(f"Invalid value of type {type(value)} is being evaluated.")
 
-    def _extract_parameters(self, element: PARAMETERIZED_NUMBER) -> None:
+    def _extract_parameters(self, element: ParameterizedNumber) -> None:
         """
         Collect parameters from an element, ensuring only allowed variables are used.
 
         Args:
-            element (PARAMETERIZED_NUMBER): Element to inspect for parameters.
+            element (ParameterizedNumber): Element to inspect for parameters.
 
         Raises:
             ValueError: If the element contains variables that are not parameters.
         """
         if isinstance(element, Parameter) and element.label != _TIME_PARAMETER_NAME:
             self._add_parameter(element.label, element)
-        elif isinstance(element, Term):
-            if not element.is_parameterized_term():
+        elif isinstance(element, Expression):
+            if not element.is_parameterized():
                 raise ValueError(
                     f"Tlist can only contain parameters and no variables, but the term {element} contains objects other than parameters."
                 )
-            for p in element.variables():
-                if isinstance(p, Parameter) and p.label != _TIME_PARAMETER_NAME:
+            for p in element.free_parameters():
+                if p.label != _TIME_PARAMETER_NAME:
                     self._add_parameter(p.label, p)
 
     def add_time_point(
         self,
-        time: PARAMETERIZED_NUMBER,
-        coefficient: PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER],
+        time: ParameterizedNumber,
+        coefficient: ParameterizedNumber | Callable[..., ParameterizedNumber],
     ) -> None:
         """
         Add or update a coefficient associated with a time point, processing callables if needed.
 
         Args:
-            time (PARAMETERIZED_NUMBER): Time point for the coefficient.
-            coefficient (PARAMETERIZED_NUMBER | Callable[..., PARAMETERIZED_NUMBER]): Coefficient value or callable.
+            time (ParameterizedNumber): Time point for the coefficient.
+            coefficient (ParameterizedNumber | Callable[..., ParameterizedNumber]): Coefficient value or callable.
 
         Raises:
             ValueError: If the coefficient type is unsupported or the callable uses invalid variables.
@@ -417,11 +430,11 @@ class Interpolator(Parameterizable):
             self._extract_parameters(coeff)
             if len(_params) > 0:
                 self._update_parameters(_params)
-        elif isinstance(coeff, (int, float, Parameter, Term)):
+        elif isinstance(coeff, (int, float, Expression)):
             self._extract_parameters(coeff)
         else:
             raise ValueError(
-                "Coefficient must be a number, Parameter, Term, or callable that returns one of these types."
+                "Coefficient must be a number, Parameter, Expression, or callable that returns one of these types."
             )
         self._time_dict[time / self._time_scale] = coeff
         self.delete_cache()
@@ -475,7 +488,7 @@ class Interpolator(Parameterizable):
             float: Evaluated coefficient.
         """
         logger.trace("[Interpolator] Evaluating coefficient at t={}", time_step)
-        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)  # ty:ignore[invalid-assignment]
+        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
         val = self.get_coefficient_expression(time_step=time_step)
 
         if self._max_time is not None:
@@ -485,7 +498,7 @@ class Interpolator(Parameterizable):
 
         return self._get_value(val, time_step)
 
-    def get_coefficient_expression(self, time_step: float) -> Number | Term | Parameter:
+    def get_coefficient_expression(self, time_step: float) -> Number | Expression | Parameter:
         """
         Return the raw expression for the coefficient at ``time_step`` without final evaluation.
 
@@ -493,12 +506,12 @@ class Interpolator(Parameterizable):
             time_step (float): Time at which to retrieve the coefficient expression.
 
         Returns:
-            Number | Term | Parameter: Coefficient expression before numeric evaluation.
+            Number | Expression | Parameter: Coefficient expression before numeric evaluation.
 
         Raises:
             ValueError: If the interpolation mode is unsupported or evaluation fails.
         """
-        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)  # ty:ignore[invalid-assignment]
+        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
 
         # generate the tlist
         self._tlist = self._generate_tlist()
@@ -524,7 +537,20 @@ class Interpolator(Parameterizable):
         self._cached_time[time_step * factor] = result
         return result
 
-    def _get_coefficient_expression_step(self, time_step: float) -> Number | Term | Parameter:
+    def _warn_no_extrapolation(self) -> None:
+        """
+        Warn (once per interpolator) that a coefficient is being evaluated outside its defined time range without extrapolation.
+        """
+        if self._warned_extrapolation or self._tlist is None or len(self._tlist) < 2:  # ruff: ignore[magic-value-comparison]
+            return
+        self._warned_extrapolation = True
+        logger.warning(
+            "[Interpolator] Coefficient assumed constant outside its defined time range: [{},  {}].",
+            self._get_value(self._tlist[0]),
+            self._get_value(self._tlist[-1]),
+        )
+
+    def _get_coefficient_expression_step(self, time_step: float) -> Number | Expression | Parameter:
         """
         Return the step-interpolated coefficient expression for ``time_step``.
 
@@ -532,15 +558,19 @@ class Interpolator(Parameterizable):
             time_step (float): Time at which to retrieve the coefficient.
 
         Returns:
-            Number | Term | Parameter: Coefficient expression for the previous time point.
+            Number | Expression | Parameter: Coefficient expression for the previous time point.
         """
         self._tlist = self._generate_tlist()
         prev_indx = bisect_right(self._tlist, time_step, key=self._get_value) - 1
-        prev_indx = -1 if prev_indx >= len(self._tlist) else prev_indx
+        if prev_indx < 0:
+            self._warn_no_extrapolation()
+            prev_indx = 0
+        elif time_step > self._get_value(self._tlist[-1]):
+            self._warn_no_extrapolation()
         prev_time_step = self._tlist[prev_indx]
         return self._time_dict[prev_time_step]
 
-    def _get_coefficient_expression_linear(self, time_step: float) -> Number | Term | Parameter:
+    def _get_coefficient_expression_linear(self, time_step: float) -> Number | Expression | Parameter:
         """
         Return the linearly interpolated coefficient expression for ``time_step``.
 
@@ -548,7 +578,7 @@ class Interpolator(Parameterizable):
             time_step (float): Time at which to interpolate.
 
         Returns:
-            Number | Term | Parameter: Coefficient expression interpolated between neighbor points.
+            Number | Expression | Parameter: Coefficient expression interpolated between neighbor points.
 
         Raises: # noqa: DOC502
             ValueError: If two points share the same time or an unexpected interpolation state is reached.
@@ -557,8 +587,8 @@ class Interpolator(Parameterizable):
         insert_pos = bisect_right(self._tlist, time_step, key=self._get_value)
 
         def _linear_value(
-            t0: PARAMETERIZED_NUMBER, v0: PARAMETERIZED_NUMBER, t1: PARAMETERIZED_NUMBER, v1: PARAMETERIZED_NUMBER
-        ) -> PARAMETERIZED_NUMBER:
+            t0: ParameterizedNumber, v0: ParameterizedNumber, t1: ParameterizedNumber, v1: ParameterizedNumber
+        ) -> ParameterizedNumber:
             t0_val = self._get_value(t0)
             t1_val = self._get_value(t1)
             if t0_val == t1_val:
@@ -566,8 +596,8 @@ class Interpolator(Parameterizable):
                     f"Ambiguous evaluation: The same time step {t0_val} has two different coefficient assignation ({v0} and {v1})."
                 )
             alpha: float = (time_step - t0_val) / (t1_val - t0_val)
-            next_is_term = isinstance(v1, (Term, Parameter))
-            prev_is_term = isinstance(v0, (Term, Parameter))
+            next_is_term = isinstance(v1, Expression)
+            prev_is_term = isinstance(v0, Expression)
             if next_is_term and prev_is_term and v1 != v0:
                 v1 = self._get_value(v1, t1_val)
                 v0 = self._get_value(v0, t0_val)
@@ -587,16 +617,18 @@ class Interpolator(Parameterizable):
         next_expr = self._time_dict[next_idx] if has_next else 0
 
         if not has_prev and has_next:
-            if len(self._tlist) == 1:
-                return next_expr
             first_idx = self._tlist[0]
+            if len(self._tlist) == 1 or not self._extrapolate:
+                self._warn_no_extrapolation()
+                return self._time_dict[first_idx]
             second_idx = self._tlist[1]
             return _linear_value(first_idx, self._time_dict[first_idx], second_idx, self._time_dict[second_idx])
 
         if not has_next and has_prev:
-            if len(self._tlist) == 1:
-                return prev_expr
             last_idx = self._tlist[-1]
+            if len(self._tlist) == 1 or not self._extrapolate:
+                self._warn_no_extrapolation()
+                return self._time_dict[last_idx]
             penultimate_idx = self._tlist[-2]
             return _linear_value(penultimate_idx, self._time_dict[penultimate_idx], last_idx, self._time_dict[last_idx])
 

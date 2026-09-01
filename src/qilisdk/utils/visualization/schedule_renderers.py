@@ -77,7 +77,7 @@ class MatplotlibScheduleRenderer:
             for text in leg.get_texts():
                 text.set_color(title_color)
         self.ax.set_title(
-            self.style.title or "Schedule Eigenvalues",
+            self.style.title or "Schedule",
             fontsize=style.title_fontsize,
             color=title_color,
             fontweight=style.fontweight,
@@ -173,7 +173,7 @@ class MatplotlibScheduleRenderer:
         if isinstance(self.ax.figure, Figure):
             self.ax.figure.savefig(filename, bbox_inches="tight")
 
-    def show(self) -> None:  # noqa: PLR6301
+    def show(self) -> None:  # ruff: ignore[no-self-use]
         """Show the current figure."""
 
         plt.show()
@@ -229,7 +229,7 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
                 )
                 if not isinstance(full_hamiltonian, Hamiltonian):
                     raise ValueError(f"Expected full_hamiltonian to be a Hamiltonian, got {type(full_hamiltonian)}")
-                as_qtensor = full_hamiltonian.to_qtensor()
+                as_qtensor = full_hamiltonian.to_qtensor(total_nqubits=self.schedule.nqubits)
                 exp_val = state.expectation_value(as_qtensor)
                 actual_expectation_values.append(float(exp_val.real))
 

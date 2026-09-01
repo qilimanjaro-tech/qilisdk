@@ -17,8 +17,9 @@ from typing import Iterator
 import numpy as np
 import pytest
 
+from qilisdk.core.comparison import LEQ
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import LEQ, Domain, Parameter, Variable
+from qilisdk.core.variables import Domain, Parameter, Variable
 from qilisdk.settings import get_settings
 
 
