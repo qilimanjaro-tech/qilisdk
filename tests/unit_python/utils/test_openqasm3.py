@@ -17,10 +17,34 @@ import math
 import pathlib
 import tempfile
 
+import numpy as np
 import pytest
 
 from qilisdk.core import Parameter
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Adjoint, Circuit, Controlled, H, M, S, T, X, Y, Z
+from qilisdk.digital import (
+    CNOT,
+    CZ,
+    RX,
+    RY,
+    RZ,
+    SWAP,
+    U1,
+    U2,
+    U3,
+    Adjoint,
+    Circuit,
+    Controlled,
+    Exponential,
+    H,
+    I,
+    M,
+    S,
+    T,
+    X,
+    Y,
+    Z,
+)
+from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.utils.openqasm import from_qasm3, from_qasm3_file, to_qasm3, to_qasm3_file
 
 
@@ -1933,3 +1957,158 @@ def test_not_iterable_loop():
                 x q[0];
             }
         """)
+
+
+# --- Adjoint gates, which must be written out as the "inv @" modifier (SDK-455) ---
+@pytest.mark.parametrize(
+    ("gate", "expected_line"),
+    [
+        (Adjoint(S(0)), "inv @ s q[0];"),
+        (Adjoint(T(0)), "inv @ t q[0];"),
+        (Adjoint(Adjoint(H(0))), "inv @ inv @ h q[0];"),
+        (Adjoint(RX(0, theta=0.5)), "inv @ rx(0.5) q[0];"),
+        (Adjoint(CNOT(0, 1)), "inv @ ctrl @ x q[0], q[1];"),
+        (Controlled(0, basic_gate=Adjoint(S(1))), "ctrl @ inv @ s q[0], q[1];"),
+    ],
+)
+def test_to_qasm3_never_exports_an_adjoint_dagger(gate, expected_line):
+    """The unicode dagger of an adjoint gate name is not valid OpenQASM 3.0 and must never be written out."""
+    circuit = Circuit(2)
+    circuit.add(gate)
+    qasm_str = to_qasm3(circuit)
+    assert "†" not in qasm_str
+    assert qasm_str.splitlines()[-1] == expected_line
+
+
+@pytest.mark.parametrize(
+    "gate",
+    [
+        Adjoint(S(0)),
+        Adjoint(T(0)),
+        Adjoint(Adjoint(H(0))),
+        Adjoint(RX(0, theta=0.5)),
+        Adjoint(CNOT(0, 1)),
+        Controlled(0, basic_gate=Adjoint(S(1))),
+    ],
+)
+def test_qasm3_round_trip_preserves_an_adjoint_matrix(gate):
+    """An adjoint gate must come back as the same unitary, rather than as the gate it is the adjoint of."""
+    circuit = Circuit(2)
+    circuit.add(gate)
+    reconstructed = from_qasm3(to_qasm3(circuit))
+    assert len(reconstructed.gates) == 1
+    assert np.allclose(reconstructed.gates[0].matrix, gate.matrix)
+
+
+def test_to_qasm3_raises_on_gates_it_cannot_name():
+    circuit = Circuit(1)
+    circuit.add(Exponential(X(0)))
+    with pytest.raises(UnsupportedGateError, match="Cannot express"):
+        to_qasm3(circuit)
+
+
+@pytest.mark.parametrize("qasm_name", ["sdg", "tdg"])
+def test_from_qasm3_reads_dagger_gate_names(qasm_name):
+    c = from_qasm3(f"""
+            OPENQASM 3.0;
+            include "stdgates.inc";
+            qubit[1] q;
+            {qasm_name} q[0];
+        """)
+    expected = Circuit(1)
+    expected.add(Adjoint(S(0)) if qasm_name == "sdg" else Adjoint(T(0)))
+    assert c == expected
+
+
+# --- Gates of our own that could not be re-imported (SDK-455) ---
+@pytest.mark.parametrize(
+    ("gate", "expected_line"),
+    [
+        (I(0), "id q[0];"),
+        (SWAP(0, 1), "swap q[0], q[1];"),
+        (CNOT(0, 1), "ctrl @ x q[0], q[1];"),
+        (CZ(0, 1), "ctrl @ z q[0], q[1];"),
+        (Controlled(1, basic_gate=Controlled(2, basic_gate=X(0))), "ctrl @ ctrl @ x q[1], q[2], q[0];"),
+    ],
+)
+def test_qasm3_round_trip_of_our_own_gates(gate, expected_line):
+    """A controlled gate must not count its controls twice, so that it can be read back in."""
+    circuit = Circuit(3)
+    circuit.add(gate)
+    qasm_str = to_qasm3(circuit)
+    assert qasm_str.splitlines()[-1] == expected_line
+    reconstructed = from_qasm3(qasm_str)
+    assert len(reconstructed.gates) == 1
+    assert reconstructed.gates[0].name == gate.name
+    assert reconstructed.gates[0].qubits == gate.qubits
+    assert np.allclose(reconstructed.gates[0].matrix, gate.matrix)
+
+
+@pytest.mark.parametrize("qasm_name", ["ccx", "toffoli"])
+def test_from_qasm3_reads_a_toffoli_by_name(qasm_name):
+    c = from_qasm3(f"""
+            OPENQASM 3.0;
+            include "stdgates.inc";
+            qubit[3] q;
+            {qasm_name} q[0], q[1], q[2];
+        """)
+    expected = Circuit(3)
+    expected.add(Controlled(0, 1, basic_gate=X(2)))
+    assert c == expected
+
+
+@pytest.mark.parametrize("qasm_name", ["cx", "cnot"])
+def test_from_qasm3_reads_a_cnot_by_name(qasm_name):
+    c = from_qasm3(f"""
+            OPENQASM 3.0;
+            include "stdgates.inc";
+            qubit[2] q;
+            {qasm_name} q[0], q[1];
+        """)
+    expected = Circuit(2)
+    expected.add(CNOT(0, 1))
+    assert c == expected
+
+
+@pytest.mark.parametrize("qasm_name", ["id", "i"])
+def test_from_qasm3_reads_the_identity(qasm_name):
+    c = from_qasm3(f"""
+            OPENQASM 3.0;
+            include "stdgates.inc";
+            qubit[1] q;
+            {qasm_name} q[0];
+        """)
+    expected = Circuit(1)
+    expected.add(I(0))
+    assert c == expected
+
+
+def test_from_qasm3_controls_a_two_qubit_gate():
+    """A control modifier on a two-qubit gate adds a control, rather than being absorbed by the gate."""
+    c = from_qasm3("""
+            OPENQASM 3.0;
+            include "stdgates.inc";
+            qubit[3] q;
+            ctrl @ cz q[0], q[1], q[2];
+            ctrl @ swap q[0], q[1], q[2];
+        """)
+    expected = Circuit(3)
+    expected.add(Controlled(0, basic_gate=CZ(1, 2)))
+    expected.add(Controlled(0, basic_gate=SWAP(1, 2)))
+    assert c == expected
+
+
+def test_from_qasm3_control_modifier_after_another_modifier():
+    """Control modifiers take the leading qubits in order, wherever they sit among the other modifiers."""
+    c = from_qasm3("""
+            OPENQASM 3.0;
+            include "stdgates.inc";
+            qubit[2] q;
+            inv @ ctrl @ s q[0], q[1];
+            pow(2) @ ctrl @ h q[0], q[1];
+        """)
+    expected = Circuit(2)
+    expected.add(Adjoint(Controlled(0, basic_gate=S(1))))
+    expected.add(Controlled(0, basic_gate=H(1)))
+    expected.add(Controlled(0, basic_gate=H(1)))
+    assert c == expected
