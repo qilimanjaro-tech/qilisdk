@@ -52,48 +52,22 @@ def _complex_dtype() -> np.dtype:
 
 
 ###############################################################################
-# Flyweight Cache
-###############################################################################
-_OPERATOR_CACHE: dict[tuple[str, int], PauliOperator] = {}
-
-
-def _get_pauli(name: str, qubit: int) -> PauliOperator:
-    key = (name, qubit)
-    if key in _OPERATOR_CACHE:
-        return _OPERATOR_CACHE[key]
-
-    if name == "Z":
-        op = PauliZ(qubit)
-    elif name == "X":
-        op = PauliX(qubit)
-    elif name == "Y":
-        op = PauliY(qubit)
-    elif name == "I":
-        op = PauliI(qubit)
-    else:
-        raise ValueError(f"Unknown Pauli operator name: {name}")
-
-    _OPERATOR_CACHE[key] = op
-    return op
-
-
-###############################################################################
 # Public Factory Functions
 ###############################################################################
 def Z(qubit: int) -> Hamiltonian:
-    return _get_pauli("Z", qubit).to_hamiltonian()
+    return PauliZ(qubit).to_hamiltonian()
 
 
 def X(qubit: int) -> Hamiltonian:
-    return _get_pauli("X", qubit).to_hamiltonian()
+    return PauliX(qubit).to_hamiltonian()
 
 
 def Y(qubit: int) -> Hamiltonian:
-    return _get_pauli("Y", qubit).to_hamiltonian()
+    return PauliY(qubit).to_hamiltonian()
 
 
 def I(qubit: int = 0) -> Hamiltonian:  # ruff: ignore[ambiguous-function-name]
-    return _get_pauli("I", qubit).to_hamiltonian()
+    return PauliI(qubit).to_hamiltonian()
 
 
 ###############################################################################
@@ -109,8 +83,6 @@ class PauliOperator(ABC):
             from qilisdk.analog import PauliX
 
             op = PauliX(0)
-
-    Flyweight usage: do NOT instantiate directly—use PauliX(q), PauliY(q), etc.
 
     Note: You can also use the factory functions X(q), Y(q), Z(q), I(q) to get a Hamiltonian object.
     """
@@ -208,7 +180,7 @@ class PauliOperator(ABC):
 
 
 ###############################################################################
-# Concrete Flyweight Operator Classes
+# Concrete Operator Classes
 ###############################################################################
 @yaml.register_class
 class PauliZ(PauliOperator):
@@ -265,7 +237,7 @@ def _validate_nqubits(nqubits: int, minimum: int = 1, label: str = "") -> None:
         raise ValueError(f"{label} Hamiltonians need at least {minimum} qubits, got {nqubits}.")
 
 
-def _coefficients(coefficient: Coefficient, count: int, name: str) -> list[complex]:
+def _parse_coefficients(coefficient: Coefficient, count: int, name: str) -> list[complex]:
     """
     Expand the coefficient of a group of Hamiltonian terms into one value per term.
 
@@ -508,7 +480,7 @@ class Hamiltonian(Parameterizable):
         on it (labelled with the Pauli type), and every two-qubit term is drawn as an edge between
         the qubits it couples, with a line style per coupling type. Slice and edge colours encode
         the coefficient of the corresponding term, as described by the accompanying colour bar.
-        Terms acting on three or more qubits are drawn as star-shaped hyperedges joined at their
+        Expressions acting on three or more qubits are drawn as star-shaped hyperedges joined at their
         centroid, and a constant (identity) term is annotated as an energy offset.
 
         If ``filepath`` is given, the resulting figure is saved to disk (the output format is
@@ -707,8 +679,8 @@ class Hamiltonian(Parameterizable):
         """
         _validate_nqubits(nqubits)
         logger.debug("[Hamiltonian] Building transverse field over {} qubits", nqubits)
-        x = _coefficients(x_coefficient, nqubits, "x_coefficient")
-        return cls({(_get_pauli("X", qubit),): x[qubit] for qubit in range(nqubits)})
+        x = _parse_coefficients(x_coefficient, nqubits, "x_coefficient")
+        return cls({(PauliX(qubit),): x[qubit] for qubit in range(nqubits)})
 
     @classmethod
     def longitudinal_field(cls, nqubits: int, z_coefficient: Coefficient = 1.0) -> Hamiltonian:
@@ -740,8 +712,8 @@ class Hamiltonian(Parameterizable):
         """
         _validate_nqubits(nqubits)
         logger.debug("[Hamiltonian] Building longitudinal field over {} qubits", nqubits)
-        z = _coefficients(z_coefficient, nqubits, "z_coefficient")
-        return cls({(_get_pauli("Z", qubit),): z[qubit] for qubit in range(nqubits)})
+        z = _parse_coefficients(z_coefficient, nqubits, "z_coefficient")
+        return cls({(PauliZ(qubit),): z[qubit] for qubit in range(nqubits)})
 
     @classmethod
     def ising(
@@ -780,13 +752,12 @@ class Hamiltonian(Parameterizable):
         _validate_nqubits(nqubits, minimum=2, label="Ising")
         logger.debug("[Hamiltonian] Building Ising model over {} qubits", nqubits)
         pairs = list(combinations(range(nqubits), 2))
-        zz = _coefficients(zz_coefficient, len(pairs), "zz_coefficient")
-        z = _coefficients(z_coefficient, nqubits, "z_coefficient")
-        elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = {
-            (_get_pauli("Z", first), _get_pauli("Z", second)): coefficient
-            for (first, second), coefficient in zip(pairs, zz, strict=True)
+        zz = _parse_coefficients(zz_coefficient, len(pairs), "zz_coefficient")
+        z = _parse_coefficients(z_coefficient, nqubits, "z_coefficient")
+        elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = {
+            (PauliZ(first), PauliZ(second)): coefficient for (first, second), coefficient in zip(pairs, zz, strict=True)
         }
-        elements.update({(_get_pauli("Z", qubit),): z[qubit] for qubit in range(nqubits)})
+        elements.update({(PauliZ(qubit),): z[qubit] for qubit in range(nqubits)})
         return cls(elements)
 
     @classmethod
@@ -836,13 +807,12 @@ class Hamiltonian(Parameterizable):
         bonds = [(qubit, qubit + 1) for qubit in range(nqubits - 1)]
         if periodic and nqubits >= _MIN_PERIODIC_EXTENT:
             bonds.append((0, nqubits - 1))
-        zz = _coefficients(zz_coefficient, len(bonds), "zz_coefficient")
-        z = _coefficients(z_coefficient, nqubits, "z_coefficient")
-        elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = {
-            (_get_pauli("Z", first), _get_pauli("Z", second)): coefficient
-            for (first, second), coefficient in zip(bonds, zz, strict=True)
+        zz = _parse_coefficients(zz_coefficient, len(bonds), "zz_coefficient")
+        z = _parse_coefficients(z_coefficient, nqubits, "z_coefficient")
+        elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = {
+            (PauliZ(first), PauliZ(second)): coefficient for (first, second), coefficient in zip(bonds, zz, strict=True)
         }
-        elements.update({(_get_pauli("Z", qubit),): z[qubit] for qubit in range(nqubits)})
+        elements.update({(PauliZ(qubit),): z[qubit] for qubit in range(nqubits)})
         return cls(elements)
 
     @classmethod
@@ -916,13 +886,12 @@ class Hamiltonian(Parameterizable):
                 elif periodic and rows >= _MIN_PERIODIC_EXTENT:
                     bonds.append((index(0, column), index(row, column)))
 
-        zz = _coefficients(zz_coefficient, len(bonds), "zz_coefficient")
-        z = _coefficients(z_coefficient, nqubits, "z_coefficient")
-        elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = {
-            (_get_pauli("Z", first), _get_pauli("Z", second)): coefficient
-            for (first, second), coefficient in zip(bonds, zz, strict=True)
+        zz = _parse_coefficients(zz_coefficient, len(bonds), "zz_coefficient")
+        z = _parse_coefficients(z_coefficient, nqubits, "z_coefficient")
+        elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = {
+            (PauliZ(first), PauliZ(second)): coefficient for (first, second), coefficient in zip(bonds, zz, strict=True)
         }
-        elements.update({(_get_pauli("Z", qubit),): z[qubit] for qubit in range(nqubits)})
+        elements.update({(PauliZ(qubit),): z[qubit] for qubit in range(nqubits)})
         return cls(elements)
 
     @classmethod
@@ -969,19 +938,19 @@ class Hamiltonian(Parameterizable):
         _validate_nqubits(nqubits, minimum=2, label="Transverse-field Ising")
         logger.debug("[Hamiltonian] Building transverse-field Ising model over {} qubits", nqubits)
         pairs = list(combinations(range(nqubits), 2))
-        x = _coefficients(x_coefficient, nqubits, "x_coefficient")
-        zz = _coefficients(zz_coefficient, len(pairs), "zz_coefficient")
-        z = _coefficients(z_coefficient, nqubits, "z_coefficient")
-        elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = {
-            (_get_pauli("X", qubit),): x[qubit] for qubit in range(nqubits)
+        x = _parse_coefficients(x_coefficient, nqubits, "x_coefficient")
+        zz = _parse_coefficients(zz_coefficient, len(pairs), "zz_coefficient")
+        z = _parse_coefficients(z_coefficient, nqubits, "z_coefficient")
+        elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = {
+            (PauliX(qubit),): x[qubit] for qubit in range(nqubits)
         }
         elements.update(
             {
-                (_get_pauli("Z", first), _get_pauli("Z", second)): coefficient
+                (PauliZ(first), PauliZ(second)): coefficient
                 for (first, second), coefficient in zip(pairs, zz, strict=True)
             }
         )
-        elements.update({(_get_pauli("Z", qubit),): z[qubit] for qubit in range(nqubits)})
+        elements.update({(PauliZ(qubit),): z[qubit] for qubit in range(nqubits)})
         return cls(elements)
 
     @classmethod
@@ -1047,19 +1016,19 @@ class Hamiltonian(Parameterizable):
             zz_coefficient = xx_coefficient
         logger.debug("[Hamiltonian] Building Heisenberg model over {} qubits", nqubits)
         pairs = list(combinations(range(nqubits), 2))
-        xx = _coefficients(xx_coefficient, len(pairs), "xx_coefficient")
-        yy = _coefficients(yy_coefficient, len(pairs), "yy_coefficient")
-        zz = _coefficients(zz_coefficient, len(pairs), "zz_coefficient")
-        z = _coefficients(z_coefficient, nqubits, "z_coefficient")
-        elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = {}
+        xx = _parse_coefficients(xx_coefficient, len(pairs), "xx_coefficient")
+        yy = _parse_coefficients(yy_coefficient, len(pairs), "yy_coefficient")
+        zz = _parse_coefficients(zz_coefficient, len(pairs), "zz_coefficient")
+        z = _parse_coefficients(z_coefficient, nqubits, "z_coefficient")
+        elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = {}
         for axis, couplings in (("X", xx), ("Y", yy), ("Z", zz)):
             elements.update(
                 {
-                    (_get_pauli(axis, first), _get_pauli(axis, second)): coefficient
+                    (_PAULI_CLASS_BY_NAME[axis](first), _PAULI_CLASS_BY_NAME[axis](second)): coefficient
                     for (first, second), coefficient in zip(pairs, couplings, strict=True)
                 }
             )
-        elements.update({(_get_pauli("Z", qubit),): z[qubit] for qubit in range(nqubits)})
+        elements.update({(PauliZ(qubit),): z[qubit] for qubit in range(nqubits)})
         return cls(elements)
 
     @classmethod
@@ -1218,7 +1187,7 @@ class Hamiltonian(Parameterizable):
                     raise ValueError(f"Unrecognized operator format: '{w}'")
                 name, qubit_str = match.groups()
                 qubit = int(qubit_str)
-                op = _get_pauli(name, qubit)
+                op = _PAULI_CLASS_BY_NAME[name](qubit)
                 ops.append(op)
 
             return coeff_val, ops

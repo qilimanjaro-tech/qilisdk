@@ -30,7 +30,6 @@ from qilisdk.analog.hamiltonian import (
     X,
     Y,
     Z,
-    _get_pauli,
 )
 from qilisdk.core import Domain, Parameter, QTensor, Variable
 from qilisdk.core.variables import BinaryVariable
@@ -94,18 +93,6 @@ def test_hamiltonian_does_not_expose_public_parameters_attribute():
         _ = hamiltonian.parameters
 
     assert hamiltonian.get_parameters() == {"theta": 0.4}
-
-
-def test_get_pauli_returns_correct_instance():
-    assert isinstance(_get_pauli("X", 0), PauliX)
-    assert isinstance(_get_pauli("Y", 1), PauliY)
-    assert isinstance(_get_pauli("Z", 2), PauliZ)
-    assert isinstance(_get_pauli("I", 3), PauliI)
-
-
-def test_get_pauli_raises_on_invalid_name():
-    with pytest.raises(ValueError, match="Unknown Pauli operator name: W"):
-        _get_pauli("W", 0)
 
 
 # -----------------------------
@@ -1136,8 +1123,8 @@ def test_heisenberg_reuses_a_list_across_the_axes_left_at_their_default():
     H = Hamiltonian.heisenberg(nqubits=3, xx_coefficient=[1.0, 2.0, 3.0])
 
     pairs = [(0, 1), (0, 2), (1, 2)]
-    for axis in ("X", "Y", "Z"):
-        couplings = [H.elements[_get_pauli(axis, first), _get_pauli(axis, second)] for first, second in pairs]
+    for axis, pauli in (("X", PauliX), ("Y", PauliY), ("Z", PauliZ)):
+        couplings = [H.elements[pauli(first), pauli(second)] for first, second in pairs]
         assert couplings == [1.0, 2.0, 3.0], f"the {axis}{axis} couplings should follow xx_coefficient"
 
 
