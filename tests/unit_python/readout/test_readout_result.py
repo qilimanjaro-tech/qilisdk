@@ -567,6 +567,48 @@ def test_expand_samples_no_expand():
     assert result.samples == {"0": 60, "1": 40}
 
 
+def test_probabilities_share_keys_with_samples_on_partial_measurement():
+    result = SamplingReadoutResult.from_samples(samples={"000": 40, "010": 60}, qubits_to_measure=[0, 1], nqubits=3)
+    assert result.samples == {"00_": 40, "01_": 60}
+    assert result.probabilities == {"00_": 0.4, "01_": 0.6}
+    assert result.get_probability("00_") == pytest.approx(0.4)
+    assert result.get_probability("01_") == pytest.approx(0.6)
+
+
+def test_probabilities_marginalize_over_unmeasured_qubits():
+    # "000" and "001" only differ on the unmeasured qubit 2, so their counts and probabilities are summed.
+    result = SamplingReadoutResult.from_samples(
+        samples={"000": 30, "001": 10, "010": 60}, qubits_to_measure=[0, 1], nqubits=3
+    )
+    assert result.samples == {"00_": 40, "01_": 60}
+    assert result.probabilities == {"00_": 0.4, "01_": 0.6}
+
+
+def test_probabilities_share_keys_with_already_filtered_samples():
+    # The C++ backends hand over keys that are already filtered to the measured qubits.
+    result = SamplingReadoutResult.from_samples(samples={"01": 55, "11": 45}, qubits_to_measure=[0, 1], nqubits=3)
+    assert result.samples == {"01_": 55, "11_": 45}
+    assert result.probabilities == {"01_": 0.55, "11_": 0.45}
+
+
+def test_probabilities_share_keys_with_samples_no_expand():
+    result = SamplingReadoutResult.from_samples(
+        samples={"000": 40, "010": 60}, qubits_to_measure=[0, 1], nqubits=3, expand_samples=False
+    )
+    assert result.samples == {"00": 40, "01": 60}
+    assert result.probabilities == {"00": 0.4, "01": 0.6}
+
+
+def test_from_state_probabilities_share_keys_with_samples():
+    readout = SamplingReadout(nshots=100)
+    state = (ket(0, 1) + ket(1, 1) + ket(1, 0)).normalized()
+    result = SamplingReadoutResult.from_state(sampling_readout=readout, state=state, qubits_to_measure=[0])
+    assert set(result.samples) == {"0_", "1_"}
+    # Marginalized exactly from the state: |01> for qubit 0 == 0, |10> + |11> for qubit 0 == 1.
+    assert result.probabilities == pytest.approx({"0_": 1 / 3, "1_": 2 / 3})
+    assert result.get_probability("1_") == pytest.approx(2 / 3)
+
+
 def test_filter_empty_samples():
     # need to create an object that "is obj" is True, but behaves like an empty dict for the methods used in from_samples
     samples_dict = MagicMock()
