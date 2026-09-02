@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 17:03+0200\n"
+"POT-Creation-Date: 2026-09-01 17:45+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -85,7 +85,7 @@ msgstr ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
 #: ../../modules/backends/backends_qilisim.rst:64
 #: ../../modules/backends/backends_qilisim.rst:67
 #: ../../modules/backends/backends_qilisim.rst:70
-#: ../../modules/backends/backends_qilisim.rst:297
+#: ../../modules/backends/backends_qilisim.rst:309
 msgid "|y|"
 msgstr "|y|"
 
@@ -247,7 +247,7 @@ msgstr ""
 "Hamiltonianos dispersos."
 
 #: ../../modules/backends/backends_qilisim.rst:139
-#: ../../modules/backends/backends_qilisim.rst:296
+#: ../../modules/backends/backends_qilisim.rst:308
 msgid ""
 ":meth:`AnalogMethod.variational_annealing() "
 "<qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`"
@@ -313,7 +313,7 @@ msgstr ""
 "ajuste ``dim`` para el tamaño del subespacio de Krylov."
 
 #: ../../modules/backends/backends_qilisim.rst:148
-#: ../../modules/backends/backends_qilisim.rst:288
+#: ../../modules/backends/backends_qilisim.rst:300
 msgid ""
 ":meth:`AnalogMethod.direct() "
 "<qilisdk.backends.backend_config.AnalogMethod.direct>`"
@@ -460,7 +460,7 @@ msgstr ""
 
 #: ../../modules/backends/backends_qilisim.rst:219
 msgid ""
-"``monte_carlo=MonteCarloConfig(trajectories=N)`` enabled Monte Carlo "
+"``monte_carlo=MonteCarloConfig(trajectories=N)`` enables Monte Carlo "
 "sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled."
 msgstr ""
 "``monte_carlo=MonteCarloConfig(trajectories=N)`` activa el muestreo Monte"
@@ -468,6 +468,16 @@ msgstr ""
 "desactivado."
 
 #: ../../modules/backends/backends_qilisim.rst:220
+msgid ""
+"``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` sets how "
+"many quantum jumps per schedule step are tolerated before a warning is "
+"displayed."
+msgstr ""
+"``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` establece "
+"cuántos saltos cuánticos por paso del schedule se toleran antes de mostrar "
+"un aviso."
+
+#: ../../modules/backends/backends_qilisim.rst:221
 msgid ""
 "``measurement_collapse`` controls whether measurements collapse the "
 "statevector in place (relevant for mid-circuit measurement and "
@@ -477,7 +487,7 @@ msgstr ""
 " estado in situ (relevante para mediciones en mitad del circuito y "
 "reservorios); por defecto ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:221
+#: ../../modules/backends/backends_qilisim.rst:222
 msgid ""
 "``normalize_state`` controls whether the state should be renormalized - "
 "defaults to ``True``."
@@ -485,7 +495,7 @@ msgstr ""
 "``normalize_state`` controla si el estado debe renormalizarse; por "
 "defecto ``True``."
 
-#: ../../modules/backends/backends_qilisim.rst:222
+#: ../../modules/backends/backends_qilisim.rst:223
 msgid ""
 "``gpu`` controls whether to use GPU acceleration if available - defaults "
 "to ``False``."
@@ -493,11 +503,42 @@ msgstr ""
 "``gpu`` controla si se usa la aceleración por GPU si está disponible; por"
 " defecto ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:240
+#: ../../modules/backends/backends_qilisim.rst:242
+msgid "Monte Carlo results are statistical, so two things control their quality:"
+msgstr ""
+"Los resultados de Monte Carlo son estadísticos, por lo que dos factores "
+"controlan su calidad:"
+
+#: ../../modules/backends/backends_qilisim.rst:244
+#, python-brace-format
+msgid ""
+"**Number of trajectories.** The statistical error of any estimate falls "
+"as :math:`1/\\sqrt{N}`, so a noisy run needs more trajectories."
+msgstr ""
+"**Número de trayectorias.** El error estadístico de cualquier estimación "
+"decrece como :math:`1/\\sqrt{N}`, por lo que una ejecución con mucho ruido "
+"estadístico necesita más trayectorias."
+
+#: ../../modules/backends/backends_qilisim.rst:246
+msgid ""
+"**Schedule step size.** If using noise, quantum jumps are applied at the "
+"end of the schedule step, so a step must be short enough that at most one"
+" jump is likely within it. This also controls the general quality of the "
+"simulation as with all simulation methods, doing things in smaller steps "
+"improves overall accuracy."
+msgstr ""
+"**Tamaño del paso del schedule.** Si se usa ruido, los saltos cuánticos se "
+"aplican al final del paso del schedule, así que el paso debe ser lo bastante "
+"corto como para que, como mucho, sea probable un salto dentro de él. Esto "
+"también controla la calidad general de la simulación: como en todos los "
+"métodos de simulación, avanzar en pasos más pequeños mejora la precisión "
+"global."
+
+#: ../../modules/backends/backends_qilisim.rst:252
 msgid "Noise model support"
 msgstr "Soporte del modelo de ruido"
 
-#: ../../modules/backends/backends_qilisim.rst:242
+#: ../../modules/backends/backends_qilisim.rst:254
 msgid ""
 "Any :class:`~qilisdk.noise.NoiseModel` accepted by the SDK can be passed "
 "directly to the constructor; QiliSim applies it inside the C++ solver, so"
@@ -508,11 +549,11 @@ msgstr ""
 "de C++, de modo que las ejecuciones digitales, analógicas y de reservorio"
 " ven todos los mismos canales de ruido:"
 
-#: ../../modules/backends/backends_qilisim.rst:257
+#: ../../modules/backends/backends_qilisim.rst:269
 msgid "GPU acceleration"
 msgstr "Aceleración por GPU"
 
-#: ../../modules/backends/backends_qilisim.rst:259
+#: ../../modules/backends/backends_qilisim.rst:271
 msgid ""
 "Some simulation methods in QiliSim support GPU acceleration if a CUDA-"
 "capable device is available. These require the ``cuda`` extra to be "
@@ -522,36 +563,36 @@ msgstr ""
 "si hay disponible un dispositivo compatible con CUDA. Estos requieren "
 "instalar el extra ``cuda``:"
 
-#: ../../modules/backends/backends_qilisim.rst:264
+#: ../../modules/backends/backends_qilisim.rst:276
 msgid "Linux"
 msgstr "Linux"
 
-#: ../../modules/backends/backends_qilisim.rst:270
+#: ../../modules/backends/backends_qilisim.rst:282
 msgid "Mac OSX"
 msgstr "Mac OSX"
 
-#: ../../modules/backends/backends_qilisim.rst:276
+#: ../../modules/backends/backends_qilisim.rst:288
 msgid "Windows"
 msgstr "Windows"
 
-#: ../../modules/backends/backends_qilisim.rst:286
+#: ../../modules/backends/backends_qilisim.rst:298
 msgid "Method"
 msgstr "Método"
 
-#: ../../modules/backends/backends_qilisim.rst:287
+#: ../../modules/backends/backends_qilisim.rst:299
 msgid "GPU support"
 msgstr "Soporte de GPU"
 
-#: ../../modules/backends/backends_qilisim.rst:289
-#: ../../modules/backends/backends_qilisim.rst:291
-#: ../../modules/backends/backends_qilisim.rst:293
-#: ../../modules/backends/backends_qilisim.rst:295
-#: ../../modules/backends/backends_qilisim.rst:299
 #: ../../modules/backends/backends_qilisim.rst:301
+#: ../../modules/backends/backends_qilisim.rst:303
+#: ../../modules/backends/backends_qilisim.rst:305
+#: ../../modules/backends/backends_qilisim.rst:307
+#: ../../modules/backends/backends_qilisim.rst:311
+#: ../../modules/backends/backends_qilisim.rst:313
 msgid "|n|"
 msgstr "|n|"
 
-#: ../../modules/backends/backends_qilisim.rst:290
+#: ../../modules/backends/backends_qilisim.rst:302
 msgid ""
 ":meth:`AnalogMethod.integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
@@ -559,7 +600,7 @@ msgstr ""
 ":meth:`AnalogMethod.integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
 
-#: ../../modules/backends/backends_qilisim.rst:292
+#: ../../modules/backends/backends_qilisim.rst:304
 msgid ""
 ":meth:`AnalogMethod.adaptive_integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
@@ -567,7 +608,7 @@ msgstr ""
 ":meth:`AnalogMethod.adaptive_integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
 
-#: ../../modules/backends/backends_qilisim.rst:294
+#: ../../modules/backends/backends_qilisim.rst:306
 msgid ""
 ":meth:`AnalogMethod.arnoldi() "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
@@ -575,7 +616,7 @@ msgstr ""
 ":meth:`AnalogMethod.arnoldi() "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
 
-#: ../../modules/backends/backends_qilisim.rst:298
+#: ../../modules/backends/backends_qilisim.rst:310
 msgid ""
 ":meth:`DigitalMethod.statevector() "
 "<qilisdk.backends.backend_config.DigitalMethod.statevector>`"
@@ -583,7 +624,7 @@ msgstr ""
 ":meth:`DigitalMethod.statevector() "
 "<qilisdk.backends.backend_config.DigitalMethod.statevector>`"
 
-#: ../../modules/backends/backends_qilisim.rst:300
+#: ../../modules/backends/backends_qilisim.rst:312
 msgid ""
 ":meth:`DigitalMethod.stabilizer() "
 "<qilisdk.backends.backend_config.DigitalMethod.stabilizer>`"

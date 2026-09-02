@@ -335,6 +335,73 @@ DenseMatrix trajectories_to_density_matrix(const DenseMatrix& trajectories) {
     return rho;
 }
 
+DenseMatrix collapse_trajectories(const DenseMatrix& trajectories, unsigned long long measured_mask, int seed) {
+    /*
+    Apply a non-selective measurement of the masked qubits to each Monte Carlo trajectory (columns
+    are state vectors). This is the stochastic unravelling of the density-matrix version
+    rho -> sum_outcomes P_outcome rho P_outcome: each trajectory Born-samples one joint outcome of
+    the measured qubits, collapses onto it and renormalises, so averaging the returned trajectories
+    reproduces the same mixture.
+
+    Args:
+        trajectories (DenseMatrix): dim x n_trajectories batch of state vectors.
+        measured_mask (unsigned long long): Bitmask of the full-state indices' bits corresponding to
+            the measured qubits.
+        seed (int): Base random seed (each trajectory uses a deterministic offset).
+
+    Returns:
+        DenseMatrix: The collapsed trajectories (same shape).
+    */
+    const long dim = trajectories.rows();
+    const long n_traj = trajectories.cols();
+    DenseMatrix out = DenseMatrix::Zero(dim, n_traj);
+
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (long c = 0; c < n_traj; ++c) {
+        // Born probabilities of each joint configuration of the measured qubits.
+        // std::map keeps a deterministic iteration order for reproducible sampling.
+        std::map<unsigned long long, double> config_probs;
+        for (long i = 0; i < dim; ++i) {
+            double w = std::norm(trajectories(i, c));
+            if (w == 0.0) {
+                continue;
+            }
+            config_probs[static_cast<unsigned long long>(i) & measured_mask] += w;
+        }
+        if (config_probs.empty()) {
+            continue;
+        }
+
+        // Per-trajectory RNG, offset by the column so parallel runs stay deterministic.
+        std::mt19937_64 rng(static_cast<unsigned long long>(seed) + 0x9e3779b97f4a7c15ULL * static_cast<unsigned long long>(c));
+        std::uniform_real_distribution<double> unif(0.0, 1.0);
+        const double r = unif(rng);
+
+        // Choose a configuration, weighted by its Born probability
+        unsigned long long chosen = config_probs.rbegin()->first;
+        double cumulative = 0.0;
+        for (const auto& kv : config_probs) {
+            cumulative += kv.second;
+            if (r <= cumulative) {
+                chosen = kv.first;
+                break;
+            }
+        }
+
+        // Collapse onto the chosen configuration and renormalise
+        const double norm = std::sqrt(config_probs[chosen]);
+        for (long i = 0; i < dim; ++i) {
+            if ((static_cast<unsigned long long>(i) & measured_mask) == chosen) {
+                out(i, c) = trajectories(i, c) / norm;
+            }
+        }
+    }
+
+    return out;
+}
+
 DenseMatrix reset_trajectories(const DenseMatrix& trajectories, unsigned long long reset_mask, int seed) {
     /*
     Apply a reset of the masked qubits to each Monte Carlo trajectory (columns are
@@ -509,6 +576,32 @@ SparseMatrix sample_from_density_matrix(const SparseMatrix& rho, int n_trajector
     sampled_states.setFromTriplets(new_mat_entries.begin(), new_mat_entries.end());
 
     return sampled_states;
+}
+
+SparseMatrix replicate_state_vector(const SparseMatrix& state_vector, int n_trajectories) {
+    /*
+    Copy a single state vector into every column of a trajectory batch.
+    Used for when a pure state is being simulated with trajectories and noise.
+
+    Args:
+        state_vector (SparseMatrix): The initial state as a single column.
+        n_trajectories (int): Number of trajectories (columns) to produce.
+
+    Returns:
+        SparseMatrix: A (dim x n_trajectories) matrix whose columns are all the input state.
+    */
+    Triplets entries;
+    entries.reserve(static_cast<size_t>(state_vector.nonZeros()) * static_cast<size_t>(n_trajectories));
+    for (int c = 0; c < n_trajectories; ++c) {
+        for (int k = 0; k < state_vector.outerSize(); ++k) {
+            for (SparseMatrix::InnerIterator it(state_vector, k); it; ++it) {
+                entries.emplace_back(Triplet(int(it.row()), c, it.value()));
+            }
+        }
+    }
+    SparseMatrix trajectories(state_vector.rows(), n_trajectories);
+    trajectories.setFromTriplets(entries.begin(), entries.end());
+    return trajectories;
 }
 
 // Convert a matrix containing trajectories as columns to a density matrix

@@ -201,6 +201,74 @@ TEST(GetVectorFromDensityMatrixTest, GetVectorFromZeroMatrixSparse) {
     EXPECT_ANY_THROW(get_vector_from_density_matrix(rho, 1e-10));
 }
 
+TEST(ReplicateStateVectorTest, EveryColumnIsTheInputState) {
+    SparseMatrix psi(2, 1);
+    psi.insert(0, 0) = Complex(1.0 / std::sqrt(2.0), 0.0);
+    psi.insert(1, 0) = Complex(0.0, 1.0 / std::sqrt(2.0));
+    psi.makeCompressed();
+
+    SparseMatrix trajectories = replicate_state_vector(psi, 5);
+    ASSERT_EQ(trajectories.rows(), 2);
+    ASSERT_EQ(trajectories.cols(), 5);
+    for (int c = 0; c < 5; ++c) {
+        EXPECT_EQ(trajectories.coeff(0, c), psi.coeff(0, 0));
+        EXPECT_EQ(trajectories.coeff(1, c), psi.coeff(1, 0));
+    }
+}
+
+TEST(ReplicateStateVectorTest, ZerosStayOutOfThePattern) {
+    SparseMatrix psi(4, 1);
+    psi.insert(2, 0) = Complex(1.0, 0.0);
+    psi.makeCompressed();
+    SparseMatrix trajectories = replicate_state_vector(psi, 3);
+    EXPECT_EQ(trajectories.nonZeros(), 3);
+}
+
+TEST(CollapseTrajectoriesTest, EachTrajectoryPicksOneOutcomeAndStaysNormalized) {
+    // Two trajectories in a uniform superposition: collapsing the only qubit has to leave each of
+    // them on a single basis state, keeping the measured value (unlike a reset)
+    const long dim = 2;
+    const long n_traj = 2;
+    DenseMatrix traj = DenseMatrix::Zero(dim, n_traj);
+    traj.setConstant(Complex(1.0 / std::sqrt(2.0), 0.0));
+
+    DenseMatrix out = collapse_trajectories(traj, 1ULL, 7);
+    ASSERT_EQ(out.rows(), dim);
+    ASSERT_EQ(out.cols(), n_traj);
+    for (long c = 0; c < n_traj; ++c) {
+        EXPECT_NEAR(out.col(c).norm(), 1.0, 1e-12);
+        const bool collapsed = std::abs(out(0, c)) < 1e-12 || std::abs(out(1, c)) < 1e-12;
+        EXPECT_TRUE(collapsed);
+    }
+}
+
+TEST(CollapseTrajectoriesTest, ABasisStateIsLeftAlone) {
+    DenseMatrix traj = DenseMatrix::Zero(2, 2);
+    traj.row(1).setOnes();
+    DenseMatrix out = collapse_trajectories(traj, 1ULL, 7);
+    EXPECT_TRUE(out.isApprox(traj, 1e-12));
+}
+
+TEST(CollapseTrajectoriesTest, UnmeasuredQubitsKeepTheirCoherence) {
+    // Two qubits, only the low bit measured: the superposition of the other one has to survive
+    DenseMatrix traj = DenseMatrix::Zero(4, 1);
+    traj(0, 0) = 0.5;  // |00>
+    traj(1, 0) = 0.5;  // |01>
+    traj(2, 0) = 0.5;  // |10>
+    traj(3, 0) = 0.5;  // |11>
+    DenseMatrix out = collapse_trajectories(traj, 1ULL, 3);
+    EXPECT_NEAR(out.col(0).norm(), 1.0, 1e-12);
+    const bool kept_zero = std::abs(out(0, 0)) > 1e-12 && std::abs(out(2, 0)) > 1e-12;
+    const bool kept_one = std::abs(out(1, 0)) > 1e-12 && std::abs(out(3, 0)) > 1e-12;
+    EXPECT_TRUE(kept_zero != kept_one);
+}
+
+TEST(CollapseTrajectoriesTest, ZeroColumnStaysZero) {
+    DenseMatrix traj = DenseMatrix::Zero(2, 1);
+    DenseMatrix out = collapse_trajectories(traj, 1ULL, 3);
+    EXPECT_TRUE(out.isZero(1e-12));
+}
+
 TEST(ResetTrajectoriesTest, ResetsMaskedQubitToZeroAcrossTrajectories) {
     const long dim = 2;
     const long n_traj = 3;

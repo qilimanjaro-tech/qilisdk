@@ -29,7 +29,7 @@ from qilisdk.core.qtensor import InitialState, QTensor, expect_val, ket
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
-from qilisdk.noise import AmplitudeDamping, Dephasing, NoiseModel
+from qilisdk.noise import AmplitudeDamping, Dephasing, Depolarizing, NoiseModel
 from qilisdk.readout import ExpectationReadout, Readout, SamplingReadout, StateTomographyReadout
 
 random.seed(42)
@@ -1045,3 +1045,181 @@ def test_same_result_as_statevector_big_circuit():
 
     # Check to make sure the keys are the same (i.e. no unexpected outcomes)
     assert set(stab_result.keys()) == set(sv_result.keys()), f"Different outcome keys: {stab_result} vs {sv_result}"
+
+
+# --------------------------------------------------------------------------------------------------
+# Monte Carlo with a noise model
+# --------------------------------------------------------------------------------------------------
+def _relaxation_schedule(dt: float = 0.02, total_time: float = 1.0) -> Schedule:
+    """A resonant drive on qubits that also relax, i.e. dynamics no unitary can reproduce."""
+    return Schedule(
+        dt=dt,
+        hamiltonians={"hx": 0.5 * pauli_x(0)},
+        coefficients={"hx": {(0, total_time): 1.0}},
+    )
+
+
+def _relaxation_noise() -> NoiseModel:
+    noise_model = NoiseModel()
+    noise_model.add(AmplitudeDamping(t1=1.0))
+    noise_model.add(Dephasing(t_phi=1.5))
+    return noise_model
+
+
+@pytest.mark.parametrize("method", [*analog_methods, AnalogMethod.adaptive_integrator()])
+def test_monte_carlo_reproduces_the_lindblad_evolution(method):
+    """Trajectories carrying quantum jumps must average back to the deterministic Lindblad result.
+
+    With 4000 trajectories the sampling error of a bounded observable is a few times 1e-2, so a
+    tolerance of 0.05 catches an unravelling that is biased (or noise that is being dropped) while
+    staying above the statistical noise.
+    """
+    readout = Readout().with_expectation(observables=[pauli_z(0)]).with_state_tomography()
+
+    def _run(trajectories):
+        monte_carlo = MonteCarloConfig(trajectories=trajectories) if trajectories else None
+        backend = QiliSim(
+            analog_simulation_method=method,
+            noise_model=_relaxation_noise(),
+            execution_config=ExecutionConfig(seed=1234, num_threads=1, monte_carlo=monte_carlo),
+        )
+        result = backend.execute(
+            AnalogEvolution(schedule=_relaxation_schedule(), initial_state=ket(1).to_density_matrix()),
+            readout=readout,
+        )
+        return result.get_expectation_values()[0], result.get_state().dense()
+
+    deterministic_ev, deterministic_rho = _run(None)
+    sampled_ev, sampled_rho = _run(4000)
+
+    assert np.isclose(sampled_ev, deterministic_ev, atol=0.05)
+    assert np.allclose(sampled_rho, deterministic_rho, atol=0.05)
+    assert np.isclose(np.trace(sampled_rho), 1.0, atol=1e-6)
+    # The relaxation has to be visible, otherwise the comparison above proves nothing
+    assert deterministic_ev > -0.5
+
+
+@pytest.mark.parametrize("method", analog_methods)
+def test_monte_carlo_from_a_state_vector_needs_no_density_matrix(method):
+    """A pure initial state is replicated into trajectories directly, and must give the same answer
+    as passing the equivalent density matrix."""
+    readout = Readout().with_expectation(observables=[pauli_z(0)]).with_state_tomography()
+
+    def _run(initial_state):
+        backend = QiliSim(
+            analog_simulation_method=method,
+            noise_model=_relaxation_noise(),
+            execution_config=ExecutionConfig(seed=1234, num_threads=1, monte_carlo=MonteCarloConfig(trajectories=2000)),
+        )
+        return backend.execute(
+            AnalogEvolution(schedule=_relaxation_schedule(), initial_state=initial_state), readout=readout
+        )
+
+    from_vector = _run(ket(1))
+    from_density_matrix = _run(ket(1).to_density_matrix())
+
+    assert from_vector.get_state().shape == (2, 2)
+    assert np.allclose(from_vector.get_state().dense(), from_density_matrix.get_state().dense(), atol=0.05)
+
+
+@pytest.mark.parametrize("method", analog_methods)
+def test_monte_carlo_noise_is_not_ignored(method):
+    """The noise model must actually reach the trajectories: relaxation has to move population into
+    the ground state compared with the same run without noise."""
+
+    def _run(noise_model):
+        backend = QiliSim(
+            analog_simulation_method=method,
+            noise_model=noise_model,
+            execution_config=ExecutionConfig(seed=99, num_threads=1, monte_carlo=MonteCarloConfig(trajectories=1000)),
+        )
+        result = backend.execute(
+            AnalogEvolution(schedule=_relaxation_schedule(), initial_state=ket(1).to_density_matrix()),
+            readout=Readout().with_state_tomography(),
+        )
+        return result.get_state().dense()
+
+    noisy = _run(_relaxation_noise())
+    noiseless = _run(None)
+    assert noisy[0, 0].real - noiseless[0, 0].real > 0.1
+
+
+@pytest.mark.parametrize("method", digital_methods)
+def test_monte_carlo_unravels_digital_noise_channels(method):
+    """Each trajectory picks one Kraus operator per channel, which has to average back to the
+    deterministic density-matrix evolution."""
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    noise_model = NoiseModel()
+    noise_model.add(Depolarizing(probability=0.15))
+
+    def _run(trajectories):
+        monte_carlo = MonteCarloConfig(trajectories=trajectories) if trajectories else None
+        backend = QiliSim(
+            digital_simulation_method=method,
+            noise_model=noise_model,
+            execution_config=ExecutionConfig(seed=5, num_threads=1, monte_carlo=monte_carlo),
+        )
+        result = backend.execute(DigitalPropagation(circuit=circuit), readout=Readout().with_state_tomography())
+        return result.get_state().dense()
+
+    deterministic = _run(None)
+    sampled = _run(6000)
+    assert np.allclose(sampled, deterministic, atol=0.05)
+    assert np.isclose(np.trace(sampled), 1.0, atol=1e-6)
+
+
+def test_monte_carlo_reservoir_layers_stay_unbiased():
+    """The reservoir carries one trajectory ensemble through every layer, so each layer has to draw
+    fresh noise outcomes rather than replaying the previous layer's."""
+    layer = ReservoirLayer(
+        evolution_dynamics=Schedule(
+            hamiltonians={"h": 0.5 * (pauli_x(0) + pauli_x(1)) + pauli_z(0) * pauli_z(1)},
+            total_time=0.5,
+            dt=0.02,
+        ),
+    )
+    readout = Readout().with_expectation(observables=[pauli_z(0), pauli_z(1)]).with_state_tomography()
+
+    def _run(trajectories):
+        monte_carlo = MonteCarloConfig(trajectories=trajectories) if trajectories else None
+        backend = QiliSim(
+            noise_model=_relaxation_noise(),
+            execution_config=ExecutionConfig(seed=11, num_threads=1, monte_carlo=monte_carlo),
+        )
+        functional = QuantumReservoir(
+            initial_state=ket(0, 1),
+            reservoir_layer=layer,
+            input_per_layer=[{}, {}, {}],
+        )
+        return backend.execute(functional, readout=readout)
+
+    deterministic = _run(None)
+    sampled = _run(4000)
+    assert np.allclose(sampled.get_expectation_values(), deterministic.get_expectation_values(), atol=0.05)
+    assert np.isclose(np.trace(sampled.get_state().dense()), 1.0, atol=1e-6)
+
+
+@pytest.mark.parametrize("num_threads", [1, 4])
+def test_monte_carlo_is_reproducible_across_thread_counts(num_threads):
+    """Every trajectory owns its random stream, so the ensemble must not depend on how the columns
+    are spread over threads."""
+    backend = QiliSim(
+        noise_model=_relaxation_noise(),
+        execution_config=ExecutionConfig(
+            seed=321, num_threads=num_threads, monte_carlo=MonteCarloConfig(trajectories=500)
+        ),
+    )
+    result = backend.execute(
+        AnalogEvolution(schedule=_relaxation_schedule(), initial_state=ket(1).to_density_matrix()),
+        readout=Readout().with_state_tomography(),
+    )
+    single_threaded = QiliSim(
+        noise_model=_relaxation_noise(),
+        execution_config=ExecutionConfig(seed=321, num_threads=1, monte_carlo=MonteCarloConfig(trajectories=500)),
+    ).execute(
+        AnalogEvolution(schedule=_relaxation_schedule(), initial_state=ket(1).to_density_matrix()),
+        readout=Readout().with_state_tomography(),
+    )
+    assert np.allclose(result.get_state().dense(), single_threaded.get_state().dense(), atol=1e-12)
