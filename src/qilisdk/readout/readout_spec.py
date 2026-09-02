@@ -13,7 +13,8 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, Literal
+from copy import copy
+from typing import TYPE_CHECKING, Generic, Literal, cast
 
 from loguru import logger
 
@@ -108,8 +109,11 @@ class Readout(Generic[S, E, T]):
         if self._sampling is not None:
             raise ValueError("Sampling readout already set in this specification.")
         logger.debug("[Readout] Adding sampling readout (nshots={})", nshots)
-        self._sampling = SamplingReadout(nshots=nshots, expand_samples=expand_samples)
-        return self  # ty:ignore[invalid-return-type]
+        readout = copy(self)
+        readout._sampling = SamplingReadout(  # ruff: ignore[private-member-access]
+            nshots=nshots, expand_samples=expand_samples
+        )
+        return cast("Readout[SamplingReadoutResult, E, T]", readout)
 
     def with_expectation(
         self,
@@ -131,8 +135,11 @@ class Readout(Generic[S, E, T]):
         if self._expectation is not None:
             raise ValueError("Expectation readout already set in this specification.")
         logger.debug("[Readout] Adding expectation readout ({} observables, nshots={})", len(observables), nshots)
-        self._expectation = ExpectationReadout(observables=observables, nshots=nshots)
-        return self  # ty:ignore[invalid-return-type]
+        readout = copy(self)
+        readout._expectation = ExpectationReadout(  # ruff: ignore[private-member-access]
+            observables=observables, nshots=nshots
+        )
+        return cast("Readout[S, ExpectationReadoutResult, T]", readout)
 
     def with_state_tomography(self, method: Literal["exact"] = "exact") -> Readout[S, E, StateTomographyReadoutResult]:
         """Add a state-tomography readout to the specification.
@@ -149,8 +156,9 @@ class Readout(Generic[S, E, T]):
         if self._state_tomography is not None:
             raise ValueError("State-tomography readout already set in this specification.")
         logger.debug("[Readout] Adding state-tomography readout (method={})", method)
-        self._state_tomography = StateTomographyReadout(method=method)
-        return self  # ty:ignore[invalid-return-type]
+        readout = copy(self)
+        readout._state_tomography = StateTomographyReadout(method=method)  # ruff: ignore[private-member-access]
+        return cast("Readout[S, E, StateTomographyReadoutResult]", readout)
 
     # -- accessors --------------------------------------------------------
 
