@@ -107,6 +107,7 @@ class Schedule(Parameterizable):
         if dt <= 0:
             raise ValueError("dt must be greater than zero.")
         self._dt = dt
+        self._snap_warned_for: tuple[float, float] | None = None
 
         coefficients = coefficients or {}
 
@@ -352,8 +353,41 @@ class Schedule(Parameterizable):
 
     @property
     def tlist(self) -> list[float]:
+        """
+        The time grid the schedule is sampled and integrated on.
+
+        The tlist starts at ``0``, ends at :attr:`T` and is evenly spaced by
+        :attr:`dt`. If ``T`` is not an integer multiple of the requested ``dt``, the ``dt`` is
+        snapped to the nearest value that divides ``T`` and a warning is given.
+
+        Returns:
+            list[float]: The sampling times, of length ``T / dt + 1``.
+        """
         T = self.T
-        return list(linspace(0, T, int(T // self.dt), dtype=float))
+        if T <= 0:
+            return [0.0]
+        return list(linspace(0, T, self._nsteps(T) + 1, dtype=float))
+
+    def _nsteps(self, T: float) -> int:
+        """Number of ``dt``-sized intervals that tile ``[0, T]``.
+
+        Args:
+            T (float): Total time of the schedule. Must be positive.
+
+        Returns:
+            int: The number of intervals, at least one.
+        """
+        nsteps = max(1, round(T / self._dt))
+        snapped_dt = T / nsteps
+        if abs(snapped_dt - self._dt) > get_settings().atol and self._snap_warned_for != (T, self._dt):
+            self._snap_warned_for = (T, self._dt)
+            logger.warning(
+                "[Schedule] Total time {} is not an integer multiple of dt={}, so dt has been snapped to {}.",
+                T,
+                self._dt,
+                snapped_dt,
+            )
+        return nsteps
 
     def _get_coefficients_max_time(self) -> float:
         if len(self._hamiltonians) == 0:
@@ -365,7 +399,18 @@ class Schedule(Parameterizable):
 
     @property
     def dt(self) -> float:
-        return self._dt
+        """The spacing of :attr:`tlist`, i.e. the time step every backend integrates with.
+
+        This is the ``dt`` the schedule was built with, snapped to the nearest step that
+        divides :attr:`T` exactly when the two are incommensurate.
+
+        Returns:
+            float: The effective time resolution.
+        """
+        T = self.T
+        if T <= 0:
+            return self._dt
+        return T / self._nsteps(T)
 
     def set_dt(self, dt: float) -> None:
         """
@@ -450,9 +495,10 @@ class Schedule(Parameterizable):
     ) -> None:
         if label in self._hamiltonians:
             raise ValueError(f"Can't add Hamiltonian because label {label} is already associated with a Hamiltonian.")
+        nsamples = int(1 / self.dt)
         self._hamiltonians[label] = hamiltonian
         self._coefficients[label] = Interpolator(
-            coefficients, interpolation, nsamples=int(1 / self.dt), extrapolate=self._extrapolate
+            coefficients, interpolation, nsamples=nsamples, extrapolate=self._extrapolate
         )
 
     def _add_hamiltonian_from_interpolator(
@@ -584,7 +630,7 @@ class Schedule(Parameterizable):
         Get the total number of discrete time steps in the annealing process.
 
         Returns:
-            int: The number of time steps, calculated as T / dt.
+            int: The number of sampling times in :attr:`tlist`, i.e. ``T / dt + 1``.
         """
         return len(self.tlist)
 
@@ -729,7 +775,7 @@ class Schedule(Parameterizable):
             "  coefficients={",
             *(f"    '{label}': {coeff!r}," for label, coeff in self.coefficients_dict.items()),
             "  },",
-            f"  dt={self.dt!r},",
+            f"  dt={self._dt!r},",
             f"  total_time={self._max_time!r},",
             f"  interpolation={self._interpolation!r}",
             ")",
