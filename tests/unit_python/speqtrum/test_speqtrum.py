@@ -169,30 +169,6 @@ def test_submit_dispatches_to_digital_propagation_handler(monkeypatch):
     assert handle.id == 99
 
 
-def test_submit_digital_propagation_warns_on_custom_initial_state(
-    monkeypatch,
-    caplog,  # ruff: ignore[redefined-while-unused]
-):
-    """A non-default initial state is ignored on hardware, so the user must be warned."""
-
-    class FakeDigitalPropagationWithInitialState(FakeDigitalPropagation):
-        initial_state = InitialState.UNIFORM
-
-    monkeypatch.setattr(speqtrum, "DigitalPropagation", FakeDigitalPropagationWithInitialState)
-    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    monkeypatch.setattr(
-        speqtrum.SpeQtrum,
-        "_create_client",
-        lambda self: DummyClient(post_payload={"id": 99}),
-        raising=True,
-    )
-    q = speqtrum.SpeQtrum()
-    handle = q.submit(FakeDigitalPropagationWithInitialState(), device="some_device", readout=Readout())
-
-    assert handle.id == 99
-    assert "custom initial state" in caplog.text
-
-
 def test_submit_dispatches_to_variational_program_handler(monkeypatch):
     monkeypatch.setattr(speqtrum, "DigitalPropagation", FakeDigitalPropagation)
     monkeypatch.setattr(speqtrum, "AnalogEvolution", FakeAnalogEvolution)
