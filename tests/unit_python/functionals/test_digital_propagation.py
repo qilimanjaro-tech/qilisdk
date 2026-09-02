@@ -102,11 +102,11 @@ def test_digital_propagation_set_parameters_clears_gate_matrix_cache():
     functional = DigitalPropagation(circuit=circuit)
 
     # Populate the cached_property.
-    matrix_before = gate.matrix.copy()
+    matrix_before = gate.matrix.dense()
 
     functional.set_parameters({"angle": np.pi / 2})
 
-    assert not np.allclose(matrix_before, gate.matrix)
+    assert not np.allclose(matrix_before, gate.matrix.dense())
 
 
 def test_digital_propagation_set_parameter_values_clears_gate_matrix_cache():
@@ -116,8 +116,8 @@ def test_digital_propagation_set_parameter_values_clears_gate_matrix_cache():
     circuit.add(gate)
     functional = DigitalPropagation(circuit=circuit)
 
-    matrix_before = gate.matrix.copy()
+    matrix_before = gate.matrix.dense()
 
     functional.set_parameter_values([np.pi / 2])
 
-    assert not np.allclose(matrix_before, gate.matrix)
+    assert not np.allclose(matrix_before, gate.matrix.dense())
