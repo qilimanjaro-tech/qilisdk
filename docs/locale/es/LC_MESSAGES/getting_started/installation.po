@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 17:03+0200\n"
+"POT-Creation-Date: 2026-08-26 18:11+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -47,10 +47,11 @@ msgid ""
 "\"qilisdk[qutip]\"``). Select your operating system in the tabs below to "
 "get the right command."
 msgstr ""
-"En macOS el shell por defecto es ``zsh``, que trata los corchetes como un "
-"patrón de expansión de nombres, por lo que los extras deben escribirse "
-"entre comillas (``pip install \"qilisdk[qutip]\"``). Seleccione su sistema "
-"operativo en las pestañas siguientes para obtener el comando correcto."
+"En macOS el shell por defecto es ``zsh``, que trata los corchetes como un"
+" patrón de expansión de nombres, por lo que los extras deben escribirse "
+"entre comillas (``pip install \"qilisdk[qutip]\"``). Seleccione su "
+"sistema operativo en las pestañas siguientes para obtener el comando "
+"correcto."
 
 #: ../../getting_started/installation.rst:19
 msgid ""
@@ -255,10 +256,23 @@ msgstr ""
 "máquina."
 
 #: ../../getting_started/installation.rst:239
+msgid "``-Ccmake.define.no_avx=ON``"
+msgstr "``-Ccmake.define.no_avx=ON``"
+
+#: ../../getting_started/installation.rst:240
+msgid ""
+"Build without the AVX2 and FMA instructions, which are used by default. "
+"Only needed for CPUs from before around 2013, which cannot run them."
+msgstr ""
+"Compila sin las instrucciones AVX2 y FMA, que se usan por defecto. Solo "
+"es necesario para CPUs anteriores a 2013 aproximadamente, que no pueden "
+"ejecutarlas."
+
+#: ../../getting_started/installation.rst:241
 msgid "``-Ccmake.define.single_precision=ON``"
 msgstr "``-Ccmake.define.single_precision=ON``"
 
-#: ../../getting_started/installation.rst:240
+#: ../../getting_started/installation.rst:242
 msgid ""
 "Use single precision (``float``) instead of double precision "
 "(``double``). Slightly faster, but less accurate."
@@ -266,31 +280,31 @@ msgstr ""
 "Usa precisión simple (``float``) en lugar de precisión doble "
 "(``double``). Ligeramente más rápido, pero menos preciso."
 
-#: ../../getting_started/installation.rst:241
+#: ../../getting_started/installation.rst:243
 msgid "``-Ccmake.build-type=Debug``"
 msgstr "``-Ccmake.build-type=Debug``"
 
-#: ../../getting_started/installation.rst:242
+#: ../../getting_started/installation.rst:244
 msgid "Enable a debug build (no optimizations, debug symbols)."
 msgstr ""
 "Habilita una compilación de depuración (sin optimizaciones, con símbolos "
 "de depuración)."
 
-#: ../../getting_started/installation.rst:243
+#: ../../getting_started/installation.rst:245
 msgid "``-Ccmake.build-type=RelWithDebInfo``"
 msgstr "``-Ccmake.build-type=RelWithDebInfo``"
 
-#: ../../getting_started/installation.rst:244
+#: ../../getting_started/installation.rst:246
 msgid "Enable an optimized debug build (optimizations plus debug symbols)."
 msgstr ""
 "Habilita una compilación de depuración optimizada (optimizaciones más "
 "símbolos de depuración)."
 
-#: ../../getting_started/installation.rst:245
+#: ../../getting_started/installation.rst:247
 msgid "``-Ccmake.build-type=Release``"
 msgstr "``-Ccmake.build-type=Release``"
 
-#: ../../getting_started/installation.rst:246
+#: ../../getting_started/installation.rst:248
 msgid ""
 "Enable a release build (optimizations, no debug symbols). This is the "
 "default."
@@ -298,27 +312,27 @@ msgstr ""
 "Habilita una compilación de lanzamiento (optimizaciones, sin símbolos de "
 "depuración). Esta es la opción predeterminada."
 
-#: ../../getting_started/installation.rst:247
+#: ../../getting_started/installation.rst:249
 msgid "``-Ccmake.define.tidy=ON``"
 msgstr "``-Ccmake.define.tidy=ON``"
 
-#: ../../getting_started/installation.rst:248
+#: ../../getting_started/installation.rst:250
 msgid "Run ``clang-tidy`` on the code during compilation."
 msgstr "Ejecuta ``clang-tidy`` sobre el código durante la compilación."
 
-#: ../../getting_started/installation.rst:249
+#: ../../getting_started/installation.rst:251
 msgid "``-Ccmake.define.verbose=ON``"
 msgstr "``-Ccmake.define.verbose=ON``"
 
-#: ../../getting_started/installation.rst:250
+#: ../../getting_started/installation.rst:252
 msgid "Enable (very) verbose output from the C++ code."
 msgstr "Habilita una salida (muy) detallada del código C++."
 
-#: ../../getting_started/installation.rst:251
+#: ../../getting_started/installation.rst:253
 msgid "``-Ccmake.define.tests=ON``"
 msgstr "``-Ccmake.define.tests=ON``"
 
-#: ../../getting_started/installation.rst:252
+#: ../../getting_started/installation.rst:254
 msgid ""
 "Build the C++ test suite, which will then be available as a ``test_cpp`` "
 "executable in the tests directory."
@@ -326,15 +340,15 @@ msgstr ""
 "Compila el conjunto de pruebas de C++, que luego estará disponible como "
 "un ejecutable ``test_cpp`` en el directorio de pruebas."
 
-#: ../../getting_started/installation.rst:253
+#: ../../getting_started/installation.rst:255
 msgid "``-Ccmake.define.coverage=ON``"
 msgstr "``-Ccmake.define.coverage=ON``"
 
-#: ../../getting_started/installation.rst:254
+#: ../../getting_started/installation.rst:256
 msgid "Enable coverage instrumentation flags."
 msgstr "Habilita los indicadores de instrumentación de cobertura."
 
-#: ../../getting_started/installation.rst:256
+#: ../../getting_started/installation.rst:258
 msgid ""
 "These can be passed to ``uv sync`` by simply appending to the build "
 "command, for example:"
@@ -342,7 +356,7 @@ msgstr ""
 "Estos se pueden pasar a ``uv sync`` simplemente añadiéndolos al comando "
 "de compilación, por ejemplo:"
 
-#: ../../getting_started/installation.rst:262
+#: ../../getting_started/installation.rst:264
 msgid ""
 "You then have an environment with the latest version of QiliSDK "
 "installed. If you want to install other things to the environment you'll "
@@ -351,7 +365,7 @@ msgstr ""
 "Entonces tendrá un entorno con la última versión de QiliSDK instalada. Si"
 " desea instalar otras cosas en el entorno, necesitará usar pip con uv:"
 
-#: ../../getting_started/installation.rst:269
+#: ../../getting_started/installation.rst:271
 msgid "And then to run a Python script within the environment, you can use:"
 msgstr "Y para ejecutar un script de Python dentro del entorno, puede usar:"
 

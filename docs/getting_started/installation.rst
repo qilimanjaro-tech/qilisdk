@@ -236,6 +236,8 @@ There are also a number of extra compile flags that can be set to enable/disable
       - What it does
     * - ``-Ccmake.define.build_native=ON``
       - Build for the architecture of the current machine for increased performance. Only recommended if you are building for your own machine.
+    * - ``-Ccmake.define.no_avx=ON``
+      - Build without the AVX2 and FMA instructions, which are used by default. Only needed for CPUs from before around 2013, which cannot run them.
     * - ``-Ccmake.define.single_precision=ON``
       - Use single precision (``float``) instead of double precision (``double``). Slightly faster, but less accurate.
     * - ``-Ccmake.build-type=Debug``
