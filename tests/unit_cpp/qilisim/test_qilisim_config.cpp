@@ -105,4 +105,27 @@ TEST(QilisimConfig, StabilizerMaxStates_GetterSetter) {
     EXPECT_EQ(config.get_stabilizer_max_states(), 200);
 }
 
+TEST(QilisimConfig, MPSSettings_GetterSetter) {
+    QiliSimConfig config;
+    config.set_mps_max_bond_dimension(128);
+    config.set_mps_truncation_cutoff(1e-8);
+    EXPECT_EQ(config.get_mps_max_bond_dimension(), 128);
+    EXPECT_DOUBLE_EQ(config.get_mps_truncation_cutoff(), 1e-8);
+    EXPECT_NO_THROW(config.validate());
+}
+
+TEST(QilisimConfig, MPSMethod_ValidatesAndRejectsBadTruncation) {
+    QiliSimConfig config;
+    config.set_digital_method("mps");
+    EXPECT_NO_THROW(config.validate());
+
+    QiliSimConfig zero_bond;
+    zero_bond.set_mps_max_bond_dimension(0);
+    EXPECT_ANY_THROW(zero_bond.validate());
+
+    QiliSimConfig negative_cutoff;
+    negative_cutoff.set_mps_truncation_cutoff(-1e-3);
+    EXPECT_ANY_THROW(negative_cutoff.validate());
+}
+
 // GCOV_EXCL_BR_STOP
