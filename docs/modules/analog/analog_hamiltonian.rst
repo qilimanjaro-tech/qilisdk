@@ -10,6 +10,63 @@ To construct a Hamiltonian with a single Pauli, you can use the constructors ``X
 From these single-qubit operators, you can build multi-qubit Hamiltonians using arithmetic operations.
 The operations follow Python syntax, for example: ``2 * Z(0) + Z(1)`` and ``Z(0) * Z(1)`` build multi-qubit Hamiltonians.
 
+Common Hamiltonians
+======================
+
+Alternatively, for the models that come up most often there are named constructors:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 60
+
+   * - Constructor
+     - Hamiltonian
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.transverse_field`
+     - :math:`\sum_i h_x X_i`
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.longitudinal_field`
+     - :math:`\sum_i h_z Z_i`
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.ising`
+     - :math:`\sum_{i<j} J Z_i Z_j + \sum_i h_z Z_i`
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.ising_chain`
+     - :math:`\sum_i J Z_i Z_{i+1} + \sum_i h_z Z_i`
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.ising_grid`
+     - :math:`\sum_{\langle i, j \rangle} J Z_i Z_j + \sum_i h_z Z_i` on a square lattice
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.transverse_field_ising`
+     - :math:`\sum_{i<j} J Z_i Z_j + \sum_i h_x X_i + \sum_i h_z Z_i`
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.heisenberg`
+     - :math:`\sum_{i<j} \left( J_x X_i X_j + J_y Y_i Y_j + J_z Z_i Z_j \right) + \sum_i h_z Z_i`
+
+.. code-block:: python
+
+    from qilisdk.analog import Hamiltonian
+
+    H = Hamiltonian.transverse_field_ising(nqubits=2, x_coefficient=1.3, zz_coefficient=-2)
+    print(H)
+
+**Output:**
+
+::
+
+    1.3 X(0) + 1.3 X(1) - 2 Z(0) Z(1)
+
+Every coefficient argument accepts either a single value, shared by every term it weights, or a list
+holding one value per term, so any of the constructors above can build a non-uniform model just by
+passing a list instead of a number. The values are taken in the order the terms are generated, which
+each constructor documents.
+
+.. code-block:: python
+
+    from qilisdk.analog import Hamiltonian
+
+    H = Hamiltonian.transverse_field_ising(nqubits=2, x_coefficient=[1.3, -0.7], zz_coefficient=[-2])
+    print(H)
+
+**Output:**
+
+::
+
+    1.3 X(0) - 0.7 X(1) - 2 Z(0) Z(1)
+
 List of Operations
 ======================
 
@@ -39,6 +96,16 @@ List of Operations
 
 - from qtensor: :meth:`Hamiltonian.from_qtensor(qtensor)<qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor>`
 - from string: :meth:`Hamiltonian.parse(hamiltonian_string)<qilisdk.analog.hamiltonian.Hamiltonian.parse>`
+
+**Common Hamiltonians**:
+
+- transverse field: :meth:`Hamiltonian.transverse_field(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.transverse_field>`
+- longitudinal field: :meth:`Hamiltonian.longitudinal_field(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.longitudinal_field>`
+- Ising: :meth:`Hamiltonian.ising(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.ising>`
+- Ising chain: :meth:`Hamiltonian.ising_chain(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.ising_chain>`
+- Ising grid: :meth:`Hamiltonian.ising_grid(rows, columns)<qilisdk.analog.hamiltonian.Hamiltonian.ising_grid>`
+- transverse-field Ising: :meth:`Hamiltonian.transverse_field_ising(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.transverse_field_ising>`
+- Heisenberg: :meth:`Hamiltonian.heisenberg(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.heisenberg>`
 
 Example: Ising Hamiltonian
 ============================

@@ -6,6 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import datetime
 import operator
 import os
 import posixpath
@@ -39,7 +40,7 @@ if shutil.which("pandoc") is None:
 # -- Project information -----------------------------------------------------
 
 project = "QiliSDK"
-copyright = "2025, Qilimanjaro Quantum Tech"
+copyright = f"{datetime.datetime.now(tz=datetime.timezone.utc).year}, Qilimanjaro Quantum Tech"
 author = "Qilimanjaro Quantum Tech"
 
 # -- General configuration ---------------------------------------------------

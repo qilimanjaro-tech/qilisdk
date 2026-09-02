@@ -34,6 +34,12 @@ if TYPE_CHECKING:
 
 _EMPTY_GRAPH_MSG = "The graph must have at least one edge."
 
+# Everything apart from SPIN because for now they have no binary encoding
+_QUBO_SUPPORTED_DOMAINS = {Domain.BINARY, Domain.POSITIVE_INTEGER, Domain.INTEGER, Domain.REAL}
+
+# Used to prevent unbounded vars from expanding into infinite binary vars
+_MAX_ENCODING_SPAN = 2**32
+
 
 def _validate_undirected_edges(edges: list[tuple[int, int]]) -> None:
     """Validate that ``edges`` describes a simple undirected graph.
@@ -1343,6 +1349,7 @@ class QUBO(Model):
         super().__init__(label)
         self.continuous_vars: dict[str, Variable] = {}
         self.__qubo_objective: Objective | None = None
+        self.__qubo_objective_needs_refresh: bool = True
         self._linearizer: _Linearizer | None = None
 
     def _reduce(self, term: Expression) -> Expression:
@@ -1368,9 +1375,14 @@ class QUBO(Model):
         Returns:
             Objective | None: The QUBO objective (factoring in the constraints and objective of the model). If the objective and constraints are not defined in the model, this property returns None.
         """
+        if not self.__qubo_objective_needs_refresh:
+            return self.__qubo_objective
         self.__qubo_objective = None
         if self.objective is not None:
-            self._build_qubo_objective(self.objective.term, self.objective.label, self.objective.sense)
+            # The objective is already binary (set_objective binarises it), so skip that conversion
+            self._build_qubo_objective(
+                self.objective.term, self.objective.label, self.objective.sense, already_binary=True
+            )
         for constraint in self.constraints:
             if constraint.label in self.lagrange_multipliers:
                 self._build_qubo_objective(
@@ -1381,6 +1393,7 @@ class QUBO(Model):
                 self._build_qubo_objective(
                     constraint.term.lhs - constraint.term.rhs
                 )  # I don't think this line can be reached.
+        self.__qubo_objective_needs_refresh = False
         return self.__qubo_objective
 
     def __repr__(self) -> str:
@@ -1531,7 +1544,7 @@ class QUBO(Model):
                     f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=Bitwise
                 )
                 slack_terms = slack.to_binary()
-                out = h + slack_terms
+                out = h - slack_terms
                 return (out) ** 2
 
         if term.operation in {
@@ -1593,12 +1606,15 @@ class QUBO(Model):
             ValueError: if a penalization method is provided that is not (&quot;unbalanced&quot;, &quot;slack&quot;)
             ValueError: if unbalanced penalization method is used and not enough parameters are provided.
             ValueError: if the degree of the provided term is larger than 2.
-            ValueError: if the constraint term contains variables that are not from Positive Integers or Binary domains.
-            ValueError: if the constraint term contains variable that do not have 0 as their lower bound.
+            ValueError: if the constraint term contains variables that are not from the binary, positive integer,
+                integer or real domains.
         """
 
         if label in self._constraints:
             raise ValueError((f'Constraint "{label}" already exists:\n \t\t{self._constraints[label]}'))
+
+        # Adding a constraint changes the QUBO objective, so we need a refresh
+        self.__qubo_objective_needs_refresh = True
 
         lower_penalization = penalization.lower()
 
@@ -1687,6 +1703,32 @@ class QUBO(Model):
         term = term.to_binary()
         term = self._reduce(term)
         self._objective = Objective(label=label, term=term, sense=sense)
+        self.__qubo_objective_needs_refresh = True
+
+    def set_lagrange_multiplier(self, constraint_label: str, lagrange_multiplier: float) -> None:
+        super().set_lagrange_multiplier(constraint_label, lagrange_multiplier)
+        self.__qubo_objective_needs_refresh = True
+
+    @staticmethod
+    def _check_encodable_bounds(var: Variable) -> None:
+        """Check that ``var`` spans few enough values to be expanded into binary variables.
+
+        A variable that is left unbounded defaults to the full range of its domain, which no encoding can represent.
+
+        Args:
+            var (Variable): the variable to check.
+
+        Raises:
+            ValueError: if the variable's bounds span more values than ``_MAX_ENCODING_SPAN``.
+        """
+        span = float(var.upper_bound) - float(var.lower_bound)
+        if var.domain is Domain.REAL:
+            span /= var.precision
+        if span > _MAX_ENCODING_SPAN:
+            raise ValueError(
+                f"Variable {var} spans too many values ({span:.3g}) to be encoded into binary variables."
+                " Set tighter bounds on the variable (or a coarser precision for real variables)."
+            )
 
     def _check_variables(self, term: Expression | Comparison, lagrange_multiplier: RealNumber = 100) -> None:
         """checks if the variables in the provided term are valid to be used in a QUBO model. Moreover, we add all the
@@ -1696,19 +1738,20 @@ class QUBO(Model):
             term (Expression): the term to be checked.
 
         Raises:
-            ValueError: if the constraint term contains variables that are not from Positive Integers or Binary domains.
-            ValueError: if the constraint term contains variable that do not have 0 as their lower bound.
+            ValueError: if the constraint term contains variables that are not from the binary, positive integer,
+                integer or real domains.
+            ValueError: if the constraint term contains a variable whose bounds span too many values to be encoded
+                into binary variables.
         """
         for v in term.variables():
-            if v.domain not in {Domain.POSITIVE_INTEGER, Domain.BINARY}:
+            if v.domain not in _QUBO_SUPPORTED_DOMAINS:
                 raise ValueError(
-                    "QUBO models are not supported for variables that are not in the positive integers or binary domains."
+                    "QUBO models are not supported for variables that are not in the binary, positive integer,"
+                    f" integer or real domains. But variable {v} is in the {v.domain.value}."
                 )
-            if v.lower_bound != 0:
-                raise ValueError(
-                    f"All variables must have a lower bound of 0. But variable {v} has a lower bound of {v.lower_bound}"
-                )
-            if isinstance(v, Variable) and v.domain is Domain.POSITIVE_INTEGER and v.label not in self.continuous_vars:
+            if isinstance(v, Variable):
+                self._check_encodable_bounds(v)
+            if isinstance(v, Variable) and v.domain is not Domain.BINARY and v.label not in self.continuous_vars:
                 self.continuous_vars[v.label] = v
                 encoding_constraint = v.encoding_constraint()
                 if encoding_constraint is not None:
@@ -1718,7 +1761,11 @@ class QUBO(Model):
                     )
 
     def _build_qubo_objective(
-        self, term: Expression, label: str | None = None, sense: ObjectiveSense = ObjectiveSense.MINIMIZE
+        self,
+        term: Expression,
+        label: str | None = None,
+        sense: ObjectiveSense = ObjectiveSense.MINIMIZE,
+        already_binary: bool = False,
     ) -> None:
         """updates the internal qubo objective term.
 
@@ -1728,8 +1775,12 @@ class QUBO(Model):
                                             Defaults to None.
             sense (ObjectiveSense, optional): The optimization sense of the model's objective.
                                                 Defaults to ObjectiveSense.MINIMIZE.
+            already_binary (bool, optional): set when ``term`` is already in binary form (e.g. the
+                                                QUBO objective, which is binarised in set_objective),
+                                                to skip the costly ``to_binary`` rebuild.
+                                                Defaults to False.
         """
-        term = copy.copy(term.to_binary())
+        term = copy.copy(term) if already_binary else copy.copy(term.to_binary())
         if self.__qubo_objective is None:
             self.__qubo_objective = Objective(
                 label=label if label is not None else "obj",
@@ -1929,7 +1980,6 @@ class QUBO(Model):
         out._lagrange_multipliers = copy.copy(self._lagrange_multipliers)
 
         out.continuous_vars = copy.copy(self.continuous_vars)
-        out.__qubo_objective = copy.copy(self.__qubo_objective)
         out._linearizer = copy.copy(self._linearizer)
 
         for label, constraint in self._encoding_constraints.items():
