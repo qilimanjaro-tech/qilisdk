@@ -256,8 +256,10 @@ class TrotterizedSchedule(Ansatz):
             schedule.nqubits,
             trotter_steps,
         )
-        for hamiltonian in schedule:
-            self.add(list(trotter_evolution(hamiltonian, schedule.dt, trotter_steps=trotter_steps)))
+
+        # Iterate over the Schedule's time slices, Trotterizing the Hamiltonian at each point
+        for t in schedule.tlist[:-1]:
+            self.add(list(trotter_evolution(schedule[t], schedule.dt, trotter_steps=trotter_steps)))
 
 
 @yaml.register_class
