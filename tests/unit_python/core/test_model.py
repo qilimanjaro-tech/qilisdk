@@ -21,7 +21,7 @@ import pytest
 
 import qilisdk.core.model as model_module
 from qilisdk.analog.hamiltonian import Z
-from qilisdk.core.comparison import EQ, GT, LEQ, LT, NEQ, Comparison, ComparisonOperation
+from qilisdk.core.comparison import EQ, GEQ, GT, LEQ, LT, NEQ, Comparison, ComparisonOperation
 from qilisdk.core.expression import Constant, Expression, Sin
 from qilisdk.core.model import (
     QUBO,
@@ -779,19 +779,19 @@ def test_qubo_add_constraint_and_objective_errors():
     # add valid
     q.add_constraint("c", term)
     assert "c" in q.lagrange_multipliers
-    # non-binary domain var
+    # unbounded integer var: not encodable
     y = Variable("y", Domain.INTEGER)
     t2 = Comparison(lhs=y, rhs=0, operation=ComparisonOperation.EQ)
     q2 = QUBO(label="q4")
-    with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
+    with pytest.raises(ValueError, match=r"Variable y spans too many values"):
         q2.add_constraint("c2", t2)
 
 
 # ---------- set_objective QUBO ----------
 def test_qubo_set_objective_errors():
     q = QUBO(label="q5")
-    # non-binary domain
-    y = Variable("y", Domain.REAL, bounds=(0, 1))
+    # unsupported (spin) domain
+    y = SpinVariable("y")
     t = y
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         q.set_objective(term=t)
@@ -966,43 +966,53 @@ def test_add_constraint_without_transform_to_qubo():
     assert q._constraints["c"].term.rhs == ct.rhs
 
 
-def test_check_variables():
+def test_check_variables_rejects_spin_domain():
     q = QUBO(label="test")
-    x = Variable("x", Domain.INTEGER, encoding=OneHot, bounds=(0, 2))
-
-    ct = EQ(x**2, 1)
-    with pytest.raises(
-        ValueError,
-        match=r"QUBO models are not supported for variables that are not in the positive integers or binary domains.",
-    ):
-        q._check_variables(ct)
-
-    x = Variable("x", Domain.REAL, encoding=OneHot, bounds=(0, 2))
-
-    ct = EQ(x**2, 1)
-    with pytest.raises(
-        ValueError,
-        match=r"QUBO models are not supported for variables that are not in the positive integers or binary domains.",
-    ):
-        q._check_variables(ct)
-
     x = Variable("x", Domain.SPIN, encoding=OneHot, bounds=(-1, 1))
 
     ct = EQ(x**2, 1)
     with pytest.raises(
         ValueError,
-        match=r"QUBO models are not supported for variables that are not in the positive integers or binary domains.",
+        match=r"QUBO models are not supported for variables that are not in the binary, positive integer,"
+        r" integer or real domains\. But variable x is in the Spin Domain\.",
     ):
         q._check_variables(ct)
 
-    x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(1, 2))
 
-    ct = EQ(x**2, 1)
+def test_check_variables_rejects_spin_variable():
+    q = QUBO(label="test")
+    s = SpinVariable("s")
+
+    con = EQ(s, 1)
     with pytest.raises(
         ValueError,
-        match=r"All variables must have a lower bound of 0. But variable x has a lower bound of 1",
+        match=r"QUBO models are not supported for variables that are not in the binary, positive integer,"
+        r" integer or real domains\.",
     ):
-        q._check_variables(ct)
+        q._check_variables(con)
+
+
+@pytest.mark.parametrize(
+    ("domain", "bounds"),
+    [
+        (Domain.POSITIVE_INTEGER, (0, 2)),
+        (Domain.POSITIVE_INTEGER, (1, 5)),
+        (Domain.INTEGER, (-2, 2)),
+        (Domain.INTEGER, (-5, -1)),
+        (Domain.REAL, (1.0, 2.0)),
+        (Domain.REAL, (-1.0, 1.0)),
+        (Domain.BINARY, (0, 1)),
+    ],
+)
+@pytest.mark.parametrize("encoding", [Bitwise, OneHot])
+def test_check_variables_accepts_supported_domains(domain, bounds, encoding):
+    q = QUBO(label="test")
+    x = Variable("x", domain, encoding=encoding, bounds=bounds, precision=1e-1)
+
+    q._check_variables(EQ(x, 1))
+
+    # Binary-domain variables need no encoding, every other supported domain is registered for encoding.
+    assert ("x" in q.continuous_vars) is (domain is not Domain.BINARY)
 
 
 def test_qubo_model_to_qubo():
@@ -1442,6 +1452,354 @@ def test_qubo_copy_includes_encoding_constraints():
     q._encoding_constraints["enc"] = Constraint("enc", EQ(b, 0))
     q2 = copy.copy(q)
     assert "enc" in q2._encoding_constraints
+
+
+# ---------- QUBO conversion of shifted / integer / real variables ----------
+
+
+def _all_bit_assignments(n: int):
+    """Yield every binary string of length ``n`` as a list of 0/1 ints."""
+    for i in range(2**n):
+        yield [(i >> b) & 1 for b in range(n)]
+
+
+def _evaluate_binary_term(term, bits_by_label):
+    """Evaluate a fully binary ``term`` given a ``{label: bit}`` mapping.
+
+    Binary variables that were cancelled out of the term (e.g. the zero-coefficient one-hot slot)
+    are simply absent from ``term.variables()`` and therefore ignored.
+    """
+    return term.evaluate({v: bits_by_label[v.label] for v in term.variables()})
+
+
+@pytest.mark.parametrize(
+    ("domain", "bounds", "precision"),
+    [
+        (Domain.POSITIVE_INTEGER, (1, 5), 1e-2),
+        (Domain.INTEGER, (-2, 2), 1e-2),
+        (Domain.INTEGER, (-5, -1), 1e-2),
+        (Domain.REAL, (1, 2), 1e-1),
+    ],
+)
+def test_to_qubo_uses_the_expansion_the_encoding_produces(domain, bounds, precision):
+    # The model has no constraints and Bitwise needs no encoding constraint, so the QUBO objective
+    # must be exactly the binary expansion of the variable. Both sides are expanded first because
+    # the QUBO build distributes the precision factor over the bits while to_binary() leaves it
+    # factored out, which are equal expressions but different trees.
+    x = Variable("x", domain, bounds=bounds, encoding=Bitwise, precision=precision)
+    m = Model("m")
+    m.set_objective(x)
+
+    q = m.to_qubo()
+
+    assert q.qubo_objective.term.expand() == x.to_binary().expand()
+
+
+def test_to_qubo_real_variable_from_the_docs_example():
+    x = Variable("x", domain=Domain.REAL, bounds=(1, 2), encoding=Bitwise, precision=1e-1)
+    m = Model("m")
+    m.set_objective(x)
+
+    q = m.to_qubo()
+
+    # 4 bits are enough to cover [1, 2] in steps of 0.1, and the offset shows up as the constant.
+    assert len(q.qubo_objective.term.variables()) == x.num_binary_equivalent()
+    assert q.qubo_objective.term.get_constant() == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize(
+    ("domain", "bounds"),
+    [
+        (Domain.POSITIVE_INTEGER, (0, 5)),
+        (Domain.POSITIVE_INTEGER, (1, 5)),
+        (Domain.POSITIVE_INTEGER, (3, 4)),
+        (Domain.INTEGER, (-2, 2)),
+        (Domain.INTEGER, (-5, -1)),
+        (Domain.INTEGER, (-1, 0)),
+    ],
+)
+def test_bitwise_expansion_in_qubo_spans_exactly_the_bounds(domain, bounds):
+    x = Variable("x", domain, bounds=bounds, encoding=Bitwise)
+    m = Model("m")
+    m.set_objective(x)
+    q = m.to_qubo()
+
+    term = q.qubo_objective.term
+    labels = [v.label for v in x.bin_vars]
+    reachable = {_evaluate_binary_term(term, dict(zip(labels, bits))) for bits in _all_bit_assignments(len(labels))}
+
+    assert min(reachable) == bounds[0]
+    assert max(reachable) == bounds[1]
+    assert set(range(bounds[0], bounds[1] + 1)) <= reachable
+
+
+@pytest.mark.parametrize(
+    ("domain", "bounds"),
+    [
+        (Domain.POSITIVE_INTEGER, (2, 6)),
+        (Domain.INTEGER, (-3, 1)),
+        (Domain.INTEGER, (-4, -2)),
+    ],
+)
+def test_qubo_objective_agrees_with_the_original_objective(domain, bounds):
+    # Compare f(x) evaluated on the integer variable against the QUBO objective evaluated on the
+    # corresponding bit string, for every bit string.
+    x = Variable("x", domain, bounds=bounds, encoding=Bitwise)
+    objective = 3 * x + 2
+    m = Model("m")
+    m.set_objective(objective)
+    q = m.to_qubo()
+
+    term = q.qubo_objective.term
+    labels = [v.label for v in x.bin_vars]
+    for bits in _all_bit_assignments(len(labels)):
+        value = x.evaluate({x: list(bits)})
+        assert _evaluate_binary_term(term, dict(zip(labels, bits))) == pytest.approx(3 * value + 2)
+
+
+def test_qubo_with_degenerate_bounds_reduces_to_a_constant():
+    x = Variable("x", Domain.INTEGER, bounds=(3, 3), encoding=Bitwise)
+    m = Model("m")
+    m.set_objective(x)
+    q = m.to_qubo()
+
+    term = q.qubo_objective.term
+    labels = [v.label for v in x.bin_vars]
+    reachable = {_evaluate_binary_term(term, dict(zip(labels, bits))) for bits in _all_bit_assignments(len(labels))}
+    assert reachable == {3}
+
+
+def test_bitwise_shifted_variable_needs_no_encoding_constraint():
+    q = QUBO("test")
+    x = Variable("x", Domain.INTEGER, bounds=(-2, 2), encoding=Bitwise)
+
+    q.set_objective(x + 0)
+
+    assert "x" in q.continuous_vars
+    assert "x_encoding_constraint" not in q._constraints
+
+
+def test_one_hot_shifted_variable_gets_an_encoding_constraint():
+    q = QUBO("test")
+    x = Variable("x", Domain.INTEGER, bounds=(-2, 2), encoding=OneHot)
+
+    q.set_objective(x + 0)
+
+    assert "x" in q.continuous_vars
+    assert "x_encoding_constraint" in q._constraints
+    # One binary per value in [-2, 2].
+    assert x.num_binary_equivalent() == 5
+
+
+def test_encoding_constraint_is_only_added_once_for_a_shifted_variable():
+    q = QUBO("test")
+    x = Variable("x", Domain.INTEGER, bounds=(-2, 2), encoding=OneHot)
+
+    q.set_objective(x + 0)
+    q.add_constraint("c", LEQ(x, 1))
+
+    assert sum(label.startswith("x_encoding_constraint") for label in q._constraints) == 1
+
+
+def test_qubo_constraint_on_a_negative_lower_bound_variable():
+    # x in [-3, 3] with x >= 0: the slack penalty must vanish exactly on the feasible values.
+    x = Variable("x", Domain.INTEGER, bounds=(-3, 3), encoding=Bitwise)
+    m = Model("m")
+    m.set_objective(x + 0)
+    m.add_constraint("c", GEQ(x, 0))
+
+    q = m.to_qubo()
+
+    assert "c" in q._constraints
+    assert len(q.qubo_objective.term.variables()) > len(x.bin_vars)  # a slack was introduced
+
+
+def test_brute_force_solves_a_shifted_integer_model():
+    x = Variable("x", Domain.INTEGER, bounds=(-2, 2), encoding=Bitwise)
+    m = Model("m")
+    m.set_objective(x + 0, sense=ObjectiveSense.MINIMIZE)
+    m.add_constraint("c", GEQ(x, -1))
+
+    result = BruteForceSolver().solve(m)
+
+    assert result.sample[x] == -1
+
+
+def test_brute_force_solves_a_positive_integer_model_with_nonzero_lower_bound():
+    x = Variable("x", Domain.POSITIVE_INTEGER, bounds=(2, 6), encoding=Bitwise)
+    m = Model("m")
+    m.set_objective(x + 0, sense=ObjectiveSense.MINIMIZE)
+
+    result = BruteForceSolver().solve(m)
+
+    assert result.sample[x] == 2
+
+
+def test_to_qubo_mixes_binary_and_shifted_integer_variables():
+    b = BinaryVariable("b")
+    x = Variable("x", Domain.INTEGER, bounds=(-1, 1), encoding=Bitwise)
+    m = Model("m")
+    m.set_objective(b + x)
+
+    q = m.to_qubo()
+
+    labels = {v.label for v in q.qubo_objective.term.variables()}
+    assert "b" in labels
+    assert {v.label for v in x.bin_vars} <= labels
+
+
+@pytest.mark.parametrize("domain", [Domain.INTEGER, Domain.POSITIVE_INTEGER, Domain.REAL])
+def test_check_variables_rejects_unbounded_variables(domain):
+    q = QUBO("test")
+    x = Variable("x", domain)
+
+    con = EQ(x, 1)
+    with pytest.raises(ValueError, match=r"Variable x spans too many values"):
+        q._check_variables(con)
+
+
+def test_check_variables_rejects_real_variable_whose_precision_is_too_fine():
+    q = QUBO("test")
+    x = Variable("x", Domain.REAL, bounds=(0, 1), precision=1e-15)
+
+    con = EQ(x, 1)
+    with pytest.raises(ValueError, match=r"Variable x spans too many values"):
+        q._check_variables(con)
+
+
+def test_check_variables_accepts_a_real_variable_with_a_workable_precision():
+    q = QUBO("test")
+    x = Variable("x", Domain.REAL, bounds=(0, 1), precision=1e-2)
+
+    q._check_variables(EQ(x, 1))
+
+    assert "x" in q.continuous_vars
+
+
+# ---------- constraint penalties agree with the feasible set ----------
+
+
+def _min_penalty_by_value(x, comparison, penalization="slack"):
+    """Build a QUBO whose objective is nothing but one constraint's penalty.
+
+    Returns ``{value of x: lowest penalty reachable at that value}``, minimising over every slack and
+    auxiliary binary variable. A correct slack penalty is 0 exactly on the feasible values of ``x``.
+    """
+    m = Model("m")
+    m.set_objective(0 * x)
+    m.add_constraint("c", comparison)
+    term = m.to_qubo(penalization=penalization).qubo_objective.term
+
+    x_term = x.to_binary()
+    bins = sorted(set(term.variables()) | set(x_term.variables()), key=lambda v: v.label)
+    penalties: dict[float, float] = {}
+    for i in range(2 ** len(bins)):
+        assignment = {v: (i >> k) & 1 for k, v in enumerate(bins)}
+        value = x_term.evaluate({v: assignment[v] for v in x_term.variables()})
+        penalty = term.evaluate(assignment)
+        penalties[value] = min(penalties.get(value, float("inf")), penalty)
+    return penalties
+
+
+_STRICT_INEQUALITY_XFAIL = pytest.mark.xfail(
+    reason="strict inequalities are transformed as non-strict ones: `x > 0` does not penalise x == 0",
+    strict=True,
+)
+
+
+@pytest.mark.parametrize(
+    ("name", "operation", "rhs", "feasible"),
+    [
+        ("x >= 0", GEQ, 0, {0, 1, 2, 3}),
+        ("x >= 2", GEQ, 2, {2, 3}),
+        ("x >= -2", GEQ, -2, {-2, -1, 0, 1, 2, 3}),
+        ("x <= 0", LEQ, 0, {-3, -2, -1, 0}),
+        ("x <= -2", LEQ, -2, {-3, -2}),
+        ("x == 1", EQ, 1, {1}),
+        ("x == -2", EQ, -2, {-2}),
+        pytest.param("x > 0", GT, 0, {1, 2, 3}, marks=_STRICT_INEQUALITY_XFAIL),
+        pytest.param("x < 0", LT, 0, {-3, -2, -1}, marks=_STRICT_INEQUALITY_XFAIL),
+    ],
+)
+def test_slack_penalty_vanishes_exactly_on_the_feasible_set(name, operation, rhs, feasible):
+    # The defining property of a slack penalty: zero on every feasible value of x, strictly positive
+    # on every infeasible one. A wrong sign, a wrong slack range or a mirrored comparison all break it.
+    x = Variable("x", Domain.INTEGER, bounds=(-3, 3), encoding=Bitwise)
+
+    penalties = _min_penalty_by_value(x, operation(x, rhs))
+
+    assert set(penalties) == set(range(-3, 4))
+    for value, penalty in sorted(penalties.items()):
+        if value in feasible:
+            assert penalty == pytest.approx(0), f"{name}: feasible x={value} was penalised ({penalty})"
+        else:
+            assert penalty > 0, f"{name}: infeasible x={value} was not penalised"
+
+
+@pytest.mark.parametrize(
+    ("name", "operation", "rhs", "feasible"),
+    [
+        ("x >= 0", GEQ, 0, {0, 1, 2, 3}),
+        ("x >= 2", GEQ, 2, {2, 3}),
+        ("x <= 0", LEQ, 0, {-3, -2, -1, 0}),
+        ("x <= -2", LEQ, -2, {-3, -2}),
+        pytest.param("x > 0", GT, 0, {1, 2, 3}, marks=_STRICT_INEQUALITY_XFAIL),
+        pytest.param("x < 0", LT, 0, {-3, -2, -1}, marks=_STRICT_INEQUALITY_XFAIL),
+    ],
+)
+def test_unbalanced_penalty_is_positive_off_the_feasible_set(name, operation, rhs, feasible):
+    # Unbalanced penalization deliberately does not vanish across the whole feasible set (it keeps
+    # rewarding slack), so only the infeasible half can be pinned down. A mirrored comparison still
+    # shows up here, because the violated values would come out free.
+    x = Variable("x", Domain.INTEGER, bounds=(-3, 3), encoding=Bitwise)
+
+    penalties = _min_penalty_by_value(x, operation(x, rhs), penalization="unbalanced")
+
+    for value, penalty in sorted(penalties.items()):
+        if value not in feasible:
+            assert penalty > 0, f"{name}: infeasible x={value} was not penalised"
+
+
+def test_slack_penalty_does_not_mirror_geq_into_leq():
+    # `x >= 0` and `x <= 0` share a slack construction and differ only by the sign of the slack term,
+    # so a copy-paste between the two branches makes them collapse onto the same penalty.
+    x = Variable("x", Domain.INTEGER, bounds=(-3, 3), encoding=Bitwise)
+
+    geq = _min_penalty_by_value(x, GEQ(x, 0))
+    leq = _min_penalty_by_value(x, LEQ(x, 0))
+
+    assert geq != leq
+    assert geq[3] == pytest.approx(0)
+    assert geq[-3] > 0
+    assert leq[-3] == pytest.approx(0)
+    assert leq[3] > 0
+
+
+@pytest.mark.parametrize(
+    ("domain", "bounds"),
+    [
+        (Domain.POSITIVE_INTEGER, (0, 3)),
+        (Domain.POSITIVE_INTEGER, (2, 5)),
+        (Domain.INTEGER, (-3, 3)),
+        (Domain.INTEGER, (-5, -1)),
+    ],
+)
+@pytest.mark.parametrize("operation", [GEQ, LEQ])
+def test_slack_penalty_matches_feasible_set_across_domains(domain, bounds, operation):
+    # The same property, over shifted and negative ranges: the slack bound is derived from the term's
+    # limits, so an off-by-one there shows up as a feasible value that costs something.
+    lower, upper = bounds
+    threshold = (lower + upper) // 2
+    x = Variable("x", domain, bounds=bounds, encoding=Bitwise)
+
+    penalties = _min_penalty_by_value(x, operation(x, threshold))
+
+    for value, penalty in sorted(penalties.items()):
+        feasible = value >= threshold if operation is GEQ else value <= threshold
+        if feasible:
+            assert penalty == pytest.approx(0), f"feasible x={value} was penalised ({penalty})"
+        else:
+            assert penalty > 0, f"infeasible x={value} was not penalised"
 
 
 # ---------------------------------------------------------------------------
