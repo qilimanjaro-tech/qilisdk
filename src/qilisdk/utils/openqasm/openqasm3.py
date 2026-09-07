@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import math
+import re
 from copy import copy
 from pathlib import Path
+from typing import Any
 
 from loguru import logger
 from numpy import e, pi
@@ -64,7 +66,44 @@ from openqasm3.ast import (
 from openqasm3.parser import parse
 
 from qilisdk.core import Parameter
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Adjoint, Circuit, Controlled, Gate, H, M, S, T, X, Y, Z
+from qilisdk.digital import (
+    CNOT,
+    CZ,
+    RX,
+    RY,
+    RZ,
+    SWAP,
+    U1,
+    U2,
+    U3,
+    Adjoint,
+    Circuit,
+    Controlled,
+    Gate,
+    H,
+    I,
+    M,
+    S,
+    T,
+    X,
+    Y,
+    Z,
+)
+from qilisdk.digital.exceptions import UnsupportedGateError
+
+# Gates whose OpenQASM 3.0 name is not simply their lowercased QiliSDK name.
+_OPENQASM3_NAMES: dict[type[Gate], str] = {I: "id"}
+
+# The names of the OpenQASM 3.0 gates that act on more than one qubit and are not built from modifiers.
+_QASM3_TOFFOLI_NAMES = frozenset({"ccx", "toffoli"})
+_QASM3_CNOT_NAMES = frozenset({"cx", "cnot"})
+_QASM3_CNOT_NQUBITS = 2
+
+# The modifiers that add a control qubit to a gate.
+_QASM3_CONTROL_MODIFIERS = frozenset({"ctrl", "negctrl"})
+
+# A valid OpenQASM 3.0 gate name, which every gate name is checked against before being written out.
+_QASM3_GATE_NAME = re.compile(r"[A-Za-z]\w*", re.ASCII)
 
 
 class OpenQasmParser:
@@ -148,7 +187,7 @@ class OpenQasmParser:
 
     def __init__(self) -> None:
         self.reg_name_to_start_end = {}
-        self.var_list = {}
+        self.var_list: dict[str, dict[str, Any]] = {}
         self.custom_gate_definitions = {}
         self.subroutine_definitions = {}
         self.gates_to_add = []
@@ -197,7 +236,6 @@ class OpenQasmParser:
 
     @staticmethod
     def _parse_return_val(return_str: str | complex | bool) -> str | int | float | complex | bool:
-
         # If we have "return:" at the start, remove it
         if isinstance(return_str, str):
             return_str = return_str.removeprefix("return:")
@@ -236,10 +274,9 @@ class OpenQasmParser:
     def _handle_standard_functions(
         func_name: str, args_evalled: list
     ) -> list | str | int | float | complex | bool | None:
-
         # With two int arguments
         if (
-            len(args_evalled) >= 2  # noqa: PLR2004
+            len(args_evalled) >= 2  # ruff: ignore[magic-value-comparison]
             and isinstance(args_evalled[0], int)
             and isinstance(args_evalled[1], int)
         ):
@@ -452,7 +489,6 @@ class OpenQasmParser:
         raise ValueError(f"Undefined variable for index expression: {var_name}")  # pragma: no cover
 
     def _evaluate_expression(self, expr: object) -> list | str | int | float | complex | bool:
-
         # If it's a list, evaluate each element
         if isinstance(expr, list):
             return [self._evaluate_expression(element) for element in expr]
@@ -518,7 +554,6 @@ class OpenQasmParser:
         return flat_list
 
     def _evaluate_register(self, qb: object) -> list[int]:
-
         # We should always have a name for the register
         if hasattr(qb, "name") and qb.name is not None:
             # Get the reg info
@@ -559,6 +594,12 @@ class OpenQasmParser:
 
     @staticmethod
     def _str_to_gate(gate_name: str, qubit: int, arguments: list[float]) -> Gate:
+        if gate_name in {"id", "i"}:
+            return I(qubit)
+        if gate_name == "sdg":
+            return Adjoint(S(qubit))
+        if gate_name == "tdg":
+            return Adjoint(T(qubit))
         if gate_name == "x":
             return X(qubit)
         if gate_name == "y":
@@ -588,57 +629,59 @@ class OpenQasmParser:
     def _to_qilisdk_gate(
         self, gate_name: str, qubits: list, arguments: list[float] = [], modifiers: list[str] = []
     ) -> list[Gate]:
-
         # Process the gate info
         gate_name = gate_name.lower()
-        gates_to_return = []
-        num_controls_total = 0
-        for modifier in modifiers:
-            if modifier in {"ctrl", "negctrl"}:
-                num_controls_total += 1
-        qubits_without_controls = qubits[num_controls_total:]
+        num_controls = sum(1 for modifier in modifiers if modifier in _QASM3_CONTROL_MODIFIERS)
+        targets = qubits[num_controls:]
 
-        # The gate itself
-        if gate_name == "cx" or (gate_name == "x" and "ctrl" in modifiers):
-            gates_to_return.append(CNOT(*qubits))
+        # The gate itself, which is broadcast over each of its target qubits if it is a one-qubit gate
+        if gate_name == "x" and "ctrl" in modifiers and len(qubits) == _QASM3_CNOT_NQUBITS:
+            # A single controlled X is a CNOT, which absorbs the control modifier
+            main_gates: list[Gate] = [CNOT(*qubits)]
             modifiers = [modifier for modifier in modifiers if modifier != "ctrl"]
+        elif gate_name in _QASM3_CNOT_NAMES:
+            main_gates = [CNOT(*targets)]
         elif gate_name == "cz":
-            gates_to_return.append(CZ(*qubits))
-            modifiers = [modifier for modifier in modifiers if modifier != "ctrl"]
+            main_gates = [CZ(*targets)]
+        elif gate_name == "swap":
+            main_gates = [SWAP(*targets)]
+        elif gate_name in _QASM3_TOFFOLI_NAMES:
+            main_gates = [Controlled(targets[0], targets[1], basic_gate=X(targets[2]))]
         else:
-            for qubit in qubits_without_controls:
-                gates_to_return.append(self._str_to_gate(gate_name, qubit, arguments))
+            main_gates = [self._str_to_gate(gate_name, qubit, arguments) for qubit in targets]
+
+        # Each control modifier controls on the next of the leading qubits, wherever it sits among the modifiers
+        controls_left = iter(qubits)
+        control_qubits = [next(controls_left) if modifier in _QASM3_CONTROL_MODIFIERS else -1 for modifier in modifiers]
 
         # Apply modifiers if we have them
-        main_gates = copy(gates_to_return)
         gates_to_return = []
-        for j in range(len(main_gates)):
-            main_gate = main_gates[j]
+        for main_gate in main_gates:
+            modified_gate = main_gate
             gates_to_prepend = []
             gates_to_append = []
             num_repeats = 1
             for i in range(len(modifiers) - 1, -1, -1):
                 if modifiers[i] == "ctrl":
-                    main_gate = Controlled(qubits[i], basic_gate=main_gate)  # ty:ignore[invalid-argument-type]
+                    modified_gate = Controlled(control_qubits[i], basic_gate=modified_gate)  # ty:ignore[invalid-argument-type]
                 elif modifiers[i] == "negctrl":
-                    main_gate = Controlled(qubits[i], basic_gate=main_gate)  # ty:ignore[invalid-argument-type]
-                    gates_to_prepend.append(X(qubits[i]))
-                    gates_to_append.append(X(qubits[i]))
+                    modified_gate = Controlled(control_qubits[i], basic_gate=modified_gate)  # ty:ignore[invalid-argument-type]
+                    gates_to_prepend.append(X(control_qubits[i]))
+                    gates_to_append.append(X(control_qubits[i]))
                 elif modifiers[i] == "inv":
-                    main_gate = Adjoint(main_gate)  # ty:ignore[invalid-argument-type]
+                    modified_gate = Adjoint(modified_gate)  # ty:ignore[invalid-argument-type]
                 elif modifiers[i] == "pow":
                     num_repeats += 1
                 else:
                     raise ValueError(f"Unsupported gate modifier: {modifiers[i]}")  # pragma: no cover
             for _ in range(num_repeats):
                 gates_to_return.extend(gates_to_prepend)
-                gates_to_return.append(main_gate)
+                gates_to_return.append(modified_gate)
                 gates_to_return.extend(gates_to_append)
 
         return gates_to_return
 
     def _cast_to_type(self, var_name: str | Identifier) -> None:
-
         # If we have a variable name object, get the name string
         if isinstance(var_name, Identifier):
             var_name = var_name.name  # pragma: no cover
@@ -651,7 +694,7 @@ class OpenQasmParser:
             elif var_type in {"float", "angle", "duration", "stretch"}:
                 self.var_list[var_name]["value"] = float(self.var_list[var_name]["value"])
             elif var_type == "complex":
-                self.var_list[var_name]["value"] = complex(self.var_list[var_name]["value"])  # ty: ignore[invalid-assignment]
+                self.var_list[var_name]["value"] = complex(self.var_list[var_name]["value"])
             elif var_type == "bool":
                 self.var_list[var_name]["value"] = bool(self.var_list[var_name]["value"])
 
@@ -672,7 +715,7 @@ class OpenQasmParser:
             reg_size = self._evaluate_expression(statement.size)
         if isinstance(reg_size, int):
             self.reg_name_to_start_end[reg_name] = (self.nqubits, self.nqubits + reg_size - 1)
-            self.var_list[reg_name] = {"size": reg_size, "value": 0, "type": "qubit"}  # ty: ignore[invalid-assignment]
+            self.var_list[reg_name] = {"size": reg_size, "value": 0, "type": "qubit"}
             self.nqubits = max(self.nqubits, self.nqubits + reg_size)
 
     def _handle_statement_classical_declaration(self, statement: ClassicalDeclaration | ConstantDeclaration) -> None:
@@ -720,7 +763,7 @@ class OpenQasmParser:
             "size": var_size,
             "value": var_value,
             "type": var_type,
-        }  # ty: ignore[invalid-assignment]
+        }
         self._cast_to_type(var_name)
 
     def _handle_statement_classical_assignment(self, statement: ClassicalAssignment) -> None:
@@ -730,7 +773,7 @@ class OpenQasmParser:
         # Depending on the assignment type
         if not isinstance(var_name, Identifier):
             if statement.op == AssignmentOperator["="]:
-                self.var_list[var_name]["value"] = new_value  # ty: ignore[invalid-assignment]
+                self.var_list[var_name]["value"] = new_value
             elif statement.op == AssignmentOperator["+="] and not isinstance(new_value, (str, list)):
                 self.var_list[var_name]["value"] += new_value
             elif statement.op == AssignmentOperator["-="] and not isinstance(new_value, (str, list)):
@@ -777,7 +820,6 @@ class OpenQasmParser:
                 modifiers.append(modifier_name)
 
     def _get_modifiers_for_statement(self, statement: QuantumGate) -> tuple[list[str], int]:
-
         modifiers = []
         num_controls = 0
 
@@ -799,7 +841,6 @@ class OpenQasmParser:
     def _handle_statement_quantum_gate(
         self, statement: QuantumGate, extra_qubits: list[int] = [], extra_modifiers: list[str] = []
     ) -> None:
-
         # Get info about the gates
         gate_name = statement.name.name
         qubits = extra_qubits.copy()
@@ -838,7 +879,6 @@ class OpenQasmParser:
     def _handle_statement_branching_statement(
         self, statement: BranchingStatement, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
     ) -> complex | bool | int | float | str | None:
-
         # Check the condition
         condition_value = self._evaluate_expression(statement.condition)
 
@@ -863,7 +903,6 @@ class OpenQasmParser:
     def _handle_statement_switch_statement(
         self, statement: SwitchStatement, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
     ) -> complex | bool | int | float | str | None:
-
         # Get the value of the target expression
         target_val = self._evaluate_expression(statement.target)
         found_case = False
@@ -895,7 +934,6 @@ class OpenQasmParser:
     def _handle_statement_for_in_loop(
         self, statement: ForInLoop, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
     ) -> complex | bool | int | float | str | None:
-
         # The new variable to declare for the loop variable
         loop_var_name = statement.identifier.name
         loop_var_type = statement.type
@@ -937,7 +975,7 @@ class OpenQasmParser:
             "size": loop_var_size,
             "value": 0,
             "type": loop_var_type,
-        }  # ty: ignore[invalid-assignment]
+        }
 
         # Loop through the values and process the body with the loop variable set to the current value
         res = None
@@ -993,7 +1031,6 @@ class OpenQasmParser:
     def _process_statement(
         self, statement: object, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
     ) -> str | int | float | complex | bool | None:
-
         # Initializing a qubit
         if isinstance(statement, QubitDeclaration):
             self._handle_statement_qubit_declaration(statement)
@@ -1087,7 +1124,7 @@ class OpenQasmParser:
                 "size": 1,
                 "value": new_param,
                 "type": "parameter",
-            }  # ty: ignore[invalid-assignment]
+            }
 
         # Otherwise raise an error for now - we can add more statement types later
         elif not isinstance(statement, (Include, AliasStatement)):
@@ -1170,6 +1207,17 @@ class OpenQasmParser:
 
     @staticmethod
     def to_qasm3(circuit: Circuit) -> str:
+        """Convert a Circuit object to its OpenQASM 3.0 string representation.
+
+        Args:
+            circuit: The Circuit object to convert.
+
+        Raises:
+            UnsupportedGateError: If a gate of the circuit cannot be expressed in OpenQASM 3.0.
+
+        Returns:
+            str: The OpenQASM 3.0 representation of the circuit.
+        """
         logger.info("[OpenQASM3] Exporting circuit to OpenQASM 3.0")
         logger.debug("[OpenQASM3] Exporting {} gates on {} qubits", len(circuit.gates), circuit.nqubits)
         qasm3 = "OPENQASM 3.0;\n"
@@ -1178,20 +1226,31 @@ class OpenQasmParser:
             qasm3 += f"qubit[{circuit.nqubits}] q;\n"
         for gate in circuit.gates:
             logger.trace("[OpenQASM3] Exporting gate {} on qubits {}", gate.name, gate.qubits)
-            qasm_gate_name = gate.name.lower()
-            if gate.name == "CNOT":
-                qasm_gate_name = "x"
+            if isinstance(gate, M):
+                qasm3 += "measure q[" + ",".join([str(qb) for qb in gate.qubits]) + "];\n"
+                continue
+            # Controls and adjoints are written out as OpenQASM 3.0 modifiers on the gate they wrap
+            base_gate: Gate = gate
+            modifiers: list[str] = []
+            control_qubits: tuple[int, ...] = ()
+            while isinstance(base_gate, (Controlled, Adjoint)):
+                if isinstance(base_gate, Controlled):
+                    # A Controlled gate holds the control qubits of the gate it wraps as well as its own
+                    num_own_controls = len(base_gate.control_qubits) - len(base_gate.basic_gate.control_qubits)
+                    modifiers.extend(["ctrl @"] * num_own_controls)
+                    control_qubits += base_gate.control_qubits[:num_own_controls]
+                else:
+                    modifiers.append("inv @")
+                base_gate = base_gate.basic_gate
+            qasm_gate_name = _OPENQASM3_NAMES.get(type(base_gate), base_gate.name.lower())
+            if _QASM3_GATE_NAME.fullmatch(qasm_gate_name) is None:
+                raise UnsupportedGateError(f"Cannot express the {gate.name} gate in OpenQASM 3.0.")
             qasm_parameter_str = ""
-            if gate.is_parameterized:
-                qasm_parameter_str = "(" + ", ".join([str(param) for param in gate.get_parameter_values()]) + ")"
-            qasm_control_str = "".join(["ctrl @ " for _ in gate.control_qubits])
-            qasm_qubits_str = ", ".join([f"q[{qb}]" for qb in gate.qubits])
-            if gate.name == "M":
-                qasm_gate_name = "measure"
-                qasm_qubits_str = "q[" + ",".join([str(qb) for qb in gate.qubits]) + "]"
-            qasm_gate_string = f"{qasm_control_str}{qasm_gate_name}{qasm_parameter_str} {qasm_qubits_str}"
-            qasm_gate_string = qasm_gate_string.strip()
-            qasm3 += f"{qasm_gate_string};\n"
+            if base_gate.is_parameterized:
+                qasm_parameter_str = "(" + ", ".join([str(param) for param in base_gate.get_parameter_values()]) + ")"
+            qasm_modifier_str = "".join([f"{modifier} " for modifier in modifiers])
+            qasm_qubits_str = ", ".join([f"q[{qb}]" for qb in control_qubits + base_gate.qubits])
+            qasm3 += f"{qasm_modifier_str}{qasm_gate_name}{qasm_parameter_str} {qasm_qubits_str};\n"
         return qasm3.strip()
 
 

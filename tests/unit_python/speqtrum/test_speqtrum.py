@@ -31,7 +31,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from loguru_caplog import loguru_caplog as caplog  # noqa: F401
+from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 
 from qilisdk.experiments.experiment_functional import ExperimentFunctional
 from qilisdk.experiments.experiment_result import ExperimentResult
@@ -280,7 +280,7 @@ _MESSAGE_CASES = [
 )
 def test_submit_surfaces_api_message_as_warning(
     monkeypatch,
-    caplog,  # noqa: F811
+    caplog,  # ruff: ignore[redefined-while-unused]
     patches,
     make_functional,
     job_id,
@@ -433,7 +433,7 @@ def test_create_client_registers_response_hook(monkeypatch) -> None:
     assert speqtrum._ensure_ok in captured["event_hooks"]["response"]
 
     # the helper returns a client instance; ensure the stub can be closed cleanly
-    assert http_client.__enter__() is http_client  # noqa: PLC2801
+    assert http_client.__enter__() is http_client  # ruff: ignore[unnecessary-dunder-call]
 
 
 def test_variational_program_handle_preserves_inner_result(monkeypatch):

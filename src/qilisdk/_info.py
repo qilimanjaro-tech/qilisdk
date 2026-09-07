@@ -13,12 +13,11 @@
 # limitations under the License.
 
 import platform
-import subprocess  # noqa: S404
+import subprocess  # ruff: ignore[suspicious-subprocess-import]
 import sys
 from math import ceil, log2
 
 import cpuinfo
-import GPUtil
 import psutil
 
 
@@ -29,7 +28,7 @@ def about() -> str:
     Returns:
         str: A formatted string containing the QiliSDK version and relevant system information.
     """
-    from . import __version__  # noqa: PLC0415
+    from . import __version__  # ruff: ignore[import-outside-top-level]
 
     # Python stuff
     info = ""
@@ -42,25 +41,25 @@ def about() -> str:
 
     # Check versions of key dependencies
     try:
-        import numpy as np  # noqa: PLC0415
+        import numpy as np  # ruff: ignore[import-outside-top-level]
 
         info += f"Numpy Version: {np.__version__}\n"
     except ImportError:
         info += "Numpy Version: Not Found\n"
     try:
-        import scipy  # noqa: PLC0415
+        import scipy  # ruff: ignore[import-outside-top-level]
 
         info += f"SciPy Version: {scipy.__version__}\n"
     except ImportError:
         info += "SciPy Version: Not Found\n"
     try:
-        import qutip  # noqa: PLC0415
+        import qutip  # ruff: ignore[import-outside-top-level]
 
         info += f"QuTiP Version: {qutip.__version__}\n"
     except ImportError:
         info += "QuTiP Version: Not Found\n"
     try:
-        import cudaq  # noqa: PLC0415
+        import cudaq  # ruff: ignore[import-outside-top-level]
 
         info += f"CUDA-Q Version: {cudaq.__version__}\n"
     except ImportError:
@@ -69,24 +68,29 @@ def about() -> str:
     # System info
     cpu_info = cpuinfo.get_cpu_info()
     ram = round(2 ** ceil(log2(psutil.virtual_memory().total / (1024**3))))
-    try:  # This can fail if there are driver issues
-        gpus = GPUtil.getGPUs()
-    except ValueError:
-        gpus = []
-    nvidia_smi_output = None
+    gpu_name = None
+    gpu_vram = None
     cuda_version = "Not Found"
     nvidia_driver_version = "Not Found"
     try:
-        nvidia_smi_output = subprocess.check_output(  # noqa: S602
-            ["nvidia-smi | grep 'Driver'"],  # noqa: S607
-            shell=True,
+        gpu_query = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"],  # ruff: ignore[start-process-with-partial-path]
+            stderr=subprocess.DEVNULL,
+        ).decode()
+        name, separator, vram = gpu_query.strip().splitlines()[0].partition(",")
+        if separator:
+            gpu_name = name.strip()
+            gpu_vram = round(int(vram) / 1024)
+    except (subprocess.CalledProcessError, FileNotFoundError, IndexError, ValueError):
+        pass
+    try:
+        nvidia_smi_output = subprocess.check_output(
+            ["nvidia-smi"],  # ruff: ignore[start-process-with-partial-path]
             stderr=subprocess.STDOUT,
         ).decode()
         cuda_version = nvidia_smi_output.split("CUDA Version:")[-1].split()[0]
         nvidia_driver_version = nvidia_smi_output.split("Driver Version:")[-1].split()[0]
-        nvidia_smi_output = nvidia_smi_output.replace("|", "")
-        nvidia_smi_output = nvidia_smi_output.strip()
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError, IndexError):
         pass
     info += f"Platform: {platform.system()} {platform.release()} ({platform.version()})\n"
     info += f"Processor: {platform.processor()}\n"
@@ -94,8 +98,9 @@ def about() -> str:
     info += f"Number of CPU Cores: {psutil.cpu_count(logical=False)}\n"
     info += f"Number of Logical Processors: {psutil.cpu_count(logical=True)}\n"
     info += f"Available Memory: {ram} GB\n"
-    if gpus:
-        info += f"GPU Info: {gpus[0].name} with {int(gpus[0].memoryTotal // 1024)} GB VRAM\n"
+    if gpu_name is not None:
+        vram_info = f" with {gpu_vram} GB VRAM" if gpu_vram is not None else ""
+        info += f"GPU Info: {gpu_name}{vram_info}\n"
         info += f"CUDA Version: {cuda_version}\n"
         info += f"NVIDIA Driver Version: {nvidia_driver_version}\n"
     else:
@@ -104,7 +109,7 @@ def about() -> str:
     # Check for g++
     has_gpp = False
     try:
-        gpp_version = subprocess.check_output(["g++", "--version"], stderr=subprocess.STDOUT).decode()  # noqa: S607
+        gpp_version = subprocess.check_output(["g++", "--version"], stderr=subprocess.STDOUT).decode()  # ruff: ignore[start-process-with-partial-path]
         info += f"g++ Version: {gpp_version.splitlines()[0]}\n"
         has_gpp = True
     except (subprocess.CalledProcessError, FileNotFoundError, IndexError):
@@ -112,7 +117,7 @@ def about() -> str:
     if has_gpp:
         try:
             subprocess.check_output(
-                ["g++", "-fopenmp", "-x", "c++", "-", "-o", "/dev/null"],  # noqa: S607
+                ["g++", "-fopenmp", "-x", "c++", "-", "-o", "/dev/null"],  # ruff: ignore[start-process-with-partial-path]
                 input="#include <omp.h>\nint main() { return 0; }".encode(),
                 stderr=subprocess.STDOUT,
             ).decode()
@@ -124,16 +129,16 @@ def about() -> str:
     has_clang = False
     try:
         clang_command = (
-            subprocess.check_output(["ls /usr/bin/clang-[0-9]*"], shell=True, stderr=subprocess.STDOUT).decode().strip()  # noqa: S602, S607
+            subprocess.check_output(["ls /usr/bin/clang-[0-9]*"], shell=True, stderr=subprocess.STDOUT).decode().strip()  # ruff: ignore[subprocess-popen-with-shell-equals-true, start-process-with-partial-path]
         )
-        clang_version = subprocess.check_output([clang_command, "--version"], stderr=subprocess.STDOUT).decode()  # noqa: S603
+        clang_version = subprocess.check_output([clang_command, "--version"], stderr=subprocess.STDOUT).decode()  # ruff: ignore[subprocess-without-shell-equals-true]
         info += f"clang++ Version: {clang_version.splitlines()[0]}\n"
         has_clang = True
     except (subprocess.CalledProcessError, FileNotFoundError, IndexError):
         info += "clang++ Version: Not Found\n"
     if has_clang:
         try:
-            subprocess.check_output(  # noqa: S603
+            subprocess.check_output(  # ruff: ignore[subprocess-without-shell-equals-true]
                 [f"{clang_command}", "-fopenmp", "-x", "c++", "-", "-o", "/dev/null"],
                 input="#include <omp.h>\nint main() { return 0; }".encode(),
                 stderr=subprocess.STDOUT,
@@ -144,20 +149,20 @@ def about() -> str:
 
     # Try importing QiliSim
     try:
-        from .backends.qilisim import QiliSim  # noqa: PLC0415
+        from .backends.qilisim import QiliSim  # ruff: ignore[import-outside-top-level]
 
         _ = QiliSim()
         info += "QiliSim Import: Success\n"
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:  # ruff: ignore[blind-except]
         info += f"QiliSim Import: Failed with error: {e}\n"
 
     # Try importing QTensor
     try:
-        from .core.qtensor import ket  # noqa: PLC0415
+        from .core.qtensor import ket  # ruff: ignore[import-outside-top-level]
 
         _ = ket(0)
         info += "QTensor Import: Success\n"
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:  # ruff: ignore[blind-except]
         info += f"QTensor Import: Failed with error: {e}\n"
 
     info += f"{_DIVIDER}\n"

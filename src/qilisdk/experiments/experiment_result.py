@@ -323,7 +323,7 @@ class ExperimentResult(FunctionalResult):
                 default_y_label=default_label,
                 apply_y_override=is_amplitude,
             )
-        elif n_dimensions == 2:  # noqa: PLR2004
+        elif n_dimensions == 2:  # ruff: ignore[magic-value-comparison]
             self._plot_2d(
                 to_plot,
                 self.dims,

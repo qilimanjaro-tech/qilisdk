@@ -21,7 +21,8 @@ from loguru import logger
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
-    from qilisdk.core.variables import BaseVariable, ComparisonTerm, Parameter
+    from qilisdk.core.comparison import Comparison
+    from qilisdk.core.variables import BaseVariable, Parameter
 
     from .types import RealNumber
 
@@ -36,12 +37,12 @@ class Parameterizable(ABC):
     def __init__(self) -> None:
         super().__init__()
         self._parameters: dict[str, Parameter] = {}
-        self._parameter_constraints: list[ComparisonTerm] = []
+        self._parameter_constraints: list[Comparison] = []
         self._prefix = ""
 
     # Private Methods
 
-    def _iter_parameter_children(self) -> Iterable[Parameterizable]:  # noqa: PLR6301
+    def _iter_parameter_children(self) -> Iterable[Parameterizable]:  # ruff: ignore[no-self-use]
         """Yield child objects that compose this object's parameter interface.
 
         Override this method in subclasses that expose nested
@@ -57,7 +58,7 @@ class Parameterizable(ABC):
         local_params = self._parameters or {}
         yield from local_params.items()
         for child in self._iter_parameter_children():
-            yield from child._iter_parameter_items()  # noqa: SLF001
+            yield from child._iter_parameter_items()  # ruff: ignore[private-member-access]
 
     def _add_parameter(self, label: str, parameter: Parameter) -> None:
         """Add a parameter under the current prefix.
@@ -146,7 +147,7 @@ class Parameterizable(ABC):
             return self._parameters.pop(label)
         for child in self._iter_parameter_children():
             if label in child.get_parameter_names():
-                return child._pop(label)  # noqa: SLF001
+                return child._pop(label)  # ruff: ignore[private-member-access]
         raise ValueError(f"Parameter {label} is not defined in the current object or any of its children.")
 
     # Public Methods
@@ -185,16 +186,16 @@ class Parameterizable(ABC):
         """Return the currently configured parameter prefix for this object."""
         return self._prefix
 
-    def add_parameter_constraint(self, constraint: ComparisonTerm) -> None:
+    def add_parameter_constraint(self, constraint: Comparison) -> None:
         """Add a constraint on a single or a set of parameters
 
         Args:
-            constraint (ComparisonTerm): The comparison term to specify the constraint. Only Parameter objects are allowed in the constraint.
+            constraint (Comparison): The comparison term to specify the constraint. Only Parameter objects are allowed in the constraint.
 
         Raises:
             ValueError: If Generic Variables are present in the constraint.
         """
-        if not (constraint.lhs.is_parameterized_term() and constraint.rhs.is_parameterized_term()):
+        if not (constraint.lhs.is_parameterized() and constraint.rhs.is_parameterized()):
             raise ValueError(
                 "The constraint should only contain parameters and having generic variables is not allowed."
             )
@@ -308,11 +309,11 @@ class Parameterizable(ABC):
                 )
             available_parameters[label].set_bounds(bound[0], bound[1])
 
-    def get_constraints(self) -> list[ComparisonTerm]:
+    def get_constraints(self) -> list[Comparison]:
         """Get all constraints on the parameters.
 
         Returns:
-            list[ComparisonTerm]: Comparison terms defined locally and by child parameterizable objects.
+            list[Comparison]: Comparison terms defined locally and by child parameterizable objects.
         """
         constraints = list((self._parameter_constraints or []))
         for child in self._iter_parameter_children():

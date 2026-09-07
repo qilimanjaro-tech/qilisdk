@@ -25,6 +25,8 @@ from qilisdk.digital.circuit_transpiler import (
 from qilisdk.digital.circuit_transpiler_passes import (
     CancelIdentityPairsPass,
     CircuitTranspilerPass,
+    SabreLayoutPass,
+    SabreSwapPass,
     SingleQubitGateBasis,
 )
 from qilisdk.digital.gates import Controlled, Gate
@@ -158,6 +160,38 @@ def test_circuit_transpiler_transpile_does_not_expose_initial_layout() -> None:
     transpilation_result = CircuitTranspiler(pipeline=[_RecordInitialLayoutOnlyPass()]).transpile(circuit)
 
     assert transpilation_result.layout == {}
+
+
+def test_circuit_transpiler_default_does_not_apply_the_layout_twice() -> None:
+    transpiler = CircuitTranspiler.default(topology=[(0, 1), (1, 2)])
+
+    layout_passes = [p for p in transpiler._pipeline if isinstance(p, SabreLayoutPass)]
+
+    assert len(layout_passes) == 1
+    # SabreSwapPass applies context.initial_layout, so the layout pass must not also do it.
+    assert layout_passes[0].apply_layout is False
+
+
+def test_sabre_pipeline_does_not_add_swaps_to_a_routable_layout() -> None:
+    # A 3-qubit star routes with no swaps when its centre sits mid-chain, which is
+    # what SabreLayoutPass picks. Applying that layout twice used to cost a SWAP.
+    topology = build_topology_graph([(0, 1), (1, 2), (2, 3), (3, 4)])
+    circuit = Circuit(3)
+    circuit.add(CNOT(0, 1))
+    circuit.add(CNOT(0, 2))
+
+    for seed in range(6):
+        transpiler = CircuitTranspiler(
+            pipeline=[
+                SabreLayoutPass(topology, seed=seed, apply_layout=False),
+                SabreSwapPass(topology, seed=seed),
+            ]
+        )
+        transpilation_result = transpiler.transpile(circuit)
+
+        assert transpilation_result.metrics["swap_count"] == 0, f"seed {seed}"
+        assert transpilation_result.layout is not None
+        assert sorted(transpilation_result.layout) == list(range(circuit.nqubits)), f"seed {seed}"
 
 
 def test_circuit_transpiler_result_returns_defensive_copies() -> None:

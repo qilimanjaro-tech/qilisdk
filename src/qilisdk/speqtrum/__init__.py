@@ -46,4 +46,4 @@ for feature in OPTIONAL_FEATURES:
     imported_feature: ImportedFeature = import_optional_dependencies(feature)
     for symbol_name, symbol_obj in imported_feature.symbols.items():
         setattr(current_module, symbol_name, symbol_obj)
-        __all__ += [symbol_name]  # noqa: PLE0604
+        __all__ += [symbol_name]  # ruff: ignore[invalid-all-object]

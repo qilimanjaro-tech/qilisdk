@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ruff: noqa: ANN001, ANN202, PLR6301
+# ruff: file-ignore[missing-type-function-argument, missing-return-type-private-function, no-self-use]
 from __future__ import annotations
 
 from email.utils import parsedate_to_datetime

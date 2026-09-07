@@ -75,19 +75,77 @@ def _zyz_from_unitary(unitary: np.ndarray) -> tuple[float, float, float]:
     return (theta, phi, lam)
 
 
-def _unitary_sqrt_2x2(unitary: np.ndarray) -> np.ndarray:
-    """Compute the principal square root of a 2x2 unitary.
+def _u3_and_phase_from_unitary(unitary: np.ndarray) -> tuple[float, float, float, float]:
+    """Decompose a 2x2 unitary as ``exp(i*alpha) * U3(theta, phi, gamma)``.
+
+    Unlike :func:`_zyz_from_unitary`, the discarded global phase is returned instead of being dropped, so the
+    factorisation is exact. This matters whenever the gate is later placed under a control, where a global phase
+    becomes an observable relative phase.
 
     Args:
         unitary (np.ndarray): 2x2 unitary matrix.
     Returns:
-        np.ndarray: Matrix V such that V · V equals U.
+        tuple[float, float, float, float]: Tuple containing theta, phi, gamma and the residual phase alpha.
+    Raises:
+        ValueError: If matrix is not 2x2 or is singular.
     """
-    logger.trace("[NumericHelpers] Computing principal square root of 2x2 unitary")
-    w, V = np.linalg.eig(unitary)
-    ph = np.angle(w)
-    sqrt_w = np.exp(0.5j * ph)
-    return V @ np.diag(sqrt_w) @ np.linalg.inv(V)
+    logger.trace("[NumericHelpers] Recovering U3 angles and global phase from unitary")
+    if unitary.shape != (2, 2):
+        raise ValueError("Expected 2x2 unitary for U3 decomposition.")
+    if abs(np.linalg.det(unitary)) < _EPS:
+        raise ValueError("Matrix is singular.")
+
+    a00, a01 = unitary[0, 0], unitary[0, 1]
+    a10, a11 = unitary[1, 0], unitary[1, 1]
+
+    # theta == pi: the diagonal vanishes, so alpha can be absorbed into phi and gamma.
+    if abs(a00) < _EPS:
+        return (math.pi, _wrap_angle(float(np.angle(a10))), _wrap_angle(float(np.angle(-a01))), 0.0)
+
+    # U3 has a real non-negative top-left entry, so alpha is entirely fixed by it.
+    alpha = _wrap_angle(float(np.angle(a00)))
+    dephase = np.exp(-1j * alpha)
+
+    # theta == 0: the anti-diagonal vanishes and only phi + gamma is determined.
+    if abs(a01) < _EPS:
+        return (0.0, 0.0, _wrap_angle(float(np.angle(a11 * dephase))), alpha)
+
+    theta = 2.0 * math.atan2(float(np.abs(a01)), float(np.abs(a00)))
+    phi = _wrap_angle(float(np.angle(a10 * dephase)))
+    gamma = _wrap_angle(float(np.angle(-a01 * dephase)))
+    return (theta, phi, gamma, alpha)
+
+
+def _unitary_sqrt_2x2(unitary: np.ndarray) -> np.ndarray:
+    """Compute a unitary square root of a 2x2 unitary.
+
+    The closed form below is used instead of an eigendecomposition because `numpy.linalg.eig` returns an
+    ill-conditioned (non-orthogonal) eigenvector basis for degenerate spectra, which yields a non-unitary "square
+    root". Factoring the input as ``exp(i*delta) * A`` with ``A`` in SU(2) and applying the Cayley-Hamilton identity
+    ``(A + I)^2 = (tr(A) + 2) * A`` keeps the result exactly unitary for every input.
+
+    Args:
+        unitary (np.ndarray): 2x2 unitary matrix.
+    Returns:
+        np.ndarray: Unitary matrix V such that V · V equals U.
+    Raises:
+        ValueError: If matrix is not 2x2 or is not unitary.
+    """
+    logger.trace("[NumericHelpers] Computing square root of 2x2 unitary")
+    if unitary.shape != (2, 2):
+        raise ValueError("Expected 2x2 unitary for square root.")
+    if not np.allclose(unitary.conj().T @ unitary, np.eye(2), atol=1e-9):
+        raise ValueError("Expected a unitary matrix for square root.")
+
+    # Factor out the phase that makes the remainder special unitary, so that Cayley-Hamilton applies.
+    delta = 0.5 * float(np.angle(np.linalg.det(unitary)))
+    special = unitary * np.exp(-1j * delta)
+
+    # When trace == -2 the remainder is -I, whose square roots are degenerate; diag(i, -i) is one of them.
+    trace = float(np.real(np.trace(special)))
+    root = np.diag([1j, -1j]).astype(complex) if trace + 2.0 < _EPS else (special + np.eye(2)) / math.sqrt(trace + 2.0)
+
+    return root * np.exp(0.5j * delta)
 
 
 def _is_close_mod_2pi(a: float, b: float, eps: float = _EPS) -> bool:

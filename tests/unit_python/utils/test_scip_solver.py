@@ -19,22 +19,12 @@ pytest.importorskip("pyscipopt", reason="ScipSolver tests require the 'scip' opt
 
 from pyscipopt import Model as ScipModel
 
+from qilisdk.core.comparison import EQ, GEQ, LEQ, NEQ
+from qilisdk.core.expression import Constant, Sin
 from qilisdk.core.model import Model, ObjectiveSense
-from qilisdk.core.variables import (
-    EQ,
-    GEQ,
-    LEQ,
-    NEQ,
-    BinaryVariable,
-    Domain,
-    Operation,
-    Parameter,
-    SpinVariable,
-    Term,
-    Variable,
-)
+from qilisdk.core.variables import BinaryVariable, Domain, Parameter, SpinVariable, Variable
 from qilisdk.utils.classical_solvers import ScipSolver
-from qilisdk.utils.classical_solvers.scip_solver import _decode_scip_value, _term_to_scip_expr
+from qilisdk.utils.classical_solvers.scip_solver import _decode_scip_value, _expression_to_scip_expr
 
 
 def test_decode_scip_value_spin_maps_to_sign():
@@ -54,66 +44,86 @@ def test_decode_scip_value_real_is_passthrough():
     assert np.isclose(_decode_scip_value(v, 3.7), 3.7)
 
 
-def test_term_to_scip_expr_empty_term_is_zero():
-    assert np.isclose(_term_to_scip_expr(Term([], Operation.ADD), {}), 0.0)
+def test_expression_to_scip_expr_constant_is_its_value():
+    assert np.isclose(_expression_to_scip_expr(Constant(0), {}), 0.0)
+    assert np.isclose(_expression_to_scip_expr(Constant(2.5), {}), 2.5)
 
 
-def test_term_to_scip_expr_unsupported_operation_raises():
+def test_expression_to_scip_expr_unsupported_node_raises():
     x = BinaryVariable("x")
-    term = Term([x], Operation.SUB)
     scip_model = ScipModel("t")
     var_exprs = {x: scip_model.addVar(name="x", vtype="B")}
-    with pytest.raises(ValueError, match="not supported"):
-        _term_to_scip_expr(term, var_exprs)
+    expr = Sin(x)
+    with pytest.raises(ValueError, match="not supported by the SCIP solver"):
+        _expression_to_scip_expr(expr, var_exprs)
 
 
-def test_term_to_scip_expr_handles_nested_mul_term():
-    # A product whose factor is itself a (sub-)term exercises the nested-Term branch of a MUL term.
-    x, y = BinaryVariable("x"), BinaryVariable("y")
+def test_expression_to_scip_expr_symbolic_exponent_raises():
+    x = BinaryVariable("x")
+    p = Parameter("p", 2)
     scip_model = ScipModel("t")
-    var_exprs = {x: scip_model.addVar(name="x", vtype="B"), y: scip_model.addVar(name="y", vtype="B")}
-    outer = Term([Term([x, y], Operation.ADD)], Operation.MUL)
-    assert _term_to_scip_expr(outer, var_exprs) is not None
+    var_exprs = {x: scip_model.addVar(name="x", vtype="B")}
+    with pytest.raises(ValueError, match="symbolic exponent"):
+        _expression_to_scip_expr(x**p, var_exprs)
+
+
+def test_expression_to_scip_expr_handles_nested_product_of_sums():
+    # Mul does not distribute on construction, so a factored sum stays a child of the Mul node.
+    x, y, z = BinaryVariable("x"), BinaryVariable("y"), BinaryVariable("z")
+    scip_model = ScipModel("t")
+    var_exprs = {v: scip_model.addVar(name=v.label, vtype="B") for v in (x, y, z)}
+    assert _expression_to_scip_expr((x + y) * z, var_exprs) is not None
+
+
+def test_expression_to_scip_expr_handles_integer_power():
+    x = BinaryVariable("x")
+    v = Variable("v", Domain.INTEGER, bounds=(0, 3))
+    scip_model = ScipModel("t")
+    var_exprs = {
+        x: scip_model.addVar(name="x", vtype="B"),
+        v: scip_model.addVar(name="v", vtype="I", lb=0, ub=3),
+    }
+    assert _expression_to_scip_expr(v**2 + x, var_exprs) is not None
 
 
 def test_scip_solver_minimizes_binary():
     x = BinaryVariable("x")
     m = Model("bin")
     m.set_objective(1 * x)
-    _, sample = ScipSolver().solve(m)
-    assert sample[x] == 0
+    result = ScipSolver().solve(m)
+    assert result.sample[x] == 0
 
 
 def test_scip_solver_maximize():
     x = BinaryVariable("x")
     m = Model("max_bin")
     m.set_objective(1 * x, sense=ObjectiveSense.MAXIMIZE)
-    _, sample = ScipSolver().solve(m)
-    assert sample[x] == 1
+    result = ScipSolver().solve(m)
+    assert result.sample[x] == 1
 
 
 def test_scip_solver_quadratic_objective():
     x = Variable("x", Domain.INTEGER, bounds=(0, 7))
     m = Model("int_model")
     m.set_objective((x - 5) * (x - 5))
-    _, sample = ScipSolver().solve(m)
-    assert sample[x] == 5
+    result = ScipSolver().solve(m)
+    assert result.sample[x] == 5
 
 
 def test_scip_solver_real_variable_stays_continuous():
     y = Variable("y", Domain.REAL, bounds=(0, 10))
     m = Model("real_model")
     m.set_objective((y - 3.7) * (y - 3.7))
-    _, sample = ScipSolver().solve(m)
-    assert np.isclose(sample[y], 3.7, atol=1e-3)
+    result = ScipSolver().solve(m)
+    assert np.isclose(result.sample[y], 3.7, atol=1e-3)
 
 
 def test_scip_solver_spin_variable():
     s = SpinVariable("s")
     m = Model("spin_model")
-    m.set_objective(Term([s], Operation.ADD))
-    _, sample = ScipSolver().solve(m)
-    assert sample[s] == -1
+    m.set_objective(s)
+    result = ScipSolver().solve(m)
+    assert result.sample[s] == -1
 
 
 def test_scip_solver_respects_hard_constraint():
@@ -121,9 +131,9 @@ def test_scip_solver_respects_hard_constraint():
     m = Model("constrained")
     m.set_objective(x + y)
     m.add_constraint("c1", EQ(x + y, 1))
-    results, sample = ScipSolver().solve(m)
-    assert sample[x] + sample[y] == 1
-    assert results["c1"] == 0
+    result = ScipSolver().solve(m)
+    assert result.sample[x] + result.sample[y] == 1
+    assert result.results["c1"] == 0
 
 
 def test_scip_solver_less_than_or_equal_constraint():
@@ -132,9 +142,9 @@ def test_scip_solver_less_than_or_equal_constraint():
     # Maximizing would pick (1, 1); the <= constraint caps the sum at 1.
     m.set_objective(x + y, sense=ObjectiveSense.MAXIMIZE)
     m.add_constraint("c", LEQ(x + y, 1))
-    results, sample = ScipSolver().solve(m)
-    assert sample[x] + sample[y] <= 1
-    assert results["c"] == 0
+    result = ScipSolver().solve(m)
+    assert result.sample[x] + result.sample[y] <= 1
+    assert result.results["c"] == 0
 
 
 def test_scip_solver_greater_than_or_equal_constraint():
@@ -143,15 +153,15 @@ def test_scip_solver_greater_than_or_equal_constraint():
     # Minimizing would pick (0, 0); the >= constraint forces the sum up to 1.
     m.set_objective(x + y)
     m.add_constraint("c", GEQ(x + y, 1))
-    results, sample = ScipSolver().solve(m)
-    assert sample[x] + sample[y] >= 1
-    assert results["c"] == 0
+    result = ScipSolver().solve(m)
+    assert result.sample[x] + result.sample[y] >= 1
+    assert result.results["c"] == 0
 
 
 def test_scip_solver_unsupported_variable_raises():
     p = Parameter("p", 1.0)
     m = Model("param_model")
-    m.set_objective(Term([p], Operation.ADD))
+    m.set_objective(p)
     solver = ScipSolver()
     with pytest.raises(ValueError, match="not supported for variable"):
         solver.solve(m)
@@ -171,8 +181,8 @@ def test_scip_solver_forwards_params():
     x = BinaryVariable("x")
     m = Model("params")
     m.set_objective(1 * x)
-    _, sample = ScipSolver().solve(m, params={"limits/time": 60})
-    assert sample[x] == 0
+    result = ScipSolver().solve(m, params={"limits/time": 60})
+    assert result.sample[x] == 0
 
 
 def test_scip_solver_infeasible_raises():
@@ -190,5 +200,5 @@ def test_scip_solver_returns_evaluate_of_best():
     x = BinaryVariable("x")
     m = Model("ret_test")
     m.set_objective(1 * x)
-    results, sample = ScipSolver().solve(m)
-    assert results == m.evaluate(sample)
+    result = ScipSolver().solve(m)
+    assert result.results == m.evaluate(result.sample)

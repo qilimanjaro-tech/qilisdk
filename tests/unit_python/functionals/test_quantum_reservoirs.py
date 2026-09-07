@@ -392,7 +392,6 @@ def test_process_qtensor_too_many_qubits_raises():
 
 
 def test_process_qtensor_exact_match():
-
     schedule, _ = _schedule_with_parameter(nqubits=2)
     layer = ReservoirLayer(evolution_dynamics=schedule)
     obs = QTensor(np.identity(4))

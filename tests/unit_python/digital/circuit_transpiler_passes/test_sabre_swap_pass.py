@@ -299,6 +299,41 @@ def test_sabre_swap_uses_context_layout_hint_when_no_explicit_layout() -> None:
     assert context.final_layout == {0: 1, 1: 0}
 
 
+def test_sabre_swap_ignores_context_layout_that_was_already_applied() -> None:
+    topology = make_line_topology(2)
+    swap_pass = SabreSwapPass(topology, seed=5)
+    context = TranspilationContext()
+    context.initial_layout = [1, 0]
+    context.layout_applied = True
+    swap_pass.attach_context(context)
+
+    circuit = Circuit(2)
+    circuit.add(RX(0, theta=0.1))
+    circuit.add(CZ(0, 1))
+
+    out = swap_pass.run(circuit)
+
+    # The circuit is already in physical coordinates, so the mapping must not be reapplied.
+    assert [gate.qubits for gate in out.gates] == [(0,), (0, 1)]
+    assert swap_pass.last_final_layout == [0, 1]
+    assert context.final_layout == {0: 0, 1: 1}
+
+
+def test_sabre_swap_keys_final_layout_on_logical_qubits_for_sparse_hint() -> None:
+    swap_pass = SabreSwapPass([(0, 1), (1, 2), (0, 2)], initial_layout=[2, 0])
+    context = TranspilationContext()
+    swap_pass.attach_context(context)
+
+    circuit = Circuit(2)
+    circuit.add(CZ(0, 1))
+
+    swap_pass.run(circuit)
+
+    # Physical labels in the hint must not become keys, nor index into the layout list.
+    assert sorted(context.final_layout) == list(range(circuit.nqubits))
+    assert context.final_layout == {0: 2, 1: 0}
+
+
 def test_sabre_swap_rejects_multi_qubit_gate_after_entering_main_routing_loop() -> None:
     class FakeGate:
         def __init__(self, qubits):

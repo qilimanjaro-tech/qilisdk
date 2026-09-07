@@ -158,10 +158,10 @@ def _produce_gate(
     if isinstance(gate, Adjoint):
         inner_cls = type(gate.basic_gate)
         if inner_cls is S:
-            qis.s_adj(qubits[_qubit_index(gate.basic_gate)])  # ty:ignore[invalid-argument-type]
+            qis.s_adj(qubits[_qubit_index(gate.basic_gate)])
             return
         if inner_cls is T:
-            qis.t_adj(qubits[_qubit_index(gate.basic_gate)])  # ty:ignore[invalid-argument-type]
+            qis.t_adj(qubits[_qubit_index(gate.basic_gate)])
             return
     if cls is M:
         for q in gate.qubits:

@@ -65,7 +65,7 @@ def preload_cuda_libraries() -> bool:
         ``False`` does not preclude GPU use — a system CUDA install on the
         loader path is discovered by the C++ shim without preloading.
     """
-    global _preloaded  # noqa: PLW0603 -- module-level cache so the preload runs at most once
+    global _preloaded  # ruff: ignore[global-statement] -- module-level cache so the preload runs at most once
     if _preloaded:
         return True
 

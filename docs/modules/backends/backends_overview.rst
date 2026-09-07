@@ -5,32 +5,18 @@ The :mod:`~qilisdk.backends` module provides concrete execution engines for runn
 Currently, three backends are supported:
 
 - :doc:`QiliSim <backends_qilisim>`: A high-performance CPU simulator developed by Qilimanjaro, ideal for local development and testing.
-- :doc:`CUDA <backends_cuda>`: A GPU-accelerated backend leveraging NVIDIA hardware for large-scale simulations.
+- :doc:`CUDA-Q <backends_cudaq>`: A GPU-accelerated backend leveraging NVIDIA hardware for large-scale simulations.
 - :doc:`Qutip <backends_qutip>`: A CPU-based backend using the QuTiP library, suitable for lightweight simulations and environments without GPU access.
 
 .. NOTE::
 
-    Backends other than QiliSim are optional; to install one, include its extra when installing QILISDK:
+    Backends other than QiliSim run on third-party frameworks that QiliSDK does not distribute.
+    Install the framework yourself and the backend becomes available:
 
-    .. tabs::
+    .. code-block:: console
 
-        .. group-tab:: Linux
-
-            .. code-block:: console
-
-                pip install qilisdk[<backend_name>]
-
-        .. group-tab:: Mac OSX
-
-            .. code-block:: console
-
-                pip install "qilisdk[<backend_name>]"
-
-        .. group-tab:: Windows
-
-            .. code-block:: console
-
-                pip install qilisdk[<backend_name>]
+        pip install cuda-quantum-cu12   # or cuda-quantum-cu13, for CudaqBackend
+        pip install qutip qutip-qip     # for QutipBackend
 
     For more information check the :doc:`../../getting_started/installation` page.
 
@@ -79,7 +65,7 @@ drivers to be present on the system.
      - --
      - None
      - CPU based; no special hardware needs.
-   * - :class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`
+   * - :class:`CudaqBackend <qilisdk.backends.cudaq_backend.CudaqBackend>`
      - ``cuda``
      - `cuda-quantum <https://github.com/NVIDIA/cuda-quantum>`_
      - Requires NVIDIA hardware with recent drivers.
@@ -113,7 +99,7 @@ Legend:
      - |y|
      - |y|
      - |y|
-   * - :class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`
+   * - :class:`CudaqBackend <qilisdk.backends.cudaq_backend.CudaqBackend>`
      - |y|
      - |y|
      - |p|
@@ -126,10 +112,10 @@ Legend:
 
 .. note::
 
-   ``QuantumReservoir`` is fully native only on QiliSim. On the :class:`CudaBackend` and
+   ``QuantumReservoir`` is fully native only on QiliSim. On the :class:`CudaqBackend` and
    :class:`QutipBackend` the ``Circuit`` reservoir steps are evaluated as dense QTensor unitaries on CPU, while
    ``Schedule`` steps still use the backend's native analog solver. Attaching a
-   :class:`~qilisdk.noise.NoiseModel` to a reservoir run is ignored on both :class:`CudaBackend` and
+   :class:`~qilisdk.noise.NoiseModel` to a reservoir run is ignored on both :class:`CudaqBackend` and
    :class:`QutipBackend`.
    (a warning is logged).
 

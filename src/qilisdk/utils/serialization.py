@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ruff: noqa: ANN401
+# ruff: file-ignore[any-type]
 
 from io import StringIO
 from pathlib import Path

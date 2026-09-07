@@ -951,7 +951,9 @@ class QTensor:
             filepath (str | None): Destination file path for the rendered figure.
                 If ``None``, the figure is not saved.
         """
-        from qilisdk.utils.visualization.qtensor_renderers import MatplotlibQTensorRenderer  # noqa: PLC0415
+        from qilisdk.utils.visualization.qtensor_renderers import (  # ruff:ignore[import-outside-top-level]
+            MatplotlibQTensorRenderer,
+        )
 
         renderer = MatplotlibQTensorRenderer(self, style=style)
         renderer.plot()

@@ -6,5 +6,5 @@ Backends
 
    backends_overview
    backends_qilisim
-   backends_cuda
+   backends_cudaq
    backends_qutip

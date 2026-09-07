@@ -17,28 +17,31 @@ import copy
 import re
 from abc import ABC
 from collections import defaultdict
-from itertools import product
-from typing import TYPE_CHECKING, Callable, ClassVar
+from itertools import combinations, product
+from typing import TYPE_CHECKING, Callable, ClassVar, TypeAlias
 
 import numpy as np
 from loguru import logger
 from scipy.sparse import csr_matrix, kron, spmatrix
 
+from qilisdk.core.expression import Expression
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.core.qtensor import QTensor
 from qilisdk.core.types import Number
-from qilisdk.core.variables import BaseVariable, Parameter, Term
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
+from qilisdk.utils.visualization.style import HamiltonianStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import InvalidHamiltonianOperation
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable, Iterator
+
+    from qilisdk.core.variables import Parameter
 
 _DIVISION_BY_OPERATORS_MESSAGE = "Division by operators is not supported"
-_GENERIC_VARIABLE_IN_TERM_MESSAGE = "Term provided contains generic variables that are not Parameter."
+_GENERIC_VARIABLE_IN_TERM_MESSAGE = "Expression provided contains generic variables that are not Parameter."
 _GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE = (
     "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
 )
@@ -49,48 +52,22 @@ def _complex_dtype() -> np.dtype:
 
 
 ###############################################################################
-# Flyweight Cache
-###############################################################################
-_OPERATOR_CACHE: dict[tuple[str, int], PauliOperator] = {}
-
-
-def _get_pauli(name: str, qubit: int) -> PauliOperator:
-    key = (name, qubit)
-    if key in _OPERATOR_CACHE:
-        return _OPERATOR_CACHE[key]
-
-    if name == "Z":
-        op = PauliZ(qubit)
-    elif name == "X":
-        op = PauliX(qubit)
-    elif name == "Y":
-        op = PauliY(qubit)
-    elif name == "I":
-        op = PauliI(qubit)
-    else:
-        raise ValueError(f"Unknown Pauli operator name: {name}")
-
-    _OPERATOR_CACHE[key] = op
-    return op
-
-
-###############################################################################
 # Public Factory Functions
 ###############################################################################
 def Z(qubit: int) -> Hamiltonian:
-    return _get_pauli("Z", qubit).to_hamiltonian()
+    return PauliZ(qubit).to_hamiltonian()
 
 
 def X(qubit: int) -> Hamiltonian:
-    return _get_pauli("X", qubit).to_hamiltonian()
+    return PauliX(qubit).to_hamiltonian()
 
 
 def Y(qubit: int) -> Hamiltonian:
-    return _get_pauli("Y", qubit).to_hamiltonian()
+    return PauliY(qubit).to_hamiltonian()
 
 
-def I(qubit: int = 0) -> Hamiltonian:  # noqa: E743
-    return _get_pauli("I", qubit).to_hamiltonian()
+def I(qubit: int = 0) -> Hamiltonian:  # ruff: ignore[ambiguous-function-name]
+    return PauliI(qubit).to_hamiltonian()
 
 
 ###############################################################################
@@ -106,8 +83,6 @@ class PauliOperator(ABC):
             from qilisdk.analog import PauliX
 
             op = PauliX(0)
-
-    Flyweight usage: do NOT instantiate directly—use PauliX(q), PauliY(q), etc.
 
     Note: You can also use the factory functions X(q), Y(q), Z(q), I(q) to get a Hamiltonian object.
     """
@@ -205,7 +180,7 @@ class PauliOperator(ABC):
 
 
 ###############################################################################
-# Concrete Flyweight Operator Classes
+# Concrete Operator Classes
 ###############################################################################
 @yaml.register_class
 class PauliZ(PauliOperator):
@@ -232,6 +207,60 @@ class PauliI(PauliOperator):
 
 
 _PAULI_CLASS_BY_NAME: dict[str, type[PauliOperator]] = {cls._NAME: cls for cls in (PauliI, PauliX, PauliY, PauliZ)}
+
+
+# Wrapping a lattice direction into a ring only adds a new bond once it spans at least 3 sites;
+# below that the wrap-around bond would duplicate one the open lattice already has.
+_MIN_PERIODIC_EXTENT = 3
+
+# Coefficients of the model constructors, either one value shared by every term or one value per term
+Coefficient: TypeAlias = float | list[float]
+
+
+def _validate_nqubits(nqubits: int, minimum: int = 1, label: str = "") -> None:
+    """
+    Validate the number of qubits given for a certain Hamiltonian constructor.
+
+    Args:
+        nqubits (int): the qubit count to validate.
+        minimum (int, optional): the smallest count the model can be built on, e.g. 2 for a model
+            with two-qubit couplings. Defaults to 1.
+        label (str, optional): the model name, used in the error message. Defaults to "".
+
+    Raises:
+        ValueError: if ``nqubits`` is not greater than zero.
+        ValueError: if ``nqubits`` is below ``minimum``.
+    """
+    if nqubits <= 0:
+        raise ValueError(f"nqubits must be greater than zero, got {nqubits}.")
+    if nqubits < minimum:
+        raise ValueError(f"{label} Hamiltonians need at least {minimum} qubits, got {nqubits}.")
+
+
+def _parse_coefficients(coefficient: Coefficient, count: int, name: str) -> list[complex]:
+    """
+    Expand the coefficient of a group of Hamiltonian terms into one value per term.
+
+    A plain number gives the same value to every term, while a list gives each term the value at its
+    own position.
+
+    Args:
+        coefficient (Coefficient): the value shared by every term, or one value per term.
+        count (int): the number of terms the coefficient weights.
+        name (str): the argument name, used in the error message.
+
+    Returns:
+        list[complex]: the coefficient of each term, in the order the terms are generated.
+
+    Raises:
+        ValueError: if a list is given whose length does not match the number of terms.
+    """
+    if isinstance(coefficient, (list, tuple)):
+        if len(coefficient) != count:
+            raise ValueError(f"{name} must hold one coefficient per term, got {len(coefficient)} for {count} terms.")
+        return [complex(value) for value in coefficient]
+    return [complex(coefficient)] * count
+
 
 # Cache sparse single-qubit matrices once per dtype to avoid rebuilding them for every term.
 _SINGLE_QUBIT_SPARSE: dict[tuple[str, np.dtype], csr_matrix] = {}
@@ -276,12 +305,14 @@ class Hamiltonian(Parameterizable):
 
     ZERO: int = 0
 
-    def __init__(self, elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] | None = None) -> None:
+    def __init__(
+        self, elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] | None = None
+    ) -> None:
         """
         Build a Hamiltonian from a mapping of Pauli operator products to coefficients.
 
         Args:
-            elements (dict[tuple[PauliOperator, ...], complex | Term | Parameter], optional):
+            elements (dict[tuple[PauliOperator, ...], complex | Expression | Parameter], optional):
                 Mapping from operator tuples to numerical coefficients or symbolic parameters. For example:
 
                 .. code-block:: python
@@ -297,21 +328,14 @@ class Hamiltonian(Parameterizable):
             ValueError: If the provided coefficients include generic variables instead of parameters.
         """
         super().__init__()
-        self._elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(complex)
+        self._elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
         if elements:
             for key, val in elements.items():
-                if isinstance(val, Term):
-                    for v in val.variables():
-                        if isinstance(v, Parameter):
-                            self._add_parameter(v.label, v)
-                        else:
-                            raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
-                elif isinstance(val, BaseVariable):
-                    if isinstance(val, Parameter):
-                        self._add_parameter(val.label, val)
-
-                    else:
+                if isinstance(val, Expression):
+                    if not val.is_parameterized():
                         raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
+                    for parameter in val.free_parameters():
+                        self._add_parameter(parameter.label, parameter)
                 self._elements[key] += val
             self.simplify()
 
@@ -325,12 +349,7 @@ class Hamiltonian(Parameterizable):
     @property
     def elements(self) -> dict[tuple[PauliOperator, ...], complex]:
         """Return the stored operator-coefficient mapping with symbolic terms evaluated."""
-        return {
-            k: (
-                v if isinstance(v, complex) else (v.evaluate({}) if isinstance(v, Term) else v.evaluate())  # ty:ignore[unresolved-attribute]
-            )
-            for k, v in self._elements.items()
-        }
+        return {k: (v if isinstance(v, (int, float, complex)) else v.evaluate({})) for k, v in self._elements.items()}
 
     def simplify(self) -> Hamiltonian:
         """Simplify the Hamiltonian expression by removing near-zero terms and accumulating constant terms.
@@ -454,6 +473,45 @@ class Hamiltonian(Parameterizable):
             out += aux * value
         return out
 
+    def draw(self, style: HamiltonianStyle | None = None, filepath: str | None = None) -> None:
+        """Render this Hamiltonian as an interaction graph and optionally save it to a file.
+
+        Every qubit is drawn as a node whose disc is split into one slice per local field acting
+        on it (labelled with the Pauli type), and every two-qubit term is drawn as an edge between
+        the qubits it couples, with a line style per coupling type. Slice and edge colours encode
+        the coefficient of the corresponding term, as described by the accompanying colour bar.
+        Expressions acting on three or more qubits are drawn as star-shaped hyperedges joined at their
+        centroid, and a constant (identity) term is annotated as an energy offset.
+
+        If ``filepath`` is given, the resulting figure is saved to disk (the output format is
+        inferred from the file extension, e.g. ``.png``, ``.pdf``, ``.svg``); otherwise the figure
+        is shown.
+
+        Args:
+            style (HamiltonianStyle | None, optional): Customization options for the plot appearance.
+                Defaults to :class:`HamiltonianStyle`.
+            filepath (str | None, optional): If provided, saves the plot to the specified file path.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import X, Z
+
+                H = X(0) + 2 * Z(1) + 0.5 * Z(0) * Z(1)
+                H.draw()
+        """
+        logger.debug("[Hamiltonian] Drawing Hamiltonian with style: {} and filepath: {}", style, filepath)
+        from qilisdk.utils.visualization.hamiltonian_renderers import (  # ruff: ignore[import-outside-top-level]
+            MatplotlibHamiltonianRenderer,
+        )
+
+        renderer = MatplotlibHamiltonianRenderer(self, style=style or HamiltonianStyle())
+        renderer.plot()
+        if filepath:
+            renderer.save(filepath)
+        else:
+            renderer.show()
+
     def __iter__(self) -> Iterator[tuple[complex, list[PauliOperator]]]:
         for key, value in self.elements.items():
             yield value, list(key)
@@ -559,18 +617,18 @@ class Hamiltonian(Parameterizable):
 
         return " ".join(parts)
 
-    def get_commuting_partitions(self) -> list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]:
+    def get_commuting_partitions(self) -> list[dict[tuple[PauliOperator, ...], complex | Expression | Parameter]]:
         """
         Split the Hamiltonian into a list of partitions, each containing commuting terms.
 
         For now this is a greedy algorithm, but a smarter graph-coloring approach could be used later.
 
         Returns:
-            list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]:
+            list[dict[tuple[PauliOperator, ...], complex | Expression | Parameter]]:
                 A list of dictionaries, each representing a partition of the Hamiltonian containing commuting terms.
         """
         logger.debug("[Hamiltonian] Partitioning Hamiltonian into commuting groups")
-        partitions: list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]] = []
+        partitions: list[dict[tuple[PauliOperator, ...], complex | Expression | Parameter]] = []
 
         # Check each term with each partition
         for term, coeff in self.elements.items():
@@ -592,6 +650,388 @@ class Hamiltonian(Parameterizable):
         return partitions
 
     @classmethod
+    def transverse_field(cls, nqubits: int, x_coefficient: Coefficient = 1.0) -> Hamiltonian:
+        """
+        Build a transverse field, :math:`\\sum_i h_i\\, X_i`.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.transverse_field(nqubits=2, x_coefficient=1.3)
+                # 1.3 X(0) + 1.3 X(1)
+
+                H = Hamiltonian.transverse_field(nqubits=2, x_coefficient=[1.3, 0.7])
+                # 1.3 X(0) + 0.7 X(1)
+
+        Args:
+            nqubits (int): the number of qubits the Hamiltonian acts on.
+            x_coefficient (Coefficient, optional): the field strength on every qubit, or a list
+                holding the strength of each qubit in turn. Defaults to 1.0.
+
+        Returns:
+            Hamiltonian: the transverse-field Hamiltonian.
+
+        Raises:
+            ValueError: if ``nqubits`` is not greater than zero.
+            ValueError: if a list of coefficients does not hold one value per term.
+        """
+        _validate_nqubits(nqubits)
+        logger.debug("[Hamiltonian] Building transverse field over {} qubits", nqubits)
+        x = _parse_coefficients(x_coefficient, nqubits, "x_coefficient")
+        return cls({(PauliX(qubit),): x[qubit] for qubit in range(nqubits)})
+
+    @classmethod
+    def longitudinal_field(cls, nqubits: int, z_coefficient: Coefficient = 1.0) -> Hamiltonian:
+        """
+        Build a longitudinal field, :math:`\\sum_i h_i\\, Z_i`.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.longitudinal_field(nqubits=2, z_coefficient=1.3)
+                # 1.3 Z(0) + 1.3 Z(1)
+
+                H = Hamiltonian.longitudinal_field(nqubits=2, z_coefficient=[1.3, 0.7])
+                # 1.3 Z(0) + 0.7 Z(1)
+
+        Args:
+            nqubits (int): the number of qubits the Hamiltonian acts on.
+            z_coefficient (Coefficient, optional): the field strength on every qubit, or a list
+                holding the strength of each qubit in turn. Defaults to 1.0.
+
+        Returns:
+            Hamiltonian: the longitudinal-field Hamiltonian.
+
+        Raises:
+            ValueError: if ``nqubits`` is not greater than zero.
+            ValueError: if a list of coefficients does not hold one value per term.
+        """
+        _validate_nqubits(nqubits)
+        logger.debug("[Hamiltonian] Building longitudinal field over {} qubits", nqubits)
+        z = _parse_coefficients(z_coefficient, nqubits, "z_coefficient")
+        return cls({(PauliZ(qubit),): z[qubit] for qubit in range(nqubits)})
+
+    @classmethod
+    def ising(
+        cls,
+        nqubits: int,
+        zz_coefficient: Coefficient = 1.0,
+        z_coefficient: Coefficient = 0.0,
+    ) -> Hamiltonian:
+        """
+        Build an all-to-all Ising Hamiltonian, :math:`\\sum_{i<j} J_{ij}\\, Z_i Z_j + \\sum_i h_i\\, Z_i`.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.ising(nqubits=2, zz_coefficient=2.0)
+                # 2 Z(0) Z(1)
+
+        Args:
+            nqubits (int): the number of qubits the Hamiltonian acts on. Must be at least 2.
+            zz_coefficient (Coefficient, optional): the coupling on every pair of qubits, or a list
+                holding the coupling of each pair in turn, ordered as ``(0, 1), (0, 2), ..., (1, 2),
+                ...``. Defaults to 1.0.
+            z_coefficient (Coefficient, optional): the longitudinal field on every qubit, or a list
+                holding the field of each qubit in turn. Defaults to 0.0, which leaves the field out
+                entirely.
+
+        Returns:
+            Hamiltonian: the Ising Hamiltonian.
+
+        Raises:
+            ValueError: if ``nqubits`` is less than 2.
+            ValueError: if a list of coefficients does not hold one value per term.
+        """
+        _validate_nqubits(nqubits, minimum=2, label="Ising")
+        logger.debug("[Hamiltonian] Building Ising model over {} qubits", nqubits)
+        pairs = list(combinations(range(nqubits), 2))
+        zz = _parse_coefficients(zz_coefficient, len(pairs), "zz_coefficient")
+        z = _parse_coefficients(z_coefficient, nqubits, "z_coefficient")
+        elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = {
+            (PauliZ(first), PauliZ(second)): coefficient for (first, second), coefficient in zip(pairs, zz, strict=True)
+        }
+        elements.update({(PauliZ(qubit),): z[qubit] for qubit in range(nqubits)})
+        return cls(elements)
+
+    @classmethod
+    def ising_chain(
+        cls,
+        nqubits: int,
+        zz_coefficient: Coefficient = 1.0,
+        z_coefficient: Coefficient = 0.0,
+        periodic: bool = False,
+    ) -> Hamiltonian:
+        """
+        Build a 1D nearest-neighbour Ising chain, :math:`\\sum_i J_i\\, Z_i Z_{i+1} + \\sum_i h_i\\, Z_i`.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.ising_chain(nqubits=3, zz_coefficient=2.0)
+                # 2 Z(0) Z(1) + 2 Z(1) Z(2)
+
+                # Closing the chain into a ring adds the bond between the two ends.
+                H = Hamiltonian.ising_chain(nqubits=3, zz_coefficient=2.0, periodic=True)
+                # 2 Z(0) Z(1) + 2 Z(1) Z(2) + 2 Z(0) Z(2)
+
+        Args:
+            nqubits (int): the number of qubits in the chain. Must be at least 2.
+            zz_coefficient (Coefficient, optional): the coupling on every bond, or a list holding the
+                coupling of each bond in turn, ordered along the chain and ending with the
+                wrap-around bond when ``periodic`` is set. Defaults to 1.0.
+            z_coefficient (Coefficient, optional): the longitudinal field on every qubit, or a list
+                holding the field of each qubit in turn. Defaults to 0.0, which leaves the field out
+                entirely.
+            periodic (bool, optional): whether to close the chain into a ring by coupling the last
+                qubit back to the first. Ignored for fewer than 3 qubits, where the ring bond would
+                duplicate the one bond the chain already has. Defaults to False.
+
+        Returns:
+            Hamiltonian: the Ising chain Hamiltonian.
+
+        Raises:
+            ValueError: if ``nqubits`` is less than 2.
+            ValueError: if a list of coefficients does not hold one value per term.
+        """
+        _validate_nqubits(nqubits, minimum=2, label="Ising chain")
+        logger.debug("[Hamiltonian] Building Ising chain over {} qubits (periodic={})", nqubits, periodic)
+        bonds = [(qubit, qubit + 1) for qubit in range(nqubits - 1)]
+        if periodic and nqubits >= _MIN_PERIODIC_EXTENT:
+            bonds.append((0, nqubits - 1))
+        zz = _parse_coefficients(zz_coefficient, len(bonds), "zz_coefficient")
+        z = _parse_coefficients(z_coefficient, nqubits, "z_coefficient")
+        elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = {
+            (PauliZ(first), PauliZ(second)): coefficient for (first, second), coefficient in zip(bonds, zz, strict=True)
+        }
+        elements.update({(PauliZ(qubit),): z[qubit] for qubit in range(nqubits)})
+        return cls(elements)
+
+    @classmethod
+    def ising_grid(
+        cls,
+        rows: int,
+        columns: int,
+        zz_coefficient: Coefficient = 1.0,
+        z_coefficient: Coefficient = 0.0,
+        periodic: bool = False,
+    ) -> Hamiltonian:
+        """
+        Build a 2D nearest-neighbour Ising model on a ``rows`` x ``columns`` square lattice.
+
+        Qubits are numbered in row-major order, so the qubit at ``(row, column)`` has index
+        ``row * columns + column``, and the Hamiltonian acts on ``rows * columns`` qubits. Each qubit
+        is coupled to its neighbour to the right and its neighbour below, giving the usual square
+        lattice.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                # A 2x2 lattice: qubits 0 1 on the top row, 2 3 on the bottom.
+                H = Hamiltonian.ising_grid(rows=2, columns=2)
+                # Z(0) Z(1) + Z(0) Z(2) + Z(1) Z(3) + Z(2) Z(3)
+
+        Args:
+            rows (int): the number of lattice rows.
+            columns (int): the number of lattice columns.
+            zz_coefficient (Coefficient, optional): the coupling on every bond, or a list holding the
+                coupling of each bond in turn, ordered by the site each bond starts from in row-major
+                order and, within a site, giving its horizontal bond before its vertical one.
+                Defaults to 1.0.
+            z_coefficient (Coefficient, optional): the longitudinal field on every qubit, or a list
+                holding the field of each qubit in turn. Defaults to 0.0, which leaves the field out
+                entirely.
+            periodic (bool, optional): whether to wrap the lattice into a torus by coupling each edge
+                back to the opposite one. Wrapping is skipped along any direction shorter than 3
+                sites, where it would duplicate an existing bond. Defaults to False.
+
+        Returns:
+            Hamiltonian: the Ising grid Hamiltonian.
+
+        Raises:
+            ValueError: if ``rows`` or ``columns`` is not greater than zero.
+            ValueError: if the lattice holds fewer than 2 qubits.
+            ValueError: if a list of coefficients does not hold one value per term.
+        """
+        if rows <= 0:
+            raise ValueError(f"rows must be greater than zero, got {rows}.")
+        if columns <= 0:
+            raise ValueError(f"columns must be greater than zero, got {columns}.")
+        nqubits = rows * columns
+        _validate_nqubits(nqubits, minimum=2, label="Ising grid")
+        logger.debug("[Hamiltonian] Building {}x{} Ising grid (periodic={})", rows, columns, periodic)
+
+        def index(row: int, column: int) -> int:
+            return row * columns + column
+
+        bonds: list[tuple[int, int]] = []
+        for row in range(rows):
+            for column in range(columns):
+                if column + 1 < columns:
+                    bonds.append((index(row, column), index(row, column + 1)))
+                elif periodic and columns >= _MIN_PERIODIC_EXTENT:
+                    bonds.append((index(row, 0), index(row, column)))
+                if row + 1 < rows:
+                    bonds.append((index(row, column), index(row + 1, column)))
+                elif periodic and rows >= _MIN_PERIODIC_EXTENT:
+                    bonds.append((index(0, column), index(row, column)))
+
+        zz = _parse_coefficients(zz_coefficient, len(bonds), "zz_coefficient")
+        z = _parse_coefficients(z_coefficient, nqubits, "z_coefficient")
+        elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = {
+            (PauliZ(first), PauliZ(second)): coefficient for (first, second), coefficient in zip(bonds, zz, strict=True)
+        }
+        elements.update({(PauliZ(qubit),): z[qubit] for qubit in range(nqubits)})
+        return cls(elements)
+
+    @classmethod
+    def transverse_field_ising(
+        cls,
+        nqubits: int,
+        x_coefficient: Coefficient = 1.0,
+        zz_coefficient: Coefficient = 1.0,
+        z_coefficient: Coefficient = 0.0,
+    ) -> Hamiltonian:
+        """
+        Build an all-to-all transverse-field Ising Hamiltonian.
+
+        .. math::
+
+            H = \\sum_{i<j} J_{ij}\\, Z_i Z_j + \\sum_i h^x_i\\, X_i + \\sum_i h^z_i\\, Z_i
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                H = Hamiltonian.transverse_field_ising(nqubits=2, x_coefficient=1.3, zz_coefficient=-2)
+                # 1.3 X(0) + 1.3 X(1) - 2 Z(0) Z(1)
+
+        Args:
+            nqubits (int): the number of qubits the Hamiltonian acts on. Must be at least 2.
+            x_coefficient (Coefficient, optional): the transverse field on every qubit, or a list
+                holding the field of each qubit in turn. Defaults to 1.0.
+            zz_coefficient (Coefficient, optional): the coupling on every pair of qubits, or a list
+                holding the coupling of each pair in turn, ordered as ``(0, 1), (0, 2), ..., (1, 2),
+                ...``. Defaults to 1.0.
+            z_coefficient (Coefficient, optional): the longitudinal field on every qubit, or a list
+                holding the field of each qubit in turn. Defaults to 0.0, which leaves the field out
+                entirely.
+
+        Returns:
+            Hamiltonian: the transverse-field Ising Hamiltonian.
+
+        Raises:
+            ValueError: if ``nqubits`` is less than 2.
+            ValueError: if a list of coefficients does not hold one value per term.
+        """
+        _validate_nqubits(nqubits, minimum=2, label="Transverse-field Ising")
+        logger.debug("[Hamiltonian] Building transverse-field Ising model over {} qubits", nqubits)
+        pairs = list(combinations(range(nqubits), 2))
+        x = _parse_coefficients(x_coefficient, nqubits, "x_coefficient")
+        zz = _parse_coefficients(zz_coefficient, len(pairs), "zz_coefficient")
+        z = _parse_coefficients(z_coefficient, nqubits, "z_coefficient")
+        elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = {
+            (PauliX(qubit),): x[qubit] for qubit in range(nqubits)
+        }
+        elements.update(
+            {
+                (PauliZ(first), PauliZ(second)): coefficient
+                for (first, second), coefficient in zip(pairs, zz, strict=True)
+            }
+        )
+        elements.update({(PauliZ(qubit),): z[qubit] for qubit in range(nqubits)})
+        return cls(elements)
+
+    @classmethod
+    def heisenberg(
+        cls,
+        nqubits: int,
+        xx_coefficient: Coefficient = 1.0,
+        yy_coefficient: Coefficient | None = None,
+        zz_coefficient: Coefficient | None = None,
+        z_coefficient: Coefficient = 0.0,
+    ) -> Hamiltonian:
+        """
+        Build an all-to-all Heisenberg Hamiltonian.
+
+        .. math::
+
+            H = \\sum_{i<j} \\left( J^x_{ij} X_i X_j + J^y_{ij} Y_i Y_j + J^z_{ij} Z_i Z_j \\right)
+                + \\sum_i h_i\\, Z_i
+
+        Leaving ``yy_coefficient`` and ``zz_coefficient`` at their defaults gives the isotropic XXX
+        model; setting ``zz_coefficient`` alone gives the XXZ model; setting all three independently
+        gives the fully anisotropic XYZ model.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+
+                # Isotropic XXX model.
+                H = Hamiltonian.heisenberg(nqubits=2, xx_coefficient=0.5)
+                # 0.5 X(0) X(1) + 0.5 Y(0) Y(1) + 0.5 Z(0) Z(1)
+
+                # XXZ model with an anisotropic ZZ coupling.
+                H = Hamiltonian.heisenberg(nqubits=2, xx_coefficient=1.0, zz_coefficient=0.3)
+
+                # A disordered field, set qubit by qubit.
+                H = Hamiltonian.heisenberg(nqubits=3, xx_coefficient=1.0, z_coefficient=[-1.2, 0.4, 2.7])
+
+        Args:
+            nqubits (int): the number of qubits the Hamiltonian acts on. Must be at least 2.
+            xx_coefficient (Coefficient, optional): the ``XX`` coupling on every pair of qubits, or a
+                list holding the coupling of each pair in turn, ordered as ``(0, 1), (0, 2), ...,
+                (1, 2), ...``. Defaults to 1.0.
+            yy_coefficient (Coefficient, optional): the ``YY`` coupling, given the same way as
+                ``xx_coefficient``. Defaults to None, which reuses ``xx_coefficient``.
+            zz_coefficient (Coefficient, optional): the ``ZZ`` coupling, given the same way as
+                ``xx_coefficient``. Defaults to None, which reuses ``xx_coefficient``.
+            z_coefficient (Coefficient, optional): the longitudinal field on every qubit, or a list
+                holding the field of each qubit in turn. Defaults to 0.0, which leaves the field out
+                entirely.
+
+        Returns:
+            Hamiltonian: the Heisenberg Hamiltonian.
+
+        Raises:
+            ValueError: if ``nqubits`` is less than 2.
+            ValueError: if a list of coefficients does not hold one value per term.
+        """
+        _validate_nqubits(nqubits, minimum=2, label="Heisenberg")
+        if yy_coefficient is None:
+            yy_coefficient = xx_coefficient
+        if zz_coefficient is None:
+            zz_coefficient = xx_coefficient
+        logger.debug("[Hamiltonian] Building Heisenberg model over {} qubits", nqubits)
+        pairs = list(combinations(range(nqubits), 2))
+        xx = _parse_coefficients(xx_coefficient, len(pairs), "xx_coefficient")
+        yy = _parse_coefficients(yy_coefficient, len(pairs), "yy_coefficient")
+        zz = _parse_coefficients(zz_coefficient, len(pairs), "zz_coefficient")
+        z = _parse_coefficients(z_coefficient, nqubits, "z_coefficient")
+        elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = {}
+        for axis, couplings in (("X", xx), ("Y", yy), ("Z", zz)):
+            elements.update(
+                {
+                    (_PAULI_CLASS_BY_NAME[axis](first), _PAULI_CLASS_BY_NAME[axis](second)): coefficient
+                    for (first, second), coefficient in zip(pairs, couplings, strict=True)
+                }
+            )
+        elements.update({(PauliZ(qubit),): z[qubit] for qubit in range(nqubits)})
+        return cls(elements)
+
+    @classmethod
     def from_qtensor(cls, tensor: QTensor, tol: float | None = None, prune: float | None = None) -> Hamiltonian:
         """
         Expand a qtensor (dense operator) on n qubits into a sum of Pauli strings,
@@ -604,7 +1044,7 @@ class Hamiltonian(Parameterizable):
         Returns:
             Hamiltonian: Sum_{P in {I,X,Y,Z}^{⊗ n}} c_P * P  with c_P = Tr(qt * P) / 2^n
 
-        Raises
+        Raises:
             ValueError: If the input is not square, not a power-of-two dimension, or not Hermitian w.r.t. `tol`.
         """
         if tol is None:
@@ -628,7 +1068,7 @@ class Hamiltonian(Parameterizable):
 
         # Prebuild per-qubit operator “letters” so we can construct full strings quickly
 
-        H = Hamiltonian()  # start additive Hamiltonian expression
+        H = Hamiltonian()
         # Full Pauli basis (includes identity on any subset automatically)
         for word in product((0, 1, 2, 3), repeat=n):
             # Compose the word into a QiliSDK operator acting on the proper qubits
@@ -639,10 +1079,10 @@ class Hamiltonian(Parameterizable):
                 op = op * pauli_for[letter](q) if op != 0 else pauli_for[letter](q)
 
             # Convert to dense once; no padding needed because it spans all n qubits
-            P_dense = op.to_qtensor(n).dense()
+            dense_P = op.to_qtensor(n).dense()
 
             # Coefficient c_P = Tr(A P) / 2^n  (P is Hermitian)
-            c = norm * np.trace(A @ P_dense)
+            c = norm * np.trace(A @ dense_P)
 
             # Numerical safety: coefficients should be real for Hermitian A and P
             if abs(c.imag) < tol:
@@ -680,9 +1120,7 @@ class Hamiltonian(Parameterizable):
         if hamiltonian_str == "0":
             return cls({})
 
-        elements: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(
-            complex
-        )  # TODO (ameer): the parsing doesn't support Term and Parameters
+        elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
 
         # If there's no initial +/- sign, prepend '+ ' for easier splitting
         if not hamiltonian_str.startswith("+") and not hamiltonian_str.startswith("-"):
@@ -735,7 +1173,8 @@ class Hamiltonian(Parameterizable):
                 if coeff_str.startswith("(") and coeff_str.endswith(")"):
                     coeff_str = coeff_str[1:-1]
                 coeff_val = complex(coeff_str) * sign
-                words = words[1:]  # consume this word
+                # consume this word
+                words = words[1:]
             else:
                 # No explicit coefficient => ±1
                 coeff_val = complex(sign)
@@ -748,7 +1187,7 @@ class Hamiltonian(Parameterizable):
                     raise ValueError(f"Unrecognized operator format: '{w}'")
                 name, qubit_str = match.groups()
                 qubit = int(qubit_str)
-                op = _get_pauli(name, qubit)
+                op = _PAULI_CLASS_BY_NAME[name](qubit)
                 ops.append(op)
 
             return coeff_val, ops
@@ -805,7 +1244,7 @@ class Hamiltonian(Parameterizable):
         Returns:
             bool: ``True`` if the two Hamiltonians commute, ``False`` otherwise.
         """
-        residual: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(complex)
+        residual: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
         for ops1, c1 in self._elements.items():
             for ops2, c2 in h._elements.items():
                 if Hamiltonian._pauli_strings_commute(ops1, ops2):
@@ -845,9 +1284,7 @@ class Hamiltonian(Parameterizable):
         n = self.nqubits
         d = 2**n
         t = self._elements.get((PauliI(0),), 0)
-        if isinstance(t, Parameter):
-            return t.evaluate() * d
-        if isinstance(t, Term):
+        if isinstance(t, Expression):
             return t.evaluate({}) * d
         return t * d
 
@@ -934,28 +1371,28 @@ class Hamiltonian(Parameterizable):
 
     # ------- Public arithmetic operators --------
 
-    def __add__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
+    def __add__(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> Hamiltonian:
         out = copy.copy(self)
-        if isinstance(other, Term) and not other.is_parameterized_term():
+        if isinstance(other, Expression) and not other.is_parameterized():
             raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         out._add_inplace(other)
         return out.simplify()
 
-    def __radd__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
-        if isinstance(other, Term) and not other.is_parameterized_term():
+    def __radd__(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> Hamiltonian:
+        if isinstance(other, Expression) and not other.is_parameterized():
             raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         return self.__add__(other)
 
-    def __sub__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
-        if isinstance(other, Term) and not other.is_parameterized_term():
+    def __sub__(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> Hamiltonian:
+        if isinstance(other, Expression) and not other.is_parameterized():
             raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         out = copy.copy(self)
         out._sub_inplace(other)
         return out.simplify()
 
-    def __rsub__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
+    def __rsub__(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> Hamiltonian:
         # (other - self)
-        if isinstance(other, Term) and not other.is_parameterized_term():
+        if isinstance(other, Expression) and not other.is_parameterized():
             raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         out = copy.copy(other if isinstance(other, Hamiltonian) else Hamiltonian() + other)
         out._sub_inplace(self)
@@ -964,15 +1401,15 @@ class Hamiltonian(Parameterizable):
     def __neg__(self) -> Hamiltonian:
         return -1 * self
 
-    def __mul__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
-        if isinstance(other, Term) and not other.is_parameterized_term():
+    def __mul__(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> Hamiltonian:
+        if isinstance(other, Expression) and not other.is_parameterized():
             raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         out = copy.copy(self)
         out._mul_inplace(other)
         return out.simplify()
 
-    def __rmul__(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> Hamiltonian:
-        if isinstance(other, Term) and not other.is_parameterized_term():
+    def __rmul__(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> Hamiltonian:
+        if isinstance(other, Expression) and not other.is_parameterized():
             raise ValueError(_GENERIC_VARIABLE_IN_TERM_MESSAGE)
         if isinstance(other, Hamiltonian):
             out = copy.copy(other)
@@ -994,16 +1431,16 @@ class Hamiltonian(Parameterizable):
     __imul__ = __mul__
     __itruediv__ = __truediv__
 
-    def _add_inplace(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> None:
+    def _add_inplace(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> None:
         if isinstance(other, Hamiltonian):
             # If it's empty, do nothing
             if not other.elements:
                 return
             # Otherwise, add each term
-            for key, val in other._elements.items():  # noqa: SLF001
+            for key, val in other._elements.items():  # ruff: ignore[private-member-access]
                 self._elements[key] += val
 
-            self._update_parameters(other._parameters)  # noqa: SLF001
+            self._update_parameters(other._parameters)  # ruff: ignore[private-member-access]
         elif isinstance(other, PauliOperator):
             # Just add 1 to that single operator key
             self._elements[other,] += 1
@@ -1012,101 +1449,101 @@ class Hamiltonian(Parameterizable):
                 return
             # Add the scalar to (I(0),)
             self._elements[PauliI(0),] += other
-        elif isinstance(other, (Term, Parameter)):
-            if isinstance(other, Term):
-                if not other.is_parameterized_term():
-                    raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
-                self._update_parameters({v.label: v for v in other if isinstance(v, Parameter)})
-            else:
-                self._add_parameter(other.label, other)
+        elif isinstance(other, Expression):
+            if not other.is_parameterized():
+                raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
+            for parameter in other.free_parameters():
+                self._add_parameter(parameter.label, parameter)
             self._elements[PauliI(0),] += other
         else:
             raise InvalidHamiltonianOperation(f"Invalid addition between Hamiltonian and {other.__class__.__name__}.")
 
-    def _sub_inplace(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> None:
+    def _sub_inplace(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> None:
         if isinstance(other, Hamiltonian):
-            for key, val in other._elements.items():  # noqa: SLF001
+            for key, val in other._elements.items():  # ruff: ignore[private-member-access]
                 self._elements[key] -= val
-            self._update_parameters(other._parameters)  # noqa: SLF001
+            self._update_parameters(other._parameters)  # ruff: ignore[private-member-access]
         elif isinstance(other, PauliOperator):
             self._elements[other,] -= 1
         elif isinstance(other, (int, float, complex)):
             if abs(other) < get_settings().atol:
                 return
             self._elements[PauliI(0),] -= other
-        elif isinstance(other, (Term, Parameter)):
-            if isinstance(other, Term):
-                if not other.is_parameterized_term():
-                    raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
-                self._update_parameters({v.label: v for v in other if isinstance(v, Parameter)})
-            else:
-                self._add_parameter(other.label, other)
+        elif isinstance(other, Expression):
+            if not other.is_parameterized():
+                raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
+            for parameter in other.free_parameters():
+                self._add_parameter(parameter.label, parameter)
             self._elements[PauliI(0),] -= other
         else:
             raise InvalidHamiltonianOperation(
                 f"Invalid subtraction between Hamiltonian and {other.__class__.__name__}."
             )
 
-    def _mul_inplace(self, other: Number | PauliOperator | Hamiltonian | Term | Parameter) -> None:
-        if isinstance(other, (int, float, complex)):
-            # 0 short-circuit
-            if abs(other) < get_settings().atol:
-                # everything becomes 0
-                self._elements.clear()
-                return None
-            # 1 short-circuit
-            if other == 1:
-                return None
-            # scale all coefficients
-            for k in self._elements:
-                self._elements[k] *= other
-            return None
+    def _scale_inplace(self, factor: Number | Expression | Parameter) -> None:
+        """Multiply every coefficient by a scalar factor.
 
-        if isinstance(other, (Term, Parameter)):
-            if isinstance(other, Term):
-                if not other.is_parameterized_term():
-                    raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
-                self._update_parameters({v.label: v for v in other if isinstance(v, Parameter)})
-            else:
-                self._add_parameter(other.label, other)
-            for k in self._elements:
-                self._elements[k] *= other
+        Raises:
+            ValueError: if ``factor`` is a symbolic expression that is not fully parameterized.
+        """
+        if isinstance(factor, (int, float, complex)):
+            # 0 and 1 short-circuits
+            if abs(factor) < get_settings().atol:
+                self._elements.clear()
+                return
+            if factor == 1:
+                return
+        else:
+            if not factor.is_parameterized():
+                raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
+            for parameter in factor.free_parameters():
+                self._add_parameter(parameter.label, parameter)
+        for k in self._elements:
+            self._elements[k] *= factor
+
+    @staticmethod
+    def _identity_coefficient(other: Hamiltonian) -> complex | Expression | Parameter | None:
+        """Return the coefficient of ``other`` if it is a scalar times the identity, ``None`` otherwise."""
+        if len(other._elements) != 1:
             return None
+        ((ops, coefficient),) = other._elements.items()
+        if len(ops) == 1 and ops[0].name == "I" and ops[0].qubit == 0:
+            return coefficient
+        return None
+
+    def _mul_inplace(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> None:
+        if isinstance(other, (int, float, complex, Expression)):
+            self._scale_inplace(other)
+            return
 
         if isinstance(other, PauliOperator):
             # Convert single PauliOperator -> Hamiltonian with 1 key
-            # Then do the single-key Hamiltonian path below
             other = other.to_hamiltonian()
 
-        if isinstance(other, Hamiltonian):
-            if not other.elements:
-                # Multiply by "0" Hamiltonian => 0
-                self._elements.clear()
-                return None
-
-            # Check if 'other' is purely scalar identity => short-circuit
-            if len(other.elements) == 1:
-                ((ops2, c2),) = other._elements.items()  # single item  # noqa: SLF001
-                if len(ops2) == 1:
-                    op2 = ops2[0]
-                    if op2.name == "I" and op2.qubit == 0:
-                        # effectively scalar c2
-                        return self._mul_inplace(c2)
-
-            # Otherwise, we do the general multiply
-            new_dict: dict[tuple[PauliOperator, ...], complex | Term | Parameter] = defaultdict(complex)
-            for ops1, c1 in self._elements.items():
-                for ops2, c2 in other._elements.items():  # noqa: SLF001
-                    phase, new_ops = self._multiply_sets(ops1, ops2)
-                    new_dict[new_ops] += phase * c1 * c2
-            self._elements = new_dict
-            self._update_parameters(other._parameters)  # noqa: SLF001
-
-        else:
+        if not isinstance(other, Hamiltonian):
             raise InvalidHamiltonianOperation(
                 f"Invalid multiplication between Hamiltonian and {other.__class__.__name__}."
             )
-        return None
+
+        if not other._elements:  # ruff: ignore[private-member-access]
+            # Multiply by "0" Hamiltonian => 0
+            self._elements.clear()
+            return
+
+        # A scalar multiple of the identity is just a rescaling
+        coefficient = self._identity_coefficient(other)
+        if coefficient is not None:
+            self._scale_inplace(coefficient)
+            return
+
+        # Otherwise, we do the general multiply
+        new_dict: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
+        for ops1, c1 in self._elements.items():
+            for ops2, c2 in other._elements.items():  # ruff: ignore[private-member-access]
+                phase, new_ops = self._multiply_sets(ops1, ops2)
+                new_dict[new_ops] += phase * c1 * c2
+        self._elements = new_dict
+        self._update_parameters(other._parameters)  # ruff: ignore[private-member-access]
 
     def _div_inplace(self, other: Number | PauliOperator | Hamiltonian) -> None:
         # Only valid for scalars

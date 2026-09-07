@@ -149,7 +149,7 @@ class MatplotlibQTensorRenderer:
         if isinstance(self.axes.figure, Figure):
             self.axes.figure.savefig(filename, bbox_inches="tight")
 
-    def show(self) -> None:  # noqa: PLR6301
+    def show(self) -> None:  # ruff: ignore[no-self-use]
         """Show the current figure."""
         plt.show()
 

@@ -82,7 +82,9 @@ class Backend(ABC):
         self._noise_model = noise_model
 
     @overload
-    def execute(self, functional: VariationalProgram, readout: Readout[S, E, T]) -> VariationalProgramResult: ...
+    def execute(
+        self, functional: VariationalProgram, readout: Readout[S, E, T]
+    ) -> VariationalProgramResult[FunctionalResult[S, E, T]]: ...
 
     @overload
     def execute(self, functional: PrimitiveFunctional, readout: Readout[S, E, T]) -> FunctionalResult[S, E, T]: ...
@@ -200,7 +202,7 @@ class Backend(ABC):
 
     def _execute_variational_program(
         self, functional: VariationalProgram, readout: list[ReadoutMethod]
-    ) -> VariationalProgramResult:
+    ) -> VariationalProgramResult[FunctionalResult[Any, Any, Any]]:
         logger.info("[Backend] Executing Variational Program")
         # Wrap the flat readout list back into a spec for the recursive execute() call
         spec = _readout_list_to_spec(readout)

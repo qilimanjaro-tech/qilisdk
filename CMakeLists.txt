@@ -27,6 +27,12 @@ if(MSVC)
 set(PYBIND11_FINDPYTHON ON)
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 endif()
+
+# Disable link-time optimisation from pybind, we'll do our own later in parallel
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
+endif()
+
 find_package(pybind11 REQUIRED)
 
 # This is optional, but should be available as part of most compilers
@@ -96,8 +102,18 @@ set_target_properties(qtensor_module PROPERTIES
     INSTALL_RPATH "${RPATH_ORIGIN}"
 )
 
+# Classical solvers
+pybind11_add_module(solvers_module SHARED src/qilisdk_cpp/solvers/solvers_bindings.cpp)
+file(GLOB SOLVERS_SOURCES src/qilisdk_cpp/solvers/*.cpp)
+target_sources(solvers_module PRIVATE ${SOLVERS_SOURCES})
+target_link_libraries(solvers_module PRIVATE qilisdk_libs)
+set_target_properties(solvers_module PROPERTIES
+    BUILD_RPATH "${RPATH_ORIGIN}"
+    INSTALL_RPATH "${RPATH_ORIGIN}"
+)
+
 # List of all modules to build
-set(MODULES_TO_BUILD qilisdk_libs qtensor_module qilisim_module)
+set(MODULES_TO_BUILD qilisdk_libs qtensor_module qilisim_module solvers_module)
 
 # For each module
 foreach(module ${MODULES_TO_BUILD})
@@ -137,6 +153,20 @@ foreach(module ${MODULES_TO_BUILD})
         # For performance
         target_compile_options(${module} PRIVATE -fopenmp-simd)
         target_compile_options(${module} PRIVATE -fcx-limited-range)
+
+        # Link-time optimisation in parallel
+        if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+            check_cxx_compiler_flag("-flto=auto" QILISDK_HAS_FLTO_AUTO)
+            if (QILISDK_HAS_FLTO_AUTO)
+                set(LTO_FLAG "-flto=auto")
+            else()
+                set(LTO_FLAG "-flto")
+            endif()
+            message(STATUS "[QiliSDK C++] Using ${LTO_FLAG} for optimised builds of module: ${module}")
+            set(LTO_IF_OPTIMISED "$<NOT:$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>>")
+            target_compile_options(${module} PRIVATE "$<${LTO_IF_OPTIMISED}:${LTO_FLAG};-fno-fat-lto-objects>")
+            target_link_options(${module} PRIVATE "$<${LTO_IF_OPTIMISED}:${LTO_FLAG}>")
+        endif()
 
     endif()
 

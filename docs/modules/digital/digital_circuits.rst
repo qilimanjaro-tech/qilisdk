@@ -62,6 +62,7 @@ You can also initialize a random circuit with a specified number of gates using 
         single_qubit_gates=[X, H],
         two_qubit_gates=[CNOT],
         ngates=10,
+        seed=42,
     )
     circuit.draw()
 

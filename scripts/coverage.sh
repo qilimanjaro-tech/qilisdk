@@ -17,7 +17,7 @@ mkdir -p coverage
 
 # Rebuild the C++ ensuring we build the test suite
 echo "Rebuilding C++ with tests enabled..."
-uv sync -v --all-groups --extra all-cu13 -Ccmake.build-type=Debug -Ccmake.define.tests=ON -Ccmake.define.coverage=ON --reinstall 2>&1
+uv sync -v --all-groups --extra all-cu13 -Ccmake.build-type=Debug -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0 -Ccmake.define.tests=ON -Ccmake.define.coverage=ON --reinstall 2>&1
 
 # Run the C++ test suite
 echo "Running C++ tests with coverage..."
@@ -39,7 +39,7 @@ done
 
 # Run Python coverage
 echo "Running Python tests with coverage..."
-python3 -m pytest --cov=qilisdk --cov-report=xml --cov-report=term-missing tests/unit_python/
+python3 -m pytest -n auto --cov=qilisdk --cov-report=xml --cov-report=term-missing tests/unit_python/
 mv coverage.xml coverage/coverage_python.xml
 
 # Generate the C++ coverage XML report 

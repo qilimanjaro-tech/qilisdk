@@ -421,7 +421,6 @@ def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(mon
 
 
 def test_get_qutip_observable_qtensor(monkeypatch):
-
     monkeypatch.setattr("qilisdk.backends.qutip_backend.mesolve", lambda *args, **kwargs: TimeEvolutionMockResults())
     backend = QutipBackend()
     z_matrix = QTensor(np.array([[1, 0], [0, -1]]))
@@ -433,7 +432,6 @@ def test_get_qutip_observable_qtensor(monkeypatch):
 
 
 def test_get_qutip_observable_hamiltonian_smaller_than_system(monkeypatch):
-
     monkeypatch.setattr(
         "qilisdk.backends.qutip_backend.mesolve", lambda *args, **kwargs: TimeEvolutionMockResults2Qubits()
     )
@@ -447,7 +445,6 @@ def test_get_qutip_observable_hamiltonian_smaller_than_system(monkeypatch):
 
 
 def test_get_qutip_observable_unsupported_type_raises():
-
     backend = QutipBackend()
     with pytest.raises(ValueError, match="unsupported observable type"):
         backend._to_qubip_observables(42, nqubits=1)
