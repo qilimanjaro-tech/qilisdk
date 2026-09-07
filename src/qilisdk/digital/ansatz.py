@@ -47,7 +47,7 @@ class HardwareEfficientAnsatz(Ansatz):
     """
     Hardware-efficient ansatz with ``layers`` entangling blocks and, by default,
     ``(layers + 1)`` single-qubit blocks: one before each entangling block plus one
-    one at the end, which can be disabled with ``final_rotation_layer=False``.
+    at the end, which can be disabled with ``final_rotation_layer=False``.
 
     Example:
         .. code-block:: python
