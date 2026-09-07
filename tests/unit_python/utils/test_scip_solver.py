@@ -90,40 +90,40 @@ def test_scip_solver_minimizes_binary():
     x = BinaryVariable("x")
     m = Model("bin")
     m.set_objective(1 * x)
-    _, sample = ScipSolver().solve(m)
-    assert sample[x] == 0
+    result = ScipSolver().solve(m)
+    assert result.sample[x] == 0
 
 
 def test_scip_solver_maximize():
     x = BinaryVariable("x")
     m = Model("max_bin")
     m.set_objective(1 * x, sense=ObjectiveSense.MAXIMIZE)
-    _, sample = ScipSolver().solve(m)
-    assert sample[x] == 1
+    result = ScipSolver().solve(m)
+    assert result.sample[x] == 1
 
 
 def test_scip_solver_quadratic_objective():
     x = Variable("x", Domain.INTEGER, bounds=(0, 7))
     m = Model("int_model")
     m.set_objective((x - 5) * (x - 5))
-    _, sample = ScipSolver().solve(m)
-    assert sample[x] == 5
+    result = ScipSolver().solve(m)
+    assert result.sample[x] == 5
 
 
 def test_scip_solver_real_variable_stays_continuous():
     y = Variable("y", Domain.REAL, bounds=(0, 10))
     m = Model("real_model")
     m.set_objective((y - 3.7) * (y - 3.7))
-    _, sample = ScipSolver().solve(m)
-    assert np.isclose(sample[y], 3.7, atol=1e-3)
+    result = ScipSolver().solve(m)
+    assert np.isclose(result.sample[y], 3.7, atol=1e-3)
 
 
 def test_scip_solver_spin_variable():
     s = SpinVariable("s")
     m = Model("spin_model")
     m.set_objective(s)
-    _, sample = ScipSolver().solve(m)
-    assert sample[s] == -1
+    result = ScipSolver().solve(m)
+    assert result.sample[s] == -1
 
 
 def test_scip_solver_respects_hard_constraint():
@@ -131,9 +131,9 @@ def test_scip_solver_respects_hard_constraint():
     m = Model("constrained")
     m.set_objective(x + y)
     m.add_constraint("c1", EQ(x + y, 1))
-    results, sample = ScipSolver().solve(m)
-    assert sample[x] + sample[y] == 1
-    assert results["c1"] == 0
+    result = ScipSolver().solve(m)
+    assert result.sample[x] + result.sample[y] == 1
+    assert result.results["c1"] == 0
 
 
 def test_scip_solver_less_than_or_equal_constraint():
@@ -142,9 +142,9 @@ def test_scip_solver_less_than_or_equal_constraint():
     # Maximizing would pick (1, 1); the <= constraint caps the sum at 1.
     m.set_objective(x + y, sense=ObjectiveSense.MAXIMIZE)
     m.add_constraint("c", LEQ(x + y, 1))
-    results, sample = ScipSolver().solve(m)
-    assert sample[x] + sample[y] <= 1
-    assert results["c"] == 0
+    result = ScipSolver().solve(m)
+    assert result.sample[x] + result.sample[y] <= 1
+    assert result.results["c"] == 0
 
 
 def test_scip_solver_greater_than_or_equal_constraint():
@@ -153,9 +153,9 @@ def test_scip_solver_greater_than_or_equal_constraint():
     # Minimizing would pick (0, 0); the >= constraint forces the sum up to 1.
     m.set_objective(x + y)
     m.add_constraint("c", GEQ(x + y, 1))
-    results, sample = ScipSolver().solve(m)
-    assert sample[x] + sample[y] >= 1
-    assert results["c"] == 0
+    result = ScipSolver().solve(m)
+    assert result.sample[x] + result.sample[y] >= 1
+    assert result.results["c"] == 0
 
 
 def test_scip_solver_unsupported_variable_raises():
@@ -181,8 +181,8 @@ def test_scip_solver_forwards_params():
     x = BinaryVariable("x")
     m = Model("params")
     m.set_objective(1 * x)
-    _, sample = ScipSolver().solve(m, params={"limits/time": 60})
-    assert sample[x] == 0
+    result = ScipSolver().solve(m, params={"limits/time": 60})
+    assert result.sample[x] == 0
 
 
 def test_scip_solver_infeasible_raises():
@@ -200,5 +200,5 @@ def test_scip_solver_returns_evaluate_of_best():
     x = BinaryVariable("x")
     m = Model("ret_test")
     m.set_objective(1 * x)
-    results, sample = ScipSolver().solve(m)
-    assert results == m.evaluate(sample)
+    result = ScipSolver().solve(m)
+    assert result.results == m.evaluate(result.sample)
