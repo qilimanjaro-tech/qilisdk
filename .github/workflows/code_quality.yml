@@ -97,7 +97,7 @@ jobs:
 
       - name: Install the project
         run: |
-          uv sync --frozen --group dev --extra all-cu13 \
+          uv sync --frozen --group dev --group backends --extra all-cu13 \
             -Ccmake.build-type=Debug \
             -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
@@ -107,7 +107,7 @@ jobs:
       # one environment covers every version we support.
       - name: Type Checking
         run: |
-          for version in 3.11 3.12 3.13; do
+          for version in 3.11 3.12 3.13 3.14; do
             echo "::group::ty check --python-version $version"
             ty check --output-format=github --python-version "$version"
             echo "::endgroup::"
