@@ -19,6 +19,7 @@ from enum import Enum
 from typing import Any, Callable, NoReturn
 
 from loguru import logger
+from packaging.requirements import Requirement
 
 
 class OptionalDependencyError(ImportError):
@@ -38,10 +39,18 @@ class RequirementMode(str, Enum):
 
 @dataclass(frozen=True)
 class DependencyGroup:
-    """One alternative group of distributions that satisfies a feature."""
+    """One alternative group of distributions that satisfies a feature.
+
+    Attributes:
+        dists (list[str]):
+            PEP 508 requirement strings, so a group can pin a floor as well as a
+            name, e.g. ``"cuda-quantum-cu12>=0.14.0"``.
+        extra (str):
+            The extra the user should install if this group is unsatisfied, if any.
+    """
 
     dists: list[str]
-    extra: str  # the extra the user should install if this group is missing
+    extra: str = ""
 
 
 @dataclass(frozen=True)
@@ -61,7 +70,6 @@ class OptionalFeature:
     mode: RequirementMode
     dependency_groups: list[DependencyGroup]
     symbols: list[Symbol]
-    install_hint: str | None = None
 
 
 @dataclass
@@ -95,6 +103,7 @@ class _OptionalDependencyStub:
         feature_name: str,
         import_error: Exception | None = None,
         install_hint: str | None = None,
+        unmet: list[str] | None = None,
     ) -> None:
         self._symbol_name = symbol_name
         self._feature_name = feature_name
@@ -102,10 +111,13 @@ class _OptionalDependencyStub:
         self.__name__ = symbol_name
         self.__qualname__ = symbol_name
         self._install_hint = install_hint
+        self._unmet = unmet or []
 
     def _raise(self) -> NoReturn:
         hint = f"`pip install qilisdk[{self._feature_name}]`" if self._install_hint is None else self._install_hint
         message = f"Using {self._symbol_name} requires installing optional dependencies: {hint}\n"
+        if self._unmet:
+            message += f"Unsatisfied requirements: {', '.join(self._unmet)}\n"
         if self._import_error is None:
             raise OptionalDependencyError(message)
         detail = f"{type(self._import_error).__name__}: {self._import_error}"
@@ -121,41 +133,70 @@ class _OptionalDependencyStub:
             symbol_name=f"{self._symbol_name}.{name}",
             feature_name=self._feature_name,
             import_error=self._import_error,
+            install_hint=self._install_hint,
+            unmet=self._unmet,
         )
 
     def __repr__(self) -> str:
-        return f"<missing optional dependency: {self._symbol_name} (extra '{self._feature_name}')>"
+        return f"<missing optional dependency: {self._symbol_name} (feature {self._feature_name!r})>"
 
 
 def _group_installed(dists: list[str]) -> tuple[bool, list[str]]:
-    logger.trace("[Optionals] Checking distributions {}", dists)
-    missing: list[str] = []
+    """Check a group of requirements against the installed distributions.
+
+    Args:
+        dists (list[str]): PEP 508 requirement strings.
+
+    Returns:
+        Whether every requirement is satisfied, and a description of each one that
+        is not, saying whether it is absent or which version was found instead.
+    """
+    logger.trace("[Optionals] Checking requirements {}", dists)
+    unmet: list[str] = []
     for dist in dists:
+        requirement = Requirement(dist)
         try:
-            importlib.metadata.version(dist)
+            installed = importlib.metadata.version(requirement.name)
         except importlib.metadata.PackageNotFoundError:
-            logger.debug("[Optionals] Distribution {} not installed", dist)
-            missing.append(dist)
-    return (len(missing) == 0), missing
+            logger.debug("[Optionals] Distribution {} not installed", requirement.name)
+            unmet.append(f"{dist} (not installed)")
+            continue
+        if not requirement.specifier.contains(installed, prereleases=True):
+            logger.debug(
+                "[Optionals] Distribution {} is {}, which does not satisfy {}", requirement.name, installed, dist
+            )
+            unmet.append(f"{dist} (found {installed})")
+    return (len(unmet) == 0), unmet
+
+
+def _install_command(dists: list[str]) -> str:
+    """Return the pip command installing ``dists``, quoted so specifiers survive the shell."""
+    return "`pip install " + " ".join(f'"{dist}"' for dist in dists) + "`"
+
+
+def _group_install_hint(group: DependencyGroup, feature: OptionalFeature) -> str:
+    """Return the command that satisfies a single dependency group."""
+    if group.extra:
+        return f"`pip install qilisdk[{group.extra}]`"
+    if group.dists:
+        # Not shipped under any extra, so point at the upstream distributions.
+        return _install_command(group.dists)
+    return f"`pip install qilisdk[{feature.name}]`"
 
 
 def _default_install_hint(feature: OptionalFeature) -> str:
-    # Override wins
-    if feature.install_hint:
-        return feature.install_hint
-
-    # ANY: show all alternatives
+    """Return the command the user should run to satisfy ``feature``."""
+    # ANY: every group is an alternative, so show them all.
     if feature.mode is RequirementMode.ANY:
-        extras = [g.extra for g in feature.dependency_groups if g.extra]
-        # fallback if extras not set
-        if extras:
-            options = " or ".join(f"`pip install qilisdk[{e}]`" for e in extras)
-            return options
-        return f"`pip install qilisdk[{feature.name}]`"
+        hints = [_group_install_hint(g, feature) for g in feature.dependency_groups]
+        return " or ".join(hints) if hints else f"`pip install qilisdk[{feature.name}]`"
 
-    # ALL: single extra name is typically the feature name
-    # If you use group.extra for ALL too, you can prefer it here.
-    return f"`pip install qilisdk[{feature.name}]`"
+    # ALL: a single command covers every group.
+    extra = next((g.extra for g in feature.dependency_groups if g.extra), "")
+    if extra:
+        return f"`pip install qilisdk[{extra}]`"
+    dists = [dist for group in feature.dependency_groups for dist in group.dists]
+    return _install_command(dists) if dists else f"`pip install qilisdk[{feature.name}]`"
 
 
 def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
@@ -171,12 +212,15 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
     """
     logger.debug("[Optionals] Resolving optional feature {}", feature.name)
 
-    def make_stub(symbol_name: str, *, import_error: Exception | None = None) -> _OptionalDependencyStub:
+    def make_stub(
+        symbol_name: str, *, import_error: Exception | None = None, unmet: list[str] | None = None
+    ) -> _OptionalDependencyStub:
         return _OptionalDependencyStub(
             symbol_name=symbol_name,
             feature_name=feature.name,
             import_error=import_error,
             install_hint=_default_install_hint(feature),
+            unmet=unmet,
         )
 
     satisfied_group: DependencyGroup | None = None
@@ -187,27 +231,28 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
         all_dists: list[str] = []
         for g in feature.dependency_groups:
             all_dists.extend(g.dists)
-        ok, missing = _group_installed(all_dists)
+        ok, unmet = _group_installed(all_dists)
         if not ok:
             logger.warning(
-                "[Optionals] Optional feature {} unavailable, missing distributions {}", feature.name, missing
+                "[Optionals] Optional feature {} unavailable, unsatisfied requirements {}", feature.name, unmet
             )
             # stubs
-            stubs: dict[str, Any] = {s.name: make_stub(s.name) for s in feature.symbols}
+            stubs: dict[str, Any] = {s.name: make_stub(s.name, unmet=unmet) for s in feature.symbols}
             return ImportedFeature(name=feature.name, symbols=stubs)
         satisfied_group = feature.dependency_groups[0] if feature.dependency_groups else None
 
     else:  # ANY
         for g in feature.dependency_groups:
-            ok, missing = _group_installed(g.dists)
+            ok, unmet = _group_installed(g.dists)
             if ok:
                 satisfied_group = g
                 break
-            missing_by_group.append((g, missing))
+            missing_by_group.append((g, unmet))
 
         if satisfied_group is None:
             logger.warning("[Optionals] Optional feature {} unavailable, no dependency group satisfied", feature.name)
-            stubs: dict[str, Any] = {s.name: make_stub(s.name) for s in feature.symbols}
+            all_unmet = [requirement for _, unmet in missing_by_group for requirement in unmet]
+            stubs: dict[str, Any] = {s.name: make_stub(s.name, unmet=all_unmet) for s in feature.symbols}
             return ImportedFeature(name=feature.name, symbols=stubs)
 
     # All good: import real symbols

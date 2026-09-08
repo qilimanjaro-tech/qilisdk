@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import warnings
 from typing import Any
 
 from qilisdk._optionals import (
@@ -34,22 +35,22 @@ __all__ = [
 
 OPTIONAL_FEATURES: list[OptionalFeature] = [
     OptionalFeature(
-        name="cuda",
+        name="cudaq",
         mode=RequirementMode.ANY,
         dependency_groups=[
-            DependencyGroup(dists=["cuda-quantum-cu12"], extra="cuda12"),
-            DependencyGroup(dists=["cuda-quantum-cu13"], extra="cuda13"),
+            DependencyGroup(dists=["cuda-quantum-cu12>=0.14.0"]),
+            DependencyGroup(dists=["cuda-quantum-cu13>=0.14.0"]),
         ],
         symbols=[
-            Symbol(path="qilisdk.backends.cuda_backend", name="CudaBackend"),
-            Symbol(path="qilisdk.backends.cuda_backend", name="CudaSamplingMethod"),
+            Symbol(path="qilisdk.backends.cudaq_backend", name="CudaqBackend"),
+            Symbol(path="qilisdk.backends.cudaq_backend", name="CudaqSamplingMethod"),
         ],
     ),
     OptionalFeature(
         name="qutip",
         mode=RequirementMode.ALL,
         dependency_groups=[
-            DependencyGroup(dists=["qutip", "qutip-qip", "matplotlib"], extra="qutip"),
+            DependencyGroup(dists=["qutip>=5.2.2", "qutip-qip>=0.4.0"]),
         ],
         symbols=[Symbol(path="qilisdk.backends.qutip_backend", name="QutipBackend")],
     ),
@@ -67,6 +68,14 @@ _OPTIONAL_FEATURE_BY_SYMBOL: dict[str, OptionalFeature] = {
 }
 
 __all__ += list(_OPTIONAL_FEATURE_BY_SYMBOL)
+
+# Superseded names, still resolvable so existing code keeps working. They are kept out
+# of ``__all__`` and out of the module globals so every access goes through the hook
+# below and warns.
+_DEPRECATED_SYMBOLS: dict[str, str] = {
+    "CudaBackend": "CudaqBackend",
+    "CudaSamplingMethod": "CudaqSamplingMethod",
+}
 
 
 def __getattr__(name: str) -> Any:  # ruff: ignore[any-type]
@@ -88,6 +97,10 @@ def __getattr__(name: str) -> Any:  # ruff: ignore[any-type]
     Raises:
         AttributeError: If ``name`` is not an optional backend symbol.
     """
+    replacement = _DEPRECATED_SYMBOLS.get(name)
+    if replacement is not None:
+        warnings.warn(f"{name} is deprecated, use {replacement} instead.", DeprecationWarning, stacklevel=2)
+        return __getattr__(replacement)
     feature = _OPTIONAL_FEATURE_BY_SYMBOL.get(name)
     if feature is None:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

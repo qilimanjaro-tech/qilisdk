@@ -14,7 +14,7 @@
 
 """Tests for the lazy import of optional backends in :mod:`qilisdk.backends`.
 
-The optional backends (``CudaBackend``/``CudaSamplingMethod`` -> ``cudaq`` and
+The optional backends (``CudaqBackend``/``CudaqSamplingMethod`` -> ``cudaq`` and
 ``QutipBackend`` -> ``qutip``) must only pull in their heavy third-party
 dependency the first time the symbol is actually accessed, never merely because
 ``qilisdk.backends`` (or the default ``QiliSim`` backend) was imported.
@@ -26,6 +26,7 @@ modules, so an in-process ``sys.modules`` check would be meaningless.
 
 from __future__ import annotations
 
+import importlib
 import importlib.util
 import json
 import subprocess
@@ -96,13 +97,13 @@ def test_optional_symbols_advertised_without_importing_dependency() -> None:
         names = dir(backends)
         print("RESULT:" + json.dumps({
             "all": backends.__all__,
-            "in_dir": {name: (name in names) for name in ["CudaBackend", "CudaSamplingMethod", "QutipBackend"]},
+            "in_dir": {name: (name in names) for name in ["CudaqBackend", "CudaqSamplingMethod", "QutipBackend"]},
             "cudaq": loaded("cudaq"),
             "qutip": loaded("qutip"),
         }))
         """
     )
-    for symbol in ("CudaBackend", "CudaSamplingMethod", "QutipBackend"):
+    for symbol in ("CudaqBackend", "CudaqSamplingMethod", "QutipBackend"):
         assert symbol in result["all"]
         assert result["in_dir"][symbol] is True
     # Advertising the names must not have triggered the heavy imports.
@@ -114,8 +115,8 @@ def test_optional_symbols_advertised_without_importing_dependency() -> None:
     ("symbol", "dependency"),
     [
         ("QutipBackend", "qutip"),
-        ("CudaBackend", "cudaq"),
-        ("CudaSamplingMethod", "cudaq"),
+        ("CudaqBackend", "cudaq"),
+        ("CudaqSamplingMethod", "cudaq"),
     ],
 )
 def test_accessing_symbol_imports_its_dependency_and_caches(symbol: str, dependency: str) -> None:
@@ -188,5 +189,25 @@ def test_module_dir_is_sorted_and_lists_all_symbols() -> None:
     """``dir(qilisdk.backends)`` is sorted and includes eager and lazy symbols."""
     names = dir(backends)
     assert names == sorted(names)
-    for symbol in ("QiliSim", "AnalogMethod", "CudaBackend", "CudaSamplingMethod", "QutipBackend"):
+    for symbol in ("QiliSim", "AnalogMethod", "CudaqBackend", "CudaqSamplingMethod", "QutipBackend"):
         assert symbol in names
+
+
+@pytest.mark.parametrize(
+    ("deprecated", "replacement"),
+    [
+        ("CudaBackend", "CudaqBackend"),
+        ("CudaSamplingMethod", "CudaqSamplingMethod"),
+    ],
+)
+def test_superseded_names_resolve_and_warn(deprecated: str, replacement: str) -> None:
+    """The superseded names still resolve to their replacement, and warn when used."""
+    modules = [backends]
+    if importlib.util.find_spec("cudaq") is not None:
+        # the backend module itself only imports with CUDA-Q present
+        modules.append(importlib.import_module("qilisdk.backends.cudaq_backend"))
+
+    for module in modules:
+        with pytest.warns(DeprecationWarning, match=f"{deprecated} is deprecated"):
+            resolved = getattr(module, deprecated)
+        assert resolved is getattr(module, replacement)
