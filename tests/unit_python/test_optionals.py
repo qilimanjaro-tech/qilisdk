@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
+from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 from packaging.requirements import Requirement
 
 from qilisdk._optionals import (
@@ -183,6 +184,27 @@ def test_missing_and_outdated_alternatives_are_both_reported() -> None:
     message = str(excinfo.value)
     assert f"numpy>=999.0.0 (found {installed})" in message
     assert "definitely-not-installed-dist-xyz (not installed)" in message
+
+
+def test_any_mode_warning_names_every_alternative(caplog):  # ruff: ignore[redefined-while-unused]
+    """The warning for an unavailable ANY feature says which requirements each alternative wanted."""
+    installed = importlib.metadata.version("numpy")
+    feature = OptionalFeature(
+        name="either",
+        mode=RequirementMode.ANY,
+        dependency_groups=[
+            DependencyGroup(dists=["numpy>=999.0.0"]),
+            DependencyGroup(dists=["definitely-not-installed-dist-xyz"]),
+        ],
+        symbols=[Symbol(path="unused", name="Thing")],
+    )
+
+    import_optional_dependencies(feature)
+
+    assert (
+        "Optional feature either unavailable, unsatisfied requirements "
+        f"['numpy>=999.0.0 (found {installed})'] or ['definitely-not-installed-dist-xyz (not installed)']"
+    ) in caplog.text
 
 
 def test_satisfied_floor_resolves_the_symbol() -> None:
