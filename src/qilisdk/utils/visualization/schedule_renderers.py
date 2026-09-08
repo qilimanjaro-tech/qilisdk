@@ -77,7 +77,7 @@ class MatplotlibScheduleRenderer:
             for text in leg.get_texts():
                 text.set_color(title_color)
         self.ax.set_title(
-            self.style.title or "Schedule Eigenvalues",
+            self.style.title or "Schedule",
             fontsize=style.title_fontsize,
             color=title_color,
             fontweight=style.fontweight,

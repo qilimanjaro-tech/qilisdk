@@ -220,14 +220,13 @@ class Bitwise(Encoding):
         if var.domain is Domain.REAL:
             bounds = (bounds[0] / precision, bounds[1] / precision)
 
-        abs_bound = np.abs(bounds[1] - bounds[0])
-        n_binary = int(np.floor(np.log2(abs_bound if abs_bound != 0 else 1)))
-        binary_vars = [BinaryVariable(var.label + f"({i})") for i in range(n_binary + 1)]
+        n_binary = Bitwise.num_binary_equivalent(var, precision)
+        binary_vars = [BinaryVariable(var.label + f"({i})") for i in range(n_binary)]
 
         term: Expression = Constant(0)
-        for i in range(n_binary):
+        for i in range(n_binary - 1):
             term += 2**i * binary_vars[i]
-        term += (np.abs(bounds[1] - bounds[0]) + 1 - 2**n_binary) * binary_vars[-1]
+        term += (np.abs(bounds[1] - bounds[0]) + 1 - 2 ** (n_binary - 1)) * binary_vars[-1]
         term += bounds[0]
         return term * var.precision if var.domain is Domain.REAL else term
 
@@ -263,6 +262,10 @@ class Bitwise(Encoding):
         bounds = var.bounds
         if var.domain is Domain.REAL:
             bounds = (bounds[0] / precision, bounds[1] / precision)
+
+        # Fixed vars for now are represented by a single (unused) binary variable
+        if bounds[1] - bounds[0] == 0:
+            return 1
 
         n_binary = int(np.floor(np.log2(np.abs(bounds[1] - bounds[0]))))
 
@@ -308,7 +311,7 @@ class OneHot(Encoding):
         if var.domain is Domain.REAL:
             bounds = (bounds[0] / precision, bounds[1] / precision)
 
-        n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
+        n_binary = OneHot.num_binary_equivalent(var, precision)
 
         binary_vars = [BinaryVariable(var.label + f"({i})") for i in range(n_binary)]
 
@@ -348,11 +351,7 @@ class OneHot(Encoding):
 
     @staticmethod
     def encoding_constraint(var: Variable, precision: float = 1e-2) -> Comparison:
-        bounds = var.bounds
-        if var.domain is Domain.REAL:
-            bounds = (bounds[0] / precision, bounds[1] / precision)
-
-        n_binary = int(np.abs(bounds[1] - bounds[0])) + 1
+        n_binary = OneHot.num_binary_equivalent(var, precision)
 
         binary_vars = [BinaryVariable(var.label + f"({i})") for i in range(n_binary)]
         return Comparison(lhs=sum(binary_vars, Constant(0)), rhs=1, operation=ComparisonOperation.EQ)
@@ -400,7 +399,7 @@ class DomainWall(Encoding):
         if var.domain is Domain.REAL:
             bounds = (bounds[0] / precision, bounds[1] / precision)
 
-        n_binary = int(np.abs(bounds[1] - bounds[0]))
+        n_binary = DomainWall.num_binary_equivalent(var, precision)
 
         binary_vars = [BinaryVariable(var.label + f"({i})") for i in range(n_binary)]
 
@@ -437,11 +436,7 @@ class DomainWall(Encoding):
 
     @staticmethod
     def encoding_constraint(var: Variable, precision: float = 1e-2) -> Comparison:
-        bounds = var.bounds
-        if var.domain is Domain.REAL:
-            bounds = (bounds[0] / precision, bounds[1] / precision)
-
-        n_binary = int(np.abs(bounds[1] - bounds[0]))
+        n_binary = DomainWall.num_binary_equivalent(var, precision)
 
         binary_vars = [BinaryVariable(var.label + f"({i})") for i in range(n_binary)]
         return Comparison(
@@ -757,7 +752,13 @@ class Variable(BaseVariable):
         self._invalidate_encoding()
 
     def __copy__(self) -> Variable:
-        return Variable(label=self.label, domain=self.domain, bounds=self.bounds, encoding=self._encoding)
+        return Variable(
+            label=self.label,
+            domain=self.domain,
+            bounds=self.bounds,
+            encoding=self._encoding,
+            precision=self._precision,
+        )
 
     def __getitem__(self, item: int) -> BaseVariable:
         if self._expression is None:

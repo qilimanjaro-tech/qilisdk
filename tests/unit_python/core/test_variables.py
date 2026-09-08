@@ -938,6 +938,30 @@ def test_mathematical_map():
     assert isinstance(copy(dummy_map), DummyMap)
 
 
+def test_mathematical_map_nested_in_term():
+    """A map is evaluated through its recursive core when it is an element of a larger term."""
+    b = BinaryVariable("b")
+    c = BinaryVariable("c")
+    p = Parameter("p", 1)
+
+    # The map wraps a sum, and is itself nested in a sum, so it is evaluated through the recursion.
+    nested = DummyMap(2 * b + p) + 1
+    assert nested.evaluate({b: 1}) == 4
+    assert nested.evaluate({b: 0}) == 2
+    assert nested.evaluate({b: 1, p: 3}) == 6
+
+    assert (Sin(2 * b + p) + 1).evaluate({b: 1}) == pytest.approx(np.sin(3) + 1)
+    assert (2 * DummyMap(2 * b + p)).evaluate({b: 1}) == 6
+
+    # Plain variables and parameters nested in a map inside a term.
+    assert (DummyMap(b) + c).evaluate({b: 1, c: 1}) == 2
+    assert (DummyMap(p) + c).evaluate({c: 1}) == 2
+
+    t = DummyMap(2 * b + p) + c
+    with pytest.raises(EvaluationError, match=r"No value was provided to evaluate the binary variable c\."):
+        t.evaluate({b: 1})
+
+
 def test_sin_map():
     b = BinaryVariable("b")
     p = Parameter("p", 1)
@@ -1546,3 +1570,114 @@ def test_parameter_non_trainable_bounds_are_locked_to_value():
 
     p.set_bounds(0.0, 3.0)
     assert p.bounds == (0.0, 3.0)
+
+
+def test_variable_copy_preserves_precision_and_encoding():
+    x = Variable("x", Domain.REAL, bounds=(1, 2), encoding=Bitwise, precision=1e-1)
+
+    y = copy(x)
+
+    assert y.precision == x.precision
+    assert y.encoding is x.encoding
+    assert y.to_binary() == x.to_binary()
+
+
+def test_bitwise_num_binary_equivalent_with_equal_bounds():
+    x = Variable("x", Domain.INTEGER, bounds=(3, 3), encoding=Bitwise)
+
+    assert x.num_binary_equivalent() == 1
+    # The single binary variable has a zero coefficient, so only the offset survives.
+    assert x.to_binary().get_constant() == 3
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for evaluation through deeply nested expressions.
+# ---------------------------------------------------------------------------
+
+
+def test_nested_terms_are_hash_and_eval_stable_across_build_orders():
+    # The same nested expression built with commuted operands must be equal,
+    # hash-equal, and evaluate identically - a stale cache in any sub-term
+    # would break one of these.
+    x = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+    z = Variable("z", Domain.REAL)
+
+    a = (x + y) * (y + z) + 2 * x * z + 5
+    b = 5 + 2 * z * x + (z + y) * (y + x)
+
+    assert a == b
+    assert hash(a) == hash(b)
+    for values in ({x: 0, y: 0, z: 0}, {x: 1, y: 2, z: 3}, {x: -2, y: 1, z: 4}):
+        assert a.evaluate(values) == b.evaluate(values)
+
+
+def test_evaluate_of_deeply_nested_term_matches_manual_computation():
+    x = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+    z = Variable("z", Domain.REAL)
+
+    t = ((x + 1) * (y + 2)) * (z + 3) + 4 * x * y - 2
+
+    for xv, yv, zv in ((0, 0, 0), (1, 1, 1), (2, -1, 3), (-2, 5, -4)):
+        expected = ((xv + 1) * (yv + 2)) * (zv + 3) + 4 * xv * yv - 2
+        assert t.evaluate({x: xv, y: yv, z: zv}) == expected
+
+
+def test_evaluate_missing_variable_raises_for_partial_assignment():
+    x = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+
+    t = x * y + x
+    with pytest.raises(EvaluationError, match=r"No value was provided to evaluate the variable y\."):
+        t.evaluate({x: 1})
+
+
+def test_evaluate_uses_parameter_default_and_allows_override():
+    x = Variable("x", Domain.REAL)
+    p = Parameter("p", 5)
+
+    t = p + x
+    assert t.evaluate({x: 2}) == 7  # p falls back to its stored value of 5
+    assert t.evaluate({x: 2, p: 3}) == 5  # provided value overrides the default
+
+
+def test_evaluate_rejects_list_value_for_parameter():
+    x = Variable("x", Domain.REAL)
+    p = Parameter("p", 1)
+
+    t = p + x
+    with pytest.raises(NotImplementedError, match=r"Evaluating the value of a parameter with a list is not supported"):
+        t.evaluate({x: 1, p: [1, 0]})
+
+
+def test_evaluate_applies_math_map_nested_inside_a_term():
+    # Regression: a Function nested inside another expression must still have
+    # its map applied when reached through the recursive evaluation.
+    p = Parameter("p", 1)
+
+    t = Sin(p) + 2
+    assert t.evaluate({}) == pytest.approx(np.sin(1) + 2)
+
+    # a map alongside a plain variable in the same ADD term, and a map wrapping a term
+    x = Variable("x", Domain.REAL)
+    t2 = Sin(x) + x
+    assert t2.evaluate({x: 0.5}) == pytest.approx(np.sin(0.5) + 0.5)
+
+    t3 = Cos(2 * x) + 1
+    assert t3.evaluate({x: 0.5}) == pytest.approx(np.cos(1.0) + 1)
+
+
+def test_variable_equality_marker_is_label_based_and_type_safe():
+    x1 = Variable("x", Domain.REAL)
+    x2 = Variable("x", Domain.REAL)
+    y = Variable("y", Domain.REAL)
+
+    assert x1 == x2  # equal by label
+    assert x1 != y
+    # equality against non-variables must be False, never an error
+    assert (x1 == 5) is False
+    assert (x1 == "x") is False
+    assert (x1 == (x1 + 1)) is False  # a Term is not a variable
+    # different variable subclasses with the same label still compare equal by label
+    assert BinaryVariable("v") == SpinVariable("v")
