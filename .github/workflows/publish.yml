@@ -58,7 +58,7 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074  # v4.2.0
         env:
-          CIBW_BUILD: "cp311-* cp312-* cp313-*"
+          CIBW_BUILD: "cp311-* cp312-* cp313-* cp314-*"
           CIBW_SKIP: "*-musllinux_*"
           CIBW_MANYLINUX_X86_64_IMAGE: "manylinux_2_28"
           CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux_2_28"
@@ -158,13 +158,13 @@ jobs:
       id-token: write
     steps:
       - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c  # v6.2.3
+        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c  # v6.2.4
         with:
           role-to-assume: arn:aws:iam::723412851021:role/GitHub_actions_role
           aws-region: eu-west-1
           role-session-name: GitHubActions-DevOps
       - name: Assume deploy role in target account
-        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c  # v6.2.3
+        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c  # v6.2.4
         with:
           role-to-assume: arn:aws:iam::723412851021:role/Code-Artifact-Publish
           aws-region: eu-west-1
