@@ -207,6 +207,40 @@ def test_any_mode_warning_names_every_alternative(caplog):  # ruff: ignore[redef
     ) in caplog.text
 
 
+def test_any_mode_warning_without_dependency_groups(caplog):  # ruff: ignore[redefined-while-unused]
+    """A feature that declares no alternatives at all still warns, without a dangling requirement list."""
+    feature = OptionalFeature(
+        name="empty",
+        mode=RequirementMode.ANY,
+        dependency_groups=[],
+        symbols=[Symbol(path="unused", name="Thing")],
+    )
+
+    imported = import_optional_dependencies(feature)
+
+    assert "Optional feature empty unavailable, unsatisfied requirements none declared" in caplog.text
+    with pytest.raises(OptionalDependencyError):
+        imported.symbols["Thing"]()
+
+
+def test_any_mode_second_alternative_resolves_the_symbol(caplog):  # ruff: ignore[redefined-while-unused]
+    """A later alternative satisfying the feature resolves the symbol and warns about nothing."""
+    feature = OptionalFeature(
+        name="either",
+        mode=RequirementMode.ANY,
+        dependency_groups=[
+            DependencyGroup(dists=["definitely-not-installed-dist-xyz"]),
+            DependencyGroup(dists=["numpy>=1.0.0"]),
+        ],
+        symbols=[Symbol(path="qilisdk._optionals", name="OptionalFeature")],
+    )
+
+    imported = import_optional_dependencies(feature)
+
+    assert imported.symbols["OptionalFeature"] is OptionalFeature
+    assert "unavailable" not in caplog.text
+
+
 def test_satisfied_floor_resolves_the_symbol() -> None:
     """A distribution that meets its floor lets the real symbol through."""
     feature = OptionalFeature(
