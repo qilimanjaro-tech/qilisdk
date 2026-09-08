@@ -17,6 +17,9 @@
 #include <gtest/gtest.h>
 #include <pybind11/embed.h>
 #include "../../../src/qilisdk_cpp/core/qtensor.h"
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
 
 namespace py = pybind11;
 
@@ -1512,6 +1515,32 @@ TEST(SampleTest, NegativeProbability_Ignored) {
     std::map<std::string, int> counts = q.sample(10, 42);
     EXPECT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts["1"], 10);
+}
+
+TEST(SampleTest, NegativeProbability_Throws) {
+    // Pauli Z is not a state, its negative eigenvalue is far too large to be numerical noise
+    SparseMatrix m(2, 2);
+    m.insert(0, 0) = 1.0;
+    m.insert(1, 1) = -1.0;
+    m.makeCompressed();
+    QTensorCpp q(m);
+    EXPECT_THROW(q.sample(10, 42), py::value_error);
+}
+
+TEST(SampleTest, ThreadCount_SameCounts) {
+    // The same seed must give the same counts however many threads happen to be available
+    QTensorCpp q = QTensorCpp::uniform(3);
+#if defined(_OPENMP)
+    const int original_threads = omp_get_max_threads();
+    omp_set_num_threads(1);
+    std::map<std::string, int> single = q.sample(1000, 42);
+    omp_set_num_threads(4);
+    std::map<std::string, int> multi = q.sample(1000, 42);
+    omp_set_num_threads(original_threads);
+    EXPECT_EQ(single, multi);
+#else
+    EXPECT_EQ(q.sample(1000, 42), q.sample(1000, 42));
+#endif
 }
 
 TEST(SampleTest, Scalar_Throws) {

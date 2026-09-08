@@ -1936,7 +1936,8 @@ std::map<std::string, int> QTensorCpp::sample(int nshots, int seed) const {
 
     The probability of each outcome is given by probabilities(), i.e. the squared magnitudes of the coefficients for a
     ket or bra and the diagonal elements for a density matrix. The distribution is renormalized before sampling, so
-    states which are not perfectly normalized can be sampled too.
+    states which are not perfectly normalized can be sampled too, but negative entries are only tolerated when they
+    are within default_atol of zero, since anything larger means this QTensor is not a state.
 
     Args:
         nshots (int): The number of shots to draw.
@@ -1957,19 +1958,24 @@ std::map<std::string, int> QTensorCpp::sample(int nshots, int seed) const {
     const Eigen::Index dim = Eigen::Index(probs.size());
     double* probs_data = probs.data();
 
-    // Accumulate the total probability
+    // Accumulate the total probability, clamping away negative entries within tolerance
     double total_prob = 0.0;
+    double min_prob = 0.0;
 #ifndef _WIN32
 #if defined(_OPENMP)
-#pragma omp parallel for reduction(+ : total_prob) schedule(static)
+#pragma omp parallel for reduction(+ : total_prob) reduction(min : min_prob) schedule(static)
 #endif
 #endif
     for (Eigen::Index i = 0; i < dim; ++i) {
         if (probs_data[i] < 0.0) {
+            min_prob = std::min(min_prob, probs_data[i]);
             probs_data[i] = 0.0;
         } else {
             total_prob += probs_data[i];
         }
+    }
+    if (min_prob < -default_atol) {
+        throw py::value_error("Cannot sample from a QTensor with negative probabilities");
     }
     if (total_prob <= 0.0) {
         throw py::value_error("Cannot sample from a QTensor with zero total probability");

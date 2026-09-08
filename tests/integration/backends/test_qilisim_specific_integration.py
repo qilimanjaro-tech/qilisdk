@@ -1045,3 +1045,19 @@ def test_same_result_as_statevector_big_circuit():
 
     # Check to make sure the keys are the same (i.e. no unexpected outcomes)
     assert set(stab_result.keys()) == set(sv_result.keys()), f"Different outcome keys: {stab_result} vs {sv_result}"
+
+
+def test_qtensor_sample_is_unaffected_by_backend_thread_count():
+    """QTensor.sample has no thread knob of its own, and ``omp_set_num_threads`` is process
+    global, so a QiliSim run which sets the thread count used to change the counts every later
+    sample produced from the same seed. The seed alone must fix the outcome."""
+    qtensor = QTensor.uniform(3)
+    before = qtensor.sample(nshots=1000, seed=42)
+
+    circuit = Circuit(nqubits=1)
+    circuit.add(H(0))
+    QiliSim(execution_config=ExecutionConfig(num_threads=1, seed=1)).execute(
+        DigitalPropagation(circuit=circuit), readout=Readout().with_sampling(nshots=1)
+    )
+
+    assert qtensor.sample(nshots=1000, seed=42) == before
