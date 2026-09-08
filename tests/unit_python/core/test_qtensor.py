@@ -1195,10 +1195,12 @@ def test_qtensor_sample_negative_probability_ignored():
 
 def test_qtensor_sample_negative_probability_raises():
     # Pauli Z is not a state, its negative eigenvalue is far too large to be numerical noise
+    qt = QTensor(np.diag([1.0, -1.0]))
     with pytest.raises(ValueError, match="negative probabilities"):
-        QTensor(np.diag([1.0, -1.0])).sample(nshots=10, seed=1)
+        qt.sample(nshots=10, seed=1)
+    qt2 = QTensor(np.diag([-0.5, 0.6, 0.6, 0.3]))
     with pytest.raises(ValueError, match="negative probabilities"):
-        QTensor(np.diag([-0.5, 0.6, 0.6, 0.3])).sample(nshots=10, seed=1)
+        qt2.sample(nshots=10, seed=1)
 
 
 def test_qtensor_negative_norm():
