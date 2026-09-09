@@ -1,3 +1,606 @@
+# qilisdk 0.2.2rc1 (2026-09-09)
+
+## Features
+
+- Introduced a real expression-tree AST rooted at the new `qilisdk.core.Expression` base class, replacing the previous flattened-polynomial model. Building expressions is unchanged: `2 * BinaryVariable("b") + 1` and every other arithmetic spelling still works exactly as before, the resulting object is just an `Expression` instead of a `Term`. Symbolic values (gate angles, Hamiltonian coefficients, schedule coefficients, model objectives/constraints) are now uniformly typed `Expression`, built from `Add`/`Mul`/`Pow`/`Constant` and the unary `Function` nodes `Sin`/`Cos`/`Exp`/`Log`/`Tan`/`Sqrt`/`Abs`. The new tree adds symbolic differentiation (`Expression.derivative`), distribution (`Expression.expand`), substitution (`Expression.substitute`), operand listing (`Expression.to_list`), arbitrary unary functions, and non-integer/symbolic powers, while preserving order-independent structural equality (`x + y == y + x`). `Variable` now defaults to `Domain.INTEGER`, so the domain only has to be passed when you want a different one. It also fixes a wrong-answer bug in the old model, where a product of two identical function terms collapsed into a sum: `Sin(x) * Sin(x)` evaluated as `2 * sin(x)` and is now `sin(x) ** 2`. ([PR #226](https://github.com/qilimanjaro-tech/qilisdk/pull/226))
+- A new digital simulation method has been added to QiliSim, based on stabilizer states. This allow efficient simulation of circuits with small numbers of T gates. For example, to sample from a 1000-qubit GHZ state in around 10s on a laptop:
+
+  ```python
+  from time import time
+  from qilisdk.digital import Circuit, H, CNOT
+  from qilisdk.backends import QiliSim, DigitalMethod
+  from qilisdk.readout import Readout
+  from qilisdk.functionals import DigitalPropagation
+
+  # Settings
+  nqubits = 1000
+  nshots = 10000
+
+  # Circuit creating a GHZ state
+  c = Circuit(nqubits)
+  c.add(H(0))
+  for i in range(1, nqubits):
+      c.add(CNOT(i - 1, i))
+
+  # Set everything up
+  digital = DigitalPropagation(circuit=c)
+  backend_stab = QiliSim(digital_simulation_method=DigitalMethod.stabilizer())
+  readout = Readout().with_sampling(nshots)
+
+  # Run it
+  t0 = time()
+  results_stab = backend_stab.execute(digital, readout)
+  t1 = time()
+  samples_stab = results_stab.get_samples()
+  print(samples_stab)
+  print(f"Execution time: {t1 - t0} seconds")
+  ``` 
+
+  It can also do more general circuits, however either a performance cost (scaling as 2^{number of T gates}) or an accuracy cost (if truncation is enabled via setting `max_states` to something non-zero). ([PR #239](https://github.com/qilimanjaro-tech/qilisdk/pull/239))
+- Support for time-dependent Lindblad noise has been added, supported in both `QiliSim` and `QutipBackend`:
+
+  ```python
+  from qilisdk.noise import LindbladGenerator
+  from qilisdk.core import QTensor
+  import numpy as np
+
+  J1 = QTensor(np.array([[0, 1], [0, 0]]))
+  T = 100
+  lindblad_noise = LindbladGenerator(jump_operators=[J1], rates=[lambda t: 0.005 * (1 + np.sin(t / T))])
+  ```
+
+  By extension, `QutipBackend` now also supports general noise for analog evolution (but for now still not for digital). ([PR #245](https://github.com/qilimanjaro-tech/qilisdk/pull/245))
+- GPU support has been added to the Variational Annealing method in QiliSim. No extra dependencies have been added, it tries to load the CUDA libraries as they would be installed via the QiliSDK CUDA optional install, and defaults to CPU if that fails. Usage is via a flag in the `ExecutionConfig`:
+
+  ```python
+  from qilisdk.backends import QiliSim, AnalogMethod, ExecutionConfig
+
+  backend = QiliSim(
+      analog_simulation_method=AnalogMethod.variational_annealing(),
+      execution_config=ExecutionConfig(gpu=True),
+  )
+  ```
+
+  For a 60-qubit test case (an X to ZZ chain, second-order ansatz, defaults nshots), the time taken goes from 108s (8-core CPU), to 18s (8-core CPU + RTX 4060 GPU). ([PR #252](https://github.com/qilimanjaro-tech/qilisdk/pull/252))
+- QiliSim statevector performance has been improved for both digital and analog simulation:
+
+   - For a 27 qubit random circuit of 1000 gates, sampling time is down from 44s -> 16s (**2.75x speedup**).
+   - For a 25 qubit X to ZZ annealing task, time to reach 99% of the solution is down from 122s -> 79s (**1.54x speedup**).
+
+  This was done by analyzing the assembly via `perf`, then improving the memory accesses and ensuring that we correctly use SIMD instructions. We also implement gate-fusion, where nearby gates that act on similar sections of the statevector are grouped and applied together to improve memory access. To control this, there are two new arguments to the `DigitalMethod.statevector()` method: `fuse_gates` and `max_fused_qubits`. `fuse_gates` is a boolean toggle to decide whether to use gate fusion (defaults to on), whilst `max_fused_qubits` decides how many qubits we should try to fuse at once, defaulting to 4, which has been benchmarked and seems to be optimum (based on modern CPU cache sizes).
+
+  Performance can be pushed if the user compiles specific to their machine with the new compile flag
+   `-Ccmake.define.build_native=ON`, which for newer CPUs can offer some slight benefit. If the user cares more about performance than precision, they can also compile using single-precision floats rather than doubles with the new flag `-Ccmake.define.single_precision=ON`. This is fine for sampling (since finite sampling is inherently noisy) but can give non-physical values for expectation values or state tomography. On my laptop with both flags the above random circuit takes 14s instead, so a ~10% speedup. ([PR #255](https://github.com/qilimanjaro-tech/qilisdk/pull/255))
+- Two new classical solvers have been added: ScipySolver and ScipSolver. SCIP is one of the leading mixed-integer programming solvers which doesn't need a license (compared to something like Gurobi). It can be installed via an optional extra:
+
+  ```bash
+  uv pip install qilisdk[scip]
+  ```
+
+  Usage is the same as with the BruteForceSolver:
+  ```python
+  from qilisdk.core import Model
+  from qilisdk.utils.classical_solvers import BruteForceSolver, ScipySolver, ScipSolver
+
+  model = Model.random_ising(10)
+  # solver = BruteForceSolver()
+  # solver = ScipSolver()
+  solver = ScipySolver(method="nelder-mead")
+  solution = solver.solve(model)
+  print(solution)
+  ```
+  For a random Ising model with 13 qubits:
+  ```
+  Solver                               Time           Solution
+  ------------------------------------------------------------------
+  Brute force                         7.4171 s        -5.1688
+  Scipy (Nelder-Mead)                 0.6702 s        -4.4559
+  Scipy (Powell)                      0.7337 s        -4.4559
+  Scipy (TNC)                         0.1107 s        -2.8488
+  Scipy (COBYLA)                      0.1357 s        -4.4323
+  Scipy (differential_evolution)      4.3912 s        -5.1688
+  Scipy (basinhopping)                1.4425 s        -3.3048
+  SCIP                                0.4231 s        -5.1688
+  QiliSim (statevector)               1.4903 s        -5.0092
+  QiliSim (VA, order=1)               1.0353 s        -4.5232
+  QiliSim (VA, order=2)               2.3634 s        -5.1386
+  ```
+
+  For a random Ising model with 30 qubits:
+  ```
+  Solver                               Time          Solution
+  ------------------------------------------------------------------
+  SCIP                                2.3561 s       -28.1468
+  QiliSim (VA, order=1)               3.4792 s       -28.0689
+  QiliSim (VA, order=2)              32.7094 s       -28.1075
+  ``` ([PR #259](https://github.com/qilimanjaro-tech/qilisdk/pull/259))
+- Previously `QTensor` used a row-sparse matrix format, which was better some quantum objects (e.g. gates) but not so good for things like statevectors. Now, the C++ side of `QTensor` detects the best sparsity pattern based on the initialization, allowing faster initialization and manipulation. The before and after, comparing versus `numpy` for some 25-qubit state initializatons:
+
+  ```
+  # Task    |  Numpy  | QTensor Before | QTensor After
+  # --------|---------|----------------|----------------
+  # zero    | 0.00003 | 0.37700        | 0.00001
+  # uniform | 0.09614 | 1.19820        | 0.08174
+  # ket     | 0.00002 | 0.38340        | 0.00001
+  # bra     | 0.00001 | 0.00002        | 0.00000
+  ``` ([PR #265](https://github.com/qilimanjaro-tech/qilisdk/pull/265))
+- Updated SpeQtrum job submission to display maintenance messages from PublicAPI and fixed the execution type when submitting a quantum reservoir payload. ([PR #270](https://github.com/qilimanjaro-tech/qilisdk/pull/270))
+- When executing a job, there is now a new field that can be returned: the time taken for execution. For now this is only used for local simulation jobs, but later support may be added for real quantum hardware execution time. Example:
+
+  ```python
+  from qilisdk.digital import Circuit, H, CNOT
+  from qilisdk.backends import QiliSim
+  from qilisdk.functionals import DigitalPropagation
+  from qilisdk.readout import Readout
+
+  c = Circuit(5)
+  c.add(H(0))
+  c.add(CNOT(0, 1))
+  func = DigitalPropagation(c)
+  readout = Readout().with_sampling(nshots=100)
+  backend = QiliSim()
+  res = backend.execute(func, readout)
+  print(res)
+  ``` ([PR #276](https://github.com/qilimanjaro-tech/qilisdk/pull/276))
+- More logging has been added to QiliSDK, using the loguru library as before. Different logging levels are now used throughout the library (TRACE, DEBUG, INFO, SUCCESS, WARNING, ERROR, CRITICAL) and can be enabled either via changed the `logging_config.yaml` or via the configure function as follows:
+
+  ```python
+  from qilisdk.logging import configure_logging
+
+  configure_logging(level="DEBUG")
+  ``` ([PR #278](https://github.com/qilimanjaro-tech/qilisdk/pull/278))
+- The normalization of the state in all simulation methods in QiliSim can now be disabled:
+
+  ```python
+  from qilisdk.backends import QiliSim, ExecutionConfig
+
+  backend = QiliSim(execution_config=ExecutionConfig(normalize_state=False))
+  ``` ([PR #280](https://github.com/qilimanjaro-tech/qilisdk/pull/280))
+- QiliSim performance has been generally increased via a variety of micro-optimizations and improvements to gate fusion. The Arnoldi step now does matrix-free operations by default, increasing performance, although the integrators are still faster. Reservoirs have benefited especially from these performance improvements.
+
+  Approximate performance improvements:
+  - digital statevector simulation: ~1.5x
+  - analog integration: ~1.2x
+  - reservoirs: ~10x
+
+  ([PR #283](https://github.com/qilimanjaro-tech/qilisdk/pull/283))
+- Some generators of common machine-learning datasets have been added to QiliSDK. These are useful when working with quantum reservoirs. They all have a generate method that allows generating samples as follows:
+
+  ```python
+  from qilisdk.ml.datasets import MackeyGlass
+
+  inputs, targets = MackeyGlass().generate(100)
+  ```
+
+  You can also draw the datasets:
+  ```python
+  MackeyGlass.draw(inputs, style="2d")
+  ```
+
+  An example of this use with a quantum reservoir is as follows:
+  ```python
+  import numpy as np
+
+  from qilisdk.analog import Schedule, X, Y, Z
+  from qilisdk.backends import AnalogMethod, QiliSim
+  from qilisdk.core import QTensor
+  from qilisdk.digital import RY, Circuit
+  from qilisdk.functionals import QuantumReservoir, ReservoirInput, ReservoirLayer
+  from qilisdk.ml.datasets import NARMA
+  from qilisdk.readout import Readout
+
+  NQUBITS = 5
+  NSTEPS = 500  # one reservoir layer per time step
+  WASHOUT = 50  # steps dropped while the reservoir forgets its initial state
+  NTRAIN = 300  # training steps; the remaining steps are the test set
+
+  # The NARMA task: a random drive u(t) and the nonlinear response y(t) to predict.
+  inputs, targets = NARMA(order=2, seed=42).generate(NSTEPS)
+  u, y = inputs[:, 0], targets[:, 0]
+
+  # The Hamiltonian to use
+  J = 1
+  hx = 0.5
+  hz = 1.05
+  hamiltonian = (
+      J * sum(X(i) * X(i + 1) for i in range(NQUBITS - 1))
+      + hz * sum(Z(i) for i in range(NQUBITS))
+      + hx * sum(X(i) for i in range(NQUBITS))
+  )
+
+  # Each layer encodes one input sample as an RY rotation on qubit 0, evolves the whole
+  # register, and then resets qubit 0. That reset is what gives the reservoir a fading
+  # memory: information injected at step t leaks into the other qubits and slowly decays.
+  input_encoding = Circuit(NQUBITS)
+  input_encoding.add(RY(0, theta=ReservoirInput("u", 0.0)))
+
+  # Set up the reservoir
+  layer = ReservoirLayer(
+      evolution_dynamics=Schedule.constant(hamiltonian, total_time=5.0, dt=0.5),
+      input_encoding=input_encoding,
+      qubits_to_reset=[0],
+  )
+  reservoir = QuantumReservoir(
+      initial_state=QTensor.zero(NQUBITS),
+      reservoir_layer=layer,
+      input_per_layer=[{"u": float(2 * np.arcsin(np.sqrt(sample / 0.5)))} for sample in u],
+  )
+
+  # The expectation values measured after each layer are the features of the readout
+  observables = [op(q) for op in (X, Y, Z) for q in range(NQUBITS)]
+  observables += [(Z(i) * Z(j)) for i in range(NQUBITS) for j in range(i + 1, NQUBITS)]
+
+  # Set up the simulation
+  backend = QiliSim(analog_simulation_method=AnalogMethod.direct())
+  result = backend.execute(reservoir, Readout().with_expectation(observables=observables))
+
+  # The intermediate readouts cover layers 0 to L-2 and the final one is layer L-1, so
+  # together they give exactly one feature row per input sample.
+  features = np.array([*result.get_intermediate_expectation_values(), result.get_expectation_values()])
+
+  # Only a linear readout is trained (ridge regression with a bias column)
+  design = np.hstack([features[WASHOUT:], np.ones((NSTEPS - WASHOUT, 1))])
+  target = y[WASHOUT:]
+  x_train, y_train = design[:NTRAIN], target[:NTRAIN]
+  x_test, y_test = design[NTRAIN:], target[NTRAIN:]
+  penalty = 1e-8 * np.eye(x_train.shape[1])
+  penalty[-1, -1] = 0.0  # never penalize the bias
+  weights = np.linalg.solve(x_train.T @ x_train + penalty, x_train.T @ y_train)
+
+  # Score the prediction with the normalized mean squared error.
+  predictions = x_test @ weights
+  nmse = np.mean((y_test - predictions) ** 2) / np.var(y_test)
+  print(f"test NMSE: {nmse:.4f}")
+
+  import matplotlib.pyplot as plt
+
+  plt.plot(y_test, label="y_test")
+  plt.plot(predictions, label="prediction", linestyle="--")
+  plt.legend()
+  plt.show()
+  ``` ([PR #284](https://github.com/qilimanjaro-tech/qilisdk/pull/284))
+- A new function has been added to QTensor: `QTensor.magic()`. This computes how "magic" a state is, correlating to how hard it is to simulate in the stabilizer state formalism. The method used is the efficient method used in this paper: https://arxiv.org/abs/2601.07824. Usage:
+
+  ```python
+  from qilisdk.core import QTensor
+
+  state = QTensor.zero(3)
+  magic = state.magic()
+  print(magic)
+  ``` ([PR #285](https://github.com/qilimanjaro-tech/qilisdk/pull/285))
+- The optional simulation backends are now imported lazily: their heavy third-party dependencies (`cudaq` for `CudaqBackend`/`CudaqSamplingMethod`, `qutip` for `QutipBackend`) are only loaded the first time the backend is actually accessed, not when `qilisdk.backends` (or the default `QiliSim`) is imported. This keeps import times and memory usage low when you only use one backend.
+
+  ```python
+  import sys
+
+  from qilisdk.backends import QiliSim  # neither cudaq nor qutip is imported
+
+  assert "cudaq" not in sys.modules
+  assert "qutip" not in sys.modules
+
+  # The optional dependency is imported only on first access of its backend:
+  from qilisdk.backends import QutipBackend  # now qutip is imported
+
+  assert "qutip" in sys.modules
+  ``` ([PR #288](https://github.com/qilimanjaro-tech/qilisdk/pull/288))
+- The performance of `Model.random_ising()` has been improved, a 50 qubit fully-connected Ising model used to take 30s, it now takes 0.08s. ([PR #297](https://github.com/qilimanjaro-tech/qilisdk/pull/297))
+- `Hamiltonian` now has a `draw()` method that renders the Hamiltonian as an interaction graph, alongside the existing `Circuit.draw()` and `Schedule.draw()`. Qubits are laid out with `rustworkx` and drawn as discs split into one slice per local field (labelled with its Pauli type), two-qubit terms become edges whose line style identifies the coupling type, and terms acting on three or more qubits become star-shaped hyperedges. Slice and edge colours encode the term coefficients, as described by the accompanying colour bar. The appearance is controlled with `HamiltonianStyle`, which follows the same themes as the circuit and schedule renderers.
+
+  ```python
+  from qilisdk.analog import X, Z
+  from qilisdk.utils.visualization.style import HamiltonianStyle
+
+  H = X(0) + 2 * Z(0) - 1.5 * Z(1) + 0.5 * Z(0) * Z(1) + 0.3 * X(0) * X(1)
+
+  H.draw()
+
+  # Pick a layout, split the colour scale between local fields and couplings, and save to disk:
+  H.draw(
+      HamiltonianStyle(layout="circular", separate_color_scales=True, title="My Hamiltonian"),
+      filepath="hamiltonian.png",
+  )
+  ``` ([PR #301](https://github.com/qilimanjaro-tech/qilisdk/pull/301))
+- A new ClassicalSolver has been added to QiliSDK, allowing classical simulated annealing. This is only supported for QUBO models, and is the classical analogue to quantum annealing. By starting in a hot "temperature" (meaning we accept any possible binary spin flips) and slowly transitioning to a colder "temperature" (meaning we only accept spin flips that lower the energy), in theory we slowly converge towards the global optimum.
+
+  Usage (here a comparison with SCIP, a very fast global solver):
+
+  ```python
+  from qilisdk.core import Model
+  from qilisdk.utils.classical_solvers import ScipSolver, SimulatedAnnealingSolver
+  from time import time
+
+  # Generate the random problem
+  nqubits = 30
+  model = Model.random_ising(nqubits)
+
+  # Solve with SCIP
+  t0 = time()
+  sol = ScipSolver().solve(model).objective
+  t1 = time()
+  print(f"Scip solver found ground state energy {sol} in {t1 - t0:.4f} seconds for {nqubits} bits.")
+
+  # Solve with Simulated Annealing
+  t0 = time()
+  sol = SimulatedAnnealingSolver().solve(model.to_qubo()).objective
+  t1 = time()
+  print(f"Simulated annealing found ground state energy {sol} in {t1 - t0:.4f} seconds for {nqubits} bits.")
+  ```
+
+  Output on my laptop:
+  ```
+  Scip solver found ground state energy -28.146801667784096 in 2.3119 seconds for 30 bits.
+  Simulated annealing found ground state energy -28.146801667784207 in 0.0171 seconds for 30 bits.
+  ``` ([PR #304](https://github.com/qilimanjaro-tech/qilisdk/pull/304))
+- Adding model constuctors for randomized problems (previously we only had `Model.random_ising()`):
+  - `Model.random_knapsack()`
+  - `Model.random_max_cut()`
+  - `Model.random_graph_coloring()`
+  - `Model.random_travelling_salesman()`
+
+  Usage:
+
+  ```python
+  from qilisdk.core import Model
+
+  model = Model.random_knapsack(3)
+  ```
+
+  ([PR #312](https://github.com/qilimanjaro-tech/qilisdk/pull/312))
+- Added some convenience constructors for Hamiltonians:
+
+  ```python
+  from qilisdk.analog import Hamiltonian
+
+  H = Hamiltonian.transverse_field_ising(nqubits=2, x_coefficient=1.3, zz_coefficient=-2)
+  H = Hamiltonian.transverse_field(nqubits=2, x_coefficient=1.3)
+  H = Hamiltonian.longitudinal_field(nqubits=2, z_coefficient=1.3)
+  H = Hamiltonian.ising(nqubits=2, zz_coefficient=2.0)
+  H = Hamiltonian.ising_chain(nqubits=4, zz_coefficient=2.0, periodic=True)
+  H = Hamiltonian.ising_grid(rows=2, columns=3, zz_coefficient=2.0)
+  H = Hamiltonian.heisenberg(nqubits=2, xx_coefficient=1.0, zz_coefficient=0.3)
+  ```
+
+  Any coefficient can also be given as a list holding one value per term, rather than a single value
+  shared by every term:
+
+  ```python
+  H = Hamiltonian.ising(nqubits=3, zz_coefficient=[0.5, -1.0, 2.0])
+  ``` ([PR #315](https://github.com/qilimanjaro-tech/qilisdk/pull/315))
+- The ability to sample from a QTensor statevector/density matrix has been added, this uses the same method and output format as the sampling readout:
+
+  ```python
+  from qilisdk.core import QTensor
+
+  state = QTensor.ghz(5)
+  samples = state.sample(100)
+  print(samples)
+  ``` ([PR #328](https://github.com/qilimanjaro-tech/qilisdk/pull/328))
+- Added the ability to specify a seed to `Circuit.random()`, rather than relying on the global rng.
+  Usage remains the same, except now with the new optional `seed` argument:
+
+  ```python
+  from qilisdk.digital import Circuit, X, RX, S, RY, U1, U2, U3, CNOT
+
+  c = Circuit.random(
+      nqubits=3,
+      single_qubit_gates={X, RX, S, RY, U1, U2, U3},
+      two_qubit_gates={CNOT},
+      ngates=10,
+      seed=42,
+  )
+  print(c)
+  ``` ([PR #347](https://github.com/qilimanjaro-tech/qilisdk/pull/347))
+- The `HardwareEfficientAnsatz` can now be customized as to whether it ends on a rotation or an entangling layer, by default the former, customizable via a new parameter:
+
+  ```python
+  from qilisdk.digital.ansatz import HardwareEfficientAnsatz
+
+  ansatz = HardwareEfficientAnsatz(
+      nqubits=2,
+      layers=2,
+      connectivity="Linear",
+      structure="grouped",
+      final_rotation_layer=False,
+  )
+  ```
+
+  Note this changes the default behaviour: by default there is now a trailing single-qubit block, so an ansatz has `(layers + 1)` parameterized blocks instead of `layers`. ([PR #352](https://github.com/qilimanjaro-tech/qilisdk/pull/352))
+- `CudaqBackend` and `QutipBackend` now check the version of the framework you installed, not just that it is there. CUDA-Q below 0.14.0, QuTiP below 5.2.2 or qutip-qip below 0.4.0 raise `OptionalDependencyError` on first use, naming the version that was found and the one that is needed. These are the versions the test suite runs against. ([PR #453](https://github.com/qilimanjaro-tech/qilisdk/pull/453))
+- Added support for Python 3.14. Wheels are published for it, and the test suite, the type checks and the platform builds all run against it. `CudaqBackend` is the one exception: CUDA-Q publishes no Python 3.14 wheels, so it stays unavailable there and asking for it raises the usual `OptionalDependencyError`. Supporting 3.14 raised a few lower bounds to the first release with wheels for it: `numpy>=2.3.2`, `scipy>=1.16.1` and, for the `scip` extra, `pyscipopt>=5.7.0`. ([PR #453](https://github.com/qilimanjaro-tech/qilisdk/pull/453))
+
+## Bugfixes
+
+- A bug has been fixed in which global jump operator noise was expanded as L (x) L rather than two separate jump operators L (x) I and I (x) L, which resulted in global analog noise being applied inconsistently. ([PR #282](https://github.com/qilimanjaro-tech/qilisdk/pull/282))
+- Previously in analog simulation in QiliSim if the dt was set to high and the integrator diverged, it returned all zeros. It now raises a warning and returns quiet (i.e. not crashing anything) NaNs.
+
+  Also fixed a bug in which trying to use the adaptive integrator in a quantum reservoir wouldn't be detected correctly. ([PR #287](https://github.com/qilimanjaro-tech/qilisdk/pull/287))
+- Fixed a few cases of some parallelized loops using `#pragma omp for` instead of `#pragma omp parallel for`. Whilst this results in 2-3x speedup for those cases, those particular code paths are not currently used, and so instead this is just future-proofing their use. ([PR #305](https://github.com/qilimanjaro-tech/qilisdk/pull/305))
+- A bug was fixed in which some `MathematicalMaps` would have identical hashes, and thus some Terms (or anything using `MathematicalMaps` as keys) might have unintentionally combined them. ([PR #307](https://github.com/qilimanjaro-tech/qilisdk/pull/307))
+- The expectation value of a Hamiltonian when nshots is specified (i.e. asking for an expectation value with shot noise) is now correctly handled, previously the nshots was silently ignored. ([PR #310](https://github.com/qilimanjaro-tech/qilisdk/pull/310))
+- Fixed a bug in which Parameterized gates generated in random circuits had their ranges specified incorrectly so trying to adjust their parameters later would fail. ([PR #347](https://github.com/qilimanjaro-tech/qilisdk/pull/347))
+- Previously after creating a QiliSim instance, each simulation would use the same seed for subsequent runs, now the seed is advanced after each run, so the following would produce different outputs (although still reproducible with the same base seed):
+
+  <!-- SKIP -->
+  ```python
+  backend = QiliSim(execution_config=ExecutionConfig(seed=42))
+  results_1 = backend.execute(...)
+  results_2 = backend.execute(...)
+  # results_1 != results_2
+  ```
+
+  If you want the previous behavior, simply create a new backend each time to reset the random generator with a given seed. ([PR #348](https://github.com/qilimanjaro-tech/qilisdk/pull/348))
+- Fixed a bug in which Circuits could not be hashed if they contained a measurement.
+
+  Also tweaked the Circuit hash so that it follows the `Circuit.__eq__` method closer with respect to Parameters, such that now both are rounded to the same `atol` when compared. ([PR #353](https://github.com/qilimanjaro-tech/qilisdk/pull/353))
+- A bug was fixed in which the qubit resets in the QuantumReservoir QiliSim implementation were being done on the wrong qubits, specifically that trying to target qubit `0` would instead target qubit `nqubits-1` and vice-versa because of a endianness typo. ([PR #358](https://github.com/qilimanjaro-tech/qilisdk/pull/358))
+- A bug has been fixed in which decomposed multi-controlled gates produced a wrong unitary, specifically that since it used the square root of certain gates to build the decomposition, so phases were incorrectly ignored. ([PR #361](https://github.com/qilimanjaro-tech/qilisdk/pull/361))
+- A bug was fixed in which the topology-aware transpiler applied the initial layout twice, specifically that `SabreLayoutPass` retargeted the circuit onto physical qubits and also recorded the mapping in the transpilation context, so `SabreSwapPass` applied the same mapping again and inserted SWAPs that were not needed. The reported `result.layout` was also keyed on physical labels rather than logical qubits, so reading it could return the wrong qubit or raise an `IndexError`. ([PR #375](https://github.com/qilimanjaro-tech/qilisdk/pull/375))
+- Previously if you created a Schedule with `T = 1` and `dt= 0.1`, it would instead make 9 steps with `dt = 0.125`, as opposed to the expected 10 steps with `dt = 0.1`. Now the tlist construction behaves as one would expect, as well as rounding the dt if an integer multiple isn't possible (emitting a warning if so).
+
+  Two things to watch when upgrading: `len(schedule)` and iterating a schedule now give N+1 items instead of N, and `schedule.dt` is now derived so it can differ from the value you passed in.
+
+  ```python
+  from qilisdk.analog import PauliX, PauliZ, Schedule
+
+  T = 1.0
+  dt = 0.1
+  tlist = Schedule.linear(PauliX(0), PauliZ(0), T, dt=dt).tlist
+  print(tlist)
+  ``` ([PR #377](https://github.com/qilimanjaro-tech/qilisdk/pull/377))
+- A bug was fixed in which `Schedule.eig()` didn't pass nqubits when calling to `Hamiltonian.to_qtensor()`, so if one Hamiltonian had less qubits than the other (i.e. one Hamiltonian was `X(0)` and the other was `X(0) + X(1)`) then there was a mismatch in the array sizes. ([PR #378](https://github.com/qilimanjaro-tech/qilisdk/pull/378))
+- Schedules with coefficients that don't span the full time are now kept constant rather than extrapolating. Previously a Schedule like the following would extrapolate it's coefficient to below zero, whilst the user probably expected that it remain at zero. This behavior can be re-enabled by an `extrapolate` arg to Schedule, but by default it's off:
+
+  ```python
+  from qilisdk.analog import PauliX, PauliZ, Schedule
+
+  s = Schedule(
+      hamiltonians={"driver": PauliX(0).to_hamiltonian(), "problem": PauliZ(0).to_hamiltonian()},
+      coefficients={"driver": {0.0: 1.0, 2.0: 0.0}, "problem": {0.0: 0.0, 10.0: 1.0}},
+      dt=1.0,
+      extrapolate=False,
+  )
+  s.draw()
+  ```
+
+  Now correctly outputs the following, rather than the driver line going below zero as before:
+
+  <img width="1214" height="754" alt="image" src="https://github.com/user-attachments/assets/16ac5553-1941-40eb-aac6-16085ced956c" /> ([PR #381](https://github.com/qilimanjaro-tech/qilisdk/pull/381))
+- Printing a Schedule now correctly shows the interpolation type. ([PR #381](https://github.com/qilimanjaro-tech/qilisdk/pull/381))
+- Fixed a bug in which integer variables using Bitwise encoding would raise an unnecessary error when doing `Model.to_qubo()`. ([PR #384](https://github.com/qilimanjaro-tech/qilisdk/pull/384))
+- Fixed a bug in which simulating parameter perturbations via QiliSim would perturb the original Circuit/Schedule rather than making copies of the Parameters and perturbing those. ([PR #396](https://github.com/qilimanjaro-tech/qilisdk/pull/396))
+- QiliSim now handles noise acting on controls correctly: previously if you had noise on qubit 1 and then did a CNOT controlled on qubit 1, the noise would not apply since it only checked for the targets of the gate, not the controls.
+
+  Also fixed qubit-specific noise spreading to all the targets of a multi-target gate: previously if you had noise on qubit 1 and then did a swap between qubits 1 and 2, the noise was applied to both, but it should only be applied to qubit 1.
+
+  Global and per-gate noise is now applied independently to each qubit a gate acts on, instead of as one correlated operator across the targets. ([PR #397](https://github.com/qilimanjaro-tech/qilisdk/pull/397))
+- CudaqBackend now handles noise on multi-qubit gates correctly: previously if you had noise on qubit 1 and then did a swap or a CNOT involving qubit 1, the noise was just ignored. Now it is correctly applied to that qubit alone, whether it is a target or a control.
+
+  Global and per-gate noise is now applied independently to each qubit a gate acts on, instead of as one correlated operator across the qubits.
+
+  A global multi-qubit Kraus channel is now applied to any gate acting on that many qubits, rather than only to a gate spanning the whole register. Channels that do not fit the gate are skipped with a warning. ([PR #398](https://github.com/qilimanjaro-tech/qilisdk/pull/398))
+- A bug was fixed in which GEQ and LEQ resulted in the same QUBO constraint. ([PR #401](https://github.com/qilimanjaro-tech/qilisdk/pull/401))
+- QUBO models now support the use of bounded floats and negative integers. Whilst the encoding of such variables
+  existed before, they were over-cautiously disallowed by QUBO, however as long as the variable is bounded and has a finite binary encoding, there is no reason why it cannot be put in QUBO form.
+
+  ```python
+  from qilisdk.core import Variable, Domain, Model, GEQ
+  from qilisdk.core.variables import Bitwise
+  from qilisdk.utils.classical_solvers import BruteForceSolver
+
+  x = Variable("x", Domain.INTEGER, bounds=(-3, 3), encoding=Bitwise)
+  m = Model("m")
+  m.set_objective(x + 1)
+  m.add_constraint("c", GEQ(x, 0))
+  q = m.to_qubo()
+  sol = BruteForceSolver().solve(q)
+  print(sol)
+  ``` ([PR #401](https://github.com/qilimanjaro-tech/qilisdk/pull/401))
+- A bug was fixed in which `Schedule.draw()` labelled its plot "Schedule Eigenvalues", but now titles the plot "Schedule Coefficients" (which is what it actually plots). ([PR #451](https://github.com/qilimanjaro-tech/qilisdk/pull/451))
+- `Readout.with_*` no longer mutates the specification it is called on. The class documents that each `with_*` builder returns a new `Readout` and leaves the original untouched, but `with_* was setting the sampling slot on `self` and returning it, so a shared base specification was silently modified:
+
+  ```python
+  from qilisdk.readout import Readout
+
+  base = Readout()
+  sampled = base.with_sampling(nshots=1000)
+
+  print(base.sampling)  # previously the SamplingReadout, now None
+  ```
+
+  `with_*` now populates a copy, so `base` stays reusable for building further specifications. ([PR #452](https://github.com/qilimanjaro-tech/qilisdk/pull/452))
+- Corrected the lower bound of the `qir` extra. It now needs `pyqir>=0.12.0`, since `to_qir` and `from_qir` use `pyqir.ptr_id`, which does not exist before that release. Missing-extra install hints also name the right extra now, `pip install qilisdk[qir]` rather than the non-existent `qilisdk[pyqir]`. ([PR #453](https://github.com/qilimanjaro-tech/qilisdk/pull/453))
+- A number of small bugs have been fixed with the OpenQASM 2 and 3 conversion routines:
+
+   - Registers are no longer assumed to be called "c" and "q" in OpenQASM 2 code.
+   - Adjoints are now handled correctly, specifically that they no longer use the unicode dagger symbol which caused problems on reimport.
+   - All supported gates now survive a round-trip. ([PR #456](https://github.com/qilimanjaro-tech/qilisdk/pull/456))
+- 2D `ExperimentResult.plot()` maps were mirrored whenever a sweep ran downwards, and every 2D map had slightly wrong cell geometry. The plot built its mesh edges with `np.linspace(values.min(), values.max(), len(values) + 1)`, which always ascends, while the data was painted in the order it was measured.
+
+  Any experiment sweeping a parameter from high to low (for example a flux bias ramped down) therefore produced a map flipped about the midpoint of that axis, with correct-looking tick labels and no warning. **Anyone who has published or fitted a figure from a descending sweep should re-plot it.** Only the rendering was affected: the stored data is intact, so re-plotting an existing `ExperimentResult` is enough to recover the correct figure.
+
+  The same edge calculation also treated the first and last swept points as the outer edges of the mesh rather than as cell centres, so `n` points were drawn as `n` cells of width `(n - 1) * step / n`: the axis was compressed and shifted by half a cell, and non-uniformly spaced sweeps (a log sweep, say) were redrawn as an even grid. The error is negligible for a few thousand points but reaches 9% at 11 points.
+
+  Each cell is now centred on the point it was measured at, so descending and non-uniformly spaced sweeps are drawn correctly:
+
+  ```python
+  import numpy as np
+
+  from qilisdk.experiments import Dimension, ExperimentResult
+
+
+  class TwoToneVsFluxBias(ExperimentResult):
+      plot_title = "two_tone_vs_flux_bias"
+
+
+  flux = np.arange(0.515, 0.48, -0.0035)  # a ramp played downwards
+  frequency = np.arange(-0.2e9, -0.05e9, 1e6)
+  data = np.zeros((len(flux), len(frequency), 2))
+  data[0, :, 0] = 50.0  # a feature measured at flux[0] == 0.515
+
+  result = TwoToneVsFluxBias(
+      qubit=0,
+      averages=1,
+      data=data,
+      dims=[Dimension(["Flux bias (V)"], [flux]), Dimension(["Frequency (Hz)"], [frequency])],
+  )
+  result.plot()  # the feature now renders at 0.515, not at 0.480
+  ```
+
+  Secondary (twin) axes were fixed alongside: they took their limits from the smallest and largest secondary values, which flipped a secondary axis running opposite to its primary one, and left it misaligned with the primary axis. They are now placed by mapping the primary axis limits onto the secondary values, so both axes label the same positions. ([PR #467](https://github.com/qilimanjaro-tech/qilisdk/pull/467))
+- `ExperimentResult.plot()` now lays out the figure before writing it to disk, so a saved plot looks like the one on screen.
+
+  Two separate problems: `_plot_2d` called `tight_layout()` *after* saving, so the file kept the untidied layout while the displayed figure got the tidy one, and `_plot_1d` never called it at all. In both cases a secondary axis label pushed the title off the top of the canvas, so every saved figure with a `twiny`/`twinx` axis came out with its title clipped. Re-saving an affected figure is enough to fix it. ([PR #467](https://github.com/qilimanjaro-tech/qilisdk/pull/467))
+- On a 1D `ExperimentResult.plot()` with a secondary x axis, the fit curve was drawn on the secondary axis instead of the primary one, in the secondary axis' coordinates, which placed it far outside the visible range: the fit did not appear at all.
+
+  `add_fit` is handed no axes, so an implementation can only draw on pyplot's current axes, and `Axes.twiny()` had already made the secondary axis current by the time it was called. The fit is now performed before the secondary axis is created, so the current axes is the primary one:
+
+  ```python
+  import numpy as np
+
+  from qilisdk.experiments import Dimension, ExperimentResult
+
+
+  class ResonatorSpectroscopy(ExperimentResult):
+      plot_title = "resonator_spectroscopy"
+
+      @staticmethod
+      def add_fit(x_values, y_values, initial_guess=None):
+          import matplotlib.pyplot as plt
+
+          plt.plot(x_values, y_values, "-", color="red", label="fit")
+
+
+  frequency = np.linspace(4.0e9, 5.0e9, 8)
+  data = np.stack([np.linspace(0.1, 1.0, 8), np.linspace(-0.5, 0.5, 8)], axis=-1)
+  result = ResonatorSpectroscopy(
+      qubit=0,
+      averages=1,
+      data=data,
+      dims=[Dimension(["Frequency (Hz)", "Flux bias (V)"], [frequency, np.linspace(-1.0, 1.0, 8)])],
+  )
+  result.plot(fit=True)  # the fit curve is now visible over the data
+  ```
+
+  Fitting first also keeps the secondary axis aligned when the fit is evaluated on a grid reaching past the measured points, since the secondary axis is positioned from the primary axis limits and those limits grow to fit the curve. ([PR #467](https://github.com/qilimanjaro-tech/qilisdk/pull/467))
+
+## Improved Documentation
+
+- fixed Mac installation instruction for optional dependencies, changed the background color of the code blocks, and added gradient to per OS tabs. ([PR #302](https://github.com/qilimanjaro-tech/qilisdk/pull/302))
+
+## Deprecations and Removals
+
+- **Breaking change.** Removed `Term`, `Operation`, and `MathematicalMap` from `qilisdk.core.variables`; use `Expression` and the node classes (`Add`, `Mul`, `Pow`, `Constant`, `Sin`, `Cos`, ...) instead, importing them from `qilisdk.core` or `qilisdk.core.expression`. Consequences of the new model: `Mul` no longer auto-distributes, so `x * (y + z)` stays factored until `.expand()` is called (it is no longer structurally equal to `x*y + x*z`); `Expression.degree` raises `NonPolynomialError` for non-polynomial expressions (e.g. non-integer/symbolic powers of a variable, or a function of a variable); `Pow` is now a node built with `**` whose exponent is an `Expression`, so `Pow(x, 2.0)` becomes `x ** 2`; `Inv` is a helper that returns `x ** -1` rather than a class, so `isinstance(expr, Inv)` no longer works; expression nodes are immutable, so `Constant.value`, `Add.args`, `Mul.args`, `Pow.base`, `Pow.exp` and `Function.arg` are read-only; `Variable.term` is renamed to `Variable.expression`; `ComparisonTerm` is renamed to `Comparison` and, with `ComparisonOperation` and the `LT`/`LEQ`/`EQ`/`NEQ`/`GT`/`GEQ` helpers, now lives in the new `qilisdk.core.comparison` module rather than `qilisdk.core.variables` (all of them are still re-exported from `qilisdk.core`); `BaseVariable.evaluate` takes an environment mapping like every other node, so `variable.evaluate(bits)` becomes `variable.evaluate({variable: bits})`; and the YAML serialization tags for symbolic expressions changed, so expression-bearing documents (Schedules, Models, Hamiltonians) serialized by earlier versions will not deserialize. ([PR #226](https://github.com/qilimanjaro-tech/qilisdk/pull/226))
+- Removed the concrete calibration experiments from `qilisdk.experiments`, keeping only the generic `ExperimentFunctional`, `ExperimentResult` and `Dimension` base classes. The `RabiExperiment`, `T1Experiment`, `T1SoftSaturationHWLExperiment`, `T2Experiment`, `TwoTonesAtFixedFluxBiasExperiment`, `TwoTonesVsFluxBiasExperiment`, `TwoTonesPulsedSoftExperiment` and `TwoTonesFrequencyVsFluxQdacRampCWExperiment` classes (and their matching `*ExperimentResult` classes).
+
+  The SpeQtrum backend follows the same simplification: the per-experiment payloads, results and job handles collapse into a single generic experiment path. `ExecuteType` now exposes one `EXPERIMENT` member instead of the five experiment-specific ones, `ExecutePayload` carries a single `experiment_payload: ExperimentPayload` field, and `ExecuteResult` a single `experiment_result: ExperimentResult` field. ([PR #300](https://github.com/qilimanjaro-tech/qilisdk/pull/300))
+- **Breaking change.** QiliSDK no longer installs CUDA-Q or QuTiP. `CudaqBackend` and `QutipBackend` now work against whatever version of their framework you have installed yourself: `pip install cuda-quantum-cu12` (or `cuda-quantum-cu13`) for `CudaqBackend`, `pip install qutip qutip-qip` for `QutipBackend`. The `qutip` extra is gone, and the `cuda`, `cuda12` and `cuda13` extras now only install the CUDA math libraries that give QiliSim GPU support. Everything else is unchanged: the backends are still imported lazily, and asking for one whose framework is missing still raises `OptionalDependencyError` with an install hint. ([PR #453](https://github.com/qilimanjaro-tech/qilisdk/pull/453))
+- **Breaking change.** `CudaBackend` and `CudaSamplingMethod` are now `CudaqBackend` and `CudaqSamplingMethod`, and `qilisdk.backends.cuda_backend` is now `qilisdk.backends.cudaq_backend`, so the names say CUDA-Q, the framework they run on, rather than CUDA, which is what the `cuda12` and `cuda13` extras give QiliSim. The old names still resolve to the new ones and raise a `DeprecationWarning` when used, so existing code keeps working. ([PR #453](https://github.com/qilimanjaro-tech/qilisdk/pull/453))
+
+## Misc
+
+- [PR #291](https://github.com/qilimanjaro-tech/qilisdk/pull/291), [PR #292](https://github.com/qilimanjaro-tech/qilisdk/pull/292), [PR #296](https://github.com/qilimanjaro-tech/qilisdk/pull/296), [PR #357](https://github.com/qilimanjaro-tech/qilisdk/pull/357), [PR #360](https://github.com/qilimanjaro-tech/qilisdk/pull/360), [PR #404](https://github.com/qilimanjaro-tech/qilisdk/pull/404), [PR #444](https://github.com/qilimanjaro-tech/qilisdk/pull/444), [PR #450](https://github.com/qilimanjaro-tech/qilisdk/pull/450), [PR #453](https://github.com/qilimanjaro-tech/qilisdk/pull/453), [PR #465](https://github.com/qilimanjaro-tech/qilisdk/pull/465)
+
+
 # qilisdk 0.2.1 (2026-07-08)
 
 ## Features
