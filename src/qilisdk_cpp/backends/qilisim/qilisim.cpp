@@ -407,8 +407,6 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
     // For each layer of the reservoir
     py::list inter_results;
     int layer_index = 0;
-    const int base_seed = config.get_seed();
-    int step_index = 0;
     for (py::handle input_handler : functional.attr("input_per_layer")) {
         qilisdk::log_trace("[QiliSim, C++] Reservoir layer " + std::to_string(++layer_index));
         py::object input_dict = py::reinterpret_borrow<py::object>(input_handler);
@@ -417,9 +415,6 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
         // For everything in this layer
         for (py::handle step_handler : functional.attr("reservoir_layer")) {
             py::object step = py::reinterpret_borrow<py::object>(step_handler);
-
-            // Every step gets its own seed
-            config.set_seed(base_seed + 104729 * (step_index++));
 
             // If it's a digital layer
             if (py::isinstance(step, Circuit)) {
@@ -571,7 +566,6 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 }
             }
         }
-        layer_index++;
     }
 
     // Construct the final result object

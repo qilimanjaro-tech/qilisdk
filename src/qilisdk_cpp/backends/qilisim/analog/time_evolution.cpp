@@ -126,7 +126,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
 
     // With trajectories and jump operators the noise is unravelled into quantum jumps
     bool use_jump_unraveling = !is_unitary_dynamics && (use_monte_carlo || input_is_trajectories);
-    TrajectoryUnraveling unraveling(config.get_seed());
+    TrajectoryUnraveling unraveling(config.next_seed());
     SparseMatrix jump_drift;
     const std::vector<SparseMatrix> no_jumps;
     if (use_jump_unraveling) {
@@ -338,7 +338,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
 
     // With trajectories and jump operators the noise is unravelled into quantum jumps
     bool use_jump_unraveling = !is_unitary_dynamics && (use_monte_carlo || input_is_trajectories);
-    TrajectoryUnraveling unraveling(config.get_seed());
+    TrajectoryUnraveling unraveling(config.next_seed());
     SparseMatrix jump_drift;
     const std::vector<SparseMatrix> no_jumps;
     const bool normalize_in_step = config.get_normalize_state() && !use_jump_unraveling;

@@ -198,7 +198,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
     }
 
     // Object for handling the seeds of each trajectory
-    TrajectoryUnraveling unraveling(config.get_seed());
+    TrajectoryUnraveling unraveling(config.next_seed());
 
     // Whether the columns of `state` are currently Monte Carlo trajectories
     bool state_is_trajectories = monte_carlo;
@@ -291,7 +291,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
                 // If we have measurement_collapse enabled, apply the measurement and collapse the state
                 if (config.get_measurement_collapse()) {
                     if (state_is_trajectories) {
-                        state = collapse_trajectories(state, measured_qubit_mask(qubits_to_measure_after_gate), config.get_seed() + 7919 * (i + 1));
+                        state = collapse_trajectories(state, measured_qubit_mask(qubits_to_measure_after_gate), config.next_seed());
                     } else {
                         state = collapse_state(state, qubits_to_measure_after_gate);
                         is_statevector = false;
@@ -450,7 +450,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     }
 
     // Draws the noise outcome of each individual trajectory
-    TrajectoryUnraveling unraveling(config.get_seed());
+    TrajectoryUnraveling unraveling(config.next_seed());
 
     // Whether the columns of `state` are currently Monte Carlo trajectories
     bool state_is_trajectories = monte_carlo;
@@ -515,7 +515,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
                 // If we have measurement_collapse enabled, apply the measurement and collapse the state
                 if (config.get_measurement_collapse()) {
                     if (state_is_trajectories) {
-                        state = collapse_trajectories(state, measured_qubit_mask(qubits_to_measure_after_gate), config.get_seed() + 7919 * (i + 1));
+                        state = collapse_trajectories(state, measured_qubit_mask(qubits_to_measure_after_gate), config.next_seed());
                     } else {
                         state = collapse_state(state, qubits_to_measure_after_gate);
                         is_statevector = false;
