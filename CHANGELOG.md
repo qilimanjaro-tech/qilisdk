@@ -1,4 +1,4 @@
-# qilisdk 0.2.2rc1 (2026-09-09)
+# qilisdk 0.3.0 (2026-09-09)
 
 ## Features
 
@@ -148,14 +148,16 @@
   from qilisdk.logging import configure_logging
 
   configure_logging(level="DEBUG")
-  ``` ([PR #278](https://github.com/qilimanjaro-tech/qilisdk/pull/278))
+  ``` 
+  ([PR #278](https://github.com/qilimanjaro-tech/qilisdk/pull/278))
 - The normalization of the state in all simulation methods in QiliSim can now be disabled:
 
   ```python
   from qilisdk.backends import QiliSim, ExecutionConfig
 
   backend = QiliSim(execution_config=ExecutionConfig(normalize_state=False))
-  ``` ([PR #280](https://github.com/qilimanjaro-tech/qilisdk/pull/280))
+  ```
+  ([PR #280](https://github.com/qilimanjaro-tech/qilisdk/pull/280))
 - QiliSim performance has been generally increased via a variety of micro-optimizations and improvements to gate fusion. The Arnoldi step now does matrix-free operations by default, increasing performance, although the integrators are still faster. Reservoirs have benefited especially from these performance improvements.
 
   Approximate performance improvements:
@@ -258,7 +260,8 @@
   plt.plot(predictions, label="prediction", linestyle="--")
   plt.legend()
   plt.show()
-  ``` ([PR #284](https://github.com/qilimanjaro-tech/qilisdk/pull/284))
+  ```
+  ([PR #284](https://github.com/qilimanjaro-tech/qilisdk/pull/284))
 - A new function has been added to QTensor: `QTensor.magic()`. This computes how "magic" a state is, correlating to how hard it is to simulate in the stabilizer state formalism. The method used is the efficient method used in this paper: https://arxiv.org/abs/2601.07824. Usage:
 
   ```python
@@ -267,7 +270,8 @@
   state = QTensor.zero(3)
   magic = state.magic()
   print(magic)
-  ``` ([PR #285](https://github.com/qilimanjaro-tech/qilisdk/pull/285))
+  ```
+  ([PR #285](https://github.com/qilimanjaro-tech/qilisdk/pull/285))
 - The optional simulation backends are now imported lazily: their heavy third-party dependencies (`cudaq` for `CudaqBackend`/`CudaqSamplingMethod`, `qutip` for `QutipBackend`) are only loaded the first time the backend is actually accessed, not when `qilisdk.backends` (or the default `QiliSim`) is imported. This keeps import times and memory usage low when you only use one backend.
 
   ```python
@@ -282,7 +286,8 @@
   from qilisdk.backends import QutipBackend  # now qutip is imported
 
   assert "qutip" in sys.modules
-  ``` ([PR #288](https://github.com/qilimanjaro-tech/qilisdk/pull/288))
+  ```
+  ([PR #288](https://github.com/qilimanjaro-tech/qilisdk/pull/288))
 - The performance of `Model.random_ising()` has been improved, a 50 qubit fully-connected Ising model used to take 30s, it now takes 0.08s. ([PR #297](https://github.com/qilimanjaro-tech/qilisdk/pull/297))
 - `Hamiltonian` now has a `draw()` method that renders the Hamiltonian as an interaction graph, alongside the existing `Circuit.draw()` and `Schedule.draw()`. Qubits are laid out with `rustworkx` and drawn as discs split into one slice per local field (labelled with its Pauli type), two-qubit terms become edges whose line style identifies the coupling type, and terms acting on three or more qubits become star-shaped hyperedges. Slice and edge colours encode the term coefficients, as described by the accompanying colour bar. The appearance is controlled with `HamiltonianStyle`, which follows the same themes as the circuit and schedule renderers.
 
@@ -299,7 +304,8 @@
       HamiltonianStyle(layout="circular", separate_color_scales=True, title="My Hamiltonian"),
       filepath="hamiltonian.png",
   )
-  ``` ([PR #301](https://github.com/qilimanjaro-tech/qilisdk/pull/301))
+  ```
+  ([PR #301](https://github.com/qilimanjaro-tech/qilisdk/pull/301))
 - A new ClassicalSolver has been added to QiliSDK, allowing classical simulated annealing. This is only supported for QUBO models, and is the classical analogue to quantum annealing. By starting in a hot "temperature" (meaning we accept any possible binary spin flips) and slowly transitioning to a colder "temperature" (meaning we only accept spin flips that lower the energy), in theory we slowly converge towards the global optimum.
 
   Usage (here a comparison with SCIP, a very fast global solver):
@@ -365,7 +371,8 @@
 
   ```python
   H = Hamiltonian.ising(nqubits=3, zz_coefficient=[0.5, -1.0, 2.0])
-  ``` ([PR #315](https://github.com/qilimanjaro-tech/qilisdk/pull/315))
+  ```
+  ([PR #315](https://github.com/qilimanjaro-tech/qilisdk/pull/315))
 - The ability to sample from a QTensor statevector/density matrix has been added, this uses the same method and output format as the sampling readout:
 
   ```python
@@ -374,7 +381,8 @@
   state = QTensor.ghz(5)
   samples = state.sample(100)
   print(samples)
-  ``` ([PR #328](https://github.com/qilimanjaro-tech/qilisdk/pull/328))
+  ```
+  ([PR #328](https://github.com/qilimanjaro-tech/qilisdk/pull/328))
 - Added the ability to specify a seed to `Circuit.random()`, rather than relying on the global rng.
   Usage remains the same, except now with the new optional `seed` argument:
 
@@ -389,7 +397,8 @@
       seed=42,
   )
   print(c)
-  ``` ([PR #347](https://github.com/qilimanjaro-tech/qilisdk/pull/347))
+  ```
+  ([PR #347](https://github.com/qilimanjaro-tech/qilisdk/pull/347))
 - The `HardwareEfficientAnsatz` can now be customized as to whether it ends on a rotation or an entangling layer, by default the former, customizable via a new parameter:
 
   ```python
@@ -420,7 +429,6 @@
 - Fixed a bug in which Parameterized gates generated in random circuits had their ranges specified incorrectly so trying to adjust their parameters later would fail. ([PR #347](https://github.com/qilimanjaro-tech/qilisdk/pull/347))
 - Previously after creating a QiliSim instance, each simulation would use the same seed for subsequent runs, now the seed is advanced after each run, so the following would produce different outputs (although still reproducible with the same base seed):
 
-  <!-- SKIP -->
   ```python
   backend = QiliSim(execution_config=ExecutionConfig(seed=42))
   results_1 = backend.execute(...)
@@ -446,7 +454,8 @@
   dt = 0.1
   tlist = Schedule.linear(PauliX(0), PauliZ(0), T, dt=dt).tlist
   print(tlist)
-  ``` ([PR #377](https://github.com/qilimanjaro-tech/qilisdk/pull/377))
+  ```
+  ([PR #377](https://github.com/qilimanjaro-tech/qilisdk/pull/377))
 - A bug was fixed in which `Schedule.eig()` didn't pass nqubits when calling to `Hamiltonian.to_qtensor()`, so if one Hamiltonian had less qubits than the other (i.e. one Hamiltonian was `X(0)` and the other was `X(0) + X(1)`) then there was a mismatch in the array sizes. ([PR #378](https://github.com/qilimanjaro-tech/qilisdk/pull/378))
 - Schedules with coefficients that don't span the full time are now kept constant rather than extrapolating. Previously a Schedule like the following would extrapolate it's coefficient to below zero, whilst the user probably expected that it remain at zero. This behavior can be re-enabled by an `extrapolate` arg to Schedule, but by default it's off:
 
@@ -494,7 +503,8 @@
   q = m.to_qubo()
   sol = BruteForceSolver().solve(q)
   print(sol)
-  ``` ([PR #401](https://github.com/qilimanjaro-tech/qilisdk/pull/401))
+  ```
+  ([PR #401](https://github.com/qilimanjaro-tech/qilisdk/pull/401))
 - A bug was fixed in which `Schedule.draw()` labelled its plot "Schedule Eigenvalues", but now titles the plot "Schedule Coefficients" (which is what it actually plots). ([PR #451](https://github.com/qilimanjaro-tech/qilisdk/pull/451))
 - `Readout.with_*` no longer mutates the specification it is called on. The class documents that each `with_*` builder returns a new `Readout` and leaves the original untouched, but `with_* was setting the sampling slot on `self` and returning it, so a shared base specification was silently modified:
 
@@ -698,7 +708,7 @@
 
   # Set up the schedule, initial state, analog evolution, and readout
   analog_evolution = AnalogEvolution(
-      schedule=Schedule.linear(Hx, Hz, T, dt=T/steps),
+      schedule=Schedule.linear(Hx, Hz, T, dt=T / steps),
       initial_state=QTensor.uniform(nqubits),
   )
   readout = Readout().with_expectation([Hz])
@@ -707,7 +717,8 @@
   print("Executing analog evolution...")
   results = QiliSim().execute(analog_evolution, readout)
   print(results)
-  ``` ([PR #225](https://github.com/qilimanjaro-tech/qilisdk/pull/225))
+  ```
+  ([PR #225](https://github.com/qilimanjaro-tech/qilisdk/pull/225))
 - Two new `Schedule` constructors have been added: `Schedule.constant()` and `Schedule.linear_list()`.
 
   Schedule.constant(hamiltonian, total_time, dt) allows for quickly defining the time evolution of a fixed Hamiltonian.
@@ -719,20 +730,20 @@
   Usage is the same as with the other Schedule constructors:
 
   ```python
-
   from qilisdk.analog import Schedule, X, Z
 
   nqubits = 3
   H1 = -sum(X(i) for i in range(nqubits))
   H2 = sum(Z(i) for i in range(nqubits))
-  H3 = sum(Z(i) * Z((i+1) % nqubits) for i in range(nqubits))
+  H3 = sum(Z(i) * Z((i + 1) % nqubits) for i in range(nqubits))
 
   schedule_constant = Schedule.constant(H1, total_time=10.0, dt=0.01)
   schedule_constant.draw()
 
   schedule_list = Schedule.chained_linear([H1, H2, H3], total_time=10.0, dt=0.01)
   schedule_list.draw()
-  ``` ([PR #228](https://github.com/qilimanjaro-tech/qilisdk/pull/228))
+  ```
+  ([PR #228](https://github.com/qilimanjaro-tech/qilisdk/pull/228))
 - The plotting functions for the experiment classes have been updated:
   - fitting is now supported for most experiment types and can be toggled on/off
   - each of the experiment plots can also be done in dB if requested
@@ -740,7 +751,7 @@
   - units for various quantities have been added
 
   Usage remains the same as before, but now with optional parameters `fit` and `db`:
-  <!-- SKIP -->
+  
   ```python
   experiment_result.plot(db=True, fit=False)
   ```
@@ -751,8 +762,10 @@
 
   ```python
   from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
+
   optimizer = SciPyOptimizer(method="shgo")
-  ``` ([PR #250](https://github.com/qilimanjaro-tech/qilisdk/pull/250))
+  ```
+  ([PR #250](https://github.com/qilimanjaro-tech/qilisdk/pull/250))
 
 ## Bugfixes
 
@@ -1096,7 +1109,6 @@
 
   **Before (digital circuit sampling):**
 
-  <!-- SKIP -->
   ```python
   from qilisdk.functionals import Sampling
 
@@ -1107,7 +1119,6 @@
 
   **After:**
 
-  <!-- SKIP -->
   ```python
   from qilisdk.functionals import DigitalPropagation
   from qilisdk.readout import Readout
@@ -1119,7 +1130,6 @@
 
   **Before (analog time evolution):**
 
-  <!-- SKIP -->
   ```python
   from qilisdk.functionals import TimeEvolution
 
@@ -1130,7 +1140,6 @@
 
   **After:**
 
-  <!-- SKIP -->
   ```python
   from qilisdk.analog import Z
   from qilisdk.functionals import AnalogEvolution
@@ -1143,7 +1152,6 @@
 
   **Before (variational program):**
 
-  <!-- SKIP -->
   ```python
   vp = VariationalProgram(functional=Sampling(ansatz), optimizer=opt, cost_function=cost_fn)
   result = backend.execute(vp)
@@ -1151,7 +1159,6 @@
 
   **After:**
 
-  <!-- SKIP -->
   ```python
   from qilisdk.readout import Readout
 
@@ -1336,7 +1343,6 @@
 
   OpenQASM 2 and 3 support has been moved to an optional dependency group and now lives under the `qilisdk.utils.openqasm` package. Install with `pip install qilisdk[openqasm]`; the public entry points (`to_qasm2`, `from_qasm2`, `to_qasm2_file`, `from_qasm2_file`, `to_qasm3`, `from_qasm3`, `to_qasm3_file`, `from_qasm3_file`) are unchanged but now imported from `qilisdk.utils.openqasm` rather than `qilisdk.utils.openqasm2` / `qilisdk.utils.openqasm3`:
 
-  <!-- SKIP -->
   ```python
   # Before
   from qilisdk.utils.openqasm2 import to_qasm2, from_qasm2
