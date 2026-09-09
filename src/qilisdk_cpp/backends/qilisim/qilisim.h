@@ -35,10 +35,9 @@ class QiliSimCpp {
     py::object execute_analog_evolution(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::dict& solver_params);
     py::object execute_quantum_reservoir(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::dict& solver_params);
 
-    // Restart the random stream with a given seed
-    void reset_seed(int seed) {
-        root_seed = seed;
-        seed_rng.seed(static_cast<uint64_t>(static_cast<uint32_t>(seed)));
+    // Restart the random stream from the root seed
+    void reset_seed() {
+        seed_rng.seed(static_cast<uint64_t>(static_cast<uint32_t>(root_seed)));
         seed_rng_initialised = true;
     }
 };

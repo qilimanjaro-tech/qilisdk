@@ -177,7 +177,7 @@ def test_reset_seed_rewinds_the_stream():
 
     first = backend.execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples()
     backend.execute(DigitalPropagation(circuit=circuit), readout=readout)
-    backend.qili_sim.reset_seed(42)
+    backend.qili_sim.reset_seed()
     assert backend.execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples() == first
 
 

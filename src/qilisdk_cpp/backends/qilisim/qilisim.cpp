@@ -48,7 +48,8 @@ void QiliSimCpp::set_seed_from_config(QiliSimConfig& config) {
     */
     const int seed = config.get_seed();
     if (!seed_rng_initialised || seed != root_seed) {
-        reset_seed(seed);
+        root_seed = seed;
+        reset_seed();
     }
     config.set_seed(static_cast<int>(seed_rng() & 0x7fffffffULL));
 }
