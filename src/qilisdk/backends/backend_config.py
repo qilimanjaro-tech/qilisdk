@@ -265,9 +265,7 @@ class ExecutionConfig(BaseSimulatorConfig):
             set to ``0``, all available cores are selected. Defaults to
             ``0``.
         seed (int | None): Random seed used by the simulator. If ``None``,
-            a random seed is generated. Defaults to ``None``. Each execution
-            derives its own sub-seed from this root, so repeated executions on
-            one backend give new randomness (although still reproducible for a given initial seed).
+            a random seed is generated. Defaults to ``None``.
         monte_carlo (MonteCarloConfig | None): Monte Carlo configuration.
             If ``None``, Monte Carlo is disabled and deterministic
             evolution is used. Defaults to ``None``.
@@ -282,9 +280,7 @@ class ExecutionConfig(BaseSimulatorConfig):
     seed: int | None = Field(
         default=None,
         ge=0,
-        description=(
-            "Initial random seed used by the simulator. If `None`, a random seed is generated. Each execution derives its own sub-seed from this."
-        ),
+        description="Random seed used by the simulator. If `None`, a random seed is generated.",
     )
     # None means Monte-Carlo disabled
     monte_carlo: MonteCarloConfig | None = Field(
@@ -339,7 +335,7 @@ class ExecutionConfig(BaseSimulatorConfig):
     @classmethod
     def _validate_seed(cls, seed: int | None) -> int:
         if seed is None:
-            generated = secrets.randbelow(2**31 - 1)
+            generated = secrets.randbelow(2**15)
             logger.debug("[BackendConfig] No seed provided, generated random seed {}", generated)
             return generated
         return seed
