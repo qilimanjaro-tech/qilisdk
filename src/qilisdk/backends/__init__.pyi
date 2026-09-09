@@ -13,16 +13,19 @@
 # limitations under the License.
 
 from .backend_config import AnalogMethod, DigitalMethod, ExecutionConfig
-from .cuda_backend import CudaBackend, CudaSamplingMethod
+from .cudaq_backend import CudaqBackend, CudaqSamplingMethod
 from .qilisim import QiliSim
 from .qutip_backend import QutipBackend
 
 __all__ = [
     "AnalogMethod",
-    "CudaBackend",
-    "CudaSamplingMethod",
+    "CudaqBackend",
+    "CudaqSamplingMethod",
     "DigitalMethod",
     "ExecutionConfig",
     "QiliSim",
     "QutipBackend",
 ]
+
+CudaBackend = CudaqBackend
+CudaSamplingMethod = CudaqSamplingMethod

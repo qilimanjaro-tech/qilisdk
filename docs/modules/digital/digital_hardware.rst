@@ -17,6 +17,9 @@ HardwareEfficientAnsatz
 
   - ``grouped``: Applies all single-qubit gates first, followed by all two-qubit gates.
   - ``interposed``: Interleaves single and two-qubit gates.
+- **final_rotation_layer**: If ``True`` (the default), a trailing single-qubit block is appended after the last
+  entangling block, so the circuit has ``(layers + 1)`` parameterized blocks and ends on tunable rotations. If
+  ``False``, the circuit has ``layers`` parameterized blocks and ends on an entangling block.
 
 
 **Example**

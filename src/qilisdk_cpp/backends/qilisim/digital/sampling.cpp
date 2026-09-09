@@ -192,7 +192,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
         if (is_statevector) {
             state = state.replicate(1, config.get_num_monte_carlo_trajectories()).eval();
         } else {
-            state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
+            state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.next_seed());
         }
         is_statevector = false;
     }
@@ -444,7 +444,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         if (is_statevector) {
             state = state.replicate(1, config.get_num_monte_carlo_trajectories()).eval();
         } else {
-            state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.get_seed());
+            state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.next_seed());
         }
         is_statevector = false;
     }

@@ -141,7 +141,7 @@ class ApplyReadoutErrorTest : public ::testing::Test {};
 TEST_F(ApplyReadoutErrorTest, ZeroError_CountsUnchanged) {
     std::map<std::string, int> counts = {{"00", 500}, {"11", 500}};
     auto nm = symmetricReadoutNoise(2, 0.0);
-    auto result = apply_readout_error(counts, nm, 2);
+    auto result = apply_readout_error(counts, nm, 2, 42);
     EXPECT_EQ(result.at("00"), 500);
     EXPECT_EQ(result.at("11"), 500);
     EXPECT_EQ(totalCounts(result), 1000);
@@ -150,7 +150,7 @@ TEST_F(ApplyReadoutErrorTest, ZeroError_CountsUnchanged) {
 TEST_F(ApplyReadoutErrorTest, TotalShotCountPreserved) {
     std::map<std::string, int> counts = {{"0", 300}, {"1", 700}};
     auto nm = symmetricReadoutNoise(1, 0.1);
-    auto result = apply_readout_error(counts, nm, 1);
+    auto result = apply_readout_error(counts, nm, 1, 42);
     EXPECT_EQ(totalCounts(result), 1000);
 }
 
@@ -159,7 +159,7 @@ TEST_F(ApplyReadoutErrorTest, PerfectFlip_AllOnesBecomesAllZeros) {
     NoiseModelCpp nm;
     nm.add_readout_error_per_qubit(0, 0.0, 1.0);
     nm.add_readout_error_per_qubit(1, 0.0, 1.0);
-    auto result = apply_readout_error(counts, nm, 2);
+    auto result = apply_readout_error(counts, nm, 2, 42);
     ASSERT_EQ(result.count("00"), 1u);
     EXPECT_EQ(result.at("00"), 1000);
 }
@@ -168,7 +168,7 @@ TEST_F(ApplyReadoutErrorTest, PerfectFlip_AllZerosBecomesAllOnes) {
     std::map<std::string, int> counts = {{"00", 1000}};
     NoiseModelCpp nm;
     nm.add_readout_error_global(1.0, 0.0);
-    auto result = apply_readout_error(counts, nm, 2);
+    auto result = apply_readout_error(counts, nm, 2, 42);
     ASSERT_EQ(result.count("11"), 1u);
     EXPECT_EQ(result.at("11"), 1000);
 }
@@ -176,7 +176,7 @@ TEST_F(ApplyReadoutErrorTest, PerfectFlip_AllZerosBecomesAllOnes) {
 TEST_F(ApplyReadoutErrorTest, PartialError_ReducesDominantOutcome) {
     std::map<std::string, int> counts = {{"0", 10000}};
     auto nm = symmetricReadoutNoise(1, 0.1);
-    auto result = apply_readout_error(counts, nm, 1);
+    auto result = apply_readout_error(counts, nm, 1, 42);
     EXPECT_EQ(totalCounts(result), 10000);
     double frac0 = fractionOf(result, "0");
     EXPECT_NEAR(frac0, 0.9, 0.05);
@@ -185,14 +185,14 @@ TEST_F(ApplyReadoutErrorTest, PartialError_ReducesDominantOutcome) {
 TEST_F(ApplyReadoutErrorTest, EmptyInputCounts_ReturnsEmpty) {
     std::map<std::string, int> counts;
     auto nm = symmetricReadoutNoise(2, 0.1);
-    auto result = apply_readout_error(counts, nm, 2);
+    auto result = apply_readout_error(counts, nm, 2, 42);
     EXPECT_TRUE(result.empty());
 }
 
 TEST_F(ApplyReadoutErrorTest, SingleQubit_OutputKeysAreValidBitstrings) {
     std::map<std::string, int> counts = {{"0", 500}, {"1", 500}};
     auto nm = symmetricReadoutNoise(1, 0.05);
-    auto result = apply_readout_error(counts, nm, 1);
+    auto result = apply_readout_error(counts, nm, 1, 42);
     for (const auto& p : result) {
         EXPECT_EQ(p.first.size(), 1u);
         EXPECT_TRUE(p.first == "0" || p.first == "1");
@@ -202,7 +202,7 @@ TEST_F(ApplyReadoutErrorTest, SingleQubit_OutputKeysAreValidBitstrings) {
 TEST_F(ApplyReadoutErrorTest, MultiQubit_OutputKeysHaveCorrectLength) {
     std::map<std::string, int> counts = {{"000", 500}, {"111", 500}};
     auto nm = symmetricReadoutNoise(3, 0.05);
-    auto result = apply_readout_error(counts, nm, 3);
+    auto result = apply_readout_error(counts, nm, 3, 42);
     for (const auto& p : result) {
         EXPECT_EQ(p.first.size(), 3u);
     }
@@ -211,8 +211,8 @@ TEST_F(ApplyReadoutErrorTest, MultiQubit_OutputKeysHaveCorrectLength) {
 TEST_F(ApplyReadoutErrorTest, Deterministic_SameSeedSameResult) {
     std::map<std::string, int> counts = {{"0", 500}, {"1", 500}};
     auto nm = symmetricReadoutNoise(1, 0.2);
-    auto r1 = apply_readout_error(counts, nm, 1);
-    auto r2 = apply_readout_error(counts, nm, 1);
+    auto r1 = apply_readout_error(counts, nm, 1, 42);
+    auto r2 = apply_readout_error(counts, nm, 1, 42);
     EXPECT_EQ(r1, r2);
 }
 
@@ -220,7 +220,7 @@ TEST_F(ApplyReadoutErrorTest, AsymmetricError_DifferentFlipRates) {
     std::map<std::string, int> counts = {{"0", 400}, {"1", 600}};
     NoiseModelCpp nm;
     nm.add_readout_error_per_qubit(0, 0.0, 1.0);
-    auto result = apply_readout_error(counts, nm, 1);
+    auto result = apply_readout_error(counts, nm, 1, 42);
     ASSERT_EQ(result.count("0"), 1u);
     EXPECT_EQ(result.at("0"), 1000);
     EXPECT_EQ(result.count("1"), 0u);

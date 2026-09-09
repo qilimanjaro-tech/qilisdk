@@ -119,7 +119,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         if (input_was_vector) {
             rho_0 = replicate_state_vector(rho_0, config.get_num_monte_carlo_trajectories());
         } else {
-            rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.get_seed());
+            rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.next_seed());
         }
         is_unitary_on_statevector = true;
     }
@@ -331,7 +331,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         if (input_was_vector) {
             rho_0 = replicate_state_vector(rho_0, config.get_num_monte_carlo_trajectories());
         } else {
-            rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.get_seed());
+            rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.next_seed());
         }
         is_unitary_on_statevector = true;
     }

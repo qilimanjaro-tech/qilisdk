@@ -43,11 +43,11 @@ This functional can be executed on any backend that supports digital circuits. F
 
 .. code-block:: python
 
-    from qilisdk.backends import CudaBackend
+    from qilisdk.backends import CudaqBackend
     from qilisdk.readout import Readout
 
     # Run on CUDA backend and retrieve counts
-    backend = CudaBackend()
+    backend = CudaqBackend()
     results = backend.execute(digital_propagation, Readout().with_sampling(nshots=100))
     print(results)
 
