@@ -56,7 +56,7 @@ pytest.importorskip(
     exc_type=ImportError,
 )
 
-from qilisdk.backends.cuda_backend import CudaBackend
+from qilisdk.backends.cudaq_backend import CudaqBackend
 
 backends = [QutipBackend(), QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))]
 if pytest.importorskip(
@@ -64,7 +64,7 @@ if pytest.importorskip(
     reason="CUDA backend tests require the 'cuda' optional dependency",
     exc_type=ImportError,
 ):
-    backends.append(CudaBackend())
+    backends.append(CudaqBackend())
 backends_no_cuda = [QutipBackend(), QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))]
 
 # Backends that support time-dependent (callable) Lindblad rates ``rate(t)`` for analog evolution.

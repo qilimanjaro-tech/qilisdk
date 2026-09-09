@@ -29,7 +29,7 @@ from qilisdk.analog import Schedule
 from qilisdk.analog import X as PauliX
 from qilisdk.analog import Y as PauliY
 from qilisdk.analog import Z as PauliZ
-from qilisdk.backends import CudaBackend, QiliSim
+from qilisdk.backends import CudaqBackend, QiliSim
 from qilisdk.core import Parameter, ket
 from qilisdk.core.interpolator import Interpolation
 from qilisdk.core.qtensor import QTensor, tensor_prod
@@ -50,8 +50,8 @@ from qilisdk.noise import (
 from qilisdk.noise.representations import KrausChannel, LindbladGenerator
 from qilisdk.readout import Readout
 
-backends = [QiliSim, CudaBackend]
-args_per_backend = {QiliSim: {"execution_config": ExecutionConfig(seed=42, num_threads=1)}, CudaBackend: {}}
+backends = [QiliSim, CudaqBackend]
+args_per_backend = {QiliSim: {"execution_config": ExecutionConfig(seed=42, num_threads=1)}, CudaqBackend: {}}
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -166,7 +166,7 @@ def test_per_gate_per_qubit_noise_on_controlled_gate(gate, noisy_gate, backend_c
     assert result.get_samples() == {"10": 100}
 
 
-def test_cuda_backend_multi_qubit_channel_on_a_multi_qubit_gate():
+def test_cudaq_backend_multi_qubit_channel_on_a_multi_qubit_gate():
     # CUDA-specific: a Kraus channel acting on as many qubits as a gate is applied to that gate,
     # rather than only to a gate spanning the whole register.
     flip_both = np.zeros((4, 4))
@@ -177,21 +177,21 @@ def test_cuda_backend_multi_qubit_channel_on_a_multi_qubit_gate():
     noise_model = NoiseModel()
     noise_model.add(KrausChannel(operators=[QTensor(flip_both)]))
 
-    result = CudaBackend(noise_model=noise_model).execute(
+    result = CudaqBackend(noise_model=noise_model).execute(
         DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100)
     )
 
     assert result.get_samples() == {"110": 100}
 
 
-def test_cuda_backend_swap_without_noise_is_unchanged():
+def test_cudaq_backend_swap_without_noise_is_unchanged():
     # CUDA-specific: without a noise model the SWAP gate keeps using the CUDA-Q built-in operation
     # rather than the custom one the noisy path installs.
     circuit = Circuit(nqubits=2)
     circuit.add(X(0))
     circuit.add(SWAP(0, 1))
 
-    result = CudaBackend().execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
+    result = CudaqBackend().execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
 
     assert result.get_samples() == {"01": 100}
 
