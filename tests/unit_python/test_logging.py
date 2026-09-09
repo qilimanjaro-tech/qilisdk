@@ -20,8 +20,9 @@ import pytest
 from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 
 from qilisdk import logging as qilisdk_logging
+from qilisdk.core.comparison import LT
 from qilisdk.core.model import Model, ObjectiveSense
-from qilisdk.core.variables import LT, BinaryVariable, Domain, OneHot, Variable
+from qilisdk.core.variables import BinaryVariable, Domain, OneHot, Variable
 from qilisdk.logging import InterceptHandler
 
 

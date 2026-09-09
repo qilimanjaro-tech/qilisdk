@@ -21,9 +21,10 @@ from loguru import logger
 from numpy import linspace
 
 from qilisdk.analog.hamiltonian import Hamiltonian
-from qilisdk.core.interpolator import PARAMETERIZED_NUMBER, Interpolation, Interpolator, TimeDict
+from qilisdk.core.expression import Cos, Expression
+from qilisdk.core.interpolator import Interpolation, Interpolator, ParameterizedNumber, TimeDict
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import BaseVariable, Cos, Domain, Parameter, Term
+from qilisdk.core.variables import BaseVariable, Domain, Parameter
 from qilisdk.settings import get_settings
 from qilisdk.utils.visualization import ScheduleStyle
 from qilisdk.yaml import yaml
@@ -76,7 +77,7 @@ class Schedule(Parameterizable):
         hamiltonians: dict[str, Hamiltonian] | None = None,
         coefficients: InterpDict | CoeffDict | None = None,
         dt: float = _DEFAULT_DT,
-        total_time: PARAMETERIZED_NUMBER | None = None,
+        total_time: ParameterizedNumber | None = None,
         interpolation: Interpolation = Interpolation.LINEAR,
         extrapolate: bool = False,
     ) -> None:
@@ -86,7 +87,7 @@ class Schedule(Parameterizable):
             hamiltonians (dict[str, Hamiltonian] | None): Mapping of labels to Hamiltonian objects. If omitted, an empty schedule is created.
             coefficients (InterpDict | CoeffDict | None): Per-Hamiltonian time definitions. Keys are time points or intervals; values are coefficients or callables. If an :class:`Interpolator` is supplied, it is used directly.
             dt (float): Time resolution used for sampling callable/interval definitions and plotting. Must be positive.
-            total_time (float | Parameter | Term | None): Optional maximum time that rescales all defined time points proportionally.
+            total_time (float | Parameter | Expression | None): Optional maximum time that rescales all defined time points proportionally.
             interpolation (Interpolation): How to interpolate between provided time points (``LINEAR`` or ``STEP``).
             extrapolate (bool): Whether to extrapolate coefficients outside their defined time points.
 
@@ -102,10 +103,11 @@ class Schedule(Parameterizable):
         self._extrapolate = extrapolate
         self._current_time: Parameter = Parameter(_TIME_PARAMETER_NAME, 0, Domain.REAL)
         self.iter_time_step = 0
-        self._max_time: PARAMETERIZED_NUMBER | None = None
+        self._max_time: ParameterizedNumber | None = None
         if dt <= 0:
             raise ValueError("dt must be greater than zero.")
         self._dt = dt
+        self._snap_warned_for: tuple[float, float] | None = None
 
         coefficients = coefficients or {}
 
@@ -334,7 +336,7 @@ class Schedule(Parameterizable):
         return self._hamiltonians
 
     @property
-    def coefficients_dict(self) -> dict[str, dict[PARAMETERIZED_NUMBER, PARAMETERIZED_NUMBER]]:
+    def coefficients_dict(self) -> dict[str, dict[ParameterizedNumber, ParameterizedNumber]]:
         return {ham: self._coefficients[ham].coefficients_dict for ham in self._hamiltonians}
 
     @property
@@ -351,8 +353,41 @@ class Schedule(Parameterizable):
 
     @property
     def tlist(self) -> list[float]:
+        """
+        The time grid the schedule is sampled and integrated on.
+
+        The tlist starts at ``0``, ends at :attr:`T` and is evenly spaced by
+        :attr:`dt`. If ``T`` is not an integer multiple of the requested ``dt``, the ``dt`` is
+        snapped to the nearest value that divides ``T`` and a warning is given.
+
+        Returns:
+            list[float]: The sampling times, of length ``T / dt + 1``.
+        """
         T = self.T
-        return list(linspace(0, T, int(T // self.dt), dtype=float))
+        if T <= 0:
+            return [0.0]
+        return list(linspace(0, T, self._nsteps(T) + 1, dtype=float))
+
+    def _nsteps(self, T: float) -> int:
+        """Number of ``dt``-sized intervals that tile ``[0, T]``.
+
+        Args:
+            T (float): Total time of the schedule. Must be positive.
+
+        Returns:
+            int: The number of intervals, at least one.
+        """
+        nsteps = max(1, round(T / self._dt))
+        snapped_dt = T / nsteps
+        if abs(snapped_dt - self._dt) > get_settings().atol and self._snap_warned_for != (T, self._dt):
+            self._snap_warned_for = (T, self._dt)
+            logger.warning(
+                "[Schedule] Total time {} is not an integer multiple of dt={}, so dt has been snapped to {}.",
+                T,
+                self._dt,
+                snapped_dt,
+            )
+        return nsteps
 
     def _get_coefficients_max_time(self) -> float:
         if len(self._hamiltonians) == 0:
@@ -364,7 +399,18 @@ class Schedule(Parameterizable):
 
     @property
     def dt(self) -> float:
-        return self._dt
+        """The spacing of :attr:`tlist`, i.e. the time step every backend integrates with.
+
+        This is the ``dt`` the schedule was built with, snapped to the nearest step that
+        divides :attr:`T` exactly when the two are incommensurate.
+
+        Returns:
+            float: The effective time resolution.
+        """
+        T = self.T
+        if T <= 0:
+            return self._dt
+        return T / self._nsteps(T)
 
     def set_dt(self, dt: float) -> None:
         """
@@ -396,7 +442,7 @@ class Schedule(Parameterizable):
         yield from self._hamiltonians.values()
         yield from self._coefficients.values()
 
-    def _get_value(self, value: PARAMETERIZED_NUMBER | complex, t: float | None = None) -> float:
+    def _get_value(self, value: ParameterizedNumber | complex, t: float | None = None) -> float:
         if isinstance(value, (int, float)):
             return value
         if isinstance(value, complex):
@@ -407,18 +453,18 @@ class Schedule(Parameterizable):
                     raise ValueError("Can't evaluate Parameter because time is not provided.")
                 value.set_value(t)
             return float(value.evaluate())
-        if isinstance(value, Term):
+        if isinstance(value, Expression):
             ctx: Mapping[BaseVariable, list[int] | int | float] = {self._current_time: t} if t is not None else {}
             aux = value.evaluate(ctx)
 
             return aux.real if isinstance(aux, complex) else float(aux)
         raise ValueError(f"Invalid value of type {type(value)} is being evaluated.")
 
-    def _extract_parameters(self, element: PARAMETERIZED_NUMBER) -> None:
+    def _extract_parameters(self, element: ParameterizedNumber) -> None:
         if isinstance(element, Parameter):
             self._add_parameter(element.label, element)
-        elif isinstance(element, Term):
-            if not element.is_parameterized_term():
+        elif isinstance(element, Expression):
+            if not element.is_parameterized():
                 raise ValueError(
                     f"Tlist can only contain parameters and no variables, but the term {element} contains objects other than parameters."
                 )
@@ -426,7 +472,7 @@ class Schedule(Parameterizable):
                 if isinstance(p, Parameter):
                     self._add_parameter(p.label, p)
 
-    def scale_max_time(self, max_time: PARAMETERIZED_NUMBER) -> None:  # FIX!
+    def scale_max_time(self, max_time: ParameterizedNumber) -> None:  # FIX!
         """
         Rescale the schedule to a new maximum time while keeping relative points fixed.
 
@@ -449,9 +495,10 @@ class Schedule(Parameterizable):
     ) -> None:
         if label in self._hamiltonians:
             raise ValueError(f"Can't add Hamiltonian because label {label} is already associated with a Hamiltonian.")
+        nsamples = int(1 / self.dt)
         self._hamiltonians[label] = hamiltonian
         self._coefficients[label] = Interpolator(
-            coefficients, interpolation, nsamples=int(1 / self.dt), extrapolate=self._extrapolate
+            coefficients, interpolation, nsamples=nsamples, extrapolate=self._extrapolate
         )
 
     def _add_hamiltonian_from_interpolator(
@@ -583,7 +630,7 @@ class Schedule(Parameterizable):
         Get the total number of discrete time steps in the annealing process.
 
         Returns:
-            int: The number of time steps, calculated as T / dt.
+            int: The number of sampling times in :attr:`tlist`, i.e. ``T / dt + 1``.
         """
         return len(self.tlist)
 
@@ -629,7 +676,7 @@ class Schedule(Parameterizable):
             MatplotlibScheduleRenderer,
         )
 
-        style = style or ScheduleStyle()
+        style = style or ScheduleStyle(title="Schedule Coefficient")
         renderer = MatplotlibScheduleRenderer(self, style=style)
         renderer.plot()
         if filepath:
@@ -673,7 +720,7 @@ class Schedule(Parameterizable):
                 "[Schedule] Overlaps can't be shown without intermediate states. Setting show_overlaps to False."
             )
             show_overlaps = False
-
+        style = style or ScheduleStyle(title="Schedule Eigenvalues")
         renderer = MatplotlibEigenvalueRenderer(
             self, levels=levels, style=style, intermediate_states=intermediate_states, show_overlaps=show_overlaps
         )
@@ -728,7 +775,7 @@ class Schedule(Parameterizable):
             "  coefficients={",
             *(f"    '{label}': {coeff!r}," for label, coeff in self.coefficients_dict.items()),
             "  },",
-            f"  dt={self.dt!r},",
+            f"  dt={self._dt!r},",
             f"  total_time={self._max_time!r},",
             f"  interpolation={self._interpolation!r}",
             ")",

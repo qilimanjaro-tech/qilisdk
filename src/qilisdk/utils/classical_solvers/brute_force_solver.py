@@ -17,9 +17,9 @@ import itertools
 from loguru import logger
 
 from qilisdk.core import Model
-from qilisdk.core.variables import BaseVariable, BinaryVariable, Number, RealNumber, Variable
+from qilisdk.core.variables import BinaryVariable, Variable
 
-from .base_solver import ClassicalSolver, _assert_real
+from .base_solver import ClassicalSolver, ClassicalSolverResult, _assert_real
 
 
 class BruteForceSolver(ClassicalSolver):
@@ -32,10 +32,10 @@ class BruteForceSolver(ClassicalSolver):
             from qilisdk.utils.classical_solvers import BruteForceSolver
 
             model = Model.knapsack(values=[5, 4], weights=[3, 2], max_weight=3)
-            results, sample = BruteForceSolver().solve(model)
+            result = BruteForceSolver().solve(model)
     """
 
-    def solve(self, model: Model) -> tuple[dict[str, Number], dict[BaseVariable, RealNumber]]:  # ruff: ignore[no-self-use]
+    def solve(self, model: Model) -> ClassicalSolverResult:  # ruff: ignore[no-self-use]
         """Solve the given model by brute-force enumeration of all variable assignments.
 
         Binary variables are assigned values from {0, 1}. Any other ``Variable`` is decomposed
@@ -46,9 +46,7 @@ class BruteForceSolver(ClassicalSolver):
             model: The ``Model`` instance to solve.
 
         Returns:
-            tuple[dict[str, Number], dict[BaseVariable, RealNumber]]: a tuple of
-            (results dict mapping objective/constraint labels to their evaluated values,
-            sample dict mapping each variable to its value in the optimal solution).
+            ClassicalSolverResult: the results of the optimization, including the objective value and best solution.
 
         Raises:
             ValueError: if the model contains a variable that has no encoding (i.e. is not a
@@ -66,7 +64,7 @@ class BruteForceSolver(ClassicalSolver):
                 vals = []
                 for bits_int in range(2**n_bits):
                     bits = [(bits_int >> b) & 1 for b in range(n_bits)]
-                    val = v.evaluate(bits)
+                    val = v.evaluate({v: bits})
                     if val not in seen:
                         seen.add(val)
                         vals.append(val)
@@ -94,4 +92,4 @@ class BruteForceSolver(ClassicalSolver):
             if objective_value + penalty < best_objective_value:
                 best_objective_value = objective_value + penalty
                 best_sample = sample
-        return model.evaluate(best_sample), best_sample
+        return ClassicalSolverResult.from_model(model, best_sample)

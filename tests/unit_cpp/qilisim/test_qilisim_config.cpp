@@ -15,6 +15,7 @@
 // GCOV_EXCL_BR_START
 
 #include <gtest/gtest.h>
+#include <set>
 #include "../../../src/qilisdk_cpp/backends/qilisim/config/qilisim_config.h"
 
 TEST(QilisimConfig, BadValidateThrows) {
@@ -126,6 +127,47 @@ TEST(QilisimConfig, MPSMethod_ValidatesAndRejectsBadTruncation) {
     QiliSimConfig negative_cutoff;
     negative_cutoff.set_mps_truncation_cutoff(-1e-3);
     EXPECT_ANY_THROW(negative_cutoff.validate());
+}
+
+TEST(QilisimConfig, NextSeedGivesDistinctStreams) {
+    QiliSimConfig config;
+    config.set_seed(7);
+
+    // Each draw is a distinct, non-negative sub-seed, and none of them is the root seed itself
+    std::set<int> seeds;
+    for (int i = 0; i < 100; ++i) {
+        int seed = config.next_seed();
+        EXPECT_GE(seed, 0);
+        EXPECT_NE(seed, config.get_seed());
+        seeds.insert(seed);
+    }
+    EXPECT_EQ(seeds.size(), 100u);
+}
+
+TEST(QilisimConfig, NextSeedIsReproducibleForARootSeed) {
+    QiliSimConfig first;
+    QiliSimConfig second;
+    first.set_seed(7);
+    second.set_seed(7);
+    for (int i = 0; i < 10; ++i) {
+        EXPECT_EQ(first.next_seed(), second.next_seed());
+    }
+
+    // A different root seed gives a different stream
+    QiliSimConfig other;
+    other.set_seed(8);
+    QiliSimConfig seven;
+    seven.set_seed(7);
+    EXPECT_NE(seven.next_seed(), other.next_seed());
+}
+
+TEST(QilisimConfig, SetSeedRestartsTheStream) {
+    QiliSimConfig config;
+    config.set_seed(7);
+    const int first_draw = config.next_seed();
+    config.next_seed();
+    config.set_seed(7);
+    EXPECT_EQ(config.next_seed(), first_draw);
 }
 
 // GCOV_EXCL_BR_STOP

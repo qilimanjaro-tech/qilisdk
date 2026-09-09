@@ -30,7 +30,7 @@ Usage Example
 .. code-block:: python
 
     import numpy as np
-    from qilisdk.backends import CudaBackend
+    from qilisdk.backends import CudaqBackend
     from qilisdk.core import ket
     from qilisdk.digital import Circuit, U2
     from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
@@ -60,7 +60,7 @@ Usage Example
         ],
     )
 
-    results = CudaBackend().execute(
+    results = CudaqBackend().execute(
         reservoir,
         Readout().with_expectation(observables=[Z(0), Z(1), Z(0) * Z(1)]),
     )

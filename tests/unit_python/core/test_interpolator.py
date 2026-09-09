@@ -16,8 +16,9 @@ import numpy as np
 import pytest
 
 import qilisdk
+from qilisdk.core.expression import Sin
 from qilisdk.core.interpolator import Interpolation, Interpolator, _process_callable
-from qilisdk.core.variables import Domain, Parameter, Sin, Variable
+from qilisdk.core.variables import Domain, Parameter, Variable
 
 
 @pytest.mark.parametrize(

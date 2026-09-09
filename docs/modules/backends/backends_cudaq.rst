@@ -1,0 +1,160 @@
+CUDA-Q Backend
+--------------
+
+The **CUDA-Q** backend leverages NVIDIA GPUs via the
+`cuda-quantum <https://github.com/NVIDIA/cuda-quantum>`_ framework. When no compatible GPU is
+detected it transparently falls back to a CPU target, so the same code prototyped on a laptop will
+also run on an accelerated machine.
+
+Installation
+============
+
+CUDA-Q is not shipped with QiliSDK, install the build that matches your CUDA toolkit yourself and
+the backend becomes available:
+
+.. code-block:: console
+
+    pip install "cuda-quantum-cu12>=0.14.0"   # or cuda-quantum-cu13
+
+.. NOTE::
+    ``CudaqBackend`` requires CUDA-Q 0.14.0 or newer. CUDA-Q publishes no wheels for Python 3.14, so
+    the backend is unavailable there until it does.
+
+Quick start
+===========
+
+.. code-block:: python
+
+    import numpy as np
+    from qilisdk.digital import Circuit, H, RX, CNOT
+    from qilisdk.backends import CudaqBackend, CudaqSamplingMethod
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.readout import Readout
+
+    circuit = Circuit(2)
+    circuit.add(RX(0, theta=np.pi / 4))
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+
+    backend = CudaqBackend(sampling_method=CudaqSamplingMethod.STATE_VECTOR)
+    result = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=500))
+    print(result.get_samples())
+
+Functional support
+==================
+
+.. list-table::
+   :header-rows: 1
+   :widths: 35 12 53
+
+   * - Functional
+     - Support
+     - Notes
+   * - :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`
+     - |y|
+     - Native CUDA-Q kernel. Sampling method selected via :class:`~qilisdk.backends.cudaq_backend.CudaqSamplingMethod`. Intermediate measurements raise ``NotImplementedError``.
+   * - :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`
+     - |y|
+     - Driven by ``cudaq.evolve`` on the ``dynamics`` target (always GPU-accelerated when available, independent of the digital sampling method).
+   * - :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`
+     - |p|
+     - The CudaqBackend does not natively implement :meth:`Backend._execute_quantum_reservoir <qilisdk.backends.backend.Backend._execute_quantum_reservoir>`. Circuit steps inside the reservoir layer fall back to dense ``QTensor`` unitary multiplication on CPU; ``Schedule`` steps still use CUDA-Q's ``evolve``. Any attached noise model is ignored.
+   * - :class:`~qilisdk.functionals.variational_program.VariationalProgram`
+     - |y|
+     - Reuses the digital/analog handlers above for each optimization step.
+
+.. |y| unicode:: U+2705
+.. |p| unicode:: U+1F7E1
+.. |n| unicode:: U+274C
+
+Configuration
+=============
+
+The CUDA backend exposes a single configuration parameter —
+:class:`~qilisdk.backends.cudaq_backend.CudaqSamplingMethod` — that selects the underlying CUDA-Q
+target used for **digital** circuits. If no method is specified, ``STATE_VECTOR`` is used.
+Analog evolution always runs on the ``dynamics`` target and ignores this setting. 
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 60 15 15 15
+
+   * - Method
+     - CUDA-Q target
+     - Supports Sampling
+     - Supports Expectation Values
+     - Supports State Tomography
+   * - :class:`~qilisdk.backends.cudaq_backend.CudaqSamplingMethod.STATE_VECTOR`
+     - ``nvidia`` when a GPU is available, otherwise ``qpp-cpu``. Precision matches :class:`~qilisdk.settings.Precision`.
+     - |y|
+     - |y|
+     - |y|
+   * - :class:`~qilisdk.backends.cudaq_backend.CudaqSamplingMethod.STATE_VECTOR_MGPU`
+     - ``nvidia-mgpu`` when multiple GPUs are available, otherwise falls back to ``nvidia``.
+     - |y|
+     - |y|
+     - |y|
+   * - :class:`~qilisdk.backends.cudaq_backend.CudaqSamplingMethod.TENSOR_NETWORK`
+     - ``tensornet``. Good for shallow, wide circuits.
+     - |y|
+     - |n|
+     - |n|
+   * - :class:`~qilisdk.backends.cudaq_backend.CudaqSamplingMethod.MATRIX_PRODUCT_STATE`
+     - ``tensornet-mps``. Good for low-entanglement, long circuits.
+     - |y|
+     - |n|
+     - |n|
+   * - :class:`~qilisdk.backends.cudaq_backend.CudaqSamplingMethod.CPU`
+     - ``cpu``. Force running on CPU. Mostly useful for benchmarking.
+     - |y|
+     - |y|
+     - |y|
+
+Set the method at construction time:
+
+.. code-block:: python
+
+    from qilisdk.backends import CudaqBackend, CudaqSamplingMethod
+
+    backend = CudaqBackend(sampling_method=CudaqSamplingMethod.MATRIX_PRODUCT_STATE)
+
+Some CUDA simulation methods support parameters being set via environment variables, notably the `MATRIX_PRODUCT_STATE` and `TENSOR_NETWORK` methods. 
+See the `CUDA-Q documentation <https://nvidia.github.io/cuda-quantum/latest/using/backends/sims/tnsims.html>`_ for details.
+
+To set the precision of the simulation, use the :class:`~qilisdk.settings.Settings` object:
+
+.. code-block:: python
+
+    from qilisdk.settings import get_settings, Precision
+
+    settings = get_settings()
+    settings.complex_precision = Precision.COMPLEX_64  # or COMPLEX_32
+
+Noise model support
+===================
+
+A :class:`~qilisdk.noise.NoiseModel` can be passed to ``CudaqBackend(noise_model=…)``:
+
+- For :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`, qilisdk noise channels
+  are translated into a ``cudaq.NoiseModel`` (Kraus channels for static / time-derived noise,
+  parameter perturbations applied to the circuit). With noise enabled, only a single
+  :class:`~qilisdk.readout.SamplingReadout` is supported.
+- For :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, Lindblad-compatible noise
+  channels become CUDA-Q jump operators and Hamiltonian deltas fed to ``cudaq.evolve``.
+- For :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`, the fallback
+  implementation drops the noise model (a warning is logged).
+
+Example: a depolarising channel applied to every gate of a digital circuit:
+
+.. code-block:: python
+
+    from qilisdk.backends import CudaqBackend, CudaqSamplingMethod
+    from qilisdk.noise import NoiseModel, Depolarizing 
+
+    nm = NoiseModel()
+    nm.add(Depolarizing(probability=1e-3))
+
+    backend = CudaqBackend(
+        sampling_method=CudaqSamplingMethod.STATE_VECTOR,
+        noise_model=nm,
+    )

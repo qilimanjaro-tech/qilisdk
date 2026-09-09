@@ -1,0 +1,1501 @@
+# Copyright 2025 Qilimanjaro Quantum Tech
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+from __future__ import annotations
+
+import warnings
+from collections.abc import Callable
+from copy import copy
+from enum import Enum
+from typing import TYPE_CHECKING, Type, TypeAlias, TypeVar
+
+import cudaq
+import numpy as np
+from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, SpinOperatorTerm, State, evolve, operators, spin
+from cudaq import Schedule as CudaSchedule
+from loguru import logger
+
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
+from qilisdk.backends.backend import Backend
+from qilisdk.core.qtensor import InitialState, QTensor
+from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
+from qilisdk.digital.exceptions import UnsupportedGateError
+from qilisdk.digital.gates import (
+    CNOT,
+    CZ,
+    RX,
+    RY,
+    RZ,
+    SWAP,
+    U1,
+    U2,
+    U3,
+    Adjoint,
+    BasicGate,
+    Controlled,
+    Gate,
+    H,
+    I,
+    M,
+    S,
+    T,
+    X,
+    Y,
+    Z,
+)
+from qilisdk.functionals import FunctionalResult
+from qilisdk.noise import (
+    BitFlip,
+    Depolarizing,
+    LindbladGenerator,
+    Noise,
+    NoiseConfig,
+    PhaseFlip,
+    ReadoutAssignment,
+    SupportsStaticKraus,
+    SupportsStaticLindblad,
+    SupportsTimeDerivedKraus,
+    SupportsTimeDerivedLindblad,
+)
+from qilisdk.readout import SamplingReadout
+from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult
+from qilisdk.settings import Precision, get_settings
+
+if TYPE_CHECKING:
+    from qilisdk.analog.schedule import Schedule
+    from qilisdk.digital.circuit import Circuit
+    from qilisdk.functionals.analog_evolution import AnalogEvolution
+    from qilisdk.functionals.digital_propagation import DigitalPropagation
+    from qilisdk.noise import NoiseModel
+    from qilisdk.readout import ReadoutMethod
+
+
+def _complex_dtype() -> np.dtype:
+    return get_settings().complex_precision.dtype
+
+
+TBasicGate = TypeVar("TBasicGate", bound=BasicGate)
+BasicGateHandlersMapping = dict[Type[TBasicGate], Callable[[cudaq.Kernel, TBasicGate, cudaq.QuakeValue], None]]
+
+TPauliOperator = TypeVar("TPauliOperator", bound=PauliOperator)
+PauliOperatorHandlersMapping: TypeAlias = dict[Type[TPauliOperator], Callable[[TPauliOperator], ElementaryOperator]]
+
+
+# CUDA-Q doesn't allow noise on its built in SWAP, so we make a custom one
+_SWAP_OP_NAME = "qilisdk_swap"
+_SINGLE_QUBIT_DIMENSION = 2
+_SWAP_MATRIX = [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1]
+
+
+def _to_cuda_noise(noise: Noise, gate_duration: float) -> cudaq.KrausChannel | None:
+    """Convert a qilisdk noise channel to a CUDA-Q ``KrausChannel``.
+
+    Args:
+        noise (Noise): The noise channel to convert.
+        gate_duration (float): Duration of the gate, used for
+            time-dependent Kraus derivation.
+
+    Returns:
+        cudaq.KrausChannel | None: The equivalent CUDA-Q Kraus channel,
+            or ``None`` if the noise type is not convertible.
+    """
+    if isinstance(noise, BitFlip):
+        return cudaq.BitFlipChannel(noise.probability)
+    if isinstance(noise, PhaseFlip):
+        return cudaq.PhaseFlipChannel(noise.probability)
+    if isinstance(noise, Depolarizing):
+        return cudaq.DepolarizationChannel(noise.probability)
+    if isinstance(noise, SupportsTimeDerivedKraus):
+        kraus_channel = noise.as_kraus_from_duration(duration=gate_duration)
+        kraus_operators_np = [np.array(operator.dense(), dtype=np.complex128) for operator in kraus_channel.operators]
+        return cudaq.KrausChannel(kraus_operators_np)
+    if isinstance(noise, SupportsStaticKraus):
+        kraus_channel = noise.as_kraus()
+        kraus_operators_np = [np.array(operator.dense(), dtype=np.complex128) for operator in kraus_channel.operators]
+        return cudaq.KrausChannel(kraus_operators_np)
+    return None
+
+
+def _to_embedded_cuda_noise(
+    noise: Noise, gate_duration: float, position: int, num_qubits: int
+) -> cudaq.KrausChannel | None:
+    """Convert a single-qubit noise channel to a CUDA-Q channel on the qubits of a multi-qubit gate.
+
+    CUDA-Q applies a channel to all the qubits of a gate at once, so the channel is embedded at the
+    position of the qubit it acts on, leaving the other qubits of the gate untouched. CUDA-Q orders
+    the qubits of a channel with the gate's first qubit as the least significant factor, so the
+    tensor product is built from its last qubit backwards.
+
+    Args:
+        noise (Noise): The noise channel to convert.
+        gate_duration (float): Duration of the gate, used for time-dependent Kraus derivation.
+        position (int): Position, within the qubits of the gate, of the qubit the noise acts on.
+        num_qubits (int): Number of qubits the gate acts on, controls included.
+
+    Returns:
+        cudaq.KrausChannel | None: The embedded CUDA-Q Kraus channel, or ``None`` if the noise
+            defines no Kraus operators or they do not act on a single qubit.
+    """
+    if isinstance(noise, SupportsTimeDerivedKraus):
+        kraus_channel = noise.as_kraus_from_duration(duration=gate_duration)
+    elif isinstance(noise, SupportsStaticKraus):
+        kraus_channel = noise.as_kraus()
+    else:
+        return None
+    operators = []
+    for operator in kraus_channel.operators:
+        matrix = np.array(operator.dense(), dtype=np.complex128)
+        if matrix.shape[0] != _SINGLE_QUBIT_DIMENSION:
+            logger.warning(
+                "[CudaqBackend] Noise channel {} does not act on a single qubit, cannot embed in multi-qubit gate",
+                noise,
+            )
+            return None
+        embedded = np.eye(1, dtype=np.complex128)
+        for qubit in reversed(range(num_qubits)):
+            embedded = np.kron(embedded, matrix if qubit == position else np.eye(2, dtype=np.complex128))
+        operators.append(embedded)
+    return cudaq.KrausChannel(operators)
+
+
+def reverse_bits(x: int, n: int) -> int:
+    """Reverse the lowest n bits of integer x.
+
+    Returns:
+        int: x with the lowest n bit reversed.
+    """
+    y = 0
+    for _ in range(n):
+        y = (y << 1) | (x & 1)
+        x >>= 1
+    return y
+
+
+def cudaq_to_standard(statevector: np.ndarray) -> np.ndarray:
+    """
+    Convert a CUDA-Q style statevector to the more common qubit-ordering
+    convention where [0,1,0,0] corresponds to :math:`|01>` for 2 qubits.
+
+    Args:
+        statevector: 1D array-like of length 2^n
+
+    Returns:
+        np.ndarray: reordered statevector
+
+    Raises:
+        ValueError: if the statevector is not a 1D array or the length is not a power of 2.
+    """
+    psi = np.asarray(statevector, dtype=complex)
+    dim = psi.shape[0]
+
+    if psi.ndim != 1:
+        raise ValueError("statevector must be a 1D array")
+
+    n = int(np.log2(dim))
+    if 2**n != dim:
+        raise ValueError("length of statevector must be a power of 2")
+
+    out = np.empty_like(psi)
+    for i in range(dim):
+        out[reverse_bits(i, n)] = psi[i]
+    return out
+
+
+class CudaqSamplingMethod(str, Enum):
+    """Enumeration of available simulation methods for the CUDA backend."""
+
+    STATE_VECTOR = "state_vector"
+    STATE_VECTOR_MGPU = "state_vector_mgpu"
+    TENSOR_NETWORK = "tensor_network"
+    MATRIX_PRODUCT_STATE = "matrix_product_state"
+    CPU = "cpu"
+
+
+class CudaqBackend(Backend):
+    """Backend implementation using CUDA-based simulation.
+
+    This backend translates a quantum circuit into a CUDA-compatible kernel
+    and executes it using the ``cudaq`` library. It supports different
+    simulation methods including state vector, tensor network, and matrix
+    product state simulations. Gate operations in the circuit are mapped to
+    CUDA operations via dedicated handler functions.
+    """
+
+    def __init__(
+        self,
+        sampling_method: CudaqSamplingMethod = CudaqSamplingMethod.STATE_VECTOR,
+        noise_model: NoiseModel | None = None,
+    ) -> None:
+        """Initialize the :class:`CudaqBackend`.
+
+        Args:
+            sampling_method (CudaqSamplingMethod): The simulation method to
+                use for sampling circuits. Options include
+                ``STATE_VECTOR``, ``STATE_VECTOR_MGPU``, ``TENSOR_NETWORK``, ``MATRIX_PRODUCT_STATE``, or
+                ``CPU``. Defaults to ``CudaqSamplingMethod.STATE_VECTOR``.
+            noise_model (NoiseModel | None): Optional noise model applied
+                during execution. Defaults to ``None``.
+        """
+        super().__init__(noise_model=noise_model)
+        cudaq.register_operation("i", np.array([1, 0, 0, 1], dtype=_complex_dtype()))
+        cudaq.register_operation(_SWAP_OP_NAME, np.array(_SWAP_MATRIX, dtype=_complex_dtype()))
+        self._basic_gate_handlers: BasicGateHandlersMapping = {
+            I: CudaqBackend._handle_I,
+            X: CudaqBackend._handle_X,
+            Y: CudaqBackend._handle_Y,
+            Z: CudaqBackend._handle_Z,
+            H: CudaqBackend._handle_H,
+            S: CudaqBackend._handle_S,
+            T: CudaqBackend._handle_T,
+            RX: CudaqBackend._handle_RX,
+            RY: CudaqBackend._handle_RY,
+            RZ: CudaqBackend._handle_RZ,
+            U1: CudaqBackend._handle_U1,
+            U2: CudaqBackend._handle_U2,
+            U3: CudaqBackend._handle_U3,
+            SWAP: self._handle_SWAP,
+        }  # ty:ignore[invalid-assignment]
+        self._pauli_operator_handlers: PauliOperatorHandlersMapping = {
+            PauliX: CudaqBackend._handle_PauliX,
+            PauliY: CudaqBackend._handle_PauliY,
+            PauliZ: CudaqBackend._handle_PauliZ,
+            PauliI: CudaqBackend._handle_PauliI,
+        }
+        self._sampling_method = sampling_method
+        logger.info("[CudaqBackend] CudaqBackend initialised (sampling_method={})", sampling_method.value)
+
+    def _execute_digital_propagation(
+        self, functional: DigitalPropagation, readout: list[ReadoutMethod]
+    ) -> FunctionalResult:
+        """Execute a digital-circuit propagation functional using the CUDA backend.
+
+        Translates the circuit into a CUDA-Q kernel, applies noise if a
+        noise model is set, and returns the requested readout results.
+
+        Args:
+            functional (DigitalPropagation): The digital propagation
+                functional to execute.
+            readout (list[ReadoutMethod]): Readout specifications for
+                result extraction.
+
+        Returns:
+            FunctionalResult: The execution result containing the requested
+                readout data.
+
+        Raises:
+            NotImplementedError: If the circuit contains intermediate
+                measurements (measurements followed by further gates).
+            UnsupportedGateError: If the circuit contains a gate with no
+                registered CUDA handler.
+            ValueError: If a noise model is set and a non-sampling readout
+                is requested.
+        """
+        logger.info("[CudaqBackend] Executing Digital Propagation")
+        self._validate_digital_readout_with_noise(readout=readout)
+        self._apply_digital_simulation_method()
+        kernel = cudaq.make_kernel()
+        qubits = kernel.qalloc(functional.circuit.nqubits)
+        og_param = None
+
+        # If it's MPS or TN, we can't get the state, only samples
+        if self.sampling_method in {
+            CudaqSamplingMethod.TENSOR_NETWORK,
+            CudaqSamplingMethod.MATRIX_PRODUCT_STATE,
+        } and not all(ro.is_sampling_readout() for ro in readout):
+            raise ValueError(
+                f"Only Sampling Readouts are supported for {self.sampling_method.value.upper()} simulation."
+            )
+
+        # Apply parameter perturbations
+        if self._noise_model:
+            og_param = copy(functional.get_parameters())
+            self._handle_gate_parameter_perturbations(functional.circuit, self._noise_model)
+
+        # Transpile the circuit into CUDAQ format
+        transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
+        measured_qubits = set()
+        for i, gate in enumerate(transpiled_circuit.gates):
+            if isinstance(gate, Controlled):
+                self._handle_controlled(kernel, gate, qubits[gate.control_qubits[0]], qubits[gate.target_qubits[0]])
+            elif isinstance(gate, Adjoint):
+                self._handle_adjoint(kernel, gate, qubits[gate.target_qubits[0]])
+            elif isinstance(gate, M):
+                if any(not isinstance(g, M) for g in transpiled_circuit.gates[i:]):
+                    raise NotImplementedError("Intermediate-measurement is not Supported with Cuda Backend")
+                measured_qubits.update(gate.qubits)
+                self._handle_M(kernel, gate, transpiled_circuit, qubits)
+            else:
+                handler = self._basic_gate_handlers.get(type(gate), None)
+                if handler is None:
+                    raise UnsupportedGateError(f"Unsupported gate {type(gate).__name__}")
+                handler(kernel, gate, *(qubits[gate.target_qubits[i]] for i in range(len(gate.target_qubits))))
+
+        qubits_to_measure = list(measured_qubits) if len(measured_qubits) > 0 else None
+
+        if self._noise_model:
+            cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, transpiled_circuit)
+            cudaq_result = cudaq.sample(
+                kernel,
+                shots_count=readout[0].nshots,  # ty:ignore[unresolved-attribute]
+                noise_model=cuda_noise_model,
+            )
+            cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
+            if og_param:
+                functional.set_parameters(og_param)
+            logger.info("[CudaqBackend] Sampling finished, {} distinct bitstrings", len(cudaq_result))
+            sampling_readout = next((ro for ro in readout if isinstance(ro, SamplingReadout)), None)
+            expand_samples = sampling_readout.expand_samples if sampling_readout else True
+            return FunctionalResult(
+                ReadoutCompositeResults(
+                    sampling=SamplingReadoutResult.from_samples(
+                        samples=dict(cudaq_result.items()),
+                        qubits_to_measure=qubits_to_measure,
+                        nqubits=functional.circuit.nqubits,
+                        expand_samples=expand_samples,
+                    ),
+                    expectation_values=None,
+                    state_tomography=None,
+                )
+            )
+
+        if all(ro.is_sampling_readout() for ro in readout):
+            sampling_readout = next(ro for ro in readout if isinstance(ro, SamplingReadout))
+            cudaq_result = cudaq.sample(kernel, shots_count=sampling_readout.nshots)
+            if og_param:
+                functional.set_parameters(og_param)
+            logger.info("[CudaqBackend] Sampling finished, {} distinct bitstrings", len(cudaq_result))
+            return FunctionalResult(
+                ReadoutCompositeResults(
+                    sampling=SamplingReadoutResult.from_samples(
+                        samples=dict(cudaq_result.items()),
+                        qubits_to_measure=qubits_to_measure,
+                        nqubits=functional.circuit.nqubits,
+                        expand_samples=sampling_readout.expand_samples,
+                    ),
+                    expectation_values=None,
+                    state_tomography=None,
+                )
+            )
+
+        cudaq_state = cudaq.get_state(kernel)
+        final_state = cudaq_to_standard(
+            np.array(
+                cudaq_state,
+                dtype=_complex_dtype(),
+            )
+        )
+        if len(final_state.shape) == 1:
+            final_state = final_state.reshape(-1, 1)
+        final_state = QTensor((final_state))
+
+        return FunctionalResult(
+            readout_results=CudaqBackend._construct_results_list(
+                final_state=final_state,
+                readout=readout,
+                qubits_to_measure=qubits_to_measure,
+            )
+        )
+
+    def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
+        """Compute analog time evolution using the CUDA-Q dynamics target.
+
+        Translates the schedule Hamiltonians to CUDA-Q operator sums,
+        applies Lindblad noise channels when a noise model is set, and
+        evolves the initial state over the schedule time steps.
+
+        Args:
+            functional (AnalogEvolution): The analog evolution functional
+                to execute, containing the schedule and initial state.
+            readout (list[ReadoutMethod]): Readout specifications for
+                result extraction.
+
+        Returns:
+            FunctionalResult: The execution result, optionally including
+                intermediate-state readouts when
+                ``functional.store_intermediate_results`` is ``True``.
+        """
+        logger.info(
+            "[CudaqBackend] Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt
+        )
+        if get_settings().complex_precision != Precision.COMPLEX_128:
+            logger.warning(
+                "[CudaqBackend] CUDA-Q dynamics simulation only supports fp64, ignoring complex_precision={} and using fp64.",
+                get_settings().complex_precision.value,
+            )
+        cudaq.set_target("dynamics", option="fp64")
+        og_params = None
+        # Apply parameter perturbations
+        if self._noise_model and self._noise_model.global_perturbations:
+            og_params = copy(functional.get_parameters())
+            self._handle_schedule_parameter_perturbations(functional.schedule, self._noise_model)
+
+        steps = functional.schedule.tlist
+
+        cuda_schedule = CudaSchedule(steps, ["t"])
+
+        cuda_hamiltonian = self._get_cuda_hamiltonian(functional.schedule)
+
+        logger.debug("[CudaqBackend] Hamiltonian compiled for evolution")
+
+        cuda_observables = []
+
+        # Add noise
+        jump_operators: list[OperatorSum] = []
+        hamiltonian_deltas: list[OperatorSum] = []
+        if self._noise_model:
+            jump_operators, hamiltonian_deltas = self._noise_model_to_cudaq_dynamics(
+                self._noise_model, functional.schedule.nqubits, functional.schedule.dt
+            )
+
+        # Remove any constant terms from the Hamiltonian, also add the deltas
+        for delta in hamiltonian_deltas:
+            cuda_hamiltonian += delta
+
+        if isinstance(functional.initial_state, InitialState):
+            state_as_qtensor = functional.initial_state.as_qtensor(functional.schedule.nqubits)
+        else:
+            state_as_qtensor = functional.initial_state
+        state_as_cuda = self._qtensor_initial_state_to_cuda(state_as_qtensor, dtype=np.dtype(np.complex128))
+
+        evolution_result = evolve(
+            hamiltonian=cuda_hamiltonian,
+            dimensions=dict.fromkeys(range(functional.schedule.nqubits), 2),
+            schedule=cuda_schedule,
+            initial_state=state_as_cuda,
+            observables=cuda_observables,
+            collapse_operators=jump_operators,
+            store_intermediate_results=functional.store_intermediate_results,
+        )
+
+        logger.info("[CudaqBackend] TimeEvolution finished")
+        # Dynamics computes in fp64; keep the results complex128 to match.
+        final_state = np.array(
+            evolution_result.final_state(),
+            dtype=np.complex128,
+        )
+        if len(final_state.shape) == 1:
+            final_state = final_state.reshape(-1, 1)
+        final_state = QTensor(final_state)
+
+        if og_params:
+            functional.set_parameters(og_params)
+
+        intermediate_states = []
+        if evolution_result.intermediate_states() is not None and functional.store_intermediate_results:
+            for state in evolution_result.intermediate_states():
+                _state = np.array(state, dtype=np.complex128)
+                if len(_state.shape) == 1:
+                    _state = _state.reshape(-1, 1)
+                intermediate_states.append(QTensor(_state))
+
+        return FunctionalResult(
+            readout_results=CudaqBackend._construct_results_list(final_state=final_state, readout=readout),
+            intermediate_results=(
+                [CudaqBackend._construct_results_list(state, readout=readout) for state in intermediate_states]
+                if functional.store_intermediate_results
+                else None
+            ),
+        )
+
+    @property
+    def sampling_method(self) -> CudaqSamplingMethod:
+        """Return the simulation method currently configured for the backend.
+
+        Returns:
+            CudaqSamplingMethod: The simulation method used for circuit
+                execution.
+        """
+        return self._sampling_method
+
+    def _validate_digital_readout_with_noise(self, readout: list[ReadoutMethod]) -> None:
+        """Validate that readout methods are compatible with noisy digital simulation.
+
+        When a noise model is active, only a single
+        :class:`~qilisdk.readout.SamplingReadout` is supported for
+        digital circuits on the CUDA backend.
+
+        Args:
+            readout (list[ReadoutMethod]): The readout methods to validate.
+
+        Raises:
+            ValueError: If a non-sampling readout is requested with noise,
+                or if more than one readout is provided with noise.
+        """
+        if self._noise_model:
+            if any(not ro.is_sampling_readout() for ro in readout):
+                raise ValueError(
+                    "Currently only the sample readout method is supported with CUDA backend for digital simulation with noise."
+                )
+            if len(readout) > 1:
+                raise ValueError(
+                    "Currently only a single sampling operation is supported with CUDA backend digital simulation with noise."
+                )
+
+    def _apply_digital_simulation_method(self) -> None:
+        """
+        Configure the cudaq simulation target based on the selected simulation method.
+
+        For the STATE_VECTOR method, it checks for GPU availability and selects an appropriate target.
+        For the STATE_VECTOR_MGPU method, it checks for multiple GPU availability and selects an appropriate target.
+        For TENSOR_NETWORK and MATRIX_PRODUCT_STATE methods, it explicitly sets the target to use tensor network-based simulations.
+        For the CPU method, it sets the target to use CPU-based simulation.
+
+        Raises:
+            ValueError: If an unsupported sampling method is configured.
+        """
+        logger.info("[CudaqBackend] Applying sampling simulation method {}", self.sampling_method.value)
+        if self.sampling_method in {CudaqSamplingMethod.STATE_VECTOR, CudaqSamplingMethod.STATE_VECTOR_MGPU}:
+            float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_128 else "fp32"
+            num_gpus = cudaq.num_available_gpus()
+            if num_gpus == 0:
+                cudaq.set_target("qpp-cpu")
+                logger.debug("[CudaqBackend] No GPU detected, using cudaq's 'qpp-cpu' backend")
+            elif self.sampling_method == CudaqSamplingMethod.STATE_VECTOR_MGPU:
+                if num_gpus < 2:  # ruff: ignore[magic-value-comparison] # come on, two isn't a magic numbr
+                    cudaq.set_target("nvidia", option=float_precision)
+                    logger.warning(
+                        "[CudaqBackend] Multiple GPU simulation method selected but only single GPU detected. Falling back to single GPU."
+                    )
+                else:
+                    cudaq.set_target("nvidia", option="mgpu," + float_precision)
+                    logger.debug("[CudaqBackend] Multiple GPUs detected, using cudaq's 'nvidia-mgpu' backend")
+            else:
+                cudaq.set_target("nvidia", option=float_precision)
+                logger.debug("[CudaqBackend] GPU detected, using cudaq's 'nvidia' backend")
+        elif self.sampling_method == CudaqSamplingMethod.CPU:
+            cudaq.set_target("qpp-cpu")
+            logger.debug("[CudaqBackend] Using cudaq's 'qpp-cpu' backend")
+        elif self.sampling_method == CudaqSamplingMethod.TENSOR_NETWORK:
+            cudaq.set_target("tensornet")
+            logger.debug("[CudaqBackend] Using cudaq's 'tensornet' backend")
+        elif self.sampling_method == CudaqSamplingMethod.MATRIX_PRODUCT_STATE:
+            cudaq.set_target("tensornet-mps")
+            logger.debug("[CudaqBackend] Using cudaq's 'tensornet-mps' backend")
+        else:
+            raise ValueError(f"Unsupported sampling method: {self.sampling_method.value}")
+
+    @staticmethod
+    def _handle_readout_errors(cudaq_result: dict[str, int], noise_model: NoiseModel, nqubits: int) -> dict[str, int]:
+        """Apply readout-assignment errors to raw measurement counts.
+
+        For each shot the method probabilistically flips measured bits
+        according to the ``p01`` and ``p10`` error rates configured in
+        the noise model.
+
+        Args:
+            cudaq_result (dict[str, int]): Raw bitstring counts from the
+                CUDA-Q sampler.
+            noise_model (NoiseModel): The noise model containing readout
+                assignment errors.
+            nqubits (int): Total number of qubits in the circuit.
+
+        Returns:
+            dict[str, int]: Adjusted bitstring counts with readout errors
+                applied. Returned unchanged if no readout errors are
+                configured.
+        """
+        # Determine which qubits have readout assignment errors
+        readout_error_per_qubits = [(0.0, 0.0) for _ in range(nqubits)]
+        has_readout_error = False
+        for noise in noise_model.global_noise:
+            if isinstance(noise, ReadoutAssignment):
+                for qubit in range(nqubits):
+                    readout_error_per_qubits[qubit] = (noise.p01, noise.p10)
+                    has_readout_error = True
+        for qubit, noises in noise_model.per_qubit_noise.items():
+            for noise in noises:
+                if isinstance(noise, ReadoutAssignment):
+                    readout_error_per_qubits[qubit] = (noise.p01, noise.p10)
+                    has_readout_error = True
+
+        if not has_readout_error:
+            return cudaq_result
+
+        # numpy generator
+        gen = np.random.default_rng(42)
+
+        # First split into individual shots
+        shots = []
+        for bitstring, count in cudaq_result.items():
+            shots.extend([bitstring] * count)
+
+        # Convert each shot according to the readout error probabilities
+        adjusted_counts: dict[str, int] = {}
+        for shot in shots:
+            adjusted_shot = list(shot)
+            for qubit_index in range(nqubits):
+                p01, p10 = readout_error_per_qubits[qubit_index]
+                if shot[nqubits - 1 - qubit_index] == "0" and gen.random() < p01:
+                    adjusted_shot[nqubits - 1 - qubit_index] = "1"
+                elif gen.random() < p10:
+                    adjusted_shot[nqubits - 1 - qubit_index] = "0"
+            adjusted_bitstring = "".join(adjusted_shot)
+            adjusted_counts[adjusted_bitstring] = adjusted_counts.get(adjusted_bitstring, 0) + 1
+
+        # Set the new results
+        cudaq_result = adjusted_counts
+
+        return cudaq_result
+
+    @staticmethod
+    def _add_global_noise(
+        noise: Noise,
+        cuda_noise_model: cudaq.NoiseModel,
+        all_cuda_gate_names: dict[Type[BasicGate] | Type[Gate], str],
+        noise_config: NoiseConfig,
+        multi_qubit_gates: dict[Type[BasicGate] | Type[Gate], int],
+    ) -> None:
+        """Register a global noise channel on every gate type in the CUDA-Q noise model.
+
+        Args:
+            noise (Noise): The noise channel to register.
+            cuda_noise_model (cudaq.NoiseModel): The target CUDA-Q noise
+                model to modify in place.
+            all_cuda_gate_names (dict[Type[BasicGate] | Type[Gate], str]):
+                Mapping from gate types to their CUDA-Q string names.
+            noise_config (NoiseConfig): Gate-timing configuration used to
+                derive Kraus operators for time-dependent noise.
+            multi_qubit_gates (dict[Type[BasicGate] | Type[Gate], int]): Number of qubits of the
+                multi-qubit gates of the circuit, keyed by gate type.
+        """
+        for gate, gate_name in all_cuda_gate_names.items():
+            duration = noise_config.get_gate_time(gate)
+
+            # See if we need to handle multi-qubit gates
+            if num_qubits := multi_qubit_gates.get(gate, 0):
+                CudaqBackend._add_multi_qubit_noise(noise, gate, gate_name, num_qubits, cuda_noise_model, duration)
+            if gate is SWAP:
+                continue
+
+            # See if we can convert the noise to a CUDA-Q channel
+            if cuda_noise := _to_cuda_noise(noise, duration):
+                # A channel acting on more than one qubit only fits the multi-qubit gates above
+                if (
+                    isinstance(noise, SupportsStaticKraus)
+                    and noise.as_kraus().operators
+                    and noise.as_kraus().operators[0].dense().shape[0] != _SINGLE_QUBIT_DIMENSION
+                ):
+                    continue
+
+                # Otherwise, add normally
+                cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
+
+    @staticmethod
+    def _add_multi_qubit_noise(
+        noise: Noise,
+        gate_type: Type[BasicGate] | Type[Gate],
+        gate_name: str,
+        num_qubits: int,
+        cuda_noise_model: cudaq.NoiseModel,
+        duration: float,
+    ) -> None:
+        """Register a noise channel for a multi-qubit gate type on all qubits of the gate.
+
+        CUDA-Q applies a channel to all the qubits of a gate at once, so a single-qubit channel has
+        to be registered separately, and embedded, for each qubit of the gate: the two qubits of a
+        SWAP, or the control and the target of a controlled gate, which CUDA-Q sees as the base
+        operation of the gate applied to both and tells apart from the plain gate by the number of
+        control qubits.
+
+        Args:
+            noise (Noise): The noise channel to register.
+            gate_type (Type[BasicGate] | Type[Gate]): The gate type the operation belongs to.
+            gate_name (str): The CUDA-Q name of the operation.
+            num_qubits (int): The number of qubits the gate acts on, controls included.
+            cuda_noise_model (cudaq.NoiseModel): The target CUDA-Q noise model to modify in place.
+            duration (float): Duration of the gate, used for time-dependent Kraus derivation.
+        """
+        num_controls = num_qubits - (2 if gate_type is SWAP else 1)
+
+        # A channel that already acts on as many qubits as the gate is applied directly
+        dim = 0
+        if isinstance(noise, SupportsStaticKraus) and noise.as_kraus().operators:
+            dim = noise.as_kraus().operators[0].dense().shape[0]
+        if dim == 2**num_qubits and (cuda_noise := _to_cuda_noise(noise, duration)):
+            cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise, num_controls)
+            return
+
+        # Otherwise we loop over qubits and apply it to each
+        for position in range(num_qubits):
+            if cuda_noise := _to_embedded_cuda_noise(noise, duration, position, num_qubits):
+                cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise, num_controls)
+            else:
+                logger.warning(
+                    "[CudaqBackend] Noise channel {} does not define Kraus operators or they do not act on a single qubit, cannot embed in multi-qubit gate {}",
+                    noise,
+                    gate_type.__name__,
+                )
+                return
+
+    @staticmethod
+    def _add_per_gate_noise(
+        gate_type: Type[BasicGate] | Type[Gate],
+        noises: list[Noise],
+        cuda_noise_model: cudaq.NoiseModel,
+        all_cuda_gate_names: dict[Type[BasicGate] | Type[Gate], str],
+        noise_config: NoiseConfig,
+        multi_qubit_gates: dict[Type[BasicGate] | Type[Gate], int],
+    ) -> None:
+        """Register noise channels for a specific gate type on all qubits.
+
+        Args:
+            gate_type (Type[BasicGate] | Type[Gate]): The gate type to
+                attach the noise to.
+            noises (list[Noise]): Noise channels to register.
+            cuda_noise_model (cudaq.NoiseModel): The target CUDA-Q noise
+                model to modify in place.
+            all_cuda_gate_names (dict[Type[BasicGate] | Type[Gate], str]):
+                Mapping from gate types to their CUDA-Q string names.
+            noise_config (NoiseConfig): Gate-timing configuration used to
+                derive Kraus operators for time-dependent noise.
+            multi_qubit_gates (dict[Type[BasicGate] | Type[Gate], int]): Number of qubits of the
+                multi-qubit gates of the circuit, keyed by gate type.
+        """
+        # In CUDA-Q a CNOT is stored as a controlled X, not a CNOT
+        basic_gate_type = gate_type
+        if gate_type is CNOT:
+            basic_gate_type = X
+        elif gate_type is CZ:
+            basic_gate_type = Z
+        gate_name = all_cuda_gate_names.get(basic_gate_type)
+        if gate_name is None:
+            logger.warning(
+                "[CudaqBackend] Ignoring the noise on gate '{}': CUDA-Q has no equivalent operation to attach a noise "
+                "channel to. Decompose the gate into other gates to give it noise.",
+                gate_type.__name__,
+            )
+            return
+
+        # Check each noise type
+        duration = noise_config.get_gate_time(gate_type)
+        for noise in noises:
+            # If we can turn it into a CUDA-Q channel, register it on every qubit of the gate
+            if basic_gate_type is gate_type and basic_gate_type is not SWAP:
+                if cuda_noise := _to_cuda_noise(noise, duration):
+                    cuda_noise_model.add_all_qubit_channel(gate_name, cuda_noise)
+
+            # Otherwise, if it's a multi-qubit gate, convert to a Kraus operated expanded to each qubit
+            elif num_qubits := multi_qubit_gates.get(basic_gate_type, 0):
+                CudaqBackend._add_multi_qubit_noise(
+                    noise, basic_gate_type, gate_name, num_qubits, cuda_noise_model, duration
+                )
+
+    @staticmethod
+    def _add_per_qubit_noise(
+        qubit: int,
+        noises: list[Noise],
+        cuda_noise_model: cudaq.NoiseModel,
+        all_cuda_gate_names: dict[Type[BasicGate] | Type[Gate], str],
+        noise_config: NoiseConfig,
+        circuit: Circuit,
+        gate_type: Type[BasicGate] | Type[Gate] | None = None,
+    ) -> None:
+        """Register noise channels for a specific qubit on every gate type.
+
+        Args:
+            qubit (int): The qubit index to attach the noise to.
+            noises (list[Noise]): Noise channels to register.
+            cuda_noise_model (cudaq.NoiseModel): The target CUDA-Q noise
+                model to modify in place.
+            all_cuda_gate_names (dict[Type[BasicGate] | Type[Gate], str]):
+                Mapping from gate types to their CUDA-Q string names.
+            noise_config (NoiseConfig): Gate-timing configuration used to
+                derive Kraus operators for time-dependent noise.
+            circuit (Circuit): The circuit that is going to be executed, needed for the multi-qubit
+                gates, whose qubits have to be known to place the noise on one of them.
+            gate_type (Type[BasicGate] | Type[Gate] | None): The gate type to attach the noise to,
+                or ``None`` to attach it to every gate type.
+        """
+        # If we can turn it into a CUDA-Q channel, register it on every gate type
+        for noise in noises:
+            for gate, gate_name in all_cuda_gate_names.items():
+                if gate_type in {None, gate} and (
+                    cuda_noise := _to_cuda_noise(noise, noise_config.get_gate_time(gate))
+                ):
+                    cuda_noise_model.add_channel(gate_name, [qubit], cuda_noise)
+
+        # Check for multi-qubit gates and handle noise for them
+        for gate in circuit.gates:
+            # Get the base name of the gate
+            basic_gate = gate.basic_gate if isinstance(gate, (Adjoint, Controlled)) else gate
+            gate_name = all_cuda_gate_names.get(type(basic_gate))
+
+            # Only the multi-qubit gates that act on this qubit, and that CUDA-Q has an operation for
+            if gate_name is None or len(gate.qubits) < _SINGLE_QUBIT_DIMENSION or qubit not in gate.qubits:
+                continue
+
+            # In CUDA-Q a CNOT is stored as a controlled X, not a CNOT
+            named_type = type(gate)
+            if isinstance(basic_gate, X):
+                named_type = CNOT
+            elif isinstance(basic_gate, Z):
+                named_type = CZ
+
+            # Make sure the gate type matches the one we want to attach the noise to
+            if gate_type not in {None, named_type, type(gate)}:
+                continue
+
+            # Add the noise as a Kraus operator spread over the qubits of the gate
+            duration = noise_config.get_gate_time(named_type)
+            for noise in noises:
+                if cuda_noise := _to_embedded_cuda_noise(noise, duration, gate.qubits.index(qubit), len(gate.qubits)):
+                    cuda_noise_model.add_channel(gate_name, list(gate.qubits), cuda_noise)
+
+    @staticmethod
+    def _add_per_gate_per_qubit_noise(
+        gate_type: Type[BasicGate] | Type[Gate],
+        qubit: int,
+        noises: list[Noise],
+        cuda_noise_model: cudaq.NoiseModel,
+        all_cuda_gate_names: dict[Type[BasicGate] | Type[Gate], str],
+        noise_config: NoiseConfig,
+        circuit: Circuit,
+    ) -> None:
+        """Register noise channels for a specific gate type on a specific qubit.
+
+        More or less just a wrapper since this is the same as per-qubit noise, but with a gate type filter.
+
+        Args:
+            gate_type (Type[BasicGate] | Type[Gate]): The gate type to
+                attach the noise to.
+            qubit (int): The qubit index to attach the noise to.
+            noises (list[Noise]): Noise channels to register.
+            cuda_noise_model (cudaq.NoiseModel): The target CUDA-Q noise
+                model to modify in place.
+            all_cuda_gate_names (dict[Type[BasicGate] | Type[Gate], str]):
+                Mapping from gate types to their CUDA-Q string names.
+            noise_config (NoiseConfig): Gate-timing configuration used to
+                derive Kraus operators for time-dependent noise.
+            circuit (Circuit): The circuit that is going to be executed, needed for the multi-qubit
+                gates, whose qubits have to be known to place the noise on one of them.
+        """
+        CudaqBackend._add_per_qubit_noise(
+            qubit, noises, cuda_noise_model, all_cuda_gate_names, noise_config, circuit, gate_type
+        )
+
+    def _noise_model_to_cudaq(self, noise_model: NoiseModel, circuit: Circuit) -> cudaq.NoiseModel:
+        """Convert a qilisdk :class:`~qilisdk.noise.NoiseModel` to a ``cudaq.NoiseModel``.
+
+        Translates global, per-gate, per-qubit, and per-gate-per-qubit
+        noise channels into the CUDA-Q noise model representation.
+
+        Args:
+            noise_model (NoiseModel): The qilisdk noise model to convert.
+            circuit (Circuit): The circuit that is going to be executed.
+
+        Returns:
+            cudaq.NoiseModel: The equivalent CUDA-Q noise model.
+        """
+        # Special gate cases:
+        # - the SWAP in CUDA-Q can't carry noise for some reason, so we build our own
+        # - U1 and U2 don't exist in CUDA-Q and get converted to U3
+        all_cuda_gate_names = {
+            gate: _SWAP_OP_NAME if gate is SWAP else gate.__name__.lower()
+            for gate in self._basic_gate_handlers
+            if gate.__name__.lower() not in {"u1", "u2"}
+        }
+
+        # Get the list of multi-qubit gates in the circuit
+        multi_qubit_gates = {
+            (type(gate.basic_gate) if isinstance(gate, Controlled) else type(gate)): len(gate.qubits)
+            for gate in circuit.gates
+            if len(gate.qubits) > 1
+        }
+        cuda_noise_model = cudaq.NoiseModel()
+
+        # Global noise
+        for noise in noise_model.global_noise:
+            self._add_global_noise(
+                noise, cuda_noise_model, all_cuda_gate_names, noise_model.noise_config, multi_qubit_gates
+            )
+
+        # Per gate noise
+        for gate_type, noises in noise_model.per_gate_noise.items():
+            self._add_per_gate_noise(
+                gate_type, noises, cuda_noise_model, all_cuda_gate_names, noise_model.noise_config, multi_qubit_gates
+            )
+
+        # Per qubit noise
+        for qubit, noises in noise_model.per_qubit_noise.items():
+            self._add_per_qubit_noise(
+                qubit, noises, cuda_noise_model, all_cuda_gate_names, noise_model.noise_config, circuit
+            )
+
+        # Per gate per qubit noise
+        for (gate_type, qubit), noises in noise_model.per_gate_per_qubit_noise.items():
+            self._add_per_gate_per_qubit_noise(
+                gate_type, qubit, noises, cuda_noise_model, all_cuda_gate_names, noise_model.noise_config, circuit
+            )
+
+        return cuda_noise_model
+
+    @staticmethod
+    def _handle_gate_parameter_perturbations(circuit: Circuit, noise_model: NoiseModel) -> None:
+        """Apply parameter perturbations from the noise model to circuit gate parameters.
+
+        Modifies gate parameters in place according to global and
+        per-gate perturbation rules defined in the noise model.
+
+        Args:
+            circuit (Circuit): The circuit whose parameters will be
+                perturbed.
+            noise_model (NoiseModel): The noise model containing
+                perturbation definitions.
+
+        Raises:
+            ValueError: If a perturbation targets a parameter that does
+                not exist in the circuit or gate.
+        """
+        circuit_parameters = circuit.get_parameters()
+        for parameter, perturbations in noise_model.global_perturbations.items():
+            if parameter in circuit_parameters:
+                for perturbation in perturbations:
+                    circuit.set_parameters({parameter: perturbation.perturb(circuit_parameters[parameter])})
+            else:
+                raise ValueError(f"Perturbing Parameter {parameter} that doesn't exist in the circuit.")
+        for (gate_type, parameter), perturbations in noise_model.per_gate_perturbations.items():
+            for gate in circuit.gates:
+                if isinstance(gate, gate_type):
+                    if parameter in gate.get_parameter_names():
+                        for perturbation in perturbations:
+                            gate.set_parameters({parameter: perturbation.perturb(gate.get_parameters()[parameter])})
+                    else:
+                        raise ValueError(
+                            "Invalid parameter name passed to gate."
+                            + "To perturb a parameter on a gate use the native theta, gamma, or phi depending on the gate not the Parameter object name."
+                        )
+
+    @staticmethod
+    def _handle_schedule_parameter_perturbations(schedule: Schedule, noise_model: NoiseModel) -> None:
+        """Apply parameter perturbations from the noise model to schedule parameters.
+
+        Modifies schedule parameters in place according to global
+        perturbation rules defined in the noise model.
+
+        Args:
+            schedule (Schedule): The schedule whose parameters will be
+                perturbed.
+            noise_model (NoiseModel): The noise model containing
+                perturbation definitions.
+        """
+        if noise_model.global_perturbations:
+            schedule_parameters = schedule.get_parameters()
+            for parameter, perturbations in noise_model.global_perturbations.items():
+                parameter_name = parameter.label if not isinstance(parameter, str) else parameter
+                if parameter_name in schedule_parameters:
+                    for perturbation in perturbations:
+                        schedule.set_parameters(
+                            {parameter_name: perturbation.perturb(schedule_parameters[parameter_name])}
+                        )
+
+    def _add_global_noise_dynamics(
+        self,
+        ops_numpy: list,
+        jump_operators: list[OperatorSum],
+        hamiltonian_deltas: list[OperatorSum],
+        lindblad_generator: LindbladGenerator,
+        nqubits: int,
+    ) -> None:
+        """Register global Lindblad noise for CUDA-Q dynamics evolution.
+
+        Converts a :class:`~qilisdk.noise.LindbladGenerator` into CUDA-Q
+        jump operators and optional Hamiltonian corrections, applying them
+        to every qubit in the system.
+
+        Args:
+            ops_numpy (list): Accumulator list for numpy operator arrays
+                (kept alive to prevent garbage collection).
+            jump_operators (list[OperatorSum]): Accumulator for CUDA-Q
+                jump operators.
+            hamiltonian_deltas (list[OperatorSum]): Accumulator for
+                Hamiltonian correction terms.
+            lindblad_generator (LindbladGenerator): The Lindblad generator
+                containing jump operators and an optional Hamiltonian.
+            nqubits (int): Total number of qubits in the system.
+
+        Raises:
+            ValueError: If a jump operator is not a square matrix, its
+                dimension is not a power of 2, or a global operator is
+                neither single-qubit nor full-system.
+            NotImplementedError: If the Lindblad generator has a
+                time-dependent (callable) rate.
+        """
+        if lindblad_generator.is_time_dependent:
+            raise NotImplementedError(
+                "The CUDA-Q backend does not support time-dependent Lindblad rates (callable rate(t)). "
+                "Use QiliSim's analog evolution for time-dependent rates, or provide constant rates."
+            )
+        for i, operator in enumerate(lindblad_generator.jump_operators_with_rates):
+            op_id = f"jump_op_{i}"
+            ops_numpy.append(np.array(operator.dense(), dtype=np.complex128))
+            dim = ops_numpy[-1].shape[0]
+            if ops_numpy[-1].shape[1] != dim:
+                raise ValueError("Lindblad jump operators must be square matrices.")
+            operator_nqubits = int(np.round(np.log2(dim)))
+            if 2**operator_nqubits != dim:
+                raise ValueError("Lindblad jump operator dimension must be a power of 2.")
+            if dim == 2**nqubits:
+                operators.define(
+                    id=op_id,
+                    expected_dimensions=[2 for _ in range(nqubits)],
+                    create=lambda op_np=ops_numpy[-1]: op_np,
+                    override=True,
+                )
+                jump_operators.append(operators.instantiate(op_id, degrees=list(range(nqubits))))
+            elif operator_nqubits == 1:
+                operators.define(
+                    id=op_id,
+                    expected_dimensions=[2],
+                    create=lambda op_np=ops_numpy[-1]: op_np,
+                    override=True,
+                )
+                for qubit in range(nqubits):
+                    jump_operators.append(operators.instantiate(op_id, degrees=qubit))
+            else:
+                raise ValueError("Global Lindblad jump operators must be either single-qubit or full-system operators.")
+        if lindblad_generator.hamiltonian is not None:
+            hamiltonian_deltas.append(self._hamiltonian_to_cuda(lindblad_generator.hamiltonian))
+
+    def _add_per_qubit_noise_dynamics(
+        self,
+        ops_numpy: list,
+        jump_operators: list[OperatorSum],
+        hamiltonian_deltas: list[OperatorSum],
+        lindblad_generator: LindbladGenerator,
+        qubit: int,
+    ) -> None:
+        """Register per-qubit Lindblad noise for CUDA-Q dynamics evolution.
+
+        Converts a :class:`~qilisdk.noise.LindbladGenerator` into CUDA-Q
+        jump operators and optional Hamiltonian corrections for a single
+        qubit.
+
+        Args:
+            ops_numpy (list): Accumulator list for numpy operator arrays
+                (kept alive to prevent garbage collection).
+            jump_operators (list[OperatorSum]): Accumulator for CUDA-Q
+                jump operators.
+            hamiltonian_deltas (list[OperatorSum]): Accumulator for
+                Hamiltonian correction terms.
+            lindblad_generator (LindbladGenerator): The Lindblad generator
+                containing jump operators and an optional Hamiltonian.
+            qubit (int): The qubit index to attach the noise to.
+
+        Raises:
+            ValueError: If a jump operator is not a square matrix, its
+                dimension is not a power of 2, or it is not a
+                single-qubit operator.
+            NotImplementedError: If the Lindblad generator has a
+                time-dependent (callable) rate.
+        """
+        if lindblad_generator.is_time_dependent:
+            raise NotImplementedError(
+                "The CUDA-Q backend does not support time-dependent Lindblad rates (callable rate(t)). "
+                "Use QiliSim's analog evolution for time-dependent rates, or provide constant rates."
+            )
+        for i, operator in enumerate(lindblad_generator.jump_operators_with_rates):
+            op_id = f"jump_op_q{qubit}_{i}"
+            ops_numpy.append(np.array(operator.dense(), dtype=np.complex128))
+            dim = ops_numpy[-1].shape[0]
+            if ops_numpy[-1].shape[1] != dim:
+                raise ValueError("Lindblad jump operators must be square matrices.")
+            operator_nqubits = int(np.round(np.log2(dim)))
+            if 2**operator_nqubits != dim:
+                raise ValueError("Lindblad jump operator dimension must be a power of 2.")
+            if operator_nqubits != 1:
+                raise ValueError("Per-qubit Lindblad jump operators must be single-qubit operators.")
+            operators.define(
+                id=op_id,
+                expected_dimensions=[2],
+                create=lambda op_np=ops_numpy[-1]: op_np,
+                override=True,
+            )
+            jump_operators.append(operators.instantiate(op_id, degrees=qubit))
+        if lindblad_generator.hamiltonian is not None:
+            hamiltonian_deltas.append(self._hamiltonian_to_cuda(lindblad_generator.hamiltonian))
+
+    def _noise_model_to_cudaq_dynamics(
+        self, noise_model: NoiseModel, nqubits: int, dt: float
+    ) -> tuple[list[OperatorSum], list]:
+        """Convert a noise model to CUDA-Q dynamics jump operators and Hamiltonian corrections.
+
+        Processes global and per-qubit Lindblad noise channels, producing
+        the jump operators and Hamiltonian delta terms needed by
+        ``cudaq.evolve``.
+
+        Args:
+            noise_model (NoiseModel): The qilisdk noise model to convert.
+            nqubits (int): Total number of qubits in the system.
+            dt (float): Schedule time step, used to derive time-dependent
+                Lindblad generators.
+
+        Returns:
+            tuple[list[OperatorSum], list]: A pair of
+                ``(jump_operators, hamiltonian_deltas)`` ready for the
+                CUDA-Q dynamics solver.
+        """
+        ops_numpy: list[np.ndarray] = []
+        jump_operators: list[OperatorSum] = []
+        hamiltonian_deltas: list[OperatorSum] = []
+
+        # Global noise
+        for noise in noise_model.global_noise:
+            if isinstance(noise, SupportsStaticLindblad):
+                lindblad_generator = noise.as_lindblad()
+                self._add_global_noise_dynamics(
+                    ops_numpy, jump_operators, hamiltonian_deltas, lindblad_generator, nqubits
+                )
+            elif isinstance(noise, SupportsTimeDerivedLindblad):
+                lindblad_generator = noise.as_lindblad_from_duration(duration=dt)
+                self._add_global_noise_dynamics(
+                    ops_numpy, jump_operators, hamiltonian_deltas, lindblad_generator, nqubits
+                )
+
+        # Per qubit noise
+        for qubit, noises in noise_model.per_qubit_noise.items():
+            for noise in noises:
+                if isinstance(noise, SupportsStaticLindblad):
+                    lindblad_generator = noise.as_lindblad()
+                    self._add_per_qubit_noise_dynamics(
+                        ops_numpy, jump_operators, hamiltonian_deltas, lindblad_generator, qubit
+                    )
+                elif isinstance(noise, SupportsTimeDerivedLindblad):
+                    lindblad_generator = noise.as_lindblad_from_duration(duration=dt)
+                    self._add_per_qubit_noise_dynamics(
+                        ops_numpy, jump_operators, hamiltonian_deltas, lindblad_generator, qubit
+                    )
+
+        # Remove any constant terms from the deltas
+        hamiltonian_deltas = [CudaqBackend._remove_constant_terms(delta) for delta in hamiltonian_deltas]
+
+        return jump_operators, hamiltonian_deltas
+
+    @staticmethod
+    def _remove_constant_terms(operator_sum: OperatorSum) -> OperatorSum:
+        """Remove identity (constant) terms from a CUDA-Q ``OperatorSum``.
+
+        Args:
+            operator_sum (OperatorSum): The operator sum to filter.
+
+        Returns:
+            OperatorSum: A new operator sum with only non-identity spin
+                terms, or ``ScalarOperator(0.0)`` if no terms remain.
+        """
+        new_operator_sum = None
+        for term in operator_sum:
+            if isinstance(term, SpinOperatorTerm) and not term.is_identity():
+                if new_operator_sum is None:
+                    new_operator_sum = term.copy()
+                else:
+                    new_operator_sum += term.copy()
+        if new_operator_sum is None:
+            new_operator_sum = ScalarOperator(0.0)
+        return new_operator_sum
+
+    def _get_cuda_hamiltonian(self, schedule: Schedule) -> OperatorSum:
+        """Build a time-dependent CUDA-Q Hamiltonian from a schedule.
+
+        Each Hamiltonian term in the schedule is multiplied by its
+        time-dependent coefficient and combined into a single
+        ``OperatorSum``.
+
+        Args:
+            schedule (Schedule): The schedule containing Hamiltonians and
+                their time-dependent coefficients.
+
+        Returns:
+            OperatorSum: The composed time-dependent CUDA-Q Hamiltonian.
+
+        Raises:
+            ValueError: If the schedule contains no Hamiltonians.
+        """
+
+        def get_schedule(key: str) -> Callable[[complex], float]:
+            return lambda t: schedule.coefficients[key][t.real]
+
+        cuda_hamiltonian = None
+        for key, ham in schedule.hamiltonians.items():
+            term = ScalarOperator(get_schedule(key)) * self._hamiltonian_to_cuda(ham)
+            if cuda_hamiltonian is None:
+                cuda_hamiltonian = term
+            else:
+                cuda_hamiltonian += term
+        if cuda_hamiltonian is None:
+            raise ValueError("TimeEvolution requires at least one Hamiltonian in the schedule.")
+        return cuda_hamiltonian
+
+    @staticmethod
+    def _qtensor_observable_to_hamiltonian(observable: QTensor, nqubits: int) -> Hamiltonian:
+        """Convert a ``QTensor`` observable to a :class:`~qilisdk.analog.hamiltonian.Hamiltonian`.
+
+        Args:
+            observable (QTensor): The observable tensor, which must be a
+                square operator of dimension ``2**nqubits``.
+            nqubits (int): Expected number of qubits the observable acts
+                on.
+
+        Returns:
+            Hamiltonian: The equivalent Hamiltonian decomposition.
+
+        Raises:
+            ValueError: If the observable is not a square operator, does
+                not match ``nqubits``, or is not Hermitian.
+        """
+        if not observable.is_operator():
+            raise ValueError("QTensor observable must be an operator with shape (2**N, 2**N).")
+        if observable.nqubits != nqubits:
+            raise ValueError(
+                f"QTensor observable acts on {observable.nqubits} qubits but the schedule acts on {nqubits} qubits."
+            )
+        try:
+            return Hamiltonian.from_qtensor(observable)
+        except ValueError as exc:
+            raise ValueError("QTensor observables in the CUDA backend must be Hermitian operators.") from exc
+
+    @staticmethod
+    def _qtensor_initial_state_to_cuda(initial_state: QTensor, dtype: np.dtype | None = None) -> State:
+        """Convert a ``QTensor`` initial state to a CUDA-Q ``State``.
+
+        The state is normalized and, if given as a bra, transposed to a
+        ket before conversion.
+
+        Args:
+            initial_state (QTensor): The initial quantum state to convert.
+            dtype (np.dtype | None): Complex dtype to build the state data
+                with. Defaults to the dtype implied by the global
+                ``complex_precision`` setting. The dynamics target requires
+                ``np.complex128`` regardless of that setting.
+
+        Returns:
+            State: The equivalent CUDA-Q state object.
+        """
+        normalized_state = initial_state.unit()
+        if normalized_state.is_bra():
+            normalized_state = normalized_state.adjoint()
+
+        cuda_state_data = np.array(normalized_state.dense(), dtype=dtype or _complex_dtype())
+        if normalized_state.is_ket():
+            cuda_state_data = cuda_state_data.reshape(-1)
+
+        return State.from_data(cuda_state_data)
+
+    def _handle_controlled(
+        self, kernel: cudaq.Kernel, gate: Controlled, control_qubit: cudaq.QuakeValue, target_qubit: cudaq.QuakeValue
+    ) -> None:
+        """
+        Handle a controlled gate operation.
+
+        This method processes a controlled gate by creating a temporary kernel for the basic gate,
+        applying its handler, and then integrating it into the main kernel as a controlled operation.
+
+        Args:
+            kernel (cudaq.Kernel): The main CUDA kernel being constructed.
+            gate (Controlled): The controlled gate to be handled.
+            control_qubit (cudaq.QuakeValue): The control qubit for the gate.
+            target_qubit (cudaq.QuakeValue): The target qubit for the gate.
+
+        Raises:
+            UnsupportedGateError: If the number of control qubits is not equal to one or if the basic gate is unsupported.
+        """
+        if len(gate.control_qubits) != 1:
+            logger.error(
+                "[CudaqBackend] Controlled gate with {} control qubits not supported", len(gate.control_qubits)
+            )
+            raise UnsupportedGateError
+        target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
+        handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
+        if handler is None:
+            logger.error("[CudaqBackend] Unsupported gate inside Controlled: {}", type(gate.basic_gate).__name__)
+            raise UnsupportedGateError
+        handler(target_kernel, gate.basic_gate, qubit)
+        kernel.control(target_kernel, control_qubit, target_qubit)
+
+    def _handle_adjoint(self, kernel: cudaq.Kernel, gate: Adjoint, target_qubit: cudaq.QuakeValue) -> None:
+        """
+        Handle an adjoint (inverse) gate operation.
+
+        This method creates a temporary kernel for the basic gate wrapped by the adjoint,
+        applies the corresponding handler, and then integrates it into the main kernel as an adjoint operation.
+
+        Args:
+            kernel (cudaq.Kernel): The main CUDA kernel being constructed.
+            gate (Adjoint): The adjoint gate to be handled.
+            target_qubit (cudaq.QuakeValue): The target qubit for the gate.
+
+        Raises:
+            UnsupportedGateError: If the basic gate inside the adjoint is unsupported.
+        """
+        target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
+        handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
+        if handler is None:
+            logger.error("[CudaqBackend] Unsupported gate inside Adjoint: {}", type(gate.basic_gate).__name__)
+            raise UnsupportedGateError
+        handler(target_kernel, gate.basic_gate, qubit)
+        kernel.adjoint(target_kernel, target_qubit)
+
+    @staticmethod
+    def _handle_M(kernel: cudaq.Kernel, gate: M, circuit: Circuit, qubits: cudaq.QuakeValue) -> None:
+        """
+        Handle a measurement gate.
+
+        Depending on whether the measurement targets all qubits or a subset,
+        this method applies measurement operations accordingly.
+
+        Args:
+            kernel (cudaq.Kernel): The CUDA kernel being constructed.
+            gate (M): The measurement gate.
+            circuit (Circuit): The circuit containing the measurement gate.
+            qubits (cudaq.QuakeValue): The allocated qubits for the circuit.
+        """
+        if gate.nqubits == circuit.nqubits:
+            kernel.mz(qubits)
+        else:
+            for idx in gate.target_qubits:
+                kernel.mz(qubits[idx])
+
+    @staticmethod
+    def _handle_I(kernel: cudaq.Kernel, gate: I, qubit: cudaq.QuakeValue) -> None:
+        """Handle an I (identity) gate operation."""
+        kernel.i(qubit)
+
+    @staticmethod
+    def _handle_X(kernel: cudaq.Kernel, gate: X, qubit: cudaq.QuakeValue) -> None:
+        """Handle an X gate operation."""
+        kernel.x(qubit)
+
+    @staticmethod
+    def _handle_Y(kernel: cudaq.Kernel, gate: Y, qubit: cudaq.QuakeValue) -> None:
+        """Handle a Y gate operation."""
+        kernel.y(qubit)
+
+    @staticmethod
+    def _handle_Z(kernel: cudaq.Kernel, gate: Z, qubit: cudaq.QuakeValue) -> None:
+        """Handle a Z gate operation."""
+        kernel.z(qubit)
+
+    @staticmethod
+    def _handle_H(kernel: cudaq.Kernel, gate: H, qubit: cudaq.QuakeValue) -> None:
+        """Handle an H gate operation."""
+        kernel.h(qubit)
+
+    @staticmethod
+    def _handle_S(kernel: cudaq.Kernel, gate: S, qubit: cudaq.QuakeValue) -> None:
+        """Handle an S gate operation."""
+        kernel.s(qubit)
+
+    @staticmethod
+    def _handle_T(kernel: cudaq.Kernel, gate: T, qubit: cudaq.QuakeValue) -> None:
+        """Handle a T gate operation."""
+        kernel.t(qubit)
+
+    @staticmethod
+    def _handle_RX(kernel: cudaq.Kernel, gate: RX, qubit: cudaq.QuakeValue) -> None:
+        """Handle an RX gate operation."""
+        kernel.rx(*[float(param) for param in gate.get_parameter_values()], qubit)
+
+    @staticmethod
+    def _handle_RY(kernel: cudaq.Kernel, gate: RY, qubit: cudaq.QuakeValue) -> None:
+        """Handle an RY gate operation."""
+        kernel.ry(*[float(param) for param in gate.get_parameter_values()], qubit)
+
+    @staticmethod
+    def _handle_RZ(kernel: cudaq.Kernel, gate: RZ, qubit: cudaq.QuakeValue) -> None:
+        """Handle an RZ gate operation."""
+        kernel.rz(*[float(param) for param in gate.get_parameter_values()], qubit)
+
+    @staticmethod
+    def _handle_U1(kernel: cudaq.Kernel, gate: U1, qubit: cudaq.QuakeValue) -> None:
+        """Handle a U1 gate operation."""
+        kernel.u3(theta=0.0, phi=float(gate.phi), delta=0.0, target=qubit)
+
+    @staticmethod
+    def _handle_U2(kernel: cudaq.Kernel, gate: U2, qubit: cudaq.QuakeValue) -> None:
+        """Handle a U2 gate operation."""
+        kernel.u3(theta=np.pi / 2, phi=float(gate.phi), delta=float(gate.gamma), target=qubit)
+
+    @staticmethod
+    def _handle_U3(kernel: cudaq.Kernel, gate: U3, qubit: cudaq.QuakeValue) -> None:
+        """Handle a U3 gate operation."""
+        kernel.u3(theta=float(gate.theta), phi=float(gate.phi), delta=float(gate.gamma), target=qubit)
+
+    def _handle_SWAP(
+        self, kernel: cudaq.Kernel, gate: SWAP, qubit_0: cudaq.QuakeValue, qubit_1: cudaq.QuakeValue
+    ) -> None:
+        """Handle a SWAP gate operation.
+
+        CUDA-Q rejects noise channels registered against its built-in ``swap`` operation, so with a
+        noise model the gate is emitted as an equivalent custom operation that noise can target.
+        """
+        if self._noise_model is not None:
+            getattr(kernel, _SWAP_OP_NAME)(qubit_0, qubit_1)
+        else:
+            kernel.swap(qubit_0, qubit_1)
+
+    def _hamiltonian_to_cuda(self, hamiltonian: Hamiltonian) -> OperatorSum:
+        """Convert a :class:`~qilisdk.analog.hamiltonian.Hamiltonian` to a CUDA-Q ``OperatorSum``.
+
+        Args:
+            hamiltonian (Hamiltonian): The Hamiltonian to convert.
+
+        Returns:
+            OperatorSum: The equivalent CUDA-Q operator representation.
+        """
+        out = None
+        for offset, terms in hamiltonian:
+            if out is None:
+                out = offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
+            else:
+                out += offset * np.prod([self._pauli_operator_handlers[type(pauli)](pauli) for pauli in terms])
+        return out
+
+    @staticmethod
+    def _handle_PauliX(operator: PauliX) -> ElementaryOperator:
+        return spin.x(target=operator.qubit)  # ty:ignore[unresolved-attribute]
+
+    @staticmethod
+    def _handle_PauliY(operator: PauliY) -> ElementaryOperator:
+        return spin.y(target=operator.qubit)  # ty:ignore[unresolved-attribute]
+
+    @staticmethod
+    def _handle_PauliZ(operator: PauliZ) -> ElementaryOperator:
+        return spin.z(target=operator.qubit)  # ty:ignore[unresolved-attribute]
+
+    @staticmethod
+    def _handle_PauliI(operator: PauliI) -> ElementaryOperator:
+        return spin.i(target=operator.qubit)  # ty:ignore[unresolved-attribute]
+
+
+# Superseded names, still resolvable so existing code keeps working.
+_DEPRECATED_SYMBOLS: dict[str, str] = {
+    "CudaBackend": "CudaqBackend",
+    "CudaSamplingMethod": "CudaqSamplingMethod",
+}
+
+
+def __getattr__(name: str) -> type[CudaqBackend | CudaqSamplingMethod]:
+    """Resolve a superseded symbol name to its replacement, warning on use (PEP 562).
+
+    Args:
+        name: The attribute being accessed on this module.
+
+    Returns:
+        The replacement symbol.
+
+    Raises:
+        AttributeError: If ``name`` is not a superseded symbol.
+    """
+    replacement = _DEPRECATED_SYMBOLS.get(name)
+    if replacement is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    warnings.warn(f"{name} is deprecated, use {replacement} instead.", DeprecationWarning, stacklevel=2)
+    return globals()[replacement]

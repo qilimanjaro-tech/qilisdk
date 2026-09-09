@@ -351,6 +351,74 @@ def test_calculate_expectation_values_non_hamiltonian_raises():
 
 
 # ---------------------------------------------------------------------------
+# Schedule plot titles
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def plot_titles(monkeypatch):
+    """Collect the axes title of every schedule plot rendered during the test.
+
+    Both schedule renderers set their title in ``MatplotlibScheduleRenderer.setup_axes``,
+    so spying there captures what ``Schedule.draw`` and ``Schedule.draw_eigenvalues``
+    ended up titling their plot without reaching into the global pyplot state.
+    """
+    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt, "draw", mock_show)
+    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt.Figure, "savefig", mock_save)
+
+    titles = []
+    setup_axes = MatplotlibScheduleRenderer.setup_axes
+
+    def spy(self):
+        setup_axes(self)
+        titles.append(self.ax.get_title())
+
+    monkeypatch.setattr(MatplotlibScheduleRenderer, "setup_axes", spy)
+    return titles
+
+
+def make_schedule():
+    return Schedule(total_time=10, hamiltonians={"H0": X(1) + X(0), "H1": Z(1) + Z(0)}, coefficients={}, dt=1.0)
+
+
+def test_schedule_draw_is_not_titled_as_eigenvalues(plot_titles):
+    # draw() used to fall through to the renderer default, which titled the coefficient
+    # plot "Schedule Eigenvalues".
+    make_schedule().draw()
+    (title,) = plot_titles
+    assert "Coefficient" in title
+    assert "Eigenvalue" not in title
+
+
+def test_schedule_draw_eigenvalues_is_titled_as_eigenvalues(plot_titles):
+    make_schedule().draw_eigenvalues()
+    (title,) = plot_titles
+    assert "Eigenvalue" in title
+
+
+def test_schedule_draw_and_draw_eigenvalues_have_distinct_titles(plot_titles):
+    # The two plots showing the same title was the bug, independently of the wording chosen.
+    schedule = make_schedule()
+    schedule.draw()
+    schedule.draw_eigenvalues()
+    coefficient_title, eigenvalue_title = plot_titles
+    assert coefficient_title != eigenvalue_title
+
+
+@pytest.mark.parametrize("method", ["draw", "draw_eigenvalues"])
+def test_schedule_draw_keeps_an_explicit_style_title(plot_titles, method):
+    getattr(make_schedule(), method)(style=ScheduleStyle(title="My Own Title"))
+    assert plot_titles == ["My Own Title"]
+
+
+def test_schedule_renderer_falls_back_to_a_generic_title(plot_titles):
+    # A renderer used directly, with a style carrying no title, gets the neutral default.
+    MatplotlibScheduleRenderer(schedule=make_schedule(), style=ScheduleStyle()).plot()
+    assert plot_titles == ["Schedule"]
+
+
+# ---------------------------------------------------------------------------
 # Hamiltonian renderer
 # ---------------------------------------------------------------------------
 

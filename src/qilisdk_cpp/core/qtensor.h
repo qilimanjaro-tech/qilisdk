@@ -13,7 +13,9 @@
 // limitations under the License.
 #pragma once
 
+#include <map>
 #include <set>
+#include <string>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -170,6 +172,8 @@ class QTensorCpp {
     double purity();
     std::vector<double> probabilities() const;
     py::list probabilities_python() const;
+    std::map<std::string, int> sample(int nshots = 1000, int seed = 42) const;
+    py::dict sample_python(int nshots = 1000, int seed = 42) const;
     Complex expectation_value(const QTensorCpp& other, int nshots = 0) const;
     Complex expectation_value(const MatrixFreeHamiltonian& other, int nshots = 0) const;
     Complex expectation_value_python(const py::object& other, int nshots = 0) const;

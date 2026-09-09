@@ -322,7 +322,7 @@ def test_schedule_term_and_basevariable_errors():
     sch = {"H1": {0: term}}
     with pytest.raises(
         ValueError,
-        match=r"Tlist can only contain parameters and no variables, but the term dummy \* \(2\) contains objects other than parameters.",
+        match=r"Tlist can only contain parameters and no variables, but the term 2 \* dummy contains objects other than parameters.",
     ):
         Schedule(total_time=10, dt=1, hamiltonians={"H1": H1}, coefficients=sch)
 
@@ -334,7 +334,7 @@ def test_add_schedule_step_term_basevariable_errors():
     sched = Schedule(dt=1, hamiltonians={"H1": H1}, total_time=10)
     with pytest.raises(
         ValueError,
-        match=r"Tlist can only contain parameters and no variables, but the term dummy \* \(2\) contains objects other than parameters.",
+        match=r"Tlist can only contain parameters and no variables, but the term 2 \* dummy contains objects other than parameters.",
     ):
         sched.update_hamiltonian("H1", new_coefficients={0: term})
     with pytest.raises(
@@ -351,7 +351,7 @@ def test_update_hamiltonian_coefficient_term_basevariable_errors():
     sched = Schedule(total_time=10, dt=1, hamiltonians={"H1": H1})
     with pytest.raises(
         ValueError,
-        match=r"Tlist can only contain parameters and no variables, but the term dummy \* \(2\) contains objects other than parameters.",
+        match=r"Tlist can only contain parameters and no variables, but the term 2 \* dummy contains objects other than parameters.",
     ):
         sched.update_hamiltonian("H1", new_coefficients={1: term})
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
@@ -943,6 +943,56 @@ def test_schedule_without_max_time_throws():
     H2 = PauliZ(0).to_hamiltonian()
     with pytest.raises(ValueError, match=r"Total time must be provided at initialization."):
         Schedule(dt=1, hamiltonians={"driver": H1, "problem": H2})
+
+
+@pytest.mark.parametrize(
+    ("total_time", "dt", "expected_npoints"),
+    [
+        (10.0, 1.0, 11),
+        (1.0, 0.1, 11),
+        (10.0, 0.5, 21),
+        (0.05, 0.1, 2),
+    ],
+)
+def test_tlist_is_spaced_by_dt_and_ends_at_total_time(total_time, dt, expected_npoints):
+    """tlist steps by exactly dt, starts at 0 and ends at T."""
+    sched = Schedule.linear(PauliX(0), PauliZ(0), total_time, dt=dt)
+    tlist = sched.tlist
+
+    assert len(tlist) == expected_npoints
+    assert _isclose(tlist[0], 0.0)
+    assert _isclose(tlist[-1], total_time)
+    spacings = np.diff(tlist)
+    assert all(_isclose(spacing, sched.dt) for spacing in spacings)
+    assert _isclose(sched.dt, total_time / (expected_npoints - 1))
+
+
+def test_tlist_snaps_dt_with_a_warning_when_incommensurate(monkeypatch):
+    """An incommensurate dt is snapped to divide T exactly, and the user is told once."""
+    warnings = []
+    monkeypatch.setattr("loguru.logger.warning", lambda msg, *a, **kw: warnings.append(msg))
+
+    sched = Schedule.linear(PauliX(0), PauliZ(0), 10.0, dt=0.3)
+    tlist = sched.tlist
+
+    assert len(warnings) == 1
+    assert "snapped" in warnings[0]
+    assert len(tlist) == 34
+    assert _isclose(tlist[-1], 10.0)
+    assert _isclose(sched.dt, 10.0 / 33)
+    # The warning is not repeated on every access, only once per snapped dt.
+    assert sched.tlist == tlist
+    assert len(warnings) == 1
+    sched.set_dt(0.7)
+    assert len(sched.tlist) == 15
+    assert len(warnings) == 2
+
+
+def test_tlist_of_an_empty_schedule_is_the_single_initial_time():
+    sched = Schedule(dt=1.0)
+    assert sched.T == 0
+    assert sched.tlist == [0.0]
+    assert sched.dt == 1.0
 
 
 def _driver_problem_schedule(**kwargs) -> Schedule:

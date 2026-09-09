@@ -15,10 +15,10 @@
 from typing import Any, Callable
 
 from qilisdk.core import Model
-from qilisdk.core.variables import BaseVariable, BinaryVariable, Domain, Number, RealNumber, Variable
+from qilisdk.core.variables import BaseVariable, BinaryVariable, Domain, RealNumber, Variable
 from qilisdk.optimizers import SciPyOptimizer
 
-from .base_solver import ClassicalSolver, _assert_real, _variable_bounds
+from .base_solver import ClassicalSolver, ClassicalSolverResult, _assert_real, _variable_bounds
 
 
 def _decode_value(variable: BaseVariable, parameter: float) -> RealNumber:
@@ -54,7 +54,7 @@ class ScipySolver(ClassicalSolver):
             from qilisdk.utils.classical_solvers import ScipySolver
 
             model = Model.knapsack(values=[5, 4], weights=[3, 2], max_weight=3)
-            results, sample = ScipySolver(method="l-bfgs-b").solve(model)
+            result = ScipySolver(method="l-bfgs-b").solve(model)
     """
 
     def __init__(
@@ -76,16 +76,14 @@ class ScipySolver(ClassicalSolver):
         self.method = method
         self.extra_arguments = kwargs
 
-    def solve(self, model: Model) -> tuple[dict[str, Number], dict[BaseVariable, RealNumber]]:
+    def solve(self, model: Model) -> ClassicalSolverResult:
         """Solve the given model by minimizing its objective with SciPy.
 
         Args:
             model: The ``Model`` instance to solve.
 
         Returns:
-            tuple[dict[str, Number], dict[BaseVariable, RealNumber]]: a tuple of
-            (results dict mapping objective/constraint labels to their evaluated values,
-            sample dict mapping each variable to its value in the best solution found).
+            ClassicalSolverResult: the results of the optimization, including the objective value and best solution.
 
         Raises:
             ValueError: if the model contains a variable that is neither a BinaryVariable nor a
@@ -124,4 +122,4 @@ class ScipySolver(ClassicalSolver):
 
         # Return the best results
         best_sample = build_sample(result.optimal_parameters)
-        return model.evaluate(best_sample), best_sample
+        return ClassicalSolverResult.from_model(model, best_sample)
