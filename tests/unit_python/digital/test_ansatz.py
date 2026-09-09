@@ -45,8 +45,23 @@ def test_nparameters_property():
     n_qubits = 3
     layers = 2
     ansatz = HardwareEfficientAnsatz(nqubits=n_qubits, layers=layers, connectivity="Linear", structure="grouped")
-    expected = n_qubits * (layers) * len(U1.PARAMETER_NAMES)
+    expected = n_qubits * (layers + 1) * len(U1.PARAMETER_NAMES)
     assert ansatz.nparameters == expected
+
+
+def test_nparameters_property_without_final_rotation_layer():
+    """Without the trailing block there are only ``layers`` single-qubit blocks."""
+    n_qubits = 3
+    layers = 2
+    ansatz = HardwareEfficientAnsatz(
+        nqubits=n_qubits,
+        layers=layers,
+        connectivity="Linear",
+        structure="grouped",
+        final_rotation_layer=False,
+    )
+    assert ansatz.nparameters == n_qubits * layers * len(U1.PARAMETER_NAMES)
+    assert ansatz.gates[-1].nqubits == 2  # ends on an entangler
 
 
 def test_hw_efficient_negative_layers_raises():
@@ -67,9 +82,10 @@ def test_construct_circuit_grouped_structure_gate_count():
     E = len(list(ansatz.connectivity))
     one_q, two_q = _gate_counts(ansatz)
 
-    assert one_q == (layers) * n_qubits
+    assert one_q == (layers + 1) * n_qubits
     assert two_q == layers * E
     assert len(ansatz.gates) == one_q + two_q  # total gates
+    assert ansatz.gates[-1].nqubits == 1  # ends on a rotation layer
 
 
 def test_construct_circuit_interposed_structure_gate_count():
@@ -84,21 +100,31 @@ def test_construct_circuit_interposed_structure_gate_count():
     E = len(list(ansatz.connectivity))
     one_q, two_q = _gate_counts(ansatz)
 
-    assert one_q == (layers) * n_qubits
+    assert one_q == (layers + 1) * n_qubits
     assert two_q == layers * n_qubits * E
     assert len(ansatz.gates) == one_q + two_q
+    assert ansatz.gates[-1].nqubits == 1  # ends on a rotation layer
 
 
 def test_layers_zero_only_initial_block():
-    """layers=0 → only U(0) block is applied; no entanglers."""
+    """layers=0 → only the final rotation block is applied; no entanglers."""
     n_qubits = 5
     layers = 0
     for structure in ("grouped", "interposed"):
         ans = HardwareEfficientAnsatz(nqubits=n_qubits, layers=layers, connectivity="Linear", structure=structure)
         one_q, two_q = _gate_counts(ans)
-        assert one_q == (layers) * n_qubits
+        assert one_q == (layers + 1) * n_qubits
         assert two_q == 0
-        assert len(ans.gates) == 0
+        assert len(ans.gates) == n_qubits
+
+        empty = HardwareEfficientAnsatz(
+            nqubits=n_qubits,
+            layers=layers,
+            connectivity="Linear",
+            structure=structure,
+            final_rotation_layer=False,
+        )
+        assert empty.gates == []
 
 
 def test_invalid_connectivity_string_raises():

@@ -996,12 +996,16 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
     std::vector<Gate> gates;
     int nqubits = circuit.attr("nqubits").cast<int>();
     py::list py_gates = circuit.attr("gates");
-    for (auto py_gate : py_gates) {
+    for (auto py_gate_handle : py_gates) {
+        py::object py_gate = py::reinterpret_borrow<py::object>(py_gate_handle);
+
         // Get the name
         std::string gate_type_str = py_gate.attr("name").cast<std::string>();
 
         // If we have a noise model, check if this gate has parameter perturbation noise and apply if so
         if (!noise_model.is_none() && py_gate.attr("is_parameterized").cast<bool>()) {
+            py_gate = py::module_::import("copy").attr("deepcopy")(py_gate);
+
             // Get the parameters and noise maps
             py::dict gate_parameters = py_gate.attr("get_parameters")();
             py::dict global_noise_map = noise_model.attr("global_perturbations");

@@ -238,6 +238,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
 
         if self.context is not None:
             self.context.initial_layout = initial_layout
+            self.context.layout_applied = True
             self.context.final_layout = self._user_layout
 
         logger.debug(

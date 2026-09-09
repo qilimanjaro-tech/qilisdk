@@ -16,7 +16,8 @@ through :meth:`~qilisdk.core.model.Model.evaluate`, and aggregates the resulting
 
     from qilisdk.backends import QiliSim
     from qilisdk.core.model import Model
-    from qilisdk.core.variables import BinaryVariable, LEQ
+    from qilisdk.core.comparison import LEQ
+    from qilisdk.core.variables import BinaryVariable
     from qilisdk.cost_functions import ModelCostFunction
     from qilisdk.digital import Circuit, RX, RZ, CNOT, M
     from qilisdk.functionals import DigitalPropagation

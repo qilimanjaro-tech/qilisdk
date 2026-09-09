@@ -15,8 +15,9 @@
 import numpy as np
 import pytest
 
+from qilisdk.core.comparison import EQ
 from qilisdk.core.model import Model, ObjectiveSense
-from qilisdk.core.variables import EQ, BinaryVariable
+from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult

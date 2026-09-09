@@ -164,7 +164,7 @@ class CircuitTranspiler:
 
         topology = build_topology_graph(topology)
         layout_routing_passes: list[CircuitTranspilerPass] = (
-            [SabreLayoutPass(topology), SabreSwapPass(topology)]
+            [SabreLayoutPass(topology, apply_layout=False), SabreSwapPass(topology)]
             if qubit_mapping is None
             else [CustomLayoutPass(topology, qubit_mapping)]
         )

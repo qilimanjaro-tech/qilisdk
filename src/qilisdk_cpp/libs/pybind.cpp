@@ -28,6 +28,8 @@ py::dtype dtype;
 py::object py_complex;
 py::object logger;
 py::object logger_core;
+py::object QUBO;
+py::object BaseVariable;
 py::object QTensor;
 py::object InitialState;
 py::object Hamiltonian;
@@ -56,6 +58,8 @@ py::object ReadoutResult;
 py::object ReadoutCompositeResults;
 
 void initialize_all_pybind_types() {
+    QUBO = py::module_::import("qilisdk.core.model").attr("QUBO");
+    BaseVariable = py::module_::import("qilisdk.core.variables").attr("BaseVariable");
     Circuit = py::module_::import("qilisdk.digital.circuit").attr("Circuit");
     Schedule = py::module_::import("qilisdk.analog.schedule").attr("Schedule");
     DigitalPropagation = py::module_::import("qilisdk.functionals.digital_propagation").attr("DigitalPropagation");
@@ -118,6 +122,8 @@ void error(std::string message) {
 
 // GCOVR_EXCL_START
 void finalize_all_pybind_types() {
+    QUBO = py::object();
+    BaseVariable = py::object();
     Circuit = py::object();
     Schedule = py::object();
     DigitalPropagation = py::object();

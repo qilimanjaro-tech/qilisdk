@@ -1,0 +1,321 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2025, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-07-29 11:09+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/ml/ml_datasets.rst:2
+msgid "Datasets"
+msgstr "Conjunts de dades"
+
+#: ../../modules/ml/ml_datasets.rst:4
+msgid ""
+"The :mod:`~qilisdk.ml.datasets` module provides a family of equation-"
+"based generators for various datasets that are commonly used in machine-"
+"learning research. Every generator derives from "
+":class:`~qilisdk.ml.datasets.dataset.Dataset` and exposes a common "
+":meth:`~qilisdk.ml.datasets.dataset.Dataset.generate` method:"
+msgstr ""
+"El mòdul :mod:`~qilisdk.ml.datasets` proporciona una família de "
+"generadors basats en equacions per a diversos conjunts de dades que "
+"s'utilitzen habitualment en la recerca en aprenentatge automàtic. Tots "
+"els generadors deriven de :class:`~qilisdk.ml.datasets.dataset.Dataset` i "
+"exposen un mètode :meth:`~qilisdk.ml.datasets.dataset.Dataset.generate` "
+"comú:"
+
+#: ../../modules/ml/ml_datasets.rst:17
+msgid ""
+"The returned :class:`~qilisdk.ml.datasets.dataset.DatasetSample` is an "
+"``(inputs, targets)`` pair."
+msgstr ""
+"El :class:`~qilisdk.ml.datasets.dataset.DatasetSample` retornat és un "
+"parell ``(inputs, targets)``."
+
+#: ../../modules/ml/ml_datasets.rst:19
+msgid ""
+"You can also visualize the generated datasets using the `.draw()` method "
+"of each generator:"
+msgstr ""
+"També podeu visualitzar els conjunts de dades generats amb el mètode "
+"`.draw()` de cada generador:"
+
+#: ../../modules/ml/ml_datasets.rst:30
+msgid "Available generators"
+msgstr "Generadors disponibles"
+
+#: ../../modules/ml/ml_datasets.rst:32
+msgid ""
+":class:`~qilisdk.ml.datasets.narma.NARMA` --- Nonlinear Auto-Regressive "
+"Moving Average system identification."
+msgstr ""
+":class:`~qilisdk.ml.datasets.narma.NARMA` --- Identificació de sistemes "
+"amb mitjana mòbil autoregressiva no lineal."
+
+#: ../../modules/ml/ml_datasets.rst:33
+msgid ""
+":class:`~qilisdk.ml.datasets.mackey_glass.MackeyGlass` --- Mackey--Glass "
+"chaotic delay differential equation."
+msgstr ""
+":class:`~qilisdk.ml.datasets.mackey_glass.MackeyGlass` --- Equació "
+"diferencial amb retard caòtica de Mackey--Glass."
+
+#: ../../modules/ml/ml_datasets.rst:34
+msgid ":class:`~qilisdk.ml.datasets.lorenz.Lorenz` --- Lorenz attractor."
+msgstr ":class:`~qilisdk.ml.datasets.lorenz.Lorenz` --- Atractor de Lorenz."
+
+#: ../../modules/ml/ml_datasets.rst:35
+msgid ""
+":class:`~qilisdk.ml.datasets.santa_fe_laser.SantaFeLaser` --- Santa Fe "
+"laser intensity (Lorenz--Haken equations)."
+msgstr ""
+":class:`~qilisdk.ml.datasets.santa_fe_laser.SantaFeLaser` --- Intensitat "
+"del làser de Santa Fe (equacions de Lorenz--Haken)."
+
+#: ../../modules/ml/ml_datasets.rst:36
+msgid ":class:`~qilisdk.ml.datasets.henon.HenonMap` --- Hénon map."
+msgstr ":class:`~qilisdk.ml.datasets.henon.HenonMap` --- Mapa de Hénon."
+
+#: ../../modules/ml/ml_datasets.rst:37
+msgid ":class:`~qilisdk.ml.datasets.logistic_map.LogisticMap` --- Logistic map."
+msgstr ""
+":class:`~qilisdk.ml.datasets.logistic_map.LogisticMap` --- Mapa logístic."
+
+#: ../../modules/ml/ml_datasets.rst:40
+msgid "NARMA"
+msgstr "NARMA"
+
+#: ../../modules/ml/ml_datasets.rst:42
+#, python-brace-format
+msgid ""
+"The Nonlinear Auto-Regressive Moving Average "
+"(:class:`~qilisdk.ml.datasets.narma.NARMA`) benchmark is a system-"
+"identification task. A random input stream :math:`u(t) \\sim "
+"\\mathcal{U}(0, 0.5)` drives an order-:math:`n` nonlinear recurrence "
+"whose output :math:`y(t)` must be predicted from :math:`u`:"
+msgstr ""
+"El punt de referència de mitjana mòbil autoregressiva no lineal "
+"(:class:`~qilisdk.ml.datasets.narma.NARMA`) és una tasca d'identificació "
+"de sistemes. Un flux d'entrada aleatori :math:`u(t) \\sim \\mathcal{U}(0, "
+"0.5)` acciona una recurrència no lineal d'ordre :math:`n` la sortida de "
+"la qual, :math:`y(t)`, s'ha de predir a partir de :math:`u`:"
+
+#: ../../modules/ml/ml_datasets.rst:46
+#, python-brace-format
+msgid ""
+"y(t+1) = \\alpha\\, y(t)\n"
+"         + \\beta\\, y(t) \\sum_{i=0}^{n-1} y(t-i)\n"
+"         + \\gamma\\, u(t-n+1)\\, u(t)\n"
+"         + \\delta."
+msgstr ""
+"y(t+1) = \\alpha\\, y(t)\n         + \\beta\\, y(t) \\sum_{i=0}^{n-1} "
+"y(t-i)\n         + \\gamma\\, u(t-n+1)\\, u(t)\n         + \\delta."
+
+#: ../../modules/ml/ml_datasets.rst:53
+msgid ""
+"The default coefficients :math:`(\\alpha, \\beta, \\gamma, \\delta) = "
+"(0.3, 0.05, 1.5, 0.1)` correspond to the ubiquitous ``NARMA10`` task "
+"(``order=10``). Unlike the other generators, ``inputs`` are the random "
+"drive :math:`u` and ``targets`` are the system response :math:`y`; both "
+"are shaped ``(npoints, 1)``. Because the drive is random, a ``seed`` can "
+"be specified to ensure reproducibility."
+msgstr ""
+"Els coeficients per defecte :math:`(\\alpha, \\beta, \\gamma, \\delta) = "
+"(0.3, 0.05, 1.5, 0.1)` corresponen a la ubiqua tasca ``NARMA10`` "
+"(``order=10``). A diferència dels altres generadors, ``inputs`` és "
+"l'accionament aleatori :math:`u` i ``targets`` és la resposta del sistema "
+":math:`y`; tots dos tenen forma ``(npoints, 1)``. Com que l'accionament "
+"és aleatori, es pot especificar una ``seed`` per garantir la "
+"reproductibilitat."
+
+#: ../../modules/ml/ml_datasets.rst:65
+msgid "MackeyGlass"
+msgstr "MackeyGlass"
+
+#: ../../modules/ml/ml_datasets.rst:67
+msgid ""
+"The :class:`~qilisdk.ml.datasets.mackey_glass.MackeyGlass` system is a "
+"nonlinear delay differential equation that produces a chaotic attractor:"
+msgstr ""
+"El sistema :class:`~qilisdk.ml.datasets.mackey_glass.MackeyGlass` és una "
+"equació diferencial amb retard no lineal que produeix un atractor caòtic:"
+
+#: ../../modules/ml/ml_datasets.rst:70
+msgid ""
+"\\frac{dx}{dt} = \\beta\\, \\frac{x(t - \\tau)}{1 + x(t - \\tau)^{n}}\n"
+"                - \\gamma\\, x(t)."
+msgstr ""
+"\\frac{dx}{dt} = \\beta\\, \\frac{x(t - \\tau)}{1 + x(t - \\tau)^{n}}\n   "
+"             - \\gamma\\, x(t)."
+
+#: ../../modules/ml/ml_datasets.rst:75
+msgid ""
+"With the standard parameters :math:`\\beta = 0.2`, :math:`\\gamma = 0.1`,"
+" :math:`n = 10`, the behaviour is set by the delay :math:`\\tau`: the "
+"series is periodic for small :math:`\\tau`, mildly chaotic at "
+":math:`\\tau = 17`, and increasingly chaotic beyond. The equation is "
+"integrated with a fixed-step RK4 scheme at resolution ``dt`` and sub-"
+"sampled every ``sample_every`` steps."
+msgstr ""
+"Amb els paràmetres estàndard :math:`\\beta = 0.2`, :math:`\\gamma = 0.1`, "
+":math:`n = 10`, el comportament queda determinat pel retard "
+":math:`\\tau`: la sèrie és periòdica per a :math:`\\tau` petits, "
+"lleugerament caòtica a :math:`\\tau = 17` i cada vegada més caòtica més "
+"enllà. L'equació s'integra amb un esquema RK4 de pas fix amb resolució "
+"``dt`` i es submostreja cada ``sample_every`` passos."
+
+#: ../../modules/ml/ml_datasets.rst:88
+msgid "Lorenz"
+msgstr "Lorenz"
+
+#: ../../modules/ml/ml_datasets.rst:90
+msgid ""
+"The :class:`~qilisdk.ml.datasets.lorenz.Lorenz` attractor is a three-"
+"dimensional chaotic dynamical system:"
+msgstr ""
+"L'atractor :class:`~qilisdk.ml.datasets.lorenz.Lorenz` és un sistema "
+"dinàmic caòtic tridimensional:"
+
+#: ../../modules/ml/ml_datasets.rst:92
+#, python-brace-format
+msgid ""
+"\\dot{x} = \\sigma (y - x), \\quad\n"
+"\\dot{y} = x (\\rho - z) - y, \\quad\n"
+"\\dot{z} = x y - \\beta z."
+msgstr ""
+"\\dot{x} = \\sigma (y - x), \\quad\n\\dot{y} = x (\\rho - z) - y, "
+"\\quad\n\\dot{z} = x y - \\beta z."
+
+#: ../../modules/ml/ml_datasets.rst:98
+msgid ""
+"The trajectory is integrated with RK4 and sub-sampled, yielding a "
+"``horizon``-step-ahead prediction task over the three-dimensional state, "
+"so ``inputs`` and ``targets`` are both shaped ``(npoints, 3)``."
+msgstr ""
+"La trajectòria s'integra amb RK4 i es submostreja, donant lloc a una "
+"tasca de predicció de ``horizon`` passos endavant sobre l'estat "
+"tridimensional, de manera que ``inputs`` i ``targets`` tenen tots dos "
+"forma ``(npoints, 3)``."
+
+#: ../../modules/ml/ml_datasets.rst:109
+msgid "SantaFeLaser"
+msgstr "SantaFeLaser"
+
+#: ../../modules/ml/ml_datasets.rst:111
+#, python-brace-format
+msgid ""
+"The original *Santa Fe Time Series Competition* Data Set A is a recording"
+" of the chaotic intensity pulsations of a far-infrared "
+":math:`\\mathrm{NH_3}` laser. Rather than shipping the recording, "
+":class:`~qilisdk.ml.datasets.santa_fe_laser.SantaFeLaser` reproduces the "
+"same qualitative dynamics from first principles using the single-mode "
+"**Lorenz--Haken** laser equations:"
+msgstr ""
+"El conjunt de dades A original de la *Santa Fe Time Series Competition* "
+"és un enregistrament de les pulsacions caòtiques d'intensitat d'un làser "
+"de :math:`\\mathrm{NH_3}` d'infraroig llunyà. En lloc de distribuir "
+"l'enregistrament, "
+":class:`~qilisdk.ml.datasets.santa_fe_laser.SantaFeLaser` reprodueix la "
+"mateixa dinàmica qualitativa des de primers principis mitjançant les "
+"equacions de làser **Lorenz--Haken** d'un sol mode:"
+
+#: ../../modules/ml/ml_datasets.rst:116
+#, python-brace-format
+msgid ""
+"\\dot{E} = \\sigma (P - E), \\quad\n"
+"\\dot{P} = E (\\rho - N) - P, \\quad\n"
+"\\dot{N} = E P - \\beta N,"
+msgstr ""
+"\\dot{E} = \\sigma (P - E), \\quad\n\\dot{P} = E (\\rho - N) - P, "
+"\\quad\n\\dot{N} = E P - \\beta N,"
+
+#: ../../modules/ml/ml_datasets.rst:122
+msgid ""
+"where :math:`E` is the field amplitude, :math:`P` the polarization and "
+":math:`N` the population inversion. The measured quantity is the laser "
+"**intensity** :math:`I \\propto E^2`, which is non-negative and "
+"reproduces the behaviour of the Santa Fe recording. Both ``inputs`` and "
+"``targets`` are shaped ``(npoints, 1)``."
+msgstr ""
+"on :math:`E` és l'amplitud del camp, :math:`P` la polarització i "
+":math:`N` la inversió de població. La magnitud mesurada és la "
+"**intensitat** del làser :math:`I \\propto E^2`, que és no negativa i "
+"reprodueix el comportament de l'enregistrament de Santa Fe. Tant "
+"``inputs`` com ``targets`` tenen forma ``(npoints, 1)``."
+
+#: ../../modules/ml/ml_datasets.rst:134
+msgid "HenonMap"
+msgstr "HenonMap"
+
+#: ../../modules/ml/ml_datasets.rst:136
+msgid ""
+"The :class:`~qilisdk.ml.datasets.henon.HenonMap` is a two-dimensional "
+"discrete chaotic system:"
+msgstr ""
+"El :class:`~qilisdk.ml.datasets.henon.HenonMap` és un sistema caòtic "
+"discret bidimensional:"
+
+#: ../../modules/ml/ml_datasets.rst:138
+#, python-brace-format
+msgid ""
+"x_{n+1} = 1 - a\\, x_n^2 + y_n, \\qquad\n"
+"y_{n+1} = b\\, x_n,"
+msgstr ""
+"x_{n+1} = 1 - a\\, x_n^2 + y_n, \\qquad\ny_{n+1} = b\\, x_n,"
+
+#: ../../modules/ml/ml_datasets.rst:143
+msgid ""
+"which is chaotic for the parameters :math:`a = 1.4`, :math:`b = 0.3`. "
+":meth:`generate` returns a ``horizon``-step-ahead prediction task over "
+"the two-dimensional state, so ``inputs`` and ``targets`` are both shaped "
+"``(npoints, 2)``."
+msgstr ""
+"que és caòtic per als paràmetres :math:`a = 1.4`, :math:`b = 0.3`. "
+":meth:`generate` retorna una tasca de predicció de ``horizon`` passos "
+"endavant sobre l'estat bidimensional, de manera que ``inputs`` i "
+"``targets`` tenen tots dos forma ``(npoints, 2)``."
+
+#: ../../modules/ml/ml_datasets.rst:154
+msgid "LogisticMap"
+msgstr "LogisticMap"
+
+#: ../../modules/ml/ml_datasets.rst:156
+msgid ""
+"The :class:`~qilisdk.ml.datasets.logistic_map.LogisticMap` is a simple "
+"one-dimensional chaotic system:"
+msgstr ""
+"El :class:`~qilisdk.ml.datasets.logistic_map.LogisticMap` és un sistema "
+"caòtic unidimensional senzill:"
+
+#: ../../modules/ml/ml_datasets.rst:158
+#, python-brace-format
+msgid "x_{n+1} = r\\, x_n (1 - x_n),"
+msgstr "x_{n+1} = r\\, x_n (1 - x_n),"
+
+#: ../../modules/ml/ml_datasets.rst:162
+msgid ""
+"which becomes chaotic as the growth rate :math:`r` approaches 4 (the "
+"default :math:`r = 3.9` sits well inside the chaotic regime). "
+":meth:`generate` returns a ``horizon``-step-ahead prediction task, so "
+"``inputs`` and ``targets`` are shaped ``(npoints, 1)``."
+msgstr ""
+"que esdevé caòtic a mesura que la taxa de creixement :math:`r` s'aproxima "
+"a 4 (el valor per defecte :math:`r = 3.9` se situa ben endins del règim "
+"caòtic). :meth:`generate` retorna una tasca de predicció de ``horizon`` "
+"passos endavant, de manera que ``inputs`` i ``targets`` tenen forma "
+"``(npoints, 1)``."
+
