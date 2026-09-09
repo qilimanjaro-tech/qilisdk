@@ -42,6 +42,9 @@ void QiliSimConfig::validate() const {
     if (monte_carlo && num_monte_carlo_trajectories <= 0) {
         throw py::value_error("Number of Monte Carlo trajectories must be positive.");
     }
+    if (max_expected_jumps_per_step <= 0) {
+        throw py::value_error("Max expected jumps per step must be positive.");
+    }
     if (num_threads <= 0) {
         throw py::value_error("Number of threads must be positive.");
     }

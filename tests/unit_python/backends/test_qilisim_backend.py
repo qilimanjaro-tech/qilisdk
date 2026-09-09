@@ -57,7 +57,11 @@ def test_qilisim_config_builders_and_validation():
         num_substeps=3,
     )
     digital = DigitalMethod.statevector(max_cache_size=2048)
-    execution = ExecutionConfig(seed=42, num_threads=2, monte_carlo=MonteCarloConfig(trajectories=250))
+    execution = ExecutionConfig(
+        seed=42,
+        num_threads=2,
+        monte_carlo=MonteCarloConfig(trajectories=250, max_expected_jumps_per_step=0.25),
+    )
 
     backend = QiliSim(
         analog_simulation_method=analog,
@@ -71,6 +75,7 @@ def test_qilisim_config_builders_and_validation():
     assert config["num_arnoldi_substeps"] == 3
     assert config["monte_carlo"] is True
     assert config["num_monte_carlo_trajectories"] == 250
+    assert config["max_expected_jumps_per_step"] == 0.25
     assert config["max_cache_size"] == 2048
     assert config["num_threads"] == 2
     assert config["seed"] == 42
@@ -81,6 +86,8 @@ def test_qilisim_config_builders_and_validation():
         AnalogMethod(arnoldi_dim=0)
     with pytest.raises(ValidationError):
         MonteCarloConfig(trajectories=0)
+    with pytest.raises(ValidationError):
+        MonteCarloConfig(max_expected_jumps_per_step=0.0)
     with pytest.raises(ValidationError):
         DigitalMethod(max_cache_size=-5)
     with pytest.raises(ValidationError):

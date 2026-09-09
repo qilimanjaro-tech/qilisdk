@@ -1730,6 +1730,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     params["monte_carlo"] = py::bool_(true);
     params["adaptive_tol"] = py::float_(1e-2);
     params["num_monte_carlo_trajectories"] = py::int_(500);
+    params["max_expected_jumps_per_step"] = py::float_(0.25);
     params["num_threads"] = py::int_(4);
     params["store_intermediate_results"] = py::bool_(true);
     params["normalize_after_each_gate"] = py::bool_(true);
@@ -1751,6 +1752,7 @@ TEST(ParseSolverParams, AllFieldsParsedCorrectly) {
     EXPECT_EQ(config.get_digital_method(), "statevector");
     EXPECT_TRUE(config.get_monte_carlo());
     EXPECT_EQ(config.get_num_monte_carlo_trajectories(), 500);
+    EXPECT_NEAR(config.get_max_expected_jumps_per_step(), 0.25, 1e-15);
     EXPECT_EQ(config.get_num_threads(), 4);
     EXPECT_TRUE(config.get_store_intermediate_results());
     EXPECT_TRUE(config.get_normalize_after_gate());
