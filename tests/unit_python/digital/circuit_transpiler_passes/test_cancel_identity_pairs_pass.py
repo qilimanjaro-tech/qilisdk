@@ -17,6 +17,7 @@ from typing import Any
 
 import numpy as np
 
+from qilisdk.core import QTensor
 from qilisdk.digital import (
     CNOT,
     CZ,
@@ -64,7 +65,7 @@ class NoMatrixGate(Gate):
         return "NoMatrixGate"
 
     @property
-    def matrix(self) -> np.ndarray:
+    def matrix(self) -> QTensor:
         raise GateHasNoMatrixError
 
     @property
@@ -85,8 +86,8 @@ class PhaseGate(Gate):
         return "PhaseGate"
 
     @property
-    def matrix(self) -> np.ndarray:
-        return np.array([[1, 0], [0, np.exp(1j * self._phase)]], dtype=complex)
+    def matrix(self) -> QTensor:
+        return QTensor(np.array([[1, 0], [0, np.exp(1j * self._phase)]], dtype=complex))
 
     @property
     def target_qubits(self) -> tuple[int, ...]:
