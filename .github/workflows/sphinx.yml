@@ -40,18 +40,24 @@ jobs:
 
       - name: Redirect root to latest release tag
         run: |
-          latest_tag="${{ github.event.release.tag_name }}"
+          # Only X.Y.Z tags get their own build, so a tag carrying a suffix (e.g. .devN, .postN, rcN) has no directory
+          latest_tag=""
+          released_tag="${{ github.event.release.tag_name }}"
+          if [ -n "$released_tag" ]; then
+            release_segment="$(printf '%s' "$released_tag" | sed -E 's/^v?([0-9]+(\.[0-9]+)*).*$/\1/')"
+            if [ -d "docs/_build/en/${release_segment}" ]; then
+              latest_tag="$release_segment"
+            else
+              echo "::notice::No built docs for ${released_tag}; keeping the root on the newest built release."
+            fi
+          fi
+          # Otherwise fall back to the newest version that has a build
+          # (this is needed for a main tag like 0.2.2rc1, since 0.2.2 doesn't yet exist)
           if [ -z "$latest_tag" ]; then
-            latest_tag="$(git tag --sort=-version:refname | head -n 1)"
+            latest_tag="$(ls -1 docs/_build/en | grep -E '^[0-9]+\.[0-9]+(\.[0-9]+)?$' | sort -V | tail -n 1)"
           fi
           if [ -z "$latest_tag" ]; then
-            echo "No tag found to redirect to" >&2
-            exit 1
-          fi
-          # filter any post-release suffixes (e.g. 0.2.0.post1 -> 0.2.0)
-          latest_tag="${latest_tag%%.post*}"
-          if [ ! -d "docs/_build/en/${latest_tag}" ]; then
-            echo "Built docs for tag ${latest_tag} not found" >&2
+            echo "No built release docs found to redirect to" >&2
             ls docs/_build/en
             exit 1
           fi
