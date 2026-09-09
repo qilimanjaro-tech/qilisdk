@@ -1,48 +1,50 @@
 <!DOCTYPE html>
-<html lang="en"
-      data-content_root="../../../"
-      x-data="{ darkMode: localStorage.getItem('darkMode') || localStorage.setItem('darkMode', 'system'), activeSection: '' }"
-      x-init="$watch('darkMode', val => localStorage.setItem('darkMode', val))"
-      class="scroll-smooth"
-      :class="{'dark': darkMode === 'dark' || (darkMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)}"
->
+<html lang="en" data-content_root="../../../"
+  x-data="{ darkMode: $persist(window.matchMedia('(prefers-color-scheme: dark)').matches), activeSection: ''}"
+  :class="{ 'dark' : darkMode === true }">
+
 <head>
+  <script>
+    (function () {
+      // Set initial color scheme
+      if ((localStorage.getItem("_x_darkMode") === "true") || (window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
+
+      // Watch for media preference changes
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+        localStorage.setItem("_x_darkMode", event.matches);
+        document.documentElement.classList.toggle("dark", event.matches);
+      });
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta charset="utf-8" />
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="white" />
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="black" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#030711" />
   
-    <title>qilisdk.backends.qutip_backend | QiliSDK</title>
-    <meta property="og:title" content="qilisdk.backends.qutip_backend | QiliSDK" />
-    <meta name="twitter:title" content="qilisdk.backends.qutip_backend | QiliSDK" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=508cba51" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=42baaae4" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e4e41e26" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=15e0fffa" />
-      <link rel="icon" href="../../../_static/QiliSDK_q.png" />
-        <link rel="search" title="Search" href="../../../search.html" />
-        <link rel="index" title="Index" href="../../../genindex.html" />
-
-    <script>
-    <!-- Prevent Flash of wrong theme -->
-      const userPreference = localStorage.getItem('darkMode');
-      let mode;
-      if (userPreference === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        mode = 'dark';
-        document.documentElement.classList.add('dark');
-      } else {
-        mode = 'light';
-      }
-      if (!userPreference) {localStorage.setItem('darkMode', mode)}
-    </script>
+  <title>qilisdk.backends.qutip_backend | QiliSDK</title>
+  <meta property="og:title" content="qilisdk.backends.qutip_backend | QiliSDK" />
+  <meta name="twitter:title" content="qilisdk.backends.qutip_backend | QiliSDK" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=af2a1b69" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=d6d7c91b" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=73a96f5a" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=a81faafa" />
+  <link rel="icon" href="../../../_static/QiliSDK_q.png" />
+  <link rel="search" title="Search" href="../../../search.html" />
+  <link rel="index" title="Index" href="../../../genindex.html" />
 </head>
-  <body x-data="{ showSidebar: false, showScrollTop: false }" class="min-h-screen font-sans antialiased bg-background text-foreground" :class="{ 'overflow-hidden': showSidebar }">
-    <div x-cloak x-show="showSidebar" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" @click.self="showSidebar = false"></div><div id="page" class="relative flex flex-col min-h-screen"><a href="#content" class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100">
+
+<body x-data="{ showSidebar: false, showScrollTop: false }"
+  class="min-h-screen font-sans antialiased bg-background text-foreground" :class="{ 'overflow-hidden': showSidebar }">
+  <div x-cloak x-show="showSidebar"
+    class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden"
+    @click.self="showSidebar = false"></div><div id="page" class="relative flex flex-col min-h-screen"><a href="#content"
+      class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100">
       Skip to content
-    </a><header
-  class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
+    </a><header class="sticky top-0 z-40 w-full border-b shadow-xs border-border bg-background/90 backdrop-blur"><div class="container flex items-center h-14">
     <div class="hidden mr-4 md:flex">
 <a href="../../../index.html" class="flex items-center mr-6">
     <img style="height: 2rem; width: auto;" class="hidden dark:block" src="../../../_static/QiliSDK_wht.svg" alt="QiliSDK" />
@@ -77,7 +79,7 @@
       </svg>
       <span class="sr-only">Toggle navigation menu</span>
     </button>
-    <div class="flex items-center justify-between flex-1 space-x-2 sm:space-x-4 md:justify-end">
+    <div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
       <div class="flex-1 w-full md:w-auto md:flex-none"><form id="searchbox"
       action="../../../search.html"
       method="get"
@@ -96,17 +98,17 @@
   </kbd>
 </form>
       </div>
-      <nav class="flex items-center space-x-1">
-        <button @click="darkMode = darkMode === 'light' ? 'dark' : 'light'"
+      <nav class="flex items-center gap-1">
+        <button @click="darkMode = !darkMode"
           class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9"
           type="button"
-          aria-label="Color theme switcher">
-          <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 96 960 960" fill="currentColor"
+          title="Toggle color scheme">
+          <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 96 960 960" fill="currentColor"
             class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0">
             <path
               d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z" />
           </svg>
-          <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 96 960 960" fill="currentColor"
+          <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 96 960 960" fill="currentColor"
             class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100">
             <path
               d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z" />
@@ -117,16 +119,19 @@
   </div>
 </header>
 
-    <div class="flex-1"><div class="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside id="left-sidebar"
-  class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full shrink-0 overflow-y-auto border-r border-border md:sticky"
+    <div class="flex-1"><div
+        class="container md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside id="left-sidebar"
+  class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full overflow-y-auto border-r border-border md:sticky"
   :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }">
 
-    <a href="../../../index.html" class="!justify-start text-sm md:!hidden bg-background">
-        <img width="16" height="16" class="mr-2 hidden dark:block" src="../../../_static/QiliSDK_wht.svg" alt="Logo" />
-        <img width="16" height="16" class="mr-2 dark:hidden" src="../../../_static/QiliSDK_blk.svg" alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
+    <a href="../../../index.html" class="justify-start text-sm md:!hidden bg-background">
+      <img width="16" height="16" class="mr-2 hidden dark:block" src="../../../_static/QiliSDK_wht.svg"
+        alt="Logo" />
+      <img width="16" height="16" class="mr-2 dark:hidden" src="../../../_static/QiliSDK_blk.svg"
+        alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
     </a>
 
-    <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
+    <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0">
       <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
   <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
@@ -155,7 +160,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/core/core.html">Core</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_variables_parameters.html">Variables and Parameters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_terms_maps_comparisons.html">Terms, Maps and Comparisons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_terms_maps_comparisons.html">Expressions, Functions and Comparisons</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_model.html">Models</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_qubo.html">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/core/core_qtensor.html">QTensor</a></li>
@@ -198,7 +203,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/backends/backends.html">Backends</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_qilisim.html">QiliSim</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_cuda.html">CUDA Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_cudaq.html">CUDA-Q Backend</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/backends/backends_qutip.html">Qutip Backend</a></li>
 </ul>
 </li>
@@ -212,6 +217,11 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/noise/noise_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/noise/noise_config.html">Noise Config</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/noise/noise_types.html">Noise Types</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/ml/ml.html">Machine Learning</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/ml/ml_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/ml/ml_datasets.html">Datasets</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
@@ -229,13 +239,15 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/backends/index.html">qilisdk.backends</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/backend/index.html">qilisdk.backends.backend</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/backend_config/index.html">qilisdk.backends.backend_config</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/cuda_backend/index.html">qilisdk.backends.cuda_backend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/cudaq_backend/index.html">qilisdk.backends.cudaq_backend</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/qilisim/index.html">qilisdk.backends.qilisim</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/backends/qutip_backend/index.html">qilisdk.backends.qutip_backend</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/core/index.html">qilisdk.core</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/comparison/index.html">qilisdk.core.comparison</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/exceptions/index.html">qilisdk.core.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/expression/index.html">qilisdk.core.expression</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/interpolator/index.html">qilisdk.core.interpolator</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/model/index.html">qilisdk.core.model</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/core/parameterizable/index.html">qilisdk.core.parameterizable</a></li>
@@ -278,6 +290,10 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/logging/index.html">qilisdk.logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/ml/index.html">qilisdk.ml</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/ml/datasets/index.html">qilisdk.ml.datasets</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="../../../code/api/qilisdk/noise/index.html">qilisdk.noise</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/amplitude_damping/index.html">qilisdk.noise.amplitude_damping</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
@@ -346,6 +362,9 @@
     </p>
     <ul>
       <li class="toctree-l1">
+        <a class="reference internal" href="../../../../0.3.0/index.html">0.3.0</a>
+      </li>
+      <li class="toctree-l1">
         <a class="reference internal" href="../../../../0.2.1/index.html">0.2.1</a>
       </li>
       <li class="toctree-l1">
@@ -389,7 +408,7 @@
       </svg>
     </button>
   </aside>
-        <main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+          <main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
 <div class="w-full min-w-0 mx-auto">
 <nav aria-label="breadcrumbs"
      class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
@@ -419,14 +438,14 @@
       <h1>Source code for qilisdk.backends.qutip_backend</h1><div class="highlight"><pre>
 <span></span><code><span id="line-1"><span class="c1"># Copyright 2025 Qilimanjaro Quantum Tech</span>
 </span><span id="line-2"><span class="c1">#</span>
-</span><span id="line-3"><span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+</span><span id="line-3"><span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 </span><span id="line-4"><span class="c1"># you may not use this file except in compliance with the License.</span>
 </span><span id="line-5"><span class="c1"># You may obtain a copy of the License at</span>
 </span><span id="line-6"><span class="c1">#</span>
 </span><span id="line-7"><span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 </span><span id="line-8"><span class="c1">#</span>
 </span><span id="line-9"><span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-</span><span id="line-10"><span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+</span><span id="line-10"><span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 </span><span id="line-11"><span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 </span><span id="line-12"><span class="c1"># See the License for the specific language governing permissions and</span>
 </span><span id="line-13"><span class="c1"># limitations under the License.</span>
@@ -460,7 +479,7 @@
 </span><span id="line-41">
 <div class="viewcode-block" id="TBasicGate">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/qutip_backend/index.html#qilisdk.backends.qutip_backend.TBasicGate">[docs]</a>
-</span><span id="line-42"><span class="n">TBasicGate</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TBasicGate&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">BasicGate</span><span class="p">)</span></div>
+</span><span id="line-42"><span class="n">TBasicGate</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"TBasicGate"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">BasicGate</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="BasicGateHandlersMapping">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/qutip_backend/index.html#qilisdk.backends.qutip_backend.BasicGateHandlersMapping">[docs]</a>
@@ -469,7 +488,7 @@
 </span><span id="line-44">
 <div class="viewcode-block" id="TPauliOperator">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/qutip_backend/index.html#qilisdk.backends.qutip_backend.TPauliOperator">[docs]</a>
-</span><span id="line-45"><span class="n">TPauliOperator</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TPauliOperator&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">PauliOperator</span><span class="p">)</span></div>
+</span><span id="line-45"><span class="n">TPauliOperator</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"TPauliOperator"</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">PauliOperator</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="PauliOperatorHandlersMapping">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/qutip_backend/index.html#qilisdk.backends.qutip_backend.PauliOperatorHandlersMapping">[docs]</a>
@@ -484,34 +503,34 @@
 <div class="viewcode-block" id="QutipI">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/qutip_backend/index.html#qilisdk.backends.qutip_backend.QutipI">[docs]</a>
 </span><span id="line-53"><span class="k">class</span><span class="w"> </span><span class="nc">QutipI</span><span class="p">(</span><span class="n">SingleQubitGate</span><span class="p">):</span>
-</span><span id="line-54"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-54"><span class="w">    </span><span class="sd">"""</span>
 </span><span id="line-55"><span class="sd">    Single-qubit I gate.</span>
 </span><span id="line-56">
 </span><span id="line-57"><span class="sd">    Examples</span>
 </span><span id="line-58"><span class="sd">    --------</span>
 </span><span id="line-59"><span class="sd">    &gt;&gt;&gt; from qutip_qip.operations import X</span>
 </span><span id="line-60"><span class="sd">    &gt;&gt;&gt; I(0).get_compact_qobj()  # doctest: +NORMALIZE_WHITESPACE</span>
-</span><span id="line-61"><span class="sd">    Quantum object: dims=[[2], [2]], shape=(2, 2), type=&#39;oper&#39;, dtype=Dense, isherm=True</span>
+</span><span id="line-61"><span class="sd">    Quantum object: dims=[[2], [2]], shape=(2, 2), type='oper', dtype=Dense, isherm=True</span>
 </span><span id="line-62"><span class="sd">    Qobj data =</span>
 </span><span id="line-63"><span class="sd">    [[1. 0.]</span>
 </span><span id="line-64"><span class="sd">     [0. 1.]]</span>
-</span><span id="line-65"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-65"><span class="sd">    """</span>
 </span><span id="line-66">
-</span><span id="line-67">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: ANN001, ANN003</span>
+</span><span id="line-67">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># ruff: ignore[missing-type-function-argument, missing-type-kwargs]</span>
 </span><span id="line-68">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">targets</span><span class="o">=</span><span class="n">targets</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 <div class="viewcode-block" id="QutipI.name">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/qutip_backend/index.html#qilisdk.backends.qutip_backend.QutipI.name">[docs]</a>
-</span><span id="line-69">        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;I&quot;</span></div>
+</span><span id="line-69">        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">"I"</span></div>
 
 <div class="viewcode-block" id="QutipI.latex_str">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/qutip_backend/index.html#qilisdk.backends.qutip_backend.QutipI.latex_str">[docs]</a>
-</span><span id="line-70">        <span class="bp">self</span><span class="o">.</span><span class="n">latex_str</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;I&quot;</span></div>
+</span><span id="line-70">        <span class="bp">self</span><span class="o">.</span><span class="n">latex_str</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"I"</span></div>
 
 </span><span id="line-71">
 <div class="viewcode-block" id="QutipI.get_compact_qobj">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/qutip_backend/index.html#qilisdk.backends.qutip_backend.QutipI.get_compact_qobj">[docs]</a>
-</span><span id="line-72">    <span class="k">def</span><span class="w"> </span><span class="nf">get_compact_qobj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># noqa: ANN201, PLR6301</span>
-</span><span id="line-73">        <span class="k">return</span> <span class="n">qeye</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_qutip5</span> <span class="k">else</span> <span class="n">qeye</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;dense&quot;</span><span class="p">)</span></div>
+</span><span id="line-72">    <span class="k">def</span><span class="w"> </span><span class="nf">get_compact_qobj</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># ruff: ignore[missing-return-type-undocumented-public-function, no-self-use]</span>
+</span><span id="line-73">        <span class="k">return</span> <span class="n">qeye</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_qutip5</span> <span class="k">else</span> <span class="n">qeye</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">"dense"</span><span class="p">)</span></div>
 </div>
 
 </span><span id="line-74">
@@ -519,15 +538,15 @@
 <div class="viewcode-block" id="QutipBackend">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/qutip_backend/index.html#qilisdk.backends.qutip_backend.QutipBackend">[docs]</a>
 </span><span id="line-76"><span class="k">class</span><span class="w"> </span><span class="nc">QutipBackend</span><span class="p">(</span><span class="n">Backend</span><span class="p">):</span>
-</span><span id="line-77"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Backend that runs digital-circuit and analog time-evolution experiments using QuTiP.</span>
+</span><span id="line-77"><span class="w">    </span><span class="sd">"""Backend that runs digital-circuit and analog time-evolution experiments using QuTiP.</span>
 </span><span id="line-78">
 </span><span id="line-79"><span class="sd">    The backend is CPU-only and has no hardware dependencies, which makes</span>
 </span><span id="line-80"><span class="sd">    it ideal for local development, CI pipelines, and educational</span>
 </span><span id="line-81"><span class="sd">    notebooks.</span>
-</span><span id="line-82"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-82"><span class="sd">    """</span>
 </span><span id="line-83">
 </span><span id="line-84">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nsteps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10_000</span><span class="p">,</span> <span class="n">noise_model</span><span class="p">:</span> <span class="n">NoiseModel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-85"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Instantiate a new :class:`QutipBackend`.</span>
+</span><span id="line-85"><span class="w">        </span><span class="sd">"""Instantiate a new :class:`QutipBackend`.</span>
 </span><span id="line-86">
 </span><span id="line-87"><span class="sd">        Args:</span>
 </span><span id="line-88"><span class="sd">            nsteps (int): The maximum number of internal steps for the</span>
@@ -537,7 +556,7 @@
 </span><span id="line-92"><span class="sd">                converted into QuTiP collapse operators (including</span>
 </span><span id="line-93"><span class="sd">                time-dependent rates ``rate(t)``). Digital-circuit noise is not</span>
 </span><span id="line-94"><span class="sd">                supported and is ignored with a warning.</span>
-</span><span id="line-95"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-95"><span class="sd">        """</span>
 <div class="viewcode-block" id="QutipBackend.noise_model">
 <a class="viewcode-back" href="../../../code/api/qilisdk/backends/qutip_backend/index.html#qilisdk.backends.qutip_backend.QutipBackend.noise_model">[docs]</a>
 </span><span id="line-96">        <span class="bp">self</span><span class="o">.</span><span class="n">noise_model</span> <span class="o">=</span> <span class="n">noise_model</span></div>
@@ -564,12 +583,12 @@
 </span><span id="line-113">            <span class="n">U3</span><span class="p">:</span> <span class="n">QutipBackend</span><span class="o">.</span><span class="n">_handle_U3</span><span class="p">,</span>
 </span><span id="line-114">            <span class="n">SWAP</span><span class="p">:</span> <span class="n">QutipBackend</span><span class="o">.</span><span class="n">_handle_SWAP</span><span class="p">,</span>
 </span><span id="line-115">        <span class="p">}</span>  <span class="c1"># ty:ignore[invalid-assignment]</span>
-</span><span id="line-116">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[QutipBackend] QutipBackend initialised&quot;</span><span class="p">)</span>
+</span><span id="line-116">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"[QutipBackend] QutipBackend initialised"</span><span class="p">)</span>
 </span><span id="line-117">
 </span><span id="line-118">    <span class="k">def</span><span class="w"> </span><span class="nf">_execute_digital_propagation</span><span class="p">(</span>
 </span><span id="line-119">        <span class="bp">self</span><span class="p">,</span> <span class="n">functional</span><span class="p">:</span> <span class="n">DigitalPropagation</span><span class="p">,</span> <span class="n">readout</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutMethod</span><span class="p">]</span>
 </span><span id="line-120">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FunctionalResult</span><span class="p">:</span>
-</span><span id="line-121"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute a digital-circuit propagation functional using QuTiP.</span>
+</span><span id="line-121"><span class="w">        </span><span class="sd">"""Execute a digital-circuit propagation functional using QuTiP.</span>
 </span><span id="line-122">
 </span><span id="line-123"><span class="sd">        Translates the circuit gates into QuTiP operations, runs the</span>
 </span><span id="line-124"><span class="sd">        simulation via ``CircuitSimulator``, and returns the requested</span>
@@ -587,14 +606,14 @@
 </span><span id="line-136">
 </span><span id="line-137"><span class="sd">        Raises:</span>
 </span><span id="line-138"><span class="sd">            ValueError: If the circuit contains mid-circuit measurements.</span>
-</span><span id="line-139"><span class="sd">        &quot;&quot;&quot;</span>
-</span><span id="line-140">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[QutipBackend] Executing Sampling&quot;</span><span class="p">)</span>
+</span><span id="line-139"><span class="sd">        """</span>
+</span><span id="line-140">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"[QutipBackend] Executing Sampling"</span><span class="p">)</span>
 </span><span id="line-141">
-</span><span id="line-142">        <span class="c1"># Warn if noise model is provided, since we don&#39;t support digital noise here for now</span>
+</span><span id="line-142">        <span class="c1"># Warn if noise model is provided, since we don't support digital noise here for now</span>
 </span><span id="line-143">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">noise_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="line-144">            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-</span><span id="line-145">                <span class="s2">&quot;Noise model provided to QutipBackend, but digital noise is not supported. &quot;</span>
-</span><span id="line-146">                <span class="s2">&quot;The noise model will be ignored.&quot;</span>
+</span><span id="line-145">                <span class="s2">"Noise model provided to QutipBackend, but digital noise is not supported. "</span>
+</span><span id="line-146">                <span class="s2">"The noise model will be ignored."</span>
 </span><span id="line-147">            <span class="p">)</span>
 </span><span id="line-148">
 </span><span id="line-149">        <span class="n">init_state</span> <span class="o">=</span> <span class="n">tensor</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">basis</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">functional</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)])</span>
@@ -610,11 +629,11 @@
 </span><span id="line-159">        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
 </span><span id="line-160">            <span class="n">first_m</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># No measurements at all</span>
 </span><span id="line-161">
-</span><span id="line-162">        <span class="c1"># If there&#39;s a measurement, check that nothing after it is a non-measurement</span>
+</span><span id="line-162">        <span class="c1"># If there's a measurement, check that nothing after it is a non-measurement</span>
 </span><span id="line-163">        <span class="k">if</span> <span class="n">first_m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">gates</span><span class="p">[</span><span class="n">first_m</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]):</span>
 </span><span id="line-164">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-165">                <span class="s2">&quot;Mid-circuit measurements are not supported in the QutipBackend. &quot;</span>
-</span><span id="line-166">                <span class="s2">&quot;All measurements must be at the end of the circuit.&quot;</span>
+</span><span id="line-165">                <span class="s2">"Mid-circuit measurements are not supported in the QutipBackend. "</span>
+</span><span id="line-166">                <span class="s2">"All measurements must be at the end of the circuit."</span>
 </span><span id="line-167">            <span class="p">)</span>
 </span><span id="line-168">
 </span><span id="line-169">        <span class="n">transpiled_circuit</span> <span class="o">=</span> <span class="n">DecomposeMultiControlledGatesPass</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">functional</span><span class="o">.</span><span class="n">circuit</span><span class="p">)</span>
@@ -623,7 +642,7 @@
 </span><span id="line-172">
 </span><span id="line-173">        <span class="n">final_state</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">sim</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">init_state</span><span class="p">)</span><span class="o">.</span><span class="n">get_final_states</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">full</span><span class="p">())</span>
 </span><span id="line-174">
-</span><span id="line-175">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[QutipBackend] Sampling finished&quot;</span><span class="p">)</span>
+</span><span id="line-175">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"[QutipBackend] Sampling finished"</span><span class="p">)</span>
 </span><span id="line-176">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">measurements</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">measurements</span><span class="p">)</span> <span class="o">!=</span> <span class="n">functional</span><span class="o">.</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
 </span><span id="line-177">            <span class="k">return</span> <span class="n">FunctionalResult</span><span class="p">(</span>
 </span><span id="line-178">                <span class="n">readout_results</span><span class="o">=</span><span class="n">QutipBackend</span><span class="o">.</span><span class="n">_construct_results_list</span><span class="p">(</span>
@@ -635,9 +654,9 @@
 </span><span id="line-184">        <span class="p">)</span>
 </span><span id="line-185">
 </span><span id="line-186">    <span class="k">def</span><span class="w"> </span><span class="nf">_execute_analog_evolution</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">functional</span><span class="p">:</span> <span class="n">AnalogEvolution</span><span class="p">,</span> <span class="n">readout</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ReadoutMethod</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">FunctionalResult</span><span class="p">:</span>
-</span><span id="line-187"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the time evolution of an initial state under the given schedule.</span>
+</span><span id="line-187"><span class="w">        </span><span class="sd">"""Compute the time evolution of an initial state under the given schedule.</span>
 </span><span id="line-188">
-</span><span id="line-189"><span class="sd">        Uses QuTiP&#39;s ``mesolve`` to integrate the master equation over the</span>
+</span><span id="line-189"><span class="sd">        Uses QuTiP's ``mesolve`` to integrate the master equation over the</span>
 </span><span id="line-190"><span class="sd">        schedule time steps.</span>
 </span><span id="line-191">
 </span><span id="line-192"><span class="sd">        Args:</span>
@@ -654,10 +673,10 @@
 </span><span id="line-203"><span class="sd">        Raises:</span>
 </span><span id="line-204"><span class="sd">            ValueError: If the initial state has an unsupported shape</span>
 </span><span id="line-205"><span class="sd">                (must be a ket, bra, or density matrix).</span>
-</span><span id="line-206"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-206"><span class="sd">        """</span>
 </span><span id="line-207">
 </span><span id="line-208">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-</span><span id="line-209">            <span class="s2">&quot;[QutipBackend] Executing TimeEvolution (T=</span><span class="si">{}</span><span class="s2">, dt=</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">dt</span>
+</span><span id="line-209">            <span class="s2">"[QutipBackend] Executing TimeEvolution (T=</span><span class="si">{}</span><span class="s2">, dt=</span><span class="si">{}</span><span class="s2">)"</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">functional</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">dt</span>
 </span><span id="line-210">        <span class="p">)</span>
 </span><span id="line-211">        <span class="n">steps</span> <span class="o">=</span> <span class="n">functional</span><span class="o">.</span><span class="n">schedule</span><span class="o">.</span><span class="n">tlist</span>
 </span><span id="line-212">
@@ -692,8 +711,8 @@
 </span><span id="line-241">        <span class="k">elif</span> <span class="n">initial_state</span><span class="o">.</span><span class="n">is_ket</span><span class="p">():</span>
 </span><span id="line-242">            <span class="n">state_dim</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">2</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">initial_state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)],</span> <span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
 </span><span id="line-243">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-244">            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;[QutipBackend] Invalid initial state provided&quot;</span><span class="p">)</span>
-</span><span id="line-245">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid initial state provided.&quot;</span><span class="p">)</span>
+</span><span id="line-244">            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"[QutipBackend] Invalid initial state provided"</span><span class="p">)</span>
+</span><span id="line-245">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"invalid initial state provided."</span><span class="p">)</span>
 </span><span id="line-246">
 </span><span id="line-247">        <span class="n">qutip_init_state</span> <span class="o">=</span> <span class="n">Qobj</span><span class="p">(</span><span class="n">initial_state</span><span class="o">.</span><span class="n">dense</span><span class="p">(),</span> <span class="n">dims</span><span class="o">=</span><span class="n">state_dim</span><span class="p">)</span>
 </span><span id="line-248">
@@ -714,13 +733,13 @@
 </span><span id="line-263">            <span class="n">rho0</span><span class="o">=</span><span class="n">qutip_init_state</span><span class="p">,</span>
 </span><span id="line-264">            <span class="n">tlist</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span>
 </span><span id="line-265">            <span class="n">options</span><span class="o">=</span><span class="p">{</span>
-</span><span id="line-266">                <span class="s2">&quot;store_states&quot;</span><span class="p">:</span> <span class="n">functional</span><span class="o">.</span><span class="n">store_intermediate_results</span><span class="p">,</span>
-</span><span id="line-267">                <span class="s2">&quot;store_final_state&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="line-268">                <span class="s2">&quot;nsteps&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nsteps</span><span class="p">,</span>
+</span><span id="line-266">                <span class="s2">"store_states"</span><span class="p">:</span> <span class="n">functional</span><span class="o">.</span><span class="n">store_intermediate_results</span><span class="p">,</span>
+</span><span id="line-267">                <span class="s2">"store_final_state"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="line-268">                <span class="s2">"nsteps"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nsteps</span><span class="p">,</span>
 </span><span id="line-269">            <span class="p">},</span>
 </span><span id="line-270">        <span class="p">)</span>
 </span><span id="line-271">
-</span><span id="line-272">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[QutipBackend] TimeEvolution finished&quot;</span><span class="p">)</span>
+</span><span id="line-272">        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"[QutipBackend] TimeEvolution finished"</span><span class="p">)</span>
 </span><span id="line-273">        <span class="k">return</span> <span class="n">FunctionalResult</span><span class="p">(</span>
 </span><span id="line-274">            <span class="n">readout_results</span><span class="o">=</span><span class="n">QutipBackend</span><span class="o">.</span><span class="n">_construct_results_list</span><span class="p">(</span>
 </span><span id="line-275">                <span class="n">final_state</span><span class="o">=</span><span class="n">QTensor</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">final_state</span><span class="o">.</span><span class="n">full</span><span class="p">()),</span> <span class="n">readout</span><span class="o">=</span><span class="n">readout</span>
@@ -738,7 +757,7 @@
 </span><span id="line-287">    <span class="k">def</span><span class="w"> </span><span class="nf">_noise_model_to_qutip_cops</span><span class="p">(</span>
 </span><span id="line-288">        <span class="bp">self</span><span class="p">,</span> <span class="n">noise_model</span><span class="p">:</span> <span class="n">NoiseModel</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">steps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span>
 </span><span id="line-289">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qobj</span><span class="p">]]:</span>
-</span><span id="line-290"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a noise model into QuTiP collapse operators for ``mesolve``.</span>
+</span><span id="line-290"><span class="w">        </span><span class="sd">"""Convert a noise model into QuTiP collapse operators for ``mesolve``.</span>
 </span><span id="line-291">
 </span><span id="line-292"><span class="sd">        Args:</span>
 </span><span id="line-293"><span class="sd">            noise_model (NoiseModel): The qiliSDK noise model to convert.</span>
@@ -753,7 +772,7 @@
 </span><span id="line-302"><span class="sd">                where ``jump_ops`` is the list of (possibly time-dependent)</span>
 </span><span id="line-303"><span class="sd">                collapse operators and ``hamiltonian_deltas`` are constant</span>
 </span><span id="line-304"><span class="sd">                coherent Hamiltonian corrections to add to the Hamiltonian.</span>
-</span><span id="line-305"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-305"><span class="sd">        """</span>
 </span><span id="line-306">        <span class="n">jump_ops</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="p">[]</span>
 </span><span id="line-307">        <span class="n">hamiltonian_deltas</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qobj</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 </span><span id="line-308">
@@ -774,7 +793,7 @@
 </span><span id="line-323">
 </span><span id="line-324">    <span class="nd">@staticmethod</span>
 </span><span id="line-325">    <span class="k">def</span><span class="w"> </span><span class="nf">_noise_as_lindblad</span><span class="p">(</span><span class="n">noise</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">dt</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LindbladGenerator</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-326"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the Lindblad generator for a noise source, if it exposes one.</span>
+</span><span id="line-326"><span class="w">        </span><span class="sd">"""Return the Lindblad generator for a noise source, if it exposes one.</span>
 </span><span id="line-327">
 </span><span id="line-328"><span class="sd">        Args:</span>
 </span><span id="line-329"><span class="sd">            noise (object): The noise source to convert.</span>
@@ -784,7 +803,7 @@
 </span><span id="line-333"><span class="sd">        Returns:</span>
 </span><span id="line-334"><span class="sd">            LindbladGenerator | None: The Lindblad generator, or ``None`` if the</span>
 </span><span id="line-335"><span class="sd">                noise source does not expose a Lindblad representation.</span>
-</span><span id="line-336"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-336"><span class="sd">        """</span>
 </span><span id="line-337">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">SupportsStaticLindblad</span><span class="p">):</span>
 </span><span id="line-338">            <span class="k">return</span> <span class="n">noise</span><span class="o">.</span><span class="n">as_lindblad</span><span class="p">()</span>
 </span><span id="line-339">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">noise</span><span class="p">,</span> <span class="n">SupportsTimeDerivedLindblad</span><span class="p">):</span>
@@ -800,7 +819,7 @@
 </span><span id="line-349">        <span class="n">hamiltonian_deltas</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qobj</span><span class="p">],</span>
 </span><span id="line-350">        <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 </span><span id="line-351">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-352"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Append the collapse operators of a Lindblad generator to ``jump_ops``.</span>
+</span><span id="line-352"><span class="w">        </span><span class="sd">"""Append the collapse operators of a Lindblad generator to ``jump_ops``.</span>
 </span><span id="line-353">
 </span><span id="line-354"><span class="sd">        Single-qubit jump operators are embedded into the full ``nqubits``</span>
 </span><span id="line-355"><span class="sd">        Hilbert space; full-system operators are used as-is. Constant rates</span>
@@ -822,14 +841,14 @@
 </span><span id="line-371"><span class="sd">            ValueError: If a jump operator is not a square matrix, its</span>
 </span><span id="line-372"><span class="sd">                dimension is not a power of 2, or a single-qubit operator is</span>
 </span><span id="line-373"><span class="sd">                requested on a multi-qubit operator scope.</span>
-</span><span id="line-374"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-374"><span class="sd">        """</span>
 </span><span id="line-375">        <span class="n">rates</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">rates</span>
 </span><span id="line-376">        <span class="n">target_qubits</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">))</span> <span class="k">if</span> <span class="n">qubits</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">qubits</span>
 </span><span id="line-377">        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">jump_op</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">generator</span><span class="o">.</span><span class="n">jump_operators</span><span class="p">):</span>
 </span><span id="line-378">            <span class="n">op_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">jump_op</span><span class="o">.</span><span class="n">dense</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">_complex_dtype</span><span class="p">())</span>
 </span><span id="line-379">            <span class="n">dim</span> <span class="o">=</span> <span class="n">op_np</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </span><span id="line-380">            <span class="k">if</span> <span class="n">op_np</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">dim</span><span class="p">:</span>
-</span><span id="line-381">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Lindblad jump operators must be square matrices.&quot;</span><span class="p">)</span>
+</span><span id="line-381">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Lindblad jump operators must be square matrices."</span><span class="p">)</span>
 </span><span id="line-382">            <span class="n">operator_nqubits</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">dim</span><span class="p">)))</span>
 </span><span id="line-383">
 </span><span id="line-384">            <span class="k">if</span> <span class="n">dim</span> <span class="o">==</span> <span class="mi">2</span><span class="o">**</span><span class="n">nqubits</span><span class="p">:</span>
@@ -837,25 +856,25 @@
 </span><span id="line-386">            <span class="k">elif</span> <span class="n">operator_nqubits</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
 </span><span id="line-387">                <span class="n">embedded</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_embed_single_qubit_operator</span><span class="p">(</span><span class="n">op_np</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">)</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">target_qubits</span><span class="p">]</span>
 </span><span id="line-388">            <span class="k">else</span><span class="p">:</span>
-</span><span id="line-389">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Lindblad jump operators must be either single-qubit or full-system operators.&quot;</span><span class="p">)</span>
+</span><span id="line-389">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Lindblad jump operators must be either single-qubit or full-system operators."</span><span class="p">)</span>
 </span><span id="line-390">
 </span><span id="line-391">            <span class="n">rate</span> <span class="o">=</span> <span class="n">rates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">rates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
 </span><span id="line-392">            <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">embedded</span><span class="p">:</span>
 </span><span id="line-393">                <span class="k">if</span> <span class="n">rate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="line-394">                    <span class="n">jump_ops</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">op</span><span class="p">)</span>
 </span><span id="line-395">                <span class="k">elif</span> <span class="nb">callable</span><span class="p">(</span><span class="n">rate</span><span class="p">):</span>
-</span><span id="line-396">                    <span class="n">rate_fn</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;Callable[[float], float]&quot;</span><span class="p">,</span> <span class="n">rate</span><span class="p">)</span>  <span class="c1"># needed for type safety</span>
+</span><span id="line-396">                    <span class="n">rate_fn</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Callable[[float], float]"</span><span class="p">,</span> <span class="n">rate</span><span class="p">)</span>  <span class="c1"># needed for type safety</span>
 </span><span id="line-397">                    <span class="n">coeff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">rate_fn</span><span class="p">(</span><span class="n">t</span><span class="p">))</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">steps</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">_complex_dtype</span><span class="p">())</span>
 </span><span id="line-398">                    <span class="n">jump_ops</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">op</span><span class="p">,</span> <span class="n">coeff</span><span class="p">])</span>
 </span><span id="line-399">                <span class="k">else</span><span class="p">:</span>
-</span><span id="line-400">                    <span class="n">jump_ops</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="s2">&quot;float&quot;</span><span class="p">,</span> <span class="n">rate</span><span class="p">)))</span> <span class="o">*</span> <span class="n">op</span><span class="p">)</span>
+</span><span id="line-400">                    <span class="n">jump_ops</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="s2">"float"</span><span class="p">,</span> <span class="n">rate</span><span class="p">)))</span> <span class="o">*</span> <span class="n">op</span><span class="p">)</span>
 </span><span id="line-401">
 </span><span id="line-402">        <span class="k">if</span> <span class="n">generator</span><span class="o">.</span><span class="n">hamiltonian</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="line-403">            <span class="n">hamiltonian_deltas</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_to_qubip_observables</span><span class="p">(</span><span class="n">generator</span><span class="o">.</span><span class="n">hamiltonian</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">))</span>
 </span><span id="line-404">
 </span><span id="line-405">    <span class="nd">@staticmethod</span>
 </span><span id="line-406">    <span class="k">def</span><span class="w"> </span><span class="nf">_embed_single_qubit_operator</span><span class="p">(</span><span class="n">op</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">target_qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Qobj</span><span class="p">:</span>
-</span><span id="line-407"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Embed a single-qubit operator into the full ``nqubits`` Hilbert space.</span>
+</span><span id="line-407"><span class="w">        </span><span class="sd">"""Embed a single-qubit operator into the full ``nqubits`` Hilbert space.</span>
 </span><span id="line-408">
 </span><span id="line-409"><span class="sd">        Args:</span>
 </span><span id="line-410"><span class="sd">            op (np.ndarray): The 2x2 single-qubit operator matrix.</span>
@@ -864,14 +883,14 @@
 </span><span id="line-413">
 </span><span id="line-414"><span class="sd">        Returns:</span>
 </span><span id="line-415"><span class="sd">            Qobj: The operator acting on ``target_qubit`` and identity elsewhere.</span>
-</span><span id="line-416"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-416"><span class="sd">        """</span>
 </span><span id="line-417">        <span class="n">factors</span> <span class="o">=</span> <span class="p">[</span><span class="n">qeye</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)]</span>
 </span><span id="line-418">        <span class="n">factors</span><span class="p">[</span><span class="n">target_qubit</span><span class="p">]</span> <span class="o">=</span> <span class="n">Qobj</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">[[</span><span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
 </span><span id="line-419">        <span class="k">return</span> <span class="n">tensor</span><span class="p">(</span><span class="o">*</span><span class="n">factors</span><span class="p">)</span>
 </span><span id="line-420">
 </span><span id="line-421">    <span class="nd">@staticmethod</span>
 </span><span id="line-422">    <span class="k">def</span><span class="w"> </span><span class="nf">_to_qubip_observables</span><span class="p">(</span><span class="n">obs</span><span class="p">:</span> <span class="n">QTensor</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">PauliOperator</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Qobj</span><span class="p">:</span>
-</span><span id="line-423"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a QiliSDK observable to a QuTiP Qobj.</span>
+</span><span id="line-423"><span class="w">        </span><span class="sd">"""Convert a QiliSDK observable to a QuTiP Qobj.</span>
 </span><span id="line-424">
 </span><span id="line-425"><span class="sd">        Args:</span>
 </span><span id="line-426"><span class="sd">            obs (QTensor | Hamiltonian | PauliOperator): The observable to convert.</span>
@@ -882,7 +901,7 @@
 </span><span id="line-431">
 </span><span id="line-432"><span class="sd">        Raises:</span>
 </span><span id="line-433"><span class="sd">            ValueError: If the observable type is unsupported.</span>
-</span><span id="line-434"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-434"><span class="sd">        """</span>
 </span><span id="line-435">        <span class="n">aux_obs</span> <span class="o">=</span> <span class="kc">None</span>
 </span><span id="line-436">        <span class="n">identity</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">PauliI</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">matrix</span><span class="p">)</span>
 </span><span id="line-437">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">PauliOperator</span><span class="p">):</span>
@@ -904,11 +923,11 @@
 </span><span id="line-453">            <span class="n">aux_obs</span> <span class="o">=</span> <span class="n">obs</span>
 </span><span id="line-454">        <span class="k">if</span> <span class="n">aux_obs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="line-455">            <span class="k">return</span> <span class="n">Qobj</span><span class="p">(</span><span class="n">aux_obs</span><span class="o">.</span><span class="n">dense</span><span class="p">(),</span> <span class="n">dims</span><span class="o">=</span><span class="p">[[</span><span class="mi">2</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)])</span>
-</span><span id="line-456">        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;[QutipBackend] Unsupported observable type </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">obs</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-</span><span id="line-457">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unsupported observable type of </span><span class="si">{</span><span class="n">obs</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-456">        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"[QutipBackend] Unsupported observable type </span><span class="si">{}</span><span class="s2">"</span><span class="p">,</span> <span class="n">obs</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+</span><span id="line-457">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unsupported observable type of </span><span class="si">{</span><span class="n">obs</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </span><span id="line-458">
 </span><span id="line-459">    <span class="k">def</span><span class="w"> </span><span class="nf">_get_qutip_circuit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QubitCircuit</span><span class="p">:</span>
-</span><span id="line-460"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Translate a qiliSDK circuit to a QuTiP circuit.</span>
+</span><span id="line-460"><span class="w">        </span><span class="sd">"""Translate a qiliSDK circuit to a QuTiP circuit.</span>
 </span><span id="line-461">
 </span><span id="line-462"><span class="sd">        Args:</span>
 </span><span id="line-463"><span class="sd">            circuit (Circuit): the qiliSDK circuit to be translated to qutip.</span>
@@ -918,7 +937,7 @@
 </span><span id="line-467">
 </span><span id="line-468"><span class="sd">        Returns:</span>
 </span><span id="line-469"><span class="sd">            QubitCircuit: the translated qutip circuit.</span>
-</span><span id="line-470"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-470"><span class="sd">        """</span>
 </span><span id="line-471">        <span class="n">qutip_circuit</span> <span class="o">=</span> <span class="n">QubitCircuit</span><span class="p">(</span>
 </span><span id="line-472">            <span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span> <span class="n">num_cbits</span><span class="o">=</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span> <span class="n">input_states</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)]</span>
 </span><span id="line-473">        <span class="p">)</span>
@@ -933,14 +952,14 @@
 </span><span id="line-482">            <span class="k">else</span><span class="p">:</span>
 </span><span id="line-483">                <span class="n">handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_basic_gate_handlers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">gate</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
 </span><span id="line-484">                <span class="k">if</span> <span class="n">handler</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-485">                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;[QutipBackend] Unsupported gate </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-</span><span id="line-486">                    <span class="k">raise</span> <span class="n">UnsupportedGateError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported gate </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="line-485">                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"[QutipBackend] Unsupported gate </span><span class="si">{}</span><span class="s2">"</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+</span><span id="line-486">                    <span class="k">raise</span> <span class="n">UnsupportedGateError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unsupported gate </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </span><span id="line-487">                <span class="n">qubits</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">target_qubits</span>
 </span><span id="line-488">                <span class="n">handler</span><span class="p">(</span><span class="n">qutip_circuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">,</span> <span class="o">*</span><span class="n">qubits</span><span class="p">)</span>
 </span><span id="line-489">        <span class="k">return</span> <span class="n">qutip_circuit</span>
 </span><span id="line-490">
-</span><span id="line-491">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_controlled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">Controlled</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
-</span><span id="line-492"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle a controlled gate operation by registering a custom QuTiP gate.</span>
+</span><span id="line-491">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_controlled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">Controlled</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># ruff: ignore[no-self-use]</span>
+</span><span id="line-492"><span class="w">        </span><span class="sd">"""Handle a controlled gate operation by registering a custom QuTiP gate.</span>
 </span><span id="line-493">
 </span><span id="line-494"><span class="sd">        For non-native controlled gates the block-matrix is constructed</span>
 </span><span id="line-495"><span class="sd">        explicitly, mirroring the approach recommended in the QuTiP QIP</span>
@@ -949,10 +968,10 @@
 </span><span id="line-498"><span class="sd">        Args:</span>
 </span><span id="line-499"><span class="sd">            circuit (QubitCircuit): The QuTiP circuit being constructed.</span>
 </span><span id="line-500"><span class="sd">            gate (Controlled): The controlled gate to handle.</span>
-</span><span id="line-501"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-501"><span class="sd">        """</span>
 </span><span id="line-502">
-</span><span id="line-503">        <span class="k">if</span> <span class="n">gate</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;CNOT&quot;</span><span class="p">:</span>
-</span><span id="line-504">            <span class="n">circuit</span><span class="o">.</span><span class="n">add_gate</span><span class="p">(</span><span class="s2">&quot;CNOT&quot;</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="p">[</span><span class="o">*</span><span class="n">gate</span><span class="o">.</span><span class="n">target_qubits</span><span class="p">],</span> <span class="n">controls</span><span class="o">=</span><span class="p">[</span><span class="o">*</span><span class="n">gate</span><span class="o">.</span><span class="n">control_qubits</span><span class="p">])</span>
+</span><span id="line-503">        <span class="k">if</span> <span class="n">gate</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"CNOT"</span><span class="p">:</span>
+</span><span id="line-504">            <span class="n">circuit</span><span class="o">.</span><span class="n">add_gate</span><span class="p">(</span><span class="s2">"CNOT"</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="p">[</span><span class="o">*</span><span class="n">gate</span><span class="o">.</span><span class="n">target_qubits</span><span class="p">],</span> <span class="n">controls</span><span class="o">=</span><span class="p">[</span><span class="o">*</span><span class="n">gate</span><span class="o">.</span><span class="n">control_qubits</span><span class="p">])</span>
 </span><span id="line-505">        <span class="k">else</span><span class="p">:</span>
 </span><span id="line-506">            <span class="n">base_matrix</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">basic_gate</span><span class="o">.</span><span class="n">matrix</span>
 </span><span id="line-507">            <span class="n">dim_target</span> <span class="o">=</span> <span class="n">base_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -966,13 +985,13 @@
 </span><span id="line-515">                <span class="k">return</span> <span class="n">Qobj</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="n">dims</span><span class="p">)</span>
 </span><span id="line-516">
 </span><span id="line-517">            <span class="n">matrix_digest</span> <span class="o">=</span> <span class="n">base_matrix</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">()[:</span><span class="mi">16</span><span class="p">]</span>
-</span><span id="line-518">            <span class="n">gate_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">matrix_digest</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="line-518">            <span class="n">gate_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">matrix_digest</span><span class="si">}</span><span class="s2">"</span>
 </span><span id="line-519">            <span class="k">if</span> <span class="n">gate_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">circuit</span><span class="o">.</span><span class="n">user_gates</span><span class="p">:</span>
 </span><span id="line-520">                <span class="n">circuit</span><span class="o">.</span><span class="n">user_gates</span><span class="p">[</span><span class="n">gate_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">qutip_controlled_gate</span>
 </span><span id="line-521">            <span class="n">circuit</span><span class="o">.</span><span class="n">add_gate</span><span class="p">(</span><span class="n">gate_name</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="p">[</span><span class="o">*</span><span class="n">gate</span><span class="o">.</span><span class="n">control_qubits</span><span class="p">,</span> <span class="o">*</span><span class="n">gate</span><span class="o">.</span><span class="n">target_qubits</span><span class="p">])</span>
 </span><span id="line-522">
-</span><span id="line-523">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_adjoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">Adjoint</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># noqa: PLR6301</span>
-</span><span id="line-524"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle an adjoint (inverse) gate operation.</span>
+</span><span id="line-523">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_adjoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">Adjoint</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># ruff: ignore[no-self-use]</span>
+</span><span id="line-524"><span class="w">        </span><span class="sd">"""Handle an adjoint (inverse) gate operation.</span>
 </span><span id="line-525">
 </span><span id="line-526"><span class="sd">        Registers a custom QuTiP gate whose unitary is the adjoint of the</span>
 </span><span id="line-527"><span class="sd">        wrapped basic gate.</span>
@@ -980,19 +999,19 @@
 </span><span id="line-529"><span class="sd">        Args:</span>
 </span><span id="line-530"><span class="sd">            circuit (QubitCircuit): The QuTiP circuit being constructed.</span>
 </span><span id="line-531"><span class="sd">            gate (Adjoint): The adjoint gate to handle.</span>
-</span><span id="line-532"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-532"><span class="sd">        """</span>
 </span><span id="line-533">
 </span><span id="line-534">        <span class="k">def</span><span class="w"> </span><span class="nf">qutip_adjoined_gate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Qobj</span><span class="p">:</span>
 </span><span id="line-535">            <span class="k">return</span> <span class="n">Qobj</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">matrix</span><span class="p">)</span>
 </span><span id="line-536">
-</span><span id="line-537">        <span class="n">gate_name</span> <span class="o">=</span> <span class="s2">&quot;Adjoint_&quot;</span> <span class="o">+</span> <span class="n">gate</span><span class="o">.</span><span class="n">name</span>
+</span><span id="line-537">        <span class="n">gate_name</span> <span class="o">=</span> <span class="s2">"Adjoint_"</span> <span class="o">+</span> <span class="n">gate</span><span class="o">.</span><span class="n">name</span>
 </span><span id="line-538">        <span class="k">if</span> <span class="n">gate_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">circuit</span><span class="o">.</span><span class="n">user_gates</span><span class="p">:</span>
 </span><span id="line-539">            <span class="n">circuit</span><span class="o">.</span><span class="n">user_gates</span><span class="p">[</span><span class="n">gate_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">qutip_adjoined_gate</span>
 </span><span id="line-540">        <span class="n">circuit</span><span class="o">.</span><span class="n">add_gate</span><span class="p">(</span><span class="n">gate_name</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="p">[</span><span class="o">*</span><span class="n">gate</span><span class="o">.</span><span class="n">target_qubits</span><span class="p">])</span>
 </span><span id="line-541">
 </span><span id="line-542">    <span class="nd">@staticmethod</span>
 </span><span id="line-543">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_M</span><span class="p">(</span><span class="n">qutip_circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">M</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-544"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle a measurement gate.</span>
+</span><span id="line-544"><span class="w">        </span><span class="sd">"""Handle a measurement gate.</span>
 </span><span id="line-545">
 </span><span id="line-546"><span class="sd">        Adds a measurement operation to each target qubit, storing the</span>
 </span><span id="line-547"><span class="sd">        classical result in the corresponding classical bit.</span>
@@ -1001,58 +1020,58 @@
 </span><span id="line-550"><span class="sd">            qutip_circuit (QubitCircuit): The QuTiP circuit being</span>
 </span><span id="line-551"><span class="sd">                constructed.</span>
 </span><span id="line-552"><span class="sd">            gate (M): The measurement gate to handle.</span>
-</span><span id="line-553"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-553"><span class="sd">        """</span>
 </span><span id="line-554">        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">target_qubits</span><span class="p">:</span>
-</span><span id="line-555">            <span class="n">qutip_circuit</span><span class="o">.</span><span class="n">add_measurement</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;M</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">classical_store</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+</span><span id="line-555">            <span class="n">qutip_circuit</span><span class="o">.</span><span class="n">add_measurement</span><span class="p">(</span><span class="sa">f</span><span class="s2">"M</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">targets</span><span class="o">=</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">classical_store</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
 </span><span id="line-556">
 </span><span id="line-557">    <span class="nd">@staticmethod</span>
 </span><span id="line-558">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_I</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">I</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-559"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle an I (identity) gate operation.&quot;&quot;&quot;</span>
+</span><span id="line-559"><span class="w">        </span><span class="sd">"""Handle an I (identity) gate operation."""</span>
 </span><span id="line-560">        <span class="n">circuit</span><span class="o">.</span><span class="n">add_gate</span><span class="p">(</span><span class="n">QutipI</span><span class="p">(</span><span class="n">targets</span><span class="o">=</span><span class="n">qubit</span><span class="p">))</span>
 </span><span id="line-561">
 </span><span id="line-562">    <span class="nd">@staticmethod</span>
 </span><span id="line-563">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_X</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">X</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-564"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle an X gate operation.&quot;&quot;&quot;</span>
+</span><span id="line-564"><span class="w">        </span><span class="sd">"""Handle an X gate operation."""</span>
 </span><span id="line-565">        <span class="n">circuit</span><span class="o">.</span><span class="n">add_gate</span><span class="p">(</span><span class="n">QutipGates</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="n">targets</span><span class="o">=</span><span class="n">qubit</span><span class="p">))</span>
 </span><span id="line-566">
 </span><span id="line-567">    <span class="nd">@staticmethod</span>
 </span><span id="line-568">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_Y</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">Y</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-569"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle a Y gate operation.&quot;&quot;&quot;</span>
+</span><span id="line-569"><span class="w">        </span><span class="sd">"""Handle a Y gate operation."""</span>
 </span><span id="line-570">        <span class="n">circuit</span><span class="o">.</span><span class="n">add_gate</span><span class="p">(</span><span class="n">QutipGates</span><span class="o">.</span><span class="n">Y</span><span class="p">(</span><span class="n">targets</span><span class="o">=</span><span class="n">qubit</span><span class="p">))</span>
 </span><span id="line-571">
 </span><span id="line-572">    <span class="nd">@staticmethod</span>
 </span><span id="line-573">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_Z</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">Z</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-574"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle a Z gate operation.&quot;&quot;&quot;</span>
+</span><span id="line-574"><span class="w">        </span><span class="sd">"""Handle a Z gate operation."""</span>
 </span><span id="line-575">        <span class="n">circuit</span><span class="o">.</span><span class="n">add_gate</span><span class="p">(</span><span class="n">QutipGates</span><span class="o">.</span><span class="n">Z</span><span class="p">(</span><span class="n">targets</span><span class="o">=</span><span class="n">qubit</span><span class="p">))</span>
 </span><span id="line-576">
 </span><span id="line-577">    <span class="nd">@staticmethod</span>
 </span><span id="line-578">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_H</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">H</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-579"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle an H gate operation.&quot;&quot;&quot;</span>
+</span><span id="line-579"><span class="w">        </span><span class="sd">"""Handle an H gate operation."""</span>
 </span><span id="line-580">        <span class="n">circuit</span><span class="o">.</span><span class="n">add_gate</span><span class="p">(</span><span class="n">QutipGates</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">targets</span><span class="o">=</span><span class="n">qubit</span><span class="p">))</span>
 </span><span id="line-581">
 </span><span id="line-582">    <span class="nd">@staticmethod</span>
 </span><span id="line-583">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_S</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">S</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-584"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle an S gate operation.&quot;&quot;&quot;</span>
+</span><span id="line-584"><span class="w">        </span><span class="sd">"""Handle an S gate operation."""</span>
 </span><span id="line-585">        <span class="n">circuit</span><span class="o">.</span><span class="n">add_gate</span><span class="p">(</span><span class="n">QutipGates</span><span class="o">.</span><span class="n">S</span><span class="p">(</span><span class="n">targets</span><span class="o">=</span><span class="n">qubit</span><span class="p">))</span>
 </span><span id="line-586">
 </span><span id="line-587">    <span class="nd">@staticmethod</span>
 </span><span id="line-588">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_T</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">T</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-589"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle a T gate operation.&quot;&quot;&quot;</span>
+</span><span id="line-589"><span class="w">        </span><span class="sd">"""Handle a T gate operation."""</span>
 </span><span id="line-590">        <span class="n">circuit</span><span class="o">.</span><span class="n">add_gate</span><span class="p">(</span><span class="n">QutipGates</span><span class="o">.</span><span class="n">T</span><span class="p">(</span><span class="n">targets</span><span class="o">=</span><span class="n">qubit</span><span class="p">))</span>
 </span><span id="line-591">
 </span><span id="line-592">    <span class="nd">@staticmethod</span>
 </span><span id="line-593">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_RX</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">RX</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-594"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle an RX gate operation.&quot;&quot;&quot;</span>
+</span><span id="line-594"><span class="w">        </span><span class="sd">"""Handle an RX gate operation."""</span>
 </span><span id="line-595">        <span class="n">circuit</span><span class="o">.</span><span class="n">add_gate</span><span class="p">(</span><span class="n">QutipGates</span><span class="o">.</span><span class="n">RX</span><span class="p">(</span><span class="n">targets</span><span class="o">=</span><span class="p">[</span><span class="n">qubit</span><span class="p">],</span> <span class="n">arg_value</span><span class="o">=</span><span class="n">gate</span><span class="o">.</span><span class="n">get_parameter_values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]))</span>
 </span><span id="line-596">
 </span><span id="line-597">    <span class="nd">@staticmethod</span>
 </span><span id="line-598">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_RY</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">RY</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-599"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle an RY gate operation.&quot;&quot;&quot;</span>
+</span><span id="line-599"><span class="w">        </span><span class="sd">"""Handle an RY gate operation."""</span>
 </span><span id="line-600">        <span class="n">circuit</span><span class="o">.</span><span class="n">add_gate</span><span class="p">(</span><span class="n">QutipGates</span><span class="o">.</span><span class="n">RY</span><span class="p">(</span><span class="n">targets</span><span class="o">=</span><span class="p">[</span><span class="n">qubit</span><span class="p">],</span> <span class="n">arg_value</span><span class="o">=</span><span class="n">gate</span><span class="o">.</span><span class="n">get_parameter_values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]))</span>
 </span><span id="line-601">
 </span><span id="line-602">    <span class="nd">@staticmethod</span>
 </span><span id="line-603">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_RZ</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">RZ</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-604"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle an RZ gate operation.&quot;&quot;&quot;</span>
+</span><span id="line-604"><span class="w">        </span><span class="sd">"""Handle an RZ gate operation."""</span>
 </span><span id="line-605">        <span class="n">circuit</span><span class="o">.</span><span class="n">add_gate</span><span class="p">(</span><span class="n">QutipGates</span><span class="o">.</span><span class="n">RZ</span><span class="p">(</span><span class="n">targets</span><span class="o">=</span><span class="p">[</span><span class="n">qubit</span><span class="p">],</span> <span class="n">arg_value</span><span class="o">=</span><span class="n">gate</span><span class="o">.</span><span class="n">get_parameter_values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]))</span>
 </span><span id="line-606">
 </span><span id="line-607">    <span class="nd">@staticmethod</span>
@@ -1062,8 +1081,8 @@
 </span><span id="line-611">
 </span><span id="line-612">    <span class="nd">@staticmethod</span>
 </span><span id="line-613">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_U1</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">U1</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-614"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle a U1 gate operation.&quot;&quot;&quot;</span>
-</span><span id="line-615">        <span class="n">u1_label</span> <span class="o">=</span> <span class="s2">&quot;U1&quot;</span>
+</span><span id="line-614"><span class="w">        </span><span class="sd">"""Handle a U1 gate operation."""</span>
+</span><span id="line-615">        <span class="n">u1_label</span> <span class="o">=</span> <span class="s2">"U1"</span>
 </span><span id="line-616">
 </span><span id="line-617">        <span class="k">if</span> <span class="n">u1_label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">circuit</span><span class="o">.</span><span class="n">user_gates</span><span class="p">:</span>
 </span><span id="line-618">            <span class="n">circuit</span><span class="o">.</span><span class="n">user_gates</span><span class="p">[</span><span class="n">u1_label</span><span class="p">]</span> <span class="o">=</span> <span class="n">QutipBackend</span><span class="o">.</span><span class="n">_qutip_U1</span>
@@ -1084,8 +1103,8 @@
 </span><span id="line-633">
 </span><span id="line-634">    <span class="nd">@staticmethod</span>
 </span><span id="line-635">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_U2</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">U2</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-636"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle a U2 gate operation.&quot;&quot;&quot;</span>
-</span><span id="line-637">        <span class="n">u2_label</span> <span class="o">=</span> <span class="s2">&quot;U2&quot;</span>
+</span><span id="line-636"><span class="w">        </span><span class="sd">"""Handle a U2 gate operation."""</span>
+</span><span id="line-637">        <span class="n">u2_label</span> <span class="o">=</span> <span class="s2">"U2"</span>
 </span><span id="line-638">
 </span><span id="line-639">        <span class="k">if</span> <span class="n">u2_label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">circuit</span><span class="o">.</span><span class="n">user_gates</span><span class="p">:</span>
 </span><span id="line-640">            <span class="n">circuit</span><span class="o">.</span><span class="n">user_gates</span><span class="p">[</span><span class="n">u2_label</span><span class="p">]</span> <span class="o">=</span> <span class="n">QutipBackend</span><span class="o">.</span><span class="n">_qutip_U2</span>
@@ -1107,8 +1126,8 @@
 </span><span id="line-656">
 </span><span id="line-657">    <span class="nd">@staticmethod</span>
 </span><span id="line-658">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_U3</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">U3</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-659"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle a U3 gate operation.&quot;&quot;&quot;</span>
-</span><span id="line-660">        <span class="n">u3_label</span> <span class="o">=</span> <span class="s2">&quot;U3&quot;</span>
+</span><span id="line-659"><span class="w">        </span><span class="sd">"""Handle a U3 gate operation."""</span>
+</span><span id="line-660">        <span class="n">u3_label</span> <span class="o">=</span> <span class="s2">"U3"</span>
 </span><span id="line-661">
 </span><span id="line-662">        <span class="k">if</span> <span class="n">u3_label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">circuit</span><span class="o">.</span><span class="n">user_gates</span><span class="p">:</span>
 </span><span id="line-663">            <span class="n">circuit</span><span class="o">.</span><span class="n">user_gates</span><span class="p">[</span><span class="n">u3_label</span><span class="p">]</span> <span class="o">=</span> <span class="n">QutipBackend</span><span class="o">.</span><span class="n">_qutip_U3</span>
@@ -1116,29 +1135,30 @@
 </span><span id="line-665">
 </span><span id="line-666">    <span class="nd">@staticmethod</span>
 </span><span id="line-667">    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_SWAP</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">QubitCircuit</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">SWAP</span><span class="p">,</span> <span class="n">qubit_0</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">qubit_1</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-668"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Handle a SWAP gate operation.&quot;&quot;&quot;</span>
+</span><span id="line-668"><span class="w">        </span><span class="sd">"""Handle a SWAP gate operation."""</span>
 </span><span id="line-669">        <span class="n">circuit</span><span class="o">.</span><span class="n">add_gate</span><span class="p">(</span><span class="n">QutipGates</span><span class="o">.</span><span class="n">SWAP</span><span class="p">(</span><span class="n">targets</span><span class="o">=</span><span class="p">[</span><span class="n">qubit_0</span><span class="p">,</span> <span class="n">qubit_1</span><span class="p">]))</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 </div></div>
-        </main>
-      </div>
-    </div><footer class="py-6 border-t border-border md:py-0">
+          </main>
+        </div>
+      </div><footer class="py-6 border-t border-border md:py-0">
     <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
       <div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
-        <p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2025, Qilimanjaro Quantum Tech&nbsp;</p>
+        <p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2026, Qilimanjaro Quantum Tech&nbsp;</p>
 </div>
 </div>
 </footer>
-  </div>
-  
+    </div>
+    
     <script src="../../../_static/documentation_options.js?v=7f41d439"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script defer="defer" src="../../../_static/theme.js?v=073f68d9"></script>
+    <script defer="defer" src="../../../_static/theme.js?v=5db23cf8"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-  
+    
 </body>
+
 </html>

@@ -1,48 +1,50 @@
 <!DOCTYPE html>
-<html lang="es"
-      data-content_root="../../../../"
-      x-data="{ darkMode: localStorage.getItem('darkMode') || localStorage.setItem('darkMode', 'system'), activeSection: '' }"
-      x-init="$watch('darkMode', val => localStorage.setItem('darkMode', val))"
-      class="scroll-smooth"
-      :class="{'dark': darkMode === 'dark' || (darkMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)}"
->
+<html lang="es" data-content_root="../../../../"
+  x-data="{ darkMode: $persist(window.matchMedia('(prefers-color-scheme: dark)').matches), activeSection: ''}"
+  :class="{ 'dark' : darkMode === true }">
+
 <head>
+  <script>
+    (function () {
+      // Set initial color scheme
+      if ((localStorage.getItem("_x_darkMode") === "true") || (window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
+
+      // Watch for media preference changes
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+        localStorage.setItem("_x_darkMode", event.matches);
+        document.documentElement.classList.toggle("dark", event.matches);
+      });
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta charset="utf-8" />
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="white" />
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="black" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#030711" />
   
-    <title>qilisdk.digital.circuit_transpiler_passes.sabre_layout_pass | QiliSDK</title>
-    <meta property="og:title" content="qilisdk.digital.circuit_transpiler_passes.sabre_layout_pass | QiliSDK" />
-    <meta name="twitter:title" content="qilisdk.digital.circuit_transpiler_passes.sabre_layout_pass | QiliSDK" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=508cba51" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/theme.css?v=42baaae4" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e4e41e26" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/awesome-sphinx-design.css?v=15e0fffa" />
-      <link rel="icon" href="../../../../_static/QiliSDK_q.png" />
-        <link rel="search" title="Búsqueda" href="../../../../search.html" />
-        <link rel="index" title="Índice" href="../../../../genindex.html" />
-
-    <script>
-    <!-- Prevent Flash of wrong theme -->
-      const userPreference = localStorage.getItem('darkMode');
-      let mode;
-      if (userPreference === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        mode = 'dark';
-        document.documentElement.classList.add('dark');
-      } else {
-        mode = 'light';
-      }
-      if (!userPreference) {localStorage.setItem('darkMode', mode)}
-    </script>
+  <title>qilisdk.digital.circuit_transpiler_passes.sabre_layout_pass | QiliSDK</title>
+  <meta property="og:title" content="qilisdk.digital.circuit_transpiler_passes.sabre_layout_pass | QiliSDK" />
+  <meta name="twitter:title" content="qilisdk.digital.circuit_transpiler_passes.sabre_layout_pass | QiliSDK" />
+  <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=af2a1b69" />
+  <link rel="stylesheet" type="text/css" href="../../../../_static/theme.css?v=d6d7c91b" />
+  <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+  <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=73a96f5a" />
+  <link rel="stylesheet" type="text/css" href="../../../../_static/awesome-sphinx-design.css?v=a81faafa" />
+  <link rel="icon" href="../../../../_static/QiliSDK_q.png" />
+  <link rel="search" title="Búsqueda" href="../../../../search.html" />
+  <link rel="index" title="Índice" href="../../../../genindex.html" />
 </head>
-  <body x-data="{ showSidebar: false, showScrollTop: false }" class="min-h-screen font-sans antialiased bg-background text-foreground" :class="{ 'overflow-hidden': showSidebar }">
-    <div x-cloak x-show="showSidebar" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" @click.self="showSidebar = false"></div><div id="page" class="relative flex flex-col min-h-screen"><a href="#content" class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100">
+
+<body x-data="{ showSidebar: false, showScrollTop: false }"
+  class="min-h-screen font-sans antialiased bg-background text-foreground" :class="{ 'overflow-hidden': showSidebar }">
+  <div x-cloak x-show="showSidebar"
+    class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden"
+    @click.self="showSidebar = false"></div><div id="page" class="relative flex flex-col min-h-screen"><a href="#content"
+      class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100">
       Skip to content
-    </a><header
-  class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
+    </a><header class="sticky top-0 z-40 w-full border-b shadow-xs border-border bg-background/90 backdrop-blur"><div class="container flex items-center h-14">
     <div class="hidden mr-4 md:flex">
 <a href="../../../../index.html" class="flex items-center mr-6">
     <img style="height: 2rem; width: auto;" class="hidden dark:block" src="../../../../_static/QiliSDK_wht.svg" alt="QiliSDK" />
@@ -77,7 +79,7 @@
       </svg>
       <span class="sr-only">Toggle navigation menu</span>
     </button>
-    <div class="flex items-center justify-between flex-1 space-x-2 sm:space-x-4 md:justify-end">
+    <div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
       <div class="flex-1 w-full md:w-auto md:flex-none"><form id="searchbox"
       action="../../../../search.html"
       method="get"
@@ -96,17 +98,17 @@
   </kbd>
 </form>
       </div>
-      <nav class="flex items-center space-x-1">
-        <button @click="darkMode = darkMode === 'light' ? 'dark' : 'light'"
+      <nav class="flex items-center gap-1">
+        <button @click="darkMode = !darkMode"
           class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9"
           type="button"
-          aria-label="Color theme switcher">
-          <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 96 960 960" fill="currentColor"
+          title="Toggle color scheme">
+          <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 96 960 960" fill="currentColor"
             class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0">
             <path
               d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z" />
           </svg>
-          <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 96 960 960" fill="currentColor"
+          <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 96 960 960" fill="currentColor"
             class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100">
             <path
               d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z" />
@@ -117,16 +119,19 @@
   </div>
 </header>
 
-    <div class="flex-1"><div class="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside id="left-sidebar"
-  class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full shrink-0 overflow-y-auto border-r border-border md:sticky"
+    <div class="flex-1"><div
+        class="container md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside id="left-sidebar"
+  class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full overflow-y-auto border-r border-border md:sticky"
   :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }">
 
-    <a href="../../../../index.html" class="!justify-start text-sm md:!hidden bg-background">
-        <img width="16" height="16" class="mr-2 hidden dark:block" src="../../../../_static/QiliSDK_wht.svg" alt="Logo" />
-        <img width="16" height="16" class="mr-2 dark:hidden" src="../../../../_static/QiliSDK_blk.svg" alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
+    <a href="../../../../index.html" class="justify-start text-sm md:!hidden bg-background">
+      <img width="16" height="16" class="mr-2 hidden dark:block" src="../../../../_static/QiliSDK_wht.svg"
+        alt="Logo" />
+      <img width="16" height="16" class="mr-2 dark:hidden" src="../../../../_static/QiliSDK_blk.svg"
+        alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
     </a>
 
-    <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
+    <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0">
       <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
   <p class="caption" role="heading"><span class="caption-text">Primeros pasos</span></p>
 <ul>
@@ -155,7 +160,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules/core/core.html">Core</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_overview.html">Visión general</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_variables_parameters.html">Variables y parámetros</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_terms_maps_comparisons.html">Términos, mapas y comparaciones</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_terms_maps_comparisons.html">Terms, Maps and Comparisons</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_model.html">Modelos</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_qubo.html">QUBO</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/core/core_qtensor.html">QTensor</a></li>
@@ -198,7 +203,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules/backends/backends.html">Backends</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/backends/backends_overview.html">Descripción general</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/backends/backends_qilisim.html">QiliSim Backend</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../../../modules/backends/backends_cuda.html">Backend CUDA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/backends/backends_cuda.html">CUDA Backend</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/backends/backends_qutip.html">Backend QuTiP</a></li>
 </ul>
 </li>
@@ -344,6 +349,9 @@
     </p>
     <ul>
       <li class="toctree-l1">
+        <a class="reference internal" href="../../../../../0.3.0/index.html">0.3.0</a>
+      </li>
+      <li class="toctree-l1">
         <a class="reference internal" href="../../../../../0.2.1/index.html">0.2.1</a>
       </li>
       <li class="toctree-l1">
@@ -387,7 +395,7 @@
       </svg>
     </button>
   </aside>
-        <main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+          <main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
 <div class="w-full min-w-0 mx-auto">
 <nav aria-label="breadcrumbs"
      class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
@@ -417,14 +425,14 @@
       <h1>Código fuente para qilisdk.digital.circuit_transpiler_passes.sabre_layout_pass</h1><div class="highlight"><pre>
 <span></span><code><span id="line-1"><span class="c1"># Copyright 2023 Qilimanjaro Quantum Tech</span>
 </span><span id="line-2"><span class="c1">#</span>
-</span><span id="line-3"><span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+</span><span id="line-3"><span class="c1"># Licensed under the Apache License, Version 2.0 (the "License");</span>
 </span><span id="line-4"><span class="c1"># you may not use this file except in compliance with the License.</span>
 </span><span id="line-5"><span class="c1"># You may obtain a copy of the License at</span>
 </span><span id="line-6"><span class="c1">#</span>
 </span><span id="line-7"><span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
 </span><span id="line-8"><span class="c1">#</span>
 </span><span id="line-9"><span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
-</span><span id="line-10"><span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+</span><span id="line-10"><span class="c1"># distributed under the License is distributed on an "AS IS" BASIS,</span>
 </span><span id="line-11"><span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 </span><span id="line-12"><span class="c1"># See the License for the specific language governing permissions and</span>
 </span><span id="line-13"><span class="c1"># limitations under the License.</span>
@@ -457,35 +465,35 @@
 </span><span id="line-40">
 </span><span id="line-41">
 </span><span id="line-42"><span class="k">def</span><span class="w"> </span><span class="nf">_is_controlled_gate</span><span class="p">(</span><span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="n">Controlled</span><span class="p">[</span><span class="n">BasicGate</span><span class="p">]]:</span>
-</span><span id="line-43"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return whether a gate is a controlled gate with a basic-gate payload.</span>
+</span><span id="line-43"><span class="w">    </span><span class="sd">"""Return whether a gate is a controlled gate with a basic-gate payload.</span>
 </span><span id="line-44">
 </span><span id="line-45"><span class="sd">    Args:</span>
 </span><span id="line-46"><span class="sd">        gate (Gate): Candidate gate.</span>
 </span><span id="line-47">
 </span><span id="line-48"><span class="sd">    Returns:</span>
 </span><span id="line-49"><span class="sd">        TypeGuard[Controlled[BasicGate]]: ``True`` when ``gate`` is a ``Controlled`` gate whose payload type is ``BasicGate``.</span>
-</span><span id="line-50"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-50"><span class="sd">    """</span>
 </span><span id="line-51">    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">Controlled</span><span class="p">)</span>
 </span><span id="line-52">
 </span><span id="line-53">
 </span><span id="line-54"><span class="k">def</span><span class="w"> </span><span class="nf">_is_adjoint_or_exponential</span><span class="p">(</span>
 </span><span id="line-55">    <span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">,</span>
 </span><span id="line-56"><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TypeGuard</span><span class="p">[</span><span class="n">Adjoint</span><span class="p">[</span><span class="n">BasicGate</span><span class="p">]</span> <span class="o">|</span> <span class="n">Exponential</span><span class="p">[</span><span class="n">BasicGate</span><span class="p">]]:</span>
-</span><span id="line-57"><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return whether a gate is an adjoint or exponential wrapper.</span>
+</span><span id="line-57"><span class="w">    </span><span class="sd">"""Return whether a gate is an adjoint or exponential wrapper.</span>
 </span><span id="line-58">
 </span><span id="line-59"><span class="sd">    Args:</span>
 </span><span id="line-60"><span class="sd">        gate (Gate): Candidate gate.</span>
 </span><span id="line-61">
 </span><span id="line-62"><span class="sd">    Returns:</span>
 </span><span id="line-63"><span class="sd">        TypeGuard[Adjoint[BasicGate] | Exponential[BasicGate]]: ``True`` when ``gate`` is either ``Adjoint`` or ``Exponential``.</span>
-</span><span id="line-64"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-64"><span class="sd">    """</span>
 </span><span id="line-65">    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="p">(</span><span class="n">Adjoint</span><span class="p">,</span> <span class="n">Exponential</span><span class="p">))</span>
 </span><span id="line-66">
 </span><span id="line-67">
 <div class="viewcode-block" id="SabreLayoutPass">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/digital/circuit_transpiler_passes/sabre_layout_pass/index.html#qilisdk.digital.circuit_transpiler_passes.sabre_layout_pass.SabreLayoutPass">[documentos]</a>
 </span><span id="line-68"><span class="k">class</span><span class="w"> </span><span class="nc">SabreLayoutPass</span><span class="p">(</span><span class="n">CircuitTranspilerPass</span><span class="p">):</span>
-</span><span id="line-69"><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-69"><span class="w">    </span><span class="sd">"""</span>
 </span><span id="line-70"><span class="sd">    A SABRE-style initial layout pass (no SWAP insertion).</span>
 </span><span id="line-71"><span class="sd">    It computes a good logical→physical qubit mapping for a given coupling graph</span>
 </span><span id="line-72"><span class="sd">    and returns a *new* Circuit with all gates retargeted to the chosen physical qubits.</span>
@@ -494,7 +502,7 @@
 </span><span id="line-75"><span class="sd">    ------------</span>
 </span><span id="line-76"><span class="sd">    - Accepts either a topology edge list or a rustworkx ``PyGraph`` and</span>
 </span><span id="line-77"><span class="sd">      normalizes it to an undirected coupling graph internally.</span>
-</span><span id="line-78"><span class="sd">    - Implements SABRE&#39;s heuristic:</span>
+</span><span id="line-78"><span class="sd">    - Implements SABRE's heuristic:</span>
 </span><span id="line-79"><span class="sd">        * Front layer (first unscheduled 2Q gates on each qubit).</span>
 </span><span id="line-80"><span class="sd">        * Extended look-ahead set of upcoming 2Q gates.</span>
 </span><span id="line-81"><span class="sd">        * Cost = sum distances(front) + beta * sum distances(lookahead),</span>
@@ -511,7 +519,7 @@
 </span><span id="line-92"><span class="sd">    seed : int | None</span>
 </span><span id="line-93"><span class="sd">        RNG seed for reproducibility (affects initial layout and tie breaks).</span>
 </span><span id="line-94"><span class="sd">    lookahead_size : int</span>
-</span><span id="line-95"><span class="sd">        Max size of the extended set (SABRE &quot;E&quot;).</span>
+</span><span id="line-95"><span class="sd">        Max size of the extended set (SABRE "E").</span>
 </span><span id="line-96"><span class="sd">    beta : float</span>
 </span><span id="line-97"><span class="sd">        Weight for the extended set in the cost function.</span>
 </span><span id="line-98"><span class="sd">    decay_delta : float</span>
@@ -530,8 +538,8 @@
 </span><span id="line-111"><span class="sd">    -----</span>
 </span><span id="line-112"><span class="sd">    * This pass performs **layout only**. Routing/SWAP insertion should be done by a separate pass.</span>
 </span><span id="line-113"><span class="sd">    * If the coupling graph has more physical qubits than the input circuit, the returned</span>
-</span><span id="line-114"><span class="sd">      circuit&#39;s `nqubits` will be enlarged as needed so that physical indices are in range.</span>
-</span><span id="line-115"><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="line-114"><span class="sd">      circuit's `nqubits` will be enlarged as needed so that physical indices are in range.</span>
+</span><span id="line-115"><span class="sd">    """</span>
 </span><span id="line-116">
 </span><span id="line-117">    <span class="n">_TWO_QUBIT_ARITY</span> <span class="o">=</span> <span class="mi">2</span>
 </span><span id="line-118">    <span class="n">_UNREACHABLE_DISTANCE</span> <span class="o">=</span> <span class="mi">1_000_000_000</span>
@@ -549,7 +557,7 @@
 </span><span id="line-130">        <span class="n">decay_delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
 </span><span id="line-131">        <span class="n">decay_lambda</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.99</span><span class="p">,</span>
 </span><span id="line-132">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-133"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a SABRE layout pass.</span>
+</span><span id="line-133"><span class="w">        </span><span class="sd">"""Initialize a SABRE layout pass.</span>
 </span><span id="line-134">
 </span><span id="line-135"><span class="sd">        Args:</span>
 </span><span id="line-136"><span class="sd">            topology (Topology): Coupling map as an edge list or ``PyGraph``.</span>
@@ -559,7 +567,7 @@
 </span><span id="line-140"><span class="sd">            beta (float): Weight assigned to look-ahead cost.</span>
 </span><span id="line-141"><span class="sd">            decay_delta (float): Increment applied to decay on selected swap endpoints.</span>
 </span><span id="line-142"><span class="sd">            decay_lambda (float): Per-iteration decay factor for penalties.</span>
-</span><span id="line-143"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-143"><span class="sd">        """</span>
 <div class="viewcode-block" id="SabreLayoutPass.topology">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/digital/circuit_transpiler_passes/sabre_layout_pass/index.html#qilisdk.digital.circuit_transpiler_passes.sabre_layout_pass.SabreLayoutPass.topology">[documentos]</a>
 </span><span id="line-144">        <span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="p">:</span> <span class="n">PyGraph</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">build_topology_graph</span><span class="p">(</span><span class="n">topology</span><span class="p">)</span></div>
@@ -603,7 +611,7 @@
 <div class="viewcode-block" id="SabreLayoutPass.run">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/digital/circuit_transpiler_passes/sabre_layout_pass/index.html#qilisdk.digital.circuit_transpiler_passes.sabre_layout_pass.SabreLayoutPass.run">[documentos]</a>
 </span><span id="line-157">    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
-</span><span id="line-158"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute a layout and return a retargeted copy of the circuit.</span>
+</span><span id="line-158"><span class="w">        </span><span class="sd">"""Compute a layout and return a retargeted copy of the circuit.</span>
 </span><span id="line-159">
 </span><span id="line-160"><span class="sd">        Args:</span>
 </span><span id="line-161"><span class="sd">            circuit (Circuit): Logical circuit to place onto physical qubits.</span>
@@ -613,17 +621,17 @@
 </span><span id="line-165">
 </span><span id="line-166"><span class="sd">        Raises:</span>
 </span><span id="line-167"><span class="sd">            ValueError: If the topology is empty or has fewer physical qubits than required by ``circuit``.</span>
-</span><span id="line-168"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-168"><span class="sd">        """</span>
 </span><span id="line-169">        <span class="n">random_generator</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
 </span><span id="line-170">
 </span><span id="line-171">        <span class="n">num_logical_qubits</span> <span class="o">=</span> <span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span>
 </span><span id="line-172">        <span class="n">physical_nodes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="o">.</span><span class="n">node_indices</span><span class="p">())</span>
 </span><span id="line-173">        <span class="k">if</span> <span class="ow">not</span> <span class="n">physical_nodes</span><span class="p">:</span>
-</span><span id="line-174">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Coupling graph has no nodes.&quot;</span><span class="p">)</span>
+</span><span id="line-174">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Coupling graph has no nodes."</span><span class="p">)</span>
 </span><span id="line-175">        <span class="n">num_physical_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">physical_nodes</span><span class="p">)</span>
 </span><span id="line-176">        <span class="k">if</span> <span class="n">num_logical_qubits</span> <span class="o">&gt;</span> <span class="n">num_physical_nodes</span><span class="p">:</span>
 </span><span id="line-177">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-178">                <span class="sa">f</span><span class="s2">&quot;Coupling graph has </span><span class="si">{</span><span class="n">num_physical_nodes</span><span class="si">}</span><span class="s2"> nodes but circuit needs </span><span class="si">{</span><span class="n">num_logical_qubits</span><span class="si">}</span><span class="s2"> qubits.&quot;</span>
+</span><span id="line-178">                <span class="sa">f</span><span class="s2">"Coupling graph has </span><span class="si">{</span><span class="n">num_physical_nodes</span><span class="si">}</span><span class="s2"> nodes but circuit needs </span><span class="si">{</span><span class="n">num_logical_qubits</span><span class="si">}</span><span class="s2"> qubits."</span>
 </span><span id="line-179">            <span class="p">)</span>
 </span><span id="line-180">        <span class="n">physical_to_dense_index</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span><span class="p">:</span> <span class="n">dense_index</span> <span class="k">for</span> <span class="n">dense_index</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">physical_nodes</span><span class="p">)}</span>
 </span><span id="line-181">        <span class="n">max_physical_label_plus_one</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">physical_nodes</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
@@ -691,7 +699,7 @@
 </span><span id="line-242">        <span class="n">physical_nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
 </span><span id="line-243">        <span class="n">physical_to_dense_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
 </span><span id="line-244">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
-</span><span id="line-245"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Run one SABRE simulation trial and score the resulting layout.</span>
+</span><span id="line-245"><span class="w">        </span><span class="sd">"""Run one SABRE simulation trial and score the resulting layout.</span>
 </span><span id="line-246">
 </span><span id="line-247"><span class="sd">        This is a layout-only variant: SWAPs are simulated on the mapping but</span>
 </span><span id="line-248"><span class="sd">        never inserted into the output circuit.</span>
@@ -707,7 +715,7 @@
 </span><span id="line-258">
 </span><span id="line-259"><span class="sd">        Returns:</span>
 </span><span id="line-260"><span class="sd">            tuple[list[int], float]: Final mapping and heuristic score for this trial.</span>
-</span><span id="line-261"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-261"><span class="sd">        """</span>
 </span><span id="line-262">        <span class="n">num_logical_qubits</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">layout</span><span class="p">)</span>
 </span><span id="line-263">        <span class="n">num_physical_qubits</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">physical_nodes</span><span class="p">)</span>
 </span><span id="line-264">        <span class="c1"># inverse layout: physical -&gt; logical (dense indices)</span>
@@ -723,11 +731,11 @@
 </span><span id="line-274">        <span class="n">score_accum</span> <span class="o">=</span> <span class="mf">0.0</span>
 </span><span id="line-275">
 </span><span id="line-276">        <span class="k">def</span><span class="w"> </span><span class="nf">advance_front_for</span><span class="p">(</span><span class="n">logical_qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-277"><span class="w">            </span><span class="sd">&quot;&quot;&quot;Move ``front_positions[logical_qubit]`` to the first unscheduled interaction.</span>
+</span><span id="line-277"><span class="w">            </span><span class="sd">"""Move ``front_positions[logical_qubit]`` to the first unscheduled interaction.</span>
 </span><span id="line-278">
 </span><span id="line-279"><span class="sd">            Args:</span>
 </span><span id="line-280"><span class="sd">                logical_qubit (int): Logical qubit index whose front pointer is advanced.</span>
-</span><span id="line-281"><span class="sd">            &quot;&quot;&quot;</span>
+</span><span id="line-281"><span class="sd">            """</span>
 </span><span id="line-282">            <span class="n">qubit_gate_indices</span> <span class="o">=</span> <span class="n">gate_indices_per_qubit</span><span class="p">[</span><span class="n">logical_qubit</span><span class="p">]</span>
 </span><span id="line-283">            <span class="n">cursor</span> <span class="o">=</span> <span class="n">front_positions</span><span class="p">[</span><span class="n">logical_qubit</span><span class="p">]</span>
 </span><span id="line-284">            <span class="k">while</span> <span class="n">cursor</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubit_gate_indices</span><span class="p">)</span> <span class="ow">and</span> <span class="n">scheduled</span><span class="p">[</span><span class="n">qubit_gate_indices</span><span class="p">[</span><span class="n">cursor</span><span class="p">]]:</span>
@@ -735,11 +743,11 @@
 </span><span id="line-286">            <span class="n">front_positions</span><span class="p">[</span><span class="n">logical_qubit</span><span class="p">]</span> <span class="o">=</span> <span class="n">cursor</span>
 </span><span id="line-287">
 </span><span id="line-288">        <span class="k">def</span><span class="w"> </span><span class="nf">front_set</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-</span><span id="line-289"><span class="w">            </span><span class="sd">&quot;&quot;&quot;Build the current front layer of unscheduled interactions.</span>
+</span><span id="line-289"><span class="w">            </span><span class="sd">"""Build the current front layer of unscheduled interactions.</span>
 </span><span id="line-290">
 </span><span id="line-291"><span class="sd">            Returns:</span>
 </span><span id="line-292"><span class="sd">                set[int]: Indices of first unscheduled 2-qubit interactions across all logical qubits.</span>
-</span><span id="line-293"><span class="sd">            &quot;&quot;&quot;</span>
+</span><span id="line-293"><span class="sd">            """</span>
 </span><span id="line-294">            <span class="n">front_gate_indices</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 </span><span id="line-295">            <span class="k">for</span> <span class="n">logical_qubit</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_logical_qubits</span><span class="p">):</span>
 </span><span id="line-296">                <span class="k">if</span> <span class="n">front_positions</span><span class="p">[</span><span class="n">logical_qubit</span><span class="p">]</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">gate_indices_per_qubit</span><span class="p">[</span><span class="n">logical_qubit</span><span class="p">]):</span>
@@ -753,7 +761,7 @@
 </span><span id="line-304">        <span class="c1"># Main loop: continue until all 2Q gates are scheduled</span>
 </span><span id="line-305">        <span class="n">remaining</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">two_qubit_pairs</span><span class="p">)</span>
 </span><span id="line-306">        <span class="k">while</span> <span class="n">remaining</span><span class="p">:</span>
-</span><span id="line-307">            <span class="c1"># Try to greedily &quot;apply&quot; any executable front gates (whose mapped endpoints are adjacent).</span>
+</span><span id="line-307">            <span class="c1"># Try to greedily "apply" any executable front gates (whose mapped endpoints are adjacent).</span>
 </span><span id="line-308">            <span class="n">progressed</span> <span class="o">=</span> <span class="kc">True</span>
 </span><span id="line-309">            <span class="k">while</span> <span class="n">progressed</span><span class="p">:</span>
 </span><span id="line-310">                <span class="n">progressed</span> <span class="o">=</span> <span class="kc">False</span>
@@ -769,7 +777,7 @@
 </span><span id="line-320">                        <span class="p">]</span>
 </span><span id="line-321">                        <span class="o">==</span> <span class="mi">1</span>
 </span><span id="line-322">                    <span class="p">):</span>
-</span><span id="line-323">                        <span class="c1"># &quot;Execute&quot; this 2Q gate in the simulation.</span>
+</span><span id="line-323">                        <span class="c1"># "Execute" this 2Q gate in the simulation.</span>
 </span><span id="line-324">                        <span class="n">scheduled</span><span class="p">[</span><span class="n">gate_idx</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 </span><span id="line-325">                        <span class="n">remaining</span> <span class="o">-=</span> <span class="mi">1</span>
 </span><span id="line-326">                        <span class="n">progressed</span> <span class="o">=</span> <span class="kc">True</span>
@@ -803,7 +811,7 @@
 </span><span id="line-354">
 </span><span id="line-355">            <span class="k">if</span> <span class="ow">not</span> <span class="n">candidate_edges</span><span class="p">:</span>
 </span><span id="line-356">                <span class="c1"># Graph might be disconnected or trivial; fall back to a random valid swap over touched qubits.</span>
-</span><span id="line-357">                <span class="c1"># This won&#39;t crash; it just gives the algorithm a way to keep moving.</span>
+</span><span id="line-357">                <span class="c1"># This won't crash; it just gives the algorithm a way to keep moving.</span>
 </span><span id="line-358">                <span class="n">candidate_physical_nodes</span> <span class="o">=</span> <span class="p">(</span>
 </span><span id="line-359">                    <span class="nb">sorted</span><span class="p">(</span><span class="n">touched_physical_nodes</span><span class="p">)</span> <span class="k">if</span> <span class="n">touched_physical_nodes</span> <span class="k">else</span> <span class="n">physical_nodes</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 </span><span id="line-360">                <span class="p">)</span>
@@ -833,8 +841,8 @@
 </span><span id="line-384">                <span class="c1"># Virtually swap logical assignments at physical nodes a and b</span>
 </span><span id="line-385">                <span class="n">logical_on_a</span> <span class="o">=</span> <span class="n">inverse_layout</span><span class="p">[</span><span class="n">physical_to_dense_index</span><span class="p">[</span><span class="n">physical_a</span><span class="p">]]</span>
 </span><span id="line-386">                <span class="n">logical_on_b</span> <span class="o">=</span> <span class="n">inverse_layout</span><span class="p">[</span><span class="n">physical_to_dense_index</span><span class="p">[</span><span class="n">physical_b</span><span class="p">]]</span>
-</span><span id="line-387">                <span class="c1"># Logical qubit may be &quot;unassigned&quot; if device &gt; logical; ensure we handle that.</span>
-</span><span id="line-388">                <span class="c1"># If either side is None, this swap doesn&#39;t affect distances; we still allow it.</span>
+</span><span id="line-387">                <span class="c1"># Logical qubit may be "unassigned" if device &gt; logical; ensure we handle that.</span>
+</span><span id="line-388">                <span class="c1"># If either side is None, this swap doesn't affect distances; we still allow it.</span>
 </span><span id="line-389">                <span class="c1"># Simulate new layout distances</span>
 </span><span id="line-390">                <span class="c1"># (temporarily mutate layout/inverse_layout, compute cost, then revert).</span>
 </span><span id="line-391">                <span class="bp">self</span><span class="o">.</span><span class="n">_swap_mapping</span><span class="p">(</span>
@@ -914,7 +922,7 @@
 </span><span id="line-465">        <span class="n">front_positions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
 </span><span id="line-466">        <span class="n">max_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 </span><span id="line-467">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-</span><span id="line-468"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Collect upcoming 2-qubit gates beyond the current front layer.</span>
+</span><span id="line-468"><span class="w">        </span><span class="sd">"""Collect upcoming 2-qubit gates beyond the current front layer.</span>
 </span><span id="line-469">
 </span><span id="line-470"><span class="sd">        Args:</span>
 </span><span id="line-471"><span class="sd">            two_qubit_pairs (list[tuple[int, int]]): Ordered 2-qubit interaction list.</span>
@@ -924,7 +932,7 @@
 </span><span id="line-475">
 </span><span id="line-476"><span class="sd">        Returns:</span>
 </span><span id="line-477"><span class="sd">            set[int]: Set of selected interaction indices for look-ahead.</span>
-</span><span id="line-478"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-478"><span class="sd">        """</span>
 </span><span id="line-479">        <span class="n">extended_gate_indices</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 </span><span id="line-480">        <span class="k">if</span> <span class="n">max_size</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
 </span><span id="line-481">            <span class="k">return</span> <span class="n">extended_gate_indices</span>
@@ -960,7 +968,7 @@
 </span><span id="line-511">        <span class="n">decay</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 </span><span id="line-512">        <span class="n">physical_to_dense_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
 </span><span id="line-513">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-514"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate distance-based heuristic cost for a set of 2-qubit gates.</span>
+</span><span id="line-514"><span class="w">        </span><span class="sd">"""Evaluate distance-based heuristic cost for a set of 2-qubit gates.</span>
 </span><span id="line-515">
 </span><span id="line-516"><span class="sd">        Args:</span>
 </span><span id="line-517"><span class="sd">            gate_indices (Iterable[int]): Indices of interactions to evaluate.</span>
@@ -972,7 +980,7 @@
 </span><span id="line-523">
 </span><span id="line-524"><span class="sd">        Returns:</span>
 </span><span id="line-525"><span class="sd">            float: Accumulated heuristic cost.</span>
-</span><span id="line-526"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-526"><span class="sd">        """</span>
 </span><span id="line-527">        <span class="n">total_cost</span> <span class="o">=</span> <span class="mf">0.0</span>
 </span><span id="line-528">        <span class="k">for</span> <span class="n">gate_idx</span> <span class="ow">in</span> <span class="n">gate_indices</span><span class="p">:</span>
 </span><span id="line-529">            <span class="n">logical_qubit_a</span><span class="p">,</span> <span class="n">logical_qubit_b</span> <span class="o">=</span> <span class="n">two_qubit_pairs</span><span class="p">[</span><span class="n">gate_idx</span><span class="p">]</span>
@@ -995,7 +1003,7 @@
 </span><span id="line-546">        <span class="n">num_logical_qubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 </span><span id="line-547">        <span class="n">physical_nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
 </span><span id="line-548">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-</span><span id="line-549"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Sample a random injective logical-to-physical layout.</span>
+</span><span id="line-549"><span class="w">        </span><span class="sd">"""Sample a random injective logical-to-physical layout.</span>
 </span><span id="line-550">
 </span><span id="line-551"><span class="sd">        Args:</span>
 </span><span id="line-552"><span class="sd">            random_generator (random.Random): Random generator used for shuffling.</span>
@@ -1007,9 +1015,9 @@
 </span><span id="line-558">
 </span><span id="line-559"><span class="sd">        Raises:</span>
 </span><span id="line-560"><span class="sd">            ValueError: If there are fewer physical nodes than logical qubits.</span>
-</span><span id="line-561"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-561"><span class="sd">        """</span>
 </span><span id="line-562">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">physical_nodes</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">num_logical_qubits</span><span class="p">:</span>
-</span><span id="line-563">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Coupling graph has only </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">physical_nodes</span><span class="p">)</span><span class="si">}</span><span class="s2"> nodes; need ≥ </span><span class="si">{</span><span class="n">num_logical_qubits</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+</span><span id="line-563">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Coupling graph has only </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">physical_nodes</span><span class="p">)</span><span class="si">}</span><span class="s2"> nodes; need ≥ </span><span class="si">{</span><span class="n">num_logical_qubits</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
 </span><span id="line-564">        <span class="n">nodes</span> <span class="o">=</span> <span class="n">physical_nodes</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># copy so we can shuffle deterministically</span>
 </span><span id="line-565">        <span class="n">random_generator</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
 </span><span id="line-566">        <span class="k">return</span> <span class="n">nodes</span><span class="p">[:</span><span class="n">num_logical_qubits</span><span class="p">]</span>
@@ -1018,7 +1026,7 @@
 </span><span id="line-569">
 </span><span id="line-570">    <span class="nd">@staticmethod</span>
 </span><span id="line-571">    <span class="k">def</span><span class="w"> </span><span class="nf">_invert_layout</span><span class="p">(</span><span class="n">layout</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">physical_to_dense_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
-</span><span id="line-572"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Build inverse mapping from dense physical index to logical qubit.</span>
+</span><span id="line-572"><span class="w">        </span><span class="sd">"""Build inverse mapping from dense physical index to logical qubit.</span>
 </span><span id="line-573">
 </span><span id="line-574"><span class="sd">        Args:</span>
 </span><span id="line-575"><span class="sd">            layout (list[int]): Logical-to-physical mapping.</span>
@@ -1026,7 +1034,7 @@
 </span><span id="line-577">
 </span><span id="line-578"><span class="sd">        Returns:</span>
 </span><span id="line-579"><span class="sd">            list[int | None]: Inverse mapping where missing assignments are represented by ``None``.</span>
-</span><span id="line-580"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-580"><span class="sd">        """</span>
 </span><span id="line-581">        <span class="n">inverse_layout</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">physical_to_dense_index</span><span class="p">)</span>
 </span><span id="line-582">        <span class="k">for</span> <span class="n">logical_qubit</span><span class="p">,</span> <span class="n">physical_qubit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">layout</span><span class="p">):</span>
 </span><span id="line-583">            <span class="n">physical_dense_index</span> <span class="o">=</span> <span class="n">physical_to_dense_index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">physical_qubit</span><span class="p">)</span>
@@ -1044,7 +1052,7 @@
 </span><span id="line-595">        <span class="n">logical_at_a</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 </span><span id="line-596">        <span class="n">logical_at_b</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 </span><span id="line-597">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-598"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Swap logical assignments between two physical nodes.</span>
+</span><span id="line-598"><span class="w">        </span><span class="sd">"""Swap logical assignments between two physical nodes.</span>
 </span><span id="line-599">
 </span><span id="line-600"><span class="sd">        Args:</span>
 </span><span id="line-601"><span class="sd">            layout (list[int]): Logical-to-physical mapping to mutate.</span>
@@ -1054,7 +1062,7 @@
 </span><span id="line-605"><span class="sd">            physical_node_b (int): Second physical node label.</span>
 </span><span id="line-606"><span class="sd">            logical_at_a (int | None): Logical qubit currently at ``physical_node_a``, if any.</span>
 </span><span id="line-607"><span class="sd">            logical_at_b (int | None): Logical qubit currently at ``physical_node_b``, if any.</span>
-</span><span id="line-608"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-608"><span class="sd">        """</span>
 </span><span id="line-609">        <span class="c1"># Update inverse first</span>
 </span><span id="line-610">        <span class="n">dense_index_a</span> <span class="o">=</span> <span class="n">physical_to_dense_index</span><span class="p">[</span><span class="n">physical_node_a</span><span class="p">]</span>
 </span><span id="line-611">        <span class="n">dense_index_b</span> <span class="o">=</span> <span class="n">physical_to_dense_index</span><span class="p">[</span><span class="n">physical_node_b</span><span class="p">]</span>
@@ -1067,14 +1075,14 @@
 </span><span id="line-618">
 </span><span id="line-619">    <span class="nd">@staticmethod</span>
 </span><span id="line-620">    <span class="k">def</span><span class="w"> </span><span class="nf">_two_qubit_structure</span><span class="p">(</span><span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]:</span>
-</span><span id="line-621"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract 2-qubit interaction structure from a circuit.</span>
+</span><span id="line-621"><span class="w">        </span><span class="sd">"""Extract 2-qubit interaction structure from a circuit.</span>
 </span><span id="line-622">
 </span><span id="line-623"><span class="sd">        Args:</span>
 </span><span id="line-624"><span class="sd">            circuit (Circuit): Input circuit in logical qubits.</span>
 </span><span id="line-625">
 </span><span id="line-626"><span class="sd">        Returns:</span>
 </span><span id="line-627"><span class="sd">            tuple[list[int], list[tuple[int, int]], list[list[int]]]: Tuple with indices of 2-qubit gates in ``circuit.gates``, corresponding logical-qubit pairs, and per-logical-qubit interaction index lists.</span>
-</span><span id="line-628"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-628"><span class="sd">        """</span>
 </span><span id="line-629">        <span class="n">num_logical_qubits</span> <span class="o">=</span> <span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span>
 </span><span id="line-630">        <span class="n">two_qubit_gate_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 </span><span id="line-631">        <span class="n">two_qubit_pairs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1095,7 +1103,7 @@
 </span><span id="line-646">        <span class="n">physical_nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
 </span><span id="line-647">        <span class="n">physical_to_dense_index</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
 </span><span id="line-648">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
-</span><span id="line-649"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute all-pairs unweighted shortest-path distances by BFS.</span>
+</span><span id="line-649"><span class="w">        </span><span class="sd">"""Compute all-pairs unweighted shortest-path distances by BFS.</span>
 </span><span id="line-650">
 </span><span id="line-651"><span class="sd">        Args:</span>
 </span><span id="line-652"><span class="sd">            graph (PyGraph): Undirected coupling graph.</span>
@@ -1104,7 +1112,7 @@
 </span><span id="line-655">
 </span><span id="line-656"><span class="sd">        Returns:</span>
 </span><span id="line-657"><span class="sd">            list[list[int]]: Dense distance matrix indexed by ``physical_to_dense_index[label]``.</span>
-</span><span id="line-658"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-658"><span class="sd">        """</span>
 </span><span id="line-659">
 </span><span id="line-660">        <span class="n">inf_distance</span> <span class="o">=</span> <span class="n">SabreLayoutPass</span><span class="o">.</span><span class="n">_UNREACHABLE_DISTANCE</span>
 </span><span id="line-661">        <span class="n">distance_matrix</span> <span class="o">=</span> <span class="p">[[</span><span class="n">inf_distance</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">physical_nodes</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">physical_nodes</span><span class="p">]</span>
@@ -1129,7 +1137,7 @@
 </span><span id="line-680">    <span class="c1"># --------- retargeting to the chosen layout ---------</span>
 </span><span id="line-681">
 </span><span id="line-682">    <span class="k">def</span><span class="w"> </span><span class="nf">_retarget_circuit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">layout</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">max_physical_label_plus_one</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
-</span><span id="line-683"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Retarget all gates in ``circuit`` using a chosen layout.</span>
+</span><span id="line-683"><span class="w">        </span><span class="sd">"""Retarget all gates in ``circuit`` using a chosen layout.</span>
 </span><span id="line-684">
 </span><span id="line-685"><span class="sd">        Args:</span>
 </span><span id="line-686"><span class="sd">            circuit (Circuit): Input logical circuit.</span>
@@ -1138,7 +1146,7 @@
 </span><span id="line-689">
 </span><span id="line-690"><span class="sd">        Returns:</span>
 </span><span id="line-691"><span class="sd">            Circuit: New circuit with all gates mapped to physical qubits.</span>
-</span><span id="line-692"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-692"><span class="sd">        """</span>
 </span><span id="line-693">        <span class="c1"># The output circuit must have enough qubits to accommodate the maximum physical index.</span>
 </span><span id="line-694">        <span class="n">output_num_qubits</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
 </span><span id="line-695">            <span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span>
@@ -1152,7 +1160,7 @@
 </span><span id="line-703">        <span class="k">return</span> <span class="n">retargeted_circuit</span>
 </span><span id="line-704">
 </span><span id="line-705">    <span class="k">def</span><span class="w"> </span><span class="nf">_retarget_gate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">,</span> <span class="n">mapped_qubits</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Gate</span><span class="p">:</span>
-</span><span id="line-706"><span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="line-706"><span class="w">        </span><span class="sd">"""</span>
 </span><span id="line-707"><span class="sd">        Recreate ``gate`` on ``mapped_qubits`` by deep-copying and remapping indices.</span>
 </span><span id="line-708">
 </span><span id="line-709"><span class="sd">        The method deep-copies the gate object to preserve concrete gate type and all parameters, then updates control and target qubit tuples recursively through wrapped gates.</span>
@@ -1163,7 +1171,7 @@
 </span><span id="line-714">
 </span><span id="line-715"><span class="sd">        Returns:</span>
 </span><span id="line-716"><span class="sd">            Gate: Retargeted gate equivalent to ``gate`` but acting on ``mapped_qubits``.</span>
-</span><span id="line-717"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-717"><span class="sd">        """</span>
 </span><span id="line-718">        <span class="n">retargeted</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
 </span><span id="line-719">        <span class="n">qubit_map</span><span class="p">:</span> <span class="n">LayoutMap</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">,</span> <span class="n">mapped_qubits</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 </span><span id="line-720">        <span class="bp">self</span><span class="o">.</span><span class="n">_remap_gate_qubits_inplace</span><span class="p">(</span><span class="n">retargeted</span><span class="p">,</span> <span class="n">qubit_map</span><span class="p">)</span>
@@ -1171,7 +1179,7 @@
 </span><span id="line-722">
 </span><span id="line-723">    <span class="nd">@staticmethod</span>
 </span><span id="line-724">    <span class="k">def</span><span class="w"> </span><span class="nf">_remap_gate_qubits_inplace</span><span class="p">(</span><span class="n">gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">,</span> <span class="n">qubit_map</span><span class="p">:</span> <span class="n">LayoutMap</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-725"><span class="w">        </span><span class="sd">&quot;&quot;&quot;Recursively remap control/target qubits of a copied gate.</span>
+</span><span id="line-725"><span class="w">        </span><span class="sd">"""Recursively remap control/target qubits of a copied gate.</span>
 </span><span id="line-726">
 </span><span id="line-727"><span class="sd">        Args:</span>
 </span><span id="line-728"><span class="sd">            gate (Gate): Gate object to modify in place.</span>
@@ -1179,7 +1187,7 @@
 </span><span id="line-730">
 </span><span id="line-731"><span class="sd">        Raises:</span>
 </span><span id="line-732"><span class="sd">            NotImplementedError: If the gate type does not provide known internal storage for control or target qubits.</span>
-</span><span id="line-733"><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="line-733"><span class="sd">        """</span>
 </span><span id="line-734">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="p">(</span><span class="n">BasicGate</span><span class="p">,</span> <span class="n">M</span><span class="p">)):</span>
 </span><span id="line-735">            <span class="n">gate</span><span class="o">.</span><span class="n">_target_qubits</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">qubit_map</span><span class="p">[</span><span class="n">logical_qubit</span><span class="p">]</span> <span class="k">for</span> <span class="n">logical_qubit</span> <span class="ow">in</span> <span class="n">gate</span><span class="o">.</span><span class="n">target_qubits</span><span class="p">)</span>  <span class="c1"># noqa: SLF001</span>
 </span><span id="line-736">            <span class="k">return</span>
@@ -1194,30 +1202,31 @@
 </span><span id="line-745">            <span class="k">return</span>
 </span><span id="line-746">
 </span><span id="line-747">        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-</span><span id="line-748">            <span class="sa">f</span><span class="s2">&quot;Retargeting not implemented for gate type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> with arity </span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="line-748">            <span class="sa">f</span><span class="s2">"Retargeting not implemented for gate type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> with arity </span><span class="si">{</span><span class="n">gate</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2">"</span>
 </span><span id="line-749">        <span class="p">)</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 </div></div>
-        </main>
-      </div>
-    </div><footer class="py-6 border-t border-border md:py-0">
+          </main>
+        </div>
+      </div><footer class="py-6 border-t border-border md:py-0">
     <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
       <div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
-        <p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2025, Qilimanjaro Quantum Tech&nbsp;</p>
+        <p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2026, Qilimanjaro Quantum Tech&nbsp;</p>
 </div>
 </div>
 </footer>
-  </div>
-  
+    </div>
+    
     <script src="../../../../_static/documentation_options.js?v=00904b1e"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script defer="defer" src="../../../../_static/theme.js?v=073f68d9"></script>
+    <script defer="defer" src="../../../../_static/theme.js?v=5db23cf8"></script>
     <script src="../../../../_static/translations.js?v=f85f4cfb"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-  
+    
 </body>
+
 </html>

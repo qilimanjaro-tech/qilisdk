@@ -1,48 +1,50 @@
 <!DOCTYPE html>
-<html lang="es"
-      data-content_root="./"
-      x-data="{ darkMode: localStorage.getItem('darkMode') || localStorage.setItem('darkMode', 'system'), activeSection: '' }"
-      x-init="$watch('darkMode', val => localStorage.setItem('darkMode', val))"
-      class="scroll-smooth"
-      :class="{'dark': darkMode === 'dark' || (darkMode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)}"
->
+<html lang="es" data-content_root="./"
+  x-data="{ darkMode: $persist(window.matchMedia('(prefers-color-scheme: dark)').matches), activeSection: ''}"
+  :class="{ 'dark' : darkMode === true }">
+
 <head>
+  <script>
+    (function () {
+      // Set initial color scheme
+      if ((localStorage.getItem("_x_darkMode") === "true") || (window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+        document.documentElement.classList.add("dark");
+      }
+
+      // Watch for media preference changes
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (event) => {
+        localStorage.setItem("_x_darkMode", event.matches);
+        document.documentElement.classList.toggle("dark", event.matches);
+      });
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta charset="utf-8" />
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="white" />
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="black" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#030711" />
   
-    <title>Índice | QiliSDK</title>
-    <meta property="og:title" content="Índice | QiliSDK" />
-    <meta name="twitter:title" content="Índice | QiliSDK" />
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=508cba51" />
-      <link rel="stylesheet" type="text/css" href="_static/theme.css?v=42baaae4" />
-      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
-      <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
-      <link rel="stylesheet" type="text/css" href="_static/custom.css?v=e4e41e26" />
-      <link rel="stylesheet" type="text/css" href="_static/awesome-sphinx-design.css?v=15e0fffa" />
-      <link rel="icon" href="_static/QiliSDK_q.png" />
-        <link rel="search" title="Búsqueda" href="search.html" />
-        <link rel="index" title="Índice" href="#" />
-
-    <script>
-    <!-- Prevent Flash of wrong theme -->
-      const userPreference = localStorage.getItem('darkMode');
-      let mode;
-      if (userPreference === 'dark' || window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        mode = 'dark';
-        document.documentElement.classList.add('dark');
-      } else {
-        mode = 'light';
-      }
-      if (!userPreference) {localStorage.setItem('darkMode', mode)}
-    </script>
+  <title>Índice | QiliSDK</title>
+  <meta property="og:title" content="Índice | QiliSDK" />
+  <meta name="twitter:title" content="Índice | QiliSDK" />
+  <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=af2a1b69" />
+  <link rel="stylesheet" type="text/css" href="_static/theme.css?v=d6d7c91b" />
+  <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+  <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  <link rel="stylesheet" type="text/css" href="_static/custom.css?v=73a96f5a" />
+  <link rel="stylesheet" type="text/css" href="_static/awesome-sphinx-design.css?v=a81faafa" />
+  <link rel="icon" href="_static/QiliSDK_q.png" />
+  <link rel="search" title="Búsqueda" href="search.html" />
+  <link rel="index" title="Índice" href="#" />
 </head>
-  <body x-data="{ showSidebar: false, showScrollTop: false }" class="min-h-screen font-sans antialiased bg-background text-foreground" :class="{ 'overflow-hidden': showSidebar }">
-    <div x-cloak x-show="showSidebar" class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden" @click.self="showSidebar = false"></div><div id="page" class="relative flex flex-col min-h-screen"><a href="#content" class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100">
+
+<body x-data="{ showSidebar: false, showScrollTop: false }"
+  class="min-h-screen font-sans antialiased bg-background text-foreground" :class="{ 'overflow-hidden': showSidebar }">
+  <div x-cloak x-show="showSidebar"
+    class="fixed inset-0 z-50 overflow-hidden bg-background/80 backdrop-blur-sm md:hidden"
+    @click.self="showSidebar = false"></div><div id="page" class="relative flex flex-col min-h-screen"><a href="#content"
+      class="absolute top-0 left-0 z-[100] block bg-background p-4 text-xl transition -translate-x-full opacity-0 focus:translate-x-0 focus:opacity-100">
       Skip to content
-    </a><header
-  class="sticky top-0 z-40 w-full border-b shadow-sm border-border supports-backdrop-blur:bg-background/60 bg-background/95 backdrop-blur"><div class="container flex items-center h-14">
+    </a><header class="sticky top-0 z-40 w-full border-b shadow-xs border-border bg-background/90 backdrop-blur"><div class="container flex items-center h-14">
     <div class="hidden mr-4 md:flex">
 <a href="index.html" class="flex items-center mr-6">
     <img style="height: 2rem; width: auto;" class="hidden dark:block" src="_static/QiliSDK_wht.svg" alt="QiliSDK" />
@@ -77,7 +79,7 @@
       </svg>
       <span class="sr-only">Toggle navigation menu</span>
     </button>
-    <div class="flex items-center justify-between flex-1 space-x-2 sm:space-x-4 md:justify-end">
+    <div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
       <div class="flex-1 w-full md:w-auto md:flex-none"><form id="searchbox"
       action="search.html"
       method="get"
@@ -96,17 +98,17 @@
   </kbd>
 </form>
       </div>
-      <nav class="flex items-center space-x-1">
-        <button @click="darkMode = darkMode === 'light' ? 'dark' : 'light'"
+      <nav class="flex items-center gap-1">
+        <button @click="darkMode = !darkMode"
           class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9"
           type="button"
-          aria-label="Color theme switcher">
-          <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 96 960 960" fill="currentColor"
+          title="Toggle color scheme">
+          <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 96 960 960" fill="currentColor"
             class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0">
             <path
               d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z" />
           </svg>
-          <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 96 960 960" fill="currentColor"
+          <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 96 960 960" fill="currentColor"
             class="absolute transition-all scale-0 rotate-90 dark:rotate-0 dark:scale-100">
             <path
               d="M480 936q-151 0-255.5-104.5T120 576q0-138 90-239.5T440 218q25-3 39 18t-1 44q-17 26-25.5 55t-8.5 61q0 90 63 153t153 63q31 0 61.5-9t54.5-25q21-14 43-1.5t19 39.5q-14 138-117.5 229T480 936Zm0-80q88 0 158-48.5T740 681q-20 5-40 8t-40 3q-123 0-209.5-86.5T364 396q0-20 3-40t8-40q-78 32-126.5 102T200 576q0 116 82 198t198 82Zm-10-270Z" />
@@ -117,16 +119,19 @@
   </div>
 </header>
 
-    <div class="flex-1"><div class="container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside id="left-sidebar"
-  class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full shrink-0 overflow-y-auto border-r border-border md:sticky"
+    <div class="flex-1"><div
+        class="container md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10"><aside id="left-sidebar"
+  class="fixed inset-y-0 left-0 md:top-14 z-50 md:z-30 bg-background md:bg-transparent transition-all duration-100 -translate-x-full md:translate-x-0 ml-0 p-6 md:p-0 md:-ml-2 md:h-[calc(100vh-3.5rem)] w-5/6 md:w-full overflow-y-auto border-r border-border md:sticky"
   :aria-hidden="!showSidebar" :class="{ 'translate-x-0': showSidebar }">
 
-    <a href="index.html" class="!justify-start text-sm md:!hidden bg-background">
-        <img width="16" height="16" class="mr-2 hidden dark:block" src="_static/QiliSDK_wht.svg" alt="Logo" />
-        <img width="16" height="16" class="mr-2 dark:hidden" src="_static/QiliSDK_blk.svg" alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
+    <a href="index.html" class="justify-start text-sm md:!hidden bg-background">
+      <img width="16" height="16" class="mr-2 hidden dark:block" src="_static/QiliSDK_wht.svg"
+        alt="Logo" />
+      <img width="16" height="16" class="mr-2 dark:hidden" src="_static/QiliSDK_blk.svg"
+        alt="Logo" /><span class="font-bold text-clip whitespace-nowrap">QiliSDK</span>
     </a>
 
-    <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0 h-[calc(100vh-8rem)] md:h-auto">
+    <div class="relative overflow-hidden md:overflow-auto my-4 md:my-0">
       <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
   <p class="caption" role="heading"><span class="caption-text">Primeros pasos</span></p>
 <ul>
@@ -193,10 +198,12 @@
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/optimizers/optimizer/index.html">qilisdk.optimizers.optimizer</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/settings/index.html">qilisdk.settings</a></li>
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/speqtrum/index.html">qilisdk.speqtrum</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/speqtrum/experiments/index.html">qilisdk.speqtrum.experiments</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/speqtrum/keyring/index.html">qilisdk.speqtrum.keyring</a></li>
 <li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/speqtrum/speqtrum/index.html">qilisdk.speqtrum.speqtrum</a></li>
+<li class="toctree-l4"><a class="reference internal" href="code/api/qilisdk/speqtrum/speqtrum_models/index.html">qilisdk.speqtrum.speqtrum_models</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="code/api/qilisdk/utils/index.html">qilisdk.utils</a><ul>
@@ -221,6 +228,9 @@
       <span class="caption_text">Versiones</span>
     </p>
     <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../0.3.0/index.html">0.3.0</a>
+      </li>
       <li class="toctree-l1">
         <a class="reference internal" href="../0.2.1/index.html">0.2.1</a>
       </li>
@@ -265,7 +275,7 @@
       </svg>
     </button>
   </aside>
-        <main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
+          <main class="relative py-6 lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_300px]">
 <div class="w-full min-w-0 mx-auto">
 <nav aria-label="breadcrumbs"
      class="flex items-center mb-4 space-x-1 text-sm text-muted-foreground">
@@ -291,14 +301,467 @@
 <div id="content" role="main">
 
   <h1 id="index">Índice</h1>
+  <h2 id="_">_</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__class_vars__">__class_vars__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__class_vars__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__class_vars__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__class_vars__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__class_vars__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__class_vars__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__class_vars__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__class_vars__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__class_vars__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__class_vars__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__class_vars__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__private_attributes__">__private_attributes__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__private_attributes__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__private_attributes__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__private_attributes__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__private_attributes__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__private_attributes__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__private_attributes__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__private_attributes__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__private_attributes__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__private_attributes__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__private_attributes__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__pydantic_complete__">__pydantic_complete__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_complete__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_complete__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_complete__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_complete__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__pydantic_complete__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_complete__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_complete__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_complete__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_complete__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_complete__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__pydantic_computed_fields__">__pydantic_computed_fields__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_computed_fields__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_computed_fields__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_computed_fields__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_computed_fields__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__pydantic_computed_fields__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_computed_fields__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_computed_fields__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_computed_fields__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_computed_fields__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_computed_fields__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__pydantic_core_schema__">__pydantic_core_schema__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_core_schema__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_core_schema__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_core_schema__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_core_schema__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__pydantic_core_schema__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_core_schema__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_core_schema__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_core_schema__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_core_schema__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_core_schema__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__pydantic_custom_init__">__pydantic_custom_init__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_custom_init__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_custom_init__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_custom_init__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_custom_init__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__pydantic_custom_init__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_custom_init__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_custom_init__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_custom_init__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_custom_init__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_custom_init__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__pydantic_decorators__">__pydantic_decorators__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_decorators__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_decorators__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_decorators__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_decorators__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__pydantic_decorators__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_decorators__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_decorators__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_decorators__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_decorators__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_decorators__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__pydantic_extra__">__pydantic_extra__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_extra__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_extra__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_extra__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_extra__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__pydantic_extra__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_extra__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_extra__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_extra__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_extra__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_extra__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__pydantic_fields__">__pydantic_fields__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_fields__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_fields__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_fields__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_fields__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__pydantic_fields__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_fields__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_fields__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_fields__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_fields__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_fields__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__pydantic_fields_set__">__pydantic_fields_set__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_fields_set__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_fields_set__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_fields_set__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_fields_set__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__pydantic_fields_set__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_fields_set__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_fields_set__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_fields_set__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_fields_set__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_fields_set__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__pydantic_generic_metadata__">__pydantic_generic_metadata__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_generic_metadata__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_generic_metadata__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_generic_metadata__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_generic_metadata__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__pydantic_generic_metadata__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_generic_metadata__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_generic_metadata__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_generic_metadata__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_generic_metadata__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_generic_metadata__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__pydantic_parent_namespace__">__pydantic_parent_namespace__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_parent_namespace__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_parent_namespace__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_parent_namespace__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_parent_namespace__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__pydantic_parent_namespace__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_parent_namespace__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_parent_namespace__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_parent_namespace__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_parent_namespace__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_parent_namespace__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__pydantic_post_init__">__pydantic_post_init__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_post_init__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_post_init__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_post_init__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_post_init__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__pydantic_post_init__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_post_init__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_post_init__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_post_init__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_post_init__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_post_init__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__pydantic_private__">__pydantic_private__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_private__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_private__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_private__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_private__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__pydantic_private__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_private__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_private__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_private__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_private__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_private__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__pydantic_root_model__">__pydantic_root_model__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_root_model__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_root_model__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_root_model__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_root_model__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__pydantic_root_model__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_root_model__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_root_model__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_root_model__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_root_model__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_root_model__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__pydantic_serializer__">__pydantic_serializer__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_serializer__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_serializer__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_serializer__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_serializer__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__pydantic_serializer__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_serializer__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_serializer__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_serializer__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_serializer__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_serializer__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__pydantic_validator__">__pydantic_validator__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__pydantic_validator__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__pydantic_validator__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__pydantic_validator__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__pydantic_validator__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__pydantic_validator__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__pydantic_validator__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_validator__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__pydantic_validator__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__pydantic_validator__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__pydantic_validator__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.__signature__">__signature__ (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.__signature__">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.__signature__">(atributo de ExecuteResult)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload.__signature__">(atributo de LoginPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.__signature__">(atributo de RabiExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.__signature__">(atributo de SamplingPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.__signature__">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__signature__">(atributo de Style)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.__signature__">(atributo de T1ExperimentPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.__signature__">(atributo de TimeEvolutionPayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.__signature__">(atributo de VariationalProgramPayload)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  </tr>
+      </table>
+  
   <h2 id="A">A</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.Theme.accent">accent (atributo de Theme)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.access_token">access_token (atributo de Token)</a>
+</li>
       <li><a href="code/api/qilisdk/common/algorithm/index.html#qilisdk.common.algorithm.Algorithm">Algorithm (clase en qilisdk.common.algorithm)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.align_layer">align_layer (atributo de CircuitStyle)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobType.ANALOG">ANALOG (atributo de JobType)</a>
+</li>
+      <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings.arithmetic_precision">arithmetic_precision (atributo de QiliSDKSettings)</a>
+</li>
       <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.ax">ax (atributo de MatplotlibScheduleRenderer)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer.axes">axes (MatplotlibCircuitRenderer propiedad)</a>
 </li>
   </ul></td>
   </tr>
@@ -309,9 +772,17 @@
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/backends/backend/index.html#qilisdk.backends.backend.Backend">Backend (clase en qilisdk.backends.backend)</a>
 </li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.Theme.background">background (atributo de Theme)</a>
+</li>
+      <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.BasicGateHandlersMapping">BasicGateHandlersMapping (en el módulo qilisdk.backends.cuda_backend)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
-      <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.BasicGateHandlersMapping">BasicGateHandlersMapping (en el módulo qilisdk.backends.cuda_backend)</a>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.BLACK">BLACK (en el módulo qilisdk.utils.visualization.themes)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.Theme.border">border (atributo de Theme)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.bulge">bulge (atributo de CircuitStyle)</a>
 </li>
   </ul></td>
   </tr>
@@ -320,12 +791,34 @@
   <h2 id="C">C</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
-      <li><a href="code/api/qilisdk/cost_functions/cost_function/index.html#qilisdk.cost_functions.cost_function.CostFunction.compute_cost">compute_cost() (método de CostFunction)</a>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.CANCELLED">CANCELLED (atributo de JobStatus)</a>
 </li>
-      <li><a href="code/api/qilisdk/cost_functions/cost_function/index.html#qilisdk.cost_functions.cost_function.CostFunction">CostFunction (clase en qilisdk.cost_functions.cost_function)</a>
+      <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer.circuit">circuit (atributo de MatplotlibCircuitRenderer)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle">CircuitStyle (clase en qilisdk.utils.visualization.style)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.code">code (atributo de Device)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.COMPLETED">COMPLETED (atributo de JobStatus)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.completed_at">completed_at (atributo de JobInfo)</a>
+</li>
+      <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.Precision.COMPLEX_128">COMPLEX_128 (atributo de Precision)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.Precision.COMPLEX_64">COMPLEX_64 (atributo de Precision)</a>
+</li>
+      <li><a href="code/api/qilisdk/cost_functions/cost_function/index.html#qilisdk.cost_functions.cost_function.CostFunction.compute_cost">compute_cost() (método de CostFunction)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.connector_r">connector_r (atributo de CircuitStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.control_r">control_r (atributo de CircuitStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/cost_functions/cost_function/index.html#qilisdk.cost_functions.cost_function.CostFunction">CostFunction (clase en qilisdk.cost_functions.cost_function)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.created_at">created_at (atributo de JobInfo)</a>
+</li>
       <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaBackend">CudaBackend (clase en qilisdk.backends.cuda_backend)</a>
 </li>
       <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod">CudaSamplingMethod (clase en qilisdk.backends.cuda_backend)</a>
@@ -337,8 +830,20 @@
   <h2 id="D">D</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.dark">dark (en el módulo qilisdk.utils.visualization.themes)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.default_line_style">default_line_style (atributo de ScheduleStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.default_logging_config_path">default_logging_config_path() (en el módulo qilisdk.settings)</a>
+</li>
       <li><a href="code/api/qilisdk/speqtrum/keyring/index.html#qilisdk.speqtrum.keyring.delete_credentials">delete_credentials() (en el módulo qilisdk.speqtrum.keyring)</a>
 </li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.description">description (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.description">(atributo de JobInfo)</a>
+</li>
+      </ul></li>
       <li><a href="code/api/qilisdk/utils/serialization/index.html#qilisdk.utils.serialization.DeserializationError">DeserializationError</a>
 </li>
   </ul></td>
@@ -347,6 +852,18 @@
 </li>
       <li><a href="code/api/qilisdk/utils/serialization/index.html#qilisdk.utils.serialization.deserialize_from">deserialize_from() (en el módulo qilisdk.utils.serialization)</a>
 </li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device">Device (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.device_id">device_id (atributo de JobInfo)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceStatus">DeviceStatus (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceType">DeviceType (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobType.DIGITAL">DIGITAL (atributo de JobType)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.dpi">dpi (atributo de Style)</a>
+</li>
   </ul></td>
   </tr>
       </table>
@@ -354,11 +871,27 @@
   <h2 id="E">E</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.end_wire_ext">end_wire_ext (atributo de CircuitStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.error">error (atributo de JobDetail)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.ERROR">ERROR (atributo de JobStatus)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.error_logs">error_logs (atributo de JobDetail)</a>
+</li>
       <li><a href="code/api/qilisdk/common/exceptions/index.html#qilisdk.common.exceptions.EvaluationError">EvaluationError</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/backends/backend/index.html#qilisdk.backends.backend.Backend.execute">execute() (método de Backend)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload">ExecutePayload (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult">ExecuteResult (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteType">ExecuteType (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.expires_in">expires_in (atributo de Token)</a>
 </li>
   </ul></td>
   </tr>
@@ -367,12 +900,30 @@
   <h2 id="F">F</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.figsize">figsize (atributo de ScheduleStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.font">font (Style propiedad)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.fontfamily">fontfamily (atributo de Style)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.fontfname">fontfname (atributo de Style)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.fontsize">fontsize (atributo de Style)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.fontstretch">fontstretch (atributo de Style)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.fontstyle">fontstyle (atributo de Style)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.fontvariant">fontvariant (atributo de Style)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.fontweight">fontweight (atributo de Style)</a>
+</li>
       <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.from_qasm2">from_qasm2() (en el módulo qilisdk.utils.openqasm2)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.from_qasm2_file">from_qasm2_file() (en el módulo qilisdk.utils.openqasm2)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.Functional">Functional (clase en qilisdk.functionals.functional)</a>
 </li>
       <li><a href="code/api/qilisdk/functionals/functional_result/index.html#qilisdk.functionals.functional_result.FunctionalResult">FunctionalResult (clase en qilisdk.functionals.functional_result)</a>
@@ -384,21 +935,31 @@
   <h2 id="G">G</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.gate_margin">gate_margin (atributo de CircuitStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.gate_pad">gate_pad (atributo de CircuitStyle)</a>
+</li>
       <li><a href="code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.GateHasNoMatrixError">GateHasNoMatrixError</a>
 </li>
       <li><a href="code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.GateNotParameterizedError">GateNotParameterizedError</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.get_job_details">get_job_details() (método de SpeQtrum)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.get_parameter_bounds">get_parameter_bounds() (método de Parameterizable)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.get_parameter_names">get_parameter_names() (método de Parameterizable)</a>
 </li>
       <li><a href="code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.get_parameter_values">get_parameter_values() (método de Parameterizable)</a>
 </li>
       <li><a href="code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.get_parameters">get_parameters() (método de Parameterizable)</a>
+</li>
+      <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.get_settings">get_settings() (en el módulo qilisdk.settings)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.grid">grid (atributo de ScheduleStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.grid_style">grid_style (atributo de ScheduleStyle)</a>
 </li>
   </ul></td>
   </tr>
@@ -407,6 +968,8 @@
   <h2 id="I">I</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobId.id">id (atributo de JobId)</a>
+</li>
       <li><a href="code/api/qilisdk/common/exceptions/index.html#qilisdk.common.exceptions.InvalidBoundsError">InvalidBoundsError</a>
 </li>
   </ul></td>
@@ -414,6 +977,29 @@
       <li><a href="code/api/qilisdk/analog/exceptions/index.html#qilisdk.analog.exceptions.InvalidHamiltonianOperation">InvalidHamiltonianOperation</a>
 </li>
       <li><a href="code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.InvalidParameterNameError">InvalidParameterNameError</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.issued_at">issued_at (atributo de Token)</a>
+</li>
+  </ul></td>
+  </tr>
+      </table>
+  
+  <h2 id="J">J</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail">JobDetail (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobId">JobId (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo">JobInfo (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus">JobStatus (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.jobType">jobType (atributo de JobDetail)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobType">JobType (clase en qilisdk.speqtrum.speqtrum_models)</a>
 </li>
   </ul></td>
   </tr>
@@ -431,17 +1017,41 @@
   <h2 id="L">L</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.label_fontsize">label_fontsize (atributo de ScheduleStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.label_pad">label_pad (atributo de CircuitStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.layer_sep">layer_sep (atributo de CircuitStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.layout">layout (atributo de CircuitStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.legend_fontsize">legend_fontsize (atributo de ScheduleStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.legend_frame">legend_frame (atributo de ScheduleStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.legend_loc">legend_loc (atributo de ScheduleStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.light">light (en el módulo qilisdk.utils.visualization.themes)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.line_styles">line_styles (atributo de ScheduleStyle)</a>
+</li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.list_devices">list_devices() (método de SpeQtrum)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.list_jobs">list_jobs() (método de SpeQtrum)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/speqtrum/keyring/index.html#qilisdk.speqtrum.keyring.load_credentials">load_credentials() (en el módulo qilisdk.speqtrum.keyring)</a>
+</li>
+      <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings.logging_config_path">logging_config_path (atributo de QiliSDKSettings)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.login">login() (método de clase de SpeQtrum)</a>
 </li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.LoginPayload">LoginPayload (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.logout">logout() (método de clase de SpeQtrum)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.logs">logs (atributo de JobDetail)</a>
 </li>
   </ul></td>
   </tr>
@@ -450,12 +1060,36 @@
   <h2 id="M">M</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.MAGENTA">MAGENTA (en el módulo qilisdk.utils.visualization.themes)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceStatus.MAINTENANCE">MAINTENANCE (atributo de DeviceStatus)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.marker">marker (atributo de ScheduleStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.marker_size">marker_size (atributo de ScheduleStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.math_fontfamily">math_fontfamily (atributo de Style)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer">MatplotlibCircuitRenderer (clase en qilisdk.utils.visualization.circuit_renderers)</a>
+</li>
       <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer">MatplotlibScheduleRenderer (clase en qilisdk.utils.visualization.schedule_renderers)</a>
 </li>
       <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod.MATRIX_PRODUCT_STATE">MATRIX_PRODUCT_STATE (atributo de CudaSamplingMethod)</a>
 </li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.min_gate_h">min_gate_h (atributo de CircuitStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.min_gate_w">min_gate_w (atributo de CircuitStyle)</a>
+</li>
       <li><a href="code/api/qilisdk/cost_functions/model_cost_function/index.html#qilisdk.cost_functions.model_cost_function.ModelCostFunction.model">model (ModelCostFunction propiedad)</a>
 </li>
+      <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings.model_config">model_config (atributo de QiliSDKSettings)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel.model_config">(atributo de SpeQtrumModel)</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.Theme.model_config">(atributo de Theme)</a>
+</li>
+      </ul></li>
       <li><a href="code/api/qilisdk/cost_functions/model_cost_function/index.html#qilisdk.cost_functions.model_cost_function.ModelCostFunction">ModelCostFunction (clase en qilisdk.cost_functions.model_cost_function)</a>
 </li>
       <li>
@@ -506,6 +1140,8 @@
 </li>
         <li><a href="code/api/qilisdk/optimizers/optimizer/index.html#module-qilisdk.optimizers.optimizer">qilisdk.optimizers.optimizer</a>
 </li>
+        <li><a href="code/api/qilisdk/settings/index.html#module-qilisdk.settings">qilisdk.settings</a>
+</li>
         <li><a href="code/api/qilisdk/speqtrum/index.html#module-qilisdk.speqtrum">qilisdk.speqtrum</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/experiments/index.html#module-qilisdk.speqtrum.experiments">qilisdk.speqtrum.experiments</a>
@@ -513,6 +1149,8 @@
         <li><a href="code/api/qilisdk/speqtrum/keyring/index.html#module-qilisdk.speqtrum.keyring">qilisdk.speqtrum.keyring</a>
 </li>
         <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#module-qilisdk.speqtrum.speqtrum">qilisdk.speqtrum.speqtrum</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#module-qilisdk.speqtrum.speqtrum_models">qilisdk.speqtrum.speqtrum_models</a>
 </li>
         <li><a href="code/api/qilisdk/utils/index.html#module-qilisdk.utils">qilisdk.utils</a>
 </li>
@@ -522,7 +1160,13 @@
 </li>
         <li><a href="code/api/qilisdk/utils/visualization/index.html#module-qilisdk.utils.visualization">qilisdk.utils.visualization</a>
 </li>
+        <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#module-qilisdk.utils.visualization.circuit_renderers">qilisdk.utils.visualization.circuit_renderers</a>
+</li>
         <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#module-qilisdk.utils.visualization.schedule_renderers">qilisdk.utils.visualization.schedule_renderers</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#module-qilisdk.utils.visualization.style">qilisdk.utils.visualization.style</a>
+</li>
+        <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#module-qilisdk.utils.visualization.themes">qilisdk.utils.visualization.themes</a>
 </li>
       </ul></li>
   </ul></td>
@@ -532,11 +1176,31 @@
   <h2 id="N">N</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
-      <li><a href="code/api/qilisdk/common/exceptions/index.html#qilisdk.common.exceptions.NotSupportedOperation">NotSupportedOperation</a>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.name">name (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.name">(atributo de JobInfo)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.NEUTRAL_050">NEUTRAL_050 (en el módulo qilisdk.utils.visualization.themes)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.NEUTRAL_100">NEUTRAL_100 (en el módulo qilisdk.utils.visualization.themes)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.NEUTRAL_200">NEUTRAL_200 (en el módulo qilisdk.utils.visualization.themes)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.NEUTRAL_600">NEUTRAL_600 (en el módulo qilisdk.utils.visualization.themes)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.NEUTRAL_800">NEUTRAL_800 (en el módulo qilisdk.utils.visualization.themes)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.NEUTRAL_900">NEUTRAL_900 (en el módulo qilisdk.utils.visualization.themes)</a>
+</li>
+      <li><a href="code/api/qilisdk/common/exceptions/index.html#qilisdk.common.exceptions.NotSupportedOperation">NotSupportedOperation</a>
+</li>
       <li><a href="code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.nparameters">nparameters (Parameterizable propiedad)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.nqubits">nqubits (atributo de Device)</a>
 </li>
   </ul></td>
   </tr>
@@ -549,10 +1213,22 @@
 </li>
       <li><a href="code/api/qilisdk/cost_functions/observable_cost_function/index.html#qilisdk.cost_functions.observable_cost_function.ObservableCostFunction">ObservableCostFunction (clase en qilisdk.cost_functions.observable_cost_function)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.OPENQASM2_MAP">OPENQASM2_MAP (en el módulo qilisdk.utils.openqasm2)</a>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceStatus.OFFLINE">OFFLINE (atributo de DeviceStatus)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.Theme.on_accent">on_accent (atributo de Theme)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.Theme.on_background">on_background (atributo de Theme)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.Theme.on_primary">on_primary (atributo de Theme)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.Theme.on_surface">on_surface (atributo de Theme)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceStatus.ONLINE">ONLINE (atributo de DeviceStatus)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.OPENQASM2_MAP">OPENQASM2_MAP (en el módulo qilisdk.utils.openqasm2)</a>
+</li>
       <li><a href="code/api/qilisdk/optimizers/optimizer/index.html#qilisdk.optimizers.optimizer.Optimizer.optimize">optimize() (método de Optimizer)</a>
 </li>
       <li><a href="code/api/qilisdk/optimizers/optimizer/index.html#qilisdk.optimizers.optimizer.Optimizer">Optimizer (clase en qilisdk.optimizers.optimizer)</a>
@@ -566,17 +1242,33 @@
   <h2 id="P">P</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.padding">padding (atributo de CircuitStyle)</a>
+</li>
       <li><a href="code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable">Parameterizable (clase en qilisdk.common.parameterizable)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.ParametersNotEqualError">ParametersNotEqualError</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.PauliOperatorHandlersMapping">PauliOperatorHandlersMapping (en el módulo qilisdk.backends.cuda_backend)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.plot">plot() (método de MatplotlibScheduleRenderer)</a>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.payload">payload (atributo de JobDetail)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.PENDING">PENDING (atributo de JobStatus)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer.plot">plot() (método de MatplotlibCircuitRenderer)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.plot">(método de MatplotlibScheduleRenderer)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.Precision">Precision (clase en qilisdk.settings)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.Theme.primary">primary (atributo de Theme)</a>
 </li>
       <li><a href="code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.PrimitiveFunctional">PrimitiveFunctional (clase en qilisdk.functionals.functional)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobType.PULSE">PULSE (atributo de JobType)</a>
 </li>
   </ul></td>
   </tr>
@@ -697,8 +1389,6 @@
         <li><a href="code/api/qilisdk/digital/index.html#module-qilisdk.digital">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li>
     qilisdk.digital.exceptions
 
@@ -720,6 +1410,8 @@
         <li><a href="code/api/qilisdk/functionals/functional/index.html#module-qilisdk.functionals.functional">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li>
     qilisdk.functionals.functional_result
 
@@ -739,6 +1431,13 @@
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/optimizers/optimizer/index.html#module-qilisdk.optimizers.optimizer">module</a>
+</li>
+      </ul></li>
+      <li>
+    qilisdk.settings
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/settings/index.html#module-qilisdk.settings">module</a>
 </li>
       </ul></li>
       <li>
@@ -770,6 +1469,13 @@
 </li>
       </ul></li>
       <li>
+    qilisdk.speqtrum.speqtrum_models
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#module-qilisdk.speqtrum.speqtrum_models">module</a>
+</li>
+      </ul></li>
+      <li>
     qilisdk.utils
 
       <ul style="list-style-type:none">
@@ -798,13 +1504,42 @@
 </li>
       </ul></li>
       <li>
+    qilisdk.utils.visualization.circuit_renderers
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#module-qilisdk.utils.visualization.circuit_renderers">module</a>
+</li>
+      </ul></li>
+      <li>
     qilisdk.utils.visualization.schedule_renderers
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#module-qilisdk.utils.visualization.schedule_renderers">module</a>
 </li>
       </ul></li>
+      <li>
+    qilisdk.utils.visualization.style
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/visualization/style/index.html#module-qilisdk.utils.visualization.style">module</a>
+</li>
+      </ul></li>
+      <li>
+    qilisdk.utils.visualization.themes
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#module-qilisdk.utils.visualization.themes">module</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings">QiliSDKSettings (clase en qilisdk.settings)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceType.QPU_ANALOG">QPU_ANALOG (atributo de DeviceType)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceType.QPU_DIGITAL">QPU_DIGITAL (atributo de DeviceType)</a>
+</li>
       <li><a href="code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.QubitOutOfRangeError">QubitOutOfRangeError</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.QUEUED">QUEUED (atributo de JobStatus)</a>
 </li>
   </ul></td>
   </tr>
@@ -813,11 +1548,27 @@
   <h2 id="R">R</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
-      <li><a href="code/api/qilisdk/common/result/index.html#qilisdk.common.result.Result">Result (clase en qilisdk.common.result)</a>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteType.RABI_EXPERIMENT">RABI_EXPERIMENT (atributo de ExecuteType)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload.rabi_experiment">rabi_experiment (atributo de RabiExperimentPayload)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.rabi_experiment_payload">rabi_experiment_payload (atributo de ExecutePayload)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.rabi_experiment_result">rabi_experiment_result (atributo de ExecuteResult)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.RabiExperimentPayload">RabiExperimentPayload (clase en qilisdk.speqtrum.speqtrum_models)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.refresh_token">refresh_token (atributo de Token)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.result">result (atributo de JobDetail)</a>
+</li>
+      <li><a href="code/api/qilisdk/common/result/index.html#qilisdk.common.result.Result">Result (clase en qilisdk.common.result)</a>
+</li>
       <li><a href="code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.Functional.result_type">result_type (atributo de Functional)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.RUNNING">RUNNING (atributo de JobStatus)</a>
 </li>
   </ul></td>
   </tr>
@@ -826,11 +1577,27 @@
   <h2 id="S">S</h2>
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteType.SAMPLING">SAMPLING (atributo de ExecuteType)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload.sampling">sampling (atributo de SamplingPayload)</a>
+</li>
       <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaBackend.sampling_method">sampling_method (CudaBackend propiedad)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.save">save() (método de MatplotlibScheduleRenderer)</a>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.sampling_payload">sampling_payload (atributo de ExecutePayload)</a>
 </li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.sampling_result">sampling_result (atributo de ExecuteResult)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SamplingPayload">SamplingPayload (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer.save">save() (método de MatplotlibCircuitRenderer)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.save">(método de MatplotlibScheduleRenderer)</a>
+</li>
+      </ul></li>
       <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.schedule">schedule (atributo de MatplotlibScheduleRenderer)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle">ScheduleStyle (clase en qilisdk.utils.visualization.style)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/serialization/index.html#qilisdk.utils.serialization.SerializationError">SerializationError</a>
 </li>
@@ -840,21 +1607,51 @@
 </li>
       <li><a href="code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.set_parameter_bounds">set_parameter_bounds() (método de Parameterizable)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.set_parameter_values">set_parameter_values() (método de Parameterizable)</a>
 </li>
       <li><a href="code/api/qilisdk/common/parameterizable/index.html#qilisdk.common.parameterizable.Parameterizable.set_parameters">set_parameters() (método de Parameterizable)</a>
 </li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.DeviceType.SIMULATOR">SIMULATOR (atributo de DeviceType)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum">SpeQtrum (clase en qilisdk.speqtrum.speqtrum)</a>
+</li>
+      <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings.speqtrum_api_url">speqtrum_api_url (atributo de QiliSDKSettings)</a>
+</li>
+      <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings.speqtrum_apikey">speqtrum_apikey (atributo de QiliSDKSettings)</a>
+</li>
+      <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings.speqtrum_audience">speqtrum_audience (atributo de QiliSDKSettings)</a>
+</li>
+      <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings.speqtrum_username">speqtrum_username (atributo de QiliSDKSettings)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.SpeQtrumModel">SpeQtrumModel (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.start_pad">start_pad (atributo de CircuitStyle)</a>
 </li>
       <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod.STATE_VECTOR">STATE_VECTOR (atributo de CudaSamplingMethod)</a>
 </li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.status">status (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.status">(atributo de JobInfo)</a>
+</li>
+      </ul></li>
       <li><a href="code/api/qilisdk/speqtrum/keyring/index.html#qilisdk.speqtrum.keyring.store_credentials">store_credentials() (en el módulo qilisdk.speqtrum.keyring)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.style">style (atributo de MatplotlibScheduleRenderer)</a>
+      <li><a href="code/api/qilisdk/utils/visualization/circuit_renderers/index.html#qilisdk.utils.visualization.circuit_renderers.MatplotlibCircuitRenderer.style">style (atributo de MatplotlibCircuitRenderer)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.style">(atributo de MatplotlibScheduleRenderer)</a>
+</li>
+      </ul></li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style">Style (clase en qilisdk.utils.visualization.style)</a>
 </li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.submit">submit() (método de SpeQtrum)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.Theme.surface">surface (atributo de Theme)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.Theme.surface_muted">surface_muted (atributo de Theme)</a>
 </li>
   </ul></td>
   </tr>
@@ -865,15 +1662,55 @@
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/utils/serialization/index.html#qilisdk.utils.serialization.T">T (en el módulo qilisdk.utils.serialization)</a>
 </li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteType.T1_EXPERIMENT">T1_EXPERIMENT (atributo de ExecuteType)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload.t1_experiment">t1_experiment (atributo de T1ExperimentPayload)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.t1_experiment_payload">t1_experiment_payload (atributo de ExecutePayload)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.t1_experiment_result">t1_experiment_result (atributo de ExecuteResult)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.T1ExperimentPayload">T1ExperimentPayload (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.target_r">target_r (atributo de CircuitStyle)</a>
+</li>
       <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.TBasicGate">TBasicGate (en el módulo qilisdk.backends.cuda_backend)</a>
 </li>
       <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.CudaSamplingMethod.TENSOR_NETWORK">TENSOR_NETWORK (atributo de CudaSamplingMethod)</a>
 </li>
-      <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.to_qasm2">to_qasm2() (en el módulo qilisdk.utils.openqasm2)</a>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.theme">theme (atributo de Style)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.Theme">Theme (clase en qilisdk.utils.visualization.themes)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.tick_color">tick_color (atributo de ScheduleStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.tight_layout">tight_layout (atributo de ScheduleStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteType.TIME_EVOLUTION">TIME_EVOLUTION (atributo de ExecuteType)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload.time_evolution">time_evolution (atributo de TimeEvolutionPayload)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.time_evolution_payload">time_evolution_payload (atributo de ExecutePayload)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.time_evolution_result">time_evolution_result (atributo de ExecuteResult)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.TimeEvolutionPayload">TimeEvolutionPayload (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.TIMEOUT">TIMEOUT (atributo de JobStatus)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.title">title (atributo de Style)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.title_fontsize">title_fontsize (atributo de ScheduleStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.to_qasm2">to_qasm2() (en el módulo qilisdk.utils.openqasm2)</a>
+</li>
       <li><a href="code/api/qilisdk/utils/openqasm2/index.html#qilisdk.utils.openqasm2.to_qasm2_file">to_qasm2_file() (en el módulo qilisdk.utils.openqasm2)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token">Token (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token.token_type">token_type (atributo de Token)</a>
 </li>
       <li><a href="code/api/qilisdk/backends/cuda_backend/index.html#qilisdk.backends.cuda_backend.TPauliOperator">TPauliOperator (en el módulo qilisdk.backends.cuda_backend)</a>
 </li>
@@ -885,6 +1722,14 @@
       </ul></li>
       <li><a href="code/api/qilisdk/functionals/functional/index.html#qilisdk.functionals.functional.TResult_co">TResult_co (en el módulo qilisdk.functionals.functional)</a>
 </li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Device.type">type (atributo de Device)</a>
+
+      <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.type">(atributo de ExecutePayload)</a>
+</li>
+        <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.type">(atributo de ExecuteResult)</a>
+</li>
+      </ul></li>
   </ul></td>
   </tr>
       </table>
@@ -895,6 +1740,35 @@
       <li><a href="code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.UnsupportedGateError">UnsupportedGateError</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobInfo.updated_at">updated_at (atributo de JobInfo)</a>
+</li>
+  </ul></td>
+  </tr>
+      </table>
+  
+  <h2 id="V">V</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobStatus.VALIDATING">VALIDATING (atributo de JobStatus)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobType.VARIATIONAL">VARIATIONAL (atributo de JobType)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteType.VARIATIONAL_PROGRAM">VARIATIONAL_PROGRAM (atributo de ExecuteType)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload.variational_program">variational_program (atributo de VariationalProgramPayload)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecutePayload.variational_program_payload">variational_program_payload (atributo de ExecutePayload)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.ExecuteResult.variational_program_result">variational_program_result (atributo de ExecuteResult)</a>
+</li>
+      <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.VariationalProgramPayload">VariationalProgramPayload (clase en qilisdk.speqtrum.speqtrum_models)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.VIOLET">VIOLET (en el módulo qilisdk.utils.visualization.themes)</a>
+</li>
+  </ul></td>
   </tr>
       </table>
   
@@ -902,6 +1776,40 @@
   <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/speqtrum/speqtrum/index.html#qilisdk.speqtrum.speqtrum.SpeQtrum.wait_for_job">wait_for_job() (método de SpeQtrum)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/themes/index.html#qilisdk.utils.visualization.themes.WHITE">WHITE (en el módulo qilisdk.utils.visualization.themes)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.wire_label">wire_label (atributo de CircuitStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.wire_sep">wire_sep (atributo de CircuitStyle)</a>
+</li>
+  </ul></td>
+  </tr>
+      </table>
+  
+  <h2 id="X">X</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.xlabel">xlabel (atributo de ScheduleStyle)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.xtick_fontsize">xtick_fontsize (atributo de ScheduleStyle)</a>
+</li>
+  </ul></td>
+  </tr>
+      </table>
+  
+  <h2 id="Y">Y</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.ylabel">ylabel (atributo de ScheduleStyle)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.ytick_fontsize">ytick_fontsize (atributo de ScheduleStyle)</a>
 </li>
   </ul></td>
   </tr>
@@ -912,27 +1820,28 @@
 </div></div>
 <aside id="right-sidebar" class="hidden text-sm xl:block">
 <div class="sticky top-16 -mt-10 max-h-[calc(var(--vh)-4rem)] overflow-y-auto pt-6 space-y-2">
-<a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#A">A</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#B">B</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#C">C</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#D">D</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#E">E</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#F">F</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#G">G</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#I">I</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#K">K</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#L">L</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#M">M</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#N">N</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#O">O</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#P">P</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#Q">Q</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#R">R</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#S">S</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#T">T</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#U">U</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#W">W</a>
+<a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#_">_</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#A">A</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#B">B</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#C">C</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#D">D</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#E">E</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#F">F</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#G">G</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#I">I</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#J">J</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#K">K</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#L">L</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#M">M</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#N">N</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#O">O</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#P">P</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#Q">Q</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#R">R</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#S">S</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#T">T</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#U">U</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#V">V</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#W">W</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#X">X</a><a class="pt-2 block text-muted-foreground no-underline transition-colors hover:text-foreground focus-visible:outline-offset-[-1px]" href="#Y">Y</a>
 </div>
 </aside>
-        </main>
-      </div>
-    </div><footer class="py-6 border-t border-border md:py-0">
+          </main>
+        </div>
+      </div><footer class="py-6 border-t border-border md:py-0">
     <div class="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
       <div class="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
-        <p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2025, Qilimanjaro Quantum Tech&nbsp;</p>
+        <p class="text-sm leading-loose text-center text-muted-foreground md:text-left">© 2026, Qilimanjaro Quantum Tech&nbsp;</p>
 </div>
 </div>
 </footer>
-  </div>
-  
+    </div>
+    
     <script src="_static/documentation_options.js?v=00904b1e"></script>
     <script src="_static/doctools.js?v=9bcbadda"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script defer="defer" src="_static/theme.js?v=073f68d9"></script>
+    <script defer="defer" src="_static/theme.js?v=5db23cf8"></script>
     <script src="_static/translations.js?v=f85f4cfb"></script>
     <script src="_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-  
+    
 </body>
+
 </html>
