@@ -16,12 +16,20 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  # The version that carries coverage and the C++ suite.
-  COVERAGE_PYTHON: "3.13"
+  # The version that carries coverage and the C++ suite. It has to be in every
+  # job's matrix, pull request ones included, or nothing gets uploaded.
+  COVERAGE_PYTHON: "3.11"
+  # Tests that need CUDA-Q or QuTiP installed. They run in their own jobs, since
+  # neither framework publishes wheels for every Python version we support.
+  EXTERNAL_BACKEND_TESTS: >-
+    tests/unit_python/backends/test_cudaq_backend.py
+    tests/unit_python/backends/test_qutip_backend.py
+    tests/unit_python/backends/test_lazy_imports.py
+    tests/unit_python/noise/test_noise_handling_cudaq.py
 
 jobs:
-  tests:
-    name: Testing for Python ${{ matrix.python-version }}
+  core-tests:
+    name: Testing the core for Python ${{ matrix.python-version }}
     if: github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -34,7 +42,7 @@ jobs:
       matrix:
         # Nothing in src/ branches on the Python version, so a PR runs the oldest
         # and the newest version we support and main fills in the middle.
-        python-version: ${{ github.event_name == 'push' && fromJSON('["3.11", "3.12", "3.13"]') || fromJSON('["3.11", "3.13"]') }}
+        python-version: ${{ github.event_name == 'push' && fromJSON('["3.11", "3.12", "3.13", "3.14"]') || fromJSON('["3.11", "3.14"]') }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -53,7 +61,7 @@ jobs:
       - name: Install qilisdk with coverage
         if: matrix.python-version == env.COVERAGE_PYTHON
         run: |
-          uv sync --frozen --group dev --extra all-cu13 --reinstall-package qilisdk \
+          uv sync --frozen --group dev --extra all-cu13 --reinstall-package qilisdk --no-build \
             -Ccmake.build-type=Debug \
             -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0 \
             -Ccmake.define.tests=ON \
@@ -64,18 +72,18 @@ jobs:
       - name: Install qilisdk
         if: matrix.python-version != env.COVERAGE_PYTHON
         run: |
-          uv sync --frozen --group dev --extra all-cu13 --reinstall-package qilisdk \
+          uv sync --frozen --group dev --extra all-cu13 --reinstall-package qilisdk --no-build \
             -Ccmake.build-type=Release
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Run Python tests
         if: matrix.python-version != env.COVERAGE_PYTHON
-        run: pytest -n auto tests/unit_python/
+        run: pytest -n auto tests/unit_python/ $(printf -- '--ignore=%s ' $EXTERNAL_BACKEND_TESTS)
 
       - name: Run Python tests with coverage
         if: matrix.python-version == env.COVERAGE_PYTHON
-        run: pytest -n auto --cov=qilisdk --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy tests/unit_python/
+        run: pytest -n auto --cov=qilisdk --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy tests/unit_python/ $(printf -- '--ignore=%s ' $EXTERNAL_BACKEND_TESTS)
 
       - name: Run C++ tests
         if: matrix.python-version == env.COVERAGE_PYTHON
@@ -101,9 +109,147 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  # Not the lowest Python version, the lowest dependency versions: uv resolves every
+  # direct dependency down to the floor our bounds allow, so a wrong floor fails here.
+  core-tests-lowest:
+    name: Testing the core at the lowest dependency versions for Python ${{ matrix.python-version }}
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ${{ github.event_name == 'push' && fromJSON('["3.11", "3.12", "3.13", "3.14"]') || fromJSON('["3.11", "3.14"]') }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            **/pyproject.toml
+            **/uv.lock
+          python-version: ${{ matrix.python-version }}
+
+      # The lockfile holds the newest resolution, so this job resolves from scratch
+      # and proves the lower bounds we advertise for the core are real. Resolving from
+      # scratch covers every group, and the docs group pulls sphinx-multiversion from
+      # git, so --no-build cannot be used here.
+      - name: Install qilisdk
+        run: |
+          uv sync --resolution lowest-direct --group dev --extra all-cu13 --reinstall-package qilisdk \
+            -Ccmake.build-type=Release
+          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Run Python tests
+        run: pytest -n auto tests/unit_python/ $(printf -- '--ignore=%s ' $EXTERNAL_BACKEND_TESTS)
+
+  external-backends:
+    name: Testing the external backends for Python ${{ matrix.python-version }}
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # CUDA-Q publishes no 3.14 wheels, so the external backends stop at 3.13.
+        python-version: ${{ github.event_name == 'push' && fromJSON('["3.11", "3.12", "3.13"]') || fromJSON('["3.11", "3.13"]') }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            **/pyproject.toml
+            **/uv.lock
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install qilisdk with the external backends
+        run: |
+          uv sync --frozen --group dev --group backends --extra all-cu13 --reinstall-package qilisdk --no-build \
+            -Ccmake.build-type=Release
+          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Run Python tests
+        if: matrix.python-version != env.COVERAGE_PYTHON
+        run: pytest -n auto $EXTERNAL_BACKEND_TESTS
+
+      # Uploaded too, so the backend modules keep their coverage in the report.
+      - name: Run Python tests with coverage
+        if: matrix.python-version == env.COVERAGE_PYTHON
+        run: pytest -n auto --cov=qilisdk --cov-report=xml $EXTERNAL_BACKEND_TESTS
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == env.COVERAGE_PYTHON
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f  # v7.0.0
+        with:
+          files: coverage.xml
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  # As above, the floors of CUDA-Q, QuTiP and qutip-qip, which OPTIONAL_FEATURES enforces.
+  external-backends-lowest:
+    name: Testing the external backends at the lowest dependency versions for Python ${{ matrix.python-version }}
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ${{ github.event_name == 'push' && fromJSON('["3.11", "3.12", "3.13"]') || fromJSON('["3.11", "3.13"]') }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            **/pyproject.toml
+            **/uv.lock
+          python-version: ${{ matrix.python-version }}
+
+      # Proves the lower bounds we advertise for CUDA-Q and QuTiP are real. As above,
+      # resolving from scratch rules out --no-build.
+      - name: Install qilisdk with the external backends
+        run: |
+          uv sync --resolution lowest-direct --group dev --group backends --extra all-cu13 --reinstall-package qilisdk \
+            -Ccmake.build-type=Release
+          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Run Python tests
+        run: pytest -n auto $EXTERNAL_BACKEND_TESTS
+
   all-tests:
     name: Tests
-    needs: [tests]
+    needs: [core-tests, core-tests-lowest, external-backends, external-backends-lowest]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-20 14:10+0200\n"
+"POT-Creation-Date: 2026-08-05 20:45+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -68,8 +68,8 @@ msgstr "Exemples de creació de diversos objectes quàntics:"
 
 #: ../../modules/core/core_qtensor.rst:42
 #: ../../modules/core/core_qtensor.rst:88
-#: ../../modules/core/core_qtensor.rst:176
-#: ../../modules/core/core_qtensor.rst:226
+#: ../../modules/core/core_qtensor.rst:178
+#: ../../modules/core/core_qtensor.rst:228
 msgid "**Output**"
 msgstr "**Sortida**"
 
@@ -332,13 +332,31 @@ msgstr ""
 
 #: ../../modules/core/core_qtensor.rst:140
 msgid ""
+":meth:`.sample(nshots)<qilisdk.core.qtensor.QTensor.sample>`: draw "
+"measurement samples in the computational basis from a state or a density "
+"matrix"
+msgstr ""
+":meth:`.sample(nshots)<qilisdk.core.qtensor.QTensor.sample>`: obté mostres "
+"de mesura en la base computacional a partir d'un estat o d'una matriu de "
+"densitat"
+
+#: ../../modules/core/core_qtensor.rst:141
+msgid ""
+":meth:`.expectation_value(operator)<qilisdk.core.qtensor.QTensor.expectation_value>`:"
+" compute the expectation value of an operator on this state"
+msgstr ""
+":meth:`.expectation_value(operator)<qilisdk.core.qtensor.QTensor.expectation_value>`:"
+" calcula el valor esperat d'un operador en aquest estat"
+
+#: ../../modules/core/core_qtensor.rst:142
+msgid ""
 ":meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: "
 "partial trace"
 msgstr ""
 ":meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: traça "
 "parcial"
 
-#: ../../modules/core/core_qtensor.rst:141
+#: ../../modules/core/core_qtensor.rst:143
 msgid ""
 ":meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`:"
 " reset specified qubits to 0"
@@ -346,31 +364,31 @@ msgstr ""
 ":meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`:"
 " restableix els qubits especificats a 0"
 
-#: ../../modules/core/core_qtensor.rst:142
+#: ../../modules/core/core_qtensor.rst:144
 msgid ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias for adjoint"
 msgstr ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: àlies d'adjoint"
 
-#: ../../modules/core/core_qtensor.rst:144
+#: ../../modules/core/core_qtensor.rst:146
 msgid "Examples:"
 msgstr "Exemples:"
 
-#: ../../modules/core/core_qtensor.rst:203
+#: ../../modules/core/core_qtensor.rst:205
 msgid "Extra Utilities"
 msgstr "Utilitats addicionals"
 
-#: ../../modules/core/core_qtensor.rst:205
+#: ../../modules/core/core_qtensor.rst:207
 msgid "**Tensor product** with :func:`~qilisdk.core.qtensor.tensor_prod`"
 msgstr "**Producte tensorial** amb :func:`~qilisdk.core.qtensor.tensor_prod`"
 
-#: ../../modules/core/core_qtensor.rst:206
+#: ../../modules/core/core_qtensor.rst:208
 msgid "**Expectation value** with :func:`~qilisdk.core.qtensor.expect_val`"
 msgstr "**Valor esperat** amb :func:`~qilisdk.core.qtensor.expect_val`"
 
-#: ../../modules/core/core_qtensor.rst:238
+#: ../../modules/core/core_qtensor.rst:240
 msgid "Visualization of Quantum States"
 msgstr "Visualització d'estats quàntics"
 
-#: ../../modules/core/core_qtensor.rst:240
+#: ../../modules/core/core_qtensor.rst:242
 msgid ""
 "You can also visualize single-qubit states on the Bloch sphere using "
 ":meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
@@ -378,7 +396,7 @@ msgstr ""
 "També podeu visualitzar estats d'un sol qubit a l'esfera de Bloch "
 "mitjançant :meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
 
-#: ../../modules/core/core_qtensor.rst:249
+#: ../../modules/core/core_qtensor.rst:251
 msgid ""
 "The appearance of this plot can be customized using a "
 ":class:`~qilisdk.utils.visualization.style.QTensorStyle` object, which "

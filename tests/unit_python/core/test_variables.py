@@ -1572,6 +1572,24 @@ def test_parameter_non_trainable_bounds_are_locked_to_value():
     assert p.bounds == (0.0, 3.0)
 
 
+def test_variable_copy_preserves_precision_and_encoding():
+    x = Variable("x", Domain.REAL, bounds=(1, 2), encoding=Bitwise, precision=1e-1)
+
+    y = copy(x)
+
+    assert y.precision == x.precision
+    assert y.encoding is x.encoding
+    assert y.to_binary() == x.to_binary()
+
+
+def test_bitwise_num_binary_equivalent_with_equal_bounds():
+    x = Variable("x", Domain.INTEGER, bounds=(3, 3), encoding=Bitwise)
+
+    assert x.num_binary_equivalent() == 1
+    # The single binary variable has a zero coefficient, so only the offset survives.
+    assert x.to_binary().get_constant() == 3
+
+
 # ---------------------------------------------------------------------------
 # Regression tests for evaluation through deeply nested expressions.
 # ---------------------------------------------------------------------------

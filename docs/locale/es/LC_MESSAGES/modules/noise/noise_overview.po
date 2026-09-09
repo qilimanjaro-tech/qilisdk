@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-18 11:56+0200\n"
+"POT-Creation-Date: 2026-08-28 14:44+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -68,8 +68,8 @@ msgid "✔"
 msgstr "✔"
 
 #: ../../modules/noise/noise_overview.rst:18
-msgid ":class:`~qilisdk.backends.cuda_backend.CudaBackend`"
-msgstr ":class:`~qilisdk.backends.cuda_backend.CudaBackend`"
+msgid ":class:`~qilisdk.backends.cudaq_backend.CudaqBackend`"
+msgstr ":class:`~qilisdk.backends.cudaq_backend.CudaqBackend`"
 
 #: ../../modules/noise/noise_overview.rst:20
 msgid ":class:`~qilisdk.backends.qutip_backend.QutipBackend`"
@@ -173,21 +173,24 @@ msgstr "Aspectos a tener en cuenta"
 
 #: ../../modules/noise/noise_overview.rst:93
 msgid "Global noise acts on all qubits for all gates, including controls."
-msgstr "El ruido global actúa sobre todos los cúbits para todas las puertas, "
+msgstr ""
+"El ruido global actúa sobre todos los cúbits para todas las puertas, "
 "incluidos los controles."
 
 #: ../../modules/noise/noise_overview.rst:94
 msgid ""
 "Gate noise applies to all qubits that a gate acts on, so if you put noise"
 " on a CNOT, it will apply to both the controls and the targets."
-msgstr "El ruido de puerta se aplica a todos los cúbits sobre los que actúa la puerta, "
-"así que si pone ruido en una CNOT, se aplicará tanto a los controles como a "
-"los objetivos."
+msgstr ""
+"El ruido de puerta se aplica a todos los cúbits sobre los que actúa la "
+"puerta, así que si pone ruido en una CNOT, se aplicará tanto a los "
+"controles como a los objetivos."
 
 #: ../../modules/noise/noise_overview.rst:95
 msgid ""
 "Noise applied to a specific qubit will only ever target that qubit, even "
 "if the gate applying the noise acts on multiple qubits."
-msgstr "El ruido aplicado a un cúbit concreto solo afectará a ese cúbit, aunque la "
-"puerta que aplica el ruido actúe sobre varios cúbits."
+msgstr ""
+"El ruido aplicado a un cúbit concreto solo afectará a ese cúbit, aunque "
+"la puerta que aplica el ruido actúe sobre varios cúbits."
 

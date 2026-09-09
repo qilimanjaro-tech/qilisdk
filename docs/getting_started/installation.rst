@@ -13,10 +13,10 @@ QiliSDK and its optional extras are distributed via PyPI. Use pip to install the
 
 .. NOTE::
     On macOS the default shell is ``zsh``, which treats square brackets as a globbing pattern,
-    so the extras must be quoted (``pip install "qilisdk[qutip]"``). Select your operating system
+    so the extras must be quoted (``pip install "qilisdk[cuda12]"``). Select your operating system
     in the tabs below to get the right command.
 
-- **CUDA acceleration** (NVIDIA GPU support with :mod:`~qilisdk.backends.cuda_backend.CudaBackend`):
+- **CUDA acceleration** (NVIDIA GPU support for :mod:`~qilisdk.backends.qilisim.QiliSim`):
 
   .. tabs::
 
@@ -24,45 +24,23 @@ QiliSDK and its optional extras are distributed via PyPI. Use pip to install the
 
           .. code-block:: bash
 
-              pip install qilisdk[cuda]
+              pip install qilisdk[cuda12]
 
       .. group-tab:: Mac OSX
 
           .. code-block:: bash
 
-              pip install "qilisdk[cuda]"
+              pip install "qilisdk[cuda12]"
 
       .. group-tab:: Windows
 
           .. code-block:: bash
 
-              pip install qilisdk[cuda]
+              pip install qilisdk[cuda12]
 
 .. NOTE::
-    The CUDA backend requires a CUDA accelerated GPU to be available on your system and proper drivers to be installed.
-    More information can be found on their official website: https://nvidia.github.io/cuda-quantum/latest/using/quick_start.html#install-cuda-q
-
-- **Qutip CPU backend** (CPU simulation with :mod:`~qilisdk.backends.qutip_backend.QutipBackend`):
-
-  .. tabs::
-
-      .. group-tab:: Linux
-
-          .. code-block:: bash
-
-              pip install qilisdk[qutip]
-
-      .. group-tab:: Mac OSX
-
-          .. code-block:: bash
-
-              pip install "qilisdk[qutip]"
-
-      .. group-tab:: Windows
-
-          .. code-block:: bash
-
-              pip install qilisdk[qutip]
+    Use the ``cuda13`` extra instead if your drivers are on CUDA 13. Either way a CUDA accelerated GPU
+    must be available on your system with proper drivers installed.
 
 - **SpeQtrum** (cloud submission via :class:`~qilisdk.speqtrum`):
 
@@ -94,19 +72,33 @@ You can combine extras:
 
         .. code-block:: bash
 
-            pip install qilisdk[cuda,qutip,speqtrum]
+            pip install qilisdk[cuda12,speqtrum]
 
     .. group-tab:: Mac OSX
 
         .. code-block:: bash
 
-            pip install "qilisdk[cuda,qutip,speqtrum]"
+            pip install "qilisdk[cuda12,speqtrum]"
 
     .. group-tab:: Windows
 
         .. code-block:: bash
 
-            pip install qilisdk[cuda,qutip,speqtrum]
+            pip install qilisdk[cuda12,speqtrum]
+
+**Optional backends**
+
+:mod:`~qilisdk.backends.cudaq_backend.CudaqBackend` and :mod:`~qilisdk.backends.qutip_backend.QutipBackend`
+run on third-party frameworks that QiliSDK does not distribute, so they are not covered by any extra.
+Install the framework yourself and the backend becomes available:
+
+.. code-block:: bash
+
+    pip install "cuda-quantum-cu12>=0.14.0"       # or cuda-quantum-cu13, for CudaqBackend
+    pip install "qutip>=5.2.2" "qutip-qip>=0.4.0"  # for QutipBackend
+
+QiliSDK checks the installed version when the backend is first used, and tells you what it
+found if it is too old.
 
 .. NOTE::
 
@@ -224,7 +216,7 @@ If you want to install with extras, you can run the following, adjusting as need
 
 .. code-block:: bash
 
-    uv sync --extra cuda13 --extra qutip --extra speqtrum
+    uv sync --extra cuda13 --extra speqtrum --group backends
     
 There are also a number of extra compile flags that can be set to enable/disable certain features:
 

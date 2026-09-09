@@ -289,6 +289,11 @@ if (DEFINED tests AND tests STREQUAL "ON")
         target_link_libraries(test_cpp PRIVATE ${module})
     endforeach()
 
+    # Needed so tests can vary the thread count and check that results do not depend on it
+    if (OpenMP_CXX_FOUND)
+        target_link_libraries(test_cpp PRIVATE OpenMP::OpenMP_CXX)
+    endif()
+
     # Google test discovery
     include(GoogleTest)
     gtest_discover_tests(test_cpp)
