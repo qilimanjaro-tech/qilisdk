@@ -17,6 +17,7 @@ from loguru import logger
 
 from qilisdk.core import Parameter
 from qilisdk.core.parameterizable import Parameterizable
+from qilisdk.core.qtensor import InitialState, QTensor
 from qilisdk.digital.circuit import Circuit
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.functional_result import FunctionalResult
@@ -30,6 +31,10 @@ class DigitalPropagation(PrimitiveFunctional):
 
     The circuit is executed and results are returned based on the :class:`~qilisdk.readout.Readout`
     passed to :meth:`~qilisdk.backends.Backend.execute`.
+
+    Note:
+        ``initial_state`` is only used by simulator backends. When the functional is executed on
+        hardware, the initial state is ignored and the circuit is propagated from the zero state.
 
     Example:
         .. code-block:: python
@@ -47,12 +52,19 @@ class DigitalPropagation(PrimitiveFunctional):
 
     result_type: ClassVar[type[FunctionalResult]] = FunctionalResult
 
-    def __init__(self, circuit: Circuit) -> None:
+    def __init__(
+        self,
+        circuit: Circuit,
+        initial_state: QTensor | InitialState = InitialState.ZERO,
+    ) -> None:
         """
         Args:
             circuit (Circuit): Circuit to propagate.
+            initial_state (QTensor | InitialState): Quantum state used as the simulation starting point.
+                Ignored when the functional is executed on hardware.
         """
         super().__init__()
+        self.initial_state = initial_state
         self.circuit = circuit
         logger.debug("[DigitalPropagation] Created DigitalPropagation over circuit with {} qubits", circuit.nqubits)
 
@@ -65,7 +77,7 @@ class DigitalPropagation(PrimitiveFunctional):
         yield self.circuit
 
     def __repr__(self) -> str:
-        return f"DigitalPropagation(circuit={self.circuit})"
+        return f"DigitalPropagation(circuit={self.circuit}, initial_state={self.initial_state})"
 
     def set_parameter_values(
         self,
