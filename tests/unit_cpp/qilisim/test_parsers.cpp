@@ -1888,6 +1888,59 @@ _traj_ro_qt = [ExpectationReadout(observables=[QTensor(sp.csr_matrix(np.array([[
     EXPECT_NEAR(averaged[0], reference[0], 1e-12);
 }
 
+TEST(ConstructResultsTrajectories, ExpectationWithShotsIsSampled) {
+    py::gil_scoped_acquire gil;
+    // The identity term of the second observable carries no shot noise, so only the X(0) term of it
+    // is sampled; the Z(0) term of the first observable is sampled on its own.
+    py::exec(R"(
+from qilisdk.readout import ExpectationReadout
+from qilisdk.analog.hamiltonian import Z, X
+_traj_ro_exp_shots = [ExpectationReadout(observables=[Z(0), 0.5 * X(0) + 2.0 * X(0) * X(0)], nshots=8)]
+_traj_ro_exp_exact = [ExpectationReadout(observables=[Z(0), 0.5 * X(0) + 2.0 * X(0) * X(0)])]
+    )");
+    py::list readout_shots = py::globals()["_traj_ro_exp_shots"].cast<py::list>();
+    py::list readout_exact = py::globals()["_traj_ro_exp_exact"].cast<py::list>();
+
+    DenseMatrix trajectories = two_qubit_trajectories();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true, true};
+
+    std::vector<double> sampled = expectations_of(construct_result_object(trajectories, readout_shots, noise_model_cpp, 2, config, qubits_to_measure, true));
+    std::vector<double> exact = expectations_of(construct_result_object(trajectories, readout_exact, noise_model_cpp, 2, config, qubits_to_measure, true));
+    ASSERT_EQ(sampled.size(), 2u);
+
+    // An eight shot average of +-1 outcomes can only take the values (2 k - 8) / 8
+    EXPECT_NE(sampled[0], exact[0]);
+    EXPECT_NEAR(8.0 * (sampled[0] + 1.0) / 2.0, std::round(8.0 * (sampled[0] + 1.0) / 2.0), 1e-9);
+
+    // The identity term contributes its coefficient exactly, the X(0) term is sampled
+    double x_term = (sampled[1] - 2.0) / 0.5;
+    EXPECT_NEAR(8.0 * (x_term + 1.0) / 2.0, std::round(8.0 * (x_term + 1.0) / 2.0), 1e-9);
+}
+
+TEST(ConstructResultsTrajectories, ExpectationOfQTensorObservableWithShotsIsSampled) {
+    py::gil_scoped_acquire gil;
+    // A QTensor observable cannot be measured term by term, so the shot noise is applied on the
+    // ensemble density matrix instead; the outcomes are still the +-1 eigenvalues of the observable.
+    py::exec(R"(
+from qilisdk.readout import ExpectationReadout
+from qilisdk.core.qtensor import QTensor
+import numpy as np, scipy.sparse as sp
+_traj_ro_qt_shots = [ExpectationReadout(observables=[QTensor(sp.csr_matrix(np.array([[1.0, 0.0], [0.0, -1.0]], dtype=complex)))], nshots=8)]
+    )");
+    py::list readout = py::globals()["_traj_ro_qt_shots"].cast<py::list>();
+
+    DenseMatrix trajectories = two_qubit_trajectories();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true, true};
+
+    std::vector<double> sampled = expectations_of(construct_result_object(trajectories, readout, noise_model_cpp, 2, config, qubits_to_measure, true));
+    ASSERT_EQ(sampled.size(), 1u);
+    EXPECT_NEAR(8.0 * (sampled[0] + 1.0) / 2.0, std::round(8.0 * (sampled[0] + 1.0) / 2.0), 1e-9);
+}
+
 TEST(ConstructResultsTrajectories, ImaginaryExpectationValueThrows) {
     py::gil_scoped_acquire gil;
     // The raising operator is not Hermitian, so its expectation value over this ensemble has a
@@ -2248,6 +2301,31 @@ TEST(ConstructResultsStabilizer, ExpectationReadout_Succeeds) {
     QiliSimConfig config;
     std::vector<bool> qubits_to_measure = {true};
     EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); });
+}
+
+TEST(ConstructResultsStabilizer, ExpectationReadoutWithShotsIsSampled) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ExpectationReadout
+        from qilisdk.analog.hamiltonian import X, Z
+        _stab_ro_exp_shots = [ExpectationReadout(observables=[X(0), Z(0)], nshots=7)]
+    )");
+    // |0> has <X(0)> = 0, so seven shots give a quantised estimate rather than the exact zero, while
+    // <Z(0)> = 1 is deterministic and stays exact however few shots are taken.
+    StabilizerStateSum state(1);
+    py::list readout = py::globals()["_stab_ro_exp_shots"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+
+    py::object result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure);
+    py::list values = result.attr("expectation_values").attr("expectation_values").cast<py::list>();
+    ASSERT_EQ(values.size(), 2u);
+
+    double x_value = values[0].cast<Complex>().real();
+    EXPECT_NE(x_value, 0.0);
+    EXPECT_NEAR(7.0 * (x_value + 1.0) / 2.0, std::round(7.0 * (x_value + 1.0) / 2.0), 1e-9);
+    EXPECT_NEAR(values[1].cast<Complex>().real(), 1.0, 1e-12);
 }
 
 TEST(ConstructResultsStabilizer, StateTomographyReadoutExact_Succeeds) {
