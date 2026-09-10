@@ -695,8 +695,8 @@ class MatplotlibCircuitRenderer:
             self.axes.set_title(
                 self.style.title,
                 pad=10,
-                color=self.style.theme.surface_muted,
-                fontdict={"fontsize": self.style.fontsize},
+                color=self.style.theme.on_background,
+                fontproperties=self.style.font,
             )
 
         # In IPython keep figure square so equal aspect ratio does not shrink
