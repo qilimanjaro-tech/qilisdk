@@ -63,7 +63,7 @@ py::object construct_result_object(const StabilizerStateSum& state, const py::ob
             }
             results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples_py, "qubits_to_measure"_a = qubits_to_measure_list, "nqubits"_a = n_qubits, "expand_samples"_a = expand_samples));
         } else if (py::isinstance(ro, ExpectationReadout)) {
-            std::vector<std::complex<double>> expectations;
+            std::vector<double> expectations;
             // parse the observables for which we need to compute the expectation values
             std::vector<MatrixFreeHamiltonian> observables = parse_observables_matrix_free(n_qubits, ro.attr("observables"));
             for (const auto& obs : observables) {
@@ -194,7 +194,7 @@ py::object construct_result_object(const ExponentialAnsatz& state, const py::obj
     for (py::handle ro_handle : readout) {
         py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
         if (py::isinstance(ro, ExpectationReadout)) {
-            std::vector<Complex> expectations;
+            std::vector<double> expectations;
             // parse the observables for which we need to compute the expectation values
             std::vector<MatrixFreeHamiltonian> observables = parse_observables_matrix_free(n_qubits, ro.attr("observables"));
             for (const auto& obs : observables) {
