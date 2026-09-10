@@ -82,12 +82,21 @@ class MatplotlibQTensorRenderer:
         rotation_style = self.style.rotation_style
         figure_title = self.style.title or "Bloch Sphere Visualization"
         draw_center_circle = self.style.draw_center_circle
+        centre_circle_color = self.style.centre_circle_color
+        theme = self.style.theme
+        font = self.style.font
 
         # Better mouse rotation style
         mpl.rcParams["axes3d.mouserotationstyle"] = rotation_style
 
         # Set up the plot
         ax = self.axes
+
+        # Paint the canvas with the theme before drawing on it
+        ax.set_facecolor(theme.background)
+        if isinstance(ax.figure, Figure):
+            ax.figure.set_facecolor(theme.background)
+
         u = np.linspace(0, 2 * np.pi, sphere_points)
         v = np.linspace(0, np.pi, sphere_points)
         x = np.outer(np.cos(u), np.sin(v))
@@ -97,10 +106,10 @@ class MatplotlibQTensorRenderer:
         ax.set_xlim([-1, 1])
         ax.set_ylim([-1, 1])
         ax.set_zlim([-1, 1])
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
-        ax.set_title(figure_title)
+        ax.set_xlabel("X", color=theme.on_background, fontproperties=font)
+        ax.set_ylabel("Y", color=theme.on_background, fontproperties=font)
+        ax.set_zlabel("Z", color=theme.on_background, fontproperties=font)
+        ax.set_title(figure_title, color=theme.on_background, fontproperties=font)
         ax.xaxis.set_major_locator(plt.MaxNLocator(5))
         ax.yaxis.set_major_locator(plt.MaxNLocator(5))
         ax.zaxis.set_major_locator(plt.MaxNLocator(5))
@@ -117,12 +126,24 @@ class MatplotlibQTensorRenderer:
 
         # Draw some key points for reference
         if draw_reference_points:
-            ax.text(0, 0, reference_point_distance, "|0⟩", fontsize=font_size, ha="center")
-            ax.text(0, 0, -reference_point_distance, "|1⟩", fontsize=font_size, ha="center")
-            ax.text(reference_point_distance, 0, 0, "|+⟩", fontsize=font_size, ha="center")
-            ax.text(-reference_point_distance, 0, 0, "|-⟩", fontsize=font_size, ha="center")
-            ax.text(0, reference_point_distance, 0, "|+i⟩", fontsize=font_size, ha="center")
-            ax.text(0, -reference_point_distance, 0, "|-i⟩", fontsize=font_size, ha="center")
+            d = reference_point_distance
+            for x_ref, y_ref, z_ref, label in (
+                (0, 0, d, "|0⟩"),
+                (0, 0, -d, "|1⟩"),
+                (d, 0, 0, "|+⟩"),
+                (-d, 0, 0, "|-⟩"),
+                (0, d, 0, "|+i⟩"),
+                (0, -d, 0, "|-i⟩"),
+            ):
+                ax.text(
+                    x_ref,
+                    y_ref,
+                    z_ref,
+                    label,
+                    fontsize=font_size,
+                    ha="center",
+                    color=theme.on_background,
+                )
 
         # Draw a circle around the centre
         if draw_center_circle:
@@ -131,7 +152,7 @@ class MatplotlibQTensorRenderer:
             x = radius * np.cos(u)
             y = radius * np.sin(u)
             z = np.zeros_like(x)
-            ax.plot(x, y, z, color="b", linestyle="--", alpha=0.5)
+            ax.plot(x, y, z, color=centre_circle_color, linestyle="--", alpha=0.5)
 
         # Hide the axes
         ax.set_axis_off()

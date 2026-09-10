@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from matplotlib import font_manager as fm
+from matplotlib.colors import to_hex, to_rgb
 from matplotlib.text import Text
 from matplotlib.transforms import Bbox
 
@@ -36,7 +37,7 @@ from qilisdk.utils.visualization.hamiltonian_renderers import MatplotlibHamilton
 from qilisdk.utils.visualization.qtensor_renderers import MatplotlibQTensorRenderer
 from qilisdk.utils.visualization.schedule_renderers import MatplotlibEigenvalueRenderer, MatplotlibScheduleRenderer
 from qilisdk.utils.visualization.style import CircuitStyle, HamiltonianStyle, QTensorStyle, ScheduleStyle
-from qilisdk.utils.visualization.themes import dark
+from qilisdk.utils.visualization.themes import dark, light
 
 
 def mock_show():
@@ -709,3 +710,126 @@ def test_hamiltonian_renderer_separate_colorbar_texts_do_not_overlap(no_plot):
         overlap = Bbox.intersection(first, second)
         # A one-pixel touch is fine, real overlap is not.
         assert overlap is None or overlap.width * overlap.height < 1.0
+
+
+###############################################################################
+# Style options must actually reach the artists
+###############################################################################
+
+
+@pytest.fixture
+def no_plot_anywhere(monkeypatch):
+    for module in (
+        qilisdk.utils.visualization.circuit_renderers,
+        qilisdk.utils.visualization.hamiltonian_renderers,
+        qilisdk.utils.visualization.qtensor_renderers,
+        qilisdk.utils.visualization.schedule_renderers,
+    ):
+        monkeypatch.setattr(module.plt, "show", mock_show)
+        monkeypatch.setattr(module.plt, "draw", mock_show)
+        monkeypatch.setattr(module.plt.Figure, "savefig", mock_save)
+
+
+def _relative_luminance(color) -> float:
+    """WCAG relative luminance of a matplotlib colour."""
+    channels = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in to_rgb(color)[:3]]
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
+
+
+def _contrast_ratio(first, second) -> float:
+    """WCAG contrast ratio between two matplotlib colours (1 = identical, 21 = black on white)."""
+    lighter, darker = sorted((_relative_luminance(first), _relative_luminance(second)), reverse=True)
+    return (lighter + 0.05) / (darker + 0.05)
+
+
+@pytest.mark.parametrize("theme", [light, dark])
+@pytest.mark.parametrize(
+    ("foreground", "background"),
+    [
+        ("on_background", "background"),
+        ("on_surface", "surface"),
+        ("on_primary", "primary"),
+        ("on_accent", "accent"),
+    ],
+)
+def test_theme_foreground_colors_are_readable(theme, foreground, background):
+    # Every on_* colour has to stand out against the surface it is drawn on.
+    ratio = _contrast_ratio(getattr(theme, foreground), getattr(theme, background))
+    assert ratio >= 4.5, f"{foreground} on {background} only reaches a contrast ratio of {ratio:.2f}"
+
+
+@pytest.mark.parametrize("theme", [light, dark])
+def test_circuit_renderer_title_is_readable_and_uses_style_font(no_plot_anywhere, theme):
+    renderer = MatplotlibCircuitRenderer(Circuit(2), style=CircuitStyle(title="My Circuit", theme=theme))
+    renderer.plot()
+
+    title = renderer.axes.title
+    assert title.get_text() == "My Circuit"
+    assert to_hex(title.get_color()) == theme.on_background.lower()
+    assert _contrast_ratio(title.get_color(), renderer.axes.figure.get_facecolor()) >= 4.5
+    # The bundled font is used instead of matplotlib's fallback.
+    assert title.get_fontname() == fm.FontProperties(fname=CircuitStyle().fontfname).get_name()
+
+
+def test_circuit_renderer_figure_follows_theme(no_plot_anywhere):
+    renderer = MatplotlibCircuitRenderer(Circuit(1), style=CircuitStyle(theme=dark))
+    renderer.plot()
+    assert to_hex(renderer.axes.figure.get_facecolor()) == dark.background.lower()
+
+
+def test_qtensor_renderer_centre_circle_color_is_used(no_plot_anywhere):
+    renderer = MatplotlibQTensorRenderer(QTensor.ket(0), style=QTensorStyle(centre_circle_color="red"))
+    renderer.plot()
+    dashed = [line for line in renderer.axes.lines if line.get_linestyle() == "--"]
+    assert dashed, "the reference circle should be drawn by default"
+    assert all(to_hex(line.get_color()) == "#ff0000" for line in dashed)
+
+
+@pytest.mark.parametrize("theme", [light, dark])
+def test_qtensor_renderer_follows_theme(no_plot_anywhere, theme):
+    renderer = MatplotlibQTensorRenderer(QTensor.ket(0), style=QTensorStyle(theme=theme))
+    renderer.plot()
+
+    assert to_hex(renderer.axes.figure.get_facecolor()) == theme.background.lower()
+    assert to_hex(renderer.axes.title.get_color()) == theme.on_background.lower()
+    # The |0>, |1>, ... reference labels have to stay visible on the canvas.
+    labels = [text for text in renderer.axes.texts if text.get_text().startswith("|")]
+    assert len(labels) == 6
+    assert all(to_hex(text.get_color()) == theme.on_background.lower() for text in labels)
+
+
+def test_schedule_renderer_tick_color_overrides_theme(no_plot_anywhere):
+    H0 = X(1) + X(0)
+    schedule = Schedule(total_time=10, hamiltonians={"H0": H0}, coefficients={})
+    renderer = MatplotlibScheduleRenderer(schedule=schedule, style=ScheduleStyle(tick_color="red"))
+    renderer.plot()
+
+    ticks = renderer.ax.get_xticklabels() + renderer.ax.get_yticklabels()
+    assert ticks
+    assert all(to_hex(tick.get_color()) == "#ff0000" for tick in ticks)
+
+
+@pytest.mark.parametrize("theme", [light, dark])
+def test_schedule_renderer_tick_color_defaults_to_theme(no_plot_anywhere, theme):
+    H0 = X(1) + X(0)
+    schedule = Schedule(total_time=10, hamiltonians={"H0": H0}, coefficients={})
+    renderer = MatplotlibScheduleRenderer(schedule=schedule, style=ScheduleStyle(theme=theme))
+    renderer.plot()
+
+    assert ScheduleStyle().tick_color is None
+    ticks = renderer.ax.get_xticklabels() + renderer.ax.get_yticklabels()
+    assert all(to_hex(tick.get_color()) == theme.on_background.lower() for tick in ticks)
+
+
+@pytest.mark.parametrize("theme", [light, dark])
+def test_schedule_renderer_legend_text_is_readable_on_its_surface(no_plot_anywhere, theme):
+    H0 = X(1) + X(0)
+    schedule = Schedule(total_time=10, hamiltonians={"H0": H0}, coefficients={"H0": {(0, 10): 1.0}})
+    renderer = MatplotlibScheduleRenderer(schedule=schedule, style=ScheduleStyle(theme=theme))
+    renderer.plot()
+
+    legend = renderer.ax.get_legend()
+    assert legend is not None
+    for text in legend.get_texts():
+        assert to_hex(text.get_color()) == theme.on_surface.lower()
+        assert _contrast_ratio(text.get_color(), theme.surface) >= 4.5

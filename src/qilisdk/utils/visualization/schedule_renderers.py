@@ -52,7 +52,8 @@ class MatplotlibScheduleRenderer:
         label_color = theme.on_background
         legend_facecolor = theme.surface
         legend_edgecolor = theme.border
-        tick_color = theme.on_background
+        legend_text_color = theme.on_surface
+        tick_color = style.tick_color or theme.on_background
 
         # Set axes and figure background to theme
         facecolor = theme.background
@@ -75,7 +76,7 @@ class MatplotlibScheduleRenderer:
         # Set legend text color to match theme text color
         if leg:
             for text in leg.get_texts():
-                text.set_color(title_color)
+                text.set_color(legend_text_color)
         self.ax.set_title(
             self.style.title or "Schedule",
             fontsize=style.title_fontsize,
