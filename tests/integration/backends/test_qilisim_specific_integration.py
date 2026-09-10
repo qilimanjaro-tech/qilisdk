@@ -1139,6 +1139,7 @@ def test_stabilizer_state_tomography_rejects_too_many_qubits():
     circuit.add(H(0))
     readout = Readout().with_state_tomography()
     backend = _stabilizer_backend()
+    propagation = DigitalPropagation(circuit=circuit)
 
     with pytest.raises(ValueError, match="too big to convert to a dense object"):
-        backend.execute(DigitalPropagation(circuit=circuit), readout=readout)
+        backend.execute(propagation, readout=readout)
