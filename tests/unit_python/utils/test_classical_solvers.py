@@ -23,7 +23,6 @@ from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 
 import qilisdk.utils.classical_solvers as classical_solvers
 from qilisdk._optionals import OptionalDependencyError
-
 from qilisdk.core.comparison import EQ
 from qilisdk.core.model import QUBO, Model, ObjectiveSense
 from qilisdk.core.variables import BinaryVariable, Domain, OneHot, SpinVariable, Variable

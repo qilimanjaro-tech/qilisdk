@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any
+from typing import cast
 
 from qilisdk._optionals import (
     DependencyGroup,
@@ -20,6 +20,7 @@ from qilisdk._optionals import (
     OptionalFeature,
     RequirementMode,
     Symbol,
+    _OptionalDependencyStub,
     import_optional_dependencies,
 )
 
@@ -53,7 +54,7 @@ _OPTIONAL_FEATURE_BY_SYMBOL: dict[str, OptionalFeature] = {
 __all__ += list(_OPTIONAL_FEATURE_BY_SYMBOL)
 
 
-def __getattr__(name: str) -> Any:  # ruff: ignore[any-type]
+def __getattr__(name: str) -> type[ClassicalSolver] | _OptionalDependencyStub:
     """Lazily import optional solver symbols on first access (PEP 562).
 
     This runs only when normal attribute lookup on the module fails, i.e. the
@@ -77,7 +78,7 @@ def __getattr__(name: str) -> Any:  # ruff: ignore[any-type]
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
     imported_feature: ImportedFeature = import_optional_dependencies(feature)
     globals().update(imported_feature.symbols)
-    return imported_feature.symbols[name]
+    return cast("type[ClassicalSolver] | _OptionalDependencyStub", imported_feature.symbols[name])
 
 
 def __dir__() -> list[str]:
