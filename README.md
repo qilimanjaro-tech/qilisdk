@@ -142,7 +142,7 @@ ty check
 
 For ease of use there are also a number of scripts in the `scripts/` directory. Each of these generates a .log file with the same name as the script (`checks.sh` generates `checks.log` and so on).
 
-To run all the pre-commit checks (e.g. linting/tests):
+To run all pre-commit checks (e.g. linting/tests):
 ```bash
 bash scripts/checks.sh
 ```
