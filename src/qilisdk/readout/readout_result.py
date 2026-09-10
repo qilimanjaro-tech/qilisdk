@@ -333,8 +333,14 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
     """
 
     @classmethod
-    def from_expectations(cls, expectation_values: list[float], nshots: int | None = None) -> Self:
-        return cls(expectation_values=expectation_values, nshots=nshots)
+    def from_expectations(cls, expectation_values: list[Number], nshots: int | None = None) -> Self:
+        try:
+            real_expectation_values: list[int | float] = [_assert_real(value) for value in expectation_values]
+        except ValueError:
+            raise ValueError(
+                "Encountered an imaginary expectation value while computing the expectation values, try reducing the total tolerance or improving simulation precision."
+            )
+        return cls(expectation_values=real_expectation_values, nshots=nshots)
 
     @classmethod
     def from_state(cls, expectation_readout: ExpectationReadout, state: QTensor) -> Self:
