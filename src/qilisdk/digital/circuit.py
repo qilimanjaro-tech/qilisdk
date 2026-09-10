@@ -27,7 +27,7 @@ from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
-from .exceptions import QubitOutOfRangeError
+from .exceptions import NotAGateError, QubitOutOfRangeError
 from .gates import BasicGate, Gate
 
 if TYPE_CHECKING:
@@ -59,6 +59,30 @@ def _apply_gate_left(operator: np.ndarray, gate: Gate, nqubits: int) -> np.ndarr
     perm = perm_output + list(range(nqubits, 2 * nqubits))
 
     return np.transpose(contracted, axes=perm).reshape(operator.shape)
+
+
+def _reject_analog_object(obj: object) -> None:
+    """Raise a descriptive error if an analog object is used where a gate is expected.
+
+    Importing the analog Paulis (``qilisdk.analog.X`` and friends) instead of the digital gates of
+    the same name is a common mistake, and a :class:`~qilisdk.analog.Hamiltonian` is iterable, so
+    without this check the failure surfaces as an obscure error about tuples.
+
+    Args:
+        obj (object): The object that is being added to the circuit.
+
+    Raises:
+        NotAGateError: If the object is an analog Hamiltonian or Pauli operator.
+    """
+    # Imported here to avoid a circular import between the analog and digital subpackages.
+    from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator  # ruff: ignore[import-outside-top-level]
+
+    if isinstance(obj, (Hamiltonian, PauliOperator)):
+        raise NotAGateError(
+            f"Cannot add a {type(obj).__name__} to a Circuit, only Gate objects can be added. "
+            "This usually means the analog Paulis were imported instead of the digital gates: "
+            "did you mean to import X, Y, Z or I from qilisdk.digital rather than from qilisdk.analog?"
+        )
 
 
 @yaml.register_class
@@ -189,9 +213,11 @@ class Circuit(Parameterizable):
             gate (Gate): The quantum gate or a list of quantum gates to be added to the circuit.
 
         Raises:
+            NotAGateError: If the object to be added is an analog object rather than a gate.
             QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit's qubit range.
         """
         logger.trace("[Circuit] Adding gate: {}", gate)
+        _reject_analog_object(gate)
         if any(qubit < 0 or qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
 
@@ -204,8 +230,12 @@ class Circuit(Parameterizable):
 
         Args:
             gates (Gate | list[Gate]): The quantum gate or a list of quantum gates to be added to the circuit.
+
+        Raises:
+            NotAGateError: If any of the objects to be added is an analog object rather than a gate.
         """
         logger.trace("[Circuit] Adding gates: {}", gates)
+        _reject_analog_object(gates)
         if isinstance(gates, Gate):
             self._add(gates)
             return
@@ -220,8 +250,10 @@ class Circuit(Parameterizable):
             index (int, optional): The index at which the gate is inserted. Defaults to -1.
 
         Raises:
+            NotAGateError: If the object to be inserted is an analog object rather than a gate.
             QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit's qubit range.
         """
+        _reject_analog_object(gate)
         if any(qubit < 0 or qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
 
@@ -235,8 +267,12 @@ class Circuit(Parameterizable):
         Args:
             gates (Gate | list[Gate]): The gate or list of gates to be inserted.
             index (int, optional): The index at which the gate is inserted. Defaults to -1.
+
+        Raises:
+            NotAGateError: If any of the objects to be inserted is an analog object rather than a gate.
         """
         logger.trace("[Circuit] Inserting gates: {} at index: {}", gates, index)
+        _reject_analog_object(gates)
         if isinstance(gates, Gate):
             self._insert(gates, index)
             return
@@ -298,6 +334,7 @@ class Circuit(Parameterizable):
 
     def __add__(self, other: Circuit | Gate) -> Circuit | NotImplementedError:
         logger.trace("[Circuit] Adding {} to circuit.", other)
+        _reject_analog_object(other)
         if not isinstance(other, (Circuit, Gate)):
             return NotImplementedError(
                 "Addition is only supported between Circuit objects or a Circuit and a Gate objects"
@@ -312,6 +349,7 @@ class Circuit(Parameterizable):
 
     def __radd__(self, other: Circuit | Gate) -> Circuit | NotImplementedError:
         logger.trace("[Circuit] Right-adding {} to circuit.", other)
+        _reject_analog_object(other)
         if not isinstance(other, (Circuit, Gate)):
             return NotImplementedError(
                 "Addition is only supported between Circuit objects or a Circuit and a Gate objects"

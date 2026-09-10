@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Callable, Iterator, Mapping, overload
 from loguru import logger
 from numpy import linspace
 
+from qilisdk.analog.exceptions import NotAHamiltonianError
 from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core.expression import Cos, Expression
 from qilisdk.core.interpolator import Interpolation, Interpolator, ParameterizedNumber, TimeDict
@@ -39,6 +40,29 @@ CoeffDict = dict[str, TimeDict]
 InterpDict = dict[str, "Interpolator"]
 
 _DEFAULT_DT = 0.1
+
+
+def _reject_digital_object(obj: object) -> None:
+    """Raise a descriptive error if a digital object is used where a Hamiltonian is expected.
+
+    Importing the digital gates (``qilisdk.digital.X`` and friends) instead of the analog Paulis of
+    the same name is a common mistake.
+
+    Args:
+        obj (object): The object that is being added to the schedule.
+
+    Raises:
+        NotAHamiltonianError: If the object is a digital gate.
+    """
+    # Imported here to avoid a circular import between the analog and digital subpackages.
+    from qilisdk.digital.gates import Gate  # ruff: ignore[import-outside-top-level]
+
+    if isinstance(obj, Gate):
+        raise NotAHamiltonianError(
+            f"Cannot add the gate {type(obj).__name__} to a Schedule, only Hamiltonian objects can be added. "
+            "This usually means the digital gates were imported instead of the analog Paulis: "
+            "did you mean to import X, Y, Z or I from qilisdk.analog rather than from qilisdk.digital?"
+        )
 
 
 @yaml.register_class
@@ -539,6 +563,7 @@ class Schedule(Parameterizable):
         coefficients: Interpolator | TimeDict,
         interpolation: Interpolation = Interpolation.LINEAR,
     ) -> None:
+        _reject_digital_object(hamiltonian)
         if not isinstance(hamiltonian, Hamiltonian):
             raise ValueError(f"Expecting a Hamiltonian object but received {type(hamiltonian)} instead.")
 
@@ -593,6 +618,7 @@ class Schedule(Parameterizable):
         if label not in self._hamiltonians:
             raise ValueError(f"Can't update unknown hamiltonian {label}. Did you mean `add_hamiltonian`?")
         if new_hamiltonian is not None:
+            _reject_digital_object(new_hamiltonian)
             if not isinstance(new_hamiltonian, Hamiltonian):
                 raise ValueError(f"Expecting a Hamiltonian object but received {type(new_hamiltonian)} instead.")
             self._hamiltonians[label] = new_hamiltonian
