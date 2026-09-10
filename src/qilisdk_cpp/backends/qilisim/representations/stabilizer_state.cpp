@@ -1438,7 +1438,7 @@ DenseMatrix StabilizerState::as_dense() const {
         std::invalid_argument: If nqubits is too large for a dense statevector.
     */
     if (nqubits > MAX_QUBITS_DENSE_STABILIZER) {
-        throw std::invalid_argument("Stabilizer state of " + std::to_string(nqubits) + " qubits is too big to convert to a dense object: it would need 2^" + std::to_string(nqubits) + " amplitudes, and at most " + std::to_string(MAX_QUBITS_DENSE_STABILIZER) + " qubits are supported.");
+        throw std::invalid_argument("Stabilizer state of " + std::to_string(nqubits) + " qubits is too big to convert to a dense object.");
     }
     int64_t dim = int64_t(1) << nqubits;
     DenseMatrix result(dim, 1);
@@ -1461,7 +1461,7 @@ DenseMatrix StabilizerStateSum::as_dense() const {
         std::invalid_argument: If nqubits is too large for a dense statevector.
     */
     if (nqubits > MAX_QUBITS_DENSE_STABILIZER) {
-        throw std::invalid_argument("Stabilizer state of " + std::to_string(nqubits) + " qubits is too big to convert to a dense object: it would need 2^" + std::to_string(nqubits) + " amplitudes, and at most " + std::to_string(MAX_QUBITS_DENSE_STABILIZER) + " qubits are supported.");
+        throw std::invalid_argument("Stabilizer state of " + std::to_string(nqubits) + " qubits is too big to convert to a dense object.");
     }
     int64_t dim = int64_t(1) << nqubits;
     DenseMatrix result(dim, 1);
