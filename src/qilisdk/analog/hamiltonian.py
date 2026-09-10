@@ -46,6 +46,9 @@ _GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE = (
     "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
 )
 
+# Name used for this class in the error messages raised for digital objects.
+_REJECT_TARGET = "a Hamiltonian"
+
 
 def _complex_dtype() -> np.dtype:
     return np.dtype(get_settings().complex_precision.dtype)
@@ -1480,7 +1483,7 @@ class Hamiltonian(Parameterizable):
                 self._add_parameter(parameter.label, parameter)
             self._elements[PauliI(0),] += other
         else:
-            _reject_digital_object(other, "a Hamiltonian")
+            _reject_digital_object(other, _REJECT_TARGET)
             raise InvalidHamiltonianOperation(f"Invalid addition between Hamiltonian and {other.__class__.__name__}.")
 
     def _sub_inplace(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> None:
@@ -1501,7 +1504,7 @@ class Hamiltonian(Parameterizable):
                 self._add_parameter(parameter.label, parameter)
             self._elements[PauliI(0),] -= other
         else:
-            _reject_digital_object(other, "a Hamiltonian")
+            _reject_digital_object(other, _REJECT_TARGET)
             raise InvalidHamiltonianOperation(
                 f"Invalid subtraction between Hamiltonian and {other.__class__.__name__}."
             )

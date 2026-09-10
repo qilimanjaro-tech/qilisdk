@@ -44,6 +44,9 @@ if TYPE_CHECKING:
 
 TBasicGate = TypeVar("TBasicGate", bound="BasicGate")
 
+# Name used for this class in the error messages raised for analog objects.
+_REJECT_TARGET = "a Gate"
+
 
 def _complex_dtype() -> np.dtype:
     return get_settings().complex_precision.dtype
@@ -276,7 +279,7 @@ class Gate(Parameterizable, ABC):
             object: ``NotImplemented``, so that the other operand gets a chance to handle the
                 operation (a :class:`~qilisdk.digital.Circuit` prepends the gate, for instance).
         """
-        _reject_analog_object(other, "a Gate")
+        _reject_analog_object(other, _REJECT_TARGET)
         return NotImplemented
 
     __radd__ = __add__
@@ -291,7 +294,7 @@ class Gate(Parameterizable, ABC):
             object: ``NotImplemented``, so that the other operand gets a chance to handle the
                 operation.
         """
-        _reject_analog_object(other, "a Gate")
+        _reject_analog_object(other, _REJECT_TARGET)
         return NotImplemented
 
     __rsub__ = __sub__
