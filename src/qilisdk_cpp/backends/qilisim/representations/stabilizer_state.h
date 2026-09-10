@@ -30,6 +30,9 @@
 
 const int MAX_ROWS_STABILIZER = 1024;
 
+// Largest qubit count that can be expanded into a dense statevector
+const int MAX_QUBITS_DENSE_STABILIZER = 30;
+
 class StabilizerState {
    private:
     std::vector<std::bitset<MAX_ROWS_STABILIZER>> x_bits;
