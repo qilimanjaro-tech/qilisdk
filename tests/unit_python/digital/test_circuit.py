@@ -20,11 +20,14 @@ import numpy as np
 import pytest
 
 import qilisdk.utils.visualization.circuit_renderers
+from qilisdk.analog import X as analog_X
+from qilisdk.analog import Y as analog_Y
+from qilisdk.analog.hamiltonian import PauliX
 from qilisdk.core import Parameter
 from qilisdk.core.comparison import LEQ
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X
+from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X, Y
 from qilisdk.digital.circuit import _apply_gate_left
-from qilisdk.digital.exceptions import GateHasNoMatrixError, QubitOutOfRangeError
+from qilisdk.digital.exceptions import GateHasNoMatrixError, NotAGateError, QubitOutOfRangeError
 from qilisdk.digital.gates import BasicGate, Gate
 
 
@@ -739,3 +742,58 @@ def test_circuit_rejects_out_of_range_qubit(bad_qubit):
     gate = X(bad_qubit)
     with pytest.raises(QubitOutOfRangeError):
         circuit.add(gate)
+
+
+def test_circuit_add_analog_hamiltonian_raises_helpful_error():
+    """Adding an analog Hamiltonian to a circuit points at the analog/digital import mixup."""
+    circuit = Circuit(1)
+    hamiltonian = analog_X(0)
+    with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        circuit.add(hamiltonian)
+
+
+def test_circuit_add_analog_pauli_operator_raises_helpful_error():
+    """Adding a bare analog Pauli operator to a circuit gives the same guidance."""
+    circuit = Circuit(1)
+    pauli = PauliX(0)
+    with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        circuit.add(pauli)
+
+
+def test_circuit_insert_analog_hamiltonian_raises_helpful_error():
+    """Inserting an analog Hamiltonian into a circuit points at the analog/digital import mixup."""
+    circuit = Circuit(1)
+    hamiltonian = analog_X(0)
+    with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        circuit.insert(hamiltonian, 0)
+
+
+def test_circuit_add_operator_with_analog_hamiltonian_raises_helpful_error():
+    """The ``+`` operator rejects analog Hamiltonians with the same guidance."""
+    circuit = Circuit(1)
+    hamiltonian = analog_X(0)
+    with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        circuit += hamiltonian
+
+
+def test_gate_plus_gate_is_not_supported():
+    """Gates do not support arithmetic, so adding two of them raises the usual TypeError."""
+    first, second = X(0), Y(0)
+    with pytest.raises(TypeError, match="unsupported operand type"):
+        _ = first + second
+
+
+def test_gate_plus_analog_hamiltonian_raises_helpful_error():
+    """Adding an analog Hamiltonian to a digital gate points at the import mixup."""
+    gate = X(0)
+    hamiltonian = analog_Y(0)
+    with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        _ = gate + hamiltonian
+
+
+def test_gate_still_supports_addition_with_a_circuit():
+    """Rejecting gate arithmetic does not break prepending a gate to a circuit."""
+    circuit = Circuit(1)
+    circuit.add(X(0))
+    result = Y(0) + circuit
+    assert result.gates == [Y(0), X(0)]

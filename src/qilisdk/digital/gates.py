@@ -33,6 +33,7 @@ from .exceptions import (
     GateHasNoMatrixError,
     GateNotParameterizedError,
     InvalidParameterNameError,
+    NotAGateError,
     ParametersNotEqualError,
 )
 
@@ -43,9 +44,37 @@ if TYPE_CHECKING:
 
 TBasicGate = TypeVar("TBasicGate", bound="BasicGate")
 
+# Name used for this class in the error messages raised for analog objects.
+_REJECT_TARGET = "a Gate"
+
 
 def _complex_dtype() -> np.dtype:
     return get_settings().complex_precision.dtype
+
+
+def _reject_analog_object(obj: object, target: str) -> None:
+    """Raise a descriptive error if an analog object is used where a gate is expected.
+
+    Importing the analog Paulis (``qilisdk.analog.X`` and friends) instead of the digital gates of
+    the same name is a common mistake, and a :class:`~qilisdk.analog.Hamiltonian` is iterable, so
+    without this check the failure surfaces as an obscure error about tuples.
+
+    Args:
+        obj (object): The object that is being combined with the digital object.
+        target (str): The digital object being combined with, used in the error message.
+
+    Raises:
+        NotAGateError: If the object is an analog Hamiltonian or Pauli operator.
+    """
+    # Imported here to avoid a circular import between the analog and digital subpackages.
+    from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator  # ruff: ignore[import-outside-top-level]
+
+    if isinstance(obj, (Hamiltonian, PauliOperator)):
+        raise NotAGateError(
+            f"Cannot use the analog {type(obj).__name__} with {target}, only Gate objects are supported. "
+            "This usually means the analog Paulis were imported instead of the digital gates: "
+            "did you mean to import X, Y, Z or I from qilisdk.digital rather than from qilisdk.analog?"
+        )
 
 
 class Gate(Parameterizable, ABC):
@@ -239,6 +268,36 @@ class Gate(Parameterizable, ABC):
         if not self.is_parameterized:
             raise GateNotParameterizedError
         super().set_parameter_bounds(ranges=ranges)
+
+    def __add__(self, other: object) -> object:
+        """Reject analog operands, leaving every other operand to handle the operation itself.
+
+        Args:
+            other (object): The object the gate is being added to.
+
+        Returns:
+            object: ``NotImplemented``, so that the other operand gets a chance to handle the
+                operation (a :class:`~qilisdk.digital.Circuit` prepends the gate, for instance).
+        """
+        _reject_analog_object(other, _REJECT_TARGET)
+        return NotImplemented
+
+    __radd__ = __add__
+
+    def __sub__(self, other: object) -> object:
+        """Reject analog operands, leaving every other operand to handle the operation itself.
+
+        Args:
+            other (object): The object being subtracted from the gate.
+
+        Returns:
+            object: ``NotImplemented``, so that the other operand gets a chance to handle the
+                operation.
+        """
+        _reject_analog_object(other, _REJECT_TARGET)
+        return NotImplemented
+
+    __rsub__ = __sub__
 
     def __repr__(self) -> str:
         qubits_str = f"{self.qubits[0]}" if self.nqubits == 1 else str(self.qubits).replace("(", "").replace(")", "")

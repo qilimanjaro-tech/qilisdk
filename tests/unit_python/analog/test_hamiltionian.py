@@ -18,7 +18,7 @@ from typing import ClassVar
 import numpy as np
 import pytest
 
-from qilisdk.analog.exceptions import InvalidHamiltonianOperation
+from qilisdk.analog.exceptions import InvalidHamiltonianOperation, NotAHamiltonianError
 from qilisdk.analog.hamiltonian import (
     Hamiltonian,
     I,
@@ -33,6 +33,7 @@ from qilisdk.analog.hamiltonian import (
 )
 from qilisdk.core import Domain, Parameter, QTensor, Variable
 from qilisdk.core.variables import BinaryVariable
+from qilisdk.digital import X as digital_X
 from qilisdk.settings import Precision, get_settings
 
 COMPLEX_DTYPE = get_settings().complex_precision.dtype
@@ -1253,3 +1254,27 @@ def test_hamiltonian_draw(monkeypatch):
     calls.clear()
     H.draw(filepath="dummy_path.png")
     assert calls == ["init", "plot", "save"]
+
+
+def test_hamiltonian_plus_digital_gate_raises_helpful_error():
+    """Adding a digital gate to a Hamiltonian points at the analog/digital import mixup."""
+    hamiltonian = X(0)
+    gate = digital_X(0)
+    with pytest.raises(NotAHamiltonianError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        _ = hamiltonian + gate
+
+
+def test_hamiltonian_minus_digital_gate_raises_helpful_error():
+    """Subtracting a digital gate from a Hamiltonian gives the same guidance."""
+    hamiltonian = X(0)
+    gate = digital_X(0)
+    with pytest.raises(NotAHamiltonianError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        _ = hamiltonian - gate
+
+
+def test_pauli_operator_plus_digital_gate_raises_helpful_error():
+    """Adding a digital gate to a bare Pauli operator gives the same guidance."""
+    pauli = PauliX(0)
+    gate = digital_X(0)
+    with pytest.raises(NotAHamiltonianError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        _ = pauli + gate
