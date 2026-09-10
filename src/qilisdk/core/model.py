@@ -40,6 +40,7 @@ _QUBO_SUPPORTED_DOMAINS = {Domain.BINARY, Domain.POSITIVE_INTEGER, Domain.INTEGE
 # Upper limit on the number of binary variables a single variable may be expanded into
 _MAX_BINARY_VARS = 64
 
+
 def _validate_undirected_edges(edges: list[tuple[int, int]]) -> None:
     """Validate that ``edges`` describes a simple undirected graph.
 

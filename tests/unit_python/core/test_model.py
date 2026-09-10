@@ -1648,7 +1648,7 @@ def test_to_qubo_mixes_binary_and_shifted_integer_variables():
     assert {v.label for v in x.bin_vars} <= labels
 
 
-@pytest.mark.parametrize("domain", [Domain.INTEGER, Domain.POSITIVE_INTEGER, Domain.REAL])
+@pytest.mark.parametrize("domain", [Domain.INTEGER, Domain.REAL])
 def test_check_variables_rejects_unbounded_variables(domain):
     q = QUBO("test")
     x = Variable("x", domain)
@@ -1658,9 +1658,21 @@ def test_check_variables_rejects_unbounded_variables(domain):
         q._check_variables(con)
 
 
+def test_check_variables_accepts_an_unbounded_positive_integer():
+    """An unbounded positive integer defaults to (0, 2**63 - 1), which Bitwise encodes in exactly
+    the maximum number of binary variables, so it sits right on the limit rather than over it."""
+    q = QUBO("test")
+    x = Variable("x", Domain.POSITIVE_INTEGER)
+
+    q._check_variables(EQ(x, 1))
+
+    assert x.num_binary_equivalent() == model_module._MAX_BINARY_VARS
+    assert "x" in q.continuous_vars
+
+
 def test_check_variables_rejects_real_variable_whose_precision_is_too_fine():
     q = QUBO("test")
-    x = Variable("x", Domain.REAL, bounds=(0, 1), precision=1e-15)
+    x = Variable("x", Domain.REAL, bounds=(0, 1), precision=1e-25)
 
     con = EQ(x, 1)
     with pytest.raises(ValueError, match=r"Variable x expands into too many binary variables"):
