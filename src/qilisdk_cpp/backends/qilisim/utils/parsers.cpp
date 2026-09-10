@@ -116,7 +116,7 @@ py::object construct_result_object(const MPSState& state, const py::object& read
         if (py::isinstance(ro, SamplingReadout)) {
             int nshots = ro.attr("nshots").cast<int>();
             bool expand_samples = ro.attr("expand_samples").cast<bool>();
-            std::map<std::string, int> counts = filter_counts(apply_readout_error(state.sample(nshots), noise_model_cpp, n_qubits), qubits_to_measure);
+            std::map<std::string, int> counts = filter_counts(apply_readout_error(state.sample(nshots), noise_model_cpp, n_qubits, config.next_seed()), qubits_to_measure);
             py::dict samples_py;
             for (const auto& pair : counts) {
                 samples_py[py::cast(pair.first)] = py::cast(pair.second);
