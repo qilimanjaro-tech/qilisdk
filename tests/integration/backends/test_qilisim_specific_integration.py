@@ -1183,8 +1183,10 @@ def test_stabilizer_expectation_values_are_reproducible_with_shots():
         result = _stabilizer_backend(seed=seed).execute(DigitalPropagation(circuit=circuit), readout=readout)
         return complex(result.get_expectation_values()[0]).real
 
-    assert _run(7) == _run(7)
-    assert any(_run(7) != _run(seed) for seed in range(8, 20))
+    sampled = _run(7)
+    repeated = _run(7)
+    assert repeated == sampled
+    assert any(_run(seed) != sampled for seed in range(8, 20))
 
 
 def test_stabilizer_seed_reproducibility():
