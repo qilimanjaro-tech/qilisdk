@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
+from typing import Any
 
 from qilisdk._optionals import (
     DependencyGroup,
@@ -45,9 +45,41 @@ OPTIONAL_FEATURES: list[OptionalFeature] = [
         symbols=[Symbol(path="qilisdk.utils.classical_solvers.scip_solver", name="ScipSolver")],
     ),
 ]
-current_module = sys.modules[__name__]
-for feature in OPTIONAL_FEATURES:
+
+_OPTIONAL_FEATURE_BY_SYMBOL: dict[str, OptionalFeature] = {
+    symbol.name: feature for feature in OPTIONAL_FEATURES for symbol in feature.symbols
+}
+
+__all__ += list(_OPTIONAL_FEATURE_BY_SYMBOL)
+
+
+def __getattr__(name: str) -> Any:  # ruff: ignore[any-type]
+    """Lazily import optional solver symbols on first access (PEP 562).
+
+    This runs only when normal attribute lookup on the module fails, i.e. the
+    first time ``name`` is requested. It resolves the whole owning feature, caches
+    every resolved symbol as a real module attribute so subsequent accesses skip
+    this hook, and returns the requested symbol (or a stub raising
+    ``OptionalDependencyError`` if the optional dependency is not installed).
+
+    Args:
+        name: The attribute being accessed on the ``qilisdk.utils.classical_solvers`` module.
+
+    Returns:
+        The imported symbol, or a stub that raises on use when the optional
+        dependency is missing.
+
+    Raises:
+        AttributeError: If ``name`` is not an optional solver symbol.
+    """
+    feature = _OPTIONAL_FEATURE_BY_SYMBOL.get(name)
+    if feature is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
     imported_feature: ImportedFeature = import_optional_dependencies(feature)
-    for symbol_name, symbol_obj in imported_feature.symbols.items():
-        setattr(current_module, symbol_name, symbol_obj)
-        __all__ += [symbol_name]  # ruff: ignore[invalid-all-object]
+    globals().update(imported_feature.symbols)
+    return imported_feature.symbols[name]
+
+
+def __dir__() -> list[str]:
+    """Return the module's public attributes, including lazily-imported symbols."""
+    return sorted(__all__)

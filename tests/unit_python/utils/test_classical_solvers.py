@@ -12,10 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import importlib
+import importlib.metadata
+from importlib.metadata import PackageNotFoundError
 from unittest.mock import patch
 
 import numpy as np
 import pytest
+from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
+
+import qilisdk.utils.classical_solvers as classical_solvers
+from qilisdk._optionals import OptionalDependencyError
 
 from qilisdk.core.comparison import EQ
 from qilisdk.core.model import QUBO, Model, ObjectiveSense
@@ -372,3 +379,63 @@ def test_simulated_annealing_invalid_effort_raises(num_reads, num_sweeps):
     solver = SimulatedAnnealingSolver(num_reads=num_reads, num_sweeps=num_sweeps)
     with pytest.raises(ValueError, match="must be positive"):
         solver.solve(qubo)
+
+
+def _forget_optional_symbols():
+    """Drop symbols an earlier lazy access cached, so the next one goes through ``__getattr__``."""
+    for name in classical_solvers._OPTIONAL_FEATURE_BY_SYMBOL:
+        classical_solvers.__dict__.pop(name, None)
+
+
+def _reload_without_pyscipopt(mp):
+    """Reload the package as if ``pyscipopt`` were not installed."""
+    real_version = importlib.metadata.version
+
+    def fake_version(name):
+        if name == "pyscipopt":
+            raise PackageNotFoundError(name)
+        return real_version(name)
+
+    mp.setattr(importlib.metadata, "version", fake_version)
+    module = importlib.reload(classical_solvers)
+    _forget_optional_symbols()
+    return module
+
+
+def test_importing_the_package_without_scip_does_not_warn(caplog):  # ruff: ignore[redefined-while-unused]
+    """Importing a solver must stay silent when the optional 'scip' extra is absent."""
+    try:
+        with pytest.MonkeyPatch.context() as mp:
+            module = _reload_without_pyscipopt(mp)
+
+            assert module.BruteForceSolver is not None
+            assert "scip" not in caplog.text
+            assert "unavailable" not in caplog.text
+    finally:
+        importlib.reload(classical_solvers)
+        _forget_optional_symbols()
+
+
+def test_accessing_scip_solver_without_scip_warns_and_stubs(caplog):  # ruff: ignore[redefined-while-unused]
+    """The warning and the stub only appear once ScipSolver itself is requested."""
+    try:
+        with pytest.MonkeyPatch.context() as mp:
+            module = _reload_without_pyscipopt(mp)
+
+            stub = module.ScipSolver
+
+            assert "Optional feature scip unavailable" in caplog.text
+            with pytest.raises(OptionalDependencyError, match=r"pip install qilisdk\[scip\]"):
+                stub()
+    finally:
+        importlib.reload(classical_solvers)
+        _forget_optional_symbols()
+
+
+def test_unknown_attribute_raises_attribute_error():
+    with pytest.raises(AttributeError, match="has no attribute 'NotASolver'"):
+        classical_solvers.NotASolver
+
+
+def test_dir_advertises_the_optional_solver():
+    assert "ScipSolver" in dir(classical_solvers)
