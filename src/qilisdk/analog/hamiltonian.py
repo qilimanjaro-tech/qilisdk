@@ -33,7 +33,7 @@ from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.utils.visualization.style import HamiltonianStyle
 from qilisdk.yaml import yaml
 
-from .exceptions import InvalidHamiltonianOperation
+from .exceptions import InvalidHamiltonianOperation, NotAHamiltonianError
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterator
@@ -49,6 +49,30 @@ _GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE = (
 
 def _complex_dtype() -> np.dtype:
     return np.dtype(get_settings().complex_precision.dtype)
+
+
+def _reject_digital_object(obj: object, target: str) -> None:
+    """Raise a descriptive error if a digital object is used where a Hamiltonian is expected.
+
+    Importing the digital gates (``qilisdk.digital.X`` and friends) instead of the analog Paulis of
+    the same name is a common mistake.
+
+    Args:
+        obj (object): The object that is being combined with the analog object.
+        target (str): The analog object being combined with, used in the error message.
+
+    Raises:
+        NotAHamiltonianError: If the object is a digital gate.
+    """
+    # Imported here to avoid a circular import between the analog and digital subpackages.
+    from qilisdk.digital.gates import Gate  # ruff: ignore[import-outside-top-level]
+
+    if isinstance(obj, Gate):
+        raise NotAHamiltonianError(
+            f"Cannot use the digital gate {obj!r} with {target}, only Hamiltonian objects are supported. "
+            "This usually means the digital gates were imported instead of the analog Paulis: "
+            "did you mean to import X, Y, Z or I from qilisdk.analog rather than from qilisdk.digital?"
+        )
 
 
 ###############################################################################
@@ -1456,6 +1480,7 @@ class Hamiltonian(Parameterizable):
                 self._add_parameter(parameter.label, parameter)
             self._elements[PauliI(0),] += other
         else:
+            _reject_digital_object(other, "a Hamiltonian")
             raise InvalidHamiltonianOperation(f"Invalid addition between Hamiltonian and {other.__class__.__name__}.")
 
     def _sub_inplace(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> None:
@@ -1476,6 +1501,7 @@ class Hamiltonian(Parameterizable):
                 self._add_parameter(parameter.label, parameter)
             self._elements[PauliI(0),] -= other
         else:
+            _reject_digital_object(other, "a Hamiltonian")
             raise InvalidHamiltonianOperation(
                 f"Invalid subtraction between Hamiltonian and {other.__class__.__name__}."
             )

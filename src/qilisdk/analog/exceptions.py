@@ -18,7 +18,7 @@ class InvalidHamiltonianOperation(Exception):
 
 
 class NotAHamiltonianError(ValueError):
-    """Raised when an object that is not a :class:`Hamiltonian` is added to a schedule.
+    """Raised when an object that is not a :class:`Hamiltonian` is used where one is expected.
 
     This most commonly happens when the digital gates (``qilisdk.digital.X`` and friends) are
     used instead of the analog Pauli helpers of the same name.

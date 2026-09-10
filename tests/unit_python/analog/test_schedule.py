@@ -1029,13 +1029,15 @@ def test_schedule_extrapolate_extends_the_last_segment():
 def test_schedule_add_digital_gate_raises_helpful_error():
     """Adding a digital gate to a schedule points at the analog/digital import mixup."""
     sched = Schedule()
+    gate = digital_X(0)
     with pytest.raises(NotAHamiltonianError, match="did you mean to import X, Y, Z or I from qilisdk"):
-        sched.add_hamiltonian("h", digital_X(0), {0.0: 1.0})
+        sched.add_hamiltonian("h", gate, {0.0: 1.0})
 
 
 def test_schedule_update_with_digital_gate_raises_helpful_error():
     """Updating a schedule Hamiltonian with a digital gate gives the same guidance."""
     sched = Schedule()
     sched.add_hamiltonian("h", X(0), {0.0: 1.0})
+    gate = digital_X(0)
     with pytest.raises(NotAHamiltonianError, match="did you mean to import X, Y, Z or I from qilisdk"):
-        sched.update_hamiltonian("h", digital_X(0))
+        sched.update_hamiltonian("h", gate)

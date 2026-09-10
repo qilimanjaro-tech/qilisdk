@@ -38,7 +38,7 @@ class UnsupportedGateError(Exception):
 
 
 class NotAGateError(TypeError):
-    """Raised when an object that is not a :class:`Gate` is added to a circuit.
+    """Raised when an object that is not a :class:`Gate` is used where a gate is expected.
 
     This most commonly happens when the analog Pauli helpers (``qilisdk.analog.X`` and friends)
     are used instead of the digital gates of the same name.
