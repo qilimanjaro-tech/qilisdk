@@ -37,9 +37,8 @@ _EMPTY_GRAPH_MSG = "The graph must have at least one edge."
 # Everything apart from SPIN because for now they have no binary encoding
 _QUBO_SUPPORTED_DOMAINS = {Domain.BINARY, Domain.POSITIVE_INTEGER, Domain.INTEGER, Domain.REAL}
 
-# Used to prevent unbounded vars from expanding into infinite binary vars
-_MAX_ENCODING_SPAN = 2**32
-
+# Upper limit on the number of binary variables a single variable may be expanded into
+_MAX_BINARY_VARS = 64
 
 def _validate_undirected_edges(edges: list[tuple[int, int]]) -> None:
     """Validate that ``edges`` describes a simple undirected graph.
@@ -1711,23 +1710,27 @@ class QUBO(Model):
 
     @staticmethod
     def _check_encodable_bounds(var: Variable) -> None:
-        """Check that ``var`` spans few enough values to be expanded into binary variables.
+        """Check that ``var`` expands into few enough binary variables to be encodable.
 
-        A variable that is left unbounded defaults to the full range of its domain, which no encoding can represent.
+        Encodings differ wildly in how many binary variables a given range of values needs, so the
+        size of the variable's actual encoding is what gets checked. A variable that is left
+        unbounded defaults to the full range of its domain, which needs more binary variables than
+        the limit allows under every encoding, and so is rejected here too.
 
         Args:
             var (Variable): the variable to check.
 
         Raises:
-            ValueError: if the variable's bounds span more values than ``_MAX_ENCODING_SPAN``.
+            ValueError: if the variable's encoding would expand into more than ``_MAX_BINARY_VARS``
+                binary variables.
         """
-        span = float(var.upper_bound) - float(var.lower_bound)
-        if var.domain is Domain.REAL:
-            span /= var.precision
-        if span > _MAX_ENCODING_SPAN:
+        num_binary = var.num_binary_equivalent()
+        if num_binary > _MAX_BINARY_VARS:
             raise ValueError(
-                f"Variable {var} spans too many values ({span:.3g}) to be encoded into binary variables."
-                " Set tighter bounds on the variable (or a coarser precision for real variables)."
+                f"Variable {var} expands into too many binary variables ({num_binary:.3g}) under the"
+                f" {var.encoding.name} encoding, the maximum supported being {_MAX_BINARY_VARS}."
+                " Set tighter bounds on the variable (or a coarser precision for real variables), or"
+                " use a more compact encoding such as Bitwise."
             )
 
     def _check_variables(self, term: Expression | Comparison, lagrange_multiplier: RealNumber = 100) -> None:
@@ -1740,8 +1743,8 @@ class QUBO(Model):
         Raises:
             ValueError: if the constraint term contains variables that are not from the binary, positive integer,
                 integer or real domains.
-            ValueError: if the constraint term contains a variable whose bounds span too many values to be encoded
-                into binary variables.
+            ValueError: if the constraint term contains a variable whose encoding expands into too many binary
+                variables.
         """
         for v in term.variables():
             if v.domain not in _QUBO_SUPPORTED_DOMAINS:
