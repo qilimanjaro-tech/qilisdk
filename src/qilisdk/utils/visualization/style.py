@@ -152,7 +152,7 @@ class CircuitStyle(Style):
     max_row_width: float = Field(
         default=12.0, description="Maximum width (inches) of a row of the circuit when `fold` is 'auto'.", gt=0.0
     )
-    row_sep: float = Field(default=1.0, description="Vertical separation (inches) between wrapped rows.")
+    row_separation: float = Field(default=1.0, description="Vertical separation (inches) between wrapped rows.", gt=0.0)
     max_view_height: Annotated[float, Field(gt=0.0)] | None = Field(
         default=7.0,
         description="Height (inches) of the circuit shown when the figure first opens in a window. A taller circuit opens on its first rows and can be panned or zoomed out to reach the rest; a figure saved to file always holds the whole circuit. None opens on the whole circuit.",

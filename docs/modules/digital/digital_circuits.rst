@@ -170,7 +170,7 @@ By default, long circuits are wrapped onto multiple rows, to customize this beha
         circuit.add(X(0))
 
     # Start a new row every 10 layers, and leave more room between the rows
-    circuit.draw(style=CircuitStyle(fold=10, row_sep=1.5))
+    circuit.draw(style=CircuitStyle(fold=10, row_separation=1.5))
 
 Custom styling with :class:`~qilisdk.utils.visualization.style.CircuitStyle`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -215,7 +215,7 @@ class MatplotlibCircuitRenderer:
     @property
     def _row_height(self) -> float:
         """Vertical distance (inches) between the top wires of two consecutive rows."""
-        return (self._wires - 1) * self.style.wire_sep + self.style.row_sep
+        return (self._wires - 1) * self.style.wire_sep + self.style.row_separation
 
     def _compute_layout(self) -> None:
         """
