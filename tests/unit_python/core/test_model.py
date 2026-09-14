@@ -982,7 +982,7 @@ def test_check_variables_rejects_a_spin_that_is_not_a_spin_variable():
     ct = EQ(x**2, 1)
     with pytest.raises(
         ValueError,
-        match=r"Variable x is in the Spin Domain but is not a SpinVariable, so it has no exact binary encoding",
+        match=r"Variable x has domain Spin Domain but is not a SpinVariable, so it has no exact binary encoding",
     ):
         q._check_variables(ct)
 
