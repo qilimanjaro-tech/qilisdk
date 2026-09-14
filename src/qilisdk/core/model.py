@@ -26,16 +26,13 @@ from qilisdk.yaml import yaml
 from .comparison import EQ, GEQ, LEQ, Comparison, ComparisonOperation
 from .expression import Add, Constant, Expression, Mul, Pow
 from .types import Number, QiliEnum, RealNumber
-from .variables import BaseVariable, BinaryVariable, Bitwise, Domain, Variable
+from .variables import BaseVariable, BinaryVariable, Bitwise, Domain, SpinVariable, Variable
 
 if TYPE_CHECKING:
     from qilisdk.analog.hamiltonian import Hamiltonian
 
 
 _EMPTY_GRAPH_MSG = "The graph must have at least one edge."
-
-# Everything apart from SPIN because for now they have no binary encoding
-_QUBO_SUPPORTED_DOMAINS = {Domain.BINARY, Domain.POSITIVE_INTEGER, Domain.INTEGER, Domain.REAL}
 
 # Used to prevent unbounded vars from expanding into infinite binary vars
 _MAX_ENCODING_SPAN = 2**32
@@ -719,9 +716,11 @@ class Model:
     ) -> Model:
         """Factory method to generate an Ising model from a weighted graph.
 
+        The variables are spins, so each one takes a value in ``{-1, 1}``:
+
         .. math::
 
-            \\text{minimise} \\quad \\sum_{(u,v) \\in E} J_{uv}\\, x_u x_v + \\sum_i h_i x_i
+            \\text{minimise} \\quad \\sum_{(u,v) \\in E} J_{uv}\\, s_u s_v + \\sum_i h_i s_i
 
         Args:
             edges (list[tuple[int, int]]): the edges of the graph as ``(u, v)`` pairs.
@@ -757,9 +756,9 @@ class Model:
         if not nodes:
             raise ValueError(_EMPTY_GRAPH_MSG)
 
-        x = {n: BinaryVariable(f"x{n}") for n in nodes}
-        list_of_terms: list[Expression] = [field_map[n] * x[n] for n in nodes if field_map.get(n, 0) != 0]
-        list_of_terms.extend((1 if couplings is None else couplings[i]) * x[u] * x[v] for i, (u, v) in enumerate(edges))
+        s = {n: SpinVariable(f"s{n}") for n in nodes}
+        list_of_terms: list[Expression] = [field_map[n] * s[n] for n in nodes if field_map.get(n, 0) != 0]
+        list_of_terms.extend((1 if couplings is None else couplings[i]) * s[u] * s[v] for i, (u, v) in enumerate(edges))
 
         model = cls(label)
         model.set_objective(Add.build(tuple(list_of_terms)), sense=ObjectiveSense.MINIMIZE)
@@ -778,7 +777,7 @@ class Model:
 
         Every node carries a local field, and the nodes are coupled according to a random connected
         graph, with all coefficients drawn uniformly at random. By default the graph is fully
-        connected, so every pair of nodes is coupled.
+        connected, so every pair of nodes is coupled. As in :meth:`ising`, the variables are spins.
 
         Args:
             num_variables (int): the number of variables in the Ising model.
@@ -1738,16 +1737,14 @@ class QUBO(Model):
             term (Expression): the term to be checked.
 
         Raises:
-            ValueError: if the constraint term contains variables that are not from the binary, positive integer,
-                integer or real domains.
+            ValueError: if the constraint term contains a spin that is not a ``SpinVariable``.
             ValueError: if the constraint term contains a variable whose bounds span too many values to be encoded
                 into binary variables.
         """
         for v in term.variables():
-            if v.domain not in _QUBO_SUPPORTED_DOMAINS:
+            if v.domain is Domain.SPIN and not isinstance(v, SpinVariable):
                 raise ValueError(
-                    "QUBO models are not supported for variables that are not in the binary, positive integer,"
-                    f" integer or real domains. But variable {v} is in the {v.domain.value}."
+                    f"Variable {v} has domain {v.domain.value} but is not a SpinVariable, so it has no exact binary encoding."
                 )
             if isinstance(v, Variable):
                 self._check_encodable_bounds(v)

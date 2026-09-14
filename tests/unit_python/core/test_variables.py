@@ -631,10 +631,12 @@ def test_to_binary():
     assert isinstance(x.to_binary(), BinaryVariable)
     assert x.to_binary() == x
 
-    x = SpinVariable("x")
+    s = SpinVariable("s")
+    b = BinaryVariable("s(0)")
 
-    assert isinstance(x.to_binary(), SpinVariable)
-    assert x.to_binary() == x
+    assert s.to_binary() == 2 * b - 1
+    assert s.to_binary().evaluate({b: 0}) == -1
+    assert s.to_binary().evaluate({b: 1}) == 1
 
 
 ##############################

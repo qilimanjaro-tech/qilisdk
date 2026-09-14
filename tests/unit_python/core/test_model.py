@@ -33,7 +33,7 @@ from qilisdk.core.model import (
     _Linearizer,
     _validate_undirected_edges,
 )
-from qilisdk.core.variables import BinaryVariable, Bitwise, Domain, OneHot, SpinVariable, Variable
+from qilisdk.core.variables import BinaryVariable, Bitwise, Domain, OneHot, Parameter, SpinVariable, Variable
 from qilisdk.utils.classical_solvers import BruteForceSolver
 
 
@@ -506,17 +506,26 @@ def test_model_ising_basic():
 
 
 def test_model_ising_couplings_and_fields_evaluate():
-    # H = 2*x0*x1 - 3*x1*x2 + 0.5*x0 - x2
+    # H = 2*s0*s1 - 3*s1*s2 + 0.5*s0 - s2
     m = Model.ising(edges=[(0, 1), (1, 2)], couplings=[2.0, -3.0], fields=[0.5, 0.0, -1.0], label="MyIsing")
     assert m.label == "MyIsing"
     vars_by_label = {v.label: v for v in m.variables()}
-    sample = {vars_by_label["x0"]: 1, vars_by_label["x1"]: 1, vars_by_label["x2"]: 1}
+    sample = {vars_by_label["s0"]: 1, vars_by_label["s1"]: 1, vars_by_label["s2"]: 1}
     assert m.evaluate(sample)[m.objective.label] == pytest.approx(2.0 - 3.0 + 0.5 - 1.0)
+    sample = {vars_by_label["s0"]: -1, vars_by_label["s1"]: 1, vars_by_label["s2"]: -1}
+    assert m.evaluate(sample)[m.objective.label] == pytest.approx(-2.0 + 3.0 - 0.5 + 1.0)
+
+
+def test_model_ising_variables_are_spins():
+    m = Model.ising(edges=[(0, 1), (1, 2)])
+    assert all(isinstance(v, SpinVariable) for v in m.variables())
+    # An antiferromagnetic chain of n spins reaches -(n - 1), which binary variables cannot express.
+    assert BruteForceSolver().solve(m).objective == pytest.approx(-2.0)
 
 
 def test_model_ising_fields_as_mapping_adds_isolated_nodes():
     m = Model.ising(edges=[(0, 1)], fields={2: 1.0})
-    assert {v.label for v in m.variables()} == {"x0", "x1", "x2"}
+    assert {v.label for v in m.variables()} == {"s0", "s1", "s2"}
 
 
 def test_model_ising_mismatched_couplings():
@@ -717,10 +726,10 @@ def test_brute_force_with_bounded_variable():
 
 
 def test_brute_force_raises_for_unsupported_variable():
-    # SpinVariable is not BinaryVariable or Variable, so BruteForceSolver raises ValueError.
-    m = Model("bf_spin")
-    s = SpinVariable("s")
-    m.set_objective(s + 0)
+    # Parameter is not a BinaryVariable, SpinVariable or Variable, so BruteForceSolver raises ValueError.
+    m = Model("bf_parameter")
+    p = Parameter("p", 1.0)
+    m.set_objective(p + 0)
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         BruteForceSolver().solve(m)
 
@@ -790,8 +799,8 @@ def test_qubo_add_constraint_and_objective_errors():
 # ---------- set_objective QUBO ----------
 def test_qubo_set_objective_errors():
     q = QUBO(label="q5")
-    # unsupported (spin) domain
-    y = SpinVariable("y")
+    # unsupported (spin) domain, which only SpinVariable has an encoding for
+    y = Variable("y", Domain.SPIN, bounds=(-1, 1))
     t = y
     with pytest.raises(ValueError):  # ruff: ignore[pytest-raises-too-broad]
         q.set_objective(term=t)
@@ -966,30 +975,26 @@ def test_add_constraint_without_transform_to_qubo():
     assert q._constraints["c"].term.rhs == ct.rhs
 
 
-def test_check_variables_rejects_spin_domain():
+def test_check_variables_rejects_a_spin_that_is_not_a_spin_variable():
     q = QUBO(label="test")
     x = Variable("x", Domain.SPIN, encoding=OneHot, bounds=(-1, 1))
 
     ct = EQ(x**2, 1)
     with pytest.raises(
         ValueError,
-        match=r"QUBO models are not supported for variables that are not in the binary, positive integer,"
-        r" integer or real domains\. But variable x is in the Spin Domain\.",
+        match=r"Variable x is in the Spin Domain but is not a SpinVariable, so it has no exact binary encoding",
     ):
         q._check_variables(ct)
 
 
-def test_check_variables_rejects_spin_variable():
+def test_check_variables_accepts_spin_variable():
     q = QUBO(label="test")
     s = SpinVariable("s")
 
-    con = EQ(s, 1)
-    with pytest.raises(
-        ValueError,
-        match=r"QUBO models are not supported for variables that are not in the binary, positive integer,"
-        r" integer or real domains\.",
-    ):
-        q._check_variables(con)
+    q.set_objective(s)
+    # The spin is encoded as 2 * b - 1, exactly, so it needs no encoding constraint
+    assert q.qubo_objective.term == 2 * BinaryVariable("s(0)") - 1
+    assert len(q.constraints) == 0
 
 
 @pytest.mark.parametrize(
