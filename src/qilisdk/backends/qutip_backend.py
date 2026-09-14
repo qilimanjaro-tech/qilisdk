@@ -503,7 +503,7 @@ class QutipBackend(Backend):
         if gate.name == "CNOT":
             circuit.add_gate("CNOT", targets=[*gate.target_qubits], controls=[*gate.control_qubits])
         else:
-            base_matrix = gate.basic_gate.matrix
+            base_matrix = gate.basic_gate.matrix.dense()
             dim_target = base_matrix.shape[0]
             dim_total = 2 * dim_target
             dims = [[2] + [2] * len(gate.target_qubits), [2] + [2] * len(gate.target_qubits)]
@@ -532,7 +532,7 @@ class QutipBackend(Backend):
         """
 
         def qutip_adjoined_gate() -> Qobj:
-            return Qobj(gate.matrix)
+            return Qobj(gate.matrix.dense())
 
         gate_name = "Adjoint_" + gate.name
         if gate_name not in circuit.user_gates:

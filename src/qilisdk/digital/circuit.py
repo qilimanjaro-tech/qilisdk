@@ -39,7 +39,7 @@ def _complex_dtype() -> np.dtype:
 
 
 def _apply_gate_left(operator: np.ndarray, gate: Gate, nqubits: int) -> np.ndarray:
-    gate_matrix = gate.matrix
+    gate_matrix = gate.matrix.dense()
     k = gate.nqubits
     if k == 0:
         return operator
