@@ -60,7 +60,7 @@ extensions = [
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-source_suffix = [".rst"]  # Notebooks need no entry here: nbsphinx handles ".ipynb" itself
+source_suffix = [".rst"]
 
 # Syntax highlighting
 pygments_style = "default"
