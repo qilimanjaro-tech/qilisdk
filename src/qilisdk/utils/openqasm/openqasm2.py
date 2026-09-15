@@ -423,7 +423,7 @@ def from_qasm2(qasm_str: str) -> Circuit:
 
             # Extract qubit indices, which have to belong to one of the declared quantum registers.
             qubits = []
-            for name, index in re.findall(r"(\w+)\s*\[(\d+)\]", operands_str):
+            for name, index in re.findall(r"\b(\w++)\s*+\[(\d++)\]", operands_str):
                 if name not in qregs:
                     raise ValueError(f"Undeclared quantum register '{name}' in gate: {line}")
                 offset, size = qregs[name]
