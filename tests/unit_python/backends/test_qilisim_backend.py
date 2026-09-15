@@ -89,6 +89,47 @@ def test_qilisim_config_builders_and_validation():
         ExecutionConfig(1)
 
 
+def test_integer_settings_reject_values_too_wide_for_the_backend():
+    # Anything above the signed 32-bit range cannot be cast to the C++ `int` config fields, so it has
+    # to be rejected at construction with an error naming the field rather than at execute() time.
+    too_wide = 2**40
+
+    with pytest.raises(ValidationError, match="seed"):
+        ExecutionConfig(seed=too_wide)
+    with pytest.raises(ValidationError, match="num_threads"):
+        ExecutionConfig(num_threads=too_wide)
+    with pytest.raises(ValidationError, match="trajectories"):
+        MonteCarloConfig(trajectories=too_wide)
+    with pytest.raises(ValidationError, match="arnoldi_dim"):
+        AnalogMethod(arnoldi_dim=too_wide)
+    with pytest.raises(ValidationError, match="num_arnoldi_substeps"):
+        AnalogMethod(num_arnoldi_substeps=too_wide)
+    with pytest.raises(ValidationError, match="variational_order"):
+        AnalogMethod(variational_order=too_wide)
+    with pytest.raises(ValidationError, match="variational_shots"):
+        AnalogMethod(variational_shots=too_wide)
+    with pytest.raises(ValidationError, match="variational_warmups"):
+        AnalogMethod(variational_warmups=too_wide)
+    with pytest.raises(ValidationError, match="max_cache_size"):
+        DigitalMethod(max_cache_size=too_wide)
+    with pytest.raises(ValidationError, match="max_fused_qubits"):
+        DigitalMethod(max_fused_qubits=too_wide)
+    with pytest.raises(ValidationError, match="stabilizer_max_states"):
+        DigitalMethod.stabilizer(max_states=too_wide)
+
+    # The largest accepted value still round-trips into the backend dictionary.
+    assert ExecutionConfig(seed=2**31 - 1).get_config()["seed"] == 2**31 - 1
+
+
+def test_stabilizer_max_states_rejects_negatives_and_treats_zero_as_unlimited():
+    with pytest.raises(ValidationError, match="stabilizer_max_states"):
+        DigitalMethod(stabilizer_max_states=-5)
+    with pytest.raises(ValidationError, match="stabilizer_max_states"):
+        DigitalMethod.stabilizer(max_states=-1)
+
+    assert DigitalMethod.stabilizer(max_states=0).get_config()["stabilizer_max_states"] == 0
+
+
 def test_normalize_state_flag_defaults_and_propagates():
     # Defaults to True and is exported to the backend config.
     assert ExecutionConfig().normalize_state is True
