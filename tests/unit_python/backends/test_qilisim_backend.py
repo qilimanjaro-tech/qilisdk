@@ -25,7 +25,7 @@ from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core import QTensor, ket
-from qilisdk.digital import Circuit, H, X
+from qilisdk.digital import CNOT, Circuit, H, X
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.noise import Dephasing, LindbladGenerator, NoiseModel
@@ -104,6 +104,69 @@ def test_stabilizer_method_creates_okay():
     method = DigitalMethod.stabilizer(max_states=50)
     assert method.digital_method == "stabilizer"
     assert method.stabilizer_max_states == 50
+
+
+def test_mps_method_creates_okay():
+    method = DigitalMethod.mps(max_bond_dimension=32, truncation_cutoff=1e-8)
+    assert method.digital_method == "mps"
+    assert method.mps_max_bond_dimension == 32
+    assert np.isclose(method.mps_truncation_cutoff, 1e-8)
+
+    # The settings reach the backend configuration the C++ layer reads
+    config = QiliSim(digital_simulation_method=method).get_config()
+    assert config["digital_method"] == "mps"
+    assert config["mps_max_bond_dimension"] == 32
+    assert np.isclose(config["mps_truncation_cutoff"], 1e-8)
+
+    # A bond dimension has to be a positive number of states to keep
+    with pytest.raises(ValidationError):
+        DigitalMethod(mps_max_bond_dimension=0)
+    with pytest.raises(ValidationError):
+        DigitalMethod(mps_truncation_cutoff=-1e-3)
+
+
+def test_mps_method_circuit_optimization_flags():
+    """The MPS path reads both optimization flags in the C++ layer, so they have to be reachable
+    from the factory and default to on, as they do for the statevector method."""
+    default = DigitalMethod.mps()
+    assert default.combine_single_qubit_gates is True
+    assert default.fuse_gates is True
+
+    method = DigitalMethod.mps(max_bond_dimension=16, combine_single_qubit_gates=False, fuse_gates=False)
+    assert method.combine_single_qubit_gates is False
+    assert method.fuse_gates is False
+
+    config = QiliSim(digital_simulation_method=method).get_config()
+    assert config["combine_single_qubit_gates"] is False
+    assert config["fuse_gates"] is False
+
+
+def test_mps_method_executes_a_circuit():
+    """The "mps" digital method has its own dispatch arm in the C++ layer, which only a real
+    execution reaches, so drive a circuit through it rather than only checking that the
+    configuration is plumbed through."""
+    circuit = Circuit(2)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    backend = QiliSim(
+        digital_simulation_method=DigitalMethod.mps(),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+
+    # A Bell state, which an MPS holds exactly at bond dimension two
+    result = backend.execute(
+        DigitalPropagation(circuit),
+        Readout().with_state_tomography().with_expectation(observables=[pauli_z(0) * pauli_z(1)]),
+    )
+    data = result.get_state().data
+    state = np.asarray(data.todense() if hasattr(data, "todense") else data).reshape(-1)
+    assert np.allclose(state, [1 / np.sqrt(2), 0, 0, 1 / np.sqrt(2)], atol=1e-12)
+    assert np.isclose(complex(result.get_expectation_values()[0]), 1.0, atol=1e-12)
+
+    # Sampling goes down the same arm but returns through the sampling readout instead
+    samples = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=200)).get_samples()
+    assert set(samples) <= {"00", "11"}, f"Unexpected outcomes: {samples}"
+    assert sum(samples.values()) == 200
 
 
 def test_adaptive_creates_okay():

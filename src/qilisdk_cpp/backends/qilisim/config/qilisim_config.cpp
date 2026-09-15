@@ -35,7 +35,7 @@ void QiliSimConfig::validate() const {
     if (valid_evolution_methods.find(time_evolution_method) == std::string::npos) {
         throw py::value_error("Time evolution method must be one of " + valid_evolution_methods);
     }
-    const std::string valid_digital_methods = "'statevector', 'statevector_matrix_free', 'stabilizer'";
+    const std::string valid_digital_methods = "'statevector', 'statevector_matrix_free', 'stabilizer', 'mps'";
     if (valid_digital_methods.find(digital_method) == std::string::npos) {
         throw py::value_error("Digital method must be one of " + valid_digital_methods);
     }
@@ -65,6 +65,12 @@ void QiliSimConfig::validate() const {
     }
     if (warmups < 0) {
         throw py::value_error("Warmups cannot be negative.");
+    }
+    if (mps_max_bond_dimension <= 0) {
+        throw py::value_error("Maximum MPS bond dimension must be positive.");
+    }
+    if (mps_truncation_cutoff < 0) {
+        throw py::value_error("MPS truncation cutoff cannot be negative.");
     }
     if (order > 4) {
         throw py::value_error("Order greater than 4 not supported yet.");
