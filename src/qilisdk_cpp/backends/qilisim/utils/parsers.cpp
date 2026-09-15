@@ -1202,6 +1202,9 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     if (solver_params.contains("num_monte_carlo_trajectories")) {
         config.set_num_monte_carlo_trajectories(solver_params["num_monte_carlo_trajectories"].cast<int>());
     }
+    if (solver_params.contains("max_expected_jumps_per_step")) {
+        config.set_max_expected_jumps_per_step(solver_params["max_expected_jumps_per_step"].cast<double>());
+    }
     if (solver_params.contains("num_threads")) {
         config.set_num_threads(solver_params["num_threads"].cast<int>());
     }
