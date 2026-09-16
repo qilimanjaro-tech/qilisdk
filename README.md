@@ -16,9 +16,8 @@ There are several other quantum frameworks out there, but QiliSDK has many uniqu
  - We use a single framework for digital, analog and hybrid workflows, running on CPU, GPU or a Qilimanjaro QPU. Everything is one unified stack.
  - All core functionality is included in the package, with performance critical parts pre-compiled from C++, all easily installable with a single pip install command.
  - At the highest level we have our Model class, which lets you write problems in their simplest form simplify the conversion to quantum jobs. For the users that just want to solve their problems with quantum computers, they don't need to go any further.
+ - At a slightly lower level we have our functionals, describing quantum tasks: QuantumReservoir, VariationalProgram, AnalogEvolution, DigitalPropagation and more.
  - Meanwhile, on the more fundamental side, we have symbolic Hamiltonians and Expression classes, fully customizable analog Schedules, all standard quantum gates, our quantum object class QTensor which has a wide range of quantum information utilities, and many more.
- - We're the only quantum framework with a high-level Quantum Reservoirs object.
- - Also featured: QAOA, variational circuits, noise modelling, monte carlo simulation.
 
 ## Installation
 
