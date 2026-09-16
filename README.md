@@ -1,4 +1,4 @@
-# QiliSDK
+<img src="docs/_static/QiliSDK_wht.svg" alt="QiliSDK" width="360">
 
 [![Python Versions](https://img.shields.io/pypi/pyversions/qilisdk.svg)](https://pypi.org/project/qilisdk/)
 [![PyPI Version](https://img.shields.io/pypi/v/qilisdk.svg)](https://pypi.org/project/qilisdk/)
@@ -7,7 +7,18 @@
 [![Docs](https://img.shields.io/badge/docs-latest-pink.svg)](https://qilimanjaro-tech.github.io/qilisdk/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17819870.svg)](https://doi.org/10.5281/zenodo.17819870)
 
-**QiliSDK** is an open-source Python framework for designing and executing **analog, digital, and hybrid quantum algorithms**. Its modular structure unifies circuit-based and Hamiltonian-based workflows within a single API. It provides high-level abstractions for gates, circuits, Hamiltonians, and more, while remaining fully backend-agnostic allowing a seamless switch between CPU, GPU, or QPU execution. Fast CPU simulation can be done locally using **QiliSim**, our quantum simulator written in C++.
+**QiliSDK** is [Qilimanjaro's](https://qilimanjaro.tech/) open-source Python framework for designing and executing **analog, digital, and hybrid quantum algorithms**. Its modular structure unifies circuit-based and Hamiltonian-based workflows within a single API. It provides high-level abstractions for gates, circuits, Hamiltonians, and more, while remaining fully backend-agnostic allowing a seamless switch between CPU, GPU, or QPU execution. Fast CPU simulation can be done locally using **QiliSim**, our quantum simulator written in C++.
+
+## Why QiliSDK?
+
+There are several other quantum frameworks out there, but QiliSDK has many unique advantages:
+
+ - We use a single framework for digital, analog and hybrid workflows, running on CPU, GPU or a Qilimanjaro QPU. Everything is one unified stack.
+ - All core functionality is included in the package, with performance critical parts pre-compiled from C++, all easily installable with a single pip install command.
+ - At the highest level we have our Model class, which lets you write problems in their simplest form simplify the conversion to quantum jobs. For the users that just want to solve their problems with quantum computers, they don't need to go any further.
+ - Meanwhile, on the more fundamental side, we have symbolic Hamiltonians and Expression classes, fully customizable analog Schedules, all standard quantum gates, our quantum object class QTensor which has a wide range of quantum information utilities, and many more.
+ - We're the only quantum framework with a high-level Quantum Reservoirs object.
+ - Also featured: QAOA, variational circuits, noise modelling, monte carlo simulation.
 
 ## Installation
 
