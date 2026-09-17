@@ -80,8 +80,9 @@ functional = AnalogEvolution(schedule, initial_state=InitialState.UNIFORM)
 readout = Readout().with_expectation([final_hamiltonian])
 
 # Simulate it with GPU
-backend = QiliSim(execution_config=ExecutionConfig(gpu=True), 
-                  analog_simulation_method=AnalogMethod.variational_annealing())
+config = ExecutionConfig(gpu=True)
+method = AnalogMethod.variational_annealing()
+backend = QiliSim(execution_config=config, analog_simulation_method=method)
 results = backend.execute(functional, readout)
 print(results)
 ```
