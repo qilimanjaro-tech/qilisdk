@@ -5,6 +5,7 @@
 # from the environment for the first two.
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
+PYTHON        ?= python3
 SOURCEDIR     = .
 BUILDDIR      = _build
 LANGUAGES	  = es ca
@@ -23,7 +24,8 @@ multiversion:
 		rm -rf "$(BUILDDIR)/$$lang"; \
 		SPHINX_LOCALE_DIR="$(CURDIR)/locale" sphinx-multiversion "$(SOURCEDIR)" "$(BUILDDIR)/$$lang" -D language=$$lang; \
 	done
-	find "$(BUILDDIR)/" -name "pygments.css" -exec sed -i 's/@media (prefers-color-scheme: dark)/.dark/g' {} \;; \
+	find "$(BUILDDIR)/" -name "pygments.css" -exec sed -i 's/@media (prefers-color-scheme: dark)/.dark/g' {} \;
+	$(PYTHON) latest_alias.py "$(BUILDDIR)"
 
 # Run this to generate the files for translation
 gettext:
