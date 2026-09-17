@@ -24,7 +24,7 @@ Then, the user defines the job using one of our Functionals:
  - VariationalProgram, which can be combined with any of the above to create a variational workflow
 
  Finally, the user chooses the Backend to run the job on, which can be 
- a CPU (QiliSim), GPU (QiliSim or CudaqBackend), or QPU (SpeQtrum). 
+ for CPU (QiliSim), GPU (QiliSim or CudaqBackend), or QPU (SpeQtrum). 
 
- To get started, first check out the :doc:`getting_started/installation` guide to install QiliSDK, 
- then the :doc:`getting_started/quickstart` guide to jump straight in to some examples.
+ To get started, first check out the :doc:`/getting_started/installation` guide to install QiliSDK, 
+ then the :doc:`/getting_started/quickstart` guide to jump straight in to some examples.

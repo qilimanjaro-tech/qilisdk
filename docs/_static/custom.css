@@ -56,13 +56,11 @@ code, pre {
   --qili-code-border: 244 28% 27%;
 }
 
-.mr-4 {
-  width: 100%;
-}
-
 .language-switcher {
-  margin-left: auto;
+  display: flex;
+  align-items: center;
   margin-right: 0.5em;
+  white-space: nowrap;
 }
 
 .lang-link, .lang-active {
