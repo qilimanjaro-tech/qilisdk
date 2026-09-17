@@ -87,6 +87,51 @@ results = backend.execute(functional, readout)
 print(results)
 ```
 
+### Quantum Reservoirs
+
+```python
+import numpy as np
+from qilisdk.backends import QiliSim
+from qilisdk.core import ket
+from qilisdk.digital import Circuit, U2
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+from qilisdk.analog import Schedule, X, Z
+from qilisdk.readout import Readout
+
+# Set up the quantum reservoir
+pre_processing = Circuit(2)
+pre_processing.add(U2(1, phi=ReservoirInput("phi_1", 0.1), gamma=ReservoirInput("gamma_1", 0.1)))
+res_layer = ReservoirLayer(
+    evolution_dynamics=Schedule(
+        hamiltonians={"h": Z(0) + Z(1) + Z(0) * Z(1) + 0.5 * (X(0) + X(1))},
+        total_time=1.0,
+        dt=0.1,
+    ),
+    input_encoding=pre_processing,
+    qubits_to_reset=[1],
+)
+reservoir = QuantumReservoir(
+    initial_state=(np.random.rand() * ket(0, 0) + np.random.rand() * ket(1, 1)).unit(),
+    reservoir_layer=res_layer,
+    input_per_layer=[
+        {"phi_1": 0.2, "gamma_1": 0.1},
+        {"phi_1": 0.3, "gamma_1": 0.2},
+        {"phi_1": 0.4, "gamma_1": 0.3},
+    ],
+)
+
+# Simulate it with CPU
+results = QiliSim().execute(
+    reservoir,
+    Readout().with_expectation(observables=[Z(0), Z(1), Z(0) * Z(1)]),
+)
+print(results.get_expectation_values())
+```
+
+## Benchmarks
+
+<img src="docs/_static/benchmark_digital.png" alt="QiliSDK">
+
 ## Development Guide
 
 This section covers how to set up a local development environment for qilisdk, run tests, enforce code style, manage dependencies, and contribute to the project. We use a number of tools to maintain code quality and consistency:
