@@ -77,8 +77,14 @@ def main() -> int:
         print(f"Build directory {build_dir} not found", file=sys.stderr)
         return 1
 
+    # Every language directory is written, so this can't short-circuit on the first hit.
+    written = False
+    for language_dir in sorted(build_dir.iterdir()):
+        if language_dir.is_dir():
+            written = write_alias(language_dir) or written
+
     # A build without any release tags (a plain `make html`) is not an error.
-    if not any([write_alias(path) for path in sorted(build_dir.iterdir()) if path.is_dir()]):
+    if not written:
         print(f"No released versions found in {build_dir}, no {ALIAS} alias created", file=sys.stderr)
     return 0
 
