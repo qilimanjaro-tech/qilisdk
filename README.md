@@ -1,4 +1,4 @@
-<img src="docs/_static/QiliSDK_wht.svg" alt="QiliSDK" width="360">
+<img src="docs/_static/QiliSDK_wht.svg" alt="QiliSDK" height="80">
 
 [![Python Versions](https://img.shields.io/pypi/pyversions/qilisdk.svg)](https://pypi.org/project/qilisdk/)
 [![PyPI Version](https://img.shields.io/pypi/v/qilisdk.svg)](https://pypi.org/project/qilisdk/)
@@ -14,10 +14,10 @@
 There are several other quantum frameworks out there, but QiliSDK has many unique advantages:
 
  - We use a single framework for digital, analog and hybrid workflows, running on CPU, GPU or a Qilimanjaro QPU. Everything is one unified stack.
- - All core functionality is included in the package, with performance critical parts pre-compiled from C++, all easily installable with a single pip install command.
- - At the highest level we have our Model class, which lets you write problems in their simplest form simplify the conversion to quantum jobs. For the users that just want to solve their problems with quantum computers, they don't need to go any further.
- - At a slightly lower level we have our functionals, describing quantum tasks: QuantumReservoir, VariationalProgram, AnalogEvolution, DigitalPropagation and more.
- - Meanwhile, on the more fundamental side, we have symbolic Hamiltonians and Expression classes, fully customizable analog Schedules, all standard quantum gates, our quantum object class QTensor which has a wide range of quantum information utilities, and many more.
+ - All core functionality is included in the package, with performance critical parts pre-compiled from C++, all easily installable with a single `pip install` command.
+ - At the highest level we have our Model class, which lets you write problems in their simplest form and simplify the conversion to quantum jobs.
+ - At a slightly lower level we have our functionals, describing specific quantum tasks: VariationalProgram, AnalogEvolution, DigitalPropagation and even QuantumReservoirs.
+ - Meanwhile, on the more fundamental side, we have symbolic Hamiltonians and Expression classes, fully customizable analog Schedules, all standard quantum gates, parametrizable objects, our quantum object class QTensor which has a wide range of quantum information utilities, and many more.
 
 ## Installation
 
@@ -35,28 +35,55 @@ Here are just a few examples to get you started, for tutorials and full document
 
 ### Digital Circuits
 
-To create a simple quantum circuit:
+To create a simple quantum circuit and simulate it on your CPU:
 
 ```python
 from qilisdk.digital import Circuit, H, RX, CNOT
+from qilisdk.functionals import DigitalPropagation
+from qilisdk.readout import Readout
+from qilisdk.backends import QiliSim
 
-circuit = Circuit(2)  # Create a circuit with 2 qubits
-circuit.add(H(0))  # Apply Hadamard on qubit 0
-circuit.add(RX(1, theta=3.14))  # Apply RX rotation on qubit 1
-circuit.add(CNOT(0, 1))  # Add a CNOT gate between qubit 0 and 1
+# Create a simple two-qubit circuit
+circuit = Circuit(2)
+circuit.add(H(0))
+circuit.add(RX(1, theta=3.14))
+circuit.add(CNOT(0, 1))
+
+# Set up the quantum task
+functional = DigitalPropagation(circuit)
+readout = Readout().with_sampling(1000)
+
+# Simulate it with CPU
+backend = QiliSim()
+results = backend.execute(functional, readout)
+print(results)
 ```
 
 ### Analog Evolution
 
-To create a linear interpolation between an initial and final Hamiltonian:
+To create a linear interpolation between an initial and final Hamiltonian, then simulate it using your GPU:
 
 ```python
 from qilisdk.analog import Schedule, X, Z
+from qilisdk.functionals import AnalogEvolution
+from qilisdk.readout import Readout
+from qilisdk.core import InitialState
+from qilisdk.backends import QiliSim, AnalogMethod, ExecutionConfig
 
+# Construct the interpolation between Hamiltonians
 initial_hamiltonian = -X(0) - X(1)
 final_hamiltonian = Z(0) + Z(1) + 0.5 * Z(0) * Z(1)
-
 schedule = Schedule.linear(initial_hamiltonian, final_hamiltonian, total_time=10.0, dt=0.5)
+
+# Set up the quantum task
+functional = AnalogEvolution(schedule, initial_state=InitialState.UNIFORM)
+readout = Readout().with_expectation([final_hamiltonian])
+
+# Simulate it with GPU
+backend = QiliSim(execution_config=ExecutionConfig(gpu=True), 
+                  analog_simulation_method=AnalogMethod.variational_annealing())
+results = backend.execute(functional, readout)
+print(results)
 ```
 
 ## Development Guide
