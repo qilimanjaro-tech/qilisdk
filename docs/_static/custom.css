@@ -200,3 +200,42 @@ code, pre {
 #content:has(.title-image) > h1 {
   display: none;
 }
+
+/* "older versions" dropdown in the version list of the sidebar */
+.older-versions > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  margin-top: 0.75rem;
+  /* Match the padding and size of the version links above it */
+  padding-inline: calc(var(--spacing) * 2);
+  padding-block: calc(var(--spacing) * 1.5);
+  font-size: var(--text-sm);
+  line-height: var(--text-sm--line-height);
+  opacity: 0.8;
+}
+
+.older-versions > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Arrow sits after the label, pointing down once the list is open */
+.older-versions > summary::after {
+  content: "";
+  width: 0;
+  height: 0;
+  border-top: 0.3em solid transparent;
+  border-bottom: 0.3em solid transparent;
+  border-left: 0.4em solid currentColor;
+  transition: transform 0.15s ease-in-out;
+}
+
+.older-versions[open] > summary::after {
+  transform: rotate(90deg);
+}
+
+.older-versions > summary:hover {
+  opacity: 1;
+}

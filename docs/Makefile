@@ -14,7 +14,7 @@ LANGUAGES	  = es ca
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile multiversion gettext translations html
+.PHONY: help Makefile multiversion multiversion-english-only gettext translations html
 
 # Build for all versions of the documentation and all languages
 multiversion:
@@ -25,6 +25,13 @@ multiversion:
 		SPHINX_LOCALE_DIR="$(CURDIR)/locale" sphinx-multiversion "$(SOURCEDIR)" "$(BUILDDIR)/$$lang" -D language=$$lang; \
 	done
 	find "$(BUILDDIR)/" -name "pygments.css" -exec sed -i 's/@media (prefers-color-scheme: dark)/.dark/g' {} \;
+	$(PYTHON) latest_alias.py "$(BUILDDIR)"
+
+# Build for all versions of the documentation, English only
+multiversion-english-only:
+	rm -rf "$(BUILDDIR)/en"
+	sphinx-multiversion "$(SOURCEDIR)" "$(BUILDDIR)/en"
+	find "$(BUILDDIR)/en" -name "pygments.css" -exec sed -i 's/@media (prefers-color-scheme: dark)/.dark/g' {} \;
 	$(PYTHON) latest_alias.py "$(BUILDDIR)"
 
 # Run this to generate the files for translation
