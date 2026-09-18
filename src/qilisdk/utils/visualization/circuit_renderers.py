@@ -213,6 +213,11 @@ class MatplotlibCircuitRenderer:
             layer += 1
 
     @property
+    def _fold_dash(self) -> float:
+        """Length (inches) of wire each row keeps for its dashes, 0 for the other fold edges."""
+        return self.style.fold_dash if self.style.fold_edges == "dashed" else 0.0
+
+    @property
     def _row_height(self) -> float:
         """Vertical distance (inches) between the top wires of two consecutive rows."""
         return (self._wires - 1) * self.style.wire_sep + self.style.row_separation
@@ -271,7 +276,7 @@ class MatplotlibCircuitRenderer:
         self._layer_row: list[int] = []
         self._layer_x: list[float] = []
         self._row_widths: list[float] = []
-        dash = self.style.fold_dash
+        dash = self._fold_dash
         row = 0
         x = self.style.start_pad + dash
         layers_in_row = 0
@@ -764,15 +769,16 @@ class MatplotlibCircuitRenderer:
         """
         Draw the horizontal wires of every row, up to the last occupied x of that row.
 
-        A wire that carries on onto the next row trails off in dashes, and picks up
-        in dashes on the row below, so that only the very start and the very end of
-        the circuit are drawn as open wire ends.
+        Where the circuit is folded, ``style.fold_edges`` decides how a row ends and
+        how the next one picks up: trailing off in dashes, closed off with a vertical
+        line, or left as bare wire ends. Only the very start and the very end of the
+        circuit are drawn open.
         """
         last_row = len(self._row_widths) - 1
         for row, x_end in enumerate(self._row_widths):
             self._row = row
-            lead = self.style.fold_dash if row else 0.0
-            trail = self.style.fold_dash if row != last_row else 0.0
+            lead = self._fold_dash if row else 0.0
+            trail = self._fold_dash if row != last_row else 0.0
             spans = [(lead, x_end - trail, "solid")]
             if lead:
                 spans.append((0.0, lead, "dashed"))
@@ -793,6 +799,23 @@ class MatplotlibCircuitRenderer:
                             )
                         )
                     )
+
+            if self.style.fold_edges != "closed" or self._wires == 1:
+                continue
+            top = self._ypos(0, n_qubits=self._wires, sep=self.style.wire_sep)
+            bottom = self._ypos(self._wires - 1, n_qubits=self._wires, sep=self.style.wire_sep)
+            for x in ([0.0] if row else []) + ([x_end] if row != last_row else []):
+                self._record(
+                    self.axes.add_line(
+                        plt.Line2D(
+                            [x, x],
+                            [bottom, top],
+                            lw=1,
+                            color=self.style.theme.border,
+                            zorder=self._Z["wire"],
+                        )
+                    )
+                )
 
     def _draw_wire_labels(self) -> None:
         """Draw wire labels to the left of every row."""

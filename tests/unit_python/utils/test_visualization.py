@@ -242,7 +242,9 @@ def deep_circuit(nqubits=2, depth=40, measure=True):
     return circuit
 
 
-@pytest.mark.parametrize(("field", "value"), [("fold", 0), ("max_row_width", 0.0), ("max_view_height", -1.0)])
+@pytest.mark.parametrize(
+    ("field", "value"), [("fold", 0), ("max_row_width", 0.0), ("max_view_height", -1.0), ("fold_dash", 0.0)]
+)
 def test_circuit_style_rejects_sizes_that_cannot_be_drawn(field, value):
     with pytest.raises(ValidationError, match="Input should be greater than 0"):
         CircuitStyle(**{field: value})
@@ -268,6 +270,17 @@ def dashed_spans(renderer, row):
         tuple(line.get_xdata())
         for line in renderer._row_artists[row]
         if isinstance(line, Line2D) and line.get_linestyle() == "--"
+    ]
+
+
+def vertical_wires(renderer, row):
+    """Collect the x of every vertical wire-coloured line drawn on a row."""
+    return [
+        line.get_xdata()[0]
+        for line in renderer._row_artists[row]
+        if isinstance(line, Line2D)
+        and line.get_zorder() == MatplotlibCircuitRenderer._Z["wire"]
+        and line.get_xdata()[0] == line.get_xdata()[1]
     ]
 
 
@@ -318,14 +331,46 @@ def test_unfolded_circuit_keeps_no_room_for_dashes(monkeypatch):
     assert renderer._layer_x[0] == pytest.approx(style.start_pad)
 
 
-def test_fold_dash_zero_leaves_the_rows_open(monkeypatch):
+def test_open_fold_edges_leave_the_rows_bare(monkeypatch):
     monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
 
-    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=CircuitStyle(max_row_width=4.0, fold_dash=0.0))
+    style = CircuitStyle(max_row_width=4.0, fold_edges="open")
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=style)
     renderer.plot()
 
     assert len(renderer._row_widths) > 1
     assert not any(dashed_spans(renderer, row) for row in range(len(renderer._row_widths)))
+    assert not any(vertical_wires(renderer, row) for row in range(len(renderer._row_widths)))
+    # bare ends need no room, so the rows start where an unfolded circuit would
+    assert renderer._layer_x[0] == style.start_pad
+
+
+def test_closed_fold_edges_join_the_wires(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    circuit = deep_circuit(nqubits=3)
+    renderer = MatplotlibCircuitRenderer(circuit=circuit, style=CircuitStyle(max_row_width=4.0, fold_edges="closed"))
+    renderer.plot()
+
+    assert len(renderer._row_widths) > 2
+    last_row = len(renderer._row_widths) - 1
+    for row, x_end in enumerate(renderer._row_widths):
+        # the wires are joined wherever the circuit carries on, and left open at its real ends
+        assert vertical_wires(renderer, row) == ([] if row == 0 else [0.0]) + ([] if row == last_row else [x_end])
+        assert not dashed_spans(renderer, row)
+
+
+def test_a_single_wire_is_never_closed_off(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    circuit = Circuit(1)
+    for _ in range(40):
+        circuit.add(RX(0, theta=np.pi / 4))
+    renderer = MatplotlibCircuitRenderer(circuit=circuit, style=CircuitStyle(max_row_width=4.0, fold_edges="closed"))
+    renderer.plot()
+
+    assert len(renderer._row_widths) > 1
+    assert not any(vertical_wires(renderer, row) for row in range(len(renderer._row_widths)))
 
 
 def test_fold_none_keeps_a_single_row(monkeypatch):

@@ -153,10 +153,14 @@ class CircuitStyle(Style):
         default=12.0, description="Maximum width (inches) of a row of the circuit when `fold` is 'auto'.", gt=0.0
     )
     row_separation: float = Field(default=1.0, description="Vertical separation (inches) between wrapped rows.", gt=0.0)
+    fold_edges: Literal["dashed", "closed", "open"] = Field(
+        default="dashed",
+        description="How the wires are drawn where a folded circuit breaks off and picks up again. 'dashed' trails them off in dashes, 'closed' joins them with a vertical line, and 'open' leaves them as bare wire ends.",
+    )
     fold_dash: float = Field(
         default=0.25,
-        description="Length (inches) of the dashed wire drawn where a row of a folded circuit breaks off and where the next one picks it up. 0 leaves the wires of every row open.",
-        ge=0.0,
+        description="Length (inches) of the dashed wire drawn at a fold when `fold_edges` is 'dashed'.",
+        gt=0.0,
     )
     max_view_height: Annotated[float, Field(gt=0.0)] | None = Field(
         default=7.0,
