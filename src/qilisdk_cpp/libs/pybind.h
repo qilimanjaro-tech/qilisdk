@@ -81,6 +81,9 @@ void info(std::string message);
 void warning(std::string message);
 void error(std::string message);
 
+// This should be called regularly during long-running loops to check for things like Ctrl-C
+void check_signals();
+
 #pragma GCC visibility pop
 
 // GCOV_EXCL_BR_STOP

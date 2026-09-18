@@ -230,6 +230,9 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
     for (int i = 0; i < int(optimized_gates.size()); ++i) {
         const auto& gate = optimized_gates[i];
 
+        // Let Ctrl-C interrupt the circuit between gates
+        check_signals();
+
         // If it's a measurement
         if (gate.get_name() == "M") {
             // Check for adjacent measurements and if we have any, do them all at once
@@ -442,6 +445,9 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     for (int i = 0; i < int(optimized_gates.size()); ++i) {
         const auto& gate = optimized_gates[i];
 
+        // Let Ctrl-C interrupt the circuit between gates
+        check_signals();
+
         // Convert gate to a matrix-free operator
         MatrixFreeOperator op(gate);
 
@@ -583,6 +589,10 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
     std::vector<bool> qubits_measured(n_qubits, false);
     for (int i = 0; i < int(gates.size()); ++i) {
         const auto& gate = gates[i];
+
+        // Let Ctrl-C interrupt the circuit between gates
+        check_signals();
+
         state.apply_gate(gate);
     }
 }
