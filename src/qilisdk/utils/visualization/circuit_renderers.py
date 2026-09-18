@@ -755,7 +755,14 @@ class MatplotlibCircuitRenderer:
     # Final decoration ----------------------------------------------------
 
     def _draw_wires(self) -> None:
-        """Draw the horizontal wires of every row, up to the last occupied x of that row."""
+        """
+        Draw the horizontal wires of every row, up to the last occupied x of that row.
+
+        Where the circuit is folded, the wires of a row are joined by a vertical
+        line at the break and again where they pick up on the next row, so that
+        only the very start and the very end of the circuit are left open.
+        """
+        last_row = len(self._row_widths) - 1
         for row, x_end in enumerate(self._row_widths):
             self._row = row
             for q in range(self._wires):
@@ -764,6 +771,20 @@ class MatplotlibCircuitRenderer:
                     self.axes.add_line(
                         plt.Line2D(
                             [0, x_end], [y, y], lw=1, color=self.style.theme.surface_muted, zorder=self._Z["wire"]
+                        )
+                    )
+                )
+
+            if self._wires == 1:
+                continue
+            breaks = ([0.0] if row else []) + ([x_end] if row != last_row else [])
+            top = self._ypos(0, n_qubits=self._wires, sep=self.style.wire_sep)
+            bottom = self._ypos(self._wires - 1, n_qubits=self._wires, sep=self.style.wire_sep)
+            for x in breaks:
+                self._record(
+                    self.axes.add_line(
+                        plt.Line2D(
+                            [x, x], [bottom, top], lw=1, color=self.style.theme.surface_muted, zorder=self._Z["wire"]
                         )
                     )
                 )

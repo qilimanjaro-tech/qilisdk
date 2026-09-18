@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from matplotlib import font_manager as fm
+from matplotlib.lines import Line2D
 from matplotlib.text import Text
 from matplotlib.transforms import Bbox
 from pydantic import ValidationError
@@ -259,6 +260,44 @@ def test_deep_circuit_is_folded_into_rows(monkeypatch):
     # every row is as tall as the circuit, and the rows are stacked downwards
     _, height = renderer._drawing_size()
     assert height > (len(renderer._row_widths) - 1) * renderer._row_height
+
+
+def fold_connectors(renderer, row):
+    """Collect the x of every vertical wire-coloured line drawn on a row."""
+    return [
+        line.get_xdata()[0]
+        for line in renderer._row_artists[row]
+        if isinstance(line, Line2D)
+        and line.get_zorder() == MatplotlibCircuitRenderer._Z["wire"]
+        and line.get_xdata()[0] == line.get_xdata()[1]
+    ]
+
+
+def test_folds_are_closed_by_vertical_connectors(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(nqubits=3), style=CircuitStyle(max_row_width=4.0))
+    renderer.plot()
+
+    assert len(renderer._row_widths) > 2
+    last_row = len(renderer._row_widths) - 1
+    for row, x_end in enumerate(renderer._row_widths):
+        # a row is closed off wherever the circuit carries on, and left open at its real ends
+        expected = ([] if row == 0 else [0.0]) + ([] if row == last_row else [x_end])
+        assert fold_connectors(renderer, row) == expected
+
+
+def test_a_single_wire_needs_no_connectors(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    circuit = Circuit(1)
+    for _ in range(40):
+        circuit.add(RX(0, theta=np.pi / 4))
+    renderer = MatplotlibCircuitRenderer(circuit=circuit, style=CircuitStyle(max_row_width=4.0))
+    renderer.plot()
+
+    assert len(renderer._row_widths) > 1
+    assert not any(fold_connectors(renderer, row) for row in range(len(renderer._row_widths)))
 
 
 def test_fold_none_keeps_a_single_row(monkeypatch):
