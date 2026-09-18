@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-18 10:30+0200\n"
+"POT-Creation-Date: 2026-09-18 11:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: ca <LL@li.org>\n"
@@ -27,22 +27,14 @@ msgstr "Visió general"
 msgid ""
 "The :mod:`qilisdk.utils` module collects the supporting tools that the rest "
 "of the SDK is built on. Nothing here describes a quantum process of its own:"
-" these are the classical solvers you compare a quantum result against, the "
-"bridges to and from other quantum frameworks, and the machinery behind "
-"saving, hashing and drawing QiliSDK objects."
+" these are just useful tools to support the rest of the SDK:"
 msgstr ""
 "El mòdul :mod:`qilisdk.utils` aplega les eines de suport sobre les quals es "
 "construeix la resta del SDK. Res del que hi ha aquí descriu un procés "
-"quàntic propi: són els solucionadors clàssics amb què comparar un resultat "
-"quàntic, els ponts cap a i des d'altres marcs de treball quàntics, i la "
-"maquinària que hi ha darrere de desar, calcular el hash i dibuixar objectes "
-"de QiliSDK."
+"quàntic propi: són simplement eines útils que donen suport a la resta del "
+"SDK:"
 
-#: ../../modules/utils/utils_overview.rst:9
-msgid "Highlights:"
-msgstr "Aspectes destacats:"
-
-#: ../../modules/utils/utils_overview.rst:11
+#: ../../modules/utils/utils_overview.rst:7
 msgid ""
 ":doc:`utils_classical_solvers` provides a common interface to brute force, "
 "SciPy, simulated annealing and SCIP, so that any "
@@ -53,7 +45,7 @@ msgstr ""
 ":class:`~qilisdk.core.model.Model` es pugui resoldre de forma clàssica com a"
 " referència."
 
-#: ../../modules/utils/utils_overview.rst:12
+#: ../../modules/utils/utils_overview.rst:8
 msgid ""
 ":doc:`utils_interoperability` converts circuits and Hamiltonians to and from"
 " OpenQASM, QIR and OpenFermion."
@@ -61,7 +53,7 @@ msgstr ""
 ":doc:`utils_interoperability` converteix circuits i hamiltonians cap a i des"
 " d'OpenQASM, QIR i OpenFermion."
 
-#: ../../modules/utils/utils_overview.rst:13
+#: ../../modules/utils/utils_overview.rst:9
 msgid ""
 ":doc:`utils_serialization` writes any QiliSDK object to YAML and reads it "
 "back, and provides the stable hash used throughout the SDK."
@@ -69,123 +61,10 @@ msgstr ""
 ":doc:`utils_serialization` escriu qualsevol objecte de QiliSDK en YAML i el "
 "torna a llegir, i proporciona el hash estable que s'utilitza a tot el SDK."
 
-#: ../../modules/utils/utils_overview.rst:14
-msgid ""
-":doc:`utils_trotterization` turns the evolution under a Hamiltonian into a "
-"sequence of gates."
-msgstr ""
-":doc:`utils_trotterization` converteix l'evolució sota un hamiltonià en una "
-"seqüència de portes."
-
-#: ../../modules/utils/utils_overview.rst:15
-msgid ""
-":doc:`utils_visualization` holds the themes and style objects that every "
-"``draw`` method accepts."
-msgstr ""
-":doc:`utils_visualization` conté els temes i els objectes d'estil que "
-"accepta cada mètode ``draw``."
-
-#: ../../modules/utils/utils_overview.rst:17
+#: ../../modules/utils/utils_overview.rst:11
 msgid ""
 "Unlike the other modules, :mod:`qilisdk.utils` has no top-level re-exports: "
 "each submodule is imported by its full path."
 msgstr ""
 "A diferència dels altres mòduls, :mod:`qilisdk.utils` no reexporta res al "
 "seu nivell superior: cada submòdul s'importa per la seva ruta completa."
-
-#: ../../modules/utils/utils_overview.rst:27
-msgid "Optional dependencies"
-msgstr "Dependències opcionals"
-
-#: ../../modules/utils/utils_overview.rst:29
-msgid ""
-"Several of these tools wrap a third-party library that QiliSDK does not "
-"install by default. The symbols are always importable, but using one without"
-" its dependency raises an error telling you which extra to install."
-msgstr ""
-"Diverses d'aquestes eines embolcallen una biblioteca de tercers que QiliSDK "
-"no instal·la per defecte. Els símbols sempre es poden importar, però "
-"utilitzar-ne un sense la seva dependència llança un error que indica quin "
-"extra cal instal·lar."
-
-#: ../../modules/utils/utils_overview.rst:38
-msgid "Submodule"
-msgstr "Submòdul"
-
-#: ../../modules/utils/utils_overview.rst:38
-msgid "Extra"
-msgstr "Extra"
-
-#: ../../modules/utils/utils_overview.rst:38
-msgid "Third-party dependency"
-msgstr "Dependència de tercers"
-
-#: ../../modules/utils/utils_overview.rst:40
-msgid ":mod:`qilisdk.utils.classical_solvers`"
-msgstr ":mod:`qilisdk.utils.classical_solvers`"
-
-#: ../../modules/utils/utils_overview.rst:40
-msgid "``scip``"
-msgstr "``scip``"
-
-#: ../../modules/utils/utils_overview.rst:40
-msgid ""
-"``pyscipopt`` "
-"(:class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` only)"
-msgstr ""
-"``pyscipopt`` (només per a "
-":class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver`)"
-
-#: ../../modules/utils/utils_overview.rst:42
-msgid ":mod:`qilisdk.utils.openqasm`"
-msgstr ":mod:`qilisdk.utils.openqasm`"
-
-#: ../../modules/utils/utils_overview.rst:42
-msgid "``openqasm``"
-msgstr "``openqasm``"
-
-#: ../../modules/utils/utils_overview.rst:42
-msgid "``openqasm3``"
-msgstr "``openqasm3``"
-
-#: ../../modules/utils/utils_overview.rst:44
-msgid ":mod:`qilisdk.utils.qir`"
-msgstr ":mod:`qilisdk.utils.qir`"
-
-#: ../../modules/utils/utils_overview.rst:44
-msgid "``qir``"
-msgstr "``qir``"
-
-#: ../../modules/utils/utils_overview.rst:44
-msgid "``pyqir``"
-msgstr "``pyqir``"
-
-#: ../../modules/utils/utils_overview.rst:46
-msgid ":mod:`qilisdk.utils.openfermion`"
-msgstr ":mod:`qilisdk.utils.openfermion`"
-
-#: ../../modules/utils/utils_overview.rst:46
-msgid "``openfermion``"
-msgstr "``openfermion``"
-
-#: ../../modules/utils/utils_overview.rst:49
-msgid ""
-"Every other part of :mod:`qilisdk.utils` works with a plain ``pip install "
-"qilisdk``. Extras can be combined in a single command, and are covered in "
-"more detail on the :doc:`../../getting_started/installation` page."
-msgstr ""
-"La resta de :mod:`qilisdk.utils` funciona amb un simple ``pip install "
-"qilisdk``. Els extres es poden combinar en una sola ordre, i es tracten amb "
-"més detall a la pàgina :doc:`../../getting_started/installation`."
-
-#: ../../modules/utils/utils_overview.rst:55
-msgid "Linux"
-msgstr "Linux"
-
-#: ../../modules/utils/utils_overview.rst:61
-msgid "Mac OSX"
-msgstr "Mac OSX"
-
-#: ../../modules/utils/utils_overview.rst:67
-msgid "Windows"
-msgstr "Windows"

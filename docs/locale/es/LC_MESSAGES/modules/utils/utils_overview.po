@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-18 10:30+0200\n"
+"POT-Creation-Date: 2026-09-18 11:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: es <LL@li.org>\n"
@@ -27,22 +27,14 @@ msgstr "Descripción general"
 msgid ""
 "The :mod:`qilisdk.utils` module collects the supporting tools that the rest "
 "of the SDK is built on. Nothing here describes a quantum process of its own:"
-" these are the classical solvers you compare a quantum result against, the "
-"bridges to and from other quantum frameworks, and the machinery behind "
-"saving, hashing and drawing QiliSDK objects."
+" these are just useful tools to support the rest of the SDK:"
 msgstr ""
 "El módulo :mod:`qilisdk.utils` reúne las herramientas de apoyo sobre las que"
 " se construye el resto del SDK. Nada de lo que hay aquí describe un proceso "
-"cuántico propio: son los solucionadores clásicos con los que comparar un "
-"resultado cuántico, los puentes hacia y desde otros marcos de trabajo "
-"cuánticos, y la maquinaria que hay detrás de guardar, hashear y dibujar "
-"objetos de QiliSDK."
+"cuántico propio: son simplemente herramientas útiles que dan soporte al "
+"resto del SDK:"
 
-#: ../../modules/utils/utils_overview.rst:9
-msgid "Highlights:"
-msgstr "Aspectos destacados:"
-
-#: ../../modules/utils/utils_overview.rst:11
+#: ../../modules/utils/utils_overview.rst:7
 msgid ""
 ":doc:`utils_classical_solvers` provides a common interface to brute force, "
 "SciPy, simulated annealing and SCIP, so that any "
@@ -53,7 +45,7 @@ msgstr ""
 ":class:`~qilisdk.core.model.Model` pueda resolverse de forma clásica como "
 "referencia."
 
-#: ../../modules/utils/utils_overview.rst:12
+#: ../../modules/utils/utils_overview.rst:8
 msgid ""
 ":doc:`utils_interoperability` converts circuits and Hamiltonians to and from"
 " OpenQASM, QIR and OpenFermion."
@@ -61,7 +53,7 @@ msgstr ""
 ":doc:`utils_interoperability` convierte circuitos y hamiltonianos hacia y "
 "desde OpenQASM, QIR y OpenFermion."
 
-#: ../../modules/utils/utils_overview.rst:13
+#: ../../modules/utils/utils_overview.rst:9
 msgid ""
 ":doc:`utils_serialization` writes any QiliSDK object to YAML and reads it "
 "back, and provides the stable hash used throughout the SDK."
@@ -69,123 +61,10 @@ msgstr ""
 ":doc:`utils_serialization` escribe cualquier objeto de QiliSDK en YAML y lo "
 "vuelve a leer, y proporciona el hash estable que se usa en todo el SDK."
 
-#: ../../modules/utils/utils_overview.rst:14
-msgid ""
-":doc:`utils_trotterization` turns the evolution under a Hamiltonian into a "
-"sequence of gates."
-msgstr ""
-":doc:`utils_trotterization` convierte la evolución bajo un hamiltoniano en "
-"una secuencia de puertas."
-
-#: ../../modules/utils/utils_overview.rst:15
-msgid ""
-":doc:`utils_visualization` holds the themes and style objects that every "
-"``draw`` method accepts."
-msgstr ""
-":doc:`utils_visualization` contiene los temas y los objetos de estilo que "
-"acepta cada método ``draw``."
-
-#: ../../modules/utils/utils_overview.rst:17
+#: ../../modules/utils/utils_overview.rst:11
 msgid ""
 "Unlike the other modules, :mod:`qilisdk.utils` has no top-level re-exports: "
 "each submodule is imported by its full path."
 msgstr ""
 "A diferencia de los demás módulos, :mod:`qilisdk.utils` no reexporta nada en"
 " su nivel superior: cada submódulo se importa por su ruta completa."
-
-#: ../../modules/utils/utils_overview.rst:27
-msgid "Optional dependencies"
-msgstr "Dependencias opcionales"
-
-#: ../../modules/utils/utils_overview.rst:29
-msgid ""
-"Several of these tools wrap a third-party library that QiliSDK does not "
-"install by default. The symbols are always importable, but using one without"
-" its dependency raises an error telling you which extra to install."
-msgstr ""
-"Varias de estas herramientas envuelven una biblioteca de terceros que "
-"QiliSDK no instala de forma predeterminada. Los símbolos siempre se pueden "
-"importar, pero usar uno sin su dependencia lanza un error que indica qué "
-"extra hay que instalar."
-
-#: ../../modules/utils/utils_overview.rst:38
-msgid "Submodule"
-msgstr "Submódulo"
-
-#: ../../modules/utils/utils_overview.rst:38
-msgid "Extra"
-msgstr "Extra"
-
-#: ../../modules/utils/utils_overview.rst:38
-msgid "Third-party dependency"
-msgstr "Dependencia de terceros"
-
-#: ../../modules/utils/utils_overview.rst:40
-msgid ":mod:`qilisdk.utils.classical_solvers`"
-msgstr ":mod:`qilisdk.utils.classical_solvers`"
-
-#: ../../modules/utils/utils_overview.rst:40
-msgid "``scip``"
-msgstr "``scip``"
-
-#: ../../modules/utils/utils_overview.rst:40
-msgid ""
-"``pyscipopt`` "
-"(:class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` only)"
-msgstr ""
-"``pyscipopt`` (solo para "
-":class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver`)"
-
-#: ../../modules/utils/utils_overview.rst:42
-msgid ":mod:`qilisdk.utils.openqasm`"
-msgstr ":mod:`qilisdk.utils.openqasm`"
-
-#: ../../modules/utils/utils_overview.rst:42
-msgid "``openqasm``"
-msgstr "``openqasm``"
-
-#: ../../modules/utils/utils_overview.rst:42
-msgid "``openqasm3``"
-msgstr "``openqasm3``"
-
-#: ../../modules/utils/utils_overview.rst:44
-msgid ":mod:`qilisdk.utils.qir`"
-msgstr ":mod:`qilisdk.utils.qir`"
-
-#: ../../modules/utils/utils_overview.rst:44
-msgid "``qir``"
-msgstr "``qir``"
-
-#: ../../modules/utils/utils_overview.rst:44
-msgid "``pyqir``"
-msgstr "``pyqir``"
-
-#: ../../modules/utils/utils_overview.rst:46
-msgid ":mod:`qilisdk.utils.openfermion`"
-msgstr ":mod:`qilisdk.utils.openfermion`"
-
-#: ../../modules/utils/utils_overview.rst:46
-msgid "``openfermion``"
-msgstr "``openfermion``"
-
-#: ../../modules/utils/utils_overview.rst:49
-msgid ""
-"Every other part of :mod:`qilisdk.utils` works with a plain ``pip install "
-"qilisdk``. Extras can be combined in a single command, and are covered in "
-"more detail on the :doc:`../../getting_started/installation` page."
-msgstr ""
-"El resto de :mod:`qilisdk.utils` funciona con un simple ``pip install "
-"qilisdk``. Los extras pueden combinarse en un único comando, y se tratan con"
-" más detalle en la página :doc:`../../getting_started/installation`."
-
-#: ../../modules/utils/utils_overview.rst:55
-msgid "Linux"
-msgstr "Linux"
-
-#: ../../modules/utils/utils_overview.rst:61
-msgid "Mac OSX"
-msgstr "Mac OSX"
-
-#: ../../modules/utils/utils_overview.rst:67
-msgid "Windows"
-msgstr "Windows"

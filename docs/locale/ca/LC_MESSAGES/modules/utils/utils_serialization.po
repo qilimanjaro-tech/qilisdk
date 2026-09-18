@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-18 10:30+0200\n"
+"POT-Creation-Date: 2026-09-18 11:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: ca <LL@li.org>\n"
@@ -85,55 +85,42 @@ msgstr "**Sortida**::"
 
 #: ../../modules/utils/utils_serialization.rst:44
 msgid ""
-"Each ``!Tag`` in the output names the class that produced the node, which is"
-" what allows the object graph to be rebuilt exactly. Tuples, complex "
-"numbers, NumPy arrays and SciPy sparse matrices all have their own tags, so "
-"a :class:`~qilisdk.core.qtensor.QTensor` or a "
-":class:`~qilisdk.functionals.functional_result.FunctionalResult` survives a "
-"round trip unchanged."
+"Each ``!Tag`` in the output names the class that produced the node, which "
+"allows the object graph to be rebuilt exactly."
 msgstr ""
-"Cada ``!Tag`` de la sortida anomena la classe que va produir el node, que és"
-" el que permet reconstruir exactament el graf d'objectes. Les tuples, els "
-"nombres complexos, els arrays de NumPy i les matrius disperses de SciPy "
-"tenen tots la seva pròpia etiqueta, de manera que un "
-":class:`~qilisdk.core.qtensor.QTensor` o un "
-":class:`~qilisdk.functionals.functional_result.FunctionalResult` sobreviu "
-"intacte a una anada i tornada."
+"Cada ``!Tag`` de la sortida anomena la classe que va produir el node, cosa "
+"que permet reconstruir exactament el graf d'objectes."
 
-#: ../../modules/utils/utils_serialization.rst:49
-msgid "Writing to and reading from a file works the same way:"
-msgstr "Escriure en un fitxer i llegir-ne funciona igual:"
+#: ../../modules/utils/utils_serialization.rst:47
+msgid "Writing to and reading from a file works in the same way:"
+msgstr "Escriure en un fitxer i llegir-ne funciona de la mateixa manera:"
 
-#: ../../modules/utils/utils_serialization.rst:65
+#: ../../modules/utils/utils_serialization.rst:63
 msgid "Checking the type on the way back"
 msgstr "Comprovar el tipus a la tornada"
 
-#: ../../modules/utils/utils_serialization.rst:67
+#: ../../modules/utils/utils_serialization.rst:65
 msgid ""
 "Both ``deserialize`` functions accept an optional class as their second "
 "argument. When given, the rebuilt object is checked against it and the call "
-"is typed as returning that class, which keeps type checkers happy and turns "
-"a mismatched file into an immediate error rather than a confusing one later "
-"on."
+"is typed as returning that class."
 msgstr ""
 "Totes dues funcions ``deserialize`` accepten una classe opcional com a segon"
 " argument. Si s'indica, l'objecte reconstruït es comprova contra ella i la "
-"crida queda tipada com si retornés aquesta classe, cosa que acontenta els "
-"verificadors de tipus i converteix un fitxer que no encaixa en un error "
-"immediat en lloc d'un de confús més endavant."
+"crida queda tipada com si retornés aquesta classe."
 
-#: ../../modules/utils/utils_serialization.rst:80
+#: ../../modules/utils/utils_serialization.rst:76
 msgid "Errors"
 msgstr "Errors"
 
-#: ../../modules/utils/utils_serialization.rst:82
+#: ../../modules/utils/utils_serialization.rst:78
 msgid ""
 "Failures are wrapped so that callers only have to catch two exceptions:"
 msgstr ""
 "Les fallades s'embolcallen perquè qui fa la crida només hagi de capturar "
 "dues excepcions:"
 
-#: ../../modules/utils/utils_serialization.rst:84
+#: ../../modules/utils/utils_serialization.rst:80
 msgid ""
 ":class:`~qilisdk.utils.serialization.SerializationError` — the object could "
 "not be written."
@@ -141,7 +128,7 @@ msgstr ""
 ":class:`~qilisdk.utils.serialization.SerializationError` — no s'ha pogut "
 "escriure l'objecte."
 
-#: ../../modules/utils/utils_serialization.rst:85
+#: ../../modules/utils/utils_serialization.rst:81
 msgid ""
 ":class:`~qilisdk.utils.serialization.DeserializationError` — the YAML could "
 "not be parsed, or the result is not an instance of the requested class."
@@ -150,11 +137,11 @@ msgstr ""
 "analitzar el YAML, o el resultat no és una instància de la classe "
 "sol·licitada."
 
-#: ../../modules/utils/utils_serialization.rst:88
+#: ../../modules/utils/utils_serialization.rst:84
 msgid "Registering your own classes"
 msgstr "Registrar les teves pròpies classes"
 
-#: ../../modules/utils/utils_serialization.rst:90
+#: ../../modules/utils/utils_serialization.rst:86
 msgid ""
 "A class becomes serializable by registering it with the shared YAML handler."
 " The decorator assigns the tag automatically from the class name, and every "
@@ -165,7 +152,7 @@ msgstr ""
 "classe, i totes les classes públiques de QiliSDK que pots serialitzar "
 "l'utilitzen:"
 
-#: ../../modules/utils/utils_serialization.rst:103
+#: ../../modules/utils/utils_serialization.rst:99
 msgid ""
 "Pass ``shared=True`` to prefix the tag with the top-level package name, "
 "which avoids collisions with tags defined elsewhere."
@@ -174,7 +161,7 @@ msgstr ""
 " superior, cosa que evita col·lisions amb etiquetes definides en un altre "
 "lloc."
 
-#: ../../modules/utils/utils_serialization.rst:108
+#: ../../modules/utils/utils_serialization.rst:104
 msgid ""
 "The handler is a ruamel ``YAML(typ=\"unsafe\")`` instance, so deserializing "
 "constructs arbitrary Python objects named in the document. Only load files "
@@ -184,11 +171,11 @@ msgstr ""
 "deserialitzar construeix objectes de Python arbitraris anomenats al "
 "document. Carrega només fitxers en què confiïs."
 
-#: ../../modules/utils/utils_serialization.rst:112
+#: ../../modules/utils/utils_serialization.rst:108
 msgid "Hashing"
 msgstr "Hashing"
 
-#: ../../modules/utils/utils_serialization.rst:114
+#: ../../modules/utils/utils_serialization.rst:110
 msgid ""
 ":func:`qilisdk.utils.hashing.hash` produces a stable hash for the objects "
 "QiliSDK builds expressions out of. It is used by "
@@ -208,14 +195,14 @@ msgstr ""
 ":class:`~qilisdk.digital.circuit.Circuit` i les portes, de manera que els "
 "termes es poden agrupar en diccionaris i comparar de manera fiable."
 
-#: ../../modules/utils/utils_serialization.rst:126
+#: ../../modules/utils/utils_serialization.rst:122
 msgid ""
 "It differs from Python's built-in ``hash`` in two ways that matter here:"
 msgstr ""
 "Es diferencia del ``hash`` integrat de Python en dos aspectes que importen "
 "aquí:"
 
-#: ../../modules/utils/utils_serialization.rst:128
+#: ../../modules/utils/utils_serialization.rst:124
 msgid ""
 "It is **stable across processes**. Python randomizes string hashing per "
 "interpreter run, whereas this one is a `blake2b <https://www.blake2.net/>`_ "
@@ -227,7 +214,7 @@ msgstr ""
 "<https://www.blake2.net/>`_ d'una codificació canònica, així que el mateix "
 "objecte produeix sempre el mateix enter."
 
-#: ../../modules/utils/utils_serialization.rst:129
+#: ../../modules/utils/utils_serialization.rst:125
 msgid ""
 "It is **consistent across numeric types**. Values are encoded as exact "
 "integer ratios, so ``1``, ``1.0`` and ``(1+0j)`` all hash alike, and "
@@ -238,36 +225,7 @@ msgstr ""
 "mateix hash, i ``nan``, ``inf`` i els escalars de NumPy es tracten "
 "explícitament."
 
-#: ../../modules/utils/utils_serialization.rst:131
-msgid ""
-"Containers are encoded element by element, each element length-prefixed and "
-"tagged by container kind, so a list and a set holding the same items do not "
-"collide. Sequences keep their order, while mappings and sets are sorted "
-"first so that iteration order cannot change the result. NumPy arrays "
-"contribute their dtype, shape and raw bytes."
-msgstr ""
-"Els contenidors es codifiquen element a element, amb cada element precedit "
-"per la seva longitud i etiquetat segons el tipus de contenidor, de manera "
-"que una llista i un conjunt amb els mateixos elements no col·lideixen. Les "
-"seqüències conserven el seu ordre, mentre que els mapatges i els conjunts "
-"s'ordenen primer perquè l'ordre d'iteració no pugui canviar el resultat. Els"
-" arrays de NumPy aporten el seu dtype, la seva forma i els seus bytes en "
-"cru."
-
-#: ../../modules/utils/utils_serialization.rst:136
-msgid ""
-"Anything else is encoded by falling back in order: an object that defines "
-"its own ``__hash__`` uses it, an object with a ``__dict__`` is encoded from "
-"its attributes together with its fully qualified class name, and everything "
-"else from its ``repr``."
-msgstr ""
-"Qualsevol altra cosa es codifica recorrent, per ordre, al següent: un "
-"objecte que defineix el seu propi ``__hash__`` l'utilitza, un objecte amb "
-"``__dict__`` es codifica a partir dels seus atributs juntament amb el seu "
-"nom de classe totalment qualificat, i tota la resta a partir del seu "
-"``repr``."
-
-#: ../../modules/utils/utils_serialization.rst:142
+#: ../../modules/utils/utils_serialization.rst:129
 msgid ""
 "The returned integer is compatible with Python's ``__hash__`` protocol, so "
 "it can be returned directly from a ``__hash__`` method. It is not a "

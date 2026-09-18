@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-18 10:30+0200\n"
+"POT-Creation-Date: 2026-09-18 11:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: es <LL@li.org>\n"
@@ -85,55 +85,42 @@ msgstr "**Salida**::"
 
 #: ../../modules/utils/utils_serialization.rst:44
 msgid ""
-"Each ``!Tag`` in the output names the class that produced the node, which is"
-" what allows the object graph to be rebuilt exactly. Tuples, complex "
-"numbers, NumPy arrays and SciPy sparse matrices all have their own tags, so "
-"a :class:`~qilisdk.core.qtensor.QTensor` or a "
-":class:`~qilisdk.functionals.functional_result.FunctionalResult` survives a "
-"round trip unchanged."
+"Each ``!Tag`` in the output names the class that produced the node, which "
+"allows the object graph to be rebuilt exactly."
 msgstr ""
-"Cada ``!Tag`` de la salida nombra la clase que produjo el nodo, que es lo "
-"que permite reconstruir exactamente el grafo de objetos. Las tuplas, los "
-"números complejos, los arrays de NumPy y las matrices dispersas de SciPy "
-"tienen todos su propia etiqueta, de modo que un "
-":class:`~qilisdk.core.qtensor.QTensor` o un "
-":class:`~qilisdk.functionals.functional_result.FunctionalResult` sobrevive "
-"intacto a una ida y vuelta."
+"Cada ``!Tag`` de la salida nombra la clase que produjo el nodo, lo que "
+"permite reconstruir exactamente el grafo de objetos."
 
-#: ../../modules/utils/utils_serialization.rst:49
-msgid "Writing to and reading from a file works the same way:"
-msgstr "Escribir en un archivo y leer de él funciona igual:"
+#: ../../modules/utils/utils_serialization.rst:47
+msgid "Writing to and reading from a file works in the same way:"
+msgstr "Escribir en un archivo y leer de él funciona de la misma forma:"
 
-#: ../../modules/utils/utils_serialization.rst:65
+#: ../../modules/utils/utils_serialization.rst:63
 msgid "Checking the type on the way back"
 msgstr "Comprobar el tipo a la vuelta"
 
-#: ../../modules/utils/utils_serialization.rst:67
+#: ../../modules/utils/utils_serialization.rst:65
 msgid ""
 "Both ``deserialize`` functions accept an optional class as their second "
 "argument. When given, the rebuilt object is checked against it and the call "
-"is typed as returning that class, which keeps type checkers happy and turns "
-"a mismatched file into an immediate error rather than a confusing one later "
-"on."
+"is typed as returning that class."
 msgstr ""
 "Ambas funciones ``deserialize`` aceptan una clase opcional como segundo "
 "argumento. Si se indica, el objeto reconstruido se comprueba contra ella y "
-"la llamada queda tipada como si devolviera esa clase, lo que contenta a los "
-"verificadores de tipos y convierte un archivo que no encaja en un error "
-"inmediato en lugar de en uno confuso más adelante."
+"la llamada queda tipada como si devolviera esa clase."
 
-#: ../../modules/utils/utils_serialization.rst:80
+#: ../../modules/utils/utils_serialization.rst:76
 msgid "Errors"
 msgstr "Errores"
 
-#: ../../modules/utils/utils_serialization.rst:82
+#: ../../modules/utils/utils_serialization.rst:78
 msgid ""
 "Failures are wrapped so that callers only have to catch two exceptions:"
 msgstr ""
 "Los fallos se envuelven para que quien llama solo tenga que capturar dos "
 "excepciones:"
 
-#: ../../modules/utils/utils_serialization.rst:84
+#: ../../modules/utils/utils_serialization.rst:80
 msgid ""
 ":class:`~qilisdk.utils.serialization.SerializationError` — the object could "
 "not be written."
@@ -141,7 +128,7 @@ msgstr ""
 ":class:`~qilisdk.utils.serialization.SerializationError` — no se pudo "
 "escribir el objeto."
 
-#: ../../modules/utils/utils_serialization.rst:85
+#: ../../modules/utils/utils_serialization.rst:81
 msgid ""
 ":class:`~qilisdk.utils.serialization.DeserializationError` — the YAML could "
 "not be parsed, or the result is not an instance of the requested class."
@@ -149,11 +136,11 @@ msgstr ""
 ":class:`~qilisdk.utils.serialization.DeserializationError` — no se pudo "
 "analizar el YAML, o el resultado no es una instancia de la clase solicitada."
 
-#: ../../modules/utils/utils_serialization.rst:88
+#: ../../modules/utils/utils_serialization.rst:84
 msgid "Registering your own classes"
 msgstr "Registrar tus propias clases"
 
-#: ../../modules/utils/utils_serialization.rst:90
+#: ../../modules/utils/utils_serialization.rst:86
 msgid ""
 "A class becomes serializable by registering it with the shared YAML handler."
 " The decorator assigns the tag automatically from the class name, and every "
@@ -164,7 +151,7 @@ msgstr ""
 "nombre de la clase, y todas las clases públicas de QiliSDK que puedes "
 "serializar lo usan:"
 
-#: ../../modules/utils/utils_serialization.rst:103
+#: ../../modules/utils/utils_serialization.rst:99
 msgid ""
 "Pass ``shared=True`` to prefix the tag with the top-level package name, "
 "which avoids collisions with tags defined elsewhere."
@@ -173,7 +160,7 @@ msgstr ""
 "nivel superior, lo que evita colisiones con etiquetas definidas en otro "
 "sitio."
 
-#: ../../modules/utils/utils_serialization.rst:108
+#: ../../modules/utils/utils_serialization.rst:104
 msgid ""
 "The handler is a ruamel ``YAML(typ=\"unsafe\")`` instance, so deserializing "
 "constructs arbitrary Python objects named in the document. Only load files "
@@ -183,11 +170,11 @@ msgstr ""
 "deserializar construye objetos de Python arbitrarios nombrados en el "
 "documento. Carga solo archivos en los que confíes."
 
-#: ../../modules/utils/utils_serialization.rst:112
+#: ../../modules/utils/utils_serialization.rst:108
 msgid "Hashing"
 msgstr "Hashing"
 
-#: ../../modules/utils/utils_serialization.rst:114
+#: ../../modules/utils/utils_serialization.rst:110
 msgid ""
 ":func:`qilisdk.utils.hashing.hash` produces a stable hash for the objects "
 "QiliSDK builds expressions out of. It is used by "
@@ -207,14 +194,14 @@ msgstr ""
 ":class:`~qilisdk.digital.circuit.Circuit` y las puertas, de modo que los "
 "términos pueden agruparse en diccionarios y compararse de forma fiable."
 
-#: ../../modules/utils/utils_serialization.rst:126
+#: ../../modules/utils/utils_serialization.rst:122
 msgid ""
 "It differs from Python's built-in ``hash`` in two ways that matter here:"
 msgstr ""
 "Se diferencia del ``hash`` integrado de Python en dos aspectos que importan "
 "aquí:"
 
-#: ../../modules/utils/utils_serialization.rst:128
+#: ../../modules/utils/utils_serialization.rst:124
 msgid ""
 "It is **stable across processes**. Python randomizes string hashing per "
 "interpreter run, whereas this one is a `blake2b <https://www.blake2.net/>`_ "
@@ -226,7 +213,7 @@ msgstr ""
 "<https://www.blake2.net/>`_ de una codificación canónica, así que el mismo "
 "objeto produce siempre el mismo entero."
 
-#: ../../modules/utils/utils_serialization.rst:129
+#: ../../modules/utils/utils_serialization.rst:125
 msgid ""
 "It is **consistent across numeric types**. Values are encoded as exact "
 "integer ratios, so ``1``, ``1.0`` and ``(1+0j)`` all hash alike, and "
@@ -237,35 +224,7 @@ msgstr ""
 " el mismo hash, y ``nan``, ``inf`` y los escalares de NumPy se tratan "
 "explícitamente."
 
-#: ../../modules/utils/utils_serialization.rst:131
-msgid ""
-"Containers are encoded element by element, each element length-prefixed and "
-"tagged by container kind, so a list and a set holding the same items do not "
-"collide. Sequences keep their order, while mappings and sets are sorted "
-"first so that iteration order cannot change the result. NumPy arrays "
-"contribute their dtype, shape and raw bytes."
-msgstr ""
-"Los contenedores se codifican elemento a elemento, con cada elemento "
-"precedido por su longitud y etiquetado según el tipo de contenedor, de modo "
-"que una lista y un conjunto con los mismos elementos no colisionan. Las "
-"secuencias conservan su orden, mientras que los mapeos y los conjuntos se "
-"ordenan primero para que el orden de iteración no pueda cambiar el "
-"resultado. Los arrays de NumPy aportan su dtype, su forma y sus bytes en "
-"crudo."
-
-#: ../../modules/utils/utils_serialization.rst:136
-msgid ""
-"Anything else is encoded by falling back in order: an object that defines "
-"its own ``__hash__`` uses it, an object with a ``__dict__`` is encoded from "
-"its attributes together with its fully qualified class name, and everything "
-"else from its ``repr``."
-msgstr ""
-"Cualquier otra cosa se codifica recurriendo, por orden, a lo siguiente: un "
-"objeto que define su propio ``__hash__`` lo usa, un objeto con ``__dict__`` "
-"se codifica a partir de sus atributos junto con su nombre de clase "
-"totalmente cualificado, y todo lo demás a partir de su ``repr``."
-
-#: ../../modules/utils/utils_serialization.rst:142
+#: ../../modules/utils/utils_serialization.rst:129
 msgid ""
 "The returned integer is compatible with Python's ``__hash__`` protocol, so "
 "it can be returned directly from a ``__hash__`` method. It is not a "

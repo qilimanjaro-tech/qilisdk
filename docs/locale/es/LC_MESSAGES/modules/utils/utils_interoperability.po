@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-18 10:30+0200\n"
+"POT-Creation-Date: 2026-09-18 11:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: es <LL@li.org>\n"
@@ -25,13 +25,13 @@ msgstr "Interoperabilidad"
 
 #: ../../modules/utils/utils_interoperability.rst:4
 msgid ""
-"QiliSDK is rarely the only tool in a workflow, so :mod:`qilisdk.utils` "
+"QiliSDK is often not the only tool in a workflow, so :mod:`qilisdk.utils` "
 "provides converters between QiliSDK objects and the formats used by other "
 "quantum frameworks. Each converter comes as a pair of ``from_*`` and "
 "``to_*`` functions, and each one depends on a third-party library that is "
 "shipped as an optional extra."
 msgstr ""
-"QiliSDK rara vez es la única herramienta de un flujo de trabajo, así que "
+"A menudo QiliSDK no es la única herramienta de un flujo de trabajo, así que "
 ":mod:`qilisdk.utils` proporciona conversores entre los objetos de QiliSDK y "
 "los formatos que usan otros marcos de trabajo cuánticos. Cada conversor "
 "viene como un par de funciones ``from_*`` y ``to_*``, y cada uno depende de "
@@ -226,26 +226,6 @@ msgstr ""
 
 #: ../../modules/utils/utils_interoperability.rst:85
 msgid ""
-"The ``openfermion`` dependency is optional; install it with the "
-"``openfermion`` extra:"
-msgstr ""
-"La dependencia ``openfermion`` es opcional; instálala con el extra "
-"``openfermion``:"
-
-#: ../../modules/utils/utils_interoperability.rst:89
-msgid "Linux"
-msgstr "Linux"
-
-#: ../../modules/utils/utils_interoperability.rst:95
-msgid "Mac OSX"
-msgstr "Mac OSX"
-
-#: ../../modules/utils/utils_interoperability.rst:101
-msgid "Windows"
-msgstr "Windows"
-
-#: ../../modules/utils/utils_interoperability.rst:107
-msgid ""
 "Each term of the ``QubitOperator`` becomes a product of "
 ":class:`~qilisdk.analog.hamiltonian.PauliX`, "
 ":class:`~qilisdk.analog.hamiltonian.PauliY` and "
@@ -261,12 +241,12 @@ msgstr ""
 "identidad, se convierte en :class:`~qilisdk.analog.hamiltonian.PauliI` sobre"
 " el cúbit 0."
 
-#: ../../modules/utils/utils_interoperability.rst:122
-#: ../../modules/utils/utils_interoperability.rst:137
+#: ../../modules/utils/utils_interoperability.rst:100
+#: ../../modules/utils/utils_interoperability.rst:115
 msgid "**Output**::"
 msgstr "**Salida**::"
 
-#: ../../modules/utils/utils_interoperability.rst:126
+#: ../../modules/utils/utils_interoperability.rst:104
 msgid ""
 "The reverse direction drops identity factors, since OpenFermion writes the "
 "identity as the empty term, and stores every coefficient as a complex "
@@ -276,7 +256,7 @@ msgstr ""
 "escribe la identidad como el término vacío, y guarda todos los coeficientes "
 "como números complejos."
 
-#: ../../modules/utils/utils_interoperability.rst:144
+#: ../../modules/utils/utils_interoperability.rst:122
 msgid ""
 "Only the qubit-operator representation is converted. An OpenFermion "
 "``FermionOperator`` has to be mapped to qubits first (with "

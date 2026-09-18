@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-18 10:30+0200\n"
+"POT-Creation-Date: 2026-09-18 11:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: ca <LL@li.org>\n"
@@ -26,19 +26,17 @@ msgstr "Solucionadors Clàssics"
 #: ../../modules/utils/utils_classical_solvers.rst:4
 msgid ""
 ":mod:`qilisdk.utils.classical_solvers` wraps a handful of purely classical "
-"optimizers behind one interface. They exist so that an optimization problem "
-"written as a :class:`~qilisdk.core.model.Model` can be solved without a "
-"backend, giving you a reference solution to compare a quantum result against"
-" and a quick way to see where classical methods start to struggle."
+"optimizers. They exist so that an optimization problem written as a "
+":class:`~qilisdk.core.model.Model` can be solved without a backend, giving "
+"you a reference solution to compare a quantum result against."
 msgstr ""
 ":mod:`qilisdk.utils.classical_solvers` embolcalla un grapat d'optimitzadors "
-"purament clàssics rere una única interfície. Existeixen perquè un problema "
-"d'optimització escrit com un :class:`~qilisdk.core.model.Model` es pugui "
-"resoldre sense un backend, cosa que et dona una solució de referència amb "
-"què comparar un resultat quàntic i una manera ràpida de veure on comencen a "
-"fallar els mètodes clàssics."
+"purament clàssics. Existeixen perquè un problema d'optimització escrit com "
+"un :class:`~qilisdk.core.model.Model` es pugui resoldre sense un backend, "
+"cosa que et dona una solució de referència amb què comparar un resultat "
+"quàntic."
 
-#: ../../modules/utils/utils_classical_solvers.rst:9
+#: ../../modules/utils/utils_classical_solvers.rst:8
 msgid ""
 "Every solver subclasses "
 ":class:`~qilisdk.utils.classical_solvers.base_solver.ClassicalSolver` and "
@@ -54,81 +52,81 @@ msgstr ""
 "que pren un model i retorna un "
 ":class:`~qilisdk.utils.classical_solvers.base_solver.ClassicalSolverResult`."
 
-#: ../../modules/utils/utils_classical_solvers.rst:23
-#: ../../modules/utils/utils_classical_solvers.rst:90
-#: ../../modules/utils/utils_classical_solvers.rst:126
-#: ../../modules/utils/utils_classical_solvers.rst:178
-#: ../../modules/utils/utils_classical_solvers.rst:206
+#: ../../modules/utils/utils_classical_solvers.rst:22
+#: ../../modules/utils/utils_classical_solvers.rst:87
+#: ../../modules/utils/utils_classical_solvers.rst:116
+#: ../../modules/utils/utils_classical_solvers.rst:162
+#: ../../modules/utils/utils_classical_solvers.rst:190
 msgid "**Output**::"
 msgstr "**Sortida**::"
 
-#: ../../modules/utils/utils_classical_solvers.rst:28
+#: ../../modules/utils/utils_classical_solvers.rst:27
 msgid "Available Solvers"
 msgstr "Solucionadors disponibles"
 
-#: ../../modules/utils/utils_classical_solvers.rst:35
+#: ../../modules/utils/utils_classical_solvers.rst:34
 msgid "Solver"
 msgstr "Solucionador"
 
-#: ../../modules/utils/utils_classical_solvers.rst:35
+#: ../../modules/utils/utils_classical_solvers.rst:34
 msgid "Accepts"
 msgstr "Accepta"
 
-#: ../../modules/utils/utils_classical_solvers.rst:35
+#: ../../modules/utils/utils_classical_solvers.rst:34
 msgid "Finds the global optimum"
 msgstr "Troba l'òptim global"
 
-#: ../../modules/utils/utils_classical_solvers.rst:37
+#: ../../modules/utils/utils_classical_solvers.rst:36
 msgid ""
 ":class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver`"
 msgstr ""
 ":class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver`"
 
-#: ../../modules/utils/utils_classical_solvers.rst:37
-#: ../../modules/utils/utils_classical_solvers.rst:39
-#: ../../modules/utils/utils_classical_solvers.rst:43
+#: ../../modules/utils/utils_classical_solvers.rst:36
+#: ../../modules/utils/utils_classical_solvers.rst:38
+#: ../../modules/utils/utils_classical_solvers.rst:42
 msgid "any ``Model``"
 msgstr "qualsevol ``Model``"
 
-#: ../../modules/utils/utils_classical_solvers.rst:37
+#: ../../modules/utils/utils_classical_solvers.rst:36
 msgid "✔ (exponential cost)"
 msgstr "✔ (cost exponencial)"
 
-#: ../../modules/utils/utils_classical_solvers.rst:39
+#: ../../modules/utils/utils_classical_solvers.rst:38
 msgid ":class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver`"
 msgstr ":class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver`"
 
-#: ../../modules/utils/utils_classical_solvers.rst:39
+#: ../../modules/utils/utils_classical_solvers.rst:38
 msgid "✕ (local minimizer by default)"
 msgstr "✕ (minimitzador local per defecte)"
 
-#: ../../modules/utils/utils_classical_solvers.rst:41
+#: ../../modules/utils/utils_classical_solvers.rst:40
 msgid ""
 ":class:`~qilisdk.utils.classical_solvers.simulated_annealing_solver.SimulatedAnnealingSolver`"
 msgstr ""
 ":class:`~qilisdk.utils.classical_solvers.simulated_annealing_solver.SimulatedAnnealingSolver`"
 
-#: ../../modules/utils/utils_classical_solvers.rst:41
+#: ../../modules/utils/utils_classical_solvers.rst:40
 msgid "``QUBO`` only"
 msgstr "només ``QUBO``"
 
-#: ../../modules/utils/utils_classical_solvers.rst:41
+#: ../../modules/utils/utils_classical_solvers.rst:40
 msgid "✕ (heuristic)"
 msgstr "✕ (heurístic)"
 
-#: ../../modules/utils/utils_classical_solvers.rst:43
+#: ../../modules/utils/utils_classical_solvers.rst:42
 msgid ":class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver`"
 msgstr ":class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver`"
 
-#: ../../modules/utils/utils_classical_solvers.rst:43
+#: ../../modules/utils/utils_classical_solvers.rst:42
 msgid "✔ (requires the ``scip`` extra)"
 msgstr "✔ (requereix l'extra ``scip``)"
 
-#: ../../modules/utils/utils_classical_solvers.rst:47
+#: ../../modules/utils/utils_classical_solvers.rst:46
 msgid "BruteForceSolver"
 msgstr "BruteForceSolver"
 
-#: ../../modules/utils/utils_classical_solvers.rst:49
+#: ../../modules/utils/utils_classical_solvers.rst:48
 #, python-brace-format
 msgid ""
 ":class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver`"
@@ -150,38 +148,34 @@ msgstr ""
 "candidats, així que la solució retornada és la millor solució *factible* "
 "sempre que els multiplicadors de Lagrange siguin prou grans."
 
-#: ../../modules/utils/utils_classical_solvers.rst:66
+#: ../../modules/utils/utils_classical_solvers.rst:65
 msgid ""
-"The cost grows exponentially with the number of variables. Above 8192 "
-"combinations the solver logs a warning and keeps going, so use it for small "
-"reference problems only. A variable with neither a binary nor a bounded "
-"domain has no encoding to enumerate and raises a ``ValueError``."
+"The cost grows exponentially with the number of variables, so use it for "
+"small reference problems only. A variable with neither a binary nor a "
+"bounded domain has no encoding to enumerate and raises a ``ValueError``."
 msgstr ""
-"El cost creix exponencialment amb el nombre de variables. Per damunt de 8192"
-" combinacions el solucionador registra un avís i continua, així que fes-lo "
+"El cost creix exponencialment amb el nombre de variables, així que fes-lo "
 "servir només per a problemes de referència petits. Una variable que no té ni"
 " domini binari ni domini fitat no té codificació a enumerar i llança un "
 "``ValueError``."
 
-#: ../../modules/utils/utils_classical_solvers.rst:71
+#: ../../modules/utils/utils_classical_solvers.rst:69
 msgid "ScipySolver"
 msgstr "ScipySolver"
 
-#: ../../modules/utils/utils_classical_solvers.rst:73
+#: ../../modules/utils/utils_classical_solvers.rst:71
 msgid ""
 ":class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver` minimizes"
 " the model's objective with SciPy, reusing the same "
 ":class:`~qilisdk.optimizers.scipy_optimizer.SciPyOptimizer` that drives the "
-"variational algorithms. The discrete variables are relaxed to continuous "
-"ones during the search and decoded back afterwards."
+"variational algorithms."
 msgstr ""
 ":class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver` minimitza"
 " l'objectiu del model amb SciPy, reutilitzant el mateix "
 ":class:`~qilisdk.optimizers.scipy_optimizer.SciPyOptimizer` que impulsa els "
-"algorismes variacionals. Les variables discretes es relaxen a variables "
-"contínues durant la cerca i després es tornen a descodificar."
+"algorismes variacionals."
 
-#: ../../modules/utils/utils_classical_solvers.rst:78
+#: ../../modules/utils/utils_classical_solvers.rst:75
 msgid ""
 "The ``method`` argument selects the SciPy routine, and any further keyword "
 "argument is forwarded to ``scipy.optimize.minimize`` (or to the "
@@ -191,26 +185,11 @@ msgstr ""
 "argument amb nom es reenvia a ``scipy.optimize.minimize`` (o a "
 "l'optimitzador global corresponent)."
 
-#: ../../modules/utils/utils_classical_solvers.rst:96
-msgid ""
-"A local minimizer on a relaxed combinatorial problem has no reason to land "
-"on the global optimum, and here it does not: brute force finds ``-7.0`` for "
-"the same model. This is exactly the kind of gap the quantum optimization "
-"algorithms in :doc:`../functionals/functionals` are meant to close, so keep "
-"a global method at hand when you need a trustworthy reference."
-msgstr ""
-"Un minimitzador local sobre un problema combinatori relaxat no té per què "
-"arribar a l'òptim global, i aquí no hi arriba: la força bruta troba ``-7.0``"
-" per al mateix model. Aquesta és exactament la mena de diferència que "
-"pretenen tancar els algorismes d'optimització quàntica de "
-":doc:`../functionals/functionals`, així que tingues a mà un mètode global "
-"quan necessitis una referència fiable."
-
-#: ../../modules/utils/utils_classical_solvers.rst:102
+#: ../../modules/utils/utils_classical_solvers.rst:92
 msgid "SimulatedAnnealingSolver"
 msgstr "SimulatedAnnealingSolver"
 
-#: ../../modules/utils/utils_classical_solvers.rst:104
+#: ../../modules/utils/utils_classical_solvers.rst:94
 msgid ""
 ":class:`~qilisdk.utils.classical_solvers.simulated_annealing_solver.SimulatedAnnealingSolver`"
 " runs simulated annealing implemented in C++. It solves a "
@@ -224,11 +203,11 @@ msgstr ""
 "un model general s'ha de convertir primer amb "
 ":meth:`~qilisdk.core.model.Model.to_qubo`."
 
-#: ../../modules/utils/utils_classical_solvers.rst:109
+#: ../../modules/utils/utils_classical_solvers.rst:99
 msgid "Configuration options:"
 msgstr "Opcions de configuració:"
 
-#: ../../modules/utils/utils_classical_solvers.rst:111
+#: ../../modules/utils/utils_classical_solvers.rst:101
 msgid ""
 "**num_reads**: The number of independent anneals to run, the best of which "
 "is returned. Defaults to 10."
@@ -236,7 +215,7 @@ msgstr ""
 "**num_reads**: El nombre de recuits independents que s'executen, dels quals "
 "es retorna el millor. Per defecte és 10."
 
-#: ../../modules/utils/utils_classical_solvers.rst:112
+#: ../../modules/utils/utils_classical_solvers.rst:102
 msgid ""
 "**num_sweeps**: The number of sweeps over all variables in each anneal. "
 "Defaults to 1000."
@@ -244,7 +223,7 @@ msgstr ""
 "**num_sweeps**: El nombre d'escombrats sobre totes les variables a cada "
 "recuit. Per defecte és 1000."
 
-#: ../../modules/utils/utils_classical_solvers.rst:113
+#: ../../modules/utils/utils_classical_solvers.rst:103
 msgid ""
 "**beta_range**: The ``(initial, final)`` inverse temperature to anneal over."
 " If not given, a range is derived from the magnitudes of the cost function's"
@@ -254,7 +233,7 @@ msgstr ""
 "qual es recou. Si no s'indica, el rang es dedueix de les magnituds dels "
 "coeficients de la funció de cost. Per defecte és ``None``."
 
-#: ../../modules/utils/utils_classical_solvers.rst:114
+#: ../../modules/utils/utils_classical_solvers.rst:104
 msgid ""
 "**seed**: The seed of the random number generators, each read deriving its "
 "own from it. Defaults to 0."
@@ -262,7 +241,7 @@ msgstr ""
 "**seed**: La llavor dels generadors de nombres aleatoris, de la qual cada "
 "lectura deriva la seva. Per defecte és 0."
 
-#: ../../modules/utils/utils_classical_solvers.rst:115
+#: ../../modules/utils/utils_classical_solvers.rst:105
 msgid ""
 "**num_threads**: The number of threads to distribute the reads over, or zero"
 " to let OpenMP decide. Defaults to 0."
@@ -270,22 +249,11 @@ msgstr ""
 "**num_threads**: El nombre de fils entre els quals es distribueixen les "
 "lectures, o zero per deixar que ho decideixi OpenMP. Per defecte és 0."
 
-#: ../../modules/utils/utils_classical_solvers.rst:132
-msgid ""
-"Converting to a QUBO introduces the slack variables used to encode the "
-"inequality constraints, which is why they show up in the sample. See "
-":doc:`../core/core_qubo` for how that conversion works."
-msgstr ""
-"La conversió a QUBO introdueix les variables de folgança que s'utilitzen per"
-" codificar les restriccions de desigualtat, i per això apareixen a la "
-"mostra. Consulta :doc:`../core/core_qubo` per veure com funciona aquesta "
-"conversió."
-
-#: ../../modules/utils/utils_classical_solvers.rst:137
+#: ../../modules/utils/utils_classical_solvers.rst:121
 msgid "ScipSolver"
 msgstr "ScipSolver"
 
-#: ../../modules/utils/utils_classical_solvers.rst:139
+#: ../../modules/utils/utils_classical_solvers.rst:123
 msgid ""
 ":class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` hands the "
 "model to `SCIP <https://www.scipopt.org/>`__, a mixed-integer programming "
@@ -297,26 +265,26 @@ msgstr ""
 "entera mixta, a través de ``pyscipopt``. Resol fins a l'optimalitat global i"
 " és l'opció pràctica quan la força bruta es torna massa lenta."
 
-#: ../../modules/utils/utils_classical_solvers.rst:143
+#: ../../modules/utils/utils_classical_solvers.rst:127
 msgid ""
 "The ``pyscipopt`` dependency is optional; install it with the ``scip`` "
 "extra:"
 msgstr ""
 "La dependència ``pyscipopt`` és opcional; instal·la-la amb l'extra ``scip``:"
 
-#: ../../modules/utils/utils_classical_solvers.rst:147
+#: ../../modules/utils/utils_classical_solvers.rst:131
 msgid "Linux"
 msgstr "Linux"
 
-#: ../../modules/utils/utils_classical_solvers.rst:153
+#: ../../modules/utils/utils_classical_solvers.rst:137
 msgid "Mac OSX"
 msgstr "Mac OSX"
 
-#: ../../modules/utils/utils_classical_solvers.rst:159
+#: ../../modules/utils/utils_classical_solvers.rst:143
 msgid "Windows"
 msgstr "Windows"
 
-#: ../../modules/utils/utils_classical_solvers.rst:165
+#: ../../modules/utils/utils_classical_solvers.rst:149
 msgid ""
 "Unlike the other solvers, "
 ":meth:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver.solve` takes "
@@ -329,11 +297,11 @@ msgstr ""
 "sortida pròpia de SCIP, i ``params`` per reenviar paràmetres a "
 "``pyscipopt.Model.setParams``."
 
-#: ../../modules/utils/utils_classical_solvers.rst:183
+#: ../../modules/utils/utils_classical_solvers.rst:167
 msgid "Reading the Result"
 msgstr "Interpretar el resultat"
 
-#: ../../modules/utils/utils_classical_solvers.rst:185
+#: ../../modules/utils/utils_classical_solvers.rst:169
 msgid ""
 "Every solver returns a "
 ":class:`~qilisdk.utils.classical_solvers.base_solver.ClassicalSolverResult`,"
@@ -343,13 +311,13 @@ msgstr ""
 ":class:`~qilisdk.utils.classical_solvers.base_solver.ClassicalSolverResult`,"
 " que és el model avaluat en la solució trobada:"
 
-#: ../../modules/utils/utils_classical_solvers.rst:189
+#: ../../modules/utils/utils_classical_solvers.rst:173
 msgid ""
 "``result.objective`` - the value of the model's objective at the solution."
 msgstr ""
 "``result.objective`` - el valor de l'objectiu del model en la solució."
 
-#: ../../modules/utils/utils_classical_solvers.rst:190
+#: ../../modules/utils/utils_classical_solvers.rst:174
 msgid ""
 "``result.constraints`` - the value of each of the model's constraints, keyed"
 " by label. A constraint evaluates to zero when it is satisfied, and to its "
@@ -359,7 +327,7 @@ msgstr ""
 "model, indexat per etiqueta. Una restricció val zero quan se satisfà, i la "
 "seva penalització en cas contrari."
 
-#: ../../modules/utils/utils_classical_solvers.rst:191
+#: ../../modules/utils/utils_classical_solvers.rst:175
 msgid ""
 "``result.results`` - the objective and every constraint together, keyed by "
 "label."
@@ -367,21 +335,17 @@ msgstr ""
 "``result.results`` - l'objectiu i totes les restriccions juntes, indexats "
 "per etiqueta."
 
-#: ../../modules/utils/utils_classical_solvers.rst:192
+#: ../../modules/utils/utils_classical_solvers.rst:176
 msgid ""
 "``result.sample`` - the value each of the model's variables takes in the "
 "solution."
 msgstr ""
 "``result.sample`` - el valor que pren cada variable del model en la solució."
 
-#: ../../modules/utils/utils_classical_solvers.rst:212
+#: ../../modules/utils/utils_classical_solvers.rst:196
 msgid ""
 "A non-zero constraint value means the solution violates that constraint, and"
-" the number is the penalty it incurred. Because the result is a "
-":class:`~qilisdk.core.result.Result`, it can be written to disk and read "
-"back with the helpers in :doc:`utils_serialization`."
+" the number is the penalty it incurred."
 msgstr ""
 "Un valor de restricció diferent de zero significa que la solució viola "
-"aquesta restricció, i el nombre és la penalització en què incorre. Com que "
-"el resultat és un :class:`~qilisdk.core.result.Result`, es pot escriure a "
-"disc i tornar a llegir amb les utilitats de :doc:`utils_serialization`."
+"aquesta restricció, i el nombre és la penalització en què incorre."
