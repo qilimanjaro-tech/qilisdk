@@ -262,42 +262,70 @@ def test_deep_circuit_is_folded_into_rows(monkeypatch):
     assert height > (len(renderer._row_widths) - 1) * renderer._row_height
 
 
-def fold_connectors(renderer, row):
-    """Collect the x of every vertical wire-coloured line drawn on a row."""
+def dashed_spans(renderer, row):
+    """Collect the ``(start, end)`` x of every dashed wire segment drawn on a row."""
     return [
-        line.get_xdata()[0]
+        tuple(line.get_xdata())
         for line in renderer._row_artists[row]
-        if isinstance(line, Line2D)
-        and line.get_zorder() == MatplotlibCircuitRenderer._Z["wire"]
-        and line.get_xdata()[0] == line.get_xdata()[1]
+        if isinstance(line, Line2D) and line.get_linestyle() == "--"
     ]
 
 
-def test_folds_are_closed_by_vertical_connectors(monkeypatch):
+def test_folded_wires_trail_off_in_dashes(monkeypatch):
     monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
 
-    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(nqubits=3), style=CircuitStyle(max_row_width=4.0))
+    circuit = deep_circuit(nqubits=3)
+    style = CircuitStyle(max_row_width=4.0)
+    renderer = MatplotlibCircuitRenderer(circuit=circuit, style=style)
     renderer.plot()
 
     assert len(renderer._row_widths) > 2
     last_row = len(renderer._row_widths) - 1
     for row, x_end in enumerate(renderer._row_widths):
-        # a row is closed off wherever the circuit carries on, and left open at its real ends
-        expected = ([] if row == 0 else [0.0]) + ([] if row == last_row else [x_end])
-        assert fold_connectors(renderer, row) == expected
+        # a wire is dashed wherever the circuit carries on, and left open at its real ends
+        expected = ([] if row == 0 else [(0.0, style.fold_dash)]) + (
+            [] if row == last_row else [(x_end - style.fold_dash, x_end)]
+        )
+        spans = dashed_spans(renderer, row)
+        assert sorted(set(spans)) == expected
+        assert len(spans) == len(expected) * circuit.nqubits
+
+    # the dashes take room of their own, so no gate is drawn over them
+    assert all(x >= style.fold_dash for row, x in zip(renderer._layer_row, renderer._layer_x) if row)
 
 
-def test_a_single_wire_needs_no_connectors(monkeypatch):
+def test_folded_rows_line_up(monkeypatch):
     monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
 
-    circuit = Circuit(1)
-    for _ in range(40):
-        circuit.add(RX(0, theta=np.pi / 4))
-    renderer = MatplotlibCircuitRenderer(circuit=circuit, style=CircuitStyle(max_row_width=4.0))
+    circuit = Circuit(3)
+    for _ in range(30):
+        circuit.add(XGate(0))
+    renderer = MatplotlibCircuitRenderer(circuit=circuit, style=CircuitStyle(fold=10))
+    renderer.plot()
+
+    # a row that holds no dashes still keeps the room for them, so the columns line up
+    assert renderer._layer_x[:10] == renderer._layer_x[10:20] == renderer._layer_x[20:]
+    assert len(set(renderer._row_widths)) == 1
+
+
+def test_unfolded_circuit_keeps_no_room_for_dashes(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    style = CircuitStyle(fold=None)
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=style)
+    renderer.plot()
+
+    assert renderer._layer_x[0] == pytest.approx(style.start_pad)
+
+
+def test_fold_dash_zero_leaves_the_rows_open(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=CircuitStyle(max_row_width=4.0, fold_dash=0.0))
     renderer.plot()
 
     assert len(renderer._row_widths) > 1
-    assert not any(fold_connectors(renderer, row) for row in range(len(renderer._row_widths)))
+    assert not any(dashed_spans(renderer, row) for row in range(len(renderer._row_widths)))
 
 
 def test_fold_none_keeps_a_single_row(monkeypatch):

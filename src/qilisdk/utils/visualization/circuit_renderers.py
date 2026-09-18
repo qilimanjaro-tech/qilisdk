@@ -271,15 +271,16 @@ class MatplotlibCircuitRenderer:
         self._layer_row: list[int] = []
         self._layer_x: list[float] = []
         self._row_widths: list[float] = []
+        dash = self.style.fold_dash
         row = 0
-        x = self.style.start_pad
+        x = self.style.start_pad + dash
         layers_in_row = 0
         for width in widths:
             # A layer wider than a whole row still gets drawn, on a row of its own
-            if width and layers_in_row and (layers_in_row >= max_layers or x + width > max_width):
-                self._row_widths.append(x)
+            if width and layers_in_row and (layers_in_row >= max_layers or x + width + dash > max_width):
+                self._row_widths.append(x + dash)
                 row += 1
-                x = self.style.start_pad
+                x = self.style.start_pad + dash
                 layers_in_row = 0
             self._layer_row.append(row)
             self._layer_x.append(x)
@@ -287,7 +288,12 @@ class MatplotlibCircuitRenderer:
             # An empty layer takes up no room, so it never fills or wraps a row
             if width:
                 layers_in_row += 1
-        self._row_widths.append(x)
+        self._row_widths.append(x + dash)
+
+        # A circuit that is never folded has no dashes, so it needs no room for them
+        if len(self._row_widths) == 1:
+            self._layer_x = [layer_x - dash for layer_x in self._layer_x]
+            self._row_widths = [self._row_widths[0] - dash * 2]
         logger.debug("[CircuitRenderer] Laid out {} layers on {} rows", len(widths), len(self._row_widths))
 
     def _record(self, artist: Artist) -> None:
@@ -758,36 +764,35 @@ class MatplotlibCircuitRenderer:
         """
         Draw the horizontal wires of every row, up to the last occupied x of that row.
 
-        Where the circuit is folded, the wires of a row are joined by a vertical
-        line at the break and again where they pick up on the next row, so that
-        only the very start and the very end of the circuit are left open.
+        A wire that carries on onto the next row trails off in dashes, and picks up
+        in dashes on the row below, so that only the very start and the very end of
+        the circuit are drawn as open wire ends.
         """
         last_row = len(self._row_widths) - 1
         for row, x_end in enumerate(self._row_widths):
             self._row = row
+            lead = self.style.fold_dash if row else 0.0
+            trail = self.style.fold_dash if row != last_row else 0.0
+            spans = [(lead, x_end - trail, "solid")]
+            if lead:
+                spans.append((0.0, lead, "dashed"))
+            if trail:
+                spans.append((x_end - trail, x_end, "dashed"))
             for q in range(self._wires):
                 y = self._ypos(q, n_qubits=self._wires, sep=self.style.wire_sep)
-                self._record(
-                    self.axes.add_line(
-                        plt.Line2D(
-                            [0, x_end], [y, y], lw=1, color=self.style.theme.surface_muted, zorder=self._Z["wire"]
+                for x_start, x_stop, linestyle in spans:
+                    self._record(
+                        self.axes.add_line(
+                            plt.Line2D(
+                                [x_start, x_stop],
+                                [y, y],
+                                lw=1,
+                                ls=linestyle,
+                                color=self.style.theme.border,
+                                zorder=self._Z["wire"],
+                            )
                         )
                     )
-                )
-
-            if self._wires == 1:
-                continue
-            breaks = ([0.0] if row else []) + ([x_end] if row != last_row else [])
-            top = self._ypos(0, n_qubits=self._wires, sep=self.style.wire_sep)
-            bottom = self._ypos(self._wires - 1, n_qubits=self._wires, sep=self.style.wire_sep)
-            for x in breaks:
-                self._record(
-                    self.axes.add_line(
-                        plt.Line2D(
-                            [x, x], [bottom, top], lw=1, color=self.style.theme.surface_muted, zorder=self._Z["wire"]
-                        )
-                    )
-                )
 
     def _draw_wire_labels(self) -> None:
         """Draw wire labels to the left of every row."""

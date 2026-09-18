@@ -153,6 +153,11 @@ class CircuitStyle(Style):
         default=12.0, description="Maximum width (inches) of a row of the circuit when `fold` is 'auto'.", gt=0.0
     )
     row_separation: float = Field(default=1.0, description="Vertical separation (inches) between wrapped rows.", gt=0.0)
+    fold_dash: float = Field(
+        default=0.25,
+        description="Length (inches) of the dashed wire drawn where a row of a folded circuit breaks off and where the next one picks it up. 0 leaves the wires of every row open.",
+        ge=0.0,
+    )
     max_view_height: Annotated[float, Field(gt=0.0)] | None = Field(
         default=7.0,
         description="Height (inches) of the circuit shown when the figure first opens in a window. A taller circuit opens on its first rows and can be panned or zoomed out to reach the rest; a figure saved to file always holds the whole circuit. None opens on the whole circuit.",
