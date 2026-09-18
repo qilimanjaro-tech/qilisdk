@@ -54,13 +54,13 @@ QiliSDK uses the standard Loguru levels, each with its own icon:
      - Very detailed information, typically only useful when written to a file.
    * - ``DEBUG``
      - 🐞
-     - Information meant for developers, emitted at most once per step of a normal workflow.
+     - Information meant for developers, designed to not flood the terminal during a normal workflow.
    * - ``INFO``
      - 💡
-     - Information meant for users, emitted at most once per step of a normal workflow.
+     - Information meant for users, designed to not flood the terminal during a normal workflow.
    * - ``SUCCESS``
      - ✅
-     - Same as ``INFO``, but for operations that completed successfully.
+     - Messages indicating a successful operation.
    * - ``WARNING``
      - 🚧
      - Things worth noting, such as a parameter being ignored. This is the default threshold.
