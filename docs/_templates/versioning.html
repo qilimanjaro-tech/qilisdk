@@ -1,6 +1,10 @@
 {% if versions %}
   {% set dev_versions = versions | selectattr("name", "equalto", "main") | list %}
-  {% set release_versions = versions | rejectattr("name", "equalto", "main") | list %}
+  {% set release_versions = versions | rejectattr("name", "equalto", "main") | list | reverse | list %}
+  {# Newest releases stay visible, everything older goes behind an "Older" dropdown. #}
+  {% set recent_versions = release_versions[:3] %}
+  {% set older_versions = release_versions[3:] %}
+  {% set current_name = current_version.name if current_version is defined else none %}
 
   <nav class="table w-full min-w-full my-6 lg:my-8 border-t pt-6">
     {% if release_versions %}
@@ -8,12 +12,26 @@
       <span class="caption_text">{{ _('Releases') }}</span>
     </p>
     <ul>
-      {%- for item in release_versions|reverse %}
+      {%- for item in recent_versions %}
       <li class="toctree-l1">
         <a class="reference internal" href="{{ item.url }}">{{ item.name }}</a>
       </li>
       {%- endfor %}
     </ul>
+
+    {% if older_versions %}
+    <details class="older-versions"
+      {%- if current_name and current_name in older_versions|map(attribute='name')|list %} open{% endif %}>
+      <summary class="toctree-l1">{{ _('older versions') }}</summary>
+      <ul>
+        {%- for item in older_versions %}
+        <li class="toctree-l1">
+          <a class="reference internal" href="{{ item.url }}">{{ item.name }}</a>
+        </li>
+        {%- endfor %}
+      </ul>
+    </details>
+    {% endif %}
     {% endif %}
 
     {% if dev_versions %}
