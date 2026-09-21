@@ -1,0 +1,220 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-18 11:43+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/logging/logging.rst:2
+msgid "Logging"
+msgstr "Registre"
+
+#: ../../modules/logging/logging.rst:4
+msgid ""
+"QiliSDK reports what it is doing through `Loguru "
+"<https://loguru.readthedocs.io>`_. Logging is configured automatically "
+"when the package is imported, and can be adjusted at any time via "
+":func:`~qilisdk.logging.configure_logging`."
+msgstr ""
+"QiliSDK informa del que està fent mitjançant `Loguru "
+"<https://loguru.readthedocs.io>`_. El registre es configura automàticament "
+"en importar el paquet i es pot ajustar en qualsevol moment mitjançant "
+":func:`~qilisdk.logging.configure_logging`."
+
+#: ../../modules/logging/logging.rst:8
+msgid ""
+"By default only messages of level ``WARNING`` and above are shown, and "
+"they are written to the console (``stderr``)."
+msgstr ""
+"Per defecte només es mostren els missatges de nivell ``WARNING`` o superior, "
+"i s'escriuen a la consola (``stderr``)."
+
+#: ../../modules/logging/logging.rst:11
+msgid "Changing the verbosity"
+msgstr "Canviar el nivell de detall"
+
+#: ../../modules/logging/logging.rst:13
+msgid ""
+"Call :func:`~qilisdk.logging.configure_logging` with a ``level`` to "
+"override the verbosity:"
+msgstr ""
+"Crida :func:`~qilisdk.logging.configure_logging` amb un ``level`` per "
+"sobreescriure el nivell de detall:"
+
+#: ../../modules/logging/logging.rst:21
+msgid ""
+"All other options of the configured sinks (format, filter, colours, ...) "
+"are preserved, so only the threshold changes. Calling it again replaces "
+"the previous configuration, so the last call wins."
+msgstr ""
+"La resta d'opcions dels sinks configurats (format, filtre, colors, ...) es "
+"conserven, de manera que només canvia el llindar. Tornar-la a cridar "
+"reemplaça la configuració anterior, així que preval l'última crida."
+
+#: ../../modules/logging/logging.rst:25
+msgid "Logging to a file"
+msgstr "Registre en un fitxer"
+
+#: ../../modules/logging/logging.rst:27
+msgid "Pass a ``filename`` to copy the console output into a text file:"
+msgstr ""
+"Passa un ``filename`` per copiar la sortida de la consola en un fitxer de "
+"text:"
+
+#: ../../modules/logging/logging.rst:41
+msgid "Logging levels"
+msgstr "Nivells de registre"
+
+#: ../../modules/logging/logging.rst:43
+msgid "QiliSDK uses the standard Loguru levels, each with its own icon:"
+msgstr ""
+"QiliSDK utilitza els nivells estàndard de Loguru, cadascun amb la seva "
+"pròpia icona:"
+
+#: ../../modules/logging/logging.rst:49
+msgid "Level"
+msgstr "Nivell"
+
+#: ../../modules/logging/logging.rst:50
+msgid "Icon"
+msgstr "Icona"
+
+#: ../../modules/logging/logging.rst:51
+msgid "Meaning"
+msgstr "Significat"
+
+#: ../../modules/logging/logging.rst:52
+msgid "``TRACE``"
+msgstr "``TRACE``"
+
+#: ../../modules/logging/logging.rst:53
+msgid "🔬"
+msgstr "🔬"
+
+#: ../../modules/logging/logging.rst:54
+msgid "Very detailed information, typically only useful when written to a file."
+msgstr ""
+"Informació molt detallada, normalment útil només quan s'escriu en un fitxer."
+
+#: ../../modules/logging/logging.rst:55
+msgid "``DEBUG``"
+msgstr "``DEBUG``"
+
+#: ../../modules/logging/logging.rst:56
+msgid "🐞"
+msgstr "🐞"
+
+#: ../../modules/logging/logging.rst:57
+msgid ""
+"Information meant for developers, designed to not flood the terminal "
+"during a normal workflow."
+msgstr ""
+"Informació destinada a desenvolupadors, dissenyada per no inundar el "
+"terminal durant un flux de treball normal."
+
+#: ../../modules/logging/logging.rst:58
+msgid "``INFO``"
+msgstr "``INFO``"
+
+#: ../../modules/logging/logging.rst:59
+msgid "💡"
+msgstr "💡"
+
+#: ../../modules/logging/logging.rst:60
+msgid ""
+"Information meant for users, designed to not flood the terminal during a "
+"normal workflow."
+msgstr ""
+"Informació destinada a usuaris, dissenyada per no inundar el terminal durant "
+"un flux de treball normal."
+
+#: ../../modules/logging/logging.rst:61
+msgid "``SUCCESS``"
+msgstr "``SUCCESS``"
+
+#: ../../modules/logging/logging.rst:62
+msgid "✅"
+msgstr "✅"
+
+#: ../../modules/logging/logging.rst:63
+msgid "Messages indicating a successful operation."
+msgstr "Missatges que indiquen que una operació s'ha completat correctament."
+
+#: ../../modules/logging/logging.rst:64
+msgid "``WARNING``"
+msgstr "``WARNING``"
+
+#: ../../modules/logging/logging.rst:65
+msgid "🚧"
+msgstr "🚧"
+
+#: ../../modules/logging/logging.rst:66
+msgid ""
+"Things worth noting, such as a parameter being ignored. This is the "
+"default threshold."
+msgstr ""
+"Aspectes a tenir en compte, com ara que s'ignori un paràmetre. Aquest és el "
+"llindar per defecte."
+
+#: ../../modules/logging/logging.rst:67
+msgid "``ERROR``"
+msgstr "``ERROR``"
+
+#: ../../modules/logging/logging.rst:68
+msgid "❌"
+msgstr "❌"
+
+#: ../../modules/logging/logging.rst:69
+msgid "Errors. Rarely used, since QiliSDK raises exceptions instead."
+msgstr ""
+"Errors. S'usen poques vegades, ja que QiliSDK llança excepcions en el seu "
+"lloc."
+
+#: ../../modules/logging/logging.rst:70
+msgid "``CRITICAL``"
+msgstr "``CRITICAL``"
+
+#: ../../modules/logging/logging.rst:71
+msgid "💀"
+msgstr "💀"
+
+#: ../../modules/logging/logging.rst:72
+msgid "Critical errors. Rarely used, for the same reason."
+msgstr "Errors crítics. S'usen poques vegades, pel mateix motiu."
+
+#: ../../modules/logging/logging.rst:75
+msgid "Customising the configuration"
+msgstr "Personalitzar la configuració"
+
+#: ../../modules/logging/logging.rst:77
+msgid ""
+"The sinks themselves are described in a YAML file. The packaged one lives"
+" next to the source of the :mod:`~qilisdk.logging` module, and looks like"
+" this:"
+msgstr ""
+"Els sinks es descriuen en un fitxer YAML. El que ve amb el paquet es troba "
+"al costat del codi font del mòdul :mod:`~qilisdk.logging` i té aquest "
+"aspecte:"
+
+#: ../../modules/logging/logging.rst:93
+msgid ""
+"To use your own file, point the ``QILISDK_LOGGING_CONFIG_PATH`` setting "
+"at it before importing QiliSDK."
+msgstr ""
+"Per usar el teu propi fitxer, apunta l'opció ``QILISDK_LOGGING_CONFIG_PATH`` "
+"cap a ell abans d'importar QiliSDK."
+
