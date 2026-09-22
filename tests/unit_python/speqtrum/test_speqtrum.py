@@ -33,6 +33,7 @@ from typing import Any
 import pytest
 from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 
+from qilisdk.core.qtensor import InitialState
 from qilisdk.experiments.experiment_functional import ExperimentFunctional
 from qilisdk.experiments.experiment_result import ExperimentResult
 from qilisdk.functionals.analog_evolution import AnalogEvolution
@@ -126,6 +127,8 @@ def test_init_succeeds_with_stub_credentials(monkeypatch):
 
 
 class FakeDigitalPropagation(DigitalPropagation):
+    initial_state = InitialState.ZERO
+
     def __init__(self): ...
 
 
