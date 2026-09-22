@@ -3,7 +3,7 @@ Serialization and Hashing
 
 Almost every object in QiliSDK can be written to disk and read back, and every object that takes part
 in symbolic expressions needs a hash that stays the same across processes. Both of these are provided
-by :mod:`qilisdk.utils`.
+by :mod:`qilisdk.utils.serialization`.
 
 Serialization
 -------------
@@ -119,7 +119,7 @@ gates, so that terms can be collected in dictionaries and compared reliably.
 
     qili_hash("some label", 1.0, (0, 1))
 
-It differs from Python's built-in ``hash`` in two ways that matter here:
+It differs from Python's built-in ``hash`` in two main ways:
 
 - It is **stable across processes**. Python randomizes string hashing per interpreter run, whereas this one is a `blake2b <https://www.blake2.net/>`_ digest of a canonical encoding, so the same object hashes to the same integer every time.
 - It is **consistent across numeric types**. Values are encoded as exact integer ratios, so ``1``, ``1.0`` and ``(1+0j)`` all hash alike, and ``nan``, ``inf`` and NumPy scalars are handled explicitly.

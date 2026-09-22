@@ -30,27 +30,23 @@ Available Solvers
    :align: left
    :widths: auto
 
-   ============================================================================================== ==================== ================================================
-   Solver                                                                                         Accepts              Finds the global optimum
-   ============================================================================================== ==================== ================================================
-   :class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver`                   any ``Model``        ✔ (exponential cost)
-   ---------------------------------------------------------------------------------------------- -------------------- ------------------------------------------------
-   :class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver`                              any ``Model``        ✕ (local minimizer by default)
-   ---------------------------------------------------------------------------------------------- -------------------- ------------------------------------------------
-   :class:`~qilisdk.utils.classical_solvers.simulated_annealing_solver.SimulatedAnnealingSolver`   ``QUBO`` only        ✕ (heuristic)
-   ---------------------------------------------------------------------------------------------- -------------------- ------------------------------------------------
-   :class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver`                                any ``Model``        ✔ (requires the ``scip`` extra)
-   ============================================================================================== ==================== ================================================
+   ============================================================================================== ==================== ===================== =====================
+   Solver                                                                                         Accepts              Global                Complexity
+   ============================================================================================== ==================== ===================== =====================
+   :class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver`                   any ``Model``        ✔                     Exponential
+   ---------------------------------------------------------------------------------------------- -------------------- --------------------- ---------------------
+   :class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver`                              any ``Model``        ✕ (by default)        Polynomial
+   ---------------------------------------------------------------------------------------------- -------------------- --------------------- ---------------------
+   :class:`~qilisdk.utils.classical_solvers.simulated_annealing_solver.SimulatedAnnealingSolver`   ``QUBO`` only        ✕                     Polynomial
+   ---------------------------------------------------------------------------------------------- -------------------- --------------------- ---------------------
+   :class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver`                                any ``Model``        ✔                     Problem Dependent
+   ============================================================================================== ==================== ===================== =====================
 
 BruteForceSolver
 ^^^^^^^^^^^^^^^^
 
 :class:`~qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver` enumerates every
-assignment of every variable and keeps the best one. A :class:`~qilisdk.core.variables.BinaryVariable`
-contributes the values ``{0, 1}``; any other :class:`~qilisdk.core.variables.Variable` is decomposed
-through its binary encoding, so the search covers every value that encoding can represent. Constraint
-penalties are added to the objective when ranking candidates, so the solution returned is the best
-*feasible* one whenever the Lagrange multipliers are large enough.
+assignment of every variable and keeps the best one.
 
 .. code-block:: python
 
@@ -63,14 +59,13 @@ penalties are added to the objective when ranking candidates, so the solution re
 .. warning::
 
     The cost grows exponentially with the number of variables, so use it for small reference problems only. 
-    A variable with neither a binary nor a bounded domain has no encoding to enumerate and raises a ``ValueError``.
 
 ScipySolver
 ^^^^^^^^^^^
 
 :class:`~qilisdk.utils.classical_solvers.scipy_solver.ScipySolver` minimizes the model's objective
 with SciPy, reusing the same :class:`~qilisdk.optimizers.scipy_optimizer.SciPyOptimizer`
-that drives the variational algorithms.
+used in the variational programs. 
 
 The ``method`` argument selects the SciPy routine, and any further keyword argument is forwarded to
 ``scipy.optimize.minimize`` (or to the corresponding global optimizer).
@@ -83,10 +78,6 @@ The ``method`` argument selects the SciPy routine, and any further keyword argum
     model = Model.knapsack(values=[5, 4, 3], weights=[3, 2, 2], max_weight=4)
     result = ScipySolver(method="l-bfgs-b").solve(model)
     print(result.objective, result.sample)
-
-**Output**::
-
-    -0.0 {b0: 0, b1: 0, b2: 0}
 
 SimulatedAnnealingSolver
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -113,18 +104,14 @@ Configuration options:
     result = SimulatedAnnealingSolver(num_reads=100, seed=42).solve(model.to_qubo())
     print(result.objective, result.sample)
 
-**Output**::
-
-    -7.0 {b0: 0, b1: 1, b2: 1, weight_slack(1): 0, weight_slack(0): 0, weight_slack(2): 0}
-
 ScipSolver
 ^^^^^^^^^^
 
-:class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` hands the model to
+:class:`~qilisdk.utils.classical_solvers.scip_solver.ScipSolver` gives the model to
 `SCIP <https://www.scipopt.org/>`__, a mixed-integer programming solver, through ``pyscipopt``. It
-solves to global optimality and is the practical choice whenever brute force becomes too slow.
+solves to global optimality, but in a smarter way than just brute force.
 
-The ``pyscipopt`` dependency is optional; install it with the ``scip`` extra:
+The ``pyscipopt`` dependency is optional and needs to be installed with the ``scip`` extra:
 
 .. tabs::
 
@@ -159,16 +146,11 @@ parameters to ``pyscipopt.Model.setParams``.
     result = ScipSolver().solve(model, params={"limits/time": 60})
     print(result.objective, result.sample)
 
-**Output**::
-
-    -7.0 {b0: 0, b1: 1, b2: 1}
-
 Reading the Result
 ------------------
 
 Every solver returns a
-:class:`~qilisdk.utils.classical_solvers.base_solver.ClassicalSolverResult`, which is the model
-evaluated at the solution that was found:
+:class:`~qilisdk.utils.classical_solvers.base_solver.ClassicalSolverResult`:
 
 - ``result.objective`` - the value of the model's objective at the solution.
 - ``result.constraints`` - the value of each of the model's constraints, keyed by label. A constraint evaluates to zero when it is satisfied, and to its penalty otherwise.
@@ -186,12 +168,3 @@ evaluated at the solution that was found:
     print(result.objective)
     print(result.constraints)
     print(result.sample)
-
-**Output**::
-
-    -7.0
-    {'weight': 0.0}
-    {b0: 0, b1: 1, b2: 1}
-
-A non-zero constraint value means the solution violates that constraint, and the number is the
-penalty it incurred.

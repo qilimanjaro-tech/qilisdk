@@ -1,15 +1,15 @@
 Overview
 ===========
 
-The :mod:`qilisdk.utils` module collects the supporting tools that the rest of the SDK is built on.
-Nothing here describes a quantum process of its own: these are just useful tools to support the rest of the SDK:
+The :mod:`qilisdk.utils` module collects a variety of tools that are useful in quantum workflows, but are otherwise
+somewhat independent:
 
 - :doc:`utils_classical_solvers` provides a common interface to brute force, SciPy, simulated annealing and SCIP, so that any :class:`~qilisdk.core.model.Model` can be solved classically for reference.
 - :doc:`utils_interoperability` converts circuits and Hamiltonians to and from OpenQASM, QIR and OpenFermion.
 - :doc:`utils_serialization` writes any QiliSDK object to YAML and reads it back, and provides the stable hash used throughout the SDK.
 
-Unlike the other modules, :mod:`qilisdk.utils` has no top-level re-exports: each submodule is
-imported by its full path.
+Unlike the other modules, :mod:`qilisdk.utils` has no top-level re-exports, i.e. each submodule is
+imported by its full path:
 
 .. code-block:: python
 
