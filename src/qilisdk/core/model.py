@@ -1925,10 +1925,7 @@ class QUBO(Model):
             if isinstance(expr, BaseVariable):
                 return spins[expr]
             if isinstance(expr, Add):
-                add_acc: Number | Hamiltonian = 0.0
-                for term in expr.args:
-                    add_acc += _parse_term(term)
-                return add_acc
+                return Hamiltonian.sum(_parse_term(term) for term in expr.args)
             if isinstance(expr, Mul):
                 mul_acc: Number | Hamiltonian = 1.0
                 for factor in expr.args:

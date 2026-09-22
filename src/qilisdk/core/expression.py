@@ -701,9 +701,17 @@ class Mul(Expression):
         return Add.build(tuple(terms))
 
     def expand(self) -> Expression:
+        # Expand each of the factors
+        factors = [factor.expand() for factor in self._args]
+
+        # If it's a simple product with no sums, build it and return
+        if not any(isinstance(factor, Add) for factor in factors):
+            return Mul.build(tuple(factors))
+
+        # Otherwise, we need to distribute the multiplication over the sums
         result: Expression = Constant(1)
-        for factor in self._args:
-            result = _mul_expand(result, factor.expand())
+        for factor in factors:
+            result = _mul_expand(result, factor)
         return result
 
     def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
