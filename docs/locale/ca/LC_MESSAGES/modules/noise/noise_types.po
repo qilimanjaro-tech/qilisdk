@@ -102,6 +102,9 @@ msgid ""
 "evolution, which evaluates the rate at each time step, when rates are "
 "given as lambda functions of time:"
 msgstr ""
+"L'evolució analògica de QiliSim admet taxes de Lindblad dependents del "
+"temps, avaluant la taxa en cada pas de temps, quan les taxes s'indiquen "
+"com a funcions lambda del temps:"
 
 #: ../../modules/noise/noise_types.rst:62
 msgid "PauliChannel"
