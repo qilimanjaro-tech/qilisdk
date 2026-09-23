@@ -130,8 +130,12 @@ def _coerce(obj: object) -> Expression | None:
 
 def _int_exponent(expr: Expression) -> int | None:
     """Return the integer value of a constant integer exponent, or ``None`` if it is not one."""
-    if isinstance(expr, Constant) and isinstance(expr.value, RealNumber) and float(expr.value).is_integer():
-        return int(expr.value)
+    if isinstance(expr, Constant):
+        value = expr.value
+        if isinstance(value, int):
+            return value
+        if isinstance(value, float) and value.is_integer():
+            return int(value)
     return None
 
 
@@ -186,19 +190,17 @@ def _collect_mul_factors(raw: tuple[Expression, ...]) -> tuple[Number, dict[Expr
     coefficient: Number = 1
     powers: dict[Expression, Expression] = {}
 
-    def accumulate(expr: Expression) -> None:
-        nonlocal coefficient
+    # Iterate over the factors using an explicit stack to avoid recursion
+    stack = list(reversed(raw))
+    while stack:
+        expr = stack.pop()
         if isinstance(expr, Constant):
             coefficient *= expr.value
         elif isinstance(expr, Mul):
-            for factor in expr.args:
-                accumulate(factor)
+            stack.extend(reversed(expr.args))
         else:
             base, exponent = (expr.base, expr.exp) if isinstance(expr, Pow) else (expr, Constant(1))
             powers[base] = exponent if base not in powers else powers[base] + exponent
-
-    for factor in raw:
-        accumulate(factor)
 
     return _float_if_real(coefficient), powers
 
@@ -213,11 +215,15 @@ def _rebuild_power_factors(powers: dict[Expression, Expression]) -> list[Express
         list[Expression]: the surviving factors.
     """
     factors: list[Expression] = []
-    for base, raw_exponent in powers.items():
-        exponent = Constant(1) if (base.is_idempotent_under_mul and _is_pos_int_const(raw_exponent)) else raw_exponent
-        if isinstance(exponent, Constant) and exponent.value == 0:
-            continue
-        factors.append(base if (isinstance(exponent, Constant) and exponent.value == 1) else Pow.build(base, exponent))
+    for base, exponent in powers.items():
+        if isinstance(exponent, Constant):
+            value = exponent.value
+            if value == 1 or (base.is_idempotent_under_mul and _is_pos_int_const(exponent)):
+                factors.append(base)
+                continue
+            if value == 0:
+                continue
+        factors.append(Pow.build(base, exponent))
     return factors
 
 
@@ -252,15 +258,13 @@ class Expression(ABC):
     """Abstract base of every node in the expression tree."""
 
     # ---- markers ----
-    @property
-    def is_idempotent_under_mul(self) -> bool:
-        """Whether ``self * self == self`` (true only for ``BinaryVariable``)."""
-        return False
+    # Plain class attributes rather than properties, for speed
 
-    @property
-    def is_parameter(self) -> bool:
-        """Whether this expression is a :class:`~qilisdk.core.variables.Parameter` leaf."""
-        return False
+    #: Whether ``self * self == self`` (true only for ``BinaryVariable``).
+    is_idempotent_under_mul: ClassVar[bool] = False
+
+    #: Whether this expression is a :class:`~qilisdk.core.variables.Parameter` leaf.
+    is_parameter: ClassVar[bool] = False
 
     # ---- abstract core ----
     @abstractmethod
@@ -382,9 +386,10 @@ class Expression(ABC):
 
     # ---- identity ----
     def __hash__(self) -> int:
-        if self._hash_cache is None:
-            self._hash_cache = self._compute_hash()
-        return self._hash_cache
+        cached = self._hash_cache
+        if cached is None:
+            cached = self._hash_cache = self._compute_hash()
+        return cached
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Expression) and hash(self) == hash(other)
@@ -467,8 +472,12 @@ class Constant(Expression):
     """A numeric literal leaf. Replaces the old ``Term.CONST`` sentinel."""
 
     def __init__(self, value: Number) -> None:
-        raw: Number = value.item() if isinstance(value, np.generic) else value
-        self._value: Number = _float_if_real(int(raw) if isinstance(raw, bool) else raw)
+        # Plain ints and floats need no normalisation and very common
+        if type(value) is int or type(value) is float:
+            self._value: Number = value
+        else:
+            raw: Number = value.item() if isinstance(value, np.generic) else value
+            self._value = _float_if_real(int(raw) if isinstance(raw, bool) else raw)
         self._hash_cache: int | None = None
 
     @property
@@ -531,19 +540,17 @@ class Add(Expression):
         coefficients: dict[Expression, Number] = {}
         const: Number = 0
 
-        def accumulate(expr: Expression, scale: Number) -> None:
-            nonlocal const
+        # Explicit stack rather than recursion
+        stack = list(reversed(raw))
+        while stack:
+            expr = stack.pop()
             if isinstance(expr, Constant):
-                const += scale * expr.value
+                const += expr.value
             elif isinstance(expr, Add):
-                for term in expr.args:
-                    accumulate(term, scale)
+                stack.extend(reversed(expr.args))
             else:
                 base, coeff = _peel_coeff(expr)
-                coefficients[base] = coefficients.get(base, 0) + scale * coeff
-
-        for term in raw:
-            accumulate(term, 1)
+                coefficients[base] = coefficients.get(base, 0) + coeff
 
         terms: list[Expression] = []
         for base, raw_coeff in coefficients.items():
@@ -663,13 +670,13 @@ class Mul(Expression):
         return cls(tuple(out))
 
     def coefficient(self) -> Number:
-        for factor in self._args:
-            if isinstance(factor, Constant):
-                return factor.value
-        return 1
+        first = self._args[0]
+        return first.value if isinstance(first, Constant) else 1
 
     def monomial(self) -> Expression:
-        rest = tuple(factor for factor in self._args if not isinstance(factor, Constant))
+        if not isinstance(self._args[0], Constant):
+            return self
+        rest = self._args[1:]
         if not rest:
             return Constant(1)
         if len(rest) == 1:

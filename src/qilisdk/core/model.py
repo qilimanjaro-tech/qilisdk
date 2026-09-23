@@ -1224,9 +1224,12 @@ class _Linearizer:
         term = term.expand()
         monomials = list(term.as_coefficients_dict().items())
         self._collect_preferred_pairs([monomial for monomial, _ in monomials])
+        reduced = [self._reduce_monomial(monomial) for monomial, _ in monomials]
+        # If nothing changed, return the original term to avoid unnecessary reconstruction
+        if all(new is old for new, (old, _) in zip(reduced, monomials)):
+            return term
         new_elements: list[Expression] = [Constant(term.get_constant())]
-        for monomial, coeff in monomials:
-            new_elements.append(Constant(coeff) * self._reduce_monomial(monomial))
+        new_elements.extend(Constant(coeff) * monomial for (_, coeff), monomial in zip(monomials, reduced))
         return Add.build(tuple(new_elements))
 
     def _collect_preferred_pairs(self, monomials: list[Expression]) -> None:
