@@ -248,6 +248,17 @@ You can also visualize single-qubit states on the Bloch sphere using :meth:`.dra
     state = QTensor.ket(0)
     state.draw()
 
+Single-qubit density matrices can be drawn as well, so one qubit of a larger state can be visualized by first
+reducing it with :meth:`~qilisdk.core.qtensor.QTensor.partial_trace`:
+
+.. code-block:: python
+
+    import numpy as np
+    from qilisdk.core import QTensor
+
+    bell_state = QTensor.ghz(2)
+    bell_state.partial_trace({0}).draw()
+
 The appearance of this plot can be customized using a :class:`~qilisdk.utils.visualization.style.QTensorStyle` object, 
 which allows you to set colors, point density, and other visual elements:
 
