@@ -566,7 +566,6 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 }
             }
         }
-        layer_index++;
     }
 
     // Construct the final result object
