@@ -1,0 +1,271 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-18 11:16+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: es <LL@li.org>\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/utils/utils_interoperability.rst:2
+msgid "Interoperability"
+msgstr "Interoperabilidad"
+
+#: ../../modules/utils/utils_interoperability.rst:4
+msgid ""
+"QiliSDK is often not the only tool in a workflow, so :mod:`qilisdk.utils` "
+"provides converters between QiliSDK objects and the formats used by other "
+"quantum frameworks. Each converter comes as a pair of ``from_*`` and "
+"``to_*`` functions, and each one depends on a third-party library that is "
+"shipped as an optional extra."
+msgstr ""
+"A menudo QiliSDK no es la única herramienta de un flujo de trabajo, así que "
+":mod:`qilisdk.utils` proporciona conversores entre los objetos de QiliSDK y "
+"los formatos que usan otros marcos de trabajo cuánticos. Cada conversor "
+"viene como un par de funciones ``from_*`` y ``to_*``, y cada uno depende de "
+"una biblioteca de terceros que se distribuye como un extra opcional."
+
+#: ../../modules/utils/utils_interoperability.rst:14
+msgid "Format"
+msgstr "Formato"
+
+#: ../../modules/utils/utils_interoperability.rst:14
+msgid "QiliSDK object"
+msgstr "Objeto de QiliSDK"
+
+#: ../../modules/utils/utils_interoperability.rst:14
+msgid "Extra"
+msgstr "Extra"
+
+#: ../../modules/utils/utils_interoperability.rst:16
+msgid "OpenQASM 2.0 / 3.0"
+msgstr "OpenQASM 2.0 / 3.0"
+
+#: ../../modules/utils/utils_interoperability.rst:16
+#: ../../modules/utils/utils_interoperability.rst:18
+msgid ":class:`~qilisdk.digital.circuit.Circuit`"
+msgstr ":class:`~qilisdk.digital.circuit.Circuit`"
+
+#: ../../modules/utils/utils_interoperability.rst:16
+msgid "``openqasm``"
+msgstr "``openqasm``"
+
+#: ../../modules/utils/utils_interoperability.rst:18
+msgid "QIR Base Profile"
+msgstr "Perfil Base de QIR"
+
+#: ../../modules/utils/utils_interoperability.rst:18
+msgid "``qir``"
+msgstr "``qir``"
+
+#: ../../modules/utils/utils_interoperability.rst:20
+msgid "OpenFermion ``QubitOperator``"
+msgstr "``QubitOperator`` de OpenFermion"
+
+#: ../../modules/utils/utils_interoperability.rst:20
+msgid ":class:`~qilisdk.analog.hamiltonian.Hamiltonian`"
+msgstr ":class:`~qilisdk.analog.hamiltonian.Hamiltonian`"
+
+#: ../../modules/utils/utils_interoperability.rst:20
+msgid "``openfermion``"
+msgstr "``openfermion``"
+
+#: ../../modules/utils/utils_interoperability.rst:24
+msgid "OpenQASM"
+msgstr "OpenQASM"
+
+#: ../../modules/utils/utils_interoperability.rst:26
+msgid ""
+":mod:`qilisdk.utils.openqasm` bridges a "
+":class:`~qilisdk.digital.circuit.Circuit` and both OpenQASM 2.0 and OpenQASM"
+" 3.0 through the ``openqasm3`` library:"
+msgstr ""
+":mod:`qilisdk.utils.openqasm` conecta un "
+":class:`~qilisdk.digital.circuit.Circuit` con OpenQASM 2.0 y OpenQASM 3.0 a "
+"través de la biblioteca ``openqasm3``:"
+
+#: ../../modules/utils/utils_interoperability.rst:29
+msgid ""
+":func:`~qilisdk.utils.openqasm.openqasm2.from_qasm2` / "
+":func:`~qilisdk.utils.openqasm.openqasm2.to_qasm2` — parse and serialize an "
+"OpenQASM 2.0 string."
+msgstr ""
+":func:`~qilisdk.utils.openqasm.openqasm2.from_qasm2` / "
+":func:`~qilisdk.utils.openqasm.openqasm2.to_qasm2` — analizar y serializar "
+"una cadena de OpenQASM 2.0."
+
+#: ../../modules/utils/utils_interoperability.rst:30
+msgid ""
+":func:`~qilisdk.utils.openqasm.openqasm2.from_qasm2_file` / "
+":func:`~qilisdk.utils.openqasm.openqasm2.to_qasm2_file` — read and write a "
+"``.qasm`` file."
+msgstr ""
+":func:`~qilisdk.utils.openqasm.openqasm2.from_qasm2_file` / "
+":func:`~qilisdk.utils.openqasm.openqasm2.to_qasm2_file` — leer y escribir un"
+" archivo ``.qasm``."
+
+#: ../../modules/utils/utils_interoperability.rst:31
+msgid ""
+":func:`~qilisdk.utils.openqasm.openqasm3.from_qasm3` / "
+":func:`~qilisdk.utils.openqasm.openqasm3.to_qasm3` — parse and serialize an "
+"OpenQASM 3.0 string."
+msgstr ""
+":func:`~qilisdk.utils.openqasm.openqasm3.from_qasm3` / "
+":func:`~qilisdk.utils.openqasm.openqasm3.to_qasm3` — analizar y serializar "
+"una cadena de OpenQASM 3.0."
+
+#: ../../modules/utils/utils_interoperability.rst:32
+msgid ""
+":func:`~qilisdk.utils.openqasm.openqasm3.from_qasm3_file` / "
+":func:`~qilisdk.utils.openqasm.openqasm3.to_qasm3_file` — read and write a "
+"``.qasm`` file."
+msgstr ""
+":func:`~qilisdk.utils.openqasm.openqasm3.from_qasm3_file` / "
+":func:`~qilisdk.utils.openqasm.openqasm3.to_qasm3_file` — leer y escribir un"
+" archivo ``.qasm``."
+
+#: ../../modules/utils/utils_interoperability.rst:47
+msgid ""
+"See :doc:`../digital/digital_qasm` for the full list of OpenQASM 3.0 "
+"features QiliSDK supports and the caveats that apply to each."
+msgstr ""
+"Consulta :doc:`../digital/digital_qasm` para ver la lista completa de "
+"características de OpenQASM 3.0 que QiliSDK admite y las salvedades que se "
+"aplican a cada una."
+
+#: ../../modules/utils/utils_interoperability.rst:51
+msgid "QIR"
+msgstr "QIR"
+
+#: ../../modules/utils/utils_interoperability.rst:53
+msgid ""
+":mod:`qilisdk.utils.qir` bridges a :class:`~qilisdk.digital.circuit.Circuit`"
+" and the `QIR Base Profile <https://github.com/qir-alliance/qir-"
+"spec/blob/main/specification/under_development/profiles/Base_Profile.md>`_ "
+"through Microsoft's `pyqir <https://pypi.org/project/pyqir/>`_ library:"
+msgstr ""
+":mod:`qilisdk.utils.qir` conecta un "
+":class:`~qilisdk.digital.circuit.Circuit` con el `Perfil Base de QIR "
+"<https://github.com/qir-alliance/qir-"
+"spec/blob/main/specification/under_development/profiles/Base_Profile.md>`_ a"
+" través de la biblioteca `pyqir <https://pypi.org/project/pyqir/>`_ de "
+"Microsoft:"
+
+#: ../../modules/utils/utils_interoperability.rst:57
+msgid ""
+":func:`~qilisdk.utils.qir.qir.from_qir` / "
+":func:`~qilisdk.utils.qir.qir.to_qir` — parse and serialize QIR textual LLVM"
+" IR."
+msgstr ""
+":func:`~qilisdk.utils.qir.qir.from_qir` / "
+":func:`~qilisdk.utils.qir.qir.to_qir` — analizar y serializar IR de LLVM "
+"textual de QIR."
+
+#: ../../modules/utils/utils_interoperability.rst:58
+msgid ""
+":func:`~qilisdk.utils.qir.qir.from_qir_file` / "
+":func:`~qilisdk.utils.qir.qir.to_qir_file` — read and write a ``.ll`` or "
+"``.bc`` file, dispatched by extension."
+msgstr ""
+":func:`~qilisdk.utils.qir.qir.from_qir_file` / "
+":func:`~qilisdk.utils.qir.qir.to_qir_file` — leer y escribir un archivo "
+"``.ll`` o ``.bc``, según la extensión."
+
+#: ../../modules/utils/utils_interoperability.rst:73
+msgid ""
+"See :doc:`../digital/digital_qir` for the supported gate mapping and the "
+"Base Profile restrictions."
+msgstr ""
+"Consulta :doc:`../digital/digital_qir` para ver la correspondencia de "
+"puertas admitida y las restricciones del Perfil Base."
+
+#: ../../modules/utils/utils_interoperability.rst:76
+msgid "OpenFermion"
+msgstr "OpenFermion"
+
+#: ../../modules/utils/utils_interoperability.rst:78
+msgid ""
+":mod:`qilisdk.utils.openfermion` converts between an OpenFermion "
+"``QubitOperator`` and a QiliSDK "
+":class:`~qilisdk.analog.hamiltonian.Hamiltonian`, which lets you build a "
+"problem with OpenFermion's chemistry tooling and then evolve or optimize it "
+"with QiliSDK."
+msgstr ""
+":mod:`qilisdk.utils.openfermion` convierte entre un ``QubitOperator`` de "
+"OpenFermion y un :class:`~qilisdk.analog.hamiltonian.Hamiltonian` de "
+"QiliSDK, lo que te permite construir un problema con las herramientas de "
+"química de OpenFermion y después evolucionarlo u optimizarlo con QiliSDK."
+
+#: ../../modules/utils/utils_interoperability.rst:82
+msgid ""
+":func:`~qilisdk.utils.openfermion.openfermion.openfermion_to_qilisdk` — "
+"build a Hamiltonian from a ``QubitOperator``."
+msgstr ""
+":func:`~qilisdk.utils.openfermion.openfermion.openfermion_to_qilisdk` — "
+"construir un hamiltoniano a partir de un ``QubitOperator``."
+
+#: ../../modules/utils/utils_interoperability.rst:83
+msgid ""
+":func:`~qilisdk.utils.openfermion.openfermion.qilisdk_to_openfermion` — "
+"build a ``QubitOperator`` from a Hamiltonian."
+msgstr ""
+":func:`~qilisdk.utils.openfermion.openfermion.qilisdk_to_openfermion` — "
+"construir un ``QubitOperator`` a partir de un hamiltoniano."
+
+#: ../../modules/utils/utils_interoperability.rst:85
+msgid ""
+"Each term of the ``QubitOperator`` becomes a product of "
+":class:`~qilisdk.analog.hamiltonian.PauliX`, "
+":class:`~qilisdk.analog.hamiltonian.PauliY` and "
+":class:`~qilisdk.analog.hamiltonian.PauliZ` operators on the corresponding "
+"qubits. OpenFermion's empty term, which stands for the identity, becomes "
+":class:`~qilisdk.analog.hamiltonian.PauliI` on qubit 0."
+msgstr ""
+"Cada término del ``QubitOperator`` se convierte en un producto de operadores"
+" :class:`~qilisdk.analog.hamiltonian.PauliX`, "
+":class:`~qilisdk.analog.hamiltonian.PauliY` y "
+":class:`~qilisdk.analog.hamiltonian.PauliZ` sobre los cúbits "
+"correspondientes. El término vacío de OpenFermion, que representa la "
+"identidad, se convierte en :class:`~qilisdk.analog.hamiltonian.PauliI` sobre"
+" el cúbit 0."
+
+#: ../../modules/utils/utils_interoperability.rst:100
+#: ../../modules/utils/utils_interoperability.rst:115
+msgid "**Output**::"
+msgstr "**Salida**::"
+
+#: ../../modules/utils/utils_interoperability.rst:104
+msgid ""
+"The reverse direction drops identity factors, since OpenFermion writes the "
+"identity as the empty term, and stores every coefficient as a complex "
+"number."
+msgstr ""
+"La dirección inversa descarta los factores identidad, ya que OpenFermion "
+"escribe la identidad como el término vacío, y guarda todos los coeficientes "
+"como números complejos."
+
+#: ../../modules/utils/utils_interoperability.rst:122
+msgid ""
+"Only the qubit-operator representation is converted. An OpenFermion "
+"``FermionOperator`` has to be mapped to qubits first (with "
+"``jordan_wigner``, ``bravyi_kitaev`` or any other OpenFermion transform) "
+"before it can be handed to "
+":func:`~qilisdk.utils.openfermion.openfermion.openfermion_to_qilisdk`."
+msgstr ""
+"Solo se convierte la representación como operador de cúbits. Un "
+"``FermionOperator`` de OpenFermion debe mapearse primero a cúbits (con "
+"``jordan_wigner``, ``bravyi_kitaev`` o cualquier otra transformación de "
+"OpenFermion) antes de poder pasarlo a "
+":func:`~qilisdk.utils.openfermion.openfermion.openfermion_to_qilisdk`."
