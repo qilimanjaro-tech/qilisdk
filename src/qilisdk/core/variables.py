@@ -27,7 +27,7 @@ from __future__ import annotations
 import copy
 import re
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
 import numpy as np
 from loguru import logger
@@ -610,9 +610,7 @@ class BinaryVariable(BaseVariable):
     def __init__(self, label: str) -> None:
         super().__init__(label=label, domain=Domain.BINARY)
 
-    @property
-    def is_idempotent_under_mul(self) -> bool:
-        return True
+    is_idempotent_under_mul: ClassVar[bool] = True
 
     def num_binary_equivalent(self) -> int:  # ruff: ignore[no-self-use]
         return 1
@@ -855,9 +853,7 @@ class Parameter(BaseVariable):
         self._trainable = trainable
         self.set_bounds(bounds[0], bounds[1])
 
-    @property
-    def is_parameter(self) -> bool:
-        return True
+    is_parameter: ClassVar[bool] = True
 
     @property
     def value(self) -> RealNumber:
