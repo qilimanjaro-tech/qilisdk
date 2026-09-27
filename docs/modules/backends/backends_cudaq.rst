@@ -121,7 +121,7 @@ Set the method at construction time:
 Some CUDA simulation methods support parameters being set via environment variables, notably the `MATRIX_PRODUCT_STATE` and `TENSOR_NETWORK` methods. 
 See the `CUDA-Q documentation <https://nvidia.github.io/cuda-quantum/latest/using/backends/sims/tnsims.html>`_ for details.
 
-To set the precision of the simulation, use the :class:`~qilisdk.settings.Settings` object:
+To set the precision of the simulation, use the :class:`~qilisdk.settings.QiliSDKSettings` object:
 
 .. code-block:: python
 
