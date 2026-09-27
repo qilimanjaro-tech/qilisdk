@@ -1,0 +1,6 @@
+build/
+results.csv
+*.nsys-rep
+*.sqlite
+*.qdrep
+*.err
