@@ -658,6 +658,30 @@ def test_variational_annealing_expectation_value_bounded():
     assert -1.00001 <= ev.real <= 1.00001
 
 
+def test_variational_annealing_intermediate_results():
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=100, warmups=5),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    schedule = _make_annealing_schedule()
+    result = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=InitialState.UNIFORM, store_intermediate_results=True),
+        readout=Readout().with_expectation(observables=[pauli_z(0)]).with_sampling(nshots=50),
+    )
+    assert isinstance(result, FunctionalResult)
+    evs = result.get_intermediate_expectation_values()
+    assert len(evs) == len(schedule.tlist)
+    assert all(-1.00001 <= step[0].real <= 1.00001 for step in evs)
+    # The uniform initial state has <Z> = 0, while the final state is the ground state of Z
+    assert abs(evs[0][0].real) < 0.3
+    assert evs[-1][0].real < -0.8
+    samples = result.get_intermediate_samples()
+    assert len(samples) == len(schedule.tlist)
+    # The variational method samples its ansatz, so each step uses the configured variational shots
+    nshots_per_step = sum(result.get_samples().values())
+    assert all(sum(counts.values()) == nshots_per_step for counts in samples)
+
+
 def test_variational_annealing_wrong_initial_state_raises():
     backend = QiliSim(
         analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=50, warmups=0),
