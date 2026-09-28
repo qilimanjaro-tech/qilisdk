@@ -132,7 +132,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     if (use_jump_unraveling) {
         jump_drift = jump_drift_operator(jump_operators);
         qilisdk::log_debug("[QiliSim, C++] Unravelling " + std::to_string(jump_operators.size()) + " jump operators over " + std::to_string(rho_0.cols()) + " Monte Carlo trajectories");
-        warn_if_jumps_underresolved(jump_drift, step_list, config.get_max_expected_jumps_per_step());
+        warn_if_jumps_underresolved(jump_drift_operator(peak_rate_jumps(jump_operators, jump_rate_series)), step_list, config.get_max_expected_jumps_per_step());
     }
 
     // Init rho_0
@@ -345,7 +345,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     if (use_jump_unraveling) {
         jump_drift = jump_drift_operator(jump_operators);
         qilisdk::log_debug("[QiliSim, C++] Unravelling " + std::to_string(jump_operators.size()) + " jump operators over " + std::to_string(rho_0.cols()) + " Monte Carlo trajectories");
-        warn_if_jumps_underresolved(jump_drift, step_list, config.get_max_expected_jumps_per_step());
+        warn_if_jumps_underresolved(jump_drift_operator(peak_rate_jumps(jump_operators, jump_rate_series)), step_list, config.get_max_expected_jumps_per_step());
     }
     const SparseMatrix* jump_drift_ptr = use_jump_unraveling ? &jump_drift : nullptr;
     const std::vector<SparseMatrix>& integrator_jumps = use_jump_unraveling ? no_jumps : jump_operators;

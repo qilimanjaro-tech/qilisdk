@@ -21,6 +21,7 @@
 // GCOV_EXCL_BR_START
 
 SparseMatrix jump_drift_operator(const std::vector<SparseMatrix>& jump_operators);
+std::vector<SparseMatrix> peak_rate_jumps(const std::vector<SparseMatrix>& jump_operators, const std::vector<std::vector<double>>& jump_rate_series);
 SparseMatrix effective_hamiltonian(const SparseMatrix& hamiltonian, const SparseMatrix& drift);
 double max_jump_rate_bound(const SparseMatrix& drift);
 std::pair<double, double> schedule_step_extremes(const std::vector<double>& step_list);

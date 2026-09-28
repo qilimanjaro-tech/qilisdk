@@ -118,6 +118,13 @@ TEST(JumpDriftOperatorTest, MultipleJumpsAccumulate) {
     EXPECT_NEAR(drift.coeff(1, 1).real(), 1.0, kTol);
 }
 
+TEST(PeakRateJumpsTest, ScalesOnlyTimeDependentJumpsByTheirPeak) {
+    // The first rate is folded in, the second peaks at sqrt(rate) = 3 mid-schedule
+    std::vector<SparseMatrix> peak_jumps = peak_rate_jumps({dampingJump(4.0), dampingJump(1.0)}, {{}, {1.0, 3.0, 2.0}});
+    EXPECT_NEAR(peak_jumps[0].coeff(0, 1).real(), 2.0, kTol);
+    EXPECT_NEAR(peak_jumps[1].coeff(0, 1).real(), 3.0, kTol);
+}
+
 TEST(EffectiveHamiltonianTest, NoDriftLeavesTheHamiltonianAlone) {
     DenseMatrix H = DenseMatrix::Zero(2, 2);
     H(0, 0) = 1.0;

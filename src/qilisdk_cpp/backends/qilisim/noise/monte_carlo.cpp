@@ -14,6 +14,7 @@
 
 #include "monte_carlo.h"
 
+#include <algorithm>
 #include <atomic>
 #include <limits>
 #include <string>
@@ -92,6 +93,28 @@ SparseMatrix jump_drift_operator(const std::vector<SparseMatrix>& jump_operators
     }
     drift.makeCompressed();
     return drift;
+}
+
+std::vector<SparseMatrix> peak_rate_jumps(const std::vector<SparseMatrix>& jump_operators, const std::vector<std::vector<double>>& jump_rate_series) {
+    /*
+    Scale each time-dependent jump operator by the largest sqrt(rate(t)) in its series, so that a
+    drift built from the result bounds the drift of every step.
+
+    Args:
+        jump_operators (std::vector<SparseMatrix>): The jump operators, time-dependent ones without their rate.
+        jump_rate_series (std::vector<std::vector<double>>): The per-step sqrt(rate(t)) of each operator,
+            empty when the rate is already folded in.
+
+    Returns:
+        std::vector<SparseMatrix>: The jump operators at their peak rate.
+    */
+    std::vector<SparseMatrix> peak_jumps = jump_operators;
+    for (std::size_t j = 0; j < jump_rate_series.size(); ++j) {
+        if (!jump_rate_series[j].empty()) {
+            peak_jumps[j] = jump_operators[j] * *std::max_element(jump_rate_series[j].begin(), jump_rate_series[j].end());
+        }
+    }
+    return peak_jumps;
 }
 
 SparseMatrix effective_hamiltonian(const SparseMatrix& hamiltonian, const SparseMatrix& drift) {
