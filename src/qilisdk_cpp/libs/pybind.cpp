@@ -120,6 +120,22 @@ void error(std::string message) {
     }
 }
 
+void check_signals() {
+    /*
+    Run any pending Python signal handlers, so that a Ctrl-C (or any other signal) interrupts a
+    long-running C++ routine instead of only being raised once it returns to Python.
+
+    Cheap enough to call once per iteration of a simulation loop: with no signal pending it is a
+    flag check, and it is a no-op when called from a thread other than the main one.
+
+    Raises:
+        py::error_already_set: If a signal handler raised, e.g. KeyboardInterrupt for SIGINT.
+    */
+    if (PyErr_CheckSignals() != 0) {
+        throw py::error_already_set();
+    }
+}
+
 // GCOVR_EXCL_START
 void finalize_all_pybind_types() {
     QUBO = py::object();
