@@ -269,6 +269,27 @@ def test_hamiltonian_hash_order_independent():
     assert hash(h1) == hash(h2)
 
 
+def test_dict_constructor_canonicalises_keys():
+    h1 = Hamiltonian({(PauliX(1), PauliZ(0)): 1.0})
+    h2 = Hamiltonian({(PauliZ(0), PauliX(1)): 1.0})
+
+    assert h1 == Z(0) * X(1)
+    assert hash(h1) == hash(h2)
+    assert h1 + h2 == 2 * Z(0) * X(1)
+
+
+@pytest.mark.parametrize(
+    ("elements", "expected_hamiltonian"),
+    [
+        ({(PauliZ(0), PauliZ(0)): 1.0}, I(0)),
+        ({(PauliX(0), PauliY(0)): 2.0}, 2j * Z(0)),
+        ({(PauliX(0), PauliX(0), PauliZ(1)): 1.0, (PauliZ(1),): 1.0}, 2 * Z(1)),
+    ],
+)
+def test_dict_constructor_collapses_repeated_qubits(elements, expected_hamiltonian):
+    assert Hamiltonian(elements) == expected_hamiltonian
+
+
 def test_hamiltonian_hash_changes_when_coefficients_change():
     h1 = Z(0) + X(1)
     h2 = Z(0) + 2 * X(1)

@@ -336,7 +336,9 @@ class Hamiltonian(Parameterizable):
                         raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
                     for parameter in val.free_parameters():
                         self._add_parameter(parameter.label, parameter)
-                self._elements[key] += val
+                # Use _multiply_sets to combine operators on the same qubit and to sort things by qubit
+                phase, canonical_key = Hamiltonian._multiply_sets(key, ())
+                self._elements[canonical_key] += val * phase
             self.simplify()
 
     @property
@@ -1198,8 +1200,6 @@ class Hamiltonian(Parameterizable):
                 # purely scalar => store as (I(0),)
                 elements[PauliI(0),] += coeff
             else:
-                # Sort operators by qubit for canonical ordering
-                op_list.sort(key=lambda op: op.qubit)
                 elements[tuple(op_list)] += coeff
 
         hamiltonian = cls(elements)
