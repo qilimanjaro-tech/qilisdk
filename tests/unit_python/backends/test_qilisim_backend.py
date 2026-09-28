@@ -92,7 +92,7 @@ def test_qilisim_config_builders_and_validation():
 def test_integer_settings_reject_values_too_wide_for_the_backend():
     # Anything above the signed 32-bit range cannot be cast to the C++ `int` config fields, so it has
     # to be rejected at construction with an error naming the field rather than at execute() time.
-    too_wide = 2**40
+    too_wide = 2**31
 
     with pytest.raises(ValidationError, match="seed"):
         ExecutionConfig(seed=too_wide)
