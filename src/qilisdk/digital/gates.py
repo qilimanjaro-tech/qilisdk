@@ -1127,8 +1127,8 @@ class U2(BasicGate):
     Which is equivalent to two azimuthal rotations of `phi` and `gamma`, with a pi/2 polar rotation in between:
         ``U2(phi, gamma) = exp(i*(phi+gamma)/2) RZ(phi) RY(pi/2) RZ(gamma)``
 
-    This is the same matrix of `qiskit` and `pennylane`, differing from `qibo` implementation on a global phase:
-        ``U2(phi, gamma) = U2_qiskit/pennylane(phi, gamma) = exp(i*(phi+gamma)/2) U2_qibo(phi, gamma)``
+    This is the same matrix of `QASM`, `qiskit` and `pennylane`, differing from `qibo` implementation on a global phase:
+        ``U2(phi, gamma) = U2_QASM/qiskit/pennylane(phi, gamma) = exp(i*(phi+gamma)/2) U2_qibo(phi, gamma)``
 
     Other unitaries you can get from this one are:
         - ``U2(phi=0, gamma=pi) = H``
@@ -1206,14 +1206,14 @@ class U3(BasicGate):
 
     .. code-block:: text
 
-        [[cos(theta/2), -exp(i*gamma/2*sin(theta/2))],
-         [exp(i*phi/2)*sin(theta/2),    exp(i*(phi+gamma))*cos(theta/2)]]
+        [[cos(theta/2),                 -exp(i*gamma)*sin(theta/2)],
+         [exp(i*phi)*sin(theta/2),  exp(i*(phi+gamma))*cos(theta/2)]]
 
     Which is equivalent to two azimuthal rotations of `phi` and `gamma`, with a 'theta' polar rotation in between:
         ``U3(theta, phi, gamma) = exp(i*(phi+gamma)/2) RZ(phi) RY(theta) RZ(gamma)``
 
-    This is the same matrix of `qiskit` and `pennylane`, differing from `QASM` and `qibo` implementation on a global phase:
-        ``U3(theta, phi, gamma) = U3_qiskit/pennylane(theta, phi, gamma) = exp(-i*(phi+gamma)/2) U3_QASM/qibo(theta, phi, gamma)``
+    This is the same matrix of `QASM`, `qiskit` and `pennylane`, differing from `qibo` implementation on a global phase:
+        ``U3(theta, phi, gamma) = U3_QASM/qiskit/pennylane(theta, phi, gamma) = exp(i*(phi+gamma)/2) U3_qibo(theta, phi, gamma)``
 
     Other unitaries you can get from this one are:
         - ``U3(theta=pi/2, phi, gamma) = U2(phi, gamma)``
