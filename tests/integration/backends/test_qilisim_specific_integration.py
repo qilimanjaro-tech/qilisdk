@@ -655,7 +655,8 @@ def test_variational_annealing_expectation_value_bounded():
     )
     assert isinstance(result, FunctionalResult)
     ev = result.get_expectation_values()[0]
-    assert -1.00001 <= ev.real <= 1.00001
+    assert isinstance(ev, float)
+    assert -1.00001 <= ev <= 1.00001
 
 
 def test_variational_annealing_wrong_initial_state_raises():
@@ -731,7 +732,7 @@ def test_variational_annealing_single_qubit_correct():
     )
     assert isinstance(result, FunctionalResult)
     ev = result.get_expectation_values()[0]
-    assert np.isclose(ev.real, -1.0, atol=0.2)
+    assert np.isclose(ev, -1.0, atol=0.2)
 
 
 def test_variational_annealing_many_qubit_correct():
@@ -747,7 +748,7 @@ def test_variational_annealing_many_qubit_correct():
     )
     assert isinstance(result, FunctionalResult)
     ev = result.get_expectation_values()[0]
-    assert np.isclose(ev.real, -nqubits, atol=0.2)
+    assert np.isclose(ev, -nqubits, atol=0.2)
 
 
 def test_matrix_free_complex_gate_on_mixed_state_stays_hermitian():
