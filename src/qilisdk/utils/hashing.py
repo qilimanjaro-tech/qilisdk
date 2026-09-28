@@ -133,7 +133,9 @@ def _encode_object(value: object) -> bytes:
     kind = _encode_kind(value.__class__)
 
     if kind == "scalar":
-        return _encode_scalar(value)
+        scalar_payload = _encode_scalar(value)
+        if scalar_payload:
+            return scalar_payload
 
     if kind == "ndarray":
         value = cast("np.ndarray", value)
@@ -174,8 +176,7 @@ def _encode_object(value: object) -> bytes:
         state_payload = _encode_object(vars(value))
         return b"object-state:" + _class_name(value.__class__) + b":" + state_payload
 
-    class_name = f"{value.__class__.__module__}.{value.__class__.__qualname__}".encode("utf-8")
-    return b"object-repr:" + class_name + b":" + repr(value).encode("utf-8")
+    return b"object-repr:" + _class_name(value.__class__) + b":" + repr(value).encode("utf-8")
 
 
 def hash(*objects: object) -> int:
