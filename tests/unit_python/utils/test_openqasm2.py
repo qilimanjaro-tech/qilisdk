@@ -573,19 +573,90 @@ def test_from_qasm2_rejects_gate_on_undeclared_register():
             "h other[0];",
         ]
     )
-    with pytest.raises(ValueError, match="do not refer to the quantum register 'q'"):
+    with pytest.raises(ValueError, match="Undeclared quantum register 'other' in gate"):
         from_qasm2(qasm_str)
 
 
-def test_from_qasm2_rejects_a_second_quantum_register():
+def test_from_qasm2_concatenates_several_quantum_registers():
+    """Several quantum registers are laid out one after another, in the order they are declared."""
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg a[2];",
+            "qreg b[2];",
+            "creg c[4];",
+            "h a[0];",
+            "cx a[1], b[0];",
+            "x b[1];",
+            "measure b -> c;",
+        ]
+    )
+    circuit = from_qasm2(qasm_str)
+    assert circuit.nqubits == 4
+    assert [str(gate) for gate in circuit.gates] == ["H(0)", "CNOT(1, 2)", "X(3)", "M(2, 3)"]
+
+
+def test_from_qasm2_rejects_a_quantum_register_declared_after_an_instruction():
     qasm_str = "\n".join(
         [
             "OPENQASM 2.0;",
             "qreg a[1];",
+            "h a[0];",
             "qreg b[1];",
         ]
     )
-    with pytest.raises(ValueError, match="Only a single quantum register is supported"):
+    with pytest.raises(ValueError, match="must all be declared before the first instruction"):
+        from_qasm2(qasm_str)
+
+
+def test_from_qasm2_rejects_a_repeated_quantum_register_name():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg a[1];",
+            "qreg a[1];",
+        ]
+    )
+    with pytest.raises(ValueError, match="'a' is declared more than once"):
+        from_qasm2(qasm_str)
+
+
+def test_from_qasm2_rejects_an_out_of_range_qubit_in_a_gate():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg a[2];",
+            "qreg b[2];",
+            "h a[2];",
+        ]
+    )
+    with pytest.raises(ValueError, match="Qubit 2 is out of range for quantum register 'a'"):
+        from_qasm2(qasm_str)
+
+
+def test_from_qasm2_rejects_an_out_of_range_qubit_in_a_measurement():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg a[2];",
+            "qreg b[2];",
+            "creg c[2];",
+            "measure a[2] -> c[0];",
+        ]
+    )
+    with pytest.raises(ValueError, match="Qubit 2 is out of range for quantum register 'a'"):
+        from_qasm2(qasm_str)
+
+
+def test_from_qasm2_rejects_a_gate_whose_operands_name_no_register():
+    qasm_str = "\n".join(
+        [
+            "OPENQASM 2.0;",
+            "qreg a[1];",
+            "h a;",
+        ]
+    )
+    with pytest.raises(ValueError, match="do not refer to a quantum register"):
         from_qasm2(qasm_str)
 
 
