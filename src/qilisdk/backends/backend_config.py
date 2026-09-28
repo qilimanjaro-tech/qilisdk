@@ -381,10 +381,11 @@ class DigitalMethod(BaseSimulatorConfig):
             for statevector simulation. Defaults to ``True``.
     """
 
-    digital_method: str = Field(
+    digital_method: Literal["statevector", "statevector_matrix_free", "stabilizer"] = Field(
         default="statevector_matrix_free",
         description=(
-            "Digital simulation method to use. This is set automatically by the preferred constructors like `statevector`."
+            "Digital simulation method to use: 'statevector', 'statevector_matrix_free', or 'stabilizer'. "
+            "This is set automatically by the preferred constructors like `statevector`."
         ),
     )
     max_cache_size: int = Field(
