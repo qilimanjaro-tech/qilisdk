@@ -119,7 +119,7 @@ def _random_connected_edges(
     if not 0 <= edge_probability <= 1:
         raise ValueError(f"edge_probability must be between 0 and 1, got {edge_probability}.")
 
-    order = list(generator.permutation(num_nodes))
+    order = [int(node) for node in generator.permutation(num_nodes)]
     edges: set[tuple[int, int]] = set()
     for index in range(1, num_nodes):
         parent = order[int(generator.integers(index))]
