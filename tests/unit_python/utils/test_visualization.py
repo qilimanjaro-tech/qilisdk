@@ -599,14 +599,68 @@ def test_qtensor_draw_with_style_runs(monkeypatch):
     qobj.draw(filepath="test_output.png", style=style)
 
 
+def test_qtensor_draw_density_matrix_runs(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.qtensor_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(qilisdk.utils.visualization.qtensor_renderers.plt.Figure, "savefig", mock_save)
+    qobj = QTensor.ket(0, 1).partial_trace({1})
+    qobj.draw()
+
+
+@pytest.mark.parametrize(
+    ("qobj", "expected"),
+    [
+        (QTensor.ket(0), (0.0, 0.0, 1.0)),
+        (QTensor.ket(1), (0.0, 0.0, -1.0)),
+        (QTensor(np.array([[1], [1]], dtype=complex) / np.sqrt(2)), (1.0, 0.0, 0.0)),
+        (QTensor(np.array([[1], [-1]], dtype=complex) / np.sqrt(2)), (-1.0, 0.0, 0.0)),
+        (QTensor(np.array([[1], [1j]], dtype=complex) / np.sqrt(2)), (0.0, 1.0, 0.0)),
+        (QTensor(np.array([[1], [-1j]], dtype=complex) / np.sqrt(2)), (0.0, -1.0, 0.0)),
+        (QTensor(np.array([[1, -1j]], dtype=complex) / np.sqrt(2)), (0.0, 1.0, 0.0)),  # a bra
+        (QTensor(np.array([[1, 0], [0, 0]], dtype=complex)), (0.0, 0.0, 1.0)),  # |0><0|
+        (QTensor(np.array([[0.5, -0.5j], [0.5j, 0.5]], dtype=complex)), (0.0, 1.0, 0.0)),  # |+i><+i|
+        (QTensor(np.eye(2, dtype=complex) / 2), (0.0, 0.0, 0.0)),  # maximally mixed
+    ],
+)
+def test_qtensor_draw_bloch_vector(monkeypatch, qobj, expected):
+    monkeypatch.setattr(qilisdk.utils.visualization.qtensor_renderers.plt, "show", mock_show)
+    arrows = []
+    monkeypatch.setattr(
+        qilisdk.utils.visualization.qtensor_renderers.AXIS_TYPE,
+        "quiver",
+        lambda self, ox, oy, oz, x, y, z, **kwargs: arrows.append((x, y, z)),
+    )
+    qobj.draw()
+    assert arrows == [pytest.approx(expected)]
+
+
+def test_qtensor_draw_reduced_state_of_entangled_state_is_mixed(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.qtensor_renderers.plt, "show", mock_show)
+    arrows = []
+    monkeypatch.setattr(
+        qilisdk.utils.visualization.qtensor_renderers.AXIS_TYPE,
+        "quiver",
+        lambda self, ox, oy, oz, x, y, z, **kwargs: arrows.append((x, y, z)),
+    )
+    amplitudes = np.zeros((8, 1), dtype=complex)
+    amplitudes[0] = amplitudes[7] = 1 / np.sqrt(2)  # a 3-qubit GHZ state
+    QTensor(amplitudes).partial_trace({0}).draw()
+    assert arrows == [pytest.approx((0.0, 0.0, 0.0))]
+
+
 def test_qtensor_draw_many_qubits_raises():
     qobj = QTensor.ket(0, 0, 0, 0)  # 4 qubits
     with pytest.raises(ValueError, match="Drawing is only supported for single-qubit states"):
         qobj.draw()
 
 
-def test_qtensor_draw_non_ket_raises():
-    qobj = QTensor(np.eye(2))  # Not a ket
+def test_qtensor_draw_many_qubit_density_matrix_raises():
+    qobj = QTensor(np.eye(4, dtype=complex) / 4)  # 2 qubits
+    with pytest.raises(ValueError, match="Drawing is only supported for single-qubit states"):
+        qobj.draw()
+
+
+def test_qtensor_draw_non_state_raises():
+    qobj = QTensor(np.eye(2))  # Neither a state vector nor a density matrix, as its trace is 2
     with pytest.raises(ValueError, match="Drawing is only supported for state vectors"):
         qobj.draw()
 
