@@ -71,8 +71,8 @@ void QiliSimConfig::validate() const {
     if (this->atol <= 0) {
         throw py::value_error("Absolute tolerance must be positive.");
     }
-    if (max_cache_size <= 0) {
-        throw py::value_error("Max cache size must be positive.");
+    if (max_cache_size < 0) {
+        throw py::value_error("Max cache size must be non-negative.");
     }
     if (max_fused_qubits < 0) {
         throw py::value_error("Max fused qubits must be non-negative (0 selects an automatic depth based on the qubit count).");

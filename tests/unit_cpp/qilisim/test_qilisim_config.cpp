@@ -52,7 +52,7 @@ TEST(QilisimConfig, BadValidateThrows) {
     EXPECT_ANY_THROW(config.validate());
 
     config = default_config;
-    config.set_max_cache_size(0);
+    config.set_max_cache_size(-1);
     EXPECT_ANY_THROW(config.validate());
 
     config = default_config;
@@ -93,6 +93,12 @@ TEST(QilisimConfig, MethodNamesMustMatchExactly) {
         config.set_digital_method(name);
         EXPECT_NO_THROW(config.validate()) << "digital method '" << name << "'";
     }
+}
+
+TEST(QilisimConfig, ZeroMaxCacheSizeDisablesCachingAndIsValid) {
+    QiliSimConfig config;
+    config.set_max_cache_size(0);
+    EXPECT_NO_THROW(config.validate());
 }
 
 TEST(QilisimConfig, FusionGettersSetters) {

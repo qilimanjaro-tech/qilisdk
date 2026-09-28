@@ -390,7 +390,7 @@ class DigitalMethod(BaseSimulatorConfig):
     )
     max_cache_size: int = Field(
         default=1000,
-        gt=0,
+        ge=0,
         description="Maximum number of cached gate representations used by the digital simulator.",
     )
     normalize_after_each_gate: bool = Field(
