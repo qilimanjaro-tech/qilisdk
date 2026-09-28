@@ -101,6 +101,12 @@ msgid ""
 "If ``False``, the circuit has ``layers`` parameterized blocks and ends on"
 " an entangling block."
 msgstr ""
+"**final_rotation_layer**: Si es ``True`` (el valor predeterminado), se "
+"añade un bloque final de un qubit después del último bloque de "
+"entrelazamiento, de modo que el circuito tiene ``(layers + 1)`` bloques "
+"parametrizados y termina en rotaciones ajustables. Si es ``False``, el "
+"circuito tiene ``layers`` bloques parametrizados y termina en un bloque de "
+"entrelazamiento."
 
 #: ../../modules/digital/digital_hardware.rst:25
 msgid "**Example**"
