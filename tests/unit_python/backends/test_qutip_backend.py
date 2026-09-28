@@ -84,8 +84,8 @@ def test_unsupported_gate_raises(backend):
         @property
         def name(self) -> str: ...  # type: ignore
 
-        def _generate_matrix(self) -> np.ndarray:
-            return np.eye(2, dtype=complex)
+        def _generate_matrix(self) -> QTensor:
+            return QTensor(np.eye(2, dtype=complex))
 
     circuit = Circuit(nqubits=1)
     circuit.gates.append(DummyGate(0))
