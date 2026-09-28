@@ -41,6 +41,10 @@ msgid ""
 "the optimal storage format based on its shape and sparsity. It supports a"
 " variety of quantum objects, including:"
 msgstr ""
+"El :class:`~qilisdk.core.qtensor.QTensor` embolcalla un array i "
+"l'emmagatzema en el format d'emmagatzematge òptim segons la seva forma i "
+"la seva dispersió. Admet una varietat d'objectes quàntics, entre els "
+"quals:"
 
 #: ../../modules/core/core_qtensor.rst:11
 msgid "**Kets** (column vectors of shape ``(2**N, 1)``)"
