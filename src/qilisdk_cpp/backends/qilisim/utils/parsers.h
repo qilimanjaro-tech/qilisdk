@@ -17,6 +17,7 @@
 #include "../../../libs/pybind.h"
 #include "../config/qilisim_config.h"
 #include "../digital/gate.h"
+#include "../environment/environment.h"
 #include "../noise/noise_model.h"
 #include "../representations/exponential_ansatz.h"
 #include "../representations/matrix_free_hamiltonian.h"
@@ -29,6 +30,8 @@ py::object construct_result_object(const ExponentialAnsatz& state, const py::obj
 py::object construct_result_object(const StabilizerStateSum& state, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure);
 QILISIM_EXPORT std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(int nqubits, const py::object& Hs);
 std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol, int nqubits);
+bool has_non_markovian_noise(const py::object& noise_model);
+EnvironmentCpp parse_environment_noise(const py::object& noise_model, int n_system_qubits, double atol);
 NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, double atol, const py::object& circuit = py::none(), const std::vector<double>* step_list = nullptr);
 std::vector<SparseMatrix> parse_observables(const py::object& observables, long nqubits, double atol);
 std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(int nqubits, const py::object& observables);
@@ -40,6 +43,7 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
 int gate_num_controls(const std::string& name);
 std::string normalize_gate_name(const std::string& name);
 std::vector<bool> parse_measurements(const py::object& circuit);
+std::map<std::string, float> resolve_gate_durations(const py::object& circuit, const py::object& noise_config);
 QiliSimConfig parse_solver_params(const py::dict& solver_params);
 
 // GCOV_EXCL_BR_STOP

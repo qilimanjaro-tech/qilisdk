@@ -1248,6 +1248,37 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     return config;
 }
 
+bool has_non_markovian_noise(const py::object& noise_model) {
+    /*
+    Check whether a noise model contains any non-Markovian noise, which requires the non-Markovian path.
+
+    Args:
+        noise_model (py::object): A NoiseModel object, or None.
+
+    Returns:
+        bool: Whether the noise model contains non-Markovian noise.
+    */
+    return !noise_model.is_none() && py::len(noise_model.attr("non_markovian_noise")) > 0;
+}
+
+EnvironmentCpp parse_environment_noise(const py::object& noise_model, int n_system_qubits, double atol) {
+    /*
+    Combine every EnvironmentNoise of a noise model into one EnvironmentCpp. The environments are
+    placed one after another after the system qubits.
+
+    Args:
+        noise_model (py::object): A NoiseModel object containing environment noise.
+        n_system_qubits (int): The number of system qubits.
+        atol (double): Absolute tolerance for numerical operations.
+
+    Returns:
+        EnvironmentCpp: The combined environment on the full register.
+    */
+    // TODO: for each environment, as_hamiltonian / as_lindblad with nqubits = n_system_qubits and an accumulated offset,
+    //       convert to full-register sparse matrices, and kron the environment states together
+    throw py::value_error("EnvironmentNoise is not implemented yet");
+}
+
 #pragma GCC visibility pop
 
 // GCOV_EXCL_BR_STOP

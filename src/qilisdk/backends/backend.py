@@ -59,6 +59,9 @@ class Backend(ABC):
     dispatches to the appropriate handler based on the functional type.
     """
 
+    # Whether the backend can simulate non-Markovian noise
+    _supports_non_markovian_noise: bool = False
+
     def __init__(
         self,
         noise_model: NoiseModel | None = None,
@@ -110,7 +113,8 @@ class Backend(ABC):
 
         Raises:
             NotImplementedError: If the backend does not support the given
-                functional type.
+                functional type, or the noise model contains non-Markovian
+                noise the backend cannot simulate.
             ValueError: If the readout specification is empty.
         """
         logger.debug("[Backend] Dispatching {} to {}", type(functional).__qualname__, type(self).__qualname__)
@@ -120,6 +124,12 @@ class Backend(ABC):
             raise NotImplementedError(
                 f"{type(self).__qualname__} does not support {type(functional).__qualname__}"
             ) from exc
+        if (
+            self._noise_model is not None
+            and self._noise_model.non_markovian_noise
+            and not self._supports_non_markovian_noise
+        ):
+            raise NotImplementedError(f"{type(self).__qualname__} does not support non-Markovian noise")
 
         readout_list = readout.to_list()
         if not readout_list:

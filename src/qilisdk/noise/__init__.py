@@ -16,6 +16,7 @@ from .amplitude_damping import AmplitudeDamping
 from .bit_flip import BitFlip
 from .dephasing import Dephasing
 from .depolarizing import Depolarizing
+from .environment_noise import EnvironmentNoise
 from .gaussian_perturbation import GaussianPerturbation
 from .noise import Noise
 from .noise_config import NoiseConfig
@@ -38,6 +39,7 @@ __all__ = [
     "BitFlip",
     "Dephasing",
     "Depolarizing",
+    "EnvironmentNoise",
     "GaussianPerturbation",
     "KrausChannel",
     "LindbladGenerator",

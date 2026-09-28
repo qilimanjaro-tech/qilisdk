@@ -79,6 +79,17 @@ bool NoiseModelCpp::is_empty() const {
     return !has_something;
 }
 
+void NoiseModelCpp::extend_register(int n_extra_qubits) {
+    /*
+    Extend the cached full-register jump operators with extra qubits appended after the register,
+    as L (x) I, so the noise keeps acting only on the original qubits.
+
+    Args:
+        n_extra_qubits (int): The number of qubits appended after the register.
+    */
+    // TODO: kron each cached jump operator with the identity on n_extra_qubits
+}
+
 void NoiseModelCpp::add_jump_operator(const SparseMatrix& L) {
     /*
     Add a jump operator with a constant (already folded) rate to the cached list.
