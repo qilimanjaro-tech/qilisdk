@@ -20,8 +20,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from matplotlib import font_manager as fm
+from matplotlib.lines import Line2D
 from matplotlib.text import Text
 from matplotlib.transforms import Bbox
+from pydantic import ValidationError
 
 import qilisdk.utils.visualization.circuit_renderers
 import qilisdk.utils.visualization.hamiltonian_renderers
@@ -226,6 +228,353 @@ def test_layer_stacking(monkeypatch):
     circuit.add(XGate(1))
     circuit.add(CNOT(0, 2))
     renderer.plot()
+
+
+def deep_circuit(nqubits=2, depth=40, measure=True):
+    """Build a circuit deep enough that it has to be wrapped onto several rows."""
+    circuit = Circuit(nqubits)
+    for _ in range(depth):
+        for qubit in range(nqubits):
+            circuit.add(RX(qubit, theta=np.pi / 4))
+        circuit.add(CNOT(0, nqubits - 1))
+    if measure:
+        circuit.add(M(*range(nqubits)))
+    return circuit
+
+
+@pytest.mark.parametrize(
+    ("field", "value"), [("fold", 0), ("max_row_width", 0.0), ("max_view_height", -1.0), ("fold_dash", 0.0)]
+)
+def test_circuit_style_rejects_sizes_that_cannot_be_drawn(field, value):
+    with pytest.raises(ValidationError, match="Input should be greater than 0"):
+        CircuitStyle(**{field: value})
+
+
+def test_deep_circuit_is_folded_into_rows(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    style = CircuitStyle(max_row_width=4.0)
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=style)
+    renderer.plot()
+
+    assert len(renderer._row_widths) > 1
+    assert max(renderer._row_widths) <= style.max_row_width
+    # every row is as tall as the circuit, and the rows are stacked downwards
+    _, height = renderer._drawing_size()
+    assert height > (len(renderer._row_widths) - 1) * renderer._row_height
+
+
+def dashed_spans(renderer, row):
+    """Collect the ``(start, end)`` x of every dashed wire segment drawn on a row."""
+    return [
+        tuple(line.get_xdata())
+        for line in renderer._row_artists[row]
+        if isinstance(line, Line2D) and line.get_linestyle() == "--"
+    ]
+
+
+def vertical_wires(renderer, row):
+    """Collect the x of every vertical wire-coloured line drawn on a row."""
+    return [
+        line.get_xdata()[0]
+        for line in renderer._row_artists[row]
+        if isinstance(line, Line2D)
+        and line.get_zorder() == MatplotlibCircuitRenderer._Z["wire"]
+        and line.get_xdata()[0] == line.get_xdata()[1]
+    ]
+
+
+def test_folded_wires_trail_off_in_dashes(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    circuit = deep_circuit(nqubits=3)
+    style = CircuitStyle(max_row_width=4.0)
+    renderer = MatplotlibCircuitRenderer(circuit=circuit, style=style)
+    renderer.plot()
+
+    assert len(renderer._row_widths) > 2
+    last_row = len(renderer._row_widths) - 1
+    for row, x_end in enumerate(renderer._row_widths):
+        # a wire is dashed wherever the circuit carries on, and left open at its real ends
+        expected = ([] if row == 0 else [(0.0, style.fold_dash)]) + (
+            [] if row == last_row else [(x_end - style.fold_dash, x_end)]
+        )
+        spans = dashed_spans(renderer, row)
+        assert sorted(set(spans)) == expected
+        assert len(spans) == len(expected) * circuit.nqubits
+
+    # the dashes take room of their own, so no gate is drawn over them
+    assert all(x >= style.fold_dash for row, x in zip(renderer._layer_row, renderer._layer_x) if row)
+
+
+def test_folded_rows_line_up(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    circuit = Circuit(3)
+    for _ in range(30):
+        circuit.add(XGate(0))
+    renderer = MatplotlibCircuitRenderer(circuit=circuit, style=CircuitStyle(fold=10))
+    renderer.plot()
+
+    # a row that holds no dashes still keeps the room for them, so the columns line up
+    assert renderer._layer_x[:10] == renderer._layer_x[10:20] == renderer._layer_x[20:]
+    assert len(set(renderer._row_widths)) == 1
+
+
+def test_unfolded_circuit_keeps_no_room_for_dashes(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    style = CircuitStyle(fold=None)
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=style)
+    renderer.plot()
+
+    assert renderer._layer_x[0] == pytest.approx(style.start_pad)
+
+
+def test_open_fold_edges_leave_the_rows_bare(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    style = CircuitStyle(max_row_width=4.0, fold_edges="open")
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=style)
+    renderer.plot()
+
+    assert len(renderer._row_widths) > 1
+    assert not any(dashed_spans(renderer, row) for row in range(len(renderer._row_widths)))
+    assert not any(vertical_wires(renderer, row) for row in range(len(renderer._row_widths)))
+    # bare ends need no room, so the rows start where an unfolded circuit would
+    assert renderer._layer_x[0] == style.start_pad
+
+
+def test_closed_fold_edges_join_the_wires(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    circuit = deep_circuit(nqubits=3)
+    renderer = MatplotlibCircuitRenderer(circuit=circuit, style=CircuitStyle(max_row_width=4.0, fold_edges="closed"))
+    renderer.plot()
+
+    assert len(renderer._row_widths) > 2
+    last_row = len(renderer._row_widths) - 1
+    for row, x_end in enumerate(renderer._row_widths):
+        # the wires are joined wherever the circuit carries on, and left open at its real ends
+        assert vertical_wires(renderer, row) == ([] if row == 0 else [0.0]) + ([] if row == last_row else [x_end])
+        assert not dashed_spans(renderer, row)
+
+
+def test_a_single_wire_is_never_closed_off(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    circuit = Circuit(1)
+    for _ in range(40):
+        circuit.add(RX(0, theta=np.pi / 4))
+    renderer = MatplotlibCircuitRenderer(circuit=circuit, style=CircuitStyle(max_row_width=4.0, fold_edges="closed"))
+    renderer.plot()
+
+    assert len(renderer._row_widths) > 1
+    assert not any(vertical_wires(renderer, row) for row in range(len(renderer._row_widths)))
+
+
+def test_fold_none_keeps_a_single_row(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=CircuitStyle(fold=None))
+    renderer.plot()
+
+    assert len(renderer._row_widths) == 1
+    assert renderer._row_widths[0] > CircuitStyle().max_row_width
+
+
+def test_fold_by_number_of_layers(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=CircuitStyle(fold=5))
+    renderer.plot()
+
+    rows = renderer._layer_row
+    assert rows[:6] == [0, 0, 0, 0, 0, 1]
+    assert max(rows) == (len(rows) - 1) // 5
+
+
+def test_layer_wider_than_a_row_gets_its_own_row(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    circuit = Circuit(1)
+    circuit.add(RX(0, theta=np.pi / 4))
+    circuit.add(RX(0, theta=np.pi / 4))
+    renderer = MatplotlibCircuitRenderer(circuit=circuit, style=CircuitStyle(max_row_width=0.01))
+    renderer.plot()
+
+    assert renderer._layer_row == [0, 1]
+
+
+def test_huge_circuit_is_drawn_at_a_lower_dpi(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(MatplotlibCircuitRenderer, "_MAX_CANVAS_PIXELS", 2**14)
+
+    style = CircuitStyle(max_row_width=4.0)
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=style)
+    renderer.plot()
+
+    assert renderer.axes.figure.dpi < style.dpi
+
+
+def test_huge_circuit_on_a_given_axes_is_drawn_at_a_lower_dpi(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(MatplotlibCircuitRenderer, "_MAX_CANVAS_PIXELS", 2**14)
+
+    style = CircuitStyle(max_row_width=4.0)
+    _, ax = plt.subplots(dpi=style.dpi)
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), ax=ax, style=style)
+    renderer.plot()
+
+    assert renderer.axes is ax
+    assert ax.figure.dpi < style.dpi
+
+
+def test_circuit_too_large_to_draw_raises(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(MatplotlibCircuitRenderer, "_MAX_CANVAS_PIXELS", 1)
+
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=CircuitStyle())
+    with pytest.raises(ValueError, match="too large to draw"):
+        renderer.plot()
+
+
+def test_tall_circuit_opens_on_its_first_rows(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    style = CircuitStyle(max_row_width=4.0, max_view_height=3.0)
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=style)
+    renderer.plot()
+
+    _, drawing_height = renderer._drawing_size()
+    bottom, top = renderer.axes.get_ylim()
+    assert drawing_height > style.max_view_height
+    assert top - bottom == pytest.approx(style.max_view_height)
+    # the view is anchored at the top of the circuit, and the window matches it
+    assert top == pytest.approx(style.padding + (renderer._wires - 1) * style.wire_sep)
+    assert renderer.axes.figure.get_size_inches()[1] == pytest.approx(style.max_view_height)
+
+
+def test_max_view_height_none_opens_on_the_whole_circuit(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    renderer = MatplotlibCircuitRenderer(
+        circuit=deep_circuit(), style=CircuitStyle(max_row_width=4.0, max_view_height=None)
+    )
+    renderer.plot()
+
+    bottom, top = renderer.axes.get_ylim()
+    assert top - bottom == pytest.approx(renderer._drawing_size()[1])
+
+
+def test_saving_holds_the_whole_circuit(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt.Figure, "savefig", mock_save)
+
+    style = CircuitStyle(max_row_width=4.0, max_view_height=3.0)
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=style)
+    renderer.plot()
+    renderer.save("test_circuit.png")
+
+    bottom, top = renderer.axes.get_ylim()
+    assert top - bottom == pytest.approx(renderer._drawing_size()[1])
+    assert renderer.axes.figure.get_size_inches()[1] == pytest.approx(renderer._drawing_size()[1])
+
+
+def test_offscreen_rows_are_not_drawn(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    style = CircuitStyle(max_row_width=4.0, max_view_height=3.0)
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=style)
+    renderer.plot()
+
+    # the rows on screen are drawn, the ones scrolled past are not
+    assert renderer._row_shown[0]
+    assert not renderer._row_shown[-1]
+    assert all(artist.get_visible() for artist in renderer._row_artists[0])
+    assert not any(artist.get_visible() for artist in renderer._row_artists[-1])
+
+    # panning to the bottom brings the last row back and drops the first
+    bottom_row = -(len(renderer._row_widths) - 1) * renderer._row_height
+    renderer.axes.set_ylim(bottom_row - style.padding, bottom_row + style.max_view_height)
+    assert not renderer._row_shown[0]
+    assert renderer._row_shown[-1]
+    assert all(artist.get_visible() for artist in renderer._row_artists[-1])
+
+
+def test_saving_draws_every_row(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt.Figure, "savefig", mock_save)
+
+    style = CircuitStyle(max_row_width=4.0, max_view_height=3.0)
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=style)
+    renderer.plot()
+    assert not all(renderer._row_shown)
+
+    renderer.save("test_circuit.png")
+    assert all(renderer._row_shown)
+    assert all(artist.get_visible() for artists in renderer._row_artists for artist in artists)
+
+
+def test_labels_scale_with_the_figure(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt.Figure, "savefig", mock_save)
+
+    style = CircuitStyle()
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(depth=4), style=style)
+    renderer.plot()
+
+    # as drawn, the labels are at the size the style asked for
+    base = style.font.get_size_in_points()
+    assert renderer._view_scale == pytest.approx(1.0)
+    assert all(text.get_fontsize() == pytest.approx(base) for text in renderer._texts)
+
+    # stretching the window scales the gates, so the labels have to follow
+    width, height = renderer.axes.figure.get_size_inches()
+    renderer.axes.figure.set_size_inches(width * 2, height * 2, forward=True)
+    renderer._on_view_changed(None)
+    assert renderer._view_scale == pytest.approx(2.0)
+    assert all(text.get_fontsize() == pytest.approx(base * 2) for text in renderer._texts)
+
+    # and a saved figure is back at the size it was drawn for
+    renderer.save("test_circuit.png")
+    assert renderer._view_scale == pytest.approx(1.0)
+    assert all(text.get_fontsize() == pytest.approx(base) for text in renderer._texts)
+
+
+def test_title_gets_a_band_of_its_own(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    circuit = deep_circuit(depth=2)
+    plain = MatplotlibCircuitRenderer(circuit=circuit, style=CircuitStyle())
+    plain.plot()
+    titled = MatplotlibCircuitRenderer(circuit=circuit, style=CircuitStyle(title="A title"))
+    titled.plot()
+
+    assert titled._title_band > 0
+    assert plain._title_band == 0
+    # the band is added to the figure, so the circuit itself keeps its size
+    assert titled.axes.figure.get_size_inches()[1] == pytest.approx(
+        plain.axes.figure.get_size_inches()[1] + titled._title_band
+    )
+
+
+def test_text_size_is_measured_once_per_label(monkeypatch):
+    monkeypatch.setattr(qilisdk.utils.visualization.circuit_renderers.plt, "show", mock_show)
+
+    renderer = MatplotlibCircuitRenderer(circuit=deep_circuit(), style=CircuitStyle())
+    measured = []
+    original = MatplotlibCircuitRenderer._text_size
+
+    def counting_text_size(self, text):
+        measured.append(text)
+        return original(self, text)
+
+    monkeypatch.setattr(MatplotlibCircuitRenderer, "_text_size", counting_text_size)
+    renderer.plot()
+
+    assert len(renderer._text_sizes) == len(set(measured))
+    assert renderer._text_width("$q_{0}$") == renderer._text_sizes["$q_{0}$"][0]
 
 
 def test_qtensor_draw_runs(monkeypatch):
