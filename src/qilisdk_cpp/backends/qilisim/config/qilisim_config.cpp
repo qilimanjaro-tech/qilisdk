@@ -13,9 +13,36 @@
 // limitations under the License.
 
 #include "qilisim_config.h"
+#include <set>
 #include "../../../libs/pybind.h"
 
 // GCOV_EXCL_BR_START
+
+namespace {
+
+void validate_choice(const std::string& value, const std::set<std::string>& valid, const std::string& name) {
+    /*
+    Check that a value is exactly one of a set of valid names.
+
+    Args:
+        value (std::string): The value to check.
+        valid (std::set<std::string>): The accepted names.
+        name (std::string): The name of the setting, used in the error message.
+
+    Raises:
+        py::value_error: If the value is not one of the valid names.
+    */
+    if (valid.count(value) > 0) {
+        return;
+    }
+    std::string options;
+    for (const auto& option : valid) {
+        options += (options.empty() ? "'" : ", '") + option + "'";
+    }
+    throw py::value_error(name + " must be one of " + options + ", got '" + value + "'");
+}
+
+}  // namespace
 
 void QiliSimConfig::validate() const {
     /*
@@ -31,14 +58,10 @@ void QiliSimConfig::validate() const {
     if (num_arnoldi_substeps <= 0) {
         throw py::value_error("Number of Arnoldi substeps must be positive.");
     }
-    const std::string valid_evolution_methods = "'direct', 'arnoldi', 'arnoldi_matrix_free', 'variational_exponential', 'integrate_rk4', 'integrate_rk45_matrix_free', or 'integrate_rk4_matrix_free'";
-    if (valid_evolution_methods.find(time_evolution_method) == std::string::npos) {
-        throw py::value_error("Time evolution method must be one of " + valid_evolution_methods);
-    }
-    const std::string valid_digital_methods = "'statevector', 'statevector_matrix_free', 'stabilizer'";
-    if (valid_digital_methods.find(digital_method) == std::string::npos) {
-        throw py::value_error("Digital method must be one of " + valid_digital_methods);
-    }
+    static const std::set<std::string> valid_evolution_methods = {"direct", "arnoldi", "arnoldi_matrix_free", "variational_exponential", "integrate_rk4", "integrate_rk45_matrix_free", "integrate_rk4_matrix_free"};
+    validate_choice(time_evolution_method, valid_evolution_methods, "Time evolution method");
+    static const std::set<std::string> valid_digital_methods = {"statevector", "statevector_matrix_free", "stabilizer"};
+    validate_choice(digital_method, valid_digital_methods, "Digital method");
     if (monte_carlo && num_monte_carlo_trajectories <= 0) {
         throw py::value_error("Number of Monte Carlo trajectories must be positive.");
     }

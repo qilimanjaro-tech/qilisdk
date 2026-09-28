@@ -76,6 +76,25 @@ TEST(QilisimConfig, BadValidateThrows) {
     EXPECT_ANY_THROW(config.validate());
 }
 
+TEST(QilisimConfig, MethodNamesMustMatchExactly) {
+    // Substrings of valid names (and of the error message) must not pass validation
+    for (const std::string name : {"statevector_matrix_fre", "statevecto", "stat", "", "'statevector'"}) {
+        QiliSimConfig config;
+        config.set_digital_method(name);
+        EXPECT_ANY_THROW(config.validate()) << "digital method '" << name << "'";
+    }
+    for (const std::string name : {"arnoldi_matrix", "integrate_rk4_matrix", "dir", ""}) {
+        QiliSimConfig config;
+        config.set_time_evolution_method(name);
+        EXPECT_ANY_THROW(config.validate()) << "time evolution method '" << name << "'";
+    }
+    for (const std::string name : {"statevector", "statevector_matrix_free", "stabilizer"}) {
+        QiliSimConfig config;
+        config.set_digital_method(name);
+        EXPECT_NO_THROW(config.validate()) << "digital method '" << name << "'";
+    }
+}
+
 TEST(QilisimConfig, FusionGettersSetters) {
     QiliSimConfig config;
     config.set_fuse_gates(true);

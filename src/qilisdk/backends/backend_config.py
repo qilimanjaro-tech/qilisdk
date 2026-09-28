@@ -381,15 +381,16 @@ class DigitalMethod(BaseSimulatorConfig):
             for statevector simulation. Defaults to ``True``.
     """
 
-    digital_method: str = Field(
+    digital_method: Literal["statevector", "statevector_matrix_free", "stabilizer"] = Field(
         default="statevector_matrix_free",
         description=(
-            "Digital simulation method to use. This is set automatically by the preferred constructors like `statevector`."
+            "Digital simulation method to use: 'statevector', 'statevector_matrix_free', or 'stabilizer'. "
+            "This is set automatically by the preferred constructors like `statevector`."
         ),
     )
     max_cache_size: int = Field(
         default=1000,
-        ge=0,
+        gt=0,
         description="Maximum number of cached gate representations used by the digital simulator.",
     )
     normalize_after_each_gate: bool = Field(
