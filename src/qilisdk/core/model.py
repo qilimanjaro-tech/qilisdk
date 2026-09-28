@@ -38,7 +38,7 @@ _EMPTY_GRAPH_MSG = "The graph must have at least one edge."
 _QUBO_SUPPORTED_DOMAINS = {Domain.BINARY, Domain.POSITIVE_INTEGER, Domain.INTEGER, Domain.REAL}
 
 # Upper limit on the number of binary variables a single variable may be expanded into
-_MAX_BINARY_VARS = 64
+_MAX_BINARY_VARS = 32
 
 
 def _validate_undirected_edges(edges: list[tuple[int, int]]) -> None:
