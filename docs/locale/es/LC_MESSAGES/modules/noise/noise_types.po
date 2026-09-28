@@ -103,6 +103,9 @@ msgid ""
 "evolution, which evaluates the rate at each time step, when rates are "
 "given as lambda functions of time:"
 msgstr ""
+"La evolución analógica de QiliSim admite tasas de Lindblad dependientes "
+"del tiempo, evaluando la tasa en cada paso temporal, cuando las tasas se "
+"indican como funciones lambda del tiempo:"
 
 #: ../../modules/noise/noise_types.rst:62
 msgid "PauliChannel"

@@ -326,13 +326,14 @@ def from_qasm2(qasm_str: str) -> Circuit:
     Parse an OpenQASM 2.0 string and create a corresponding Circuit instance.
 
     This parser supports the following instructions:
-        - Quantum register declaration (e.g., "qreg q[3];"), of which there may be only one
+        - Quantum register declaration (e.g., "qreg q[3];"), of which there may be several
         - Classical register declaration (e.g., "creg c[3];")
         - Gate instructions (one-qubit and two-qubit gates, plus the three-qubit "ccx" gate)
         - Measurement instructions (e.g., "measure q[0] -> c[0];")
 
     The registers may be given any name, and any instruction that refers to a register that was never declared
-    raises rather than being skipped.
+    raises rather than being skipped. Several quantum registers are laid out one after another in the order they
+    are declared, so the qubits of "qreg a[2]; qreg b[2];" are 0 and 1 for a, and 2 and 3 for b.
 
     Args:
         qasm_str (str): The QASM string to parse.
@@ -342,7 +343,8 @@ def from_qasm2(qasm_str: str) -> Circuit:
     """  # ruff: ignore[docstring-missing-exception]
     logger.info("[OpenQASM2] Importing circuit from OpenQASM 2.0")
     circuit = None
-    qreg_name = ""
+    qregs: dict[str, tuple[int, int]] = {}
+    nqubits = 0
     creg_names: set[str] = set()
     lines = qasm_str.splitlines()
     logger.debug("[OpenQASM2] Parsing {} lines of OpenQASM 2.0", len(lines))
@@ -364,9 +366,12 @@ def from_qasm2(qasm_str: str) -> Circuit:
             m = re.match(r"qreg\s+(\w+)\s*\[(\d+)\]\s*;", line)
             if m:
                 if circuit is not None:
-                    raise ValueError("Only a single quantum register is supported.")
-                qreg_name = m.group(1)
-                circuit = Circuit(int(m.group(2)))
+                    raise ValueError(f"Quantum registers must all be declared before the first instruction: {line}")
+                name, size = m.group(1), int(m.group(2))
+                if name in qregs:
+                    raise ValueError(f"Quantum register '{name}' is declared more than once.")
+                qregs[name] = (nqubits, size)
+                nqubits += size
             continue
 
         # Parse classical register declaration, whose name is needed to recognise measurements.
@@ -377,25 +382,36 @@ def from_qasm2(qasm_str: str) -> Circuit:
                 creg_names.add(m.group(1))
             continue
 
+        # Quantum registers must be declared before any instructions
+        if circuit is None:
+            if not qregs:
+                raise ValueError(f"A quantum register must be declared before any instruction: {line}")
+            circuit = Circuit(nqubits)
+
         # Process measurement instructions.
         if line.startswith("measure"):
-            if circuit is None:
-                raise ValueError("Quantum register must be declared before measurement.")
             # e.g., "measure q[0] -> c[0];"
             m = re.fullmatch(r"measure\s+(\w+)\s*\[(\d+)\]\s*->\s*(\w+)\s*\[\d+\]\s*;", line)
             if m is not None:
                 # TODO(vyron): Check consecutive lines of measurement and combine into single M.
-                quantum_name, classical_name, measured = m.group(1), m.group(3), (int(m.group(2)),)
+                quantum_name, classical_name, index = m.group(1), m.group(3), int(m.group(2))
             else:
                 # Special case: "measure q -> c;" means measure all qubits.
                 m = re.fullmatch(r"measure\s+(\w+)\s*->\s*(\w+)\s*;", line)
                 if m is None:
                     raise ValueError(f"Invalid measurement instruction: {line}")
-                quantum_name, classical_name, measured = m.group(1), m.group(2), tuple(range(circuit.nqubits))
-            if quantum_name != qreg_name:
+                quantum_name, classical_name, index = m.group(1), m.group(2), None
+            if quantum_name not in qregs:
                 raise ValueError(f"Undeclared quantum register '{quantum_name}' in measurement: {line}")
             if classical_name not in creg_names:
                 raise ValueError(f"Undeclared classical register '{classical_name}' in measurement: {line}")
+            offset, size = qregs[quantum_name]
+            if index is None:
+                measured = tuple(range(offset, offset + size))
+            elif index >= size:
+                raise ValueError(f"Qubit {index} is out of range for quantum register '{quantum_name}': {line}")
+            else:
+                measured = (offset + index,)
             circuit.add(M(*measured))
             continue
 
@@ -403,14 +419,19 @@ def from_qasm2(qasm_str: str) -> Circuit:
         gate_data = _parse_qasm2_gate_line(line)
         if gate_data:
             qasm_gate_name, params_str, operands_str = gate_data
-            if circuit is None:
-                raise ValueError("Quantum register must be declared before adding gates.")
             gate_name = qasm_gate_name.lower()
 
-            # Extract qubit indices, which have to belong to the declared quantum register.
-            qubits = [int(index) for index in re.findall(rf"{re.escape(qreg_name)}\s*\[(\d+)\]", operands_str)]
+            # Extract qubit indices, which have to belong to one of the declared quantum registers.
+            qubits = []
+            for name, index in re.findall(r"\b(\w++)\s*+\[(\d++)\]", operands_str):
+                if name not in qregs:
+                    raise ValueError(f"Undeclared quantum register '{name}' in gate: {line}")
+                offset, size = qregs[name]
+                if int(index) >= size:
+                    raise ValueError(f"Qubit {index} is out of range for quantum register '{name}': {line}")
+                qubits.append(offset + int(index))
             if not qubits:
-                raise ValueError(f"Gate operands do not refer to the quantum register '{qreg_name}': {line}")
+                raise ValueError(f"Gate operands do not refer to a quantum register: {line}")
 
             # Parse parameters, if any.
             parameters = []
