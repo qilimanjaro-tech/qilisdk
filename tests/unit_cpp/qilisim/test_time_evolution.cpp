@@ -134,7 +134,8 @@ struct MatrixFreeOutputs {
 
 MatrixFreeOutputs run_time_evolution_mf(SparseMatrix rho_0, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model, const std::vector<MatrixFreeHamiltonian>& observables, QiliSimConfig& config) {
     MatrixFreeOutputs out;
-    time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model, config, out.rho_t, out.intermediate_rhos);
+    out.rho_t = DenseMatrix(rho_0);
+    time_evolution_matrix_free(hamiltonians, parameters_list, step_list, noise_model, config, out.rho_t, out.intermediate_rhos);
 
     // Apply the operators using the Born rule
     for (const auto& O : observables) {

@@ -98,6 +98,11 @@ TEST(StabilizerStateConstructor, ThrowsWhenTooManyQubits) {
     EXPECT_THROW(StabilizerState{MAX_ROWS_STABILIZER + 1}, std::invalid_argument);
 }
 
+TEST(StabilizerStateAsDense, ThrowsWhenTooManyQubitsToIndex) {
+    EXPECT_THROW(StabilizerState(63).as_dense(), std::invalid_argument);
+    EXPECT_THROW(StabilizerStateSum(63).as_dense(), std::invalid_argument);
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // apply_gate: single-qubit Cliffords
 // ──────────────────────────────────────────────────────────────────────────────

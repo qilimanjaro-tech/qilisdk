@@ -111,7 +111,7 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHam
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-        for (int i = 0; i < drho.size(); ++i) {
+        for (long i = 0; i < drho.size(); ++i) {
             const Complex v = drho(i);
             drho(i) = Complex(v.imag(), -v.real());
         }

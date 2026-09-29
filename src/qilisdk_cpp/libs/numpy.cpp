@@ -13,6 +13,9 @@
 // limitations under the License.
 
 #include <cmath>
+#include <cstdint>
+#include <limits>
+#include <string>
 
 #include "numpy.h"
 
@@ -165,23 +168,26 @@ SparseMatrix from_spmatrix(const py::object& matrix, double atol) {
     */
     py::object matrix_typed = matrix.attr("astype")(py::object(dtype));
     py::object coo_matrix = matrix_typed.attr("tocoo")();
-    py::array row = coo_matrix.attr("row").cast<py::array>();
-    py::array col = coo_matrix.attr("col").cast<py::array>();
+    long rows = coo_matrix.attr("shape").attr("__getitem__")(0).cast<long>();
+    long cols = coo_matrix.attr("shape").attr("__getitem__")(1).cast<long>();
+    if (rows > std::numeric_limits<int>::max() || cols > std::numeric_limits<int>::max()) {
+        throw py::value_error("Sparse matrix of shape (" + std::to_string(rows) + ", " + std::to_string(cols) + ") is too large to convert, each dimension must fit in a 32-bit integer.");
+    }
+
+    // scipy stores the indices as int32 or int64 depending on the matrix size, so read them as int64
+    auto row = py::array_t<int64_t, py::array::c_style | py::array::forcecast>::ensure(coo_matrix.attr("row"));
+    auto col = py::array_t<int64_t, py::array::c_style | py::array::forcecast>::ensure(coo_matrix.attr("col"));
     py::array data = coo_matrix.attr("data").cast<py::array>();
-    py::buffer_info row_buf = row.request();
-    py::buffer_info col_buf = col.request();
     py::buffer_info data_buf = data.request();
-    int nnz = int(data_buf.shape[0]);
-    int rows = int(coo_matrix.attr("shape").attr("__getitem__")(0).cast<int>());
-    int cols = int(coo_matrix.attr("shape").attr("__getitem__")(1).cast<int>());
+    long nnz = long(data_buf.shape[0]);
     Triplets entries;
-    auto row_ptr = static_cast<int*>(row_buf.ptr);
-    auto col_ptr = static_cast<int*>(col_buf.ptr);
+    const int64_t* row_ptr = row.data();
+    const int64_t* col_ptr = col.data();
     auto data_ptr = static_cast<std::complex<double>*>(data_buf.ptr);
-    for (int i = 0; i < nnz; ++i) {
+    for (long i = 0; i < nnz; ++i) {
         Complex val(data_ptr[i]);
         if (std::abs(val) > atol || !std::isfinite(val.real()) || !std::isfinite(val.imag())) {
-            entries.emplace_back(Triplet(row_ptr[i], col_ptr[i], val));
+            entries.emplace_back(Triplet(int(row_ptr[i]), int(col_ptr[i]), val));
         }
     }
     SparseMatrix mat(rows, cols);

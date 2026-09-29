@@ -1433,10 +1433,16 @@ DenseMatrix StabilizerState::as_dense() const {
 
     Returns:
         DenseMatrix: The dense vector representation of the StabilizerState.
+
+    Raises:
+        std::invalid_argument: If the state has too many qubits to index densely.
     */
-    int dim = 1 << nqubits;
+    if (nqubits > 62) {
+        throw std::invalid_argument("Cannot convert a " + std::to_string(nqubits) + "-qubit stabilizer state to a dense vector.");
+    }
+    long dim = 1L << nqubits;
     DenseMatrix result(dim, 1);
-    for (int i = 0; i < dim; ++i) {
+    for (long i = 0; i < dim; ++i) {
         std::string b = std::bitset<MAX_ROWS_STABILIZER>(i).to_string().substr(MAX_ROWS_STABILIZER - nqubits);
         result(i, 0) = amplitude(b);
     }
@@ -1450,8 +1456,14 @@ DenseMatrix StabilizerStateSum::as_dense() const {
 
     Returns:
         DenseMatrix: The dense matrix representation of the StabilizerStateSum.
+
+    Raises:
+        std::invalid_argument: If the state has too many qubits to index densely.
     */
-    int dim = 1 << nqubits;
+    if (nqubits > 62) {
+        throw std::invalid_argument("Cannot convert a " + std::to_string(nqubits) + "-qubit stabilizer state to a dense vector.");
+    }
+    long dim = 1L << nqubits;
     DenseMatrix result(dim, 1);
     result.setZero();
     for (size_t k = 0; k < states.size(); ++k) {

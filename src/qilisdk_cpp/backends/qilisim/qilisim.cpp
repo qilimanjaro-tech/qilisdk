@@ -38,28 +38,6 @@
 
 #include <iostream>
 
-static void fill_state(DenseMatrix& state, long rows, long cols, Complex value) {
-    /*
-    Resize a dense state and set every entry to the same value, in parallel since
-    the state can be many gigabytes.
-
-    Args:
-        state (DenseMatrix&): The state to resize and fill.
-        rows (long): The number of rows.
-        cols (long): The number of columns.
-        value (Complex): The value to write to every entry.
-    */
-    state.resize(rows, cols);
-    const long n = state.size();
-    Complex* __restrict data = state.data();
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (long i = 0; i < n; ++i) {
-        data[i] = value;
-    }
-}
-
 void QiliSimCpp::set_seed_from_config(QiliSimConfig& config) {
     /*
     Get the root seed from the config and use it to seed the persistent random
@@ -153,31 +131,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
         result = construct_result_object(state_stabilizer, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
 
     } else {
-        // Build the initial state directly in C++, since a scipy/Eigen sparse round trip overflows its int indices past 30 qubits
-        DenseMatrix state_dense;
-        if (initial_state.is_none() || py::isinstance(initial_state, InitialState)) {
-            std::string state_name = initial_state.is_none() ? "ZERO" : initial_state.attr("name").cast<std::string>();
-            long dim = 1L << n_qubits;
-            if (state_name == "UNIFORM") {
-                fill_state(state_dense, dim, 1, Complex(1.0 / std::sqrt(static_cast<double>(dim)), 0.0));
-            } else {
-                fill_state(state_dense, dim, 1, Complex(0.0, 0.0));
-                state_dense(state_name == "ONE" ? dim - 1 : 0, 0) = 1.0;
-            }
-        } else {
-            SparseMatrixCol initial_state_cpp = parse_initial_state(initial_state, config.get_atol(), n_qubits);
-
-            // Start the evolution from a normalized state, unless the user opts out
-            if (config.get_normalize_state()) {
-                normalize_state(initial_state_cpp);
-            }
-            fill_state(state_dense, initial_state_cpp.rows(), initial_state_cpp.cols(), Complex(0.0, 0.0));
-            for (long k = 0; k < initial_state_cpp.outerSize(); ++k) {
-                for (SparseMatrixCol::InnerIterator it(initial_state_cpp, k); it; ++it) {
-                    state_dense(it.row(), it.col()) = it.value();
-                }
-            }
-        }
+        DenseMatrix state_dense = parse_initial_state_as_dense(initial_state, n_qubits, config);
 
         // Run the simulation
         bool state_is_trajectories = false;
@@ -306,14 +260,21 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         // In all of these methods the state is fully stored
     } else {
         qilisdk::log_trace("[QiliSim, C++] Using full-state evolution (method=" + config.get_time_evolution_method() + ")");
-        // Common between methods
-        SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol(), n_qubits);
+        // Matrix-free methods keep the state dense throughout, the others need it as a sparse matrix
+        bool matrix_free = config.get_time_evolution_method() == "integrate_rk4_matrix_free" || config.get_time_evolution_method() == "integrate_rk45_matrix_free" || config.get_time_evolution_method() == "arnoldi_matrix_free";
+        SparseMatrix rho_0;
+        DenseMatrix rho_t;
+        if (matrix_free) {
+            rho_t = parse_initial_state_as_dense(initial_state, n_qubits, config);
+        } else {
+            rho_0 = parse_initial_state(initial_state, config.get_atol(), n_qubits);
 
-        // Start the evolution from a normalized state, unless the user opts out
-        if (config.get_normalize_state()) {
-            normalize_state(rho_0);
+            // Start the evolution from a normalized state, unless the user opts out
+            if (config.get_normalize_state()) {
+                normalize_state(rho_0);
+            }
         }
-        int nqubits = static_cast<int>(std::log2(rho_0.rows()));
+        int nqubits = static_cast<int>(std::log2(matrix_free ? rho_t.rows() : rho_0.rows()));
         // Parse the time steps before the noise model so time-dependent Lindblad rates can be
         // evaluated at the schedule time points.
         std::vector<double> step_list = parse_time_steps(steps);
@@ -322,10 +283,9 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
 
         // Depending on the method, call the internal implementation
         std::vector<DenseMatrix> intermediate_rhos;
-        DenseMatrix rho_t;
         bool state_is_trajectories = false;
         std::vector<double> expectation_values;
-        if (config.get_time_evolution_method() == "integrate_rk4_matrix_free" || config.get_time_evolution_method() == "integrate_rk45_matrix_free" || config.get_time_evolution_method() == "arnoldi_matrix_free") {
+        if (matrix_free) {
             // Parse the Hamiltonians
             std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(nqubits, hamiltonians_values);
             if (hamiltonians.size() != parameters_list.size()) {
@@ -333,7 +293,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
             }
 
             // Call the implementation
-            time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos, &state_is_trajectories);
+            time_evolution_matrix_free(hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos, &state_is_trajectories);
 
         } else if (config.get_time_evolution_method() == "integrate_rk4" || config.get_time_evolution_method() == "arnoldi" || config.get_time_evolution_method() == "direct") {
             // Parse the Hamiltonians
@@ -521,7 +481,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                     }
 
                     // Call the implementation
-                    time_evolution_matrix_free(state.sparseView(), hamiltonians, parameters_list, step_list, noise_model_cpp, config, state, intermediate_rhos);
+                    time_evolution_matrix_free(hamiltonians, parameters_list, step_list, noise_model_cpp, config, state, intermediate_rhos);
 
                 } else if (config.get_time_evolution_method() == "integrate_rk4" || config.get_time_evolution_method() == "arnoldi" || config.get_time_evolution_method() == "direct") {
                     // Parse the Hamiltonians
