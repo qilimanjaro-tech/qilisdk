@@ -295,7 +295,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(+ : norm_sq) schedule(static)
 #endif
-        for (int i = 0; i < rho_t.rows(); ++i) {
+        for (long i = 0; i < rho_t.rows(); ++i) {
             norm_sq += std::norm(rho_t(i, 0));
         }
         const Real norm = static_cast<Real>(std::sqrt(norm_sq));
@@ -303,7 +303,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-        for (int i = 0; i < rho_t.rows(); ++i) {
+        for (long i = 0; i < rho_t.rows(); ++i) {
             rho_t(i, 0) /= norm;
         }
     } else {

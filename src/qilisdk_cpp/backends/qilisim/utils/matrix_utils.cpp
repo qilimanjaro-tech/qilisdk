@@ -127,7 +127,7 @@ Complex trace(const SparseMatrix& matrix) {
         throw py::value_error("Matrix must be square to compute trace.");
     }
     Complex tr = 0.0;
-    for (int i = 0; i < matrix.rows(); ++i) {
+    for (long i = 0; i < matrix.rows(); ++i) {
         tr += matrix.coeff(i, i);
     }
     return tr;
@@ -345,7 +345,7 @@ void normalize_state(DenseMatrix& state, bool is_statevector, bool monte_carlo) 
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(+ : sum) schedule(static)
 #endif
-        for (int i = 0; i < state.rows(); ++i) {
+        for (long i = 0; i < state.rows(); ++i) {
             sum += std::norm(state(i, 0));
         }
         const double norm = std::sqrt(sum);
@@ -353,7 +353,7 @@ void normalize_state(DenseMatrix& state, bool is_statevector, bool monte_carlo) 
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-        for (int i = 0; i < state.rows(); ++i) {
+        for (long i = 0; i < state.rows(); ++i) {
             state(i, 0) /= norm;
         }
     } else {
@@ -361,14 +361,14 @@ void normalize_state(DenseMatrix& state, bool is_statevector, bool monte_carlo) 
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(+ : sum) schedule(static)
 #endif
-        for (int i = 0; i < state.rows(); ++i) {
+        for (long i = 0; i < state.rows(); ++i) {
             sum += state.coeff(i, i).real();
         }
         check_valid_divisor(sum);
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-        for (int i = 0; i < state.rows(); ++i) {
+        for (long i = 0; i < state.rows(); ++i) {
             state.coeffRef(i, i) /= sum;
         }
     }
