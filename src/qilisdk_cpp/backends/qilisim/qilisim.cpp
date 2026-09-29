@@ -38,6 +38,28 @@
 
 #include <iostream>
 
+static void fill_state(DenseMatrix& state, long rows, long cols, Complex value) {
+    /*
+    Resize a dense state and set every entry to the same value, in parallel since
+    the state can be many gigabytes.
+
+    Args:
+        state (DenseMatrix&): The state to resize and fill.
+        rows (long): The number of rows.
+        cols (long): The number of columns.
+        value (Complex): The value to write to every entry.
+    */
+    state.resize(rows, cols);
+    const long n = state.size();
+    Complex* __restrict data = state.data();
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (long i = 0; i < n; ++i) {
+        data[i] = value;
+    }
+}
+
 void QiliSimCpp::set_seed_from_config(QiliSimConfig& config) {
     /*
     Get the root seed from the config and use it to seed the persistent random
@@ -131,29 +153,38 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
         result = construct_result_object(state_stabilizer, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
 
     } else {
-        // Parse the initial state
-        SparseMatrixCol initial_state_cpp;
-        if (initial_state.is_none()) {
+        // Build the initial state directly in C++, since a scipy/Eigen sparse round trip overflows its int indices past 30 qubits
+        DenseMatrix state_dense;
+        if (initial_state.is_none() || py::isinstance(initial_state, InitialState)) {
+            std::string state_name = initial_state.is_none() ? "ZERO" : initial_state.attr("name").cast<std::string>();
             long dim = 1L << n_qubits;
-            initial_state_cpp = SparseMatrixCol(dim, 1);
-            initial_state_cpp.insert(0, 0) = 1.0;
-            initial_state_cpp.makeCompressed();
+            if (state_name == "UNIFORM") {
+                fill_state(state_dense, dim, 1, Complex(1.0 / std::sqrt(static_cast<double>(dim)), 0.0));
+            } else {
+                fill_state(state_dense, dim, 1, Complex(0.0, 0.0));
+                state_dense(state_name == "ONE" ? dim - 1 : 0, 0) = 1.0;
+            }
         } else {
-            initial_state_cpp = parse_initial_state(initial_state, config.get_atol(), n_qubits);
+            SparseMatrixCol initial_state_cpp = parse_initial_state(initial_state, config.get_atol(), n_qubits);
 
             // Start the evolution from a normalized state, unless the user opts out
             if (config.get_normalize_state()) {
                 normalize_state(initial_state_cpp);
             }
+            fill_state(state_dense, initial_state_cpp.rows(), initial_state_cpp.cols(), Complex(0.0, 0.0));
+            for (long k = 0; k < initial_state_cpp.outerSize(); ++k) {
+                for (SparseMatrixCol::InnerIterator it(initial_state_cpp, k); it; ++it) {
+                    state_dense(it.row(), it.col()) = it.value();
+                }
+            }
         }
 
         // Run the simulation
-        DenseMatrix state_dense;
         bool state_is_trajectories = false;
         if (config.get_digital_method() == "statevector_matrix_free") {
-            sampling_matrix_free(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout, &state_is_trajectories);
+            sampling_matrix_free(gates, n_qubits, noise_model_cpp, state_dense, intermediate_results, config, readout, &state_is_trajectories);
         } else {
-            sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout, &state_is_trajectories);
+            sampling(gates, n_qubits, noise_model_cpp, state_dense, intermediate_results, config, readout, &state_is_trajectories);
         }
         qilisdk::log_debug("[QiliSim, C++] Statevector simulation complete, constructing result");
 
@@ -436,9 +467,9 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 std::map<std::string, int> counts;
                 std::vector<py::object> intermediate_results;
                 if (config.get_digital_method() == "statevector_matrix_free") {
-                    sampling_matrix_free(gates, n_qubits, state.sparseView(), noise_model_cpp, state, intermediate_results, config, readout);
+                    sampling_matrix_free(gates, n_qubits, noise_model_cpp, state, intermediate_results, config, readout);
                 } else if (config.get_digital_method() == "statevector") {
-                    sampling(gates, n_qubits, state.sparseView(), noise_model_cpp, state, intermediate_results, config, readout);
+                    sampling(gates, n_qubits, noise_model_cpp, state, intermediate_results, config, readout);
                 } else {
                     // GCOV_EXCL_START (config.validate() rejects any other sampling method before reaching here)
                     throw py::value_error("Unsupported sampling method for reservoirs: " + config.get_digital_method());
