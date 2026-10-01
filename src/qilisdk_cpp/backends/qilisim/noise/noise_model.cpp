@@ -87,7 +87,12 @@ void NoiseModelCpp::extend_register(int n_extra_qubits) {
     Args:
         n_extra_qubits (int): The number of qubits appended after the register.
     */
-    // TODO: kron each cached jump operator with the identity on n_extra_qubits
+    long dim_extra = 1L << n_extra_qubits;
+    SparseMatrix identity(dim_extra, dim_extra);
+    identity.setIdentity();
+    for (auto& L : cached_jump_operators) {
+        L = Eigen::kroneckerProduct(L, identity).eval();
+    }
 }
 
 void NoiseModelCpp::add_jump_operator(const SparseMatrix& L) {

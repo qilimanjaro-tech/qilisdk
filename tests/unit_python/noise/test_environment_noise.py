@@ -17,11 +17,13 @@ import pytest
 
 from qilisdk.analog import X as PauliX
 from qilisdk.analog import Z as PauliZ
+from qilisdk.analog.hamiltonian import PauliX as PauliXOperator
+from qilisdk.analog.hamiltonian import PauliZ as PauliZOperator
 from qilisdk.backends import CudaqBackend, QutipBackend
-from qilisdk.core import ket
+from qilisdk.core import QTensor, ket
 from qilisdk.digital import Circuit, X
 from qilisdk.functionals import DigitalPropagation
-from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, EnvironmentNoise, NoiseModel
+from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, EnvironmentNoise, LindbladGenerator, NoiseModel
 from qilisdk.noise.protocols import (
     AttachmentScope,
     SupportsStaticKraus,
@@ -58,7 +60,7 @@ def test_defaults():
 def test_default_environment_state_is_all_zeros():
     environment = _environment(n_environment_qubits=2)
 
-    np.testing.assert_allclose(environment.environment_state.dense(), (ket(0, 0) @ ket(0, 0).adjoint()).dense())
+    np.testing.assert_allclose(environment.environment_state.dense(), ket(0, 0).dense())
 
 
 def test_given_environment_state_is_kept():
@@ -82,7 +84,12 @@ def test_not_seen_as_markovian_noise():
     # The C++ noise parser dispatches on these protocols, so EnvironmentNoise must match none of them
     environment = _environment()
 
-    for protocol in (SupportsStaticKraus, SupportsTimeDerivedKraus, SupportsStaticLindblad, SupportsTimeDerivedLindblad):
+    for protocol in (
+        SupportsStaticKraus,
+        SupportsTimeDerivedKraus,
+        SupportsStaticLindblad,
+        SupportsTimeDerivedLindblad,
+    ):
         assert not isinstance(environment, protocol)
 
 
@@ -150,6 +157,23 @@ def test_hamiltonian_with_environment_offset():
     )
 
 
+def test_hamiltonian_with_environment_accepts_pauli_operators():
+    with_operators = _environment(couplings=[(1.5, PauliZOperator(0), PauliXOperator(0))])
+    with_hamiltonians = _environment(couplings=[(1.5, PauliZ(0), PauliX(0))])
+
+    np.testing.assert_allclose(
+        with_operators.as_hamiltonian_with_environment(nqubits=1).to_matrix().toarray(),
+        with_hamiltonians.as_hamiltonian_with_environment(nqubits=1).to_matrix().toarray(),
+    )
+
+
+def test_hamiltonian_with_environment_system_index_out_of_range_raises():
+    environment = _environment(couplings=[(1.0, PauliZ(1), PauliZ(0))])
+
+    with pytest.raises(ValueError, match=r"system qubits"):
+        environment.as_hamiltonian_with_environment(nqubits=1)
+
+
 def test_lindblad_with_environment():
     environment = _environment(n_environment_qubits=2, environment_noise={1: [AmplitudeDamping(t1=4.0)]})
 
@@ -170,6 +194,22 @@ def test_lindblad_with_environment_several_noises():
     assert len(generator.jump_operators_with_rates) == 2
     for operator in generator.jump_operators_with_rates:
         assert operator.shape == (4, 4)
+
+
+def test_lindblad_with_environment_generator_without_rates():
+    lowering = QTensor(np.array([[0.0, 1.0], [0.0, 0.0]]))
+    environment = _environment(environment_noise={0: [LindbladGenerator(jump_operators=[lowering])]})
+
+    generator = environment.as_lindblad_with_environment(nqubits=1)
+
+    np.testing.assert_allclose(generator.jump_operators_with_rates[0].dense(), np.kron(np.eye(2), lowering.dense()))
+
+
+def test_lindblad_with_environment_multi_qubit_jump_raises():
+    environment = _environment(environment_noise={0: [LindbladGenerator(jump_operators=[QTensor(np.eye(4))])]})
+
+    with pytest.raises(ValueError, match=r"single-qubit"):
+        environment.as_lindblad_with_environment(nqubits=1)
 
 
 def test_lindblad_with_environment_no_noise():

@@ -15,6 +15,7 @@
 #include "parsers.h"
 #include <algorithm>
 #include <cmath>
+#include "../../../libs/logging.h"
 #include "../../../libs/numpy.h"
 #include "../digital/gate.h"
 #include "../representations/matrix_free_hamiltonian.h"
@@ -1264,7 +1265,8 @@ bool has_non_markovian_noise(const py::object& noise_model) {
 EnvironmentCpp parse_environment_noise(const py::object& noise_model, int n_system_qubits, double atol) {
     /*
     Combine every EnvironmentNoise of a noise model into one EnvironmentCpp. The environments are
-    placed one after another after the system qubits.
+    placed one after another after the system qubits. The rest of the noise model is evolved as
+    jump operators alongside the environment, so every other noise must have a Lindblad form.
 
     Args:
         noise_model (py::object): A NoiseModel object containing environment noise.
@@ -1273,10 +1275,75 @@ EnvironmentCpp parse_environment_noise(const py::object& noise_model, int n_syst
 
     Returns:
         EnvironmentCpp: The combined environment on the full register.
+
+    Raises:
+        py::value_error: If the noise model has per-gate noise, or other noise without a Lindblad form.
     */
-    // TODO: for each environment, as_hamiltonian_with_environment / as_lindblad_with_environment with nqubits = n_system_qubits and an accumulated offset,
-    //       convert to full-register sparse matrices, and kron the environment states together
-    throw py::value_error("EnvironmentNoise is not implemented yet");
+    
+    // Check that it's valid
+    if (py::len(noise_model.attr("per_gate_noise")) > 0 || py::len(noise_model.attr("per_gate_per_qubit_noise")) > 0) {
+        throw py::value_error("Non-Markovian noise cannot be combined with per-gate noise, which only has a Kraus form applied after each gate.");
+    }
+    std::vector<py::object> other_noise;
+    for (auto noise : noise_model.attr("global_noise")) {
+        if (!py::isinstance(noise, EnvironmentNoise)) {
+            other_noise.push_back(py::reinterpret_borrow<py::object>(noise));
+        }
+    }
+    for (auto item : noise_model.attr("per_qubit_noise").cast<py::dict>()) {
+        for (auto noise : item.second) {
+            other_noise.push_back(py::reinterpret_borrow<py::object>(noise));
+        }
+    }
+    for (const auto& noise : other_noise) {
+        if (!py::isinstance(noise, SupportsStaticLindblad) && !py::isinstance(noise, SupportsTimeDerivedLindblad) && !py::isinstance(noise, ReadoutAssignment)) {
+            std::string type_name = py::type::of(noise).attr("__name__").cast<std::string>();
+            throw py::value_error("Non-Markovian noise can only be combined with noise that has a Lindblad form, but " + type_name + " has none.");
+        }
+    }
+
+    // Determine the total qubit counts
+    py::list environments = noise_model.attr("non_markovian_noise");
+    int n_environment_qubits = 0;
+    for (auto environment : environments) {
+        n_environment_qubits += environment.attr("n_environment_qubits").cast<int>();
+    }
+    int n_total_qubits = n_system_qubits + n_environment_qubits;
+
+    // Parse each environment and construct the corresponding Hamiltonian terms, jump operators, and initial state
+    py::list hamiltonian_terms;
+    std::vector<SparseMatrix> jump_operators;
+    SparseMatrix initial_state(1, 1);
+    initial_state.insert(0, 0) = 1.0;
+    int offset = 0;
+    for (auto environment : environments) {
+        hamiltonian_terms.append(environment.attr("as_hamiltonian_with_environment")("nqubits"_a = n_system_qubits, "offset"_a = offset));
+
+        // The jump operators end at this environment's last qubit, so pad them over the later environments
+        int n_qubits_after = n_environment_qubits - offset - environment.attr("n_environment_qubits").cast<int>();
+        SparseMatrix identity_after(1L << n_qubits_after, 1L << n_qubits_after);
+        identity_after.setIdentity();
+        py::object generator = environment.attr("as_lindblad_with_environment")("nqubits"_a = n_system_qubits, "offset"_a = offset);
+        for (auto L : generator.attr("jump_operators_with_rates")) {
+            jump_operators.push_back(Eigen::kroneckerProduct(from_spmatrix(L.attr("data"), atol), identity_after).eval());
+        }
+
+        // Set the initial state for this environment via kronecker product
+        SparseMatrix state = from_spmatrix(environment.attr("environment_state").attr("data"), atol);
+        if (state.cols() == 1) {
+            state = (state * state.adjoint()).eval();
+        }
+        initial_state = Eigen::kroneckerProduct(initial_state, state).eval();
+
+        // Each environment contributes its qubits to the total offset
+        offset += environment.attr("n_environment_qubits").cast<int>();
+
+    }
+    initial_state.makeCompressed();
+
+    qilisdk::log_debug("[QiliSim, C++] Environment: " + std::to_string(py::len(environments)) + " environments, " + std::to_string(n_environment_qubits) + " environment qubits, " + std::to_string(jump_operators.size()) + " environment jump operators");
+    py::tuple hamiltonians = py::make_tuple(Hamiltonian.attr("sum")(hamiltonian_terms));
+    return EnvironmentCpp(n_system_qubits, n_environment_qubits, parse_hamiltonians(hamiltonians, atol, n_total_qubits)[0], parse_hamiltonians_matrix_free(n_total_qubits, hamiltonians)[0], jump_operators, initial_state);
 }
 
 #pragma GCC visibility pop

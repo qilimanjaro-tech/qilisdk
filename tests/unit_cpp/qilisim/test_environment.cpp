@@ -76,8 +76,9 @@ DenseMatrix mixed_state() {
 // One system qubit, one environment qubit in |1><1|, with a ZZ coupling and a single jump operator
 EnvironmentCpp single_qubit_environment() {
     SparseMatrix hamiltonian = to_sparse(kron(pauli_z(), pauli_z()));
+    MatrixFreeHamiltonian hamiltonian_matrix_free(2, PauliString(2, {MatrixFreeOperator("Z", 0), MatrixFreeOperator("Z", 1)}));
     SparseMatrix jump = to_sparse(kron(DenseMatrix::Identity(2, 2), pauli_x()));
-    return EnvironmentCpp(1, 1, hamiltonian, {jump}, to_sparse(projector(2, 1)));
+    return EnvironmentCpp(1, 1, hamiltonian, hamiltonian_matrix_free, {jump}, to_sparse(projector(2, 1)));
 }
 
 // Equal up to a global phase
@@ -94,7 +95,7 @@ bool equal_up_to_phase(const DenseMatrix& a, const DenseMatrix& b, double tol) {
 
 TEST(Environment, QubitCounts) {
     SparseMatrix hamiltonian(8, 8);
-    EnvironmentCpp environment(1, 2, hamiltonian, {}, to_sparse(projector(4, 0)));
+    EnvironmentCpp environment(1, 2, hamiltonian, MatrixFreeHamiltonian(3), {}, to_sparse(projector(4, 0)));
 
     EXPECT_EQ(environment.get_n_system_qubits(), 1);
     EXPECT_EQ(environment.get_n_environment_qubits(), 2);
@@ -127,7 +128,7 @@ TEST(Environment, TraceOutProductState) {
     EnvironmentCpp environment = single_qubit_environment();
     DenseMatrix rho = kron(mixed_state(), projector(2, 1));
 
-    DenseMatrix reduced = environment.trace_out(rho, false);
+    DenseMatrix reduced = environment.trace_out(rho);
 
     ASSERT_EQ(reduced.rows(), 2);
     ASSERT_EQ(reduced.cols(), 2);
@@ -140,7 +141,7 @@ TEST(Environment, TraceOutEntangledStateIsMixed) {
     bell(0, 0) = 1.0 / std::sqrt(2.0);
     bell(3, 0) = 1.0 / std::sqrt(2.0);
 
-    DenseMatrix reduced = environment.trace_out(bell * bell.adjoint(), false);
+    DenseMatrix reduced = environment.trace_out(bell * bell.adjoint());
 
     ASSERT_EQ(reduced.rows(), 2);
     ASSERT_EQ(reduced.cols(), 2);
@@ -150,35 +151,40 @@ TEST(Environment, TraceOutEntangledStateIsMixed) {
 TEST(Environment, TraceOutKeepsSystemQubitOrder) {
     // Two system qubits in |0><0| (x) rho, then two environment qubits
     SparseMatrix hamiltonian(16, 16);
-    EnvironmentCpp environment(2, 2, hamiltonian, {}, to_sparse(projector(4, 0)));
+    EnvironmentCpp environment(2, 2, hamiltonian, MatrixFreeHamiltonian(4), {}, to_sparse(projector(4, 0)));
     DenseMatrix system = kron(projector(2, 0), mixed_state());
     DenseMatrix rho = kron(system, kron(mixed_state(), projector(2, 1)));
 
-    DenseMatrix reduced = environment.trace_out(rho, false);
+    DenseMatrix reduced = environment.trace_out(rho);
 
     ASSERT_EQ(reduced.rows(), 4);
     ASSERT_EQ(reduced.cols(), 4);
     EXPECT_TRUE(reduced.isApprox(system, 1e-12));
 }
 
-TEST(Environment, TraceOutTrajectoriesOfProductStates) {
-    // Two trajectories, one statevector per column, each unentangled with the environment
+TEST(Environment, TraceOutStatevector) {
     EnvironmentCpp environment = single_qubit_environment();
     DenseMatrix env_one = DenseMatrix::Zero(2, 1);
     env_one(1, 0) = 1.0;
-    DenseMatrix system_a = plus_ket();
-    DenseMatrix system_b = DenseMatrix::Zero(2, 1);
-    system_b(1, 0) = 1.0;
-    DenseMatrix trajectories(4, 2);
-    trajectories.col(0) = kron(system_a, env_one);
-    trajectories.col(1) = kron(system_b, env_one);
 
-    DenseMatrix reduced = environment.trace_out(trajectories, true);
+    DenseMatrix reduced = environment.trace_out(kron(plus_ket(), env_one));
 
     ASSERT_EQ(reduced.rows(), 2);
     ASSERT_EQ(reduced.cols(), 2);
-    EXPECT_TRUE(equal_up_to_phase(reduced.col(0), system_a, 1e-12));
-    EXPECT_TRUE(equal_up_to_phase(reduced.col(1), system_b, 1e-12));
+    EXPECT_TRUE(reduced.isApprox(plus_ket() * plus_ket().adjoint(), 1e-12));
+}
+
+TEST(Environment, TraceOutEntangledStatevectorIsMixed) {
+    EnvironmentCpp environment = single_qubit_environment();
+    DenseMatrix bell = DenseMatrix::Zero(4, 1);
+    bell(0, 0) = 1.0 / std::sqrt(2.0);
+    bell(3, 0) = 1.0 / std::sqrt(2.0);
+
+    DenseMatrix reduced = environment.trace_out(bell);
+
+    ASSERT_EQ(reduced.rows(), 2);
+    ASSERT_EQ(reduced.cols(), 2);
+    EXPECT_TRUE(reduced.isApprox(0.5 * DenseMatrix::Identity(2, 2), 1e-12));
 }
 
 TEST(Environment, AddToEvolutionAppendsConstantHamiltonianAndJumps) {
@@ -197,6 +203,21 @@ TEST(Environment, AddToEvolutionAppendsConstantHamiltonianAndJumps) {
     ASSERT_EQ(noise_model.get_jump_operators().size(), 1u);
     ASSERT_EQ(noise_model.get_jump_operators()[0].rows(), 4);
     EXPECT_TRUE(DenseMatrix(noise_model.get_jump_operators()[0]).isApprox(kron(DenseMatrix::Identity(2, 2), pauli_x()), 1e-12));
+}
+
+TEST(Environment, AddToMatrixFreeEvolutionAppendsConstantHamiltonianAndJumps) {
+    EnvironmentCpp environment = single_qubit_environment();
+    std::vector<MatrixFreeHamiltonian> hamiltonians = {MatrixFreeHamiltonian(2, PauliString(2, 'X', 0))};
+    std::vector<std::vector<double>> parameters_list = {{0.0, 0.5, 1.0}};
+    NoiseModelCpp noise_model;
+
+    environment.add_to_evolution(hamiltonians, parameters_list, noise_model);
+
+    ASSERT_EQ(hamiltonians.size(), 2u);
+    ASSERT_EQ(parameters_list.size(), 2u);
+    EXPECT_TRUE(hamiltonians[1] == MatrixFreeHamiltonian(2, PauliString(2, {MatrixFreeOperator("Z", 0), MatrixFreeOperator("Z", 1)})));
+    EXPECT_EQ(parameters_list[1], std::vector<double>({1.0, 1.0, 1.0}));
+    EXPECT_EQ(noise_model.get_jump_operators().size(), 1u);
 }
 
 TEST(Environment, AddToEvolutionKeepsExistingJumps) {
@@ -281,6 +302,32 @@ TEST(Environment, CircuitToScheduleReproducesGates) {
             EXPECT_DOUBLE_EQ(parameters_list[1][i], 1.0);
         }
     }
+}
+
+TEST(Environment, CircuitToScheduleRejectsNonUnitaryGates) {
+    std::vector<Gate> gates = {Gate("X", to_sparse(2.0 * pauli_x()), {}, {0}, {})};
+    std::map<std::string, float> gate_durations = {{NoiseModelCpp::make_gate_key("X", 0), 1.0f}};
+    std::vector<SparseMatrix> hamiltonians;
+    std::vector<std::vector<double>> parameters_list;
+    std::vector<double> step_list;
+
+    EXPECT_ANY_THROW(circuit_to_schedule(gates, gate_durations, 1, 1.0, hamiltonians, parameters_list, step_list));
+}
+
+TEST(Environment, CircuitToScheduleControlledGate) {
+    // CNOT controlled on qubit 1 targeting qubit 0, then an idle environment qubit
+    std::vector<Gate> gates = {Gate("X", to_sparse(pauli_x()), {1}, {0}, {})};
+    std::map<std::string, float> gate_durations = {{NoiseModelCpp::make_gate_key("X", 1), 1.0f}};
+    std::vector<SparseMatrix> hamiltonians;
+    std::vector<std::vector<double>> parameters_list;
+    std::vector<double> step_list;
+
+    circuit_to_schedule(gates, gate_durations, 3, 1.0, hamiltonians, parameters_list, step_list);
+
+    ASSERT_EQ(hamiltonians.size(), 1u);
+    DenseMatrix unitary = (Complex(0.0, -1.0) * DenseMatrix(hamiltonians[0])).exp();
+    DenseMatrix expected = DenseMatrix(gates[0].get_full_matrix(3));
+    EXPECT_TRUE(equal_up_to_phase(unitary, expected, 1e-9));
 }
 
 TEST(Environment, CircuitToScheduleEmptyCircuit) {

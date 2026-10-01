@@ -20,13 +20,21 @@ from qilisdk.analog import X as PauliX
 from qilisdk.analog import Y as PauliY
 from qilisdk.analog import Z as PauliZ
 from qilisdk.backends import QiliSim
-from qilisdk.backends.backend_config import ExecutionConfig
+from qilisdk.backends.backend_config import AnalogMethod, ExecutionConfig
 from qilisdk.core import QTensor, ket
 from qilisdk.core.interpolator import Interpolation
-from qilisdk.digital import RX, Circuit, H, I, X
+from qilisdk.digital import RX, Circuit, H, I, M, X
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
-from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, EnvironmentNoise, NoiseModel
+from qilisdk.noise import (
+    AmplitudeDamping,
+    BitFlip,
+    Dephasing,
+    EnvironmentNoise,
+    KrausChannel,
+    NoiseModel,
+    ReadoutAssignment,
+)
 from qilisdk.readout import Readout
 
 EXECUTION_CONFIG = ExecutionConfig(seed=42, num_threads=1)
@@ -128,9 +136,7 @@ def test_digital_zero_coupling_matches_noiseless():
     )
     reference = QiliSim(execution_config=EXECUTION_CONFIG).execute(DigitalPropagation(circuit), readout=readout)
 
-    np.testing.assert_allclose(
-        _density_matrix(state.get_state()), _density_matrix(reference.get_state()), atol=1e-6
-    )
+    np.testing.assert_allclose(_density_matrix(state.get_state()), _density_matrix(reference.get_state()), atol=1e-6)
 
 
 def test_digital_results_only_contain_system_qubits():
@@ -159,14 +165,78 @@ def test_digital_per_gate_noise_with_environment_raises():
         backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=10))
 
 
-def _analog_evolution(hamiltonian, initial_state, total_time=1.0):
+def test_digital_non_positive_gate_time_with_environment_raises():
+    noise_model = NoiseModel()
+    noise_model.add(_zz_environment(1.0))
+    # Bypasses NoiseConfig.set_gate_time, which rejects non-positive times
+    noise_model.noise_config._gate_times[X] = 0.0
+    circuit = Circuit(nqubits=1)
+    circuit.add(X(0))
+
+    backend = QiliSim(noise_model=noise_model, execution_config=EXECUTION_CONFIG)
+    with pytest.raises(ValueError, match=r"positive gate times"):
+        backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=10))
+
+
+def test_digital_readout_assignment_with_environment():
+    noise_model = NoiseModel()
+    noise_model.add(_zz_environment(0.0, environment_state=ket(0)))
+    noise_model.add(ReadoutAssignment(p01=0.0, p10=1.0))
+    circuit = Circuit(nqubits=1)
+    circuit.add(X(0))
+
+    result = QiliSim(noise_model=noise_model, execution_config=EXECUTION_CONFIG).execute(
+        DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=50)
+    )
+
+    assert result.get_samples() == {"0": 50}
+
+
+def test_noise_without_lindblad_form_with_environment_raises():
+    noise_model = NoiseModel()
+    noise_model.add(_zz_environment(1.0))
+    noise_model.add(KrausChannel(operators=[QTensor(np.eye(2))]))
+    circuit = Circuit(nqubits=1)
+    circuit.add(X(0))
+
+    backend = QiliSim(noise_model=noise_model, execution_config=EXECUTION_CONFIG)
+    with pytest.raises(ValueError, match=r"Lindblad form"):
+        backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=10))
+
+
+@pytest.mark.parametrize("measurement_collapse", [False, True])
+def test_digital_mid_circuit_measurement_with_environment(measurement_collapse):
+    # H M H: without collapse the two H cancel, with collapse the final state stays mixed
+    noise_model = NoiseModel()
+    noise_model.add(_zz_environment(0.0, environment_state=ket(0)))
+    circuit = Circuit(nqubits=1)
+    circuit.add(H(0))
+    circuit.add(M(0))
+    circuit.add(H(0))
+    config = ExecutionConfig(seed=42, num_threads=1, measurement_collapse=measurement_collapse)
+
+    result = QiliSim(noise_model=noise_model, execution_config=config).execute(
+        DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=200)
+    )
+
+    assert len(result.intermediate_results) == 1
+    assert set(result.intermediate_results[0].get_samples()) == {"0", "1"}
+    if measurement_collapse:
+        assert set(result.get_samples()) == {"0", "1"}
+    else:
+        assert result.get_samples() == {"0": 200}
+
+
+def _analog_evolution(hamiltonian, initial_state, total_time=1.0, store_intermediate_results=False):
     schedule = Schedule(
         hamiltonians={"h": hamiltonian},
         coefficients={"h": {0.0: 1.0, total_time: 1.0}},
         dt=0.01,
         interpolation=Interpolation.LINEAR,
     )
-    return AnalogEvolution(schedule=schedule, initial_state=initial_state)
+    return AnalogEvolution(
+        schedule=schedule, initial_state=initial_state, store_intermediate_results=store_intermediate_results
+    )
 
 
 def test_analog_matches_explicit_environment():
@@ -252,6 +322,62 @@ def test_analog_expectation_on_system_observable():
     )
 
     assert np.isclose(result.get_expectation_values()[0], np.cos(2 * total_time) ** 2, atol=1e-4)
+
+
+@pytest.mark.parametrize(
+    "method", [AnalogMethod.integrator(), AnalogMethod.integrator(matrix_free=False), AnalogMethod.direct()]
+)
+def test_analog_per_qubit_noise_matches_explicit_environment(method):
+    environment = EnvironmentNoise(n_environment_qubits=1, couplings=[(0.8, PauliX(0), PauliX(0))])
+    noise_model = NoiseModel()
+    noise_model.add(environment)
+    noise_model.add(AmplitudeDamping(t1=1.5), qubits=[0])
+    readout = Readout().with_state_tomography()
+
+    state = QiliSim(
+        noise_model=noise_model, analog_simulation_method=method, execution_config=EXECUTION_CONFIG
+    ).execute(_analog_evolution(0.5 * PauliZ(0), ket(1)), readout=readout)
+
+    reference_noise_model = NoiseModel()
+    reference_noise_model.add(AmplitudeDamping(t1=1.5), qubits=[0])
+    reference = QiliSim(
+        noise_model=reference_noise_model, analog_simulation_method=method, execution_config=EXECUTION_CONFIG
+    ).execute(_analog_evolution(0.5 * PauliZ(0) + 0.8 * PauliX(0) * PauliX(1), ket(1, 0)), readout=readout)
+
+    np.testing.assert_allclose(
+        _density_matrix(state.get_state()),
+        _density_matrix(reference.get_state().partial_trace({0})),
+        atol=1e-6,
+    )
+
+
+def test_analog_intermediate_results_are_traced_out():
+    noise_model = NoiseModel()
+    noise_model.add(_zz_environment(1.0))
+
+    result = QiliSim(noise_model=noise_model, execution_config=EXECUTION_CONFIG).execute(
+        _analog_evolution(PauliZ(0), PLUS, store_intermediate_results=True), readout=Readout().with_state_tomography()
+    )
+
+    assert len(result.intermediate_results) > 0
+    for intermediate in result.intermediate_results:
+        assert intermediate.get_state().shape == (2, 2)
+    np.testing.assert_allclose(
+        _density_matrix(result.intermediate_results[-1].get_state()), _density_matrix(result.get_state()), atol=1e-9
+    )
+
+
+def test_analog_variational_method_with_environment_raises():
+    noise_model = NoiseModel()
+    noise_model.add(_zz_environment(1.0))
+    backend = QiliSim(
+        noise_model=noise_model,
+        analog_simulation_method=AnalogMethod.variational_annealing(),
+        execution_config=EXECUTION_CONFIG,
+    )
+
+    with pytest.raises(ValueError, match=r"variational exponential method does not support non-Markovian noise"):
+        backend.execute(_analog_evolution(PauliX(0), PLUS), readout=Readout().with_expectation(observables=[PauliZ(0)]))
 
 
 def test_quantum_reservoir_with_environment_raises():
