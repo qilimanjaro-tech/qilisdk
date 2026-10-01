@@ -1274,7 +1274,7 @@ EnvironmentCpp parse_environment_noise(const py::object& noise_model, int n_syst
     Returns:
         EnvironmentCpp: The combined environment on the full register.
     */
-    // TODO: for each environment, as_hamiltonian / as_lindblad with nqubits = n_system_qubits and an accumulated offset,
+    // TODO: for each environment, as_hamiltonian_with_environment / as_lindblad_with_environment with nqubits = n_system_qubits and an accumulated offset,
     //       convert to full-register sparse matrices, and kron the environment states together
     throw py::value_error("EnvironmentNoise is not implemented yet");
 }

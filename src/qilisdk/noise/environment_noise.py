@@ -126,7 +126,7 @@ class EnvironmentNoise(Noise):
         # TODO(luke): build |0...0> on n_environment_qubits when None
         raise NotImplementedError
 
-    def as_hamiltonian(self, *, nqubits: int, offset: int = 0) -> Hamiltonian:
+    def as_hamiltonian_with_environment(self, *, nqubits: int, offset: int = 0) -> Hamiltonian:
         """Return the coupling plus environment Hamiltonian on the enlarged register.
 
         Environment qubit ``j`` is placed at index ``nqubits + offset + j``, so several environments
@@ -142,7 +142,7 @@ class EnvironmentNoise(Noise):
         # TODO(luke): sum(strength * P_sys * shift(P_env)) + shift(environment_hamiltonian)
         raise NotImplementedError
 
-    def as_lindblad(self, *, nqubits: int, offset: int = 0) -> LindbladGenerator:
+    def as_lindblad_with_environment(self, *, nqubits: int, offset: int = 0) -> LindbladGenerator:
         """Return the jump operators of the environment noise on the enlarged register.
 
         Args:
