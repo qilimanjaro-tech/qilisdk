@@ -15,11 +15,13 @@
 import numpy as np
 import pytest
 
+from qilisdk.analog import Hamiltonian
 from qilisdk.analog import X as PauliX
+from qilisdk.analog import Y as PauliY
 from qilisdk.analog import Z as PauliZ
 from qilisdk.analog.hamiltonian import PauliX as PauliXOperator
 from qilisdk.analog.hamiltonian import PauliZ as PauliZOperator
-from qilisdk.backends import CudaqBackend, QutipBackend
+from qilisdk.backends import CudaqBackend, QiliSim, QutipBackend
 from qilisdk.core import QTensor, ket
 from qilisdk.digital import Circuit, X
 from qilisdk.functionals import DigitalPropagation
@@ -238,3 +240,185 @@ def test_unsupported_backends_raise(backend_class):
     backend = backend_class(noise_model=noise_model)
     with pytest.raises(NotImplementedError, match=r"does not support non-Markovian noise"):
         backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=10))
+
+
+def test_backend_support_flags():
+    assert QiliSim._supports_non_markovian_noise
+    assert not QutipBackend._supports_non_markovian_noise
+    assert not CudaqBackend._supports_non_markovian_noise
+
+
+def test_unsupported_backend_accepts_markovian_only_noise_model():
+    noise_model = NoiseModel()
+    noise_model.add(AmplitudeDamping(t1=1.0))
+    circuit = Circuit(nqubits=1)
+    circuit.add(X(0))
+
+    QutipBackend(noise_model=noise_model).execute(
+        DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=10)
+    )
+
+
+def test_noise_model_keeps_environments_in_order():
+    first = _environment()
+    second = _environment(n_environment_qubits=2)
+    noise_model = NoiseModel()
+    noise_model.add(first)
+    noise_model.add(Dephasing(t_phi=1.0))
+    noise_model.add(second)
+
+    assert noise_model.non_markovian_noise == [first, second]
+    assert len(noise_model.global_noise) == 3
+
+
+@pytest.mark.parametrize("n_environment_qubits", [1, 2, 3])
+def test_default_environment_state_is_a_zero_ket(n_environment_qubits):
+    state = _environment(n_environment_qubits=n_environment_qubits).environment_state
+
+    assert state.is_ket()
+    assert state.shape == (2**n_environment_qubits, 1)
+    assert np.isclose(state.dense()[0, 0], 1.0)
+
+
+def test_density_matrix_environment_state_is_kept():
+    state = QTensor(np.diag([0.3, 0.7]))
+
+    assert _environment(environment_state=state).environment_state is state
+
+
+def test_negative_environment_noise_index_raises():
+    with pytest.raises(ValueError, match=r"out of range"):
+        _environment(environment_noise={-1: [AmplitudeDamping(t1=1.0)]})
+
+
+def test_multi_term_coupling_environment_index_out_of_range_raises():
+    with pytest.raises(ValueError, match=r"out of range"):
+        _environment(couplings=[(1.0, PauliZ(0), PauliX(0) + PauliZ(1))])
+
+
+def test_validation_accepts_every_index_in_range():
+    environment = EnvironmentNoise(
+        n_environment_qubits=3,
+        couplings=[(1.0, PauliZ(0), PauliX(2))],
+        environment_hamiltonian=PauliZ(0) * PauliZ(1),
+        environment_noise={0: [Dephasing(t_phi=1.0)], 2: [AmplitudeDamping(t1=1.0)]},
+        environment_state=ket(0, 1, 0),
+    )
+
+    assert environment.n_environment_qubits == 3
+
+
+def test_hamiltonian_with_environment_no_couplings_is_zero():
+    hamiltonian = _environment(couplings=[]).as_hamiltonian_with_environment(nqubits=2)
+
+    assert isinstance(hamiltonian, Hamiltonian)
+    assert hamiltonian.elements == {}
+
+
+def test_hamiltonian_with_environment_only_environment_hamiltonian():
+    environment = _environment(couplings=[], environment_hamiltonian=0.25 * PauliX(0))
+
+    expected = 0.25 * PauliX(1)
+    np.testing.assert_allclose(
+        environment.as_hamiltonian_with_environment(nqubits=1).to_matrix().toarray(),
+        expected.to_matrix().toarray(),
+    )
+
+
+def test_hamiltonian_with_environment_sums_couplings():
+    environment = _environment(
+        n_environment_qubits=2,
+        couplings=[(1.0, PauliZ(0), PauliZ(0)), (0.5, PauliX(1), PauliY(1)), (0.25, PauliZ(0), PauliZ(0))],
+    )
+
+    expected = 1.25 * PauliZ(0) * PauliZ(2) + 0.5 * PauliX(1) * PauliY(3)
+    np.testing.assert_allclose(
+        environment.as_hamiltonian_with_environment(nqubits=2).to_matrix().toarray(),
+        expected.to_matrix().toarray(),
+    )
+
+
+def test_hamiltonian_with_environment_shifts_multi_qubit_environment_terms():
+    environment = _environment(
+        n_environment_qubits=2, couplings=[], environment_hamiltonian=0.3 * PauliX(0) * PauliX(1) + PauliZ(1)
+    )
+
+    expected = 0.3 * PauliX(3) * PauliX(4) + PauliZ(4)
+    np.testing.assert_allclose(
+        environment.as_hamiltonian_with_environment(nqubits=2, offset=1).to_matrix().toarray(),
+        expected.to_matrix().toarray(),
+    )
+
+
+def test_hamiltonian_with_environment_multi_qubit_system_operator():
+    environment = _environment(couplings=[(0.7, PauliX(0) * PauliX(1), PauliZ(0))])
+
+    expected = 0.7 * PauliX(0) * PauliX(1) * PauliZ(2)
+    np.testing.assert_allclose(
+        environment.as_hamiltonian_with_environment(nqubits=2).to_matrix().toarray(),
+        expected.to_matrix().toarray(),
+    )
+
+
+def test_hamiltonian_with_environment_is_hermitian():
+    environment = _environment(
+        n_environment_qubits=2,
+        couplings=[(0.4, PauliX(0), PauliY(0)), (1.1, PauliY(0), PauliZ(1))],
+        environment_hamiltonian=PauliX(0) * PauliZ(1),
+    )
+
+    matrix = environment.as_hamiltonian_with_environment(nqubits=1).to_matrix().toarray()
+
+    np.testing.assert_allclose(matrix, matrix.conj().T)
+
+
+def test_hamiltonian_with_environment_does_not_mutate_inputs():
+    environment_hamiltonian = 0.5 * PauliX(0)
+    system_operator = PauliZ(0)
+    environment = _environment(
+        couplings=[(1.0, system_operator, PauliZ(0))], environment_hamiltonian=environment_hamiltonian
+    )
+
+    environment.as_hamiltonian_with_environment(nqubits=1, offset=3)
+
+    assert {op.qubit for key in environment_hamiltonian.elements for op in key} == {0}
+    assert {op.qubit for key in system_operator.elements for op in key} == {0}
+
+
+def test_lindblad_with_environment_offset_and_padding():
+    environment = _environment(n_environment_qubits=2, environment_noise={0: [Dephasing(t_phi=2.0)]})
+
+    generator = environment.as_lindblad_with_environment(nqubits=1, offset=2)
+
+    # Qubits: system 0, earlier environments 1-2, this environment 3-4, operator ends at this environment
+    local = Dephasing(t_phi=2.0).as_lindblad().jump_operators_with_rates[0].dense()
+    np.testing.assert_allclose(
+        generator.jump_operators_with_rates[0].dense(), np.kron(np.kron(np.eye(8), local), np.eye(2))
+    )
+
+
+def test_lindblad_with_environment_keeps_time_dependent_rates():
+    def rate(t):
+        return 0.1 * t
+
+    lowering = QTensor(np.array([[0.0, 1.0], [0.0, 0.0]]))
+    environment = _environment(environment_noise={0: [LindbladGenerator(jump_operators=[lowering], rates=[rate])]})
+
+    generator = environment.as_lindblad_with_environment(nqubits=1)
+
+    assert generator.is_time_dependent
+    assert generator.rates == [rate]
+    np.testing.assert_allclose(generator.jump_operators[0].dense(), np.kron(np.eye(2), lowering.dense()))
+
+
+def test_lindblad_with_environment_noise_on_every_qubit():
+    environment = _environment(
+        n_environment_qubits=3, environment_noise={j: [AmplitudeDamping(t1=1.0)] for j in range(3)}
+    )
+
+    generator = environment.as_lindblad_with_environment(nqubits=1)
+
+    local = AmplitudeDamping(t1=1.0).as_lindblad().jump_operators_with_rates[0].dense()
+    for j, operator in enumerate(generator.jump_operators_with_rates):
+        expected = np.kron(np.kron(np.eye(2 ** (1 + j)), local), np.eye(2 ** (2 - j)))
+        np.testing.assert_allclose(operator.dense(), expected)

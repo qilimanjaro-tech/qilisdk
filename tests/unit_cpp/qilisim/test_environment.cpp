@@ -341,4 +341,210 @@ TEST(Environment, CircuitToScheduleEmptyCircuit) {
     EXPECT_TRUE(parameters_list.empty());
 }
 
+TEST(Environment, AttachToTwoEnvironmentQubits) {
+    SparseMatrix hamiltonian(8, 8);
+    DenseMatrix environment_state = kron(mixed_state(), projector(2, 1));
+    EnvironmentCpp environment(1, 2, hamiltonian, MatrixFreeHamiltonian(3), {}, to_sparse(environment_state));
+
+    DenseMatrix rho = DenseMatrix(environment.attach_to(to_sparse(plus_ket())));
+
+    ASSERT_EQ(rho.rows(), 8);
+    EXPECT_TRUE(rho.isApprox(kron(plus_ket() * plus_ket().adjoint(), environment_state), 1e-12));
+}
+
+TEST(Environment, AttachThenTraceOutIsIdentity) {
+    SparseMatrix hamiltonian(16, 16);
+    EnvironmentCpp environment(2, 2, hamiltonian, MatrixFreeHamiltonian(4), {}, to_sparse(kron(mixed_state(), mixed_state())));
+    DenseMatrix system = kron(mixed_state(), plus_ket() * plus_ket().adjoint());
+
+    DenseMatrix reduced = environment.trace_out(DenseMatrix(environment.attach_to(to_sparse(system))));
+
+    ASSERT_EQ(reduced.rows(), 4);
+    EXPECT_TRUE(reduced.isApprox(system, 1e-12));
+}
+
+TEST(Environment, TraceOutGhzOverTwoEnvironmentQubits) {
+    // (|000> + |111>) / sqrt(2) leaves the system qubit maximally mixed
+    SparseMatrix hamiltonian(8, 8);
+    EnvironmentCpp environment(1, 2, hamiltonian, MatrixFreeHamiltonian(3), {}, to_sparse(projector(4, 0)));
+    DenseMatrix ghz = DenseMatrix::Zero(8, 1);
+    ghz(0, 0) = 1.0 / std::sqrt(2.0);
+    ghz(7, 0) = 1.0 / std::sqrt(2.0);
+
+    DenseMatrix from_ket = environment.trace_out(ghz);
+    DenseMatrix from_density_matrix = environment.trace_out(ghz * ghz.adjoint());
+
+    ASSERT_EQ(from_ket.rows(), 2);
+    ASSERT_EQ(from_density_matrix.rows(), 2);
+    EXPECT_TRUE(from_ket.isApprox(0.5 * DenseMatrix::Identity(2, 2), 1e-12));
+    EXPECT_TRUE(from_density_matrix.isApprox(from_ket, 1e-12));
+}
+
+TEST(Environment, TraceOutPreservesTrace) {
+    EnvironmentCpp environment = single_qubit_environment();
+    DenseMatrix random = DenseMatrix::Random(4, 4);
+    DenseMatrix rho = random * random.adjoint();
+    rho /= rho.trace();
+
+    DenseMatrix reduced = environment.trace_out(rho);
+
+    EXPECT_NEAR(std::abs(reduced.trace() - Complex(1.0, 0.0)), 0.0, 1e-12);
+    EXPECT_TRUE(reduced.isApprox(reduced.adjoint(), 1e-12));
+}
+
+TEST(Environment, AddToEvolutionWithoutStepsGivesEmptyCoefficients) {
+    EnvironmentCpp environment = single_qubit_environment();
+    std::vector<SparseMatrix> hamiltonians;
+    std::vector<std::vector<double>> parameters_list;
+    NoiseModelCpp noise_model;
+
+    environment.add_to_evolution(hamiltonians, parameters_list, noise_model);
+
+    ASSERT_EQ(parameters_list.size(), 1u);
+    EXPECT_TRUE(parameters_list[0].empty());
+}
+
+TEST(Environment, AddToEvolutionWithoutJumpsLeavesNoiseModelEmpty) {
+    SparseMatrix hamiltonian = to_sparse(kron(pauli_z(), pauli_z()));
+    EnvironmentCpp environment(1, 1, hamiltonian, MatrixFreeHamiltonian(2), {}, to_sparse(projector(2, 0)));
+    std::vector<SparseMatrix> hamiltonians = {hamiltonian};
+    std::vector<std::vector<double>> parameters_list = {{1.0}};
+    NoiseModelCpp noise_model;
+
+    environment.add_to_evolution(hamiltonians, parameters_list, noise_model);
+
+    EXPECT_TRUE(noise_model.is_empty());
+}
+
+namespace {
+
+// The schedule of a single gate, run for one step
+DenseMatrix single_gate_generator(const Gate& gate, float duration, int n_total_qubits) {
+    std::map<std::string, float> gate_durations = {{NoiseModelCpp::make_gate_key(gate.get_name(), int(gate.get_control_qubits().size())), duration}};
+    std::vector<SparseMatrix> hamiltonians;
+    std::vector<std::vector<double>> parameters_list;
+    std::vector<double> step_list;
+    circuit_to_schedule({gate}, gate_durations, n_total_qubits, double(duration), hamiltonians, parameters_list, step_list);
+    return DenseMatrix(hamiltonians.at(0));
+}
+
+}  // namespace
+
+TEST(Environment, CircuitToSchedulePauliXGeneratorConvention) {
+    // Eigenphase +pi on |-><-|, so H = -(pi / 2T) (I - X)
+    double duration = 2.0;
+
+    DenseMatrix generator = single_gate_generator(Gate("X", to_sparse(pauli_x()), {}, {0}, {}), float(duration), 1);
+
+    DenseMatrix expected = -(M_PI / (2.0 * duration)) * (DenseMatrix::Identity(2, 2) - pauli_x());
+    EXPECT_TRUE(generator.isApprox(expected, 1e-9));
+}
+
+TEST(Environment, CircuitToScheduleBranchIsStableUnderRounding) {
+    // An eigenvalue of -1 nudged just below and just above the branch cut gives the same generator
+    DenseMatrix minus = DenseMatrix::Zero(2, 1);
+    minus << 1.0 / std::sqrt(2.0), -1.0 / std::sqrt(2.0);
+    DenseMatrix plus = plus_ket();
+    auto unitary = [&](double phase) { return DenseMatrix(plus * plus.adjoint() + std::polar(1.0, phase) * minus * minus.adjoint()); };
+
+    DenseMatrix below = single_gate_generator(Gate("U", to_sparse(unitary(M_PI - 1e-12)), {}, {0}, {}), 1.0f, 1);
+    DenseMatrix above = single_gate_generator(Gate("U", to_sparse(unitary(-M_PI + 1e-12)), {}, {0}, {}), 1.0f, 1);
+
+    EXPECT_TRUE(below.isApprox(above, 1e-6));
+}
+
+TEST(Environment, CircuitToScheduleRotationGenerator) {
+    // RX(theta) = exp(-i theta X / 2), so H = theta / (2T) X with no identity part
+    double theta = 0.8;
+    double duration = 0.5;
+    DenseMatrix rx = (Complex(0.0, -theta / 2.0) * pauli_x()).exp();
+
+    DenseMatrix generator = single_gate_generator(Gate("RX", to_sparse(rx), {}, {0}, {{"theta", theta}}), float(duration), 1);
+
+    EXPECT_TRUE(generator.isApprox(theta / (2.0 * duration) * pauli_x(), 1e-9));
+}
+
+TEST(Environment, CircuitToScheduleGeneratorIsHermitian) {
+    // A generic single-qubit unitary from a random Hermitian matrix
+    DenseMatrix random = DenseMatrix::Random(2, 2);
+    DenseMatrix unitary = (Complex(0.0, -1.0) * (random + random.adjoint())).exp();
+
+    DenseMatrix generator = single_gate_generator(Gate("U", to_sparse(unitary), {}, {0}, {}), 1.5f, 2);
+
+    ASSERT_EQ(generator.rows(), 4);
+    EXPECT_TRUE(generator.isApprox(generator.adjoint(), 1e-9));
+    EXPECT_TRUE(equal_up_to_phase((Complex(0.0, -1.5) * generator).exp(), kron(unitary, DenseMatrix::Identity(2, 2)), 1e-9));
+}
+
+TEST(Environment, CircuitToScheduleNonAdjacentUnorderedTargets) {
+    // A non-symmetric two-qubit gate on targets {2, 0} of a 3-qubit register
+    DenseMatrix cnot = DenseMatrix::Zero(4, 4);
+    cnot(0, 0) = 1.0;
+    cnot(1, 1) = 1.0;
+    cnot(2, 3) = 1.0;
+    cnot(3, 2) = 1.0;
+    Gate gate("U", to_sparse(cnot), {}, {2, 0}, {});
+
+    DenseMatrix generator = single_gate_generator(gate, 1.0f, 3);
+
+    ASSERT_EQ(generator.rows(), 8);
+    EXPECT_TRUE(equal_up_to_phase((Complex(0.0, -1.0) * generator).exp(), DenseMatrix(gate.get_full_matrix(3)), 1e-9));
+}
+
+TEST(Environment, CircuitToScheduleSplitsGateIntoEqualSteps) {
+    std::vector<Gate> gates = {Gate("X", to_sparse(pauli_x()), {}, {0}, {})};
+    std::map<std::string, float> gate_durations = {{NoiseModelCpp::make_gate_key("X", 0), 1.0f}};
+    std::vector<SparseMatrix> hamiltonians;
+    std::vector<std::vector<double>> parameters_list;
+    std::vector<double> step_list;
+
+    circuit_to_schedule(gates, gate_durations, 1, 0.3, hamiltonians, parameters_list, step_list);
+
+    ASSERT_EQ(step_list.size(), 4u);
+    for (size_t i = 0; i < step_list.size(); ++i) {
+        EXPECT_NEAR(step_list[i], 0.25 * double(i + 1), 1e-9);
+    }
+    EXPECT_EQ(parameters_list[0], std::vector<double>({1.0, 1.0, 1.0, 1.0}));
+}
+
+TEST(Environment, CircuitToScheduleExactMultipleOfStepHasNoExtraStep) {
+    std::vector<Gate> gates = {Gate("X", to_sparse(pauli_x()), {}, {0}, {})};
+    std::map<std::string, float> gate_durations = {{NoiseModelCpp::make_gate_key("X", 0), 1.0f}};
+    std::vector<SparseMatrix> hamiltonians;
+    std::vector<std::vector<double>> parameters_list;
+    std::vector<double> step_list;
+
+    circuit_to_schedule(gates, gate_durations, 1, 0.5, hamiltonians, parameters_list, step_list);
+
+    EXPECT_EQ(step_list.size(), 2u);
+}
+
+TEST(Environment, CircuitToScheduleRepeatedGatesAreSequential) {
+    std::vector<Gate> gates(3, Gate("X", to_sparse(pauli_x()), {}, {0}, {}));
+    std::map<std::string, float> gate_durations = {{NoiseModelCpp::make_gate_key("X", 0), 0.5f}};
+    std::vector<SparseMatrix> hamiltonians;
+    std::vector<std::vector<double>> parameters_list;
+    std::vector<double> step_list;
+
+    circuit_to_schedule(gates, gate_durations, 1, 0.5, hamiltonians, parameters_list, step_list);
+
+    ASSERT_EQ(step_list.size(), 3u);
+    EXPECT_NEAR(step_list.back(), 1.5, 1e-9);
+    ASSERT_EQ(parameters_list.size(), 3u);
+    for (size_t k = 0; k < 3; ++k) {
+        for (size_t i = 0; i < 3; ++i) {
+            EXPECT_DOUBLE_EQ(parameters_list[k][i], k == i ? 1.0 : 0.0);
+        }
+    }
+}
+
+TEST(Environment, CircuitToScheduleMissingDurationThrows) {
+    std::vector<Gate> gates = {Gate("X", to_sparse(pauli_x()), {}, {0}, {})};
+    std::vector<SparseMatrix> hamiltonians;
+    std::vector<std::vector<double>> parameters_list;
+    std::vector<double> step_list;
+
+    EXPECT_ANY_THROW(circuit_to_schedule(gates, {}, 1, 1.0, hamiltonians, parameters_list, step_list));
+}
+
 // GCOV_EXCL_BR_STOP

@@ -14,6 +14,8 @@
 
 #include "gate.h"
 
+#include <algorithm>
+
 // GCOV_EXCL_BR_START
 
 Gate::Gate(const std::string& gate_type_, const SparseMatrix& base_matrix_, const std::vector<int>& controls_, const std::vector<int>& targets_, const std::vector<std::pair<std::string, double>>& parameters_) {
@@ -270,7 +272,8 @@ SparseMatrix Gate::get_full_matrix(int num_qubits) const {
     Returns:
         SparseMatrix: The full matrix representation of the gate.
     */
-    if (control_qubits.empty() && num_qubits == std::ceil(std::log2(base_matrix.cols()))) {
+    // The base matrix is already the full matrix only if its targets are the whole register in order
+    if (control_qubits.empty() && num_qubits == std::ceil(std::log2(base_matrix.cols())) && std::is_sorted(target_qubits.begin(), target_qubits.end())) {
         return base_matrix;
     } else {
         return base_to_full(base_matrix, num_qubits, control_qubits, target_qubits);
