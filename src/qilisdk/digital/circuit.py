@@ -29,10 +29,13 @@ from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import QubitOutOfRangeError
-from .gates import BasicGate, Gate
+from .gates import BasicGate, Gate, _reject_analog_object
 
 if TYPE_CHECKING:
     from qilisdk.core.types import RealNumber
+
+# Name used for this class in the error messages raised for analog objects.
+_REJECT_TARGET = "a Circuit"
 
 
 def _complex_dtype() -> np.dtype:
@@ -190,9 +193,11 @@ class Circuit(Parameterizable):
             gate (Gate): The quantum gate or a list of quantum gates to be added to the circuit.
 
         Raises:
+            NotAGateError: If the object to be added is an analog object rather than a gate.
             QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit's qubit range.
         """
         logger.trace("[Circuit] Adding gate: {}", gate)
+        _reject_analog_object(gate, _REJECT_TARGET)
         if any(qubit < 0 or qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
 
@@ -205,8 +210,12 @@ class Circuit(Parameterizable):
 
         Args:
             gates (Gate | list[Gate]): The quantum gate or a list of quantum gates to be added to the circuit.
+
+        Raises:
+            NotAGateError: If any of the objects to be added is an analog object rather than a gate.
         """
         logger.trace("[Circuit] Adding gates: {}", gates)
+        _reject_analog_object(gates, _REJECT_TARGET)
         if isinstance(gates, Gate):
             self._add(gates)
             return
@@ -221,8 +230,10 @@ class Circuit(Parameterizable):
             index (int): The index at which the gate is inserted.
 
         Raises:
+            NotAGateError: If the object to be inserted is an analog object rather than a gate.
             QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit's qubit range.
         """
+        _reject_analog_object(gate, _REJECT_TARGET)
         if any(qubit < 0 or qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
 
@@ -245,6 +256,7 @@ class Circuit(Parameterizable):
             QubitOutOfRangeError: If any qubit index used by a gate is not within the circuit's qubit range.
         """
         logger.trace("[Circuit] Inserting gates: {} at index: {}", gates, index)
+        _reject_analog_object(gates, _REJECT_TARGET)
         if index is None:
             start = len(self._gates)
         elif index < 0:
@@ -333,6 +345,7 @@ class Circuit(Parameterizable):
             Circuit: A new circuit holding this circuit's gates followed by ``other``'s.
         """
         logger.trace("[Circuit] Adding {} to circuit.", other)
+        _reject_analog_object(other, _REJECT_TARGET)
         if not isinstance(other, (Circuit, Gate)):
             return NotImplemented
         new_circuit = Circuit(self.nqubits)
@@ -353,6 +366,7 @@ class Circuit(Parameterizable):
             Circuit: A new circuit holding ``other``'s gates followed by this circuit's.
         """
         logger.trace("[Circuit] Right-adding {} to circuit.", other)
+        _reject_analog_object(other, _REJECT_TARGET)
         if not isinstance(other, (Circuit, Gate)):
             return NotImplemented
         new_circuit = Circuit(self.nqubits)

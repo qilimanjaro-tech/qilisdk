@@ -35,3 +35,11 @@ class InvalidParameterNameError(Exception):
 
 class UnsupportedGateError(Exception):
     """Raised when a gate is not supported by the target backend."""
+
+
+class NotAGateError(TypeError):
+    """Raised when an object that is not a :class:`Gate` is used where a gate is expected.
+
+    This most commonly happens when the analog Pauli helpers (``qilisdk.analog.X`` and friends)
+    are used instead of the digital gates of the same name.
+    """
