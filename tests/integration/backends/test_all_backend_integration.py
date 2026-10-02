@@ -37,7 +37,7 @@ from qilisdk.backends import QutipBackend
 from qilisdk.backends.backend_config import ExecutionConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core.model import Constraint, Model, Objective
-from qilisdk.core.qtensor import QTensor, ket, tensor_prod
+from qilisdk.core.qtensor import InitialState, QTensor, ket, tensor_prod
 from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
@@ -375,7 +375,7 @@ def test_time_dependent_hamiltonian_pauli_observable(backend):
     assert np.isclose(expect_z, -1.0, rtol=1e-2)
 
 
-@pytest.mark.parametrize("backend", backends_no_cuda)
+@pytest.mark.parametrize("backend", backends)
 def test_time_dependent_hamiltonian_imaginary(backend):
     o = 1.0
     dt = 0.5
@@ -403,6 +403,23 @@ def test_time_dependent_hamiltonian_imaginary(backend):
     # check that it's hermitian
     final_rho = res.get_state().dense()
     assert np.allclose(final_rho, final_rho.conj().T, rtol=1e-6)
+
+
+@pytest.mark.parametrize("backend", backends)
+def test_analog_evolution_preserves_qubit_order(backend):
+    # Neither the Hamiltonian nor the initial state is symmetric under qubit reversal
+    h_problem = pauli_z(0) - 0.5 * pauli_z(1)
+    schedule = Schedule.linear(-pauli_x(0) - pauli_x(1), h_problem, total_time=20, dt=0.01)
+    readout = Readout().with_expectation(observables=[h_problem, pauli_z(0), pauli_z(1)])
+
+    res = backend.execute(AnalogEvolution(schedule=schedule, initial_state=InitialState.UNIFORM), readout)
+    assert np.isclose(res.get_expectation_values()[0], -1.5, atol=1e-2)
+
+    res = backend.execute(
+        AnalogEvolution(schedule=Schedule.linear(h_problem, h_problem, total_time=1, dt=0.1), initial_state=ket(0, 1)),
+        readout,
+    )
+    assert np.allclose(res.get_expectation_values(), [1.5, 1.0, -1.0], atol=1e-6)
 
 
 @pytest.mark.parametrize("backend", backends_no_cuda)
