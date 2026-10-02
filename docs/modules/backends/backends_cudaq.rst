@@ -90,7 +90,7 @@ Analog evolution always runs on the ``dynamics`` target and ignores this setting
      - |y|
      - |y|
    * - :class:`~qilisdk.backends.cudaq_backend.CudaqSamplingMethod.STATE_VECTOR_MGPU`
-     - ``nvidia-mgpu`` when multiple GPUs are available, otherwise falls back to ``nvidia``.
+     - ``nvidia-mgpu`` when multiple GPUs are available and running under MPI (see below), otherwise falls back to ``nvidia``.
      - |y|
      - |y|
      - |y|
@@ -117,6 +117,13 @@ Set the method at construction time:
     from qilisdk.backends import CudaqBackend, CudaqSamplingMethod
 
     backend = CudaqBackend(sampling_method=CudaqSamplingMethod.MATRIX_PRODUCT_STATE)
+
+.. note::
+
+    ``STATE_VECTOR_MGPU`` distributes the state across MPI processes, one per GPU, so the script must be launched
+    with ``mpirun`` (e.g. ``mpirun -np 4 python script.py`` for 4 GPUs).
+    This requires a CUDA-aware MPI installation and CUDA-Q's MPI plugin to be activated, see
+    the `CUDA-Q multi-GPU documentation <https://nvidia.github.io/cuda-quantum/latest/using/backends/sims/svsims.html#multi-gpu-multi-node>`_.
 
 Some CUDA simulation methods support parameters being set via environment variables, notably the `MATRIX_PRODUCT_STATE` and `TENSOR_NETWORK` methods. 
 See the `CUDA-Q documentation <https://nvidia.github.io/cuda-quantum/latest/using/backends/sims/tnsims.html>`_ for details.
