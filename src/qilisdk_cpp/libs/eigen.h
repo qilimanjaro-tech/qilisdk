@@ -98,4 +98,37 @@ const SparseMatrix I = []() {
     return I_mat;
 }();
 
+// Single-qubit Pauli matrices, as dense 2x2 matrices
+const DenseMatrix PAULI_I = (DenseMatrix(2, 2) << Complex(1.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(1.0, 0.0)).finished();
+const DenseMatrix PAULI_X = (DenseMatrix(2, 2) << Complex(0.0, 0.0), Complex(1.0, 0.0), Complex(1.0, 0.0), Complex(0.0, 0.0)).finished();
+const DenseMatrix PAULI_Y = (DenseMatrix(2, 2) << Complex(0.0, 0.0), Complex(0.0, -1.0), Complex(0.0, 1.0), Complex(0.0, 0.0)).finished();
+const DenseMatrix PAULI_Z = (DenseMatrix(2, 2) << Complex(1.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(-1.0, 0.0)).finished();
+
+// Two-qubit SWAP gate matrix, which exchanges the two qubits
+const DenseMatrix SWAP = (DenseMatrix(4, 4) << Complex(1.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(1.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(1.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(1.0, 0.0)).finished();
+
+inline const DenseMatrix& pauli_matrix(bool x, bool z) {
+    /*
+    Select the single-qubit Pauli matrix corresponding to an (x, z) mask pair,
+    following the PauliString convention where both bits set means Y (with no extra phase).
+
+    Args:
+        x (bool): Whether to include the X component.
+        z (bool): Whether to include the Z component.
+
+    Returns:
+        DenseMatrix&: The 2x2 Pauli matrix.
+    */
+    if (x && z) {
+        return PAULI_Y;
+    }
+    if (x) {
+        return PAULI_X;
+    }
+    if (z) {
+        return PAULI_Z;
+    }
+    return PAULI_I;
+}
+
 // GCOV_EXCL_BR_STOP

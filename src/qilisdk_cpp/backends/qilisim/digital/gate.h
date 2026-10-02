@@ -44,6 +44,7 @@ class Gate {
     std::string get_id() const;
     SparseMatrix get_base_matrix() const;
     SparseMatrix get_full_matrix(int num_qubits) const;
+    DenseMatrix get_local_matrix() const;
 };
 
 std::ostream& operator<<(std::ostream& os, const Gate& gate);
