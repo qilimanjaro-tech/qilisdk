@@ -546,7 +546,8 @@ class CudaqBackend(Backend):
         Configure the cudaq simulation target based on the selected simulation method.
 
         For the STATE_VECTOR method, it checks for GPU availability and selects an appropriate target.
-        For the STATE_VECTOR_MGPU method, it checks for multiple GPU availability and selects an appropriate target.
+        For the STATE_VECTOR_MGPU method, it checks for multiple GPU availability and that it is running under multiple
+        MPI ranks, falling back to a single GPU otherwise.
         For TENSOR_NETWORK and MATRIX_PRODUCT_STATE methods, it explicitly sets the target to use tensor network-based simulations.
         For the CPU method, it sets the target to use CPU-based simulation.
 
@@ -557,6 +558,7 @@ class CudaqBackend(Backend):
         if self.sampling_method in {CudaqSamplingMethod.STATE_VECTOR, CudaqSamplingMethod.STATE_VECTOR_MGPU}:
             float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_128 else "fp32"
             num_gpus = cudaq.num_available_gpus()
+            logger.debug("[CudaqBackend] Number of available GPUs: {}", num_gpus)
             if num_gpus == 0:
                 cudaq.set_target("qpp-cpu")
                 logger.debug("[CudaqBackend] No GPU detected, using cudaq's 'qpp-cpu' backend")
@@ -568,7 +570,20 @@ class CudaqBackend(Backend):
                     )
                 else:
                     cudaq.set_target("nvidia", option="mgpu," + float_precision)
-                    logger.debug("[CudaqBackend] Multiple GPUs detected, using cudaq's 'nvidia-mgpu' backend")
+                    num_ranks = cudaq.mpi.num_ranks()
+                    if num_ranks < 2:  # ruff: ignore[magic-value-comparison]
+                        cudaq.set_target("nvidia", option=float_precision)
+                        logger.warning(
+                            "[CudaqBackend] Multiple GPU simulation method selected and {} GPUs detected, but only a single MPI rank is running. "
+                            "Falling back to single GPU. Launch with e.g. 'mpirun -np {} python ...' to use all GPUs.",
+                            num_gpus,
+                            num_gpus,
+                        )
+                    else:
+                        logger.debug(
+                            "[CudaqBackend] Multiple GPUs detected, using cudaq's 'nvidia-mgpu' backend across {} MPI ranks",
+                            num_ranks,
+                        )
             else:
                 cudaq.set_target("nvidia", option=float_precision)
                 logger.debug("[CudaqBackend] GPU detected, using cudaq's 'nvidia' backend")

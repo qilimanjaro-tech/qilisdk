@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 14:44+0300\n"
+"POT-Creation-Date: 2026-10-02 12:23+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -213,11 +213,9 @@ msgstr ":class:`~qilisdk.backends.cudaq_backend.CudaqSamplingMethod.STATE_VECTOR
 
 #: ../../modules/backends/backends_cudaq.rst:93
 msgid ""
-"``nvidia-mgpu`` when multiple GPUs are available, otherwise falls back to"
-" ``nvidia``."
-msgstr ""
-"``nvidia-mgpu`` cuando hay varias GPUs disponibles, en caso contrario "
-"recurre a ``nvidia``."
+"``nvidia-mgpu`` when multiple GPUs are available and running under MPI "
+"(see below), otherwise falls back to ``nvidia``."
+msgstr "``nvidia-mgpu`` cuando hay varias GPUs disponibles y se ejecuta bajo MPI (véase más abajo), en caso contrario recurre a ``nvidia``."
 
 #: ../../modules/backends/backends_cudaq.rst:97
 msgid ":class:`~qilisdk.backends.cudaq_backend.CudaqSamplingMethod.TENSOR_NETWORK`"
@@ -258,7 +256,17 @@ msgstr ""
 msgid "Set the method at construction time:"
 msgstr "Defina el método en el momento de la construcción:"
 
-#: ../../modules/backends/backends_cudaq.rst:121
+#: ../../modules/backends/backends_cudaq.rst:123
+msgid ""
+"``STATE_VECTOR_MGPU`` distributes the state across MPI processes, one per"
+" GPU, so the script must be launched with ``mpirun`` (e.g. ``mpirun -np 4"
+" python script.py`` for 4 GPUs). This requires a CUDA-aware MPI "
+"installation and CUDA-Q's MPI plugin to be activated, see the `CUDA-Q "
+"multi-GPU documentation <https://nvidia.github.io/cuda-"
+"quantum/latest/using/backends/sims/svsims.html#multi-gpu-multi-node>`_."
+msgstr "``STATE_VECTOR_MGPU`` distribuye el estado entre procesos MPI, uno por GPU, por lo que el script debe lanzarse con ``mpirun`` (p. ej. ``mpirun -np 4 python script.py`` para 4 GPUs). Esto requiere una instalación de MPI compatible con CUDA y tener activado el plugin MPI de CUDA-Q, consulte la `documentación multi-GPU de CUDA-Q <https://nvidia.github.io/cuda-quantum/latest/using/backends/sims/svsims.html#multi-gpu-multi-node>`_."
+
+#: ../../modules/backends/backends_cudaq.rst:128
 msgid ""
 "Some CUDA simulation methods support parameters being set via environment"
 " variables, notably the `MATRIX_PRODUCT_STATE` and `TENSOR_NETWORK` "
@@ -271,7 +279,7 @@ msgstr ""
 "CUDA-Q <https://nvidia.github.io/cuda-"
 "quantum/latest/using/backends/sims/tnsims.html>`_ para más detalles."
 
-#: ../../modules/backends/backends_cudaq.rst:124
+#: ../../modules/backends/backends_cudaq.rst:131
 msgid ""
 "To set the precision of the simulation, use the "
 ":class:`~qilisdk.settings.Settings` object:"
@@ -279,11 +287,11 @@ msgstr ""
 "Para establecer la precisión de la simulación, utilice el objeto "
 ":class:`~qilisdk.settings.Settings`:"
 
-#: ../../modules/backends/backends_cudaq.rst:134
+#: ../../modules/backends/backends_cudaq.rst:141
 msgid "Noise model support"
 msgstr "Soporte de modelos de ruido"
 
-#: ../../modules/backends/backends_cudaq.rst:136
+#: ../../modules/backends/backends_cudaq.rst:143
 msgid ""
 "A :class:`~qilisdk.noise.NoiseModel` can be passed to "
 "``CudaqBackend(noise_model=…)``:"
@@ -291,7 +299,7 @@ msgstr ""
 "Puede pasarse un :class:`~qilisdk.noise.NoiseModel` a "
 "``CudaqBackend(noise_model=…)``:"
 
-#: ../../modules/backends/backends_cudaq.rst:138
+#: ../../modules/backends/backends_cudaq.rst:145
 msgid ""
 "For :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`,"
 " qilisdk noise channels are translated into a ``cudaq.NoiseModel`` (Kraus"
@@ -306,7 +314,7 @@ msgstr ""
 "perturbaciones de parámetros aplicadas al circuito). Con ruido activado, "
 "solo se admite una única :class:`~qilisdk.readout.SamplingReadout`."
 
-#: ../../modules/backends/backends_cudaq.rst:142
+#: ../../modules/backends/backends_cudaq.rst:149
 msgid ""
 "For :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, "
 "Lindblad-compatible noise channels become CUDA-Q jump operators and "
@@ -317,7 +325,7 @@ msgstr ""
 "salto de CUDA-Q y en deltas del Hamiltoniano que se pasan a "
 "``cudaq.evolve``."
 
-#: ../../modules/backends/backends_cudaq.rst:144
+#: ../../modules/backends/backends_cudaq.rst:151
 msgid ""
 "For :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`, "
 "the fallback implementation drops the noise model (a warning is logged)."
@@ -326,7 +334,7 @@ msgstr ""
 "la implementación de fallback descarta el modelo de ruido (se emite un "
 "aviso en el log)."
 
-#: ../../modules/backends/backends_cudaq.rst:147
+#: ../../modules/backends/backends_cudaq.rst:154
 msgid ""
 "Example: a depolarising channel applied to every gate of a digital "
 "circuit:"
