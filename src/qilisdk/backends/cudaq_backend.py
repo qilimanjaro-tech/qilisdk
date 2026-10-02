@@ -181,34 +181,39 @@ def reverse_bits(x: int, n: int) -> int:
     return y
 
 
-def cudaq_to_standard(statevector: np.ndarray) -> np.ndarray:
+def cudaq_to_standard(state: np.ndarray) -> np.ndarray:
     """
-    Convert a CUDA-Q style statevector to the more common qubit-ordering
+    Convert a CUDA-Q style state to the more common qubit-ordering
     convention where [0,1,0,0] corresponds to :math:`|01>` for 2 qubits.
 
+    CUDA-Q treats qubit 0 as the least significant bit, so the conversion reverses the bits of
+    every basis index. CUDA-Q also stores density matrices column-major, so the array it exposes
+    is the transpose of the density matrix, which is undone here. Both operations are their own
+    inverse, so the same function also converts a standard state to CUDA-Q's convention.
+
     Args:
-        statevector: 1D array-like of length 2^n
+        state: 1D statevector of length 2^n, or 2D density matrix of shape (2^n, 2^n).
 
     Returns:
-        np.ndarray: reordered statevector
+        np.ndarray: reordered state
 
     Raises:
-        ValueError: if the statevector is not a 1D array or the length is not a power of 2.
+        ValueError: if the state is neither a 1D array nor a square 2D array, or the dimension is not a power of 2.
     """
-    psi = np.asarray(statevector, dtype=complex)
+    psi = np.asarray(state, dtype=complex)
     dim = psi.shape[0]
 
-    if psi.ndim != 1:
-        raise ValueError("statevector must be a 1D array")
+    if psi.shape not in {(dim,), (dim, dim)}:
+        raise ValueError("state must be a 1D array or a square 2D array")
 
     n = int(np.log2(dim))
     if 2**n != dim:
-        raise ValueError("length of statevector must be a power of 2")
+        raise ValueError("dimension of state must be a power of 2")
 
-    out = np.empty_like(psi)
-    for i in range(dim):
-        out[reverse_bits(i, n)] = psi[i]
-    return out
+    perm = np.array([reverse_bits(i, n) for i in range(dim)])
+    if psi.ndim == 1:
+        return psi[perm]
+    return psi[np.ix_(perm, perm)].T
 
 
 class CudaqSamplingMethod(str, Enum):
@@ -479,10 +484,7 @@ class CudaqBackend(Backend):
 
         logger.info("[CudaqBackend] TimeEvolution finished")
         # Dynamics computes in fp64; keep the results complex128 to match.
-        final_state = np.array(
-            evolution_result.final_state(),
-            dtype=np.complex128,
-        )
+        final_state = cudaq_to_standard(np.array(evolution_result.final_state(), dtype=np.complex128))
         if len(final_state.shape) == 1:
             final_state = final_state.reshape(-1, 1)
         final_state = QTensor(final_state)
@@ -493,7 +495,7 @@ class CudaqBackend(Backend):
         intermediate_states = []
         if evolution_result.intermediate_states() is not None and functional.store_intermediate_results:
             for state in evolution_result.intermediate_states():
-                _state = np.array(state, dtype=np.complex128)
+                _state = cudaq_to_standard(np.array(state, dtype=np.complex128))
                 if len(_state.shape) == 1:
                     _state = _state.reshape(-1, 1)
                 intermediate_states.append(QTensor(_state))
@@ -1267,7 +1269,8 @@ class CudaqBackend(Backend):
         """Convert a ``QTensor`` initial state to a CUDA-Q ``State``.
 
         The state is normalized and, if given as a bra, transposed to a
-        ket before conversion.
+        ket before conversion. It is then reordered from the standard
+        qubit ordering to CUDA-Q's (see :func:`cudaq_to_standard`).
 
         Args:
             initial_state (QTensor): The initial quantum state to convert.
@@ -1287,7 +1290,7 @@ class CudaqBackend(Backend):
         if normalized_state.is_ket():
             cuda_state_data = cuda_state_data.reshape(-1)
 
-        return State.from_data(cuda_state_data)
+        return State.from_data(cudaq_to_standard(cuda_state_data).astype(cuda_state_data.dtype))
 
     def _handle_controlled(
         self, kernel: cudaq.Kernel, gate: Controlled, control_qubit: cudaq.QuakeValue, target_qubit: cudaq.QuakeValue
