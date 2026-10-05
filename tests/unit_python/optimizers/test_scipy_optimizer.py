@@ -114,7 +114,10 @@ def test_repr():
     assert "jac='dummy_jac'" in repr_str
 
 
-@pytest.mark.parametrize("method", ["basinhopping", "direct", "dual_annealing", "differential_evolution", "shgo"])
+GLOBAL_METHODS = ["basinhopping", "brute", "direct", "dual_annealing", "differential_evolution", "shgo"]
+
+
+@pytest.mark.parametrize("method", GLOBAL_METHODS)
 def test_global_optimizers_run(method):
     dummy_cost = MagicMock(side_effect=lambda x: x[0] ** 2 + x[1] ** 2)
     optimizer = SciPyOptimizer(method=method)
@@ -126,3 +129,21 @@ def test_global_optimizers_run(method):
     assert np.isclose(optimizer_result.optimal_parameters[0], 0.0, atol=1e-2)
     assert np.isclose(optimizer_result.optimal_parameters[1], 0.0, atol=1e-2)
     assert dummy_cost.call_count > 0
+
+
+def shifted_cost(params: list[float]) -> float:
+    return (params[0] - 5.0) ** 2 + (params[1] - 5.0) ** 2
+
+
+@pytest.mark.parametrize("method", [*GLOBAL_METHODS, "Nelder-Mead", "TNC", "tnc", "L-BFGS-B"])
+def test_optimizers_respect_bounds_and_store_intermediate_results(method):
+    optimizer = SciPyOptimizer(method=method)
+    optimizer_result = optimizer.optimize(
+        shifted_cost, [0.5, 0.5], [(0.0, 1.0), (0.0, 1.0)], store_intermediate_results=True
+    )
+
+    assert np.allclose(optimizer_result.optimal_parameters, [1.0, 1.0], atol=1e-2)
+    assert np.isclose(optimizer_result.optimal_cost, 32.0, atol=1e-1)
+    assert (len(optimizer_result.intermediate_results) == 0) == (method == "brute")
+    for intermediate_result in optimizer_result.intermediate_results:
+        assert np.isclose(intermediate_result.cost, shifted_cost(intermediate_result.parameters))
