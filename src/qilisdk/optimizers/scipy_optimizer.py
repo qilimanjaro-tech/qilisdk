@@ -130,11 +130,18 @@ class SciPyOptimizer(Optimizer):
         elif store_intermediate_results:
             callback = result_callback
 
+        logger.debug(
+            "[SciPyOptimizer] Using {} interface with method {}",
+            "global optimizer"
+            if self.method in {"basinhopping", "brute", "direct", "dual_annealing", "differential_evolution", "shgo"}
+            else "local minimizer",
+            self.method,
+        )
+
         # Global optimizer have a different interface, like `scipy.optimize.shgo` rather than `scipy.optimize.minimize`
         if self.method in {"direct", "dual_annealing", "differential_evolution", "shgo"} and isinstance(
             self.method, str
         ):
-            logger.debug("[SciPyOptimizer] Using global optimizer interface {}", self.method)
             res = getattr(scipy_optimize, self.method)(
                 cost_function,
                 bounds=bounds,
@@ -143,7 +150,6 @@ class SciPyOptimizer(Optimizer):
             )
         # basinhopping doesn't take bounds itself, so they are passed to its local minimizer
         elif self.method == "basinhopping":
-            logger.debug("[SciPyOptimizer] Using global optimizer interface {}", self.method)
             minimizer_kwargs = {"bounds": bounds, **self.extra_arguments.get("minimizer_kwargs", {})}
             res = scipy_optimize.basinhopping(
                 cost_function,
@@ -153,7 +159,6 @@ class SciPyOptimizer(Optimizer):
             )
         # brute has a different syntax, it evaluates a grid over the bounds and then polishes the best point within the bounds
         elif self.method == "brute":
-            logger.debug("[SciPyOptimizer] Using global optimizer interface {}", self.method)
             if store_intermediate_results:
                 logger.warning(
                     "[SciPyOptimizer] Intermediate results are not supported for method brute, none will be stored"
@@ -167,7 +172,6 @@ class SciPyOptimizer(Optimizer):
             res = scipy_optimize.OptimizeResult(x=np.atleast_1d(optimal_parameters), fun=optimal_cost)
         # the more general local minimizer interface
         else:
-            logger.debug("[SciPyOptimizer] Using local minimizer interface with method {}", self.method)
             res = scipy_optimize.minimize(
                 cost_function,
                 x0=init_parameters,
