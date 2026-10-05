@@ -750,6 +750,24 @@ def test_variational_annealing_many_qubit_correct():
     assert np.isclose(ev.real, -nqubits, atol=0.2)
 
 
+def test_variational_annealing_is_reproducible_with_seed():
+    nqubits = 4
+    observable = sum(pauli_z(i) for i in range(nqubits))
+    functional = AnalogEvolution(
+        schedule=_make_many_qubit_annealing_schedule(nqubits), initial_state=InitialState.UNIFORM
+    )
+    readout = Readout().with_expectation(observables=[observable])
+
+    def run(seed):
+        backend = QiliSim(
+            analog_simulation_method=AnalogMethod.variational_annealing(shots=20, warmups=1),
+            execution_config=ExecutionConfig(seed=seed, num_threads=1),
+        )
+        return backend.execute(functional, readout).get_expectation_values()[0]
+
+    assert run(7) == run(7)
+
+
 def test_matrix_free_complex_gate_on_mixed_state_stays_hermitian():
     """Regression: ``rho -> U rho U†`` on the matrix-free path must use ``U†`` (conjugate
     transpose), not ``U*`` (conjugate).

@@ -157,32 +157,37 @@ void lindblad_rhs(ExponentialAnsatz& drho, const ExponentialAnsatz& rho, const M
     int N_s = static_cast<int>(samples.configs.size());
     DenseVector El = rho.local_energy(samples, H);
 
-    // Cast int8 ±1 storage to doubles so that we can use BLAS routines
-    RealMatrix O_mat_d = samples.O_mat.cast<Real>();
+    // Centred, scaled log-derivatives A = (O - <O>) / sqrt(N_s), so that M = AᵀA and V = -Aᵀ e with e = E_loc / sqrt(N_s)
+    const Real inv_sqrt_N = static_cast<Real>(1.0 / std::sqrt(static_cast<double>(N_s)));
+    RealMatrix A = samples.O_mat.cast<Real>();
+    A.rowwise() -= A.colwise().mean();
+    A *= inv_sqrt_N;
+    RealMatrix e(N_s, 2);
+    e.col(0) = El.real() * inv_sqrt_N;
+    e.col(1) = El.imag() * inv_sqrt_N;
 
-    // Compute the means
-    RealVector O_mean_real = O_mat_d.colwise().mean();
-    Complex El_mean = El.mean();
-
-    // M_{kk'} = <O_k* O_k'> - <O_k*><O_k'>
-    RealMatrix O_T = O_mat_d.transpose();
-    RealMatrix M_real = (O_T * O_mat_d) / static_cast<Real>(N_s) - O_mean_real * O_mean_real.transpose();
-
-    // V_k = -(<O_k* E_loc> - <O_k*><E_loc>)
-    DenseVector V = -((O_T.cast<Complex>() * El) / static_cast<Real>(N_s) - O_mean_real.cast<Complex>() * El_mean);
-
-    // Regularise M and solve via Cholesky
-    const double epsilon = 0.1 / std::sqrt(static_cast<double>(N_s));
-    M_real.diagonal().array() += epsilon;
-    Eigen::LLT<Eigen::MatrixXd> llt(M_real);
-    Eigen::VectorXcd adot(p);
-    adot.real() = llt.solve(V.real());
-    adot.imag() = llt.solve(V.imag());
+    // Solve (AᵀA + εI) ȧ = -Aᵀ e in whichever of the sample or parameter spaces is smaller,
+    // using (AᵀA + εI)⁻¹ Aᵀ = Aᵀ (AAᵀ + εI)⁻¹ when there are fewer samples than parameters
+    const Real epsilon = static_cast<Real>(0.1 / std::sqrt(static_cast<double>(N_s)));
+    RealMatrix adot_parts;
+    if (N_s < p) {
+        RealMatrix K = RealMatrix::Zero(N_s, N_s);
+        K.selfadjointView<Eigen::Lower>().rankUpdate(A);
+        K.diagonal().array() += epsilon;
+        Eigen::LLT<RealMatrix, Eigen::Lower> llt(K);
+        adot_parts = -(A.transpose() * llt.solve(e));
+    } else {
+        RealMatrix M = RealMatrix::Zero(p, p);
+        M.selfadjointView<Eigen::Lower>().rankUpdate(A.transpose());
+        M.diagonal().array() += epsilon;
+        Eigen::LLT<RealMatrix, Eigen::Lower> llt(M);
+        adot_parts = -llt.solve(A.transpose() * e);
+    }
 
     // Set the drho
     drho *= 0.0;
     for (int k = 0; k < p; ++k) {
-        drho.get_terms().add(adot(k), terms_vec[k].first);
+        drho.get_terms().add(Complex(adot_parts(k, 0), adot_parts(k, 1)), terms_vec[k].first);
     }
 }
 
