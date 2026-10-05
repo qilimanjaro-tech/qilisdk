@@ -7,3 +7,4 @@ Noise
     noise_overview
     noise_config
     noise_types
+    noise_non_markovian

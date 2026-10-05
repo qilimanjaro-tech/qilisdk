@@ -303,3 +303,17 @@ the probability of misreading a :math:`|1⟩` state as :math:`|0⟩` (:math:`p_{
 
     from qilisdk.noise import ReadoutAssignment
     readout_assignment_noise = ReadoutAssignment(p01=0.05, p10=0.1)
+    
+EnvironmentNoise
+^^^^^^^^^^^^^^^^^^^^^
+
+All of the noise types above are Markovian, meaning they have no memory of what happened before.
+:class:`~qilisdk.noise.environment_noise.EnvironmentNoise` instead models non-Markovian noise, by coupling the system
+to a small set of hidden environment qubits that are evolved together with the system and traced out at the end.
+It is only supported by :class:`~qilisdk.backends.qilisim.QiliSim`. See :doc:`noise_non_markovian` for details and examples.
+
+.. code-block:: python
+
+    from qilisdk.analog import X, Z
+    from qilisdk.noise import EnvironmentNoise
+    environment_noise = EnvironmentNoise(n_environment_qubits=1, couplings=[(0.5, Z(0), X(0))])

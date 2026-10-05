@@ -62,6 +62,8 @@ class QiliSim(Backend):
             )
     """
 
+    _supports_non_markovian_noise = True
+
     def __init__(
         self,
         noise_model: NoiseModel | None = None,

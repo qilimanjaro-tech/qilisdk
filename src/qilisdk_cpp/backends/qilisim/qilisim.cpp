@@ -38,6 +38,180 @@
 
 #include <iostream>
 
+namespace {
+
+py::object execute_digital_propagation_with_non_markovian_noise(const py::object& functional, const py::object& readout, const py::object& noise_model, const py::object& initial_state, QiliSimConfig& config) {
+    /*
+    Execute a digital propagation with non-Markovian noise. The circuit is lowered to a schedule using the
+    NoiseConfig gate times and evolved as a density matrix on the register enlarged by the environment,
+    which is traced out before the results are built. Each gate's generator and the environment are
+    constant during the gate, so the direct method exponentiates every gate exactly in a single step.
+    Mid-circuit measurements split the circuit into segments, as in the statevector simulation.
+
+    Args:
+        functional (py::object): The DigitalPropagation functional to execute.
+        readout (py::object): A list with readout
+        noise_model (py::object): The noise model, containing non-Markovian noise.
+        initial_state (py::object): The initial state as a QTensor or none.
+        config (QiliSimConfig&): The config for this execution.
+
+    Returns:
+        FunctionalResult: The results of the propagation.
+
+    Raises:
+        py::value_error: If any gate in the circuit has a non-positive gate time.
+    */
+    py::object circuit = functional.attr("circuit");
+    int n_qubits = circuit.attr("nqubits").cast<int>();
+    EnvironmentCpp environment = parse_environment_noise(noise_model, n_qubits, config.get_atol());
+    int n_total_qubits = environment.get_n_total_qubits();
+    qilisdk::log_debug("[QiliSim, C++] Digital propagation with non-Markovian noise: " + std::to_string(n_qubits) + " system qubits, " + std::to_string(n_total_qubits) + " total qubits");
+
+    // Markovian noise as jump operators, as in the analog path, but with no time axis for time-dependent rates
+    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol());
+    noise_model_cpp.extend_register(environment.get_n_environment_qubits());
+
+    // One step per gate, since each step is exponentiated exactly
+    std::vector<bool> final_qubits_to_measure = parse_measurements(circuit);
+    std::vector<Gate> gates = parse_gates(circuit, config.get_atol(), noise_model);
+    std::map<std::string, float> gate_durations = resolve_gate_durations(circuit, noise_model.attr("noise_config"));
+    double dt = 0.0;
+    for (const auto& [key, duration] : gate_durations) {
+        if (!(duration > 0.0f)) {
+            throw py::value_error("Non-Markovian noise needs positive gate times, but gate " + key + " has time " + std::to_string(duration) + ".");
+        }
+        dt = std::max(dt, double(duration));
+    }
+    config.set_time_evolution_method("direct");
+
+    // The initial state of the full register
+    SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol(), n_qubits);
+    if (config.get_normalize_state()) {
+        normalize_state(rho_0);
+    }
+    DenseMatrix rho(environment.attach_to(rho_0));
+
+    // Evolve each segment of gates between measurements
+    std::vector<py::object> intermediate_results;
+    size_t gate_index = 0;
+    while (gate_index < gates.size()) {
+        std::vector<Gate> segment;
+        while (gate_index < gates.size() && gates[gate_index].get_name() != "M") {
+            segment.push_back(gates[gate_index++]);
+        }
+        if (!segment.empty()) {
+            std::vector<SparseMatrix> hamiltonians;
+            std::vector<std::vector<double>> parameters_list;
+            std::vector<double> step_list;
+            circuit_to_schedule(segment, gate_durations, n_total_qubits, dt, hamiltonians, parameters_list, step_list);
+            NoiseModelCpp segment_noise_model_cpp = noise_model_cpp;
+            environment.add_to_evolution(hamiltonians, parameters_list, segment_noise_model_cpp);
+            DenseMatrix rho_t;
+            std::vector<DenseMatrix> intermediate_rhos;
+            time_evolution(rho.sparseView(), hamiltonians, parameters_list, step_list, segment_noise_model_cpp, config, rho_t, intermediate_rhos);
+            rho = rho_t;
+        }
+
+        // A block of measurements, unless it ends the circuit (those are the final readout)
+        std::vector<bool> qubits_measured(n_qubits, false);
+        while (gate_index < gates.size() && gates[gate_index].get_name() == "M") {
+            for (int target : gates[gate_index++].get_target_qubits()) {
+                qubits_measured[target] = true;
+            }
+        }
+        bool any_measured = std::find(qubits_measured.begin(), qubits_measured.end(), true) != qubits_measured.end();
+        if (any_measured && gate_index < gates.size()) {
+            intermediate_results.push_back(construct_result_object(environment.trace_out(rho), readout, noise_model_cpp, n_qubits, config, qubits_measured, false));
+            if (config.get_measurement_collapse()) {
+                rho = collapse_state(rho, qubits_measured);
+            }
+        }
+    }
+
+    // Construct the final result object after tracing out the environment
+    py::object result = construct_result_object(environment.trace_out(rho), readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure, false);
+    if (!intermediate_results.empty()) {
+        py::list intermediate_results_py;
+        for (const auto& intermediate_result : intermediate_results) {
+            intermediate_results_py.append(intermediate_result);
+        }
+        return FunctionalResult("readout_results"_a = result, "intermediate_results"_a = intermediate_results_py);
+    }
+    return FunctionalResult("readout_results"_a = result);
+}
+
+py::object execute_analog_evolution_with_non_markovian_noise(const py::object& functional, const py::object& schedule, const py::object& readout, const py::object& noise_model, QiliSimConfig& config) {
+    /*
+    Execute an analog evolution with non-Markovian noise. The schedule is evolved as a density matrix on the
+    register enlarged by the environment, which is traced out before the results are built.
+
+    Args:
+        functional (py::object): The AnalogEvolution functional to execute.
+        schedule (py::object): The schedule to evolve, with any parameter perturbations already applied.
+        readout (py::object): A list with readout
+        noise_model (py::object): The noise model, containing non-Markovian noise.
+        config (QiliSimConfig&): The config for this execution.
+
+    Returns:
+        FunctionalResult: The results of the evolution.
+
+    Raises:
+        py::value_error: If the variational exponential method is requested.
+    */
+    if (config.get_time_evolution_method() == "variational_exponential") {
+        throw py::value_error("The variational exponential method does not support non-Markovian noise.");
+    }
+    int n_qubits = schedule.attr("nqubits").cast<int>();
+    EnvironmentCpp environment = parse_environment_noise(noise_model, n_qubits, config.get_atol());
+    int n_total_qubits = environment.get_n_total_qubits();
+    qilisdk::log_debug("[QiliSim, C++] Analog evolution with non-Markovian noise: " + std::to_string(n_qubits) + " system qubits, " + std::to_string(n_total_qubits) + " total qubits");
+
+    // The initial state of the full register
+    SparseMatrix rho_0 = parse_initial_state(functional.attr("initial_state"), config.get_atol(), n_qubits);
+    if (config.get_normalize_state()) {
+        normalize_state(rho_0);
+    }
+    rho_0 = environment.attach_to(rho_0);
+
+    // The schedule and Markovian noise on the full register
+    py::object hamiltonians_full = schedule.attr("hamiltonians");
+    py::list hamiltonians_keys = hamiltonians_full.attr("keys")();
+    py::list hamiltonians_values = hamiltonians_full.attr("values")();
+    py::object steps = schedule.attr("tlist");
+    std::vector<double> step_list = parse_time_steps(steps);
+    std::vector<std::vector<double>> parameters_list = parse_coefficients(schedule, hamiltonians_keys, steps);
+    NoiseModelCpp noise_model_cpp = parse_noise_model(noise_model, n_qubits, config.get_atol(), py::none(), &step_list);
+    noise_model_cpp.extend_register(environment.get_n_environment_qubits());
+
+    // Evolve the full register together with the environment
+    DenseMatrix rho_t;
+    std::vector<DenseMatrix> intermediate_rhos;
+    const std::string& method = config.get_time_evolution_method();
+    if (method == "integrate_rk4_matrix_free" || method == "integrate_rk45_matrix_free" || method == "arnoldi_matrix_free") {
+        std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(n_total_qubits, hamiltonians_values);
+        environment.add_to_evolution(hamiltonians, parameters_list, noise_model_cpp);
+        time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
+    } else {
+        std::vector<SparseMatrix> hamiltonians = parse_hamiltonians(hamiltonians_values, config.get_atol(), n_total_qubits);
+        environment.add_to_evolution(hamiltonians, parameters_list, noise_model_cpp);
+        time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos);
+    }
+
+    // Construct the final result object after tracing out the environment
+    std::vector<bool> qubits_to_measure(n_qubits, true);
+    py::object result = construct_result_object(environment.trace_out(rho_t), readout, noise_model_cpp, n_qubits, config, qubits_to_measure, false);
+    if (functional.attr("store_intermediate_results").cast<bool>()) {
+        py::list intermediate_results;
+        for (const auto& rho_intermediate : intermediate_rhos) {
+            intermediate_results.append(construct_result_object(environment.trace_out(rho_intermediate), readout, noise_model_cpp, n_qubits, config, qubits_to_measure, false));
+        }
+        return FunctionalResult("readout_results"_a = result, "intermediate_results"_a = intermediate_results);
+    }
+    return FunctionalResult("readout_results"_a = result);
+}
+
+}  // namespace
+
 void QiliSimCpp::set_seed_from_config(QiliSimConfig& config) {
     /*
     Get the root seed from the config and use it to seed the persistent random
@@ -92,6 +266,11 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
     // Sanity checks
     if (n_qubits <= 0) {
         throw py::value_error("nqubits must be positive.");
+    }
+
+    // Non-Markovian noise can't be applied as per-gate channels, so it has its own path
+    if (has_non_markovian_noise(noise_model)) {
+        return execute_digital_propagation_with_non_markovian_noise(functional, readout, noise_model, initial_state, config);
     }
 
     // Parse the Python objects into C++ objects
@@ -237,6 +416,11 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
 
     qilisdk::log_debug("[QiliSim, C++] Analog evolution: " + std::to_string(n_qubits) + " qubits, " + std::to_string(py::len(steps)) + " time steps, method=" + config.get_time_evolution_method());
 
+    // Non-Markovian noise can't be applied as per-gate channels, so it has its own path
+    if (has_non_markovian_noise(noise_model)) {
+        return execute_analog_evolution_with_non_markovian_noise(functional, schedule, readout, noise_model, config);
+    }
+
     // A scalable method, so we should never construct any matrix or state
     if (config.get_time_evolution_method() == "variational_exponential") {
         qilisdk::log_trace("[QiliSim, C++] Using matrix-free variational exponential ansatz");
@@ -374,6 +558,11 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
     // Sanity checks
     if (n_qubits <= 0) {
         throw py::value_error("nqubits must be positive.");
+    }
+
+    // For now we don't support non-Markovian noise for quantum reservoirs
+    if (has_non_markovian_noise(noise_model)) {
+        throw py::value_error("Non-Markovian noise is not supported for quantum reservoirs yet");
     }
 
     qilisdk::log_debug("[QiliSim, C++] Quantum reservoir: " + std::to_string(n_qubits) + " qubits, " + std::to_string(py::len(functional.attr("input_per_layer"))) + " layers");
