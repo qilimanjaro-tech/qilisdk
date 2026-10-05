@@ -26,7 +26,7 @@ from qilisdk.backends import QiliSim
 from qilisdk.backends.backend_config import AnalogMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.core import QTensor, ket
 from qilisdk.core.interpolator import Interpolation
-from qilisdk.digital import RX, Circuit, H, I, M, X
+from qilisdk.digital import CNOT, CZ, RX, RY, SWAP, Circuit, H, I, M, X
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.noise import (
@@ -708,3 +708,114 @@ def test_analog_telegraph_environment_revival_fades_with_flip_rate(flip_rates):
     assert np.isclose(revivals[0], -1.0, atol=1e-3)
     assert all(earlier < later for earlier, later in pairwise(revivals))
     assert revivals[-1] > 0.9
+
+
+def test_digital_empty_circuit_with_environment_keeps_initial_state():
+    # No gates means no time passes, so even a strong coupling leaves the system untouched
+    noise_model = NoiseModel()
+    noise_model.add(EnvironmentNoise(n_environment_qubits=1, couplings=[(5.0, PauliX(0), PauliX(0))]))
+
+    state = (
+        QiliSim(noise_model=noise_model, execution_config=EXECUTION_CONFIG)
+        .execute(DigitalPropagation(Circuit(nqubits=2)), readout=Readout().with_state_tomography())
+        .get_state()
+    )
+
+    np.testing.assert_allclose(_density_matrix(state), _density_matrix(ket(0, 0)), atol=1e-12)
+
+
+@pytest.mark.parametrize(
+    "gates",
+    [
+        [H(2), CNOT(2, 0)],
+        [H(0), CNOT(0, 2)],
+        [H(0), H(2), CZ(2, 0)],
+        [X(2), H(1), SWAP(2, 0)],
+        [RY(1, theta=0.4), CNOT(1, 0), RX(2, theta=1.1), CNOT(2, 1)],
+    ],
+    ids=["cnot-reversed-non-adjacent", "cnot-non-adjacent", "cz-reversed", "swap-reversed", "parametrized-chain"],
+)
+def test_digital_zero_coupling_matches_noiseless_for_multi_qubit_gates(gates):
+    # Each gate is lowered onto its own sorted qubits, so non-adjacent and reversed qubit orders must survive
+    circuit = Circuit(nqubits=3)
+    for gate in gates:
+        circuit.add(gate)
+    readout = Readout().with_state_tomography()
+    noise_model = NoiseModel()
+    noise_model.add(_zz_environment(0.0))
+
+    state = QiliSim(noise_model=noise_model, execution_config=EXECUTION_CONFIG).execute(
+        DigitalPropagation(circuit), readout=readout
+    )
+    reference = QiliSim(execution_config=EXECUTION_CONFIG).execute(DigitalPropagation(circuit), readout=readout)
+
+    np.testing.assert_allclose(_density_matrix(state.get_state()), _density_matrix(reference.get_state()), atol=1e-6)
+
+
+def test_digital_same_environment_added_twice_gives_two_environments():
+    # Two independent ZZ environments in |+> each contribute a factor cos(2 J t)
+    environment = _zz_environment(1.0)
+    noise_model = NoiseModel()
+    noise_model.add(environment)
+    noise_model.add(environment)
+    idle_time = np.pi / 8
+    circuit = _idle_circuit(idle_time, noise_model)
+
+    result = QiliSim(noise_model=noise_model, execution_config=EXECUTION_CONFIG).execute(
+        DigitalPropagation(circuit), readout=Readout().with_expectation(observables=[PauliX(0)])
+    )
+
+    assert np.isclose(result.get_expectation_values()[0], np.cos(2 * idle_time) ** 2, atol=1e-4)
+
+
+@pytest.mark.parametrize("population", [0.0, 0.25, 0.5, 1.0])
+def test_digital_mixed_environment_state_weights_precession_direction(population):
+    # Environment |0> rotates the qubit one way and |1> the other, so <Y> is weighted by the population difference
+    idle_time = np.pi / 8
+    environment = _zz_environment(1.0, environment_state=QTensor(np.diag([population, 1 - population])))
+
+    result = _run_idle(environment, idle_time, Readout().with_expectation(observables=[PauliX(0), PauliY(0)]))
+
+    expectation_x, expectation_y = result.get_expectation_values()
+    assert np.isclose(expectation_x, np.cos(2 * idle_time), atol=1e-4)
+    assert np.isclose(expectation_y, (2 * population - 1) * np.sin(2 * idle_time), atol=1e-4)
+
+
+def test_analog_density_matrix_initial_state_matches_ket():
+    noise_model = NoiseModel()
+    noise_model.add(_zz_environment(0.7, environment_noise={0: [AmplitudeDamping(t1=1.5)]}))
+    readout = Readout().with_state_tomography()
+    backend = QiliSim(noise_model=noise_model, execution_config=EXECUTION_CONFIG)
+
+    from_ket = backend.execute(_analog_evolution(PauliX(0), PLUS), readout=readout)
+    from_density_matrix = backend.execute(_analog_evolution(PauliX(0), PLUS.to_density_matrix()), readout=readout)
+
+    np.testing.assert_allclose(
+        _density_matrix(from_ket.get_state()), _density_matrix(from_density_matrix.get_state()), atol=1e-8
+    )
+
+
+def test_analog_environments_of_different_sizes_act_on_their_own_qubits():
+    # A two-qubit environment on system qubit 0 and a one-qubit environment on system qubit 1, all in |+>,
+    # so the stacking offsets decide which system qubit sees which couplings. Each environment qubit
+    # splits the precession at rate 2 into two branches, giving one cosine factor per coupling
+    first = EnvironmentNoise(
+        n_environment_qubits=2,
+        couplings=[(0.5, PauliZ(0), PauliZ(0)), (1.5, PauliZ(0), PauliZ(1))],
+        environment_state=(ket(0, 0) + ket(0, 1) + ket(1, 0) + ket(1, 1)).unit(),
+    )
+    second = EnvironmentNoise(n_environment_qubits=1, couplings=[(1.0, PauliZ(1), PauliZ(0))], environment_state=PLUS)
+    noise_model = NoiseModel()
+    noise_model.add(first)
+    noise_model.add(second)
+    total_time = 0.4
+
+    result = QiliSim(noise_model=noise_model, execution_config=EXECUTION_CONFIG).execute(
+        _analog_evolution(PauliZ(0) + PauliZ(1), (ket(0, 0) + ket(0, 1) + ket(1, 0) + ket(1, 1)).unit(), total_time),
+        readout=Readout().with_expectation(observables=[PauliX(0), PauliX(1)]),
+    )
+
+    expectation_0, expectation_1 = result.get_expectation_values()
+    free = np.cos(2 * total_time)
+    assert np.isclose(expectation_0, free * np.cos(2 * 0.5 * total_time) * np.cos(2 * 1.5 * total_time), atol=1e-4)
+    assert np.isclose(expectation_1, free * np.cos(2 * 1.0 * total_time), atol=1e-4)

@@ -15,9 +15,12 @@ from __future__ import annotations
 
 from typing import TypeAlias, cast
 
+import numpy as np
+
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.core import QTensor, ket
 from qilisdk.core.qtensor import identity, tensor_prod
+from qilisdk.settings import get_settings
 
 from .noise import Noise
 from .protocols import AttachmentScope, SupportsStaticLindblad
@@ -102,7 +105,7 @@ class EnvironmentNoise(Noise):
         Raises:
             ValueError: If n_environment_qubits is not positive, any environment index is out of range,
                 any environment noise has no static Lindblad form, or the environment state has the
-                wrong dimension.
+                wrong dimension or is not a normalized ket or valid density matrix.
         """
         if n_environment_qubits <= 0:
             raise ValueError(f"n_environment_qubits must be > 0, got {n_environment_qubits}.")
@@ -123,10 +126,16 @@ class EnvironmentNoise(Noise):
                 f"Environment state dimension {environment_state.shape[0]} does not match "
                 f"{n_environment_qubits} environment qubits."
             )
+        if environment_state is not None and not (
+            np.isclose(environment_state.norm(), 1.0, rtol=0.0, atol=get_settings().atol)
+            if environment_state.is_ket()
+            else environment_state.is_density_matrix()
+        ):
+            raise ValueError("Environment state must be a normalized ket or a valid density matrix.")
         self._n_environment_qubits = n_environment_qubits
-        self._couplings = couplings
+        self._couplings = list(couplings)
         self._environment_hamiltonian = environment_hamiltonian
-        self._environment_noise = environment_noise or {}
+        self._environment_noise = {index: list(noises) for index, noises in (environment_noise or {}).items()}
         self._environment_state = environment_state
 
     @property

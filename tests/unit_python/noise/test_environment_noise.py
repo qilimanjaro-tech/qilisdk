@@ -15,7 +15,7 @@
 import numpy as np
 import pytest
 
-from qilisdk.analog import Hamiltonian
+from qilisdk.analog import Hamiltonian, Schedule
 from qilisdk.analog import X as PauliX
 from qilisdk.analog import Y as PauliY
 from qilisdk.analog import Z as PauliZ
@@ -24,7 +24,7 @@ from qilisdk.analog.hamiltonian import PauliZ as PauliZOperator
 from qilisdk.backends import CudaqBackend, QiliSim, QutipBackend
 from qilisdk.core import QTensor, ket
 from qilisdk.digital import Circuit, X
-from qilisdk.functionals import DigitalPropagation
+from qilisdk.functionals import AnalogEvolution, DigitalPropagation
 from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, EnvironmentNoise, LindbladGenerator, NoiseModel
 from qilisdk.noise.protocols import (
     AttachmentScope,
@@ -230,16 +230,26 @@ def test_noise_model_non_markovian_noise():
     assert noise_model.non_markovian_noise == [environment]
 
 
-@pytest.mark.parametrize("backend_class", [QutipBackend, CudaqBackend])
-def test_unsupported_backends_raise(backend_class):
-    noise_model = NoiseModel()
-    noise_model.add(_environment())
+def _digital_propagation():
     circuit = Circuit(nqubits=1)
     circuit.add(X(0))
+    return DigitalPropagation(circuit)
+
+
+def _analog_evolution():
+    schedule = Schedule(hamiltonians={"h": PauliX(0)}, coefficients={"h": {0.0: 1.0, 1.0: 1.0}}, dt=0.1)
+    return AnalogEvolution(schedule=schedule, initial_state=ket(0))
+
+
+@pytest.mark.parametrize("backend_class", [QutipBackend, CudaqBackend])
+@pytest.mark.parametrize("make_functional", [_digital_propagation, _analog_evolution])
+def test_unsupported_backends_raise(backend_class, make_functional):
+    noise_model = NoiseModel()
+    noise_model.add(_environment())
 
     backend = backend_class(noise_model=noise_model)
     with pytest.raises(NotImplementedError, match=r"does not support non-Markovian noise"):
-        backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=10))
+        backend.execute(make_functional(), readout=Readout().with_sampling(nshots=10))
 
 
 def test_backend_support_flags():
@@ -422,3 +432,90 @@ def test_lindblad_with_environment_noise_on_every_qubit():
     for j, operator in enumerate(generator.jump_operators_with_rates):
         expected = np.kron(np.kron(np.eye(2 ** (1 + j)), local), np.eye(2 ** (2 - j)))
         np.testing.assert_allclose(operator.dense(), expected)
+
+
+@pytest.mark.parametrize(
+    "state",
+    [
+        ket(0) + ket(1),
+        QTensor(np.array([[0.0], [0.0]])),
+        QTensor(np.diag([0.6, 0.6])),
+        QTensor(np.diag([1.5, -0.5])),
+        QTensor(np.array([[0.5, 0.5], [0.0, 0.5]])),
+    ],
+    ids=["unnormalized-ket", "zero-ket", "trace-not-one", "not-positive", "not-hermitian"],
+)
+def test_invalid_environment_state_raises(state):
+    with pytest.raises(ValueError, match=r"normalized ket or a valid density matrix"):
+        _environment(environment_state=state)
+
+
+@pytest.mark.parametrize(
+    "state",
+    [
+        1j * ket(1),
+        (ket(0) - 1j * ket(1)).unit(),
+        ket(1).to_density_matrix(),
+        QTensor(np.array([[0.5, 0.25j], [-0.25j, 0.5]])),
+    ],
+    ids=["phased-ket", "complex-superposition", "pure-density-matrix", "mixed-with-coherences"],
+)
+def test_valid_environment_state_is_accepted(state):
+    assert _environment(environment_state=state).environment_state is state
+
+
+def test_bra_environment_state_raises():
+    with pytest.raises(ValueError, match=r"dimension"):
+        _environment(environment_state=ket(0).adjoint())
+
+
+def test_two_qubit_environment_state_is_accepted():
+    bell = (ket(0, 0) + ket(1, 1)).unit()
+
+    assert _environment(n_environment_qubits=2, environment_state=bell).environment_state is bell
+
+
+def test_later_changes_to_couplings_are_ignored():
+    couplings = [(1.0, PauliZ(0), PauliZ(0))]
+    environment = _environment(couplings=couplings)
+
+    couplings.append((1.0, PauliZ(0), PauliZ(5)))
+
+    assert len(environment.couplings) == 1
+    environment.as_hamiltonian_with_environment(nqubits=1)
+
+
+def test_later_changes_to_environment_noise_are_ignored():
+    noises = [AmplitudeDamping(t1=1.0)]
+    environment_noise = {0: noises}
+    environment = _environment(environment_noise=environment_noise)
+
+    noises.append(BitFlip(probability=0.1))
+    environment_noise[3] = [AmplitudeDamping(t1=1.0)]
+
+    assert set(environment.environment_noise) == {0}
+    assert len(environment.environment_noise[0]) == 1
+    assert len(environment.as_lindblad_with_environment(nqubits=1).jump_operators_with_rates) == 1
+
+
+def test_empty_noise_list_gives_no_jump_operators():
+    environment = _environment(environment_noise={0: []})
+
+    assert environment.as_lindblad_with_environment(nqubits=1).jump_operators_with_rates == []
+
+
+def test_empty_noise_list_out_of_range_still_raises():
+    with pytest.raises(ValueError, match=r"out of range"):
+        _environment(environment_noise={1: []})
+
+
+@pytest.mark.parametrize("backend_class", [QutipBackend, CudaqBackend])
+def test_unsupported_backends_raise_for_environment_added_after_construction(backend_class):
+    noise_model = NoiseModel()
+    noise_model.add(AmplitudeDamping(t1=1.0))
+    backend = backend_class(noise_model=noise_model)
+
+    noise_model.add(_environment())
+
+    with pytest.raises(NotImplementedError, match=r"does not support non-Markovian noise"):
+        backend.execute(_digital_propagation(), readout=Readout().with_sampling(nshots=10))
