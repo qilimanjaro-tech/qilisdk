@@ -765,7 +765,9 @@ def test_variational_annealing_is_reproducible_with_seed():
         )
         return backend.execute(functional, readout).get_expectation_values()[0]
 
-    assert run(7) == run(7)
+    first = run(7)
+    second = run(7)
+    assert first == second
 
 
 def test_matrix_free_complex_gate_on_mixed_state_stays_hermitian():
