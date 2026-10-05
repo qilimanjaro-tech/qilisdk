@@ -113,20 +113,18 @@ class SciPyOptimizer(Optimizer):
             )
 
         # scipy uses a different callback signature depending on the method
-        def result_callback(intermediate_result: OptimizeResult) -> None:
-            store_intermediate_result(intermediate_result.x, intermediate_result.fun)
+        def result_callback(intermediate_result: OptimizeResult | list[float]) -> None:
+            if isinstance(intermediate_result, scipy_optimize.OptimizeResult):
+                store_intermediate_result(intermediate_result.x, intermediate_result.fun)
+            else:
+                store_intermediate_result(intermediate_result, cost_function(intermediate_result))
 
         def value_callback(parameters: list[float], cost: float, *_: object) -> None:
             store_intermediate_result(parameters, cost)
 
-        def parameter_callback(parameters: list[float]) -> None:
-            store_intermediate_result(parameters, cost_function(parameters))
-
         callback: Callable | None = None
         if store_intermediate_results and self.method in {"basinhopping", "dual_annealing"}:
             callback = value_callback
-        elif store_intermediate_results and str(self.method).lower() in {"direct", "tnc"}:
-            callback = parameter_callback
         elif store_intermediate_results:
             callback = result_callback
 

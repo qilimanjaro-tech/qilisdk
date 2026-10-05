@@ -16,6 +16,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
+from scipy.optimize import OptimizeResult
 
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 
@@ -86,9 +87,7 @@ def test_extra_arguments_are_propagated():
 
 def test_optimize_with_intermediate_results():
     with patch("scipy.optimize.minimize") as mock_minimize:
-        fake_result = MagicMock()
-        fake_result.fun = -1.0
-        fake_result.x = np.array([2.0, 3.0])
+        fake_result = OptimizeResult(fun=-1.0, x=np.array([2.0, 3.0]))
         mock_minimize.return_value = fake_result
 
         optimizer = SciPyOptimizer(method="Nelder-Mead")
