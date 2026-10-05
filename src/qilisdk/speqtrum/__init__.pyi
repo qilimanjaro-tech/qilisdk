@@ -13,6 +13,6 @@
 # limitations under the License.
 
 from .speqtrum import SpeQtrum
-from .speqtrum_models import DeviceStatus, DeviceType
+from .speqtrum_models import DeviceStatus, DeviceType, JobHandle, TypedJobDetail
 
-__all__ = ["DeviceStatus", "DeviceType", "SpeQtrum"]
+__all__ = ["DeviceStatus", "DeviceType", "JobHandle", "SpeQtrum", "TypedJobDetail"]
