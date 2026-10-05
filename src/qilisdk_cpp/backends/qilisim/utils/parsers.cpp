@@ -1279,7 +1279,7 @@ EnvironmentCpp parse_environment_noise(const py::object& noise_model, int n_syst
     Raises:
         py::value_error: If the noise model has per-gate noise, or other noise without a Lindblad form.
     */
-    
+
     // Check that it's valid
     if (py::len(noise_model.attr("per_gate_noise")) > 0 || py::len(noise_model.attr("per_gate_per_qubit_noise")) > 0) {
         throw py::value_error("Non-Markovian noise cannot be combined with per-gate noise, which only has a Kraus form applied after each gate.");
@@ -1337,7 +1337,6 @@ EnvironmentCpp parse_environment_noise(const py::object& noise_model, int n_syst
 
         // Each environment contributes its qubits to the total offset
         offset += environment.attr("n_environment_qubits").cast<int>();
-
     }
     initial_state.makeCompressed();
 

@@ -1087,3 +1087,149 @@ _te_unknown = _TE_Unknown()
 }
 
 // GCOV_EXCL_BR_STOP
+
+class ExecuteNonMarkovianTest : public ::testing::Test {
+   protected:
+    QiliSimCpp sim;
+
+    void SetUp() override {
+        py::gil_scoped_acquire gil;
+        py::exec(R"(
+from qilisdk.analog.hamiltonian import Z as PauliZ
+from qilisdk.analog.schedule import Schedule
+from qilisdk.core import ket
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.gates import H, M, X
+from qilisdk.functionals.analog_evolution import AnalogEvolution
+from qilisdk.functionals.digital_propagation import DigitalPropagation
+from qilisdk.noise import EnvironmentNoise, NoiseModel
+from qilisdk.readout import SamplingReadout, StateTomographyReadout
+
+def _nm_environment(coupling):
+    noise_model = NoiseModel()
+    noise_model.add(EnvironmentNoise(n_environment_qubits=1, couplings=[(coupling, PauliZ(0), PauliZ(0))]))
+    noise_model.noise_config.set_gate_time(X, 0.1)
+    noise_model.noise_config.set_gate_time(H, 0.1)
+    return noise_model
+
+def _nm_evolution(store_intermediate_results):
+    schedule = Schedule(hamiltonians={"h0": PauliZ(0)}, dt=0.1, total_time=0.3)
+    return AnalogEvolution(schedule=schedule, initial_state=ket(0), store_intermediate_results=store_intermediate_results)
+        )");
+    }
+};
+
+TEST_F(ExecuteNonMarkovianTest, Digital_MidCircuitMeasurement_GivesIntermediateResults) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+_nm_circuit = Circuit(nqubits=1)
+_nm_circuit.add(X(0))
+_nm_circuit.add(M(0))
+_nm_circuit.add(X(0))
+_nm_circuit.add(M(0))
+_nm_functional = DigitalPropagation(circuit=_nm_circuit)
+_nm_noise_model = _nm_environment(0.0)
+_nm_readout = [SamplingReadout(nshots=20)]
+_nm_params = {"measurement_collapse": True, "normalize_state": True}
+    )");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_digital_propagation(py::globals()["_nm_functional"], py::globals()["_nm_readout"], py::globals()["_nm_noise_model"], py::none(), py::globals()["_nm_params"]));
+
+    // With no coupling the two X gates bring the qubit back to |0>, after measuring |1> in between
+    py::list intermediate_results = result.attr("intermediate_results");
+    ASSERT_EQ(intermediate_results.size(), 1);
+    py::dict intermediate_samples = intermediate_results[0].attr("get_samples")();
+    EXPECT_EQ(intermediate_samples["1"].cast<int>(), 20);
+    py::dict samples = result.attr("get_samples")();
+    EXPECT_EQ(samples["0"].cast<int>(), 20);
+}
+
+TEST_F(ExecuteNonMarkovianTest, Digital_NoMidCircuitMeasurement_TracesOutEnvironment) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+_nm_circuit = Circuit(nqubits=1)
+_nm_circuit.add(H(0))
+_nm_functional = DigitalPropagation(circuit=_nm_circuit)
+_nm_noise_model = _nm_environment(1.0)
+_nm_readout = [StateTomographyReadout()]
+    )");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_digital_propagation(py::globals()["_nm_functional"], py::globals()["_nm_readout"], py::globals()["_nm_noise_model"], py::none(), empty_solver_params()));
+
+    EXPECT_EQ(py::len(result.attr("intermediate_results")), 0);
+    py::tuple shape = result.attr("get_state")().attr("shape");
+    EXPECT_EQ(shape[0].cast<int>(), 2);
+    EXPECT_EQ(shape[1].cast<int>(), 2);
+}
+
+TEST_F(ExecuteNonMarkovianTest, Digital_NonPositiveGateTime_ThrowsValueError) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+_nm_circuit = Circuit(nqubits=1)
+_nm_circuit.add(X(0))
+_nm_functional = DigitalPropagation(circuit=_nm_circuit)
+_nm_noise_model = _nm_environment(1.0)
+_nm_noise_model.noise_config._gate_times[X] = 0.0
+_nm_readout = [SamplingReadout(nshots=10)]
+    )");
+    EXPECT_THROW(sim.execute_digital_propagation(py::globals()["_nm_functional"], py::globals()["_nm_readout"], py::globals()["_nm_noise_model"], py::none(), empty_solver_params()), py::value_error);
+}
+
+TEST_F(ExecuteNonMarkovianTest, Analog_Dense_StoresIntermediateResults) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+_nm_functional = _nm_evolution(True)
+_nm_noise_model = _nm_environment(1.0)
+_nm_readout = [StateTomographyReadout()]
+_nm_params = {"evolution_method": "integrate_rk4", "normalize_state": True}
+    )");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_analog_evolution(py::globals()["_nm_functional"], py::globals()["_nm_readout"], py::globals()["_nm_noise_model"], py::globals()["_nm_params"]));
+
+    py::list intermediate_results = result.attr("intermediate_results");
+    EXPECT_GT(intermediate_results.size(), 0);
+    py::tuple shape = intermediate_results[0].attr("get_state")().attr("shape");
+    EXPECT_EQ(shape[0].cast<int>(), 2);
+}
+
+TEST_F(ExecuteNonMarkovianTest, Analog_MatrixFree_TracesOutEnvironment) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+_nm_functional = _nm_evolution(False)
+_nm_noise_model = _nm_environment(1.0)
+_nm_readout = [StateTomographyReadout()]
+_nm_params = {"evolution_method": "integrate_rk4_matrix_free"}
+    )");
+    py::object result;
+    ASSERT_NO_THROW(result = sim.execute_analog_evolution(py::globals()["_nm_functional"], py::globals()["_nm_readout"], py::globals()["_nm_noise_model"], py::globals()["_nm_params"]));
+
+    py::tuple shape = result.attr("get_state")().attr("shape");
+    EXPECT_EQ(shape[0].cast<int>(), 2);
+    EXPECT_EQ(shape[1].cast<int>(), 2);
+}
+
+TEST_F(ExecuteNonMarkovianTest, Analog_VariationalMethod_ThrowsValueError) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+_nm_functional = _nm_evolution(False)
+_nm_noise_model = _nm_environment(1.0)
+_nm_readout = [StateTomographyReadout()]
+_nm_params = {"evolution_method": "variational_exponential"}
+    )");
+    EXPECT_THROW(sim.execute_analog_evolution(py::globals()["_nm_functional"], py::globals()["_nm_readout"], py::globals()["_nm_noise_model"], py::globals()["_nm_params"]), py::value_error);
+}
+
+TEST_F(ExecuteNonMarkovianTest, Reservoir_ThrowsValueError) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+
+_nm_reservoir = QuantumReservoir(
+    initial_state=ket(0).to_density_matrix(),
+    reservoir_layer=ReservoirLayer(evolution_dynamics=Schedule(hamiltonians={"h0": PauliZ(0)}, dt=0.1, total_time=0.3)),
+    input_per_layer=[{}],
+)
+_nm_noise_model = _nm_environment(1.0)
+    )");
+    EXPECT_THROW(sim.execute_quantum_reservoir(py::globals()["_nm_reservoir"], py::list(), py::globals()["_nm_noise_model"], empty_solver_params()), py::value_error);
+}

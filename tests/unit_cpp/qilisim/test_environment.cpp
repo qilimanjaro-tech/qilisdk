@@ -84,10 +84,7 @@ EnvironmentCpp single_qubit_environment() {
 // Equal up to a global phase
 bool equal_up_to_phase(const DenseMatrix& a, const DenseMatrix& b, double tol) {
     Complex overlap = (b.adjoint() * a).trace();
-    if (std::abs(overlap) < tol) {
-        return a.norm() < tol && b.norm() < tol;
-    }
-    Complex phase = overlap / std::abs(overlap);
+    Complex phase = std::abs(overlap) < tol ? Complex(1.0, 0.0) : overlap / std::abs(overlap);
     return (a - phase * b).norm() < tol;
 }
 
