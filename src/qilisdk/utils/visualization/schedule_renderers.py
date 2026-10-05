@@ -99,8 +99,8 @@ class MatplotlibScheduleRenderer:
         )
         self.ax.tick_params(axis="x", labelsize=style.xtick_fontsize, colors=tick_color)
         self.ax.tick_params(axis="y", labelsize=style.ytick_fontsize, colors=tick_color)
-        if style.tight_layout:
-            plt.tight_layout()
+        if style.tight_layout and isinstance(self.ax.figure, Figure):
+            self.ax.figure.tight_layout()
 
     # Generate gradient colors between primary and accent
     @staticmethod
@@ -126,8 +126,10 @@ class MatplotlibScheduleRenderer:
         """
         Plot the schedule coefficients for each Hamiltonian over time.
         Args:
-            ax (plt.Axes | None): The matplotlib axes to plot on. Default is None.
+            ax (plt.Axes | None): The matplotlib axes to plot on, replacing the renderer's axes. Default is None.
         """
+        if ax is not None:
+            self.ax = ax
         style = self.style
         theme = style.theme
 
@@ -207,7 +209,7 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
         show_overlaps: bool = True,
     ) -> None:
         self.schedule: Schedule = schedule
-        self.style = style or ScheduleStyle(xlabel="Time", ylabel="Eigenvalue")
+        self.style = style or ScheduleStyle(title="Schedule Eigenvalues", xlabel="Time", ylabel="Eigenvalue")
         self.ax = ax or self._make_axes(self.style.dpi, self.style)
         self.levels = levels
         self.intermediate_states = intermediate_states
@@ -273,11 +275,13 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
         Plot the schedule coefficients for each Hamiltonian over time.
 
         Args:
-            ax (plt.Axes | None): The matplotlib axes to plot on. Default is None.
+            ax (plt.Axes | None): The matplotlib axes to plot on, replacing the renderer's axes. Default is None.
 
         Raises:
             ValueError: If the full Hamiltonian cannot be constructed or is not a Hamiltonian instance.
         """
+        if ax is not None:
+            self.ax = ax
         style = self.style
         theme = style.theme
 

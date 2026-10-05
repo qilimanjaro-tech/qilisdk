@@ -821,6 +821,25 @@ def test_schedule_renderer_falls_back_to_a_generic_title(plot_titles):
     assert plot_titles == ["Schedule"]
 
 
+@pytest.mark.parametrize(
+    ("renderer_class", "title"),
+    [(MatplotlibScheduleRenderer, "Schedule"), (MatplotlibEigenvalueRenderer, "Schedule Eigenvalues")],
+)
+def test_schedule_renderers_plot_on_the_passed_axes(renderer_class, title):
+    renderer = renderer_class(schedule=make_schedule())
+    own_ax = renderer.ax
+    figure, ax = plt.subplots()
+    figure.tight_layout = MagicMock()
+    plt.figure()
+    renderer.plot(ax=ax)
+
+    assert len(ax.lines) > 0
+    assert len(own_ax.lines) == 0
+    assert ax.get_title() == title
+    figure.tight_layout.assert_called_once()
+    plt.close("all")
+
+
 # ---------------------------------------------------------------------------
 # Hamiltonian renderer
 # ---------------------------------------------------------------------------
