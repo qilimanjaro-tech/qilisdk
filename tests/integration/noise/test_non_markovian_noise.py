@@ -166,8 +166,10 @@ def test_digital_per_gate_noise_with_environment_raises():
     circuit.add(X(0))
 
     backend = QiliSim(noise_model=noise_model, execution_config=EXECUTION_CONFIG)
+    functional = DigitalPropagation(circuit)
+    readout = Readout().with_sampling(nshots=10)
     with pytest.raises(ValueError, match=r"per-gate"):
-        backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=10))
+        backend.execute(functional, readout=readout)
 
 
 def test_digital_non_positive_gate_time_with_environment_raises():
@@ -179,8 +181,10 @@ def test_digital_non_positive_gate_time_with_environment_raises():
     circuit.add(X(0))
 
     backend = QiliSim(noise_model=noise_model, execution_config=EXECUTION_CONFIG)
+    functional = DigitalPropagation(circuit)
+    readout = Readout().with_sampling(nshots=10)
     with pytest.raises(ValueError, match=r"positive gate times"):
-        backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=10))
+        backend.execute(functional, readout=readout)
 
 
 def test_digital_readout_assignment_with_environment():
@@ -205,8 +209,10 @@ def test_noise_without_lindblad_form_with_environment_raises():
     circuit.add(X(0))
 
     backend = QiliSim(noise_model=noise_model, execution_config=EXECUTION_CONFIG)
+    functional = DigitalPropagation(circuit)
+    readout = Readout().with_sampling(nshots=10)
     with pytest.raises(ValueError, match=r"Lindblad form"):
-        backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=10))
+        backend.execute(functional, readout=readout)
 
 
 @pytest.mark.parametrize("measurement_collapse", [False, True])
@@ -381,8 +387,10 @@ def test_analog_variational_method_with_environment_raises():
         execution_config=EXECUTION_CONFIG,
     )
 
+    functional = _analog_evolution(PauliX(0), PLUS)
+    readout = Readout().with_expectation(observables=[PauliZ(0)])
     with pytest.raises(ValueError, match=r"variational exponential method does not support non-Markovian noise"):
-        backend.execute(_analog_evolution(PauliX(0), PLUS), readout=Readout().with_expectation(observables=[PauliZ(0)]))
+        backend.execute(functional, readout=readout)
 
 
 def test_quantum_reservoir_with_environment_raises():
@@ -403,8 +411,9 @@ def test_quantum_reservoir_with_environment_raises():
     noise_model.add(_zz_environment(1.0))
 
     backend = QiliSim(noise_model=noise_model, execution_config=EXECUTION_CONFIG)
+    readout = Readout().with_expectation(observables=[PauliZ(0)])
     with pytest.raises(ValueError, match=r"Non-Markovian noise is not supported for quantum reservoirs"):
-        backend.execute(reservoir, readout=Readout().with_expectation(observables=[PauliZ(0)]))
+        backend.execute(reservoir, readout=readout)
 
 
 ANALOG_METHODS = [
@@ -534,8 +543,10 @@ def test_digital_time_dependent_system_rate_with_environment_raises():
     circuit.add(X(0))
 
     backend = QiliSim(noise_model=noise_model, execution_config=EXECUTION_CONFIG)
+    functional = DigitalPropagation(circuit)
+    readout = Readout().with_sampling(nshots=10)
     with pytest.raises(ValueError, match=r"Time-dependent Lindblad rates are not supported"):
-        backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=10))
+        backend.execute(functional, readout=readout)
 
 
 def test_digital_measurement_only_circuit_with_environment():
@@ -685,8 +696,10 @@ def test_analog_time_dependent_environment_rate_raises():
     noise_model.add(environment)
 
     backend = QiliSim(noise_model=noise_model, execution_config=EXECUTION_CONFIG)
+    functional = _analog_evolution(PauliX(0), ket(0))
+    readout = Readout().with_state_tomography()
     with pytest.raises(ValueError, match=r"time-dependent"):
-        backend.execute(_analog_evolution(PauliX(0), ket(0)), readout=Readout().with_state_tomography())
+        backend.execute(functional, readout=readout)
 
 
 @pytest.mark.parametrize("flip_rates", [(0.0, 0.1, 0.3, 1.0, 3.0, 10.0, 50.0)])

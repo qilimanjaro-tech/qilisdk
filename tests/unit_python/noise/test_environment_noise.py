@@ -76,10 +76,11 @@ def test_only_global_scope_allowed():
     assert EnvironmentNoise.allowed_scopes() == frozenset({AttachmentScope.GLOBAL})
 
     noise_model = NoiseModel()
+    environment = _environment()
     with pytest.raises(ValueError, match=r"cannot be added with scope"):
-        noise_model.add(_environment(), qubits=[0])
+        noise_model.add(environment, qubits=[0])
     with pytest.raises(ValueError, match=r"cannot be added with scope"):
-        noise_model.add(_environment(), gate=X)
+        noise_model.add(environment, gate=X)
 
 
 def test_not_seen_as_markovian_noise():
@@ -109,28 +110,33 @@ def test_non_positive_environment_qubits_raises(n_environment_qubits):
 
 
 def test_coupling_environment_index_out_of_range_raises():
+    couplings = [(1.0, PauliZ(0), PauliZ(1))]
     with pytest.raises(ValueError, match=r"out of range"):
-        _environment(couplings=[(1.0, PauliZ(0), PauliZ(1))])
+        _environment(couplings=couplings)
 
 
 def test_environment_hamiltonian_index_out_of_range_raises():
+    hamiltonian = PauliX(1)
     with pytest.raises(ValueError, match=r"out of range"):
-        _environment(environment_hamiltonian=PauliX(1))
+        _environment(environment_hamiltonian=hamiltonian)
 
 
 def test_environment_noise_index_out_of_range_raises():
+    noise = {1: [AmplitudeDamping(t1=1.0)]}
     with pytest.raises(ValueError, match=r"out of range"):
-        _environment(environment_noise={1: [AmplitudeDamping(t1=1.0)]})
+        _environment(environment_noise=noise)
 
 
 def test_environment_noise_without_lindblad_form_raises():
+    noise = {0: [BitFlip(probability=0.1)]}
     with pytest.raises(ValueError, match=r"Lindblad"):
-        _environment(environment_noise={0: [BitFlip(probability=0.1)]})
+        _environment(environment_noise=noise)
 
 
 def test_environment_state_wrong_dimension_raises():
+    state = ket(0, 0)
     with pytest.raises(ValueError, match=r"dimension"):
-        _environment(environment_state=ket(0, 0))
+        _environment(environment_state=state)
 
 
 def test_hamiltonian_with_environment():
@@ -248,8 +254,10 @@ def test_unsupported_backends_raise(backend_class, make_functional):
     noise_model.add(_environment())
 
     backend = backend_class(noise_model=noise_model)
+    functional = make_functional()
+    readout = Readout().with_sampling(nshots=10)
     with pytest.raises(NotImplementedError, match=r"does not support non-Markovian noise"):
-        backend.execute(make_functional(), readout=Readout().with_sampling(nshots=10))
+        backend.execute(functional, readout=readout)
 
 
 def test_backend_support_flags():
@@ -297,13 +305,15 @@ def test_density_matrix_environment_state_is_kept():
 
 
 def test_negative_environment_noise_index_raises():
+    noise = {-1: [AmplitudeDamping(t1=1.0)]}
     with pytest.raises(ValueError, match=r"out of range"):
-        _environment(environment_noise={-1: [AmplitudeDamping(t1=1.0)]})
+        _environment(environment_noise=noise)
 
 
 def test_multi_term_coupling_environment_index_out_of_range_raises():
+    couplings = [(1.0, PauliZ(0), PauliX(0) + PauliZ(1))]
     with pytest.raises(ValueError, match=r"out of range"):
-        _environment(couplings=[(1.0, PauliZ(0), PauliX(0) + PauliZ(1))])
+        _environment(couplings=couplings)
 
 
 def test_validation_accepts_every_index_in_range():
@@ -465,8 +475,9 @@ def test_valid_environment_state_is_accepted(state):
 
 
 def test_bra_environment_state_raises():
+    bra = ket(0).adjoint()
     with pytest.raises(ValueError, match=r"dimension"):
-        _environment(environment_state=ket(0).adjoint())
+        _environment(environment_state=bra)
 
 
 def test_two_qubit_environment_state_is_accepted():
@@ -517,5 +528,7 @@ def test_unsupported_backends_raise_for_environment_added_after_construction(bac
 
     noise_model.add(_environment())
 
+    functional = _digital_propagation()
+    readout = Readout().with_sampling(nshots=10)
     with pytest.raises(NotImplementedError, match=r"does not support non-Markovian noise"):
-        backend.execute(_digital_propagation(), readout=Readout().with_sampling(nshots=10))
+        backend.execute(functional, readout=readout)
