@@ -20,6 +20,9 @@
 
 // GCOV_EXCL_BR_START
 
+// M_PI is not defined on Windows, sigh...
+constexpr double pi = 3.14159265358979323846;
+
 EnvironmentCpp::EnvironmentCpp(int n_system_qubits_, int n_environment_qubits_, const SparseMatrix& hamiltonian_, const MatrixFreeHamiltonian& hamiltonian_matrix_free_, const std::vector<SparseMatrix>& jump_operators_, const SparseMatrix& initial_state_) : n_system_qubits(n_system_qubits_), n_environment_qubits(n_environment_qubits_), hamiltonian(hamiltonian_), hamiltonian_matrix_free(hamiltonian_matrix_free_), jump_operators(jump_operators_), initial_state(initial_state_) {}
 
 int EnvironmentCpp::get_n_system_qubits() const {
@@ -166,8 +169,8 @@ void circuit_to_schedule(const std::vector<Gate>& gates, const std::map<std::str
         // Eigenphases in (-pi, pi], so an eigenvalue of -1 always gives +pi instead of flipping sign with rounding
         auto minus_phase = [](const Complex& z) {
             double phi = std::arg(z);
-            if (phi <= -M_PI + 1e-9) {
-                phi += 2.0 * M_PI;
+            if (phi <= -pi + 1e-9) {
+                phi += 2.0 * pi;
             }
             return Complex(-phi, 0.0);
         };

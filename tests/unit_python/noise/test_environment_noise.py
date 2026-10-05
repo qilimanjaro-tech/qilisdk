@@ -21,7 +21,8 @@ from qilisdk.analog import Y as PauliY
 from qilisdk.analog import Z as PauliZ
 from qilisdk.analog.hamiltonian import PauliX as PauliXOperator
 from qilisdk.analog.hamiltonian import PauliZ as PauliZOperator
-from qilisdk.backends import CudaqBackend, QiliSim, QutipBackend
+from qilisdk.backends import QiliSim
+from qilisdk.backends.backend import Backend
 from qilisdk.core import QTensor, ket
 from qilisdk.digital import Circuit, X
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation
@@ -247,13 +248,12 @@ def _analog_evolution():
     return AnalogEvolution(schedule=schedule, initial_state=ket(0))
 
 
-@pytest.mark.parametrize("backend_class", [QutipBackend, CudaqBackend])
 @pytest.mark.parametrize("make_functional", [_digital_propagation, _analog_evolution])
-def test_unsupported_backends_raise(backend_class, make_functional):
+def test_backend_without_support_raises(make_functional):
     noise_model = NoiseModel()
     noise_model.add(_environment())
 
-    backend = backend_class(noise_model=noise_model)
+    backend = Backend(noise_model=noise_model)
     functional = make_functional()
     readout = Readout().with_sampling(nshots=10)
     with pytest.raises(NotImplementedError, match=r"does not support non-Markovian noise"):
@@ -262,19 +262,19 @@ def test_unsupported_backends_raise(backend_class, make_functional):
 
 def test_backend_support_flags():
     assert QiliSim._supports_non_markovian_noise
-    assert not QutipBackend._supports_non_markovian_noise
-    assert not CudaqBackend._supports_non_markovian_noise
+    assert not Backend._supports_non_markovian_noise
 
 
-def test_unsupported_backend_accepts_markovian_only_noise_model():
+def test_backend_without_support_accepts_markovian_only_noise_model():
+    # The base Backend has no simulator, so getting to its handler means the non-Markovian check let it through
     noise_model = NoiseModel()
     noise_model.add(AmplitudeDamping(t1=1.0))
-    circuit = Circuit(nqubits=1)
-    circuit.add(X(0))
 
-    QutipBackend(noise_model=noise_model).execute(
-        DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=10)
-    )
+    backend = Backend(noise_model=noise_model)
+    functional = _digital_propagation()
+    readout = Readout().with_sampling(nshots=10)
+    with pytest.raises(NotImplementedError, match=r"has no DigitalPropagation"):
+        backend.execute(functional, readout=readout)
 
 
 def test_noise_model_keeps_environments_in_order():
@@ -520,11 +520,10 @@ def test_empty_noise_list_out_of_range_still_raises():
         _environment(environment_noise={1: []})
 
 
-@pytest.mark.parametrize("backend_class", [QutipBackend, CudaqBackend])
-def test_unsupported_backends_raise_for_environment_added_after_construction(backend_class):
+def test_backend_without_support_raises_for_environment_added_after_construction():
     noise_model = NoiseModel()
     noise_model.add(AmplitudeDamping(t1=1.0))
-    backend = backend_class(noise_model=noise_model)
+    backend = Backend(noise_model=noise_model)
 
     noise_model.add(_environment())
 
