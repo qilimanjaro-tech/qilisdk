@@ -15,6 +15,7 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
+from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 
@@ -136,7 +137,7 @@ def shifted_cost(params: list[float]) -> float:
 
 
 @pytest.mark.parametrize("method", [*GLOBAL_METHODS, "Nelder-Mead", "TNC", "tnc", "L-BFGS-B"])
-def test_optimizers_respect_bounds_and_store_intermediate_results(method):
+def test_optimizers_respect_bounds_and_store_intermediate_results(method, caplog):  # ruff: ignore[redefined-while-unused]
     optimizer = SciPyOptimizer(method=method)
     optimizer_result = optimizer.optimize(
         shifted_cost, [0.5, 0.5], [(0.0, 1.0), (0.0, 1.0)], store_intermediate_results=True
@@ -145,5 +146,6 @@ def test_optimizers_respect_bounds_and_store_intermediate_results(method):
     assert np.allclose(optimizer_result.optimal_parameters, [1.0, 1.0], atol=1e-2)
     assert np.isclose(optimizer_result.optimal_cost, 32.0, atol=1e-1)
     assert (len(optimizer_result.intermediate_results) == 0) == (method == "brute")
+    assert ("Intermediate results are not supported" in caplog.text) == (method == "brute")
     for intermediate_result in optimizer_result.intermediate_results:
         assert np.isclose(intermediate_result.cost, shifted_cost(intermediate_result.parameters))

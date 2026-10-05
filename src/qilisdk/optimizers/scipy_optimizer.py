@@ -154,6 +154,10 @@ class SciPyOptimizer(Optimizer):
         # brute has a different syntax, it evaluates a grid over the bounds and then polishes the best point within the bounds
         elif self.method == "brute":
             logger.debug("[SciPyOptimizer] Using global optimizer interface {}", self.method)
+            if store_intermediate_results:
+                logger.warning(
+                    "[SciPyOptimizer] Intermediate results are not supported for method brute, none will be stored"
+                )
             optimal_parameters, optimal_cost, *_ = scipy_optimize.brute(
                 cost_function,
                 ranges=bounds,
