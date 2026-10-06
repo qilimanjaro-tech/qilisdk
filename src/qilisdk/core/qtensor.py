@@ -962,9 +962,13 @@ class QTensor:
 
     def draw(self, style: QTensorStyle = QTensorStyle(), filepath: str | None = None) -> None:
         """
-        Render the QTensor with Matplotlib and optionally save it to a file.
+        Render the QTensor on the Bloch sphere with Matplotlib and optionally save it to a file.
 
-        The circuit is rendered using the provided style configuration. If ``filepath`` is
+        Only single-qubit QTensors can be drawn, either as a state vector (ket or bra) or as a density matrix, the
+        latter allowing one qubit of a larger state to be drawn after reducing it with
+        :meth:`~qilisdk.core.qtensor.QTensor.partial_trace`. The arrow is the Bloch vector
+        (tr(rho X), tr(rho Y), tr(rho Z)), so a mixed state sits inside the sphere rather than on its surface.
+        The state is rendered using the provided style configuration. If ``filepath`` is
         given, the resulting figure is saved to disk (the output format is inferred
         from the file extension, e.g. ``.png``, ``.pdf``, ``.svg``).
 

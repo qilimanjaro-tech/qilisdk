@@ -36,7 +36,7 @@ from qilisdk.yaml import yaml
 from .exceptions import InvalidHamiltonianOperation
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
 
     from qilisdk.core.variables import Parameter
 
@@ -96,11 +96,10 @@ class PauliOperator(ABC):
         cls._MATRIX_CACHE = {}
 
     def __init__(self, qubit: int) -> None:
-        # QSDK-05: reject negative qubit indices at construction (the upper bound
-        # depends on the Hamiltonian / circuit and is enforced at execution).
         if qubit < 0:
             raise ValueError(f"Qubit index must be non-negative, got {qubit}.")
         self._qubit = qubit
+        self._hash_cache: int | None = None
 
     @property
     def qubit(self) -> int:
@@ -131,7 +130,26 @@ class PauliOperator(ABC):
         return Hamiltonian({(self,): 1})
 
     def __hash__(self) -> int:
-        return qili_hash(self._NAME, self._qubit)
+        """Return the stable hash of this operator.
+
+        Operators are immutable, and the stable hash is expensive next to the dictionary lookups it
+        feeds, so it is computed once on first use and cached from then on.
+
+        Returns:
+            int: the cached blake2b-based hash of the operator name and qubit index.
+        """
+        if self._hash_cache is None:
+            self._hash_cache = qili_hash(self._NAME, self._qubit)
+        return self._hash_cache
+
+    def __getstate__(self) -> dict:
+        state = self.__dict__.copy()
+        state.pop("_hash_cache", None)
+        return state
+
+    def __setstate__(self, state: dict) -> None:
+        self.__dict__.update(state)
+        self._hash_cache = None
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Hamiltonian):
@@ -1206,6 +1224,33 @@ class Hamiltonian(Parameterizable):
         hamiltonian.simplify()
         return hamiltonian
 
+    @classmethod
+    def sum(cls, terms: Iterable[Number | PauliOperator | Hamiltonian | Expression | Parameter]) -> Hamiltonian:
+        """Add many terms together in a single pass.
+
+        Chaining ``h1 + h2 + ...`` (or the builtin :func:`sum`) copies and re-simplifies the growing
+        accumulator on every step, which costs quadratic time in the number of terms. This
+        accumulates everything into one Hamiltonian and simplifies once at the end instead.
+
+        Args:
+            terms (Iterable[Number | PauliOperator | Hamiltonian | Expression | Parameter]): The
+                terms to add together.
+
+        Returns:
+            Hamiltonian: The sum of all the given terms.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian, Z
+
+                h = Hamiltonian.sum(Z(i) * Z(i + 1) for i in range(1000))
+        """
+        out = cls()
+        for term in terms:
+            out._add_inplace(term)
+        return out.simplify()
+
     def commutator(self, h: Hamiltonian) -> Hamiltonian:
         """compute the commutator of the current hamiltonian with another hamiltonian (h)
 
@@ -1434,7 +1479,7 @@ class Hamiltonian(Parameterizable):
     def _add_inplace(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> None:
         if isinstance(other, Hamiltonian):
             # If it's empty, do nothing
-            if not other.elements:
+            if not other._elements:  # ruff: ignore[private-member-access]
                 return
             # Otherwise, add each term
             for key, val in other._elements.items():  # ruff: ignore[private-member-access]
