@@ -19,7 +19,7 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
 .. grid:: 2
 
    .. grid-item-card:: Getting Started
-      :link: getting_started/installation.html
+      :link: getting_started/overview.html
       :text-align: center
       :img-top: _static/rocket.png
 
@@ -45,7 +45,7 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
    :caption: Getting Started
    :hidden:
 
-   getting_started/introduction
+   getting_started/overview
    getting_started/installation
    getting_started/quickstart
 
