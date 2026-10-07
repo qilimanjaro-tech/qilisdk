@@ -34,15 +34,16 @@ class DigitalPropagation(PrimitiveFunctional):
     Example:
         .. code-block:: python
 
-            from qilisdk.digital.circuit import Circuit
+            from qilisdk.backends import QiliSim
+            from qilisdk.digital import H, Circuit
             from qilisdk.functionals import DigitalPropagation
             from qilisdk.readout import Readout
 
             circuit = Circuit(nqubits=2)
-            circuit.h(0)
+            circuit.add(H(0))
             functional = DigitalPropagation(circuit)
-            result = backend.execute(functional, readout=Readout().with_sampling(nshots=1024))
-            counts = result.samples  # dict[str, int]
+            result = QiliSim().execute(functional, readout=Readout().with_sampling(nshots=1024))
+            counts = result.sampling.samples  # dict[str, int]
     """
 
     result_type: ClassVar[type[FunctionalResult]] = FunctionalResult
