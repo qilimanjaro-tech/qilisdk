@@ -19,7 +19,7 @@ import pytest
 
 from qilisdk.core.comparison import EQ
 from qilisdk.core.model import QUBO, Model, ObjectiveSense
-from qilisdk.core.variables import BinaryVariable, Domain, OneHot, SpinVariable, Variable
+from qilisdk.core.variables import BinaryVariable, Domain, OneHot, Parameter, SpinVariable, Variable
 from qilisdk.utils.classical_solvers import (
     BruteForceSolver,
     ClassicalSolver,
@@ -143,10 +143,18 @@ def test_brute_force_integer_variable_enumeration():
     assert result.sample[v] == 0
 
 
-def test_brute_force_unsupported_variable_raises():
+def test_brute_force_spin_variable():
     s = SpinVariable("s")
     m = Model("spin_model")
     m.set_objective(s)
+    result = BruteForceSolver().solve(m)
+    assert result.sample[s] == -1
+
+
+def test_brute_force_unsupported_variable_raises():
+    p = Parameter("p", 1.0)
+    m = Model("parameter_model")
+    m.set_objective(p + 0)
     solver = BruteForceSolver()
     with pytest.raises(ValueError, match="not supported"):
         solver.solve(m)
@@ -271,10 +279,18 @@ def test_scipy_solver_real_variable():
     assert np.isclose(result.sample[y], 3.7, atol=1e-1)
 
 
-def test_scipy_solver_unsupported_variable_raises():
+def test_scipy_solver_spin_variable():
     s = SpinVariable("s")
     m = Model("spin_model")
     m.set_objective(s)
+    result = ScipySolver(method="differential_evolution", seed=1).solve(m)
+    assert result.sample[s] == -1
+
+
+def test_scipy_solver_unsupported_variable_raises():
+    p = Parameter("p", 1.0)
+    m = Model("parameter_model")
+    m.set_objective(p + 0)
     solver = ScipySolver()
     with pytest.raises(ValueError, match="not supported"):
         solver.solve(m)

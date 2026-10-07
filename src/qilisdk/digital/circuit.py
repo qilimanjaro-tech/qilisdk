@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import random
+from copy import deepcopy
 from typing import TYPE_CHECKING, Callable, Iterable
 
 import numpy as np
@@ -212,12 +213,12 @@ class Circuit(Parameterizable):
         for g in gates:
             self._add(g)
 
-    def _insert(self, gate: Gate, index: int = -1) -> None:
+    def _insert(self, gate: Gate, index: int) -> None:
         """Insert a quantum gate to the circuit at a given index.
 
         Args:
             gate (Gate): The gate to be inserted.
-            index (int, optional): The index at which the gate is inserted. Defaults to -1.
+            index (int): The index at which the gate is inserted.
 
         Raises:
             QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit's qubit range.
@@ -229,19 +230,32 @@ class Circuit(Parameterizable):
         self._parse_params(gate)
         self._gates.insert(index, gate)
 
-    def insert(self, gates: Gate | Iterable[Gate], index: int = -1) -> None:
-        """Insert a quantum gate to the circuit at a given index.
+    def insert(self, gates: Gate | Iterable[Gate], index: int | None = None) -> None:
+        """Insert one or more quantum gates into the circuit at a given index.
+
+        The gates are inserted consecutively, so their relative order is preserved.
 
         Args:
-            gates (Gate | list[Gate]): The gate or list of gates to be inserted.
-            index (int, optional): The index at which the gate is inserted. Defaults to -1.
+            gates (Gate | Iterable[Gate]): The gate or gates to be inserted.
+            index (int | None, optional): The index at which the first gate is inserted, following the
+                usual list indexing rules, so a negative value counts from the end of the circuit.
+                Defaults to None, which appends the gates at the end of the circuit.
+
+        Raises:
+            QubitOutOfRangeError: If any qubit index used by a gate is not within the circuit's qubit range.
         """
         logger.trace("[Circuit] Inserting gates: {} at index: {}", gates, index)
+        if index is None:
+            start = len(self._gates)
+        elif index < 0:
+            start = max(len(self._gates) + index, 0)
+        else:
+            start = index
         if isinstance(gates, Gate):
-            self._insert(gates, index)
+            self._insert(gates, start)
             return
-        for i, gate in enumerate(gates):
-            self._insert(gate, i + index)
+        for offset, gate in enumerate(gates):
+            self._insert(gate, start + offset)
 
     def append(self, circuit: Circuit) -> None:
         """Append circuit elements at the end of the current circuit.
@@ -279,6 +293,19 @@ class Circuit(Parameterizable):
         for i, g in enumerate(circuit.gates):
             self.insert(g, i)
 
+    def copy(self) -> Self:
+        """Return an independent deep copy of this circuit.
+
+        Every gate and parameter is duplicated, so setting parameters, adding gates or otherwise
+        modifying the returned circuit never affects this one. Parameters shared between several gates
+        of this circuit stay shared between the corresponding gates of the copy.
+
+        Returns:
+            Circuit: A new circuit equal to this one but sharing no state with it.
+        """
+        logger.trace("[Circuit] Copying circuit with {} gates.", len(self._gates))
+        return deepcopy(self)
+
     def to_matrix(self) -> np.ndarray:
         """Return the full unitary matrix representation of the circuit.
 
@@ -296,31 +323,45 @@ class Circuit(Parameterizable):
         logger.trace("[Circuit] Converting circuit to QTensor.")
         return QTensor(self.to_matrix())
 
-    def __add__(self, other: Circuit | Gate) -> Circuit | NotImplementedError:
+    def __add__(self, other: Circuit | Gate) -> Circuit:
+        """Return a new circuit with ``other`` composed at the end of this one.
+
+        Args:
+            other (Circuit | Gate): The circuit or gate to compose at the end of this circuit.
+
+        Returns:
+            Circuit: A new circuit holding this circuit's gates followed by ``other``'s.
+        """
         logger.trace("[Circuit] Adding {} to circuit.", other)
         if not isinstance(other, (Circuit, Gate)):
-            return NotImplementedError(
-                "Addition is only supported between Circuit objects or a Circuit and a Gate objects"
-            )
+            return NotImplemented
+        new_circuit = Circuit(self.nqubits)
+        new_circuit.append(self)
         if isinstance(other, Gate):
-            self.add(other)
+            new_circuit.add(other)
         else:
-            self.append(other)
-        return self
+            new_circuit.append(other)
+        return new_circuit
 
-    __iadd__ = __add__
+    def __radd__(self, other: Circuit | Gate) -> Circuit:
+        """Return a new circuit with ``other`` composed at the beginning of this one.
 
-    def __radd__(self, other: Circuit | Gate) -> Circuit | NotImplementedError:
+        Args:
+            other (Circuit | Gate): The circuit or gate to compose at the beginning of this circuit.
+
+        Returns:
+            Circuit: A new circuit holding ``other``'s gates followed by this circuit's.
+        """
         logger.trace("[Circuit] Right-adding {} to circuit.", other)
         if not isinstance(other, (Circuit, Gate)):
-            return NotImplementedError(
-                "Addition is only supported between Circuit objects or a Circuit and a Gate objects"
-            )
+            return NotImplemented
+        new_circuit = Circuit(self.nqubits)
         if isinstance(other, Gate):
-            self.insert(other, 0)
+            new_circuit.add(other)
         else:
-            self.prepend(other)
-        return self
+            new_circuit.append(other)
+        new_circuit.append(self)
+        return new_circuit
 
     def __eq__(self, other: object) -> bool:
         logger.trace("[Circuit] Checking equality of circuit with {}.", other)

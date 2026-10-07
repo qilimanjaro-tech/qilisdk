@@ -71,4 +71,19 @@ void QiliSimConfig::validate() const {
     }
 }
 
+int QiliSimConfig::next_seed() const {
+    /*
+    Advance the seed and return the next one, based on the root seed
+    and how many times we've advanced the seed.
+
+    Returns:
+        int: A non-negative seed, distinct per call.
+    */
+    uint64_t z = static_cast<uint64_t>(static_cast<uint32_t>(seed)) + 0x9e3779b97f4a7c15ULL * (++seed_stream);
+    z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9ULL;
+    z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
+    z = z ^ (z >> 31);
+    return static_cast<int>(z & 0x7fffffffULL);
+}
+
 // GCOV_EXCL_BR_STOP

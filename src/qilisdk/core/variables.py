@@ -27,7 +27,7 @@ from __future__ import annotations
 import copy
 import re
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, ClassVar, cast
 
 import numpy as np
 from loguru import logger
@@ -610,9 +610,7 @@ class BinaryVariable(BaseVariable):
     def __init__(self, label: str) -> None:
         super().__init__(label=label, domain=Domain.BINARY)
 
-    @property
-    def is_idempotent_under_mul(self) -> bool:
-        return True
+    is_idempotent_under_mul: ClassVar[bool] = True
 
     def num_binary_equivalent(self) -> int:  # ruff: ignore[no-self-use]
         return 1
@@ -643,13 +641,32 @@ class BinaryVariable(BaseVariable):
 
 @yaml.register_class
 class SpinVariable(BaseVariable):
-    """Spin decision variable restricted to ``{-1, 1}``."""
+    """Spin decision variable restricted to ``{-1, 1}``.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.core.variables import SpinVariable
+
+            s = SpinVariable("s")
+    """
 
     def __init__(self, label: str) -> None:
         super().__init__(label=label, domain=Domain.SPIN, bounds=(-1, 1))
 
     def num_binary_equivalent(self) -> int:  # ruff: ignore[no-self-use]
         return 1
+
+    def to_binary(self) -> Expression:
+        """Encode the spin as ``2 * b - 1`` over a binary variable named like any other encoding.
+
+        The encoding is exact and needs no penalty: ``b = 0`` maps the spin to ``-1`` and ``b = 1``
+        maps it to ``+1``, so every binary assignment is a valid spin assignment.
+
+        Returns:
+            Expression: an equivalent expression over a single binary variable.
+        """
+        return 2 * BinaryVariable(f"{self.label}(0)") - 1
 
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         raise NotImplementedError
@@ -855,9 +872,7 @@ class Parameter(BaseVariable):
         self._trainable = trainable
         self.set_bounds(bounds[0], bounds[1])
 
-    @property
-    def is_parameter(self) -> bool:
-        return True
+    is_parameter: ClassVar[bool] = True
 
     @property
     def value(self) -> RealNumber:

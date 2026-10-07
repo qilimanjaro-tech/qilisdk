@@ -250,7 +250,11 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
             missing_by_group.append((g, unmet))
 
         if satisfied_group is None:
-            logger.warning("[Optionals] Optional feature {} unavailable, no dependency group satisfied", feature.name)
+            logger.warning(
+                "[Optionals] Optional feature {} unavailable, unsatisfied requirements {}",
+                feature.name,
+                " or ".join(str(unmet) for _, unmet in missing_by_group) or "none declared",
+            )
             all_unmet = [requirement for _, unmet in missing_by_group for requirement in unmet]
             stubs: dict[str, Any] = {s.name: make_stub(s.name, unmet=all_unmet) for s in feature.symbols}
             return ImportedFeature(name=feature.name, symbols=stubs)

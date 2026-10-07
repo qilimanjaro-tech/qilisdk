@@ -123,6 +123,15 @@ def test_addition(hamiltonian: Hamiltonian, expected_hamiltonian: Hamiltonian):
     assert hamiltonian == expected_hamiltonian
 
 
+def test_sum_matches_chained_addition():
+    p = Parameter("p", 1.0)
+    terms = [Z(0) * Z(1), 2 * X(0), 3, Z(0), p * Y(1), Z(0) * Z(1)]
+    total = Hamiltonian.sum(terms)
+    assert total == Z(0) * Z(1) + 2 * X(0) + 3 + Z(0) + p * Y(1) + Z(0) * Z(1)
+    assert total.get_parameter_names() == ["p"]
+    assert Hamiltonian.sum([]) == Hamiltonian()
+
+
 def test_invalid_addition_operation():
     with pytest.raises(InvalidHamiltonianOperation, match=r"Invalid addition between Hamiltonian and str"):
         _ = (Z(0) + Z(2)) + "Z"

@@ -54,6 +54,35 @@ DimensionOverride = Callable[[Dimension], Dimension]
 """Callable that takes a Dimension and returns a transformed Dimension."""
 
 
+def _secondary_axis_limits(
+    primary: np.ndarray, secondary: np.ndarray, primary_limits: tuple[float, float]
+) -> tuple[float, float]:
+    """Map the limits of a primary axis onto the values of its secondary twin axis.
+
+    A twin axis relabels the very same positions as the primary axis, so its limits are the
+    secondary values at the primary limits, taken from the linear map anchored on the first
+    and last swept point. Using the smallest and largest secondary values instead would flip
+    a secondary axis that runs opposite to the primary one, for example a current ramped down
+    while the bias it sets is swept up.
+
+    Args:
+        primary (np.ndarray): Values swept along the primary axis.
+        secondary (np.ndarray): Values swept along the secondary axis, paired point by point
+            with `primary`.
+        primary_limits (tuple[float, float]): Limits currently displayed by the primary axis.
+
+    Returns:
+        tuple[float, float]: The limits to display on the secondary axis.
+    """
+    first, last = float(primary[0]), float(primary[-1])
+    secondary_first, secondary_last = float(secondary[0]), float(secondary[-1])
+    if first == last:
+        return secondary_first, secondary_last
+    slope = (secondary_last - secondary_first) / (last - first)
+    low, high = primary_limits
+    return secondary_first + (low - first) * slope, secondary_first + (high - first) * slope
+
+
 @yaml.register_class
 class ExperimentResult(FunctionalResult):
     """Base class for storing and visualizing experiment results.
@@ -184,15 +213,18 @@ class ExperimentResult(FunctionalResult):
             ax1.plot(x_values[0], s21, "--", color="grey", linewidth=0.8, zorder=1)
         ax1.plot(x_values[0], s21, ".")
 
+        if fit:
+            self.add_fit(x_values[0], s21, initial_guess=initial_guess)
+
         if len(x_labels) > 1:
             ax2 = ax1.twiny()
             ax2.set_xlabel(x_labels[1])
-            ax2.set_xlim(min(x_values[1]), max(x_values[1]))
-            ax2.set_xticks(np.linspace(min(x_values[1]), max(x_values[1]), num=6))
+            secondary_x_limits = _secondary_axis_limits(x_values[0], x_values[1], ax1.get_xlim())
+            ax2.set_xlim(secondary_x_limits)
+            ax2.set_xticks(np.linspace(*secondary_x_limits, num=6))
             ax2.ticklabel_format(axis="x", style="sci", scilimits=(-3, 3))
 
-        if fit:
-            self.add_fit(x_values[0], s21, initial_guess=initial_guess)
+        fig.tight_layout()
 
         if save_to:
             self._save_figure(fig, save_to)
@@ -235,37 +267,37 @@ class ExperimentResult(FunctionalResult):
         z_dim = z_override(z_dim_input) if z_override else z_dim_input
         z_values = z_dim.values[0]
 
-        x_edges = np.linspace(x_values[0].min(), x_values[0].max(), len(x_values[0]) + 1)
-        y_edges = np.linspace(y_values[0].min(), y_values[0].max(), len(y_values[0]) + 1)
-
         fig, ax1 = plt.subplots()
         ax1.set_title(f"{self.plot_title} - Qubit {self.qubit}")
         ax1.set_xlabel(x_labels[0])
         ax1.set_ylabel(y_labels[0])
         ax1.ticklabel_format(axis="both", style="sci", scilimits=(-3, 3))
 
-        mesh = ax1.pcolormesh(x_edges, y_edges, z_values.T, cmap="viridis", shading="auto")
+        mesh = ax1.pcolormesh(x_values[0], y_values[0], z_values.T, cmap="viridis", shading="nearest")
         colorbar_label = z_dim.labels[0]
         fig.colorbar(mesh, ax=ax1, label=colorbar_label)
 
         if len(x_labels) > 1:
             ax2 = ax1.twiny()
             ax2.set_xlabel(x_labels[1])
-            ax2.set_xlim(min(x_values[1]), max(x_values[1]))
-            ax2.set_xticks(np.linspace(min(x_values[1]), max(x_values[1]), num=6))
+            secondary_x_limits = _secondary_axis_limits(x_values[0], x_values[1], ax1.get_xlim())
+            ax2.set_xlim(secondary_x_limits)
+            ax2.set_xticks(np.linspace(*secondary_x_limits, num=6))
             ax2.ticklabel_format(axis="x", style="sci", scilimits=(-3, 3))
 
         if len(y_labels) > 1:
             ax3 = ax1.twinx()
             ax3.set_ylabel(y_labels[1])
-            ax3.set_ylim(min(y_values[1]), max(y_values[1]))
-            ax3.set_yticks(np.linspace(min(y_values[1]), max(y_values[1]), num=6))
+            secondary_y_limits = _secondary_axis_limits(y_values[0], y_values[1], ax1.get_ylim())
+            ax3.set_ylim(secondary_y_limits)
+            ax3.set_yticks(np.linspace(*secondary_y_limits, num=6))
             ax3.ticklabel_format(axis="y", style="sci", scilimits=(-3, 3))
+
+        fig.tight_layout()
 
         if save_to:
             self._save_figure(fig, save_to)
 
-        plt.tight_layout()
         plt.show()
         plt.close(fig)
 

@@ -441,10 +441,105 @@ def test_circuit_bad_prepend():
 
 def test_circuit_add_not_supported():
     c = Circuit(nqubits=2)
-    new_circuit = c + 5
-    assert isinstance(new_circuit, NotImplementedError)
-    new_circuit = 5 + c
-    assert isinstance(new_circuit, NotImplementedError)
+    with pytest.raises(TypeError):
+        c + 5
+    with pytest.raises(TypeError):
+        5 + c
+
+
+def test_add_operators_do_not_mutate_operands():
+    left = Circuit(nqubits=2)
+    x_gate = X(0)
+    left.add(x_gate)
+
+    right = Circuit(nqubits=2)
+    rz_gate = RZ(1, phi=0.3)
+    right.add(rz_gate)
+
+    combined = left + right
+    assert combined is not left
+    assert combined.gates == [x_gate, rz_gate]
+    assert left.gates == [x_gate]
+    assert right.gates == [rz_gate]
+
+    prepend_gate = RX(0, theta=0.4)
+    prepended = prepend_gate + left
+    assert prepended is not left
+    assert prepended.gates == [prepend_gate, x_gate]
+    assert left.gates == [x_gate]
+
+    appended_gate = X(1)
+    assert (left + appended_gate).gates == [x_gate, appended_gate]
+    assert left.gates == [x_gate]
+
+    # Adding gates to the result leaves the operands alone.
+    combined.add(X(1))
+    assert left.gates == [x_gate]
+    assert right.gates == [rz_gate]
+
+
+def test_copy_is_independent():
+    original = Circuit(nqubits=2)
+    angle = Parameter("angle", 0.5)
+    original.add([X(0), RX(0, theta=angle), RX(1, theta=angle)])
+
+    clone = original.copy()
+    assert clone == original
+    assert clone.get_parameter_names() == original.get_parameter_names()
+    assert all(g1 is not g2 for g1, g2 in zip(clone.gates, original.gates))
+
+    # The parameter shared by both RX gates is still shared inside the copy.
+    assert clone.nparameters == 1
+    clone.set_parameter_values([1.25])
+    assert clone.get_parameter_values() == [1.25]
+    assert original.get_parameter_values() == [0.5]
+    assert angle.value == 0.5
+    assert [g.get_parameter_values() for g in clone.gates] == [[], [1.25], [1.25]]
+
+    clone.add(X(1))
+    assert len(original.gates) == 3
+
+
+def test_append_and_prepend_copies_keep_circuits_independent():
+    source = Circuit(nqubits=1)
+    source.add(RX(0, theta=0.5))
+
+    target = Circuit(nqubits=1)
+    target.append(source.copy())
+    target.set_parameter_values([1.234])
+
+    assert target.gates[0] is not source.gates[0]
+    assert source.get_parameter_values() == [0.5]
+    assert target.get_parameter_values() == [1.234]
+
+
+def test_insert_default_index_appends_in_order():
+    c = Circuit(nqubits=2)
+    x_gate, x2_gate = X(0), X(1)
+    c.add([x_gate, x2_gate])
+
+    rz_gate, rx_gate = RZ(0, phi=0.2), RX(1, theta=0.3)
+    c.insert([rz_gate, rx_gate])
+    assert c.gates == [x_gate, x2_gate, rz_gate, rx_gate]
+
+    single_gate = X(0)
+    c.insert(single_gate)
+    assert c.gates == [x_gate, x2_gate, rz_gate, rx_gate, single_gate]
+
+
+def test_insert_negative_index_keeps_order():
+    c = Circuit(nqubits=2)
+    x_gate, x2_gate = X(0), X(1)
+    c.add([x_gate, x2_gate])
+
+    rz_gate, rx_gate = RZ(0, phi=0.2), RX(1, theta=0.3)
+    c.insert([rz_gate, rx_gate], index=-1)
+    assert c.gates == [x_gate, rz_gate, rx_gate, x2_gate]
+
+    # Negative indices below the start of the circuit clamp to the beginning.
+    first_gate = X(0)
+    c.insert(first_gate, index=-100)
+    assert c.gates == [first_gate, x_gate, rz_gate, rx_gate, x2_gate]
 
 
 def test_circuit_draw_runs(monkeypatch):

@@ -13,6 +13,7 @@
 // limitations under the License.
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 // GCOV_EXCL_BR_START
@@ -44,6 +45,9 @@ class QiliSimConfig {
     bool gpu = false;
     int stabilizer_max_states = 100;
 
+    // Counter of many times we've advanced the seed
+    mutable uint64_t seed_stream = 0;
+
    public:
     // Getters
     int get_stabilizer_max_states() const { return stabilizer_max_states; }
@@ -57,6 +61,7 @@ class QiliSimConfig {
     bool get_store_intermediate_results() const { return store_intermediate_results; }
     int get_num_threads() const { return num_threads; }
     int get_seed() const { return seed; }
+
     double get_atol() const { return atol; }
     int get_max_cache_size() const { return max_cache_size; }
     bool get_normalize_after_gate() const { return normalize_after_each_gate; }
@@ -80,7 +85,10 @@ class QiliSimConfig {
     void set_digital_method(const std::string& value) { digital_method = value; }
     void set_store_intermediate_results(bool value) { store_intermediate_results = value; }
     void set_num_threads(int value) { num_threads = value; }
-    void set_seed(int value) { seed = value; }
+    void set_seed(int value) {
+        seed = value;
+        seed_stream = 0;
+    }
     void set_atol(double value) { atol = value; }
     void set_max_cache_size(int value) { max_cache_size = value; }
     void set_normalize_after_gate(bool value) { normalize_after_each_gate = value; }
@@ -100,6 +108,9 @@ class QiliSimConfig {
 
     // Can be called to validate the config and throw a py error if not
     void validate() const;
+
+    // Advance the seed and return the next one
+    int next_seed() const;
 };
 
 // GCOV_EXCL_BR_STOP

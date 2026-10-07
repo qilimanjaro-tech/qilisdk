@@ -137,6 +137,8 @@ As well as some quantum-specific transformations:
 - :meth:`.anticommutator(other)<qilisdk.core.qtensor.QTensor.anticommutator>`: compute the anticommutator with another operator
 - :meth:`.fidelity(other)<qilisdk.core.qtensor.QTensor.fidelity>`: compute the fidelity between two quantum states
 - :meth:`.probabilities()<qilisdk.core.qtensor.QTensor.probabilities>`: compute the probability distribution of each state in the computational basis
+- :meth:`.sample(nshots)<qilisdk.core.qtensor.QTensor.sample>`: draw measurement samples in the computational basis from a state or a density matrix
+- :meth:`.expectation_value(operator)<qilisdk.core.qtensor.QTensor.expectation_value>`: compute the expectation value of an operator on this state
 - :meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: partial trace
 - :meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`: reset specified qubits to 0
 - :meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias for adjoint
@@ -245,6 +247,17 @@ You can also visualize single-qubit states on the Bloch sphere using :meth:`.dra
 
     state = QTensor.ket(0)
     state.draw()
+
+Single-qubit density matrices can be drawn as well, so one qubit of a larger state can be visualized by first
+reducing it with :meth:`~qilisdk.core.qtensor.QTensor.partial_trace`:
+
+.. code-block:: python
+
+    import numpy as np
+    from qilisdk.core import QTensor
+
+    bell_state = QTensor.ghz(2)
+    bell_state.partial_trace({0}).draw()
 
 The appearance of this plot can be customized using a :class:`~qilisdk.utils.visualization.style.QTensorStyle` object, 
 which allows you to set colors, point density, and other visual elements:
