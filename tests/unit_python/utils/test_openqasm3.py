@@ -1997,7 +1997,7 @@ def test_qasm3_round_trip_preserves_an_adjoint_matrix(gate):
     circuit.add(gate)
     reconstructed = from_qasm3(to_qasm3(circuit))
     assert len(reconstructed.gates) == 1
-    assert np.allclose(reconstructed.gates[0].matrix, gate.matrix)
+    assert np.allclose(reconstructed.gates[0].matrix.dense(), gate.matrix.dense())
 
 
 def test_to_qasm3_raises_on_gates_it_cannot_name():
@@ -2041,7 +2041,7 @@ def test_qasm3_round_trip_of_our_own_gates(gate, expected_line):
     assert len(reconstructed.gates) == 1
     assert reconstructed.gates[0].name == gate.name
     assert reconstructed.gates[0].qubits == gate.qubits
-    assert np.allclose(reconstructed.gates[0].matrix, gate.matrix)
+    assert np.allclose(reconstructed.gates[0].matrix.dense(), gate.matrix.dense())
 
 
 @pytest.mark.parametrize("qasm_name", ["ccx", "toffoli"])
