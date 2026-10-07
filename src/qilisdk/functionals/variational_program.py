@@ -37,7 +37,21 @@ class VariationalProgram(Functional):
     Example:
         .. code-block:: python
 
+            from qilisdk.analog import Z
+            from qilisdk.backends import QiliSim
+            from qilisdk.cost_functions import ObservableCostFunction
+            from qilisdk.digital import QAOA
+            from qilisdk.functionals import DigitalPropagation, VariationalProgram
+            from qilisdk.optimizers import SciPyOptimizer
+            from qilisdk.readout import Readout
+
+            hamiltonian = Z(0) * Z(1) + Z(0)
+            functional = DigitalPropagation(QAOA(problem_hamiltonian=hamiltonian, layers=1))
+            optimizer = SciPyOptimizer(method="cobyla")
+            cost_function = ObservableCostFunction(hamiltonian)
+
             program = VariationalProgram(functional, optimizer, cost_function)
+            result = QiliSim().execute(program, readout=Readout().with_sampling(nshots=1000))
     """
 
     def __init__(

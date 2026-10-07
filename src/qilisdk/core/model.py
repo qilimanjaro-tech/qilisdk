@@ -167,8 +167,7 @@ class Constraint:
     Example:
         .. code-block:: python
 
-            from qilisdk.core.model import Constraint
-            from qilisdk.core.variables import BinaryVariable, LEQ
+            from qilisdk.core import LEQ, BinaryVariable, Constraint
 
             x = BinaryVariable("x")
             constraint = Constraint("limit", LEQ(x, 1))
