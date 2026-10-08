@@ -29,6 +29,9 @@ from pydantic import ConfigDict as PydanticConfigDict
 ConfigValue = bool | int | float | str
 SolverConfigDict = dict[str, ConfigValue]
 
+# Limit int fields, since if given a value too big they can cause a seg fault on the C++ side
+INT32_MAX = 2**31 - 1
+
 
 class BaseSimulatorConfig(BaseModel, ABC):
     """Abstract base class for all QiliSim configuration sections."""
@@ -72,6 +75,7 @@ class MonteCarloConfig(BaseSimulatorConfig):
     trajectories: int = Field(
         default=100,
         gt=0,
+        le=INT32_MAX,
         description="Number of Monte Carlo trajectories to simulate when Monte Carlo mode is enabled.",
     )
 
@@ -112,11 +116,13 @@ class AnalogMethod(BaseSimulatorConfig):
     arnoldi_dim: int = Field(
         default=10,
         gt=0,
+        le=INT32_MAX,
         description="Dimension of the Arnoldi Krylov subspace used when `evolution_method='arnoldi'`.",
     )
     num_arnoldi_substeps: int = Field(
         default=1,
         gt=0,
+        le=INT32_MAX,
         description="Number of integration substeps per schedule step when using the Arnoldi method.",
     )
     adaptive_tol: float = Field(
@@ -127,16 +133,19 @@ class AnalogMethod(BaseSimulatorConfig):
     variational_shots: int = Field(
         default=100,
         gt=0,
+        le=INT32_MAX,
         description="Number of shots to use when estimating expectation values for the variational optimization when `evolution_method='variational_exponential'`.",
     )
     variational_warmups: int = Field(
         default=10,
         ge=0,
+        le=INT32_MAX,
         description="Number of warmup iterations to perform before collecting samples for the variational optimization when `evolution_method='variational_exponential'`.",
     )
     variational_order: int = Field(
         default=2,
         gt=0,
+        le=INT32_MAX,
         description="Order of the polynomial expansion used in the variational ansatz when `evolution_method='variational_exponential'`.",
     )
 
@@ -264,7 +273,7 @@ class ExecutionConfig(BaseSimulatorConfig):
         num_threads (int): Number of CPU threads used for simulation. If
             set to ``0``, all available cores are selected. Defaults to
             ``0``.
-        seed (int | None): Random seed used by the simulator. If ``None``,
+        seed (int | None): Random seed used by the simulator, in ``[0, 2**31 - 1]``. If ``None``,
             a random seed is generated. Defaults to ``None``. Each execution
             derives its own sub-seed from this root, so repeated executions on
             one backend give new randomness (although still reproducible for a given initial seed).
@@ -277,13 +286,15 @@ class ExecutionConfig(BaseSimulatorConfig):
     num_threads: int = Field(
         default=0,
         ge=0,
+        le=INT32_MAX,
         description=("Number of CPU threads used for simulation. If set to 0, all available cores are selected."),
     )  # 0 means "use all cores"
     seed: int | None = Field(
         default=None,
         ge=0,
+        le=INT32_MAX,
         description=(
-            "Initial random seed used by the simulator. If `None`, a random seed is generated. Each execution derives its own sub-seed from this."
+            f"Initial random seed used by the simulator, between 0 and {INT32_MAX}. If `None`, a random seed is generated. Each execution derives its own sub-seed from this."
         ),
     )
     # None means Monte-Carlo disabled
@@ -390,6 +401,7 @@ class DigitalMethod(BaseSimulatorConfig):
     max_cache_size: int = Field(
         default=1000,
         ge=0,
+        le=INT32_MAX,
         description="Maximum number of cached gate representations used by the digital simulator.",
     )
     normalize_after_each_gate: bool = Field(
@@ -407,6 +419,7 @@ class DigitalMethod(BaseSimulatorConfig):
     max_fused_qubits: int = Field(
         default=0,
         ge=0,
+        le=INT32_MAX,
         description="Maximum number of qubits a single fused block may span. 0 (the default) selects the depth automatically from the qubit count.",
     )
     matrix_free: bool = Field(
@@ -415,7 +428,9 @@ class DigitalMethod(BaseSimulatorConfig):
     )
     stabilizer_max_states: int = Field(
         default=100,
-        description="Maximum number of stabilizer states to track when using the stabilizer digital simulation method. Set to zero or less for unlimited.",
+        ge=0,
+        le=INT32_MAX,
+        description="Maximum number of stabilizer states to track when using the stabilizer digital simulation method. Set to zero for unlimited.",
     )
 
     def get_config(self) -> SolverConfigDict:
@@ -484,7 +499,7 @@ class DigitalMethod(BaseSimulatorConfig):
         """Return a stabilizer-based simulation configuration.
 
         Args:
-            max_states (int): Maximum number of stabilizer states to track. Set to zero or less for unlimited.
+            max_states (int): Maximum number of stabilizer states to track. Set to zero for unlimited.
         """
         return DigitalMethod(
             digital_method="stabilizer",

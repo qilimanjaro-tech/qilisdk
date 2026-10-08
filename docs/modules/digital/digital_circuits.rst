@@ -158,6 +158,20 @@ The plot can also be saved to a file by providing a filepath to the draw method:
     # Save as SVG (use .png, .pdf, etc. as needed)
     circuit.draw(filepath="my_circuit.svg")
 
+By default, long circuits are wrapped onto multiple rows, to customize this behavior you can use the ``fold`` parameter in the :class:`~qilisdk.utils.visualization.style.CircuitStyle`:
+
+.. code-block:: python
+
+    from qilisdk.digital import Circuit, X
+    from qilisdk.utils.visualization import CircuitStyle
+
+    circuit = Circuit(3)
+    for _ in range(30):
+        circuit.add(X(0))
+
+    # Start a new row every 10 layers, and leave more room between the rows
+    circuit.draw(style=CircuitStyle(fold=10, row_separation=1.5))
+
 Custom styling with :class:`~qilisdk.utils.visualization.style.CircuitStyle`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
