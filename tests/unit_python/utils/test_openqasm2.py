@@ -705,7 +705,7 @@ def test_qasm2_round_trip_preserves_an_adjoint_matrix(gate):
     circuit.add(gate)
     reconstructed = from_qasm2(to_qasm2(circuit))
     assert len(reconstructed.gates) == 1
-    assert np.allclose(reconstructed.gates[0].matrix, gate.matrix)
+    assert np.allclose(reconstructed.gates[0].matrix.dense(), gate.matrix.dense())
 
 
 @pytest.mark.parametrize(
@@ -740,7 +740,7 @@ def test_from_qasm2_rejects_an_unparseable_gate_name():
 def test_from_qasm2_reads_dagger_gate_names(qasm_name, gate):
     circuit = from_qasm2("\n".join(["OPENQASM 2.0;", "qreg q[1];", f"{qasm_name} q[0];"]))
     assert len(circuit.gates) == 1
-    assert np.allclose(circuit.gates[0].matrix, Adjoint(gate).matrix)
+    assert np.allclose(circuit.gates[0].matrix.dense(), Adjoint(gate).matrix.dense())
 
 
 # --- Gates of our own that could not be re-imported (SDK-455) ---

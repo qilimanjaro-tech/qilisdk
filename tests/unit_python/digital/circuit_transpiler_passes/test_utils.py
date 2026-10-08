@@ -15,6 +15,7 @@
 import numpy as np
 import pytest
 
+from qilisdk.core import QTensor
 from qilisdk.digital.gates import Gate
 
 from .utils import (
@@ -35,8 +36,8 @@ class FakeGate(Gate):
         self._qubits = qubits
 
     @property
-    def matrix(self) -> np.ndarray:
-        return self._matrix
+    def matrix(self) -> QTensor:
+        return QTensor(self._matrix)
 
     @property
     def qubits(self) -> tuple[int, ...]:
