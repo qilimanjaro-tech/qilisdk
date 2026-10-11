@@ -48,6 +48,7 @@ class NoiseModelCpp {
     void add_kraus_operators_per_gate_qubit(const std::string& gate_name, int qubit, const std::vector<SparseMatrix>& Ks);
     void add_readout_error_global(double p01, double p10);
     void add_readout_error_per_qubit(int qubit, double p01, double p10);
+    void extend_register(int n_extra_qubits);
 
     const std::vector<SparseMatrix>& get_jump_operators() const;
     const std::vector<std::vector<double>>& get_jump_rate_series() const;

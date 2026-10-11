@@ -21,6 +21,7 @@ from loguru import logger
 
 from qilisdk.digital import Gate
 
+from .environment_noise import EnvironmentNoise
 from .noise import Noise
 from .noise_config import NoiseConfig
 from .parameter_perturbation import ParameterPerturbation
@@ -77,6 +78,15 @@ class NoiseModel:
             list[Noise]: Noise sources applied to all operations.
         """
         return self._global_noise
+
+    @property
+    def non_markovian_noise(self) -> list[EnvironmentNoise]:
+        """Return the non-Markovian noise sources, which cannot be applied as independent per-gate channels.
+
+        Returns:
+            list[EnvironmentNoise]: The non-Markovian noise sources in the global noise.
+        """
+        return [noise for noise in self._global_noise if isinstance(noise, EnvironmentNoise)]
 
     @property
     def per_qubit_noise(self) -> dict[Qubit, list[Noise]]:

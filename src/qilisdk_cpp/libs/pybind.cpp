@@ -40,6 +40,7 @@ py::object SupportsStaticLindblad;
 py::object SupportsTimeDerivedKraus;
 py::object SupportsTimeDerivedLindblad;
 py::object ReadoutAssignment;
+py::object EnvironmentNoise;
 py::object NoiseConfig;
 py::object Circuit;
 py::object Schedule;
@@ -85,6 +86,7 @@ void initialize_all_pybind_types() {
     SupportsTimeDerivedKraus = py::module_::import("qilisdk.noise.protocols").attr("SupportsTimeDerivedKraus");
     SupportsTimeDerivedLindblad = py::module_::import("qilisdk.noise.protocols").attr("SupportsTimeDerivedLindblad");
     ReadoutAssignment = py::module_::import("qilisdk.noise.readout_assignment").attr("ReadoutAssignment");
+    EnvironmentNoise = py::module_::import("qilisdk.noise.environment_noise").attr("EnvironmentNoise");
     NoiseConfig = py::module_::import("qilisdk.noise.noise_config").attr("NoiseConfig");
     initialize_external_pybind_types();
 }
@@ -149,6 +151,7 @@ void finalize_all_pybind_types() {
     SupportsTimeDerivedKraus = py::object();
     SupportsTimeDerivedLindblad = py::object();
     ReadoutAssignment = py::object();
+    EnvironmentNoise = py::object();
     NoiseConfig = py::object();
     numpy_array = py::object();
     numpy_array_type = py::object();
