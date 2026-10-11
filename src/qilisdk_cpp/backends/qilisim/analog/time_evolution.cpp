@@ -431,7 +431,7 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     }
 }
 
-void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, QiliSimConfig& config) {
+void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, QiliSimConfig& config, std::vector<ExponentialAnsatz>& intermediate_states) {
     /*
     Execute an approximate time evolution functional using a variational approach with an exponential ansatz.
     The state at each point is represented as the exponential of a weighted sum of Pauli strings acting on the + state.
@@ -442,6 +442,7 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
         parameters_list (std::vector<std::vector<double>>): The list of parameter values for each Hamiltonian term at each time step.
         step_list (std::vector<double>): The list of time steps.
         config (QiliSimConfig&): Configuration parameters for the time evolution.
+        intermediate_states (std::vector<ExponentialAnsatz>&): Output parameter to hold the ansatz after each time step if requested.
     */
 
     // Set the number of threads
@@ -462,9 +463,15 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
 
     // Fixed-step RK4 loop
     for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+        // Run the step
         double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
         double dt = step_list[step_ind] - t_start;
         iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, config.get_gpu());
+
+        // Store intermediate states if requested
+        if (config.get_store_intermediate_results()) {
+            intermediate_states.push_back(rho_t);
+        }
     }
 }
 

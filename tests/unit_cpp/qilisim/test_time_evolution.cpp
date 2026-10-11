@@ -936,19 +936,33 @@ class TimeEvolutionVariationalTest : public ::testing::Test {
 
 TEST_F(TimeEvolutionVariationalTest, DoesNotThrowForValidInput) {
     ExponentialAnsatz rho_t(1, 1, 50, 0);
-    EXPECT_NO_THROW(time_evolution_variational_exponential(rho_t, hamiltonians, params, step_list, config));
+    std::vector<ExponentialAnsatz> intermediates;
+    EXPECT_NO_THROW(time_evolution_variational_exponential(rho_t, hamiltonians, params, step_list, config, intermediates));
+    EXPECT_TRUE(intermediates.empty());
 }
 
 TEST_F(TimeEvolutionVariationalTest, TermCountUnchangedAfterEvolution) {
     ExponentialAnsatz rho_t(1, 1, 50, 0);
     size_t initial_terms = rho_t.get_terms().size();
-    time_evolution_variational_exponential(rho_t, hamiltonians, params, step_list, config);
+    std::vector<ExponentialAnsatz> intermediates;
+    time_evolution_variational_exponential(rho_t, hamiltonians, params, step_list, config, intermediates);
     EXPECT_EQ(rho_t.get_terms().size(), initial_terms);
 }
 
 TEST_F(TimeEvolutionVariationalTest, EmptyHamiltonianListThrows) {
     ExponentialAnsatz rho_t(1, 1, 50, 0);
-    EXPECT_ANY_THROW(time_evolution_variational_exponential(rho_t, {}, {}, {}, config));
+    std::vector<ExponentialAnsatz> intermediates;
+    EXPECT_ANY_THROW(time_evolution_variational_exponential(rho_t, {}, {}, {}, config, intermediates));
+}
+
+TEST_F(TimeEvolutionVariationalTest, StoresOneIntermediateAnsatzPerStep) {
+    config.set_store_intermediate_results(true);
+    ExponentialAnsatz rho_t(1, 1, 50, 0);
+    std::vector<ExponentialAnsatz> intermediates;
+    time_evolution_variational_exponential(rho_t, hamiltonians, params, step_list, config, intermediates);
+    ASSERT_EQ(intermediates.size(), step_list.size());
+    // The last intermediate is the final state, so its terms must match those of rho_t
+    EXPECT_EQ(intermediates.back().get_terms().size(), rho_t.get_terms().size());
 }
 
 TEST_F(TimeEvolutionTest, TimeDependentRateScalingDense) {
@@ -988,7 +1002,8 @@ TEST_F(TimeEvolutionVariationalTest, AnsatzParametersComeFromVariationalConfig) 
     config.set_num_monte_carlo_trajectories(999);  // must NOT leak into the ansatz shots
 
     ExponentialAnsatz rho_t(1, 1, 50, 0);
-    time_evolution_variational_exponential(rho_t, hamiltonians, params, step_list, config);
+    std::vector<ExponentialAnsatz> intermediates;
+    time_evolution_variational_exponential(rho_t, hamiltonians, params, step_list, config, intermediates);
 
     EXPECT_EQ(rho_t.get_shots(), 37);
     EXPECT_EQ(rho_t.get_warmups(), 3);

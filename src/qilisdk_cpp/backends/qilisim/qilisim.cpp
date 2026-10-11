@@ -266,10 +266,20 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         }
 
         // Run the evolution
-        time_evolution_variational_exponential(rho_t, hamiltonians, parameters_list, step_list, config);
+        std::vector<ExponentialAnsatz> intermediate_states;
+        time_evolution_variational_exponential(rho_t, hamiltonians, parameters_list, step_list, config, intermediate_states);
 
         // Construct the result object
         py::object result = construct_result_object(rho_t, readout, n_qubits);
+
+        // If we have intermediates, process them too
+        if (config.get_store_intermediate_results()) {
+            py::list inter_results;
+            for (const auto& state_intermediate : intermediate_states) {
+                inter_results.append(construct_result_object(state_intermediate, readout, n_qubits));
+            }
+            return FunctionalResult("readout_results"_a = result, "intermediate_results"_a = inter_results);
+        }
         return FunctionalResult("readout_results"_a = result);
 
         // In all of these methods the state is fully stored
