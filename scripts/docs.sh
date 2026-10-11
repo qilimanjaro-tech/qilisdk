@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # --------------------------------------------------------------------------
-# This script goes through every file in the docs directory and scrapes all Python code blocks,
-# then runs them to make sure they work and are up to date.
+# This script goes through every file in the docs directory, plus every docstring in the source,
+# and scrapes all Python code blocks, then runs them to make sure they work and are up to date.
 # --------------------------------------------------------------------------
 # Time estimate: 1 minute
 # --------------------------------------------------------------------------
@@ -28,11 +28,12 @@ cd .docs_test
 TMPFILE=$(mktemp /tmp/docs_test_XXXXXX.py)
 trap "rm -f $TMPFILE" EXIT
 
-for file in $( { find ../../docs/ -name "*.rst"; find ../../changes/ -name "*.md"; } | sort ); do
+for file in $( { find ../../docs/ -name "*.rst"; find ../../changes/ -name "*.md"; find ../../src/ -name "*.py"; } | sort ); do
 
     # Use Python to extract and concatenate all Python code blocks, then run them.
     # RST: code-block:: python, skip with '.. SKIP' on the preceding line.
     # MD:  ```python fenced blocks, skip with '<!-- SKIP -->' on the preceding line.
+    # PY:  the RST rules applied to each docstring, plus '>>>' doctest lines; each docstring runs in a fresh namespace.
     # Also resolves .. include:: directives recursively for RST files.
     python3 - "$file" > "$TMPFILE" <<'PYEOF'
 import re, sys
@@ -49,13 +50,16 @@ def extract_blocks_rst(filename, seen=None):
 
     with open(filename) as f:
         lines = f.readlines()
+    return extract_blocks_rst_lines(lines, os.path.dirname(filename), seen)
+
+def extract_blocks_rst_lines(lines, base_dir, seen):
     blocks = []
     i = 0
     while i < len(lines):
         # Resolve .. include:: directives recursively
         inc = re.match(r'^\s*\.\. include::\s+(.+?)\s*$', lines[i])
         if inc:
-            inc_path = os.path.join(os.path.dirname(filename), inc.group(1))
+            inc_path = os.path.join(base_dir, inc.group(1))
             if os.path.isfile(inc_path):
                 blocks.extend(extract_blocks_rst(inc_path, seen))
             i += 1
@@ -121,21 +125,64 @@ def extract_blocks_md(filename):
         i += 1
     return blocks
 
+def extract_blocks_doctest(lines):
+    code_lines = []
+    in_example = False
+    for line in lines:
+        m = re.match(r'^\s*>>>(?: (.*))?$', line)
+        cont = re.match(r'^\s*\.\.\.(?: (.*))?$', line)
+        if m:
+            code_lines.append(m.group(1) or '')
+            in_example = True
+        elif cont and in_example:
+            code_lines.append(cont.group(1) or '')
+        else:
+            in_example = False
+    return ['\n'.join(code_lines)] if code_lines else []
+
+def extract_docstrings(filename):
+    import ast
+    with open(filename) as f:
+        tree = ast.parse(f.read())
+    found = []
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        doc = ast.get_docstring(node)
+        if not doc:
+            continue
+        lines = [l + '\n' for l in doc.splitlines()]
+        blocks = extract_blocks_rst_lines(lines, os.path.dirname(filename), set()) + extract_blocks_doctest(lines)
+        if blocks:
+            lineno = node.body[0].lineno
+            found.append((f"{getattr(node, 'name', '<module>')} (line {lineno})", '\n\n'.join(blocks)))
+    return found
+
 def extract(filename):
+    header = "import matplotlib\nmatplotlib.use('Agg')\n"
+    if filename.endswith('.py'):
+        docstrings = extract_docstrings(filename)
+        if docstrings:
+            print(header + f"import sys, traceback\nfailed = False\nfor name, code in {docstrings!r}:\n"
+                  f"    try:\n        exec(compile(code, {filename!r} + ':' + name, 'exec'), {{'__name__': '__main__'}})\n"
+                  "    except BaseException:\n        failed = True\n        print(f'In docstring of {name}:')\n        traceback.print_exc(file=sys.stdout)\n"
+                  "if failed:\n    raise SystemExit(1)")
+        return
     if filename.endswith('.md'):
         blocks = extract_blocks_md(filename)
     else:
         blocks = extract_blocks_rst(filename)
-    header = "import matplotlib\nmatplotlib.use('Agg')\n"
     print(header + '\n\n'.join(blocks))
 
 extract(sys.argv[1])
 PYEOF
 
-    # Skip files with no Python code blocks
+    # Skip files with no Python code blocks (silently for source files, most of which have none)
     if [[ ! -s "$TMPFILE" ]]; then
-        echo "SKIP $file (no Python code blocks)"
-        SKIP=$((SKIP + 1))
+        if [[ "$file" != *.py ]]; then
+            echo "SKIP $file (no Python code blocks)"
+            SKIP=$((SKIP + 1))
+        fi
         continue
     fi
 
@@ -153,7 +200,7 @@ PYEOF
 done
 
 echo ""
-echo "Note: skip a code block by adding '.. SKIP' immediately before a '.. code-block:: python' directive (RST), or '<!-- SKIP -->' immediately before a '\`\`\`python' fence (MD)."
+echo "Note: skip a code block by adding '.. SKIP' immediately before a '.. code-block:: python' directive (RST and docstrings), or '<!-- SKIP -->' immediately before a '\`\`\`python' fence (MD)."
 echo "Results: $PASS passed, $FAIL failed, $SKIP skipped"
 
 cd ../..

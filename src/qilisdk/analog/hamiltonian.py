@@ -335,10 +335,14 @@ class Hamiltonian(Parameterizable):
 
                 .. code-block:: python
 
-                    {
-                        (Z(0), Y(1)): 1.0,
-                        (X(1),): 1j,
-                    }
+                    from qilisdk.analog import Hamiltonian, PauliX, PauliY, PauliZ
+
+                    hamiltonian = Hamiltonian(
+                        {
+                            (PauliZ(0), PauliY(1)): 1.0,
+                            (PauliX(1),): 1j,
+                        }
+                    )
 
                 Defaults to None, which creates an empty Hamiltonian.
 
