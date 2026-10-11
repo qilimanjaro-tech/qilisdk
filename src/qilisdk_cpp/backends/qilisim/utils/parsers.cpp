@@ -46,9 +46,13 @@ py::object construct_result_object(const StabilizerStateSum& state, const py::ob
         py::value_error: If an unsupported readout method is provided.
     */
     state.set_seed(static_cast<uint64_t>(config.next_seed()));
+
+    // For each readout type
     py::list results;
     for (py::handle ro_handle : readout) {
         py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
+
+        // For the sampling readout we use the state's .sample() method
         if (py::isinstance(ro, SamplingReadout)) {
             int nshots = ro.attr("nshots").cast<int>();
             bool expand_samples = ro.attr("expand_samples").cast<bool>();
@@ -62,19 +66,33 @@ py::object construct_result_object(const StabilizerStateSum& state, const py::ob
                 qubits_to_measure_list.append(i);
             }
             results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples_py, "qubits_to_measure"_a = qubits_to_measure_list, "nqubits"_a = n_qubits, "expand_samples"_a = expand_samples));
+
+            // For the expectation readout we use the state's .expectation_value() method for each observable
+        } else if (py::isinstance(ro, ExpectationReadoutResult)) {
+            throw py::value_error("ExpectationReadoutResult is not a valid readout type. Please use ExpectationReadout instead.");
         } else if (py::isinstance(ro, ExpectationReadout)) {
+            int nshots = ro.attr("nshots").cast<int>();
             std::vector<std::complex<double>> expectations;
-            // parse the observables for which we need to compute the expectation values
             std::vector<MatrixFreeHamiltonian> observables = parse_observables_matrix_free(n_qubits, ro.attr("observables"));
             for (const auto& obs : observables) {
-                double exp_val = state.expectation_value(obs);
-                expectations.push_back(exp_val);
+                if (nshots > 0) {
+                    std::vector<std::pair<Complex, double>> terms;
+                    terms.reserve(obs.size());
+                    for (const auto& [pauli, coefficient] : obs.get_operators()) {
+                        terms.push_back({coefficient, state.expectation_value(MatrixFreeHamiltonian(n_qubits, pauli))});
+                    }
+                    expectations.push_back(sample_expectation_value(terms, nshots, config.next_seed()));
+                } else {
+                    expectations.push_back(state.expectation_value(obs));
+                }
             }
             py::list expectations_py;
             for (const auto& exp_val : expectations) {
                 expectations_py.append(py::cast(exp_val));
             }
-            results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py));
+            results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py, "nshots"_a = nshots));
+
+            // For the state tomography readout we use the state's .as_dense() method to get the final state vector
         } else if (py::isinstance(ro, StateTomographyReadout)) {
             std::string method = ro.attr("method").cast<std::string>();
             if (method != "exact") {
@@ -83,6 +101,8 @@ py::object construct_result_object(const StabilizerStateSum& state, const py::ob
             DenseMatrix final_state_dense = state.as_dense();
             py::array final_state_numpy = to_numpy(final_state_dense);
             results.append(StateTomographyReadoutResult("state"_a = QTensor(final_state_numpy)));
+
+            // Otherwise we throw an error
         } else {
             std::string ro_repr = py::repr(ro).cast<std::string>();
             throw py::value_error("Unsupported Readout Method for stabilizer backend: " + ro_repr);
@@ -92,23 +112,41 @@ py::object construct_result_object(const StabilizerStateSum& state, const py::ob
 }
 
 namespace {
-// QSDK-05 / QSDK-06 (CWE-125 / CWE-787): reject out-of-range qubit indices at
-// the C++ trust boundary. The Python layer only guards the upper bound and is
-// bypassed by deserialization (ruamel reconstructs Circuit / Gate / Pauli
-// objects without re-running __init__), so an unvalidated index (e.g. -1)
-// otherwise reaches the matrix-free kernels (undefined shift -> wild mask ->
-// out-of-bounds state access) and the measurement vector (out-of-bounds write).
+
 inline void validate_qubit_index(int qubit, int nqubits, const char* context) {
+    /*
+    Validate that a qubit index is within the valid range for a given number of qubits.
+
+    Args:
+        qubit (int): The qubit index to validate.
+        nqubits (int): The total number of qubits in the system.
+        context (const char*): A string describing the context in which the validation is being performed, for error messages.
+
+    Raises:
+        py::value_error: If the qubit index is out of range [0, nqubits).
+    */
     if (qubit < 0 || qubit >= nqubits) {
         throw py::value_error("Qubit index " + std::to_string(qubit) + " is out of range [0, " + std::to_string(nqubits) + ") for " + context + ".");
     }
 }
 
-// Build the per-step sqrt(rate(t)) multiplier used to scale a base jump operator across an analog
-// evolution. A constant rate yields a constant series; a callable rate(t) is evaluated at every time
-// point in step_list. Validates that each rate value is a finite, non-negative real number (negative
-// rates are unphysical and would make sqrt(rate) NaN, silently poisoning the evolution).
 inline std::vector<double> make_sqrt_rate_series(py::handle rate, const std::vector<double>& step_list, double atol) {
+    /*
+    Build the per-step sqrt(rate(t)) multiplier used to scale a base jump operator across the evolution.
+    A constant rate yields a constant series; a callable rate(t) is evaluated at every time point in step_list. Validates that each rate value is a finite, non-negative real number (
+    negative rates are unphysical and would make sqrt(rate) NaN, silently poisoning the evolution).
+
+    Args:
+        rate (py::handle): The Lindblad rate, either a constant or a callable function of time.
+        step_list (std::vector<double>&): The list of time points at which to evaluate the rate.
+        atol (double): The absolute tolerance for validating the rate values.
+
+    Returns:
+        std::vector<double>: The series of sqrt(rate(t)) values for each time point in step_list.
+
+    Raises:
+        py::value_error: If the rate is not a finite, non-negative real number at any time point in step_list.
+    */
     if (!PyCallable_Check(rate.ptr())) {
         double value = rate.cast<double>();
         if (!std::isfinite(value) || value < -atol) {
@@ -137,11 +175,21 @@ inline std::vector<double> make_sqrt_rate_series(py::handle rate, const std::vec
     return series;
 }
 
-// Resolve the Lindblad jump operators (base, unscaled) and their per-step sqrt(rate) series for a
-// noise pass. Constant-rate passes use jump_operators_with_rates (rate folded into the operator) and
-// get an empty series; time-dependent passes return the base operators with an explicit series.
-// Throws if the pass carries a time-dependent rate but no time axis (step_list) is available.
 inline void collect_lindblad_jumps(py::handle py_noise_pass, double dt, double atol, const std::vector<double>* step_list, std::vector<SparseMatrix>& jump_operators, std::vector<std::vector<double>>& jump_rate_series) {
+    /*
+    Resolve the Lindblad jump operators and their per-step sqrt(rate) series for a noise pass.
+
+    Args:
+        py_noise_pass (py::handle): The Python object representing the noise pass.
+        dt (double): The time step size for the evolution.
+        atol (double): The absolute tolerance for validating rate values.
+        step_list (const std::vector<double>*): The list of time points at which to evaluate time-dependent rates, or nullptr if not applicable.
+        jump_operators (std::vector<SparseMatrix>&): Output vector to hold the resolved jump operators.
+        jump_rate_series (std::vector<std::vector<double>>&): Output vector to hold the per-step sqrt(rate) series for each jump operator.
+
+    Raises:
+        py::value_error: If a time-dependent Lindblad rate is provided but no step_list is available, or if any rate value is invalid (non-finite or negative).
+    */
     py::object lindblad_gen;
     if (py::isinstance(py_noise_pass, SupportsStaticLindblad)) {
         lindblad_gen = py_noise_pass.attr("as_lindblad")();
@@ -260,7 +308,7 @@ inline double average_trajectory_expectation(const DenseMatrix& trajectories, co
     return total.real();
 }
 
-inline py::list trajectory_expectation_values(const DenseMatrix& trajectories, const py::object& expectation_readout, int n_qubits, double atol) {
+inline py::list trajectory_expectation_values(const DenseMatrix& trajectories, const py::object& expectation_readout, int n_qubits, const QiliSimConfig& config, int nshots) {
     /*
     Compute the expectation values of a list of observables over a Monte Carlo ensemble.
 
@@ -268,19 +316,42 @@ inline py::list trajectory_expectation_values(const DenseMatrix& trajectories, c
         trajectories (DenseMatrix&): The batch of Monte Carlo state vectors (dim x n_trajectories).
         expectation_readout (py::object): The ExpectationReadout object containing the list of observables.
         n_qubits (int): The number of qubits in the circuit.
-        atol (double): Absolute tolerance for checking that the expectation value is real.
+        config (QiliSimConfig&): The simulation configuration, used for the tolerance and the shot seeds.
+        nshots (int): The number of measurements per Pauli term used to estimate each expectation
+            value. If it is zero or negative the exact ensemble average is returned instead.
 
     Returns:
         py::list: The list of average expectation values of the observables over the ensemble.
     */
+    double atol = config.get_atol();
     py::list expectations_py;
     DenseMatrix applied;
     for (py::handle obs_handle : expectation_readout.attr("observables")) {
         py::object obs = py::reinterpret_borrow<py::object>(obs_handle);
         if (py::isinstance(obs, Hamiltonian) || py::isinstance(obs, PauliOperator)) {
             std::vector<MatrixFreeHamiltonian> observable = parse_observables_matrix_free(n_qubits, py::make_tuple(obs));
+
+            // Special path if given an nshots > 0
+            if (nshots > 0) {
+                std::vector<std::pair<Complex, double>> terms;
+                terms.reserve(observable[0].size());
+                for (const auto& [pauli, coefficient] : observable[0].get_operators()) {
+                    MatrixFreeHamiltonian(n_qubits, pauli).apply(trajectories, MatrixFreeApplicationType::Left, applied);
+                    terms.push_back({coefficient, average_trajectory_expectation(trajectories, applied, atol)});
+                }
+                Complex sampled = sample_expectation_value(terms, nshots, config.next_seed());
+                if (std::abs(sampled.imag()) > atol) {
+                    throw py::value_error("Encountered an imaginary expectation value while computing the expectation values, try reducing the total tolerance or improving simulation precision.");
+                }
+                expectations_py.append(py::cast(sampled.real()));
+                continue;
+            }
+
+            // Otherwise we can just apply the observable to the trajectories and compute the average
             observable[0].apply(trajectories, MatrixFreeApplicationType::Left, applied);
+
         } else {
+            // If it's a QTensor rather than a Hamiltonian, we expand it to the full Hilbert space
             py::object expanded = py::isinstance(obs, QTensor) ? obs.attr("expand")(n_qubits) : obs;
             std::vector<SparseMatrix> observable = parse_observables(py::make_tuple(expanded), n_qubits, atol);
             applied = observable[0] * trajectories;
@@ -353,9 +424,19 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
             // If we have an expectation readout, average over the trajectories if we have them,
             // otherwise use the code on the Python side
         } else if (py::isinstance(ro, ExpectationReadout)) {
-            if (state_is_trajectories) {
-                py::list expectations_py = trajectory_expectation_values(state_dense, ro, n_qubits, config.get_atol());
-                results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py, "nshots"_a = ro.attr("nshots")));
+            int nshots = ro.attr("nshots").cast<int>();
+
+            // Check if the ensemble can be sampled, i.e. all observables are Hamiltonians or PauliOperators
+            // If not we default to the density matrix path, which is slower but works for any observable
+            bool ensemble_can_be_sampled = true;
+            if (nshots > 0) {
+                for (py::handle obs_handle : ro.attr("observables")) {
+                    ensemble_can_be_sampled = ensemble_can_be_sampled && (py::isinstance(obs_handle, Hamiltonian) || py::isinstance(obs_handle, PauliOperator));
+                }
+            }
+            if (state_is_trajectories && ensemble_can_be_sampled) {
+                py::list expectations_py = trajectory_expectation_values(state_dense, ro, n_qubits, config, nshots);
+                results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py, "nshots"_a = nshots));
             } else {
                 results.append(ExpectationReadoutResult.attr("from_state")("expectation_readout"_a = py::module_::import("copy").attr("copy")(ro), "state"_a = QTensor(state_numpy())));
             }

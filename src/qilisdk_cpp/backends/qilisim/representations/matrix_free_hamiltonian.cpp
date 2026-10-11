@@ -14,6 +14,7 @@
 
 #include "matrix_free_hamiltonian.h"
 #include <algorithm>
+#include <random>
 #include <unordered_map>
 #if defined(_MSC_VER)
 #include <intrin.h>
@@ -627,6 +628,31 @@ MatrixFreeHamiltonian MatrixFreeHamiltonian::conjugate() const {
         coeff = std::conj(coeff);
     }
     return result;
+}
+
+Complex sample_expectation_value(const std::vector<std::pair<Complex, double>>& terms, int nshots, int seed) {
+    /*
+    Estimate the expectation value of an observable from a finite number of measurements of each of
+    its Pauli terms, given the exact expectation value of every term.
+
+    Args:
+        terms (std::vector<std::pair<Complex, double>>&): The Pauli terms of the observable, each as
+            its coefficient paired with its exact expectation value in the state being measured.
+        nshots (int): The number of measurements taken of each Pauli term.
+        seed (int): The seed of the generator the measurement outcomes are drawn from.
+
+    Returns:
+        Complex: The estimated expectation value of the observable.
+    */
+    std::mt19937 generator(static_cast<std::mt19937::result_type>(seed));
+    Complex expectation = 0.0;
+    for (const auto& [coefficient, term_expectation] : terms) {
+        double prob_plus = std::min(std::max(0.5 * (1.0 + term_expectation), 0.0), 1.0);
+        std::binomial_distribution<int> distribution(nshots, prob_plus);
+        int plus_counts = distribution(generator);
+        expectation += coefficient * (2.0 * double(plus_counts) / double(nshots) - 1.0);
+    }
+    return expectation;
 }
 
 // GCOV_EXCL_BR_STOP
