@@ -98,11 +98,6 @@ TEST(StabilizerStateConstructor, ThrowsWhenTooManyQubits) {
     EXPECT_THROW(StabilizerState{MAX_ROWS_STABILIZER + 1}, std::invalid_argument);
 }
 
-TEST(StabilizerStateAsDense, ThrowsWhenTooManyQubitsToIndex) {
-    EXPECT_THROW(StabilizerState(63).as_dense(), std::invalid_argument);
-    EXPECT_THROW(StabilizerStateSum(63).as_dense(), std::invalid_argument);
-}
-
 // ──────────────────────────────────────────────────────────────────────────────
 // apply_gate: single-qubit Cliffords
 // ──────────────────────────────────────────────────────────────────────────────
@@ -1509,6 +1504,26 @@ TEST(StabilizerState, DroppedGlobalPhase_HighRankDefaultsToOne) {
     }
     cd ph = pre.dropped_global_phase(after, makeGate("X", {}, {0}));
     EXPECT_EQ(ph, cd(1, 0));
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// as_dense: qubit counts too large for a dense statevector must be refused
+// ──────────────────────────────────────────────────────────────────────────────
+
+TEST(StabilizerDense, AsDenseRejectsTooManyQubits) {
+    StabilizerState s(MAX_QUBITS_DENSE_STABILIZER + 1);
+    EXPECT_THROW(s.as_dense(), std::invalid_argument);
+
+    StabilizerStateSum sum(MAX_QUBITS_DENSE_STABILIZER + 1);
+    EXPECT_THROW(sum.as_dense(), std::invalid_argument);
+}
+
+TEST(StabilizerDense, AsDenseSmallStateStillWorks) {
+    StabilizerState s(2);
+    s.apply_gate(makeGate("H", {}, {0}));
+    DenseMatrix v = s.as_dense();
+    EXPECT_EQ(v.rows(), 4);
+    EXPECT_NEAR(std::abs(v(0, 0)), 1.0 / std::sqrt(2.0), 1e-12);
 }
 
 // GCOV_EXCL_BR_STOP

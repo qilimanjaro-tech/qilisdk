@@ -1435,15 +1435,15 @@ DenseMatrix StabilizerState::as_dense() const {
         DenseMatrix: The dense vector representation of the StabilizerState.
 
     Raises:
-        std::invalid_argument: If the state has too many qubits to index densely.
+        std::invalid_argument: If nqubits is too large for a dense statevector.
     */
-    if (nqubits > 62) {
-        throw std::invalid_argument("Cannot convert a " + std::to_string(nqubits) + "-qubit stabilizer state to a dense vector.");
+    if (nqubits > MAX_QUBITS_DENSE_STABILIZER) {
+        throw std::invalid_argument("Stabilizer state of " + std::to_string(nqubits) + " qubits is too big to convert to a dense object.");
     }
-    long dim = 1L << nqubits;
+    int64_t dim = int64_t(1) << nqubits;
     DenseMatrix result(dim, 1);
-    for (long i = 0; i < dim; ++i) {
-        std::string b = std::bitset<MAX_ROWS_STABILIZER>(i).to_string().substr(MAX_ROWS_STABILIZER - nqubits);
+    for (int64_t i = 0; i < dim; ++i) {
+        std::string b = std::bitset<MAX_ROWS_STABILIZER>(uint64_t(i)).to_string().substr(MAX_ROWS_STABILIZER - nqubits);
         result(i, 0) = amplitude(b);
     }
     return result;
@@ -1458,12 +1458,12 @@ DenseMatrix StabilizerStateSum::as_dense() const {
         DenseMatrix: The dense matrix representation of the StabilizerStateSum.
 
     Raises:
-        std::invalid_argument: If the state has too many qubits to index densely.
+        std::invalid_argument: If nqubits is too large for a dense statevector.
     */
-    if (nqubits > 62) {
-        throw std::invalid_argument("Cannot convert a " + std::to_string(nqubits) + "-qubit stabilizer state to a dense vector.");
+    if (nqubits > MAX_QUBITS_DENSE_STABILIZER) {
+        throw std::invalid_argument("Stabilizer state of " + std::to_string(nqubits) + " qubits is too big to convert to a dense object.");
     }
-    long dim = 1L << nqubits;
+    int64_t dim = int64_t(1) << nqubits;
     DenseMatrix result(dim, 1);
     result.setZero();
     for (size_t k = 0; k < states.size(); ++k) {
