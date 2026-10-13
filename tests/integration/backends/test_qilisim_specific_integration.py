@@ -79,7 +79,7 @@ def test_monte_carlo_circuit(method):
     circuit.add(H(0))
     readout = [SamplingReadout(nshots=100)]
     result = backend._execute_digital_propagation(
-        DigitalPropagation(circuit=circuit), readout=readout, initial_state=initial_state
+        DigitalPropagation(circuit=circuit, initial_state=initial_state), readout=readout
     )
     assert isinstance(result, FunctionalResult)
     samples = result.get_samples()
@@ -1130,3 +1130,16 @@ def test_qtensor_sample_is_unaffected_by_backend_thread_count():
     )
 
     assert qtensor.sample(nshots=1000, seed=42) == before
+
+
+def test_stabilizer_state_tomography_rejects_too_many_qubits():
+    """A stabilizer state of 32 qubits used to overflow ``1 << nqubits`` and hand back a 1x1
+    QTensor with nqubits == 0. Converting to a dense object must fail loudly instead."""
+    circuit = Circuit(nqubits=32)
+    circuit.add(H(0))
+    readout = Readout().with_state_tomography()
+    backend = _stabilizer_backend()
+    propagation = DigitalPropagation(circuit=circuit)
+
+    with pytest.raises(ValueError, match="too big to convert to a dense object"):
+        backend.execute(propagation, readout=readout)
