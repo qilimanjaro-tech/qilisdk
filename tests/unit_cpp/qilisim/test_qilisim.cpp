@@ -158,6 +158,7 @@ TEST_F(ExecuteSamplingTest, NonNormalizedGate_NormalizationBranchExecuted) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
 import numpy as np
+from qilisdk.core.qtensor import QTensor
 from qilisdk.functionals.digital_propagation import DigitalPropagation
 
 class _ShrinkGate:
@@ -167,7 +168,7 @@ class _ShrinkGate:
     is_parameterized = False
     @property
     def matrix(self):
-        return np.array([[0.5, 0.0], [0.0, 0.5]], dtype=complex)
+        return QTensor(np.array([[0.5, 0.0], [0.0, 0.5]], dtype=complex))
     def get_parameters(self):
         return {}
 

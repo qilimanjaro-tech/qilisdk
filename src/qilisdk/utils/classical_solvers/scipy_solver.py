@@ -15,7 +15,7 @@
 from typing import Any, Callable
 
 from qilisdk.core import Model
-from qilisdk.core.variables import BaseVariable, BinaryVariable, Domain, RealNumber, Variable
+from qilisdk.core.variables import BaseVariable, BinaryVariable, Domain, RealNumber, SpinVariable, Variable
 from qilisdk.optimizers import SciPyOptimizer
 
 from .base_solver import ClassicalSolver, ClassicalSolverResult, _assert_real, _variable_bounds
@@ -86,16 +86,16 @@ class ScipySolver(ClassicalSolver):
             ClassicalSolverResult: the results of the optimization, including the objective value and best solution.
 
         Raises:
-            ValueError: if the model contains a variable that is neither a BinaryVariable nor a
-                Variable.
+            ValueError: if the model contains a variable that is not a BinaryVariable, a
+                SpinVariable or a Variable.
         """
 
         # Get the list of variables from the model
         variables = model.variables()
 
-        # Make sure all variables are either BinaryVariable or Variable
+        # Make sure all variables are either BinaryVariable, SpinVariable or Variable
         for v in variables:
-            if not isinstance(v, (BinaryVariable, Variable)):
+            if not isinstance(v, (BinaryVariable, SpinVariable, Variable)):
                 raise ValueError(f"SciPy solving is not supported for variable {v} of domain {v.domain}.")
 
         # Get the bounds for each variable
