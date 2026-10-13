@@ -225,11 +225,10 @@ def warn_if_no_avx() -> None:
     The modules are compiled for AVX2 + FMA by default, which a pre-2013 CPU has no way of
     executing, so this is worth saying before anything tries to load them.
     """
-    if platform.machine().lower() not in _X86_MACHINES or _cpu_has_avx2():
-        return
-    logger.warning(
-        "This CPU does not support AVX2, but the QiliSDK C++ modules are compiled with AVX2 and FMA by default, so "
-        "they may be slow or crash outright. If that happens, reinstall QiliSDK from source with those instructions "
-        "disabled, for example 'uv sync -Ccmake.define.no_avx=ON' or 'pip install --no-binary qilisdk "
-        "-Ccmake.define.no_avx=ON qilisdk'."
-    )
+    if platform.machine().lower() in _X86_MACHINES and not _cpu_has_avx2():
+        logger.warning(
+            "This CPU does not support AVX2, but the QiliSDK C++ modules are compiled with AVX2 and FMA by default, so "
+            "they may be slow or crash outright. If that happens, reinstall QiliSDK from source with those instructions "
+            "disabled, for example 'uv sync -Ccmake.define.no_avx=ON' or 'pip install --no-binary qilisdk "
+            "-Ccmake.define.no_avx=ON qilisdk'."
+        )
