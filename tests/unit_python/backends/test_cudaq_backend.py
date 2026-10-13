@@ -18,6 +18,7 @@ from unittest.mock import MagicMock, call, patch
 
 import numpy as np
 import pytest
+from loguru import logger
 
 pytest.importorskip(
     "cudaq",
@@ -170,8 +171,8 @@ class DummyGate(BasicGate):
     @property
     def name(self) -> str: ...  # type: ignore
 
-    def _generate_matrix(self) -> np.ndarray:
-        return np.eye(2, dtype=COMPLEX_DTYPE)
+    def _generate_matrix(self) -> QTensor:
+        return QTensor(np.eye(2, dtype=COMPLEX_DTYPE))
 
 
 def _build_quantum_reservoir_functional() -> QuantumReservoir:
@@ -416,7 +417,7 @@ def test_controlled_with_unsupported_basic_gate_raises(monkeypatch):
             super().__init__((q,))
 
         def _generate_matrix(self):
-            return np.eye(2)
+            return QTensor(np.eye(2))
 
     be = CudaqBackend()
     circuit = Circuit(2)  # small helper from Backend superclass
@@ -1012,6 +1013,50 @@ def test_tomography_for_methods_raises(monkeypatch, method):
     backend = CudaqBackend(sampling_method=method)
     with pytest.raises(ValueError, match="Only Sampling"):
         backend.execute(f, r)
+
+
+def test_cudaq_digital_propagation_initial_state_one():
+    c = Circuit(1)
+    digital = DigitalPropagation(circuit=c, initial_state=InitialState.ONE)
+    backend = CudaqBackend()
+    readout = Readout().with_sampling(10)
+    results = backend.execute(digital, readout)
+    assert isinstance(results, FunctionalResult)
+    assert "1" in results.get_samples()
+
+
+def test_cudaq_digital_propagation_initial_state_zero():
+    c = Circuit(1)
+    digital = DigitalPropagation(circuit=c, initial_state=InitialState.ZERO)
+    backend = CudaqBackend()
+    readout = Readout().with_sampling(10)
+    results = backend.execute(digital, readout)
+    assert isinstance(results, FunctionalResult)
+    assert "0" in results.get_samples()
+
+
+def test_cudaq_digital_propagation_initial_state_uniform():
+    c = Circuit(1)
+    digital = DigitalPropagation(circuit=c, initial_state=InitialState.UNIFORM)
+    backend = CudaqBackend()
+    readout = Readout().with_sampling(100)
+    results = backend.execute(digital, readout)
+    assert isinstance(results, FunctionalResult)
+    assert "0" in results.get_samples()
+    assert "1" in results.get_samples()
+
+
+def test_cudaq_digital_propagation_initial_state_qtensor(monkeypatch):
+    dummy_loogger = MagicMock()
+    monkeypatch.setattr(logger, "warning", dummy_loogger)
+    c = Circuit(1)
+    initial_state_qtensor = QTensor.one(1)
+    digital = DigitalPropagation(circuit=c, initial_state=initial_state_qtensor)
+    backend = CudaqBackend()
+    readout = Readout().with_sampling(10)
+    results = backend.execute(digital, readout)
+    assert isinstance(results, FunctionalResult)
+    assert dummy_loogger.called
 
 
 def test_cudaq_backend_rejects_time_dependent_lindblad_rate(monkeypatch):

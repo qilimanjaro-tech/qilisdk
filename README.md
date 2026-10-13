@@ -154,7 +154,7 @@ bash scripts/docs.sh
 
 To generate a full coverage report of all code, run:
 ```bash
-bash scripts/cov.sh
+bash scripts/coverage.sh
 ```
 This will generate a html file which you can open in your browser to see which lines (in both the C++ and Python) are covered by the tests. We aim for 100% coverage!
 
@@ -164,13 +164,14 @@ We manage our changelog using [**towncrier**](https://github.com/twisted/towncri
 
 For example, if you create a PR with id #123 adding a new feature, you add:
 ```
-changes/123.feature.rst
+changes/123.feature.md
 ```
 Inside this file, you briefly describe the new feature:
-```rst
+```markdown
 Added a new `cool_feature` in the `qilisdk.backends` module.
 ```
-Instead of manually creating the file, you can run:
+These change fragments should be written in Markdown, so use standard Markdown syntax.
+Also, instead of manually creating the file, you can run:
 ```bash
 towncrier create --no-edit
 ```
@@ -186,15 +187,12 @@ We welcome contributions! Here’s the workflow:
 
 1. **Fork** this repository and create a feature branch.
 2. **Write** your changes (code, docs, or tests).
-3. **Add a news fragment** (if applicable) in `changes/` describing the user-facing impact.
+3. **Add a news fragment** in `changes/` describing the user-facing impact.
 4. **Run** the following checks locally:
    ```bash
-   ruff check --fix
-   ruff format
-   ty check
-   pytest tests
+   bash scripts/checks.sh
    ```
-5. **Commit** and push your branch to your fork. `pre-commit` will also run the checks automatically.
+5. **Commit** and push your branch to your fork.
 6. **Open a Pull Request** against the `main` branch here.
 
 Our CI will run tests, linting, and type checks. Please make sure your branch passes these checks before requesting a review.

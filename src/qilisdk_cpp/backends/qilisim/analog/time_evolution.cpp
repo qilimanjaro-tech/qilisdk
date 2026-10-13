@@ -14,6 +14,7 @@
 
 #include "time_evolution.h"
 #include "../../../libs/logging.h"
+#include "../../../libs/pybind.h"
 #include "../noise/noise_model.h"
 #include "../utils/matrix_utils.h"
 #include "../utils/random.h"
@@ -143,6 +144,9 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
 
     // For each time step
     for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+        // Let Ctrl-C interrupt the evolution between time steps
+        check_signals();
+
         // Get the current Hamiltonian
         SparseMatrix currentH = combinedH;
         for (size_t h = 0; h < hamiltonians.size(); ++h) {
@@ -333,6 +337,9 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         const size_t max_iters = 1000000;  // Just in case to prevent infinite loops
         DenseMatrix k_saved;
         while (current_time < step_list.back()) {
+            // Let Ctrl-C interrupt the evolution between time steps
+            check_signals();
+
             // Make sure the next step doesn't go beyond the final time point
             dt = std::min(dt, step_list.back() - current_time);
 
@@ -362,6 +369,9 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     } else if (config.get_time_evolution_method() == "integrate_rk4_matrix_free") {
         // For each time step
         for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+            // Let Ctrl-C interrupt the evolution between time steps
+            check_signals();
+
             // Determine the time step and starting time
             double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
             double dt = step_list[step_ind] - t_start;
@@ -396,6 +406,9 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         int nqubits = hamiltonians[0].get_nqubits();
         // For each time step
         for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+            // Let Ctrl-C interrupt the evolution between time steps
+            check_signals();
+
             // Build the Hamiltonian for this step
             MatrixFreeHamiltonian currentH(nqubits);
             for (size_t h = 0; h < hamiltonians.size(); ++h) {
@@ -462,6 +475,9 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
 
     // Fixed-step RK4 loop
     for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+        // Let Ctrl-C interrupt the evolution between time steps
+        check_signals();
+
         double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
         double dt = step_list[step_ind] - t_start;
         iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, config.get_gpu());
