@@ -308,6 +308,9 @@
 </p>
 <ul>
 <li class="toctree-l1">
+<a class="reference internal" href="../../../0.3.1/modules/digital/digital_hardware.html">0.3.1</a>
+</li>
+<li class="toctree-l1">
 <a class="reference internal" href="digital_hardware.html">0.3.0</a>
 </li>
 <li class="toctree-l1">
@@ -380,9 +383,7 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">interposed</span></code>: Intercala puertas de un qubit y de dos qubits.</p></li>
 </ul>
 </li>
-<li><p><strong>final_rotation_layer</strong>: If <code class="docutils literal notranslate"><span class="pre">True</span></code> (the default), a trailing single-qubit block is appended after the last
-entangling block, so the circuit has <code class="docutils literal notranslate"><span class="pre">(layers</span> <span class="pre">+</span> <span class="pre">1)</span></code> parameterized blocks and ends on tunable rotations. If
-<code class="docutils literal notranslate"><span class="pre">False</span></code>, the circuit has <code class="docutils literal notranslate"><span class="pre">layers</span></code> parameterized blocks and ends on an entangling block.</p></li>
+<li><p><strong>final_rotation_layer</strong>: Si es <code class="docutils literal notranslate"><span class="pre">True</span></code> (el valor predeterminado), se añade un bloque final de un qubit después del último bloque de entrelazamiento, de modo que el circuito tiene <code class="docutils literal notranslate"><span class="pre">(layers</span> <span class="pre">+</span> <span class="pre">1)</span></code> bloques parametrizados y termina en rotaciones ajustables. Si es <code class="docutils literal notranslate"><span class="pre">False</span></code>, el circuito tiene <code class="docutils literal notranslate"><span class="pre">layers</span></code> bloques parametrizados y termina en un bloque de entrelazamiento.</p></li>
 </ul>
 <p><strong>Ejemplo</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.digital.ansatz</span><span class="w"> </span><span class="kn">import</span> <span class="n">HardwareEfficientAnsatz</span>

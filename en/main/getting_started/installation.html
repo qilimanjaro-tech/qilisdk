@@ -177,6 +177,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/logging/logging.html">Logging</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -308,6 +309,9 @@
 <span class="caption_text">Releases</span>
 </p>
 <ul>
+<li class="toctree-l1">
+<a class="reference internal" href="../../0.3.1/getting_started/installation.html">0.3.1</a>
+</li>
 <li class="toctree-l1">
 <a class="reference internal" href="../../0.3.0/getting_started/installation.html">0.3.0</a>
 </li>
@@ -526,28 +530,31 @@ If you must use pure Windows, the Windows instructions below should work, althou
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.build_native=ON</span></code></p></td>
 <td><p>Build for the architecture of the current machine for increased performance. Only recommended if you are building for your own machine.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.single_precision=ON</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.no_avx=ON</span></code></p></td>
+<td><p>Build without the AVX2 and FMA instructions, which are used by default. Only needed for CPUs from before around 2013, which cannot run them.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.single_precision=ON</span></code></p></td>
 <td><p>Use single precision (<code class="docutils literal notranslate"><span class="pre">float</span></code>) instead of double precision (<code class="docutils literal notranslate"><span class="pre">double</span></code>). Slightly faster, but less accurate.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.build-type=Debug</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.build-type=Debug</span></code></p></td>
 <td><p>Enable a debug build (no optimizations, debug symbols).</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.build-type=RelWithDebInfo</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.build-type=RelWithDebInfo</span></code></p></td>
 <td><p>Enable an optimized debug build (optimizations plus debug symbols).</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.build-type=Release</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.build-type=Release</span></code></p></td>
 <td><p>Enable a release build (optimizations, no debug symbols). This is the default.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.tidy=ON</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.tidy=ON</span></code></p></td>
 <td><p>Run <code class="docutils literal notranslate"><span class="pre">clang-tidy</span></code> on the code during compilation.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.verbose=ON</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.verbose=ON</span></code></p></td>
 <td><p>Enable (very) verbose output from the C++ code.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.tests=ON</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.tests=ON</span></code></p></td>
 <td><p>Build the C++ test suite, which will then be available as a <code class="docutils literal notranslate"><span class="pre">test_cpp</span></code> executable in the tests directory.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.coverage=ON</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.coverage=ON</span></code></p></td>
 <td><p>Enable coverage instrumentation flags.</p></td>
 </tr>
 </tbody>

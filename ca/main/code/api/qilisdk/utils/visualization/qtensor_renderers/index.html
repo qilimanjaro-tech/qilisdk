@@ -176,6 +176,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../modules/logging/logging.html">Registre</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Referència de l'API</span></p>
 <ul class="current">
@@ -308,6 +309,9 @@
 </p>
 <ul>
 <li class="toctree-l1">
+<a class="reference internal" href="../../../../../../../0.3.1/index.html">0.3.1</a>
+</li>
+<li class="toctree-l1">
 <a class="reference internal" href="../../../../../../../0.3.0/index.html">0.3.0</a>
 </li>
 <li class="toctree-l1">
@@ -410,11 +414,14 @@
 <dt class="sig sig-object py" id="qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.plot">
 <span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../../../../../_modules/qilisdk/utils/visualization/qtensor_renderers.html#MatplotlibQTensorRenderer.plot"><span class="viewcode-link"><span class="pre">[font]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.plot" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.utils.visualization.qtensor_renderers.MatplotlibQTensorRenderer.plot'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Render the QTensor on the current axes.</p>
+<p>State vectors (kets and bras) are converted to their density matrix before being drawn, so that pure and
+mixed states follow the same code path. Mixed states, such as those obtained from
+<a class="reference internal" href="../../../core/qtensor/index.html#qilisdk.core.qtensor.QTensor.partial_trace" title="qilisdk.core.qtensor.QTensor.partial_trace"><code class="xref py py-meth docutils literal notranslate"><span class="pre">partial_trace()</span></code></a>, sit strictly inside the Bloch sphere.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Llença<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>ValueError</strong> – If the QTensor is not a single-qubit state vector (ket or bra).</p></li>
-<li><p><strong>ValueError</strong> – If the QTensor has more than one qubit.</p></li>
+<li><p><strong>ValueError</strong> – If the QTensor does not represent a single qubit.</p></li>
+<li><p><strong>ValueError</strong> – If the QTensor is neither a state vector (ket or bra) nor a density matrix.</p></li>
 </ul>
 </dd>
 </dl>

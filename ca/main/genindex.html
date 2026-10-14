@@ -225,6 +225,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/logging/logging.html">Registre</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Referència de l'API</span></p>
 <ul>
@@ -361,6 +362,9 @@
       <span class="caption_text">Llançaments</span>
     </p>
     <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../0.3.1/index.html">0.3.1</a>
+      </li>
       <li class="toctree-l1">
         <a class="reference internal" href="../0.3.0/index.html">0.3.0</a>
       </li>
@@ -946,6 +950,8 @@
 </li>
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.BasicGate.controlled">controlled() (mètode BasicGate)</a>
 </li>
+      <li><a href="code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.copy">copy() (mètode Circuit)</a>
+</li>
       <li><a href="code/api/qilisdk/core/expression/index.html#qilisdk.core.expression.Cos">Cos (classe a qilisdk.core.expression)</a>
 </li>
       <li><a href="code/api/qilisdk/optimizers/optimizer_result/index.html#qilisdk.optimizers.optimizer_result.OptimizerIntermediateResult.cost">cost (propietat OptimizerIntermediateResult)</a>
@@ -1427,6 +1433,12 @@
 </li>
       <li><a href="code/api/qilisdk/ml/datasets/dataset/index.html#qilisdk.ml.datasets.dataset.FloatArray">FloatArray (al mòdul qilisdk.ml.datasets.dataset)</a>
 </li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.fold">fold (atribut CircuitStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.fold_dash">fold_dash (atribut CircuitStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.fold_edges">fold_edges (atribut CircuitStyle)</a>
+</li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.font">font (propietat Style)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.fontfamily">fontfamily (atribut Style)</a>
@@ -1505,12 +1517,6 @@
         <li><a href="code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.SamplingReadoutResult.from_state">(mètode de classe SamplingReadoutResult)</a>
 </li>
         <li><a href="code/api/qilisdk/readout/readout_result/index.html#qilisdk.readout.readout_result.StateTomographyReadoutResult.from_state">(mètode de classe StateTomographyReadoutResult)</a>
-</li>
-      </ul></li>
-      <li><a href="code/api/qilisdk/core/expression/index.html#qilisdk.core.expression.Function.from_yaml">from_yaml() (mètode de classe Function)</a>
-
-      <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/core/types/index.html#qilisdk.core.types.QiliEnum.from_yaml">(mètode de classe QiliEnum)</a>
 </li>
       </ul></li>
       <li><a href="code/api/qilisdk/core/expression/index.html#qilisdk.core.expression.Function">Function (classe a qilisdk.core.expression)</a>
@@ -1826,9 +1832,11 @@
         <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/transpilation_context/index.html#qilisdk.digital.circuit_transpiler_passes.transpilation_context.TranspilationContext.initial_layout">(atribut TranspilationContext)</a>
 </li>
       </ul></li>
-      <li><a href="code/api/qilisdk/functionals/analog_evolution/index.html#qilisdk.functionals.analog_evolution.AnalogEvolution.initial_state">initial_state (propietat AnalogEvolution)</a>
+      <li><a href="code/api/qilisdk/functionals/digital_propagation/index.html#qilisdk.functionals.digital_propagation.DigitalPropagation.initial_state">initial_state (atribut DigitalPropagation)</a>
 
       <ul style="list-style-type:none">
+        <li><a href="code/api/qilisdk/functionals/analog_evolution/index.html#qilisdk.functionals.analog_evolution.AnalogEvolution.initial_state">(propietat AnalogEvolution)</a>
+</li>
         <li><a href="code/api/qilisdk/functionals/quantum_reservoirs/index.html#qilisdk.functionals.quantum_reservoirs.QuantumReservoir.initial_state">(propietat QuantumReservoir)</a>
 </li>
       </ul></li>
@@ -1847,6 +1855,8 @@
       <li><a href="code/api/qilisdk/ml/datasets/dataset/index.html#qilisdk.ml.datasets.dataset.DatasetSample.inputs">inputs (atribut DatasetSample)</a>
 </li>
       <li><a href="code/api/qilisdk/digital/circuit/index.html#qilisdk.digital.circuit.Circuit.insert">insert() (mètode Circuit)</a>
+</li>
+      <li><a href="code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.INT32_MAX">INT32_MAX (al mòdul qilisdk.backends.backend_config)</a>
 </li>
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Domain.INTEGER">INTEGER (atribut Domain)</a>
 </li>
@@ -1880,10 +1890,10 @@
 </li>
       <li><a href="code/api/qilisdk/core/expression/index.html#qilisdk.core.expression.Inv">Inv() (al mòdul qilisdk.core.expression)</a>
 </li>
-      <li><a href="code/api/qilisdk/core/exceptions/index.html#qilisdk.core.exceptions.InvalidBoundsError">InvalidBoundsError</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
+      <li><a href="code/api/qilisdk/core/exceptions/index.html#qilisdk.core.exceptions.InvalidBoundsError">InvalidBoundsError</a>
+</li>
       <li><a href="code/api/qilisdk/analog/exceptions/index.html#qilisdk.analog.exceptions.InvalidHamiltonianOperation">InvalidHamiltonianOperation</a>
 </li>
       <li><a href="code/api/qilisdk/digital/exceptions/index.html#qilisdk.digital.exceptions.InvalidParameterNameError">InvalidParameterNameError</a>
@@ -1898,10 +1908,10 @@
 </li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.is_hermitian">is_hermitian() (mètode QTensor)</a>
 </li>
-      <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.BinaryVariable.is_idempotent_under_mul">is_idempotent_under_mul (propietat BinaryVariable)</a>
+      <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.BinaryVariable.is_idempotent_under_mul">is_idempotent_under_mul (atribut BinaryVariable)</a>
 
       <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/core/expression/index.html#qilisdk.core.expression.Expression.is_idempotent_under_mul">(propietat Expression)</a>
+        <li><a href="code/api/qilisdk/core/expression/index.html#qilisdk.core.expression.Expression.is_idempotent_under_mul">(atribut Expression)</a>
 </li>
       </ul></li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.is_ket">is_ket() (mètode QTensor)</a>
@@ -1910,10 +1920,10 @@
 </li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.is_operator">is_operator() (mètode QTensor)</a>
 </li>
-      <li><a href="code/api/qilisdk/core/expression/index.html#qilisdk.core.expression.Expression.is_parameter">is_parameter (propietat Expression)</a>
+      <li><a href="code/api/qilisdk/core/expression/index.html#qilisdk.core.expression.Expression.is_parameter">is_parameter (atribut Expression)</a>
 
       <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.is_parameter">(propietat Parameter)</a>
+        <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.is_parameter">(atribut Parameter)</a>
 </li>
       </ul></li>
       <li><a href="code/api/qilisdk/digital/gates/index.html#qilisdk.digital.gates.Gate.is_parameterized">is_parameterized (propietat Gate)</a>
@@ -2254,7 +2264,11 @@
 </li>
       <li><a href="code/api/qilisdk/backends/backend_config/index.html#qilisdk.backends.backend_config.DigitalMethod.max_fused_qubits">max_fused_qubits (atribut DigitalMethod)</a>
 </li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.max_row_width">max_row_width (atribut CircuitStyle)</a>
+</li>
       <li><a href="code/api/qilisdk/digital/circuit_transpiler_passes/sabre_swap_pass/index.html#qilisdk.digital.circuit_transpiler_passes.sabre_swap_pass.SabreSwapPass.max_swaps_factor">max_swaps_factor (atribut SabreSwapPass)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.max_view_height">max_view_height (atribut CircuitStyle)</a>
 </li>
       <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.ObjectiveSense.MAXIMIZE">MAXIMIZE (atribut ObjectiveSense)</a>
 </li>
@@ -4106,14 +4120,14 @@
 </li>
       <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.SlackCounter.reset_counter">reset_counter() (mètode SlackCounter)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.reset_qubits">reset_qubits() (al mòdul qilisdk.core.qtensor)</a>
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.reset_qubits">(mètode QTensor)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.JobDetail.result">result (atribut JobDetail)</a>
 </li>
       <li><a href="code/api/qilisdk/core/result/index.html#qilisdk.core.result.Result">Result (classe a qilisdk.core.result)</a>
@@ -4147,6 +4161,8 @@
       <li><a href="code/api/qilisdk/logging/index.html#qilisdk.logging.SinkConfig.rotation">rotation (atribut SinkConfig)</a>
 </li>
       <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.QTensorStyle.rotation_style">rotation_style (atribut QTensorStyle)</a>
+</li>
+      <li><a href="code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.row_separation">row_separation (atribut CircuitStyle)</a>
 </li>
       <li><a href="code/api/qilisdk/settings/index.html#qilisdk.settings.QiliSDKSettings.rtol">rtol (atribut QiliSDKSettings)</a>
 </li>
@@ -4389,10 +4405,10 @@
         <li><a href="code/api/qilisdk/core/parameterizable/index.html#qilisdk.core.parameterizable.Parameterizable.set_prefix">(mètode Parameterizable)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.set_value">set_value() (mètode Parameter)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul style="margin-left:0;list-style-type:none">
       <li><a href="code/api/qilisdk/utils/visualization/schedule_renderers/index.html#qilisdk.utils.visualization.schedule_renderers.MatplotlibScheduleRenderer.setup_axes">setup_axes() (mètode MatplotlibScheduleRenderer)</a>
 </li>
       <li><a href="code/api/qilisdk/core/qtensor/index.html#qilisdk.core.qtensor.QTensor.shape">shape (propietat QTensor)</a>
@@ -4573,6 +4589,8 @@
         <li><a href="code/api/qilisdk/core/expression/index.html#qilisdk.core.expression.Pow.substitute">(mètode Pow)</a>
 </li>
       </ul></li>
+      <li><a href="code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.sum">sum() (mètode de classe Hamiltonian)</a>
+</li>
       <li><a href="code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.SupportsStaticKraus">SupportsStaticKraus (classe a qilisdk.noise.protocols)</a>
 </li>
       <li><a href="code/api/qilisdk/noise/protocols/index.html#qilisdk.noise.protocols.SupportsStaticLindblad">SupportsStaticLindblad (classe a qilisdk.noise.protocols)</a>
@@ -4719,6 +4737,8 @@
 </li>
         <li><a href="code/api/qilisdk/core/expression/index.html#qilisdk.core.expression.Pow.to_binary">(mètode Pow)</a>
 </li>
+        <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.SpinVariable.to_binary">(mètode SpinVariable)</a>
+</li>
         <li><a href="code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.to_binary">(mètode Variable)</a>
 </li>
       </ul></li>
@@ -4774,12 +4794,6 @@
 
       <ul style="list-style-type:none">
         <li><a href="code/api/qilisdk/core/model/index.html#qilisdk.core.model.QUBO.to_qubo">(mètode QUBO)</a>
-</li>
-      </ul></li>
-      <li><a href="code/api/qilisdk/core/expression/index.html#qilisdk.core.expression.Function.to_yaml">to_yaml() (mètode de classe Function)</a>
-
-      <ul style="list-style-type:none">
-        <li><a href="code/api/qilisdk/core/types/index.html#qilisdk.core.types.QiliEnum.to_yaml">(mètode de classe QiliEnum)</a>
 </li>
       </ul></li>
       <li><a href="code/api/qilisdk/speqtrum/speqtrum_models/index.html#qilisdk.speqtrum.speqtrum_models.Token">Token (classe a qilisdk.speqtrum.speqtrum_models)</a>

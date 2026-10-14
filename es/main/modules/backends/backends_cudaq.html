@@ -176,6 +176,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../logging/logging.html">Registro</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Referencia de la API</span></p>
 <ul>
@@ -307,6 +308,9 @@
 <span class="caption_text">Versiones</span>
 </p>
 <ul>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../0.3.1/modules/backends/backends_cudaq.html">0.3.1</a>
+</li>
 <li class="toctree-l1">
 <a class="reference internal" href="../../../0.3.0/modules/backends/backends_cudaq.html">0.3.0</a>
 </li>
@@ -453,7 +457,7 @@
 <td><p>✅</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../../code/api/qilisdk/backends/cudaq_backend/index.html#qilisdk.backends.cudaq_backend.CudaqSamplingMethod.STATE_VECTOR_MGPU" title="qilisdk.backends.cudaq_backend.CudaqSamplingMethod.STATE_VECTOR_MGPU"><code class="xref py py-class docutils literal notranslate"><span class="pre">STATE_VECTOR_MGPU</span></code></a></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">nvidia-mgpu</span></code> cuando hay varias GPUs disponibles, en caso contrario recurre a <code class="docutils literal notranslate"><span class="pre">nvidia</span></code>.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">nvidia-mgpu</span></code> cuando hay varias GPUs disponibles y se ejecuta bajo MPI (véase más abajo), en caso contrario recurre a <code class="docutils literal notranslate"><span class="pre">nvidia</span></code>.</p></td>
 <td><p>✅</p></td>
 <td><p>✅</p></td>
 <td><p>✅</p></td>
@@ -483,6 +487,10 @@
 </span><span id="line-2">
 </span><span id="line-3"><span class="n">backend</span> <span class="o">=</span> <span class="n">CudaqBackend</span><span class="p">(</span><span class="n">sampling_method</span><span class="o">=</span><span class="n">CudaqSamplingMethod</span><span class="o">.</span><span class="n">MATRIX_PRODUCT_STATE</span><span class="p">)</span>
 </span></code></pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Nota</p>
+<p><code class="docutils literal notranslate"><span class="pre">STATE_VECTOR_MGPU</span></code> distribuye el estado entre procesos MPI, uno por GPU, por lo que el script debe lanzarse con <code class="docutils literal notranslate"><span class="pre">mpirun</span></code> (p. ej. <code class="docutils literal notranslate"><span class="pre">mpirun</span> <span class="pre">-np</span> <span class="pre">4</span> <span class="pre">python</span> <span class="pre">script.py</span></code> para 4 GPUs). Esto requiere una instalación de MPI compatible con CUDA y tener activado el plugin MPI de CUDA-Q, consulte la <a class="reference external" href="https://nvidia.github.io/cuda-quantum/latest/using/backends/sims/svsims.html#multi-gpu-multi-node" rel="nofollow noopener">documentación multi-GPU de CUDA-Q<svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a>.</p>
 </div>
 <p>Algunos métodos de simulación de CUDA admiten configurar parámetros mediante variables de entorno, en particular los métodos <cite>MATRIX_PRODUCT_STATE</cite> y <cite>TENSOR_NETWORK</cite>. Consulte la <a class="reference external" href="https://nvidia.github.io/cuda-quantum/latest/using/backends/sims/tnsims.html" rel="nofollow noopener">documentación de CUDA-Q<svg fill="currentColor" height="1em" stroke="none" viewbox="0 96 960 960" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M188 868q-11-11-11-28t11-28l436-436H400q-17 0-28.5-11.5T360 336q0-17 11.5-28.5T400 296h320q17 0 28.5 11.5T760 336v320q0 17-11.5 28.5T720 696q-17 0-28.5-11.5T680 656V432L244 868q-11 11-28 11t-28-11Z"></path></svg></a> para más detalles.</p>
 <p>Para establecer la precisión de la simulación, utilice el objeto <code class="xref py py-class docutils literal notranslate"><span class="pre">Settings</span></code>:</p>

@@ -225,6 +225,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/logging/logging.html">Logging</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -361,6 +362,9 @@
       <span class="caption_text">Releases</span>
     </p>
     <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../../../../../0.3.1/index.html">0.3.1</a>
+      </li>
       <li class="toctree-l1">
         <a class="reference internal" href="../../../../../0.3.0/index.html">0.3.0</a>
       </li>
@@ -546,7 +550,7 @@
 </span><span id="line-108"><span class="sd">            a matrix.</span>
 </span><span id="line-109"><span class="sd">    """</span>
 </span><span id="line-110">    <span class="k">try</span><span class="p">:</span>
-</span><span id="line-111">        <span class="k">return</span> <span class="n">g</span><span class="o">.</span><span class="n">matrix</span>
+</span><span id="line-111">        <span class="k">return</span> <span class="n">g</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">dense</span><span class="p">()</span>
 </span><span id="line-112">    <span class="k">except</span> <span class="n">GateHasNoMatrixError</span><span class="p">:</span>
 </span><span id="line-113">        <span class="k">return</span> <span class="kc">None</span>
 </span><span id="line-114">

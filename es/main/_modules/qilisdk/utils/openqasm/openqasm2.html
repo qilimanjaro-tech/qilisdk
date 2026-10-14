@@ -225,6 +225,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/logging/logging.html">Registro</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Referencia de la API</span></p>
 <ul>
@@ -361,6 +362,9 @@
       <span class="caption_text">Versiones</span>
     </p>
     <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../../../../../0.3.1/index.html">0.3.1</a>
+      </li>
       <li class="toctree-l1">
         <a class="reference internal" href="../../../../../0.3.0/index.html">0.3.0</a>
       </li>
@@ -775,143 +779,164 @@
 </span><span id="line-326"><span class="sd">    Parse an OpenQASM 2.0 string and create a corresponding Circuit instance.</span>
 </span><span id="line-327">
 </span><span id="line-328"><span class="sd">    This parser supports the following instructions:</span>
-</span><span id="line-329"><span class="sd">        - Quantum register declaration (e.g., "qreg q[3];"), of which there may be only one</span>
+</span><span id="line-329"><span class="sd">        - Quantum register declaration (e.g., "qreg q[3];"), of which there may be several</span>
 </span><span id="line-330"><span class="sd">        - Classical register declaration (e.g., "creg c[3];")</span>
 </span><span id="line-331"><span class="sd">        - Gate instructions (one-qubit and two-qubit gates, plus the three-qubit "ccx" gate)</span>
 </span><span id="line-332"><span class="sd">        - Measurement instructions (e.g., "measure q[0] -&gt; c[0];")</span>
 </span><span id="line-333">
 </span><span id="line-334"><span class="sd">    The registers may be given any name, and any instruction that refers to a register that was never declared</span>
-</span><span id="line-335"><span class="sd">    raises rather than being skipped.</span>
-</span><span id="line-336">
-</span><span id="line-337"><span class="sd">    Args:</span>
-</span><span id="line-338"><span class="sd">        qasm_str (str): The QASM string to parse.</span>
-</span><span id="line-339">
-</span><span id="line-340"><span class="sd">    Returns:</span>
-</span><span id="line-341"><span class="sd">        Circuit: The constructed Circuit object.</span>
-</span><span id="line-342"><span class="sd">    """</span>  <span class="c1"># ruff: ignore[docstring-missing-exception]</span>
-</span><span id="line-343">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"[OpenQASM2] Importing circuit from OpenQASM 2.0"</span><span class="p">)</span>
-</span><span id="line-344">    <span class="n">circuit</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-345">    <span class="n">qreg_name</span> <span class="o">=</span> <span class="s2">""</span>
-</span><span id="line-346">    <span class="n">creg_names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-</span><span id="line-347">    <span class="n">lines</span> <span class="o">=</span> <span class="n">qasm_str</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
-</span><span id="line-348">    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"[OpenQASM2] Parsing </span><span class="si">{}</span><span class="s2"> lines of OpenQASM 2.0"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
-</span><span id="line-349">    <span class="k">for</span> <span class="n">raw_line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
-</span><span id="line-350">        <span class="n">line</span> <span class="o">=</span> <span class="n">raw_line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-</span><span id="line-351">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">"[OpenQASM2] Parsing line: </span><span class="si">{}</span><span class="s2">"</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
-</span><span id="line-352">        <span class="k">if</span> <span class="s2">"//"</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
-</span><span id="line-353">            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"//"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-</span><span id="line-354">        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span> <span class="ow">or</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"//"</span><span class="p">):</span>
-</span><span id="line-355">            <span class="k">continue</span>
-</span><span id="line-356">
-</span><span id="line-357">        <span class="c1"># Skip header and include lines.</span>
-</span><span id="line-358">        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"OPENQASM"</span><span class="p">,</span> <span class="s2">"include"</span><span class="p">)):</span>
-</span><span id="line-359">            <span class="k">continue</span>
-</span><span id="line-360">
-</span><span id="line-361">        <span class="c1"># Parse quantum register declaration.</span>
-</span><span id="line-362">        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"qreg"</span><span class="p">):</span>
-</span><span id="line-363">            <span class="c1"># e.g., "qreg q[3];"</span>
-</span><span id="line-364">            <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"qreg\s+(\w+)\s*\[(\d+)\]\s*;"</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
-</span><span id="line-365">            <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
-</span><span id="line-366">                <span class="k">if</span> <span class="n">circuit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-367">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Only a single quantum register is supported."</span><span class="p">)</span>
-</span><span id="line-368">                <span class="n">qreg_name</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-</span><span id="line-369">                <span class="n">circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)))</span>
-</span><span id="line-370">            <span class="k">continue</span>
-</span><span id="line-371">
-</span><span id="line-372">        <span class="c1"># Parse classical register declaration, whose name is needed to recognise measurements.</span>
-</span><span id="line-373">        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"creg"</span><span class="p">):</span>
-</span><span id="line-374">            <span class="c1"># e.g., "creg c[3];"</span>
-</span><span id="line-375">            <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"creg\s+(\w+)\s*\[\d+\]\s*;"</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
-</span><span id="line-376">            <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
-</span><span id="line-377">                <span class="n">creg_names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
-</span><span id="line-378">            <span class="k">continue</span>
-</span><span id="line-379">
-</span><span id="line-380">        <span class="c1"># Process measurement instructions.</span>
-</span><span id="line-381">        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"measure"</span><span class="p">):</span>
-</span><span id="line-382">            <span class="k">if</span> <span class="n">circuit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-383">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Quantum register must be declared before measurement."</span><span class="p">)</span>
-</span><span id="line-384">            <span class="c1"># e.g., "measure q[0] -&gt; c[0];"</span>
-</span><span id="line-385">            <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="sa">r</span><span class="s2">"measure\s+(\w+)\s*\[(\d+)\]\s*-&gt;\s*(\w+)\s*\[\d+\]\s*;"</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
-</span><span id="line-386">            <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-387">                <span class="c1"># TODO(vyron): Check consecutive lines of measurement and combine into single M.</span>
-</span><span id="line-388">                <span class="n">quantum_name</span><span class="p">,</span> <span class="n">classical_name</span><span class="p">,</span> <span class="n">measured</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)),)</span>
-</span><span id="line-389">            <span class="k">else</span><span class="p">:</span>
-</span><span id="line-390">                <span class="c1"># Special case: "measure q -&gt; c;" means measure all qubits.</span>
-</span><span id="line-391">                <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="sa">r</span><span class="s2">"measure\s+(\w+)\s*-&gt;\s*(\w+)\s*;"</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
-</span><span id="line-392">                <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-393">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid measurement instruction: </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</span><span id="line-394">                <span class="n">quantum_name</span><span class="p">,</span> <span class="n">classical_name</span><span class="p">,</span> <span class="n">measured</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">))</span>
-</span><span id="line-395">            <span class="k">if</span> <span class="n">quantum_name</span> <span class="o">!=</span> <span class="n">qreg_name</span><span class="p">:</span>
-</span><span id="line-396">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Undeclared quantum register '</span><span class="si">{</span><span class="n">quantum_name</span><span class="si">}</span><span class="s2">' in measurement: </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</span><span id="line-397">            <span class="k">if</span> <span class="n">classical_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">creg_names</span><span class="p">:</span>
-</span><span id="line-398">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Undeclared classical register '</span><span class="si">{</span><span class="n">classical_name</span><span class="si">}</span><span class="s2">' in measurement: </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</span><span id="line-399">            <span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">M</span><span class="p">(</span><span class="o">*</span><span class="n">measured</span><span class="p">))</span>
-</span><span id="line-400">            <span class="k">continue</span>
-</span><span id="line-401">
-</span><span id="line-402">        <span class="c1"># Process gate instructions.</span>
-</span><span id="line-403">        <span class="n">gate_data</span> <span class="o">=</span> <span class="n">_parse_qasm2_gate_line</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-</span><span id="line-404">        <span class="k">if</span> <span class="n">gate_data</span><span class="p">:</span>
-</span><span id="line-405">            <span class="n">qasm_gate_name</span><span class="p">,</span> <span class="n">params_str</span><span class="p">,</span> <span class="n">operands_str</span> <span class="o">=</span> <span class="n">gate_data</span>
-</span><span id="line-406">            <span class="k">if</span> <span class="n">circuit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-407">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Quantum register must be declared before adding gates."</span><span class="p">)</span>
-</span><span id="line-408">            <span class="n">gate_name</span> <span class="o">=</span> <span class="n">qasm_gate_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-</span><span id="line-409">
-</span><span id="line-410">            <span class="c1"># Extract qubit indices, which have to belong to the declared quantum register.</span>
-</span><span id="line-411">            <span class="n">qubits</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">rf</span><span class="s2">"</span><span class="si">{</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">qreg_name</span><span class="p">)</span><span class="si">}</span><span class="s2">\s*\[(\d+)\]"</span><span class="p">,</span> <span class="n">operands_str</span><span class="p">)]</span>
-</span><span id="line-412">            <span class="k">if</span> <span class="ow">not</span> <span class="n">qubits</span><span class="p">:</span>
-</span><span id="line-413">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Gate operands do not refer to the quantum register '</span><span class="si">{</span><span class="n">qreg_name</span><span class="si">}</span><span class="s2">': </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</span><span id="line-414">
-</span><span id="line-415">            <span class="c1"># Parse parameters, if any.</span>
-</span><span id="line-416">            <span class="n">parameters</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-417">            <span class="k">if</span> <span class="n">params_str</span><span class="p">:</span>
-</span><span id="line-418">                <span class="n">parameters</span> <span class="o">=</span> <span class="p">[</span><span class="n">_evaluate_qasm2_expression</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
-</span><span id="line-419">
-</span><span id="line-420">            <span class="c1"># The Toffoli gate is the only supported gate acting on more than two qubits.</span>
-</span><span id="line-421">            <span class="k">if</span> <span class="n">gate_name</span> <span class="o">==</span> <span class="s2">"ccx"</span><span class="p">:</span>
-</span><span id="line-422">                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span> <span class="o">!=</span> <span class="n">_QASM2_TOFFOLI_NQUBITS</span><span class="p">:</span>
-</span><span id="line-423">                    <span class="k">raise</span> <span class="n">UnsupportedGateError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The ccx gate acts on three qubits, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
-</span><span id="line-424">                <span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Controlled</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">qubits</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">basic_gate</span><span class="o">=</span><span class="n">X</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="mi">2</span><span class="p">])))</span>
-</span><span id="line-425">                <span class="k">continue</span>
-</span><span id="line-426">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">}:</span>
-</span><span id="line-427">                <span class="k">raise</span> <span class="n">UnsupportedGateError</span><span class="p">(</span><span class="s2">"Only one- and two-qubit gates are supported."</span><span class="p">)</span>
-</span><span id="line-428">
-</span><span id="line-429">            <span class="c1"># Gates that OpenQASM 2.0 names in place of an inverse modifier, such as "sdg" for the adjoint of S.</span>
-</span><span id="line-430">            <span class="n">adjoint_of</span> <span class="o">=</span> <span class="n">_REVERSE_QASM2_ADJOINT_MAP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gate_name</span><span class="p">)</span>
-</span><span id="line-431">            <span class="k">if</span> <span class="n">adjoint_of</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-432">                <span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Adjoint</span><span class="p">(</span><span class="n">adjoint_of</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>  <span class="c1"># ty: ignore[invalid-argument-type]</span>
-</span><span id="line-433">                <span class="k">continue</span>
-</span><span id="line-434">
-</span><span id="line-435">            <span class="c1"># Convert QASM gate name to internal gate name.</span>
-</span><span id="line-436">            <span class="n">gate_class</span> <span class="o">=</span> <span class="n">_REVERSE_QASM2_MAP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gate_name</span><span class="p">)</span>
-</span><span id="line-437">            <span class="k">if</span> <span class="n">gate_class</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-438">                <span class="k">raise</span> <span class="n">UnsupportedGateError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown gate: </span><span class="si">{</span><span class="n">qasm_gate_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</span><span id="line-439">
-</span><span id="line-440">            <span class="c1"># Build a dictionary of parameter names to values.</span>
-</span><span id="line-441">            <span class="n">param_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">parameters</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gate_class</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">)}</span>
-</span><span id="line-442">            <span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gate_class</span><span class="p">(</span><span class="o">*</span><span class="n">qubits</span><span class="p">,</span> <span class="o">**</span><span class="n">param_dict</span><span class="p">))</span>
-</span><span id="line-443">
-</span><span id="line-444">    <span class="k">if</span> <span class="n">circuit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-445">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No quantum register declaration found in QASM."</span><span class="p">)</span>
-</span><span id="line-446">    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"[OpenQASM2] Imported circuit with </span><span class="si">{}</span><span class="s2"> qubits and </span><span class="si">{}</span><span class="s2"> gates"</span><span class="p">,</span> <span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">))</span>
-</span><span id="line-447">    <span class="k">return</span> <span class="n">circuit</span></div>
-
-</span><span id="line-448">
+</span><span id="line-335"><span class="sd">    raises rather than being skipped. Several quantum registers are laid out one after another in the order they</span>
+</span><span id="line-336"><span class="sd">    are declared, so the qubits of "qreg a[2]; qreg b[2];" are 0 and 1 for a, and 2 and 3 for b.</span>
+</span><span id="line-337">
+</span><span id="line-338"><span class="sd">    Args:</span>
+</span><span id="line-339"><span class="sd">        qasm_str (str): The QASM string to parse.</span>
+</span><span id="line-340">
+</span><span id="line-341"><span class="sd">    Returns:</span>
+</span><span id="line-342"><span class="sd">        Circuit: The constructed Circuit object.</span>
+</span><span id="line-343"><span class="sd">    """</span>  <span class="c1"># ruff: ignore[docstring-missing-exception]</span>
+</span><span id="line-344">    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"[OpenQASM2] Importing circuit from OpenQASM 2.0"</span><span class="p">)</span>
+</span><span id="line-345">    <span class="n">circuit</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-346">    <span class="n">qregs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-347">    <span class="n">nqubits</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span id="line-348">    <span class="n">creg_names</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+</span><span id="line-349">    <span class="n">lines</span> <span class="o">=</span> <span class="n">qasm_str</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+</span><span id="line-350">    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"[OpenQASM2] Parsing </span><span class="si">{}</span><span class="s2"> lines of OpenQASM 2.0"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
+</span><span id="line-351">    <span class="k">for</span> <span class="n">raw_line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+</span><span id="line-352">        <span class="n">line</span> <span class="o">=</span> <span class="n">raw_line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+</span><span id="line-353">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">"[OpenQASM2] Parsing line: </span><span class="si">{}</span><span class="s2">"</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+</span><span id="line-354">        <span class="k">if</span> <span class="s2">"//"</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+</span><span id="line-355">            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"//"</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+</span><span id="line-356">        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span> <span class="ow">or</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"//"</span><span class="p">):</span>
+</span><span id="line-357">            <span class="k">continue</span>
+</span><span id="line-358">
+</span><span id="line-359">        <span class="c1"># Skip header and include lines.</span>
+</span><span id="line-360">        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"OPENQASM"</span><span class="p">,</span> <span class="s2">"include"</span><span class="p">)):</span>
+</span><span id="line-361">            <span class="k">continue</span>
+</span><span id="line-362">
+</span><span id="line-363">        <span class="c1"># Parse quantum register declaration.</span>
+</span><span id="line-364">        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"qreg"</span><span class="p">):</span>
+</span><span id="line-365">            <span class="c1"># e.g., "qreg q[3];"</span>
+</span><span id="line-366">            <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"qreg\s+(\w+)\s*\[(\d+)\]\s*;"</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+</span><span id="line-367">            <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+</span><span id="line-368">                <span class="k">if</span> <span class="n">circuit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-369">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Quantum registers must all be declared before the first instruction: </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-370">                <span class="n">name</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+</span><span id="line-371">                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">qregs</span><span class="p">:</span>
+</span><span id="line-372">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Quantum register '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' is declared more than once."</span><span class="p">)</span>
+</span><span id="line-373">                <span class="n">qregs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">nqubits</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
+</span><span id="line-374">                <span class="n">nqubits</span> <span class="o">+=</span> <span class="n">size</span>
+</span><span id="line-375">            <span class="k">continue</span>
+</span><span id="line-376">
+</span><span id="line-377">        <span class="c1"># Parse classical register declaration, whose name is needed to recognise measurements.</span>
+</span><span id="line-378">        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"creg"</span><span class="p">):</span>
+</span><span id="line-379">            <span class="c1"># e.g., "creg c[3];"</span>
+</span><span id="line-380">            <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"creg\s+(\w+)\s*\[\d+\]\s*;"</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+</span><span id="line-381">            <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+</span><span id="line-382">                <span class="n">creg_names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+</span><span id="line-383">            <span class="k">continue</span>
+</span><span id="line-384">
+</span><span id="line-385">        <span class="c1"># Quantum registers must be declared before any instructions</span>
+</span><span id="line-386">        <span class="k">if</span> <span class="n">circuit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-387">            <span class="k">if</span> <span class="ow">not</span> <span class="n">qregs</span><span class="p">:</span>
+</span><span id="line-388">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"A quantum register must be declared before any instruction: </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-389">            <span class="n">circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)</span>
+</span><span id="line-390">
+</span><span id="line-391">        <span class="c1"># Process measurement instructions.</span>
+</span><span id="line-392">        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"measure"</span><span class="p">):</span>
+</span><span id="line-393">            <span class="c1"># e.g., "measure q[0] -&gt; c[0];"</span>
+</span><span id="line-394">            <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="sa">r</span><span class="s2">"measure\s+(\w+)\s*\[(\d+)\]\s*-&gt;\s*(\w+)\s*\[\d+\]\s*;"</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+</span><span id="line-395">            <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-396">                <span class="c1"># TODO(vyron): Check consecutive lines of measurement and combine into single M.</span>
+</span><span id="line-397">                <span class="n">quantum_name</span><span class="p">,</span> <span class="n">classical_name</span><span class="p">,</span> <span class="n">index</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+</span><span id="line-398">            <span class="k">else</span><span class="p">:</span>
+</span><span id="line-399">                <span class="c1"># Special case: "measure q -&gt; c;" means measure all qubits.</span>
+</span><span id="line-400">                <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="sa">r</span><span class="s2">"measure\s+(\w+)\s*-&gt;\s*(\w+)\s*;"</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+</span><span id="line-401">                <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-402">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Invalid measurement instruction: </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-403">                <span class="n">quantum_name</span><span class="p">,</span> <span class="n">classical_name</span><span class="p">,</span> <span class="n">index</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="kc">None</span>
+</span><span id="line-404">            <span class="k">if</span> <span class="n">quantum_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">qregs</span><span class="p">:</span>
+</span><span id="line-405">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Undeclared quantum register '</span><span class="si">{</span><span class="n">quantum_name</span><span class="si">}</span><span class="s2">' in measurement: </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-406">            <span class="k">if</span> <span class="n">classical_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">creg_names</span><span class="p">:</span>
+</span><span id="line-407">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Undeclared classical register '</span><span class="si">{</span><span class="n">classical_name</span><span class="si">}</span><span class="s2">' in measurement: </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-408">            <span class="n">offset</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="n">qregs</span><span class="p">[</span><span class="n">quantum_name</span><span class="p">]</span>
+</span><span id="line-409">            <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-410">                <span class="n">measured</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="n">offset</span> <span class="o">+</span> <span class="n">size</span><span class="p">))</span>
+</span><span id="line-411">            <span class="k">elif</span> <span class="n">index</span> <span class="o">&gt;=</span> <span class="n">size</span><span class="p">:</span>
+</span><span id="line-412">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Qubit </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> is out of range for quantum register '</span><span class="si">{</span><span class="n">quantum_name</span><span class="si">}</span><span class="s2">': </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-413">            <span class="k">else</span><span class="p">:</span>
+</span><span id="line-414">                <span class="n">measured</span> <span class="o">=</span> <span class="p">(</span><span class="n">offset</span> <span class="o">+</span> <span class="n">index</span><span class="p">,)</span>
+</span><span id="line-415">            <span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">M</span><span class="p">(</span><span class="o">*</span><span class="n">measured</span><span class="p">))</span>
+</span><span id="line-416">            <span class="k">continue</span>
+</span><span id="line-417">
+</span><span id="line-418">        <span class="c1"># Process gate instructions.</span>
+</span><span id="line-419">        <span class="n">gate_data</span> <span class="o">=</span> <span class="n">_parse_qasm2_gate_line</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</span><span id="line-420">        <span class="k">if</span> <span class="n">gate_data</span><span class="p">:</span>
+</span><span id="line-421">            <span class="n">qasm_gate_name</span><span class="p">,</span> <span class="n">params_str</span><span class="p">,</span> <span class="n">operands_str</span> <span class="o">=</span> <span class="n">gate_data</span>
+</span><span id="line-422">            <span class="n">gate_name</span> <span class="o">=</span> <span class="n">qasm_gate_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+</span><span id="line-423">
+</span><span id="line-424">            <span class="c1"># Extract qubit indices, which have to belong to one of the declared quantum registers.</span>
+</span><span id="line-425">            <span class="n">qubits</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-426">            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">index</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\b(\w++)\s*+\[(\d++)\]"</span><span class="p">,</span> <span class="n">operands_str</span><span class="p">):</span>
+</span><span id="line-427">                <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">qregs</span><span class="p">:</span>
+</span><span id="line-428">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Undeclared quantum register '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">' in gate: </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-429">                <span class="n">offset</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="n">qregs</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+</span><span id="line-430">                <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">size</span><span class="p">:</span>
+</span><span id="line-431">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Qubit </span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> is out of range for quantum register '</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">': </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-432">                <span class="n">qubits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">offset</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">))</span>
+</span><span id="line-433">            <span class="k">if</span> <span class="ow">not</span> <span class="n">qubits</span><span class="p">:</span>
+</span><span id="line-434">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Gate operands do not refer to a quantum register: </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-435">
+</span><span id="line-436">            <span class="c1"># Parse parameters, if any.</span>
+</span><span id="line-437">            <span class="n">parameters</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-438">            <span class="k">if</span> <span class="n">params_str</span><span class="p">:</span>
+</span><span id="line-439">                <span class="n">parameters</span> <span class="o">=</span> <span class="p">[</span><span class="n">_evaluate_qasm2_expression</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">params_str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+</span><span id="line-440">
+</span><span id="line-441">            <span class="c1"># The Toffoli gate is the only supported gate acting on more than two qubits.</span>
+</span><span id="line-442">            <span class="k">if</span> <span class="n">gate_name</span> <span class="o">==</span> <span class="s2">"ccx"</span><span class="p">:</span>
+</span><span id="line-443">                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span> <span class="o">!=</span> <span class="n">_QASM2_TOFFOLI_NQUBITS</span><span class="p">:</span>
+</span><span id="line-444">                    <span class="k">raise</span> <span class="n">UnsupportedGateError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The ccx gate acts on three qubits, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+</span><span id="line-445">                <span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Controlled</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">qubits</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">basic_gate</span><span class="o">=</span><span class="n">X</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="mi">2</span><span class="p">])))</span>
+</span><span id="line-446">                <span class="k">continue</span>
+</span><span id="line-447">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">}:</span>
+</span><span id="line-448">                <span class="k">raise</span> <span class="n">UnsupportedGateError</span><span class="p">(</span><span class="s2">"Only one- and two-qubit gates are supported."</span><span class="p">)</span>
 </span><span id="line-449">
+</span><span id="line-450">            <span class="c1"># Gates that OpenQASM 2.0 names in place of an inverse modifier, such as "sdg" for the adjoint of S.</span>
+</span><span id="line-451">            <span class="n">adjoint_of</span> <span class="o">=</span> <span class="n">_REVERSE_QASM2_ADJOINT_MAP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gate_name</span><span class="p">)</span>
+</span><span id="line-452">            <span class="k">if</span> <span class="n">adjoint_of</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-453">                <span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Adjoint</span><span class="p">(</span><span class="n">adjoint_of</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>  <span class="c1"># ty: ignore[invalid-argument-type]</span>
+</span><span id="line-454">                <span class="k">continue</span>
+</span><span id="line-455">
+</span><span id="line-456">            <span class="c1"># Convert QASM gate name to internal gate name.</span>
+</span><span id="line-457">            <span class="n">gate_class</span> <span class="o">=</span> <span class="n">_REVERSE_QASM2_MAP</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gate_name</span><span class="p">)</span>
+</span><span id="line-458">            <span class="k">if</span> <span class="n">gate_class</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-459">                <span class="k">raise</span> <span class="n">UnsupportedGateError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown gate: </span><span class="si">{</span><span class="n">qasm_gate_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-460">
+</span><span id="line-461">            <span class="c1"># Build a dictionary of parameter names to values.</span>
+</span><span id="line-462">            <span class="n">param_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">parameters</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gate_class</span><span class="o">.</span><span class="n">PARAMETER_NAMES</span><span class="p">)}</span>
+</span><span id="line-463">            <span class="n">circuit</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gate_class</span><span class="p">(</span><span class="o">*</span><span class="n">qubits</span><span class="p">,</span> <span class="o">**</span><span class="n">param_dict</span><span class="p">))</span>
+</span><span id="line-464">
+</span><span id="line-465">    <span class="k">if</span> <span class="n">circuit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-466">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"No quantum register declaration found in QASM."</span><span class="p">)</span>
+</span><span id="line-467">    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"[OpenQASM2] Imported circuit with </span><span class="si">{}</span><span class="s2"> qubits and </span><span class="si">{}</span><span class="s2"> gates"</span><span class="p">,</span> <span class="n">circuit</span><span class="o">.</span><span class="n">nqubits</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">gates</span><span class="p">))</span>
+</span><span id="line-468">    <span class="k">return</span> <span class="n">circuit</span></div>
+
+</span><span id="line-469">
+</span><span id="line-470">
 <div class="viewcode-block" id="from_qasm2_file">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/openqasm/openqasm2/index.html#qilisdk.utils.openqasm.openqasm2.from_qasm2_file">[documentos]</a>
-</span><span id="line-450"><span class="k">def</span><span class="w"> </span><span class="nf">from_qasm2_file</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
-</span><span id="line-451"><span class="w">    </span><span class="sd">"""</span>
-</span><span id="line-452"><span class="sd">    Read an OpenQASM 2.0 file and create a corresponding Circuit instance.</span>
-</span><span id="line-453">
-</span><span id="line-454"><span class="sd">    Args:</span>
-</span><span id="line-455"><span class="sd">        filename (str): The path to the QASM file.</span>
-</span><span id="line-456">
-</span><span id="line-457"><span class="sd">    Returns:</span>
-</span><span id="line-458"><span class="sd">        Circuit: The reconstructed Circuit object.</span>
-</span><span id="line-459"><span class="sd">    """</span>
-</span><span id="line-460">    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"[OpenQASM2] Reading OpenQASM 2.0 from file </span><span class="si">{}</span><span class="s2">"</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
-</span><span id="line-461">    <span class="n">qasm_str</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
-</span><span id="line-462">    <span class="k">return</span> <span class="n">from_qasm2</span><span class="p">(</span><span class="n">qasm_str</span><span class="p">)</span></div>
+</span><span id="line-471"><span class="k">def</span><span class="w"> </span><span class="nf">from_qasm2_file</span><span class="p">(</span><span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
+</span><span id="line-472"><span class="w">    </span><span class="sd">"""</span>
+</span><span id="line-473"><span class="sd">    Read an OpenQASM 2.0 file and create a corresponding Circuit instance.</span>
+</span><span id="line-474">
+</span><span id="line-475"><span class="sd">    Args:</span>
+</span><span id="line-476"><span class="sd">        filename (str): The path to the QASM file.</span>
+</span><span id="line-477">
+</span><span id="line-478"><span class="sd">    Returns:</span>
+</span><span id="line-479"><span class="sd">        Circuit: The reconstructed Circuit object.</span>
+</span><span id="line-480"><span class="sd">    """</span>
+</span><span id="line-481">    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"[OpenQASM2] Reading OpenQASM 2.0 from file </span><span class="si">{}</span><span class="s2">"</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+</span><span id="line-482">    <span class="n">qasm_str</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+</span><span id="line-483">    <span class="k">return</span> <span class="n">from_qasm2</span><span class="p">(</span><span class="n">qasm_str</span><span class="p">)</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

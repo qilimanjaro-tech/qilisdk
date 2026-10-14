@@ -176,6 +176,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../modules/logging/logging.html">Registre</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Referència de l'API</span></p>
 <ul class="current">
@@ -308,6 +309,9 @@
 </p>
 <ul>
 <li class="toctree-l1">
+<a class="reference internal" href="../../../../../../../0.3.1/index.html">0.3.1</a>
+</li>
+<li class="toctree-l1">
 <a class="reference internal" href="../../../../../../../0.3.0/index.html">0.3.0</a>
 </li>
 <li class="toctree-l1">
@@ -437,7 +441,7 @@
 <dd><p>Parse an OpenQASM 2.0 string and create a corresponding Circuit instance.</p>
 <dl class="simple">
 <dt>This parser supports the following instructions:</dt><dd><ul class="simple">
-<li><p>Quantum register declaration (e.g., «qreg q[3];»), of which there may be only one</p></li>
+<li><p>Quantum register declaration (e.g., «qreg q[3];»), of which there may be several</p></li>
 <li><p>Classical register declaration (e.g., «creg c[3];»)</p></li>
 <li><p>Gate instructions (one-qubit and two-qubit gates, plus the three-qubit «ccx» gate)</p></li>
 <li><p>Measurement instructions (e.g., «measure q[0] -&gt; c[0];»)</p></li>
@@ -445,7 +449,8 @@
 </dd>
 </dl>
 <p>The registers may be given any name, and any instruction that refers to a register that was never declared
-raises rather than being skipped.</p>
+raises rather than being skipped. Several quantum registers are laid out one after another in the order they
+are declared, so the qubits of «qreg a[2]; qreg b[2];» are 0 and 1 for a, and 2 and 3 for b.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Paràmetres<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>qasm_str</strong> (<a class="reference internal" href="../../../noise/noise_model/index.html#qilisdk.noise.noise_model.ParameterName" title="str"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>) – The QASM string to parse.</p>

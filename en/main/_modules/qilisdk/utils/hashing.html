@@ -225,6 +225,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/logging/logging.html">Logging</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -362,6 +363,9 @@
     </p>
     <ul>
       <li class="toctree-l1">
+        <a class="reference internal" href="../../../../0.3.1/index.html">0.3.1</a>
+      </li>
+      <li class="toctree-l1">
         <a class="reference internal" href="../../../../0.3.0/index.html">0.3.0</a>
       </li>
       <li class="toctree-l1">
@@ -456,7 +460,7 @@
 </span><span id="line-18"><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 </span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
 </span><span id="line-20"><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Set</span> <span class="k">as</span> <span class="n">AbstractSet</span>
-</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Final</span>
+</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Final</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">TypeAlias</span><span class="p">,</span> <span class="n">cast</span>
 </span><span id="line-22">
 </span><span id="line-23"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </span><span id="line-24">
@@ -509,75 +513,128 @@
 </span><span id="line-71">    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">numerator</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">denominator</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
 </span><span id="line-72">
 </span><span id="line-73">
-</span><span id="line-74"><span class="k">def</span><span class="w"> </span><span class="nf">_encode_object_via_custom_hash</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
-</span><span id="line-75">    <span class="n">object_hash_method</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="fm">__hash__</span>
-</span><span id="line-76">    <span class="k">if</span> <span class="n">object_hash_method</span> <span class="ow">in</span> <span class="p">{</span><span class="kc">None</span><span class="p">,</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">}:</span>
-</span><span id="line-77">        <span class="k">return</span> <span class="sa">b</span><span class="s2">""</span>
-</span><span id="line-78">
-</span><span id="line-79">    <span class="n">class_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
-</span><span id="line-80">    <span class="n">object_hash</span> <span class="o">=</span> <span class="n">object_hash_method</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>  <span class="c1"># ty:ignore[too-many-positional-arguments]</span>
-</span><span id="line-81">    <span class="k">return</span> <span class="sa">b</span><span class="s2">"object-hash:"</span> <span class="o">+</span> <span class="n">class_name</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">":"</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">object_hash</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
-</span><span id="line-82">
+</span><span id="line-74"><span class="c1">#: Which branch of :func:`_encode_object` a value takes, decided once per class</span>
+</span><span id="line-75"><span class="n">_EncodeKind</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"scalar"</span><span class="p">,</span> <span class="s2">"ndarray"</span><span class="p">,</span> <span class="s2">"mapping"</span><span class="p">,</span> <span class="s2">"set"</span><span class="p">,</span> <span class="s2">"sequence"</span><span class="p">,</span> <span class="s2">"other"</span><span class="p">]</span>
+</span><span id="line-76">
+</span><span id="line-77"><span class="n">_KIND_CACHE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="n">_EncodeKind</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-78"><span class="n">_CLASS_NAME_CACHE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span id="line-79">
+</span><span id="line-80">
+</span><span id="line-81"><span class="k">def</span><span class="w"> </span><span class="nf">_encode_kind</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_EncodeKind</span><span class="p">:</span>
+</span><span id="line-82"><span class="w">    </span><span class="sd">"""Return which branch of :func:`_encode_object` a class takes.</span>
 </span><span id="line-83">
-</span><span id="line-84"><span class="k">def</span><span class="w"> </span><span class="nf">_encode_object</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
-</span><span id="line-85">    <span class="n">scalar_payload</span> <span class="o">=</span> <span class="n">_encode_scalar</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-</span><span id="line-86">    <span class="k">if</span> <span class="n">scalar_payload</span><span class="p">:</span>
-</span><span id="line-87">        <span class="k">return</span> <span class="n">scalar_payload</span>
+</span><span id="line-84"><span class="sd">    The answer depends only on the class, but asking it means a chain of ``isinstance`` checks,</span>
+</span><span id="line-85"><span class="sd">    four of them against ``collections.abc`` ABCs, which dominates hashing of deeply nested</span>
+</span><span id="line-86"><span class="sd">    objects. Caching it per class turns the whole chain into a single dict lookup. The order below</span>
+</span><span id="line-87"><span class="sd">    must match the order of the branches it stands in for.</span>
 </span><span id="line-88">
-</span><span id="line-89">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-</span><span id="line-90">        <span class="n">dtype_payload</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
-</span><span id="line-91">        <span class="n">shape_payload</span> <span class="o">=</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
-</span><span id="line-92">        <span class="n">data_payload</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()</span>
-</span><span id="line-93">        <span class="k">return</span> <span class="p">(</span>
-</span><span id="line-94">            <span class="sa">b</span><span class="s2">"ndarray:"</span>
-</span><span id="line-95">            <span class="o">+</span> <span class="n">_length_prefix</span><span class="p">(</span><span class="n">dtype_payload</span><span class="p">)</span>
-</span><span id="line-96">            <span class="o">+</span> <span class="n">dtype_payload</span>
-</span><span id="line-97">            <span class="o">+</span> <span class="n">_length_prefix</span><span class="p">(</span><span class="n">shape_payload</span><span class="p">)</span>
-</span><span id="line-98">            <span class="o">+</span> <span class="n">shape_payload</span>
-</span><span id="line-99">            <span class="o">+</span> <span class="n">data_payload</span>
-</span><span id="line-100">        <span class="p">)</span>
-</span><span id="line-101">
-</span><span id="line-102">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
-</span><span id="line-103">        <span class="n">encoded_items</span> <span class="o">=</span> <span class="p">[</span><span class="n">_encode_object</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">+</span> <span class="n">_encode_object</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
-</span><span id="line-104">        <span class="n">encoded_items</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
-</span><span id="line-105">        <span class="k">return</span> <span class="sa">b</span><span class="s2">"mapping:"</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_length_prefix</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">+</span> <span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">encoded_items</span><span class="p">)</span>
-</span><span id="line-106">
-</span><span id="line-107">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">AbstractSet</span><span class="p">):</span>
-</span><span id="line-108">        <span class="n">encoded_items</span> <span class="o">=</span> <span class="p">[</span><span class="n">_encode_object</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
-</span><span id="line-109">        <span class="n">encoded_items</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
-</span><span id="line-110">        <span class="k">return</span> <span class="sa">b</span><span class="s2">"set:"</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_length_prefix</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">+</span> <span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">encoded_items</span><span class="p">)</span>
-</span><span id="line-111">
-</span><span id="line-112">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">bytes</span><span class="p">):</span>
-</span><span id="line-113">        <span class="n">encoded_items</span> <span class="o">=</span> <span class="p">[</span><span class="n">_encode_object</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
-</span><span id="line-114">        <span class="k">return</span> <span class="sa">b</span><span class="s2">"sequence:"</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_length_prefix</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">+</span> <span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">encoded_items</span><span class="p">)</span>
-</span><span id="line-115">
-</span><span id="line-116">    <span class="n">custom_hash_payload</span> <span class="o">=</span> <span class="n">_encode_object_via_custom_hash</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-</span><span id="line-117">    <span class="k">if</span> <span class="n">custom_hash_payload</span><span class="p">:</span>
-</span><span id="line-118">        <span class="k">return</span> <span class="n">custom_hash_payload</span>
-</span><span id="line-119">
-</span><span id="line-120">    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">"__dict__"</span><span class="p">):</span>
-</span><span id="line-121">        <span class="n">class_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
-</span><span id="line-122">        <span class="n">state_payload</span> <span class="o">=</span> <span class="n">_encode_object</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
-</span><span id="line-123">        <span class="k">return</span> <span class="sa">b</span><span class="s2">"object-state:"</span> <span class="o">+</span> <span class="n">class_name</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">":"</span> <span class="o">+</span> <span class="n">state_payload</span>
-</span><span id="line-124">
-</span><span id="line-125">    <span class="n">class_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
-</span><span id="line-126">    <span class="k">return</span> <span class="sa">b</span><span class="s2">"object-repr:"</span> <span class="o">+</span> <span class="n">class_name</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">":"</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+</span><span id="line-89"><span class="sd">    Returns:</span>
+</span><span id="line-90"><span class="sd">        _EncodeKind: the branch this class belongs to.</span>
+</span><span id="line-91"><span class="sd">    """</span>
+</span><span id="line-92">    <span class="n">kind</span> <span class="o">=</span> <span class="n">_KIND_CACHE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+</span><span id="line-93">    <span class="k">if</span> <span class="n">kind</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-94">        <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">complex</span><span class="p">)):</span>
+</span><span id="line-95">            <span class="n">kind</span> <span class="o">=</span> <span class="s2">"scalar"</span>
+</span><span id="line-96">        <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+</span><span id="line-97">            <span class="n">kind</span> <span class="o">=</span> <span class="s2">"ndarray"</span>
+</span><span id="line-98">        <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+</span><span id="line-99">            <span class="n">kind</span> <span class="o">=</span> <span class="s2">"mapping"</span>
+</span><span id="line-100">        <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">AbstractSet</span><span class="p">):</span>
+</span><span id="line-101">            <span class="n">kind</span> <span class="o">=</span> <span class="s2">"set"</span>
+</span><span id="line-102">        <span class="k">elif</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">):</span>
+</span><span id="line-103">            <span class="n">kind</span> <span class="o">=</span> <span class="s2">"sequence"</span>
+</span><span id="line-104">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-105">            <span class="n">kind</span> <span class="o">=</span> <span class="s2">"other"</span>
+</span><span id="line-106">        <span class="n">_KIND_CACHE</span><span class="p">[</span><span class="bp">cls</span><span class="p">]</span> <span class="o">=</span> <span class="n">kind</span>
+</span><span id="line-107">    <span class="k">return</span> <span class="n">kind</span>
+</span><span id="line-108">
+</span><span id="line-109">
+</span><span id="line-110"><span class="k">def</span><span class="w"> </span><span class="nf">_class_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+</span><span id="line-111"><span class="w">    </span><span class="sd">"""Return the encoded ``module.qualname`` of a class.</span>
+</span><span id="line-112">
+</span><span id="line-113"><span class="sd">    Returns:</span>
+</span><span id="line-114"><span class="sd">        bytes: the utf-8 encoded fully qualified class name.</span>
+</span><span id="line-115"><span class="sd">    """</span>
+</span><span id="line-116">    <span class="n">name</span> <span class="o">=</span> <span class="n">_CLASS_NAME_CACHE</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+</span><span id="line-117">    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-118">        <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+</span><span id="line-119">        <span class="n">_CLASS_NAME_CACHE</span><span class="p">[</span><span class="bp">cls</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+</span><span id="line-120">    <span class="k">return</span> <span class="n">name</span>
+</span><span id="line-121">
+</span><span id="line-122">
+</span><span id="line-123"><span class="k">def</span><span class="w"> </span><span class="nf">_encode_object_via_custom_hash</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+</span><span id="line-124">    <span class="n">object_hash_method</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="fm">__hash__</span>
+</span><span id="line-125">    <span class="k">if</span> <span class="n">object_hash_method</span> <span class="ow">in</span> <span class="p">{</span><span class="kc">None</span><span class="p">,</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__hash__</span><span class="p">}:</span>
+</span><span id="line-126">        <span class="k">return</span> <span class="sa">b</span><span class="s2">""</span>
 </span><span id="line-127">
-</span><span id="line-128">
+</span><span id="line-128">    <span class="n">object_hash</span> <span class="o">=</span> <span class="n">object_hash_method</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>  <span class="c1"># ty:ignore[too-many-positional-arguments]</span>
+</span><span id="line-129">    <span class="k">return</span> <span class="sa">b</span><span class="s2">"object-hash:"</span> <span class="o">+</span> <span class="n">_class_name</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">":"</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">object_hash</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+</span><span id="line-130">
+</span><span id="line-131">
+</span><span id="line-132"><span class="k">def</span><span class="w"> </span><span class="nf">_encode_object</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+</span><span id="line-133">    <span class="n">kind</span> <span class="o">=</span> <span class="n">_encode_kind</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span>
+</span><span id="line-134">
+</span><span id="line-135">    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"scalar"</span><span class="p">:</span>
+</span><span id="line-136">        <span class="n">scalar_payload</span> <span class="o">=</span> <span class="n">_encode_scalar</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</span><span id="line-137">        <span class="k">if</span> <span class="n">scalar_payload</span><span class="p">:</span>
+</span><span id="line-138">            <span class="k">return</span> <span class="n">scalar_payload</span>
+</span><span id="line-139">
+</span><span id="line-140">    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"ndarray"</span><span class="p">:</span>
+</span><span id="line-141">        <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"np.ndarray"</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</span><span id="line-142">        <span class="n">dtype_payload</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+</span><span id="line-143">        <span class="n">shape_payload</span> <span class="o">=</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+</span><span id="line-144">        <span class="n">data_payload</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()</span>
+</span><span id="line-145">        <span class="k">return</span> <span class="p">(</span>
+</span><span id="line-146">            <span class="sa">b</span><span class="s2">"ndarray:"</span>
+</span><span id="line-147">            <span class="o">+</span> <span class="n">_length_prefix</span><span class="p">(</span><span class="n">dtype_payload</span><span class="p">)</span>
+</span><span id="line-148">            <span class="o">+</span> <span class="n">dtype_payload</span>
+</span><span id="line-149">            <span class="o">+</span> <span class="n">_length_prefix</span><span class="p">(</span><span class="n">shape_payload</span><span class="p">)</span>
+</span><span id="line-150">            <span class="o">+</span> <span class="n">shape_payload</span>
+</span><span id="line-151">            <span class="o">+</span> <span class="n">data_payload</span>
+</span><span id="line-152">        <span class="p">)</span>
+</span><span id="line-153">
+</span><span id="line-154">    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"mapping"</span><span class="p">:</span>
+</span><span id="line-155">        <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Mapping"</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</span><span id="line-156">        <span class="n">encoded_items</span> <span class="o">=</span> <span class="p">[</span><span class="n">_encode_object</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">+</span> <span class="n">_encode_object</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+</span><span id="line-157">        <span class="n">encoded_items</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+</span><span id="line-158">        <span class="k">return</span> <span class="sa">b</span><span class="s2">"mapping:"</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_length_prefix</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">+</span> <span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">encoded_items</span><span class="p">)</span>
+</span><span id="line-159">
+</span><span id="line-160">    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"set"</span><span class="p">:</span>
+</span><span id="line-161">        <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"AbstractSet"</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</span><span id="line-162">        <span class="n">encoded_items</span> <span class="o">=</span> <span class="p">[</span><span class="n">_encode_object</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
+</span><span id="line-163">        <span class="n">encoded_items</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+</span><span id="line-164">        <span class="k">return</span> <span class="sa">b</span><span class="s2">"set:"</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_length_prefix</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">+</span> <span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">encoded_items</span><span class="p">)</span>
+</span><span id="line-165">
+</span><span id="line-166">    <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">"sequence"</span><span class="p">:</span>
+</span><span id="line-167">        <span class="n">value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"Sequence"</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</span><span id="line-168">        <span class="n">encoded_items</span> <span class="o">=</span> <span class="p">[</span><span class="n">_encode_object</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="p">]</span>
+</span><span id="line-169">        <span class="k">return</span> <span class="sa">b</span><span class="s2">"sequence:"</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_length_prefix</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">+</span> <span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">encoded_items</span><span class="p">)</span>
+</span><span id="line-170">
+</span><span id="line-171">    <span class="n">custom_hash_payload</span> <span class="o">=</span> <span class="n">_encode_object_via_custom_hash</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</span><span id="line-172">    <span class="k">if</span> <span class="n">custom_hash_payload</span><span class="p">:</span>
+</span><span id="line-173">        <span class="k">return</span> <span class="n">custom_hash_payload</span>
+</span><span id="line-174">
+</span><span id="line-175">    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">"__dict__"</span><span class="p">):</span>
+</span><span id="line-176">        <span class="n">state_payload</span> <span class="o">=</span> <span class="n">_encode_object</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+</span><span id="line-177">        <span class="k">return</span> <span class="sa">b</span><span class="s2">"object-state:"</span> <span class="o">+</span> <span class="n">_class_name</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">":"</span> <span class="o">+</span> <span class="n">state_payload</span>
+</span><span id="line-178">
+</span><span id="line-179">    <span class="k">return</span> <span class="sa">b</span><span class="s2">"object-repr:"</span> <span class="o">+</span> <span class="n">_class_name</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span> <span class="o">+</span> <span class="sa">b</span><span class="s2">":"</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+</span><span id="line-180">
+</span><span id="line-181">
 <div class="viewcode-block" id="hash">
 <a class="viewcode-back" href="../../../code/api/qilisdk/utils/hashing/index.html#qilisdk.utils.hashing.hash">[docs]</a>
-</span><span id="line-129"><span class="k">def</span><span class="w"> </span><span class="nf">hash</span><span class="p">(</span><span class="o">*</span><span class="n">objects</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-130"><span class="w">    </span><span class="sd">"""Stable blake2b-based hash for arbitrary Python objects used by qilisdk models.</span>
-</span><span id="line-131">
-</span><span id="line-132"><span class="sd">    Returns:</span>
-</span><span id="line-133"><span class="sd">        int: blake2b-based hash integer compatible with Python's ``__hash__``.</span>
-</span><span id="line-134"><span class="sd">    """</span>
-</span><span id="line-135">    <span class="n">hasher</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">blake2b</span><span class="p">(</span><span class="n">digest_size</span><span class="o">=</span><span class="n">_HASH_DIGEST_SIZE</span><span class="p">)</span>
-</span><span id="line-136">    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">objects</span><span class="p">:</span>
-</span><span id="line-137">        <span class="n">payload</span> <span class="o">=</span> <span class="n">_encode_object</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-</span><span id="line-138">        <span class="n">hasher</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_length_prefix</span><span class="p">(</span><span class="n">payload</span><span class="p">))</span>
-</span><span id="line-139">        <span class="n">hasher</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
-</span><span id="line-140">    <span class="k">return</span> <span class="n">_digest_to_hash_int</span><span class="p">(</span><span class="n">hasher</span><span class="o">.</span><span class="n">digest</span><span class="p">())</span></div>
+</span><span id="line-182"><span class="k">def</span><span class="w"> </span><span class="nf">hash</span><span class="p">(</span><span class="o">*</span><span class="n">objects</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-183"><span class="w">    </span><span class="sd">"""Stable blake2b-based hash for arbitrary Python objects used by qilisdk models.</span>
+</span><span id="line-184">
+</span><span id="line-185"><span class="sd">    Returns:</span>
+</span><span id="line-186"><span class="sd">        int: blake2b-based hash integer compatible with Python's ``__hash__``.</span>
+</span><span id="line-187"><span class="sd">    """</span>
+</span><span id="line-188">    <span class="n">hasher</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">blake2b</span><span class="p">(</span><span class="n">digest_size</span><span class="o">=</span><span class="n">_HASH_DIGEST_SIZE</span><span class="p">)</span>
+</span><span id="line-189">    <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">objects</span><span class="p">:</span>
+</span><span id="line-190">        <span class="n">payload</span> <span class="o">=</span> <span class="n">_encode_object</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</span><span id="line-191">        <span class="n">hasher</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_length_prefix</span><span class="p">(</span><span class="n">payload</span><span class="p">))</span>
+</span><span id="line-192">        <span class="n">hasher</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+</span><span id="line-193">    <span class="k">return</span> <span class="n">_digest_to_hash_int</span><span class="p">(</span><span class="n">hasher</span><span class="o">.</span><span class="n">digest</span><span class="p">())</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

@@ -225,6 +225,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/logging/logging.html">Logging</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -361,6 +362,9 @@
       <span class="caption_text">Releases</span>
     </p>
     <ul>
+      <li class="toctree-l1">
+        <a class="reference internal" href="../../../../../0.3.1/index.html">0.3.1</a>
+      </li>
       <li class="toctree-l1">
         <a class="reference internal" href="../../../../../0.3.0/index.html">0.3.0</a>
       </li>
@@ -643,7 +647,7 @@
 </span><span id="line-196">
 </span><span id="line-197">    <span class="c1"># Build the 2x2 unitary matrix for gate</span>
 </span><span id="line-198">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">BasicGate</span><span class="p">)</span> <span class="ow">and</span> <span class="n">gate</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-199">        <span class="n">unitary_matrix</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">matrix</span>
+</span><span id="line-199">        <span class="n">unitary_matrix</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">dense</span><span class="p">()</span>
 </span><span id="line-200">    <span class="k">else</span><span class="p">:</span>
 </span><span id="line-201">        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"_sqrt_1q_gate_as_basis only supports 1-qubit gates; got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </span><span id="line-202">
@@ -709,7 +713,7 @@
 </span><span id="line-262">    <span class="c1"># ---------- Generic 1-qubit unitary via matrix adjoint ----------</span>
 </span><span id="line-263">
 </span><span id="line-264">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">BasicGate</span><span class="p">)</span> <span class="ow">and</span> <span class="n">gate</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-265">        <span class="n">unitary_matrix</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">matrix</span>
+</span><span id="line-265">        <span class="n">unitary_matrix</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">dense</span><span class="p">()</span>
 </span><span id="line-266">    <span class="k">else</span><span class="p">:</span>
 </span><span id="line-267">        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"_adjoint_1q only supports 1-qubit gates; got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </span><span id="line-268">

@@ -177,6 +177,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/logging/logging.html">Registre</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Referència de l'API</span></p>
 <ul>
@@ -308,6 +309,9 @@
 <span class="caption_text">Llançaments</span>
 </p>
 <ul>
+<li class="toctree-l1">
+<a class="reference internal" href="../../0.3.1/getting_started/installation.html">0.3.1</a>
+</li>
 <li class="toctree-l1">
 <a class="reference internal" href="../../0.3.0/getting_started/installation.html">0.3.0</a>
 </li>
@@ -515,28 +519,31 @@
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.build_native=ON</span></code></p></td>
 <td><p>Compila per a l’arquitectura de la màquina actual per obtenir un major rendiment. Només es recomana si esteu compilant per a la vostra pròpia màquina.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.single_precision=ON</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.no_avx=ON</span></code></p></td>
+<td><p>Compila sense les instruccions AVX2 i FMA, que s’usen per defecte. Només és necessari per a CPUs anteriors al 2013 aproximadament, que no les poden executar.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.single_precision=ON</span></code></p></td>
 <td><p>Utilitza precisió simple (<code class="docutils literal notranslate"><span class="pre">float</span></code>) en lloc de precisió doble (<code class="docutils literal notranslate"><span class="pre">double</span></code>). Lleugerament més ràpid, però menys precís.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.build-type=Debug</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.build-type=Debug</span></code></p></td>
 <td><p>Habilita una compilació de depuració (sense optimitzacions, amb símbols de depuració).</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.build-type=RelWithDebInfo</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.build-type=RelWithDebInfo</span></code></p></td>
 <td><p>Habilita una compilació de depuració optimitzada (optimitzacions més símbols de depuració).</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.build-type=Release</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.build-type=Release</span></code></p></td>
 <td><p>Habilita una compilació de llançament (optimitzacions, sense símbols de depuració). Aquesta és l’opció predeterminada.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.tidy=ON</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.tidy=ON</span></code></p></td>
 <td><p>Executa <code class="docutils literal notranslate"><span class="pre">clang-tidy</span></code> sobre el codi durant la compilació.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.verbose=ON</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.verbose=ON</span></code></p></td>
 <td><p>Habilita una sortida (molt) detallada del codi C++.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.tests=ON</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.tests=ON</span></code></p></td>
 <td><p>Compila el conjunt de proves de C++, que després estarà disponible com a executable <code class="docutils literal notranslate"><span class="pre">test_cpp</span></code> al directori de proves.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.coverage=ON</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">-Ccmake.define.coverage=ON</span></code></p></td>
 <td><p>Habilita els indicadors d’instrumentació de cobertura.</p></td>
 </tr>
 </tbody>

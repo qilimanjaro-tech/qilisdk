@@ -362,6 +362,9 @@
     </p>
     <ul>
       <li class="toctree-l1">
+        <a class="reference internal" href="../../../../0.3.1/index.html">0.3.1</a>
+      </li>
+      <li class="toctree-l1">
         <a class="reference internal" href="expression.html">0.3.0</a>
       </li>
       <li class="toctree-l1">
@@ -1604,19 +1607,13 @@
 </span><span id="line-939">        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_arg</span><span class="si">!r}</span><span class="s2">)"</span>
 </span><span id="line-940">
 </span><span id="line-941">    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Function.to_yaml">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/expression/index.html#qilisdk.core.expression.Function.to_yaml">[documentos]</a>
 </span><span id="line-942">    <span class="k">def</span><span class="w"> </span><span class="nf">to_yaml</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">representer</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>  <span class="c1"># ruff: ignore[missing-type-function-argument, missing-return-type-class-method]</span>
-</span><span id="line-943">        <span class="k">return</span> <span class="n">representer</span><span class="o">.</span><span class="n">represent_mapping</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">yaml_tag</span><span class="p">,</span> <span class="p">{</span><span class="s2">"arg"</span><span class="p">:</span> <span class="n">node</span><span class="o">.</span><span class="n">arg</span><span class="p">})</span>  <span class="c1"># ty:ignore[unresolved-attribute]</span></div>
-
+</span><span id="line-943">        <span class="k">return</span> <span class="n">representer</span><span class="o">.</span><span class="n">represent_mapping</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">yaml_tag</span><span class="p">,</span> <span class="p">{</span><span class="s2">"arg"</span><span class="p">:</span> <span class="n">node</span><span class="o">.</span><span class="n">arg</span><span class="p">})</span>  <span class="c1"># ty:ignore[unresolved-attribute]</span>
 </span><span id="line-944">
 </span><span id="line-945">    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Function.from_yaml">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/expression/index.html#qilisdk.core.expression.Function.from_yaml">[documentos]</a>
 </span><span id="line-946">    <span class="k">def</span><span class="w"> </span><span class="nf">from_yaml</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">constructor</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>  <span class="c1"># ruff: ignore[missing-type-function-argument, missing-return-type-class-method]</span>
 </span><span id="line-947">        <span class="n">mapping</span> <span class="o">=</span> <span class="n">constructor</span><span class="o">.</span><span class="n">construct_mapping</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span><span id="line-948">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">mapping</span><span class="p">[</span><span class="s2">"arg"</span><span class="p">])</span></div>
-</div>
 
 </span><span id="line-949">
 </span><span id="line-950">

@@ -176,6 +176,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules/logging/logging.html">Registro</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Referencia de la API</span></p>
 <ul>
@@ -307,6 +308,9 @@
 <span class="caption_text">Versiones</span>
 </p>
 <ul>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../0.3.1/tutorials/applications/application_annealing.html">0.3.1</a>
+</li>
 <li class="toctree-l1">
 <a class="reference internal" href="../../../0.3.0/tutorials/applications/application_annealing.html">0.3.0</a>
 </li>
@@ -523,10 +527,7 @@
 </span></code></pre></div>
 </div>
 <p>Como puede verse en estos resultados, las muestras satisfacen la restricción (es decir, tienen exactamente dos 1’s). Más concretamente, las dos muestras «0110» y «1001» (correspondientes a Alice/Dave en un equipo y Bob/Carol en el otro) son las soluciones óptimas a nuestro problema, siendo 9 la puntuación de compatibilidad máxima obtenible.</p>
-<p>To help to visualize the evolution we just performed, we can re-run our simulation,
-this time recording the full state at each timestep and then using
-the <a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.draw_eigenvalues" title="qilisdk.analog.schedule.Schedule.draw_eigenvalues"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Schedule.draw_eigenvalues()</span></code></a> method
-to plot how our state evolved versus the eigenvalues of the Hamiltonian over time:</p>
+<p>Para ayudar a visualizar la evolución que acabamos de realizar, podemos volver a ejecutar nuestra simulación, registrando esta vez el estado completo en cada paso temporal y utilizando después el método <a class="reference internal" href="../../code/api/qilisdk/analog/schedule/index.html#qilisdk.analog.schedule.Schedule.draw_eigenvalues" title="qilisdk.analog.schedule.Schedule.draw_eigenvalues"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Schedule.draw_eigenvalues()</span></code></a> para representar cómo evolucionó nuestro estado frente a los valores propios del Hamiltoniano a lo largo del tiempo:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="n">evolution</span> <span class="o">=</span> <span class="n">AnalogEvolution</span><span class="p">(</span>
 </span><span id="line-2">    <span class="n">schedule</span><span class="o">=</span><span class="n">schedule</span><span class="p">,</span>
 </span><span id="line-3">    <span class="n">initial_state</span><span class="o">=</span><span class="n">initial_state</span><span class="p">,</span>
@@ -545,10 +546,7 @@ to plot how our state evolved versus the eigenvalues of the Hamiltonian over tim
 </a>
 <a class="only-dark reference internal image-reference" href="../../_images/annealing_example_schedule_eigenvalues_dark.svg"><img alt="../../_images/annealing_example_schedule_eigenvalues_dark.svg" class="only-dark align-center" src="../../_images/annealing_example_schedule_eigenvalues_dark.svg" style="width: 690.3000000000001px; height: 431.1px;"/>
 </a>
-<p>As we can see from this plot, the state started in the ground state of the mixing Hamiltonian (the bottom line, at the very left)
-and then evolved to the ground state of the problem Hamiltonian (at the very right). By moving slow enough we stayed in the ground state,
-with only a small percentage of our state leaking out to some of the excited states. A larger total time (and thus a slower evolution)
-would result in less state leaking out, at the cost of taking longer to run.</p>
+<p>Como podemos ver en esta gráfica, el estado comenzó en el estado fundamental del Hamiltoniano de mezcla (la línea inferior, en el extremo izquierdo) y después evolucionó hasta el estado fundamental del Hamiltoniano del problema (en el extremo derecho). Al avanzar con suficiente lentitud nos mantuvimos en el estado fundamental, con solo un pequeño porcentaje de nuestro estado escapándose hacia algunos de los estados excitados. Un tiempo total mayor (y por tanto una evolución más lenta) haría que se escapara menos estado, a costa de tardar más en ejecutarse.</p>
 </section>
 <section id="further-reading">
 <h2>Lectura adicional<a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#further-reading" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#further-reading'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></h2>

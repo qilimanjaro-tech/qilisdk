@@ -362,6 +362,9 @@
     </p>
     <ul>
       <li class="toctree-l1">
+        <a class="reference internal" href="../../../../0.3.1/index.html">0.3.1</a>
+      </li>
+      <li class="toctree-l1">
         <a class="reference internal" href="types.html">0.3.0</a>
       </li>
       <li class="toctree-l1">
@@ -478,8 +481,6 @@
 
 </span><span id="line-30">
 </span><span id="line-31">    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="QiliEnum.to_yaml">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/types/index.html#qilisdk.core.types.QiliEnum.to_yaml">[docs]</a>
 </span><span id="line-32">    <span class="k">def</span><span class="w"> </span><span class="nf">to_yaml</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">representer</span><span class="p">:</span> <span class="n">RoundTripRepresenter</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Self</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ScalarNode</span><span class="p">:</span>
 </span><span id="line-33"><span class="w">        </span><span class="sd">"""</span>
 </span><span id="line-34"><span class="sd">        Method to be called automatically during YAML serialization.</span>
@@ -487,12 +488,9 @@
 </span><span id="line-36"><span class="sd">        Returns:</span>
 </span><span id="line-37"><span class="sd">            ScalarNode: The YAML scalar node representing the class.</span>
 </span><span id="line-38"><span class="sd">        """</span>
-</span><span id="line-39">        <span class="k">return</span> <span class="n">representer</span><span class="o">.</span><span class="n">represent_scalar</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">yaml_tag</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
-
+</span><span id="line-39">        <span class="k">return</span> <span class="n">representer</span><span class="o">.</span><span class="n">represent_scalar</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">yaml_tag</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </span><span id="line-40">
 </span><span id="line-41">    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="QiliEnum.from_yaml">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/types/index.html#qilisdk.core.types.QiliEnum.from_yaml">[docs]</a>
 </span><span id="line-42">    <span class="k">def</span><span class="w"> </span><span class="nf">from_yaml</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">ScalarNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
 </span><span id="line-43"><span class="w">        </span><span class="sd">"""</span>
 </span><span id="line-44"><span class="sd">        Method to be called automatically during YAML deserialization.</span>
@@ -501,7 +499,6 @@
 </span><span id="line-47"><span class="sd">            Self: The class instance created from the YAML node value.</span>
 </span><span id="line-48"><span class="sd">        """</span>
 </span><span id="line-49">        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
-</div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

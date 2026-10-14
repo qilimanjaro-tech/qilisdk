@@ -176,6 +176,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../logging/logging.html">Registre</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Referència de l'API</span></p>
 <ul>
@@ -307,6 +308,9 @@
 <span class="caption_text">Llançaments</span>
 </p>
 <ul>
+<li class="toctree-l1">
+<a class="reference internal" href="../../../0.3.1/modules/analog/analog_hamiltonian.html">0.3.1</a>
+</li>
 <li class="toctree-l1">
 <a class="reference internal" href="../../../0.3.0/modules/analog/analog_hamiltonian.html">0.3.0</a>
 </li>
@@ -486,6 +490,14 @@
 </div>
 <p><strong>Sortida:</strong></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="o">-</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="n">Z</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mi">4</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">Z</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span> <span class="n">Z</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">3</span> <span class="n">Z</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</span></code></pre></div>
+</div>
+<p>The builtin <code class="xref py py-func docutils literal notranslate"><span class="pre">sum()</span></code> re-simplifies the growing Hamiltonian on every addition, which gets slow for large
+Hamiltonians. <a class="reference internal" href="../../code/api/qilisdk/analog/hamiltonian/index.html#qilisdk.analog.hamiltonian.Hamiltonian.sum" title="qilisdk.analog.hamiltonian.Hamiltonian.sum"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Hamiltonian.sum()</span></code></a> adds all the terms in a single
+pass instead:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><code><span id="line-1"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hamiltonian</span><span class="p">,</span> <span class="n">Z</span>
+</span><span id="line-2">
+</span><span id="line-3"><span class="n">H</span> <span class="o">=</span> <span class="n">Hamiltonian</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">Z</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">*</span> <span class="n">Z</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">))</span>
 </span></code></pre></div>
 </div>
 </section>

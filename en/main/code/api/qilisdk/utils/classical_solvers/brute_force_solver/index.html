@@ -176,6 +176,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../modules/logging/logging.html">Logging</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul class="current">
@@ -308,6 +309,9 @@
 </p>
 <ul>
 <li class="toctree-l1">
+<a class="reference internal" href="../../../../../../../0.3.1/index.html">0.3.1</a>
+</li>
+<li class="toctree-l1">
 <a class="reference internal" href="../../../../../../../0.3.0/index.html">0.3.0</a>
 </li>
 <li class="toctree-l1">
@@ -393,9 +397,10 @@
 <dt class="sig sig-object py" id="qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver.solve">
 <span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">qilisdk.core.Model</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">→</span> <span class="sig-return-typehint"><a class="reference internal" href="../base_solver/index.html#qilisdk.utils.classical_solvers.base_solver.ClassicalSolverResult" title="qilisdk.utils.classical_solvers.base_solver.ClassicalSolverResult"><span class="pre">qilisdk.utils.classical_solvers.base_solver.ClassicalSolverResult</span></a></span></span><a class="reference internal" href="../../../../../../_modules/qilisdk/utils/classical_solvers/brute_force_solver.html#BruteForceSolver.solve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a @click.prevent="window.navigator.clipboard.writeText($el.href); $el.setAttribute('data-tooltip', 'Copied!'); setTimeout(() =&gt; $el.setAttribute('data-tooltip', 'Copy link to this element'), 2000)" aria-label="Copy link to this element" class="headerlink" data-tooltip="Copy link to this element" href="#qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver.solve" x-intersect.margin.0%.0%.-70%.0%="activeSection = '#qilisdk.utils.classical_solvers.brute_force_solver.BruteForceSolver.solve'"><svg height="1em" viewbox="0 0 24 24" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"></path></svg></a></dt>
 <dd><p>Solve the given model by brute-force enumeration of all variable assignments.</p>
-<p>Binary variables are assigned values from {0, 1}. Any other <code class="docutils literal notranslate"><span class="pre">Variable</span></code> is decomposed
-via its encoding, all bit patterns are enumerated and decoded to their representable
-values, so the search covers every value the encoding can express regardless of domain.</p>
+<p>Binary variables are assigned values from {0, 1} and spin variables values from {-1, 1}.
+Any other <code class="docutils literal notranslate"><span class="pre">Variable</span></code> is decomposed via its encoding, all bit patterns are enumerated and
+decoded to their representable values, so the search covers every value the encoding can
+express regardless of domain.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>model</strong> – The <code class="docutils literal notranslate"><span class="pre">Model</span></code> instance to solve.</p>
@@ -408,7 +413,7 @@ values, so the search covers every value the encoding can express regardless of 
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>ValueError</strong> – if the model contains a variable that has no encoding (i.e. is not a
-BinaryVariable or a bounded Variable).</p>
+BinaryVariable, a SpinVariable or a bounded Variable).</p>
 </dd>
 </dl>
 </dd></dl>

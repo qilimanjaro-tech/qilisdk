@@ -225,6 +225,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/logging/logging.html">Logging</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
@@ -362,6 +363,9 @@
     </p>
     <ul>
       <li class="toctree-l1">
+        <a class="reference internal" href="../../../../../0.3.1/index.html">0.3.1</a>
+      </li>
+      <li class="toctree-l1">
         <a class="reference internal" href="../../../../../0.3.0/index.html">0.3.0</a>
       </li>
       <li class="toctree-l1">
@@ -451,7 +455,7 @@
 </span><span id="line-13"><span class="c1"># limitations under the License.</span>
 </span><span id="line-14">
 </span><span id="line-15"><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-</span><span id="line-16"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
+</span><span id="line-16"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span>
 </span><span id="line-17">
 </span><span id="line-18"><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.font_manager</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fm</span>
 </span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
@@ -703,486 +707,526 @@
 </span><span id="line-144">        <span class="n">default</span><span class="o">=</span><span class="s2">"normal"</span><span class="p">,</span>
 </span><span id="line-145">        <span class="n">description</span><span class="o">=</span><span class="s2">"If 'compact' minimizes the layers to highlight circuit depth, if 'normal' conserves the order of the circuit"</span><span class="p">,</span>
 </span><span id="line-146">    <span class="p">)</span></div>
-</div>
 
 </span><span id="line-147">
-</span><span id="line-148">
+<div class="viewcode-block" id="CircuitStyle.fold">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.fold">[docs]</a>
+</span><span id="line-148">    <span class="n">fold</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)]</span> <span class="o">|</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"auto"</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-149">        <span class="n">default</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">,</span>
+</span><span id="line-150">        <span class="n">description</span><span class="o">=</span><span class="s2">"How deep circuits are wrapped onto several rows. 'auto' starts a new row whenever the current one would grow past `max_row_width`, an integer puts exactly that many layers on each row, and None draws the whole circuit on a single row."</span><span class="p">,</span>
+</span><span id="line-151">    <span class="p">)</span></div>
+
+<div class="viewcode-block" id="CircuitStyle.max_row_width">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.max_row_width">[docs]</a>
+</span><span id="line-152">    <span class="n">max_row_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-153">        <span class="n">default</span><span class="o">=</span><span class="mf">12.0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Maximum width (inches) of a row of the circuit when `fold` is 'auto'."</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mf">0.0</span>
+</span><span id="line-154">    <span class="p">)</span></div>
+
+<div class="viewcode-block" id="CircuitStyle.row_separation">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.row_separation">[docs]</a>
+</span><span id="line-155">    <span class="n">row_separation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Vertical separation (inches) between wrapped rows."</span><span class="p">,</span> <span class="n">gt</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CircuitStyle.fold_edges">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.fold_edges">[docs]</a>
+</span><span id="line-156">    <span class="n">fold_edges</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"dashed"</span><span class="p">,</span> <span class="s2">"closed"</span><span class="p">,</span> <span class="s2">"open"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-157">        <span class="n">default</span><span class="o">=</span><span class="s2">"dashed"</span><span class="p">,</span>
+</span><span id="line-158">        <span class="n">description</span><span class="o">=</span><span class="s2">"How the wires are drawn where a folded circuit breaks off and picks up again. 'dashed' trails them off in dashes, 'closed' joins them with a vertical line, and 'open' leaves them as bare wire ends."</span><span class="p">,</span>
+</span><span id="line-159">    <span class="p">)</span></div>
+
+<div class="viewcode-block" id="CircuitStyle.fold_dash">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.fold_dash">[docs]</a>
+</span><span id="line-160">    <span class="n">fold_dash</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-161">        <span class="n">default</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
+</span><span id="line-162">        <span class="n">description</span><span class="o">=</span><span class="s2">"Length (inches) of the dashed wire drawn at a fold when `fold_edges` is 'dashed'."</span><span class="p">,</span>
+</span><span id="line-163">        <span class="n">gt</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+</span><span id="line-164">    <span class="p">)</span></div>
+
+<div class="viewcode-block" id="CircuitStyle.max_view_height">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.CircuitStyle.max_view_height">[docs]</a>
+</span><span id="line-165">    <span class="n">max_view_height</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-166">        <span class="n">default</span><span class="o">=</span><span class="mf">7.0</span><span class="p">,</span>
+</span><span id="line-167">        <span class="n">description</span><span class="o">=</span><span class="s2">"Height (inches) of the circuit shown when the figure first opens in a window. A taller circuit opens on its first rows and can be panned or zoomed out to reach the rest; a figure saved to file always holds the whole circuit. None opens on the whole circuit."</span><span class="p">,</span>
+</span><span id="line-168">    <span class="p">)</span></div>
+</div>
+
+</span><span id="line-169">
+</span><span id="line-170">
 <div class="viewcode-block" id="HamiltonianStyle">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle">[docs]</a>
-</span><span id="line-149"><span class="k">class</span><span class="w"> </span><span class="nc">HamiltonianStyle</span><span class="p">(</span><span class="n">Style</span><span class="p">):</span>
-</span><span id="line-150"><span class="w">    </span><span class="sd">"""All visual parameters controlling the appearance of a Hamiltonian interaction graph."""</span>
-</span><span id="line-151">
-</span><span id="line-152">    <span class="c1"># Figure</span>
+</span><span id="line-171"><span class="k">class</span><span class="w"> </span><span class="nc">HamiltonianStyle</span><span class="p">(</span><span class="n">Style</span><span class="p">):</span>
+</span><span id="line-172"><span class="w">    </span><span class="sd">"""All visual parameters controlling the appearance of a Hamiltonian interaction graph."""</span>
+</span><span id="line-173">
+</span><span id="line-174">    <span class="c1"># Figure</span>
 <div class="viewcode-block" id="HamiltonianStyle.figsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.figsize">[docs]</a>
-</span><span id="line-153">    <span class="n">figsize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">description</span><span class="o">=</span><span class="n">_FIGSIZE_DESCRIPTION</span><span class="p">)</span></div>
+</span><span id="line-175">    <span class="n">figsize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">description</span><span class="o">=</span><span class="n">_FIGSIZE_DESCRIPTION</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.tight_layout">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.tight_layout">[docs]</a>
-</span><span id="line-154">    <span class="n">tight_layout</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_TIGHT_LAYOUT_DESCRIPTION</span><span class="p">)</span></div>
+</span><span id="line-176">    <span class="n">tight_layout</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_TIGHT_LAYOUT_DESCRIPTION</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.title_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.title_fontsize">[docs]</a>
-</span><span id="line-155">    <span class="n">title_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_TITLE_FONTSIZE_DESCRIPTION</span><span class="p">)</span></div>
+</span><span id="line-177">    <span class="n">title_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_TITLE_FONTSIZE_DESCRIPTION</span><span class="p">)</span></div>
 
-</span><span id="line-156">
-</span><span id="line-157">    <span class="c1"># Graph layout</span>
-<div class="viewcode-block" id="HamiltonianStyle.layout">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.layout">[docs]</a>
-</span><span id="line-158">    <span class="n">layout</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"spring"</span><span class="p">,</span> <span class="s2">"circular"</span><span class="p">,</span> <span class="s2">"shell"</span><span class="p">,</span> <span class="s2">"spiral"</span><span class="p">,</span> <span class="s2">"random"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-159">        <span class="n">default</span><span class="o">=</span><span class="s2">"spring"</span><span class="p">,</span>
-</span><span id="line-160">        <span class="n">description</span><span class="o">=</span><span class="s2">"Rustworkx layout algorithm used to position the qubit nodes."</span><span class="p">,</span>
 <div class="viewcode-block" id="Style.__class_vars__">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__class_vars__">[docs]</a>
-</span><span id="line-161">    <span class="p">)</span></div>
-</div>
+</span><span id="line-178"></div>
+
+</span><span id="line-179">    <span class="c1"># Graph layout</span>
+<div class="viewcode-block" id="HamiltonianStyle.layout">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.layout">[docs]</a>
+</span><span id="line-180">    <span class="n">layout</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"spring"</span><span class="p">,</span> <span class="s2">"circular"</span><span class="p">,</span> <span class="s2">"shell"</span><span class="p">,</span> <span class="s2">"spiral"</span><span class="p">,</span> <span class="s2">"random"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+<div class="viewcode-block" id="Style.__private_attributes__">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__private_attributes__">[docs]</a>
+</span><span id="line-181">        <span class="n">default</span><span class="o">=</span><span class="s2">"spring"</span><span class="p">,</span></div>
+
+</span><span id="line-182">        <span class="n">description</span><span class="o">=</span><span class="s2">"Rustworkx layout algorithm used to position the qubit nodes."</span><span class="p">,</span>
+</span><span id="line-183">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.layout_seed">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.layout_seed">[docs]</a>
-</span><span id="line-162">    <span class="n">layout_seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Seed for the randomized layouts ('spring' and 'random')."</span><span class="p">)</span></div>
+<div class="viewcode-block" id="Style.__signature__">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__signature__">[docs]</a>
+</span><span id="line-184">    <span class="n">layout_seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Seed for the randomized layouts ('spring' and 'random')."</span><span class="p">)</span></div>
+</div>
 
 <div class="viewcode-block" id="HamiltonianStyle.positions">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.positions">[docs]</a>
-</span><span id="line-163">    <span class="n">positions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<div class="viewcode-block" id="Style.__private_attributes__">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__private_attributes__">[docs]</a>
-</span><span id="line-164">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span></div>
-
-</span><span id="line-165">        <span class="n">description</span><span class="o">=</span><span class="s2">"Explicit qubit positions, keyed by qubit index. Overrides `layout` when provided."</span><span class="p">,</span>
-</span><span id="line-166">    <span class="p">)</span></div>
-
-<div class="viewcode-block" id="Style.__signature__">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__signature__">[docs]</a>
-</span><span id="line-167"></div>
-
-</span><span id="line-168">    <span class="c1"># Nodes</span>
-<div class="viewcode-block" id="HamiltonianStyle.node_radius">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.node_radius">[docs]</a>
-</span><span id="line-169">    <span class="n">node_radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-185">    <span class="n">positions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-186">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <div class="viewcode-block" id="Style.__pydantic_complete__">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_complete__">[docs]</a>
-</span><span id="line-170">        <span class="n">default</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span></div>
+</span><span id="line-187">        <span class="n">description</span><span class="o">=</span><span class="s2">"Explicit qubit positions, keyed by qubit index. Overrides `layout` when provided."</span><span class="p">,</span></div>
 
-</span><span id="line-171">        <span class="n">description</span><span class="o">=</span><span class="s2">"Node radius as a fraction of the smallest distance between two nodes in the layout."</span><span class="p">,</span>
-</span><span id="line-172">    <span class="p">)</span></div>
+</span><span id="line-188">    <span class="p">)</span></div>
+
+</span><span id="line-189">
+<div class="viewcode-block" id="Style.__pydantic_core_schema__">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_core_schema__">[docs]</a>
+</span><span id="line-190">    <span class="c1"># Nodes</span></div>
+
+<div class="viewcode-block" id="HamiltonianStyle.node_radius">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.node_radius">[docs]</a>
+</span><span id="line-191">    <span class="n">node_radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-192">        <span class="n">default</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+<div class="viewcode-block" id="Style.__pydantic_custom_init__">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_custom_init__">[docs]</a>
+</span><span id="line-193">        <span class="n">description</span><span class="o">=</span><span class="s2">"Node radius as a fraction of the smallest distance between two nodes in the layout."</span><span class="p">,</span></div>
+
+</span><span id="line-194">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.min_node_radius">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.min_node_radius">[docs]</a>
-<div class="viewcode-block" id="Style.__pydantic_core_schema__">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_core_schema__">[docs]</a>
-</span><span id="line-173">    <span class="n">min_node_radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span></div>
-
-</span><span id="line-174">        <span class="n">default</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Lower bound on the node radius, in normalized layout units."</span>
-</span><span id="line-175">    <span class="p">)</span></div>
+</span><span id="line-195">    <span class="n">min_node_radius</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-196">        <span class="n">default</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Lower bound on the node radius, in normalized layout units."</span>
+<div class="viewcode-block" id="Style.__pydantic_decorators__">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_decorators__">[docs]</a>
+</span><span id="line-197">    <span class="p">)</span></div>
+</div>
 
 <div class="viewcode-block" id="HamiltonianStyle.show_qubit_labels">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.show_qubit_labels">[docs]</a>
-<div class="viewcode-block" id="Style.__pydantic_custom_init__">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_custom_init__">[docs]</a>
-</span><span id="line-176">    <span class="n">show_qubit_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to label each node with its qubit index."</span><span class="p">)</span></div>
-</div>
+</span><span id="line-198">    <span class="n">show_qubit_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to label each node with its qubit index."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.qubit_label_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.qubit_label_fontsize">[docs]</a>
-</span><span id="line-177">    <span class="n">qubit_label_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for the qubit index labels."</span><span class="p">)</span></div>
+</span><span id="line-199">    <span class="n">qubit_label_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for the qubit index labels."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.show_field_labels">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.show_field_labels">[docs]</a>
-</span><span id="line-178">    <span class="n">show_field_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-179">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to write the Pauli type inside each local-field slice of a node."</span>
-<div class="viewcode-block" id="Style.__pydantic_decorators__">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_decorators__">[docs]</a>
-</span><span id="line-180">    <span class="p">)</span></div>
-</div>
+</span><span id="line-200">    <span class="n">show_field_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+<div class="viewcode-block" id="Style.__pydantic_generic_metadata__">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_generic_metadata__">[docs]</a>
+</span><span id="line-201">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to write the Pauli type inside each local-field slice of a node."</span></div>
+
+</span><span id="line-202">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.field_label_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.field_label_fontsize">[docs]</a>
-</span><span id="line-181">    <span class="n">field_label_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for the local-field labels inside the nodes."</span><span class="p">)</span></div>
+</span><span id="line-203">    <span class="n">field_label_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for the local-field labels inside the nodes."</span><span class="p">)</span></div>
 
-</span><span id="line-182">
-</span><span id="line-183">    <span class="c1"># Couplings</span>
+</span><span id="line-204">
+</span><span id="line-205">    <span class="c1"># Couplings</span>
 <div class="viewcode-block" id="HamiltonianStyle.coupling_linewidth">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.coupling_linewidth">[docs]</a>
-<div class="viewcode-block" id="Style.__pydantic_generic_metadata__">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_generic_metadata__">[docs]</a>
-</span><span id="line-184">    <span class="n">coupling_linewidth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Line width of the coupling edges."</span><span class="p">)</span></div>
-</div>
+</span><span id="line-206">    <span class="n">coupling_linewidth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Line width of the coupling edges."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.coupling_curvature">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.coupling_curvature">[docs]</a>
-</span><span id="line-185">    <span class="n">coupling_curvature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-186">        <span class="n">default</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
-</span><span id="line-187">        <span class="n">description</span><span class="o">=</span><span class="s2">"Curvature offset between parallel edges when several coupling types share the same qubit pair."</span><span class="p">,</span>
-</span><span id="line-188">    <span class="p">)</span></div>
+</span><span id="line-207">    <span class="n">coupling_curvature</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-208">        <span class="n">default</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+<div class="viewcode-block" id="Style.__pydantic_parent_namespace__">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_parent_namespace__">[docs]</a>
+</span><span id="line-209">        <span class="n">description</span><span class="o">=</span><span class="s2">"Curvature offset between parallel edges when several coupling types share the same qubit pair."</span><span class="p">,</span></div>
+
+</span><span id="line-210">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.coupling_line_styles">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.coupling_line_styles">[docs]</a>
-</span><span id="line-189">    <span class="n">coupling_line_styles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-190">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">"ZZ"</span><span class="p">:</span> <span class="s2">"-"</span><span class="p">,</span> <span class="s2">"XX"</span><span class="p">:</span> <span class="s2">"--"</span><span class="p">,</span> <span class="s2">"YY"</span><span class="p">:</span> <span class="s2">"-."</span><span class="p">,</span> <span class="s2">"XZ"</span><span class="p">:</span> <span class="s2">":"</span><span class="p">,</span> <span class="s2">"ZX"</span><span class="p">:</span> <span class="s2">":"</span><span class="p">},</span>
-</span><span id="line-191">        <span class="n">description</span><span class="o">=</span><span class="s2">"Matplotlib line style per coupling type. Types not listed cycle through the remaining styles."</span><span class="p">,</span>
-<div class="viewcode-block" id="Style.__pydantic_parent_namespace__">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_parent_namespace__">[docs]</a>
-</span><span id="line-192">    <span class="p">)</span></div>
-</div>
+</span><span id="line-211">    <span class="n">coupling_line_styles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+<div class="viewcode-block" id="Style.__pydantic_post_init__">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_post_init__">[docs]</a>
+</span><span id="line-212">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">"ZZ"</span><span class="p">:</span> <span class="s2">"-"</span><span class="p">,</span> <span class="s2">"XX"</span><span class="p">:</span> <span class="s2">"--"</span><span class="p">,</span> <span class="s2">"YY"</span><span class="p">:</span> <span class="s2">"-."</span><span class="p">,</span> <span class="s2">"XZ"</span><span class="p">:</span> <span class="s2">":"</span><span class="p">,</span> <span class="s2">"ZX"</span><span class="p">:</span> <span class="s2">":"</span><span class="p">},</span></div>
+
+</span><span id="line-213">        <span class="n">description</span><span class="o">=</span><span class="s2">"Matplotlib line style per coupling type. Types not listed cycle through the remaining styles."</span><span class="p">,</span>
+</span><span id="line-214">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.default_coupling_line_styles">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.default_coupling_line_styles">[docs]</a>
-</span><span id="line-193">    <span class="n">default_coupling_line_styles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-194">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[</span><span class="s2">"-"</span><span class="p">,</span> <span class="s2">"--"</span><span class="p">,</span> <span class="s2">"-."</span><span class="p">,</span> <span class="s2">":"</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))],</span>
-<div class="viewcode-block" id="Style.__pydantic_post_init__">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_post_init__">[docs]</a>
-</span><span id="line-195">        <span class="n">description</span><span class="o">=</span><span class="s2">"Line styles cycled through for coupling types missing from `coupling_line_styles`."</span><span class="p">,</span></div>
+<div class="viewcode-block" id="Style.__pydantic_root_model__">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_root_model__">[docs]</a>
+</span><span id="line-215">    <span class="n">default_coupling_line_styles</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span></div>
 
-</span><span id="line-196">    <span class="p">)</span></div>
+</span><span id="line-216">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[</span><span class="s2">"-"</span><span class="p">,</span> <span class="s2">"--"</span><span class="p">,</span> <span class="s2">"-."</span><span class="p">,</span> <span class="s2">":"</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))],</span>
+</span><span id="line-217">        <span class="n">description</span><span class="o">=</span><span class="s2">"Line styles cycled through for coupling types missing from `coupling_line_styles`."</span><span class="p">,</span>
+<div class="viewcode-block" id="Style.__pydantic_serializer__">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_serializer__">[docs]</a>
+</span><span id="line-218">    <span class="p">)</span></div>
+</div>
 
 <div class="viewcode-block" id="HamiltonianStyle.show_coupling_labels">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.show_coupling_labels">[docs]</a>
-</span><span id="line-197">    <span class="n">show_coupling_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<div class="viewcode-block" id="Style.__pydantic_root_model__">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_root_model__">[docs]</a>
-</span><span id="line-198">        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span></div>
+</span><span id="line-219">    <span class="n">show_coupling_labels</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-220">        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<div class="viewcode-block" id="Style.__pydantic_validator__">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_validator__">[docs]</a>
+</span><span id="line-221">        <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to annotate each coupling edge with its Pauli type. Off by default, since the legend already maps line styles to coupling types."</span><span class="p">,</span></div>
 
-</span><span id="line-199">        <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to annotate each coupling edge with its Pauli type. Off by default, since the legend already maps line styles to coupling types."</span><span class="p">,</span>
-</span><span id="line-200">    <span class="p">)</span></div>
+</span><span id="line-222">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.coupling_label_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.coupling_label_fontsize">[docs]</a>
-<div class="viewcode-block" id="Style.__pydantic_serializer__">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_serializer__">[docs]</a>
-</span><span id="line-201">    <span class="n">coupling_label_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for the coupling type labels."</span><span class="p">)</span></div>
-</div>
+</span><span id="line-223">    <span class="n">coupling_label_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for the coupling type labels."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.show_multi_body">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.show_multi_body">[docs]</a>
-</span><span id="line-202">    <span class="n">show_multi_body</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-203">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<div class="viewcode-block" id="Style.__pydantic_validator__">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_validator__">[docs]</a>
-</span><span id="line-204">        <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to draw terms acting on three or more qubits as a star-shaped hyperedge."</span><span class="p">,</span></div>
-
-</span><span id="line-205">    <span class="p">)</span></div>
-
-</span><span id="line-206">
 <div class="viewcode-block" id="Style.__pydantic_fields__">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_fields__">[docs]</a>
-</span><span id="line-207">    <span class="c1"># Colour scale</span></div>
+</span><span id="line-224">    <span class="n">show_multi_body</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span></div>
 
+</span><span id="line-225">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="line-226">        <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to draw terms acting on three or more qubits as a star-shaped hyperedge."</span><span class="p">,</span>
+</span><span id="line-227">    <span class="p">)</span></div>
+
+</span><span id="line-228">
+</span><span id="line-229">    <span class="c1"># Colour scale</span>
 <div class="viewcode-block" id="HamiltonianStyle.colormap">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.colormap">[docs]</a>
-</span><span id="line-208">    <span class="n">colormap</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-209">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-</span><span id="line-210">        <span class="n">description</span><span class="o">=</span><span class="s2">"Name of a matplotlib colormap for the coefficient strengths. Defaults to a theme gradient."</span><span class="p">,</span>
-</span><span id="line-211">    <span class="p">)</span></div>
+</span><span id="line-230">    <span class="n">colormap</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-231">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<div class="viewcode-block" id="Style.__pydantic_computed_fields__">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_computed_fields__">[docs]</a>
+</span><span id="line-232">        <span class="n">description</span><span class="o">=</span><span class="s2">"Name of a matplotlib colormap for the coefficient strengths. Defaults to a theme gradient."</span><span class="p">,</span></div>
+
+</span><span id="line-233">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.show_colorbar">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.show_colorbar">[docs]</a>
-</span><span id="line-212">    <span class="n">show_colorbar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to draw the coefficient strength colour bar."</span><span class="p">)</span></div>
+</span><span id="line-234">    <span class="n">show_colorbar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to draw the coefficient strength colour bar."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.colorbar_shrink">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.colorbar_shrink">[docs]</a>
-</span><span id="line-213">    <span class="n">colorbar_shrink</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Fraction of the axes height taken up by the colour bar."</span><span class="p">)</span></div>
+</span><span id="line-235">    <span class="n">colorbar_shrink</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Fraction of the axes height taken up by the colour bar."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.colorbar_label">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.colorbar_label">[docs]</a>
-</span><span id="line-214">    <span class="n">colorbar_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-<div class="viewcode-block" id="Style.__pydantic_computed_fields__">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_computed_fields__">[docs]</a>
-</span><span id="line-215">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Label of the colour bar. Defaults to 'coefficient' (or '|coefficient|')."</span></div>
-
-</span><span id="line-216">    <span class="p">)</span></div>
+</span><span id="line-236">    <span class="n">colorbar_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-237">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Label of the colour bar. Defaults to 'coefficient' (or '|coefficient|')."</span>
+</span><span id="line-238">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.separate_color_scales">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.separate_color_scales">[docs]</a>
-</span><span id="line-217">    <span class="n">separate_color_scales</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-218">        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-</span><span id="line-219">        <span class="n">description</span><span class="o">=</span><span class="s2">"Whether local fields and couplings get their own colour scale (and colour bar) instead of a shared one."</span><span class="p">,</span>
-</span><span id="line-220">    <span class="p">)</span></div>
-
-</span><span id="line-221">
-</span><span id="line-222">    <span class="c1"># Legend</span>
-<div class="viewcode-block" id="HamiltonianStyle.show_legend">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.show_legend">[docs]</a>
-</span><span id="line-223">    <span class="n">show_legend</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-239">    <span class="n">separate_color_scales</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-240">        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <div class="viewcode-block" id="Style.__pydantic_extra__">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_extra__">[docs]</a>
-</span><span id="line-224">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to draw a legend mapping coupling types to their line style."</span></div>
+</span><span id="line-241">        <span class="n">description</span><span class="o">=</span><span class="s2">"Whether local fields and couplings get their own colour scale (and colour bar) instead of a shared one."</span><span class="p">,</span></div>
 
-</span><span id="line-225">    <span class="p">)</span></div>
+</span><span id="line-242">    <span class="p">)</span></div>
+
+</span><span id="line-243">
+<div class="viewcode-block" id="Style.__pydantic_fields_set__">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_fields_set__">[docs]</a>
+</span><span id="line-244">    <span class="c1"># Legend</span></div>
+
+<div class="viewcode-block" id="HamiltonianStyle.show_legend">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.show_legend">[docs]</a>
+</span><span id="line-245">    <span class="n">show_legend</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-246">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to draw a legend mapping coupling types to their line style."</span>
+<div class="viewcode-block" id="Style.__pydantic_private__">
+<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_private__">[docs]</a>
+</span><span id="line-247">    <span class="p">)</span></div>
+</div>
 
 <div class="viewcode-block" id="HamiltonianStyle.legend_loc">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.legend_loc">[docs]</a>
-</span><span id="line-226">    <span class="n">legend_loc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"upper right"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Location of the coupling type legend."</span><span class="p">)</span></div>
+</span><span id="line-248">    <span class="n">legend_loc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"upper right"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Location of the coupling type legend."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.legend_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.legend_fontsize">[docs]</a>
-<div class="viewcode-block" id="Style.__pydantic_fields_set__">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_fields_set__">[docs]</a>
-</span><span id="line-227">    <span class="n">legend_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_LEGEND_FONTSIZE_DESCRIPTION</span><span class="p">)</span></div>
-</div>
+</span><span id="line-249">    <span class="n">legend_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_LEGEND_FONTSIZE_DESCRIPTION</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="HamiltonianStyle.legend_frame">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.legend_frame">[docs]</a>
-</span><span id="line-228">    <span class="n">legend_frame</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_LEGEND_FRAME_DESCRIPTION</span><span class="p">)</span></div>
+</span><span id="line-250">    <span class="n">legend_frame</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_LEGEND_FRAME_DESCRIPTION</span><span class="p">)</span></div>
 
-</span><span id="line-229">
-<div class="viewcode-block" id="Style.__pydantic_private__">
-<a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.Style.__pydantic_private__">[docs]</a>
-</span><span id="line-230">    <span class="c1"># Misc</span></div>
-
+</span><span id="line-251">
+</span><span id="line-252">    <span class="c1"># Misc</span>
 <div class="viewcode-block" id="HamiltonianStyle.show_identity_offset">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.HamiltonianStyle.show_identity_offset">[docs]</a>
-</span><span id="line-231">    <span class="n">show_identity_offset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-232">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to annotate the constant (identity) energy offset of the Hamiltonian."</span>
-</span><span id="line-233">    <span class="p">)</span></div>
+</span><span id="line-253">    <span class="n">show_identity_offset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-254">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to annotate the constant (identity) energy offset of the Hamiltonian."</span>
+</span><span id="line-255">    <span class="p">)</span></div>
 </div>
 
-</span><span id="line-234">
-</span><span id="line-235">
+</span><span id="line-256">
+</span><span id="line-257">
 <div class="viewcode-block" id="ScheduleStyle">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle">[docs]</a>
-</span><span id="line-236"><span class="k">class</span><span class="w"> </span><span class="nc">ScheduleStyle</span><span class="p">(</span><span class="n">Style</span><span class="p">):</span>
-</span><span id="line-237"><span class="w">    </span><span class="sd">"""</span>
-</span><span id="line-238"><span class="sd">    Customization options for matplotlib schedule plots, with theme support.</span>
-</span><span id="line-239"><span class="sd">    """</span>
-</span><span id="line-240">
-</span><span id="line-241">    <span class="c1"># Figure and axes</span>
+</span><span id="line-258"><span class="k">class</span><span class="w"> </span><span class="nc">ScheduleStyle</span><span class="p">(</span><span class="n">Style</span><span class="p">):</span>
+</span><span id="line-259"><span class="w">    </span><span class="sd">"""</span>
+</span><span id="line-260"><span class="sd">    Customization options for matplotlib schedule plots, with theme support.</span>
+</span><span id="line-261"><span class="sd">    """</span>
+</span><span id="line-262">
+</span><span id="line-263">    <span class="c1"># Figure and axes</span>
 <div class="viewcode-block" id="ScheduleStyle.figsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.figsize">[docs]</a>
-</span><span id="line-242">    <span class="n">figsize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">description</span><span class="o">=</span><span class="n">_FIGSIZE_DESCRIPTION</span><span class="p">)</span></div>
+</span><span id="line-264">    <span class="n">figsize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">description</span><span class="o">=</span><span class="n">_FIGSIZE_DESCRIPTION</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.grid">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.grid">[docs]</a>
-</span><span id="line-243">    <span class="n">grid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to show grid lines on the plot."</span><span class="p">)</span></div>
+</span><span id="line-265">    <span class="n">grid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to show grid lines on the plot."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.grid_style">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.grid_style">[docs]</a>
-</span><span id="line-244">    <span class="n">grid_style</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-245">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">"linestyle"</span><span class="p">:</span> <span class="s2">"--"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#e0e0e0"</span><span class="p">,</span> <span class="s2">"alpha"</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">},</span>
-</span><span id="line-246">        <span class="n">description</span><span class="o">=</span><span class="s2">"Style dictionary for grid lines (linestyle, color, alpha, etc.)."</span><span class="p">,</span>
-</span><span id="line-247">    <span class="p">)</span></div>
+</span><span id="line-266">    <span class="n">grid_style</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-267">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">"linestyle"</span><span class="p">:</span> <span class="s2">"--"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#e0e0e0"</span><span class="p">,</span> <span class="s2">"alpha"</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">},</span>
+</span><span id="line-268">        <span class="n">description</span><span class="o">=</span><span class="s2">"Style dictionary for grid lines (linestyle, color, alpha, etc.)."</span><span class="p">,</span>
+</span><span id="line-269">    <span class="p">)</span></div>
 
-</span><span id="line-248">
-</span><span id="line-249">    <span class="c1"># Title and labels</span>
+</span><span id="line-270">
+</span><span id="line-271">    <span class="c1"># Title and labels</span>
 <div class="viewcode-block" id="ScheduleStyle.title_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.title_fontsize">[docs]</a>
-</span><span id="line-250">    <span class="n">title_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_TITLE_FONTSIZE_DESCRIPTION</span><span class="p">)</span></div>
+</span><span id="line-272">    <span class="n">title_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_TITLE_FONTSIZE_DESCRIPTION</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.xlabel">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.xlabel">[docs]</a>
-</span><span id="line-251">    <span class="n">xlabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"time"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Label for the x-axis."</span><span class="p">)</span></div>
+</span><span id="line-273">    <span class="n">xlabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"time"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Label for the x-axis."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.ylabel">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.ylabel">[docs]</a>
-</span><span id="line-252">    <span class="n">ylabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"coefficient value"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Label for the y-axis."</span><span class="p">)</span></div>
+</span><span id="line-274">    <span class="n">ylabel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"coefficient value"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Label for the y-axis."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.label_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.label_fontsize">[docs]</a>
-</span><span id="line-253">    <span class="n">label_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for axis labels."</span><span class="p">)</span></div>
+</span><span id="line-275">    <span class="n">label_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for axis labels."</span><span class="p">)</span></div>
 
-</span><span id="line-254">
-</span><span id="line-255">    <span class="c1"># Legend</span>
+</span><span id="line-276">
+</span><span id="line-277">    <span class="c1"># Legend</span>
 <div class="viewcode-block" id="ScheduleStyle.legend_loc">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.legend_loc">[docs]</a>
-</span><span id="line-256">    <span class="n">legend_loc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-257">        <span class="n">default</span><span class="o">=</span><span class="s2">"best"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Location of the legend (matplotlib string, e.g. 'best', 'upper right')."</span>
-</span><span id="line-258">    <span class="p">)</span></div>
+</span><span id="line-278">    <span class="n">legend_loc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-279">        <span class="n">default</span><span class="o">=</span><span class="s2">"best"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Location of the legend (matplotlib string, e.g. 'best', 'upper right')."</span>
+</span><span id="line-280">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.legend_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.legend_fontsize">[docs]</a>
-</span><span id="line-259">    <span class="n">legend_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_LEGEND_FONTSIZE_DESCRIPTION</span><span class="p">)</span></div>
+</span><span id="line-281">    <span class="n">legend_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_LEGEND_FONTSIZE_DESCRIPTION</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.legend_frame">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.legend_frame">[docs]</a>
-</span><span id="line-260">    <span class="n">legend_frame</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_LEGEND_FRAME_DESCRIPTION</span><span class="p">)</span></div>
+</span><span id="line-282">    <span class="n">legend_frame</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_LEGEND_FRAME_DESCRIPTION</span><span class="p">)</span></div>
 
-</span><span id="line-261">
-</span><span id="line-262">    <span class="c1"># Line style</span>
+</span><span id="line-283">
+</span><span id="line-284">    <span class="c1"># Line style</span>
 <div class="viewcode-block" id="ScheduleStyle.line_styles">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.line_styles">[docs]</a>
-</span><span id="line-263">    <span class="n">line_styles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-264">        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>
-</span><span id="line-265">        <span class="n">description</span><span class="o">=</span><span class="s2">"Custom line style dictionary for each Hamiltonian (e.g. {label: {color, linestyle, linewidth}})."</span><span class="p">,</span>
-</span><span id="line-266">    <span class="p">)</span></div>
+</span><span id="line-285">    <span class="n">line_styles</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-286">        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>
+</span><span id="line-287">        <span class="n">description</span><span class="o">=</span><span class="s2">"Custom line style dictionary for each Hamiltonian (e.g. {label: {color, linestyle, linewidth}})."</span><span class="p">,</span>
+</span><span id="line-288">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.default_line_style">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.default_line_style">[docs]</a>
-</span><span id="line-267">    <span class="n">default_line_style</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-268">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">"linestyle"</span><span class="p">:</span> <span class="s2">"-"</span><span class="p">,</span> <span class="s2">"linewidth"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
-</span><span id="line-269">        <span class="n">description</span><span class="o">=</span><span class="s2">"Default line style for Hamiltonians not in line_styles."</span><span class="p">,</span>
-</span><span id="line-270">    <span class="p">)</span></div>
+</span><span id="line-289">    <span class="n">default_line_style</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-290">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">"linestyle"</span><span class="p">:</span> <span class="s2">"-"</span><span class="p">,</span> <span class="s2">"linewidth"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>
+</span><span id="line-291">        <span class="n">description</span><span class="o">=</span><span class="s2">"Default line style for Hamiltonians not in line_styles."</span><span class="p">,</span>
+</span><span id="line-292">    <span class="p">)</span></div>
 
-</span><span id="line-271">
-</span><span id="line-272">    <span class="c1"># Marker style</span>
+</span><span id="line-293">
+</span><span id="line-294">    <span class="c1"># Marker style</span>
 <div class="viewcode-block" id="ScheduleStyle.marker">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.marker">[docs]</a>
-</span><span id="line-273">    <span class="n">marker</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-274">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Matplotlib marker style for data points (e.g. 'o', 's', None for no marker)."</span>
-</span><span id="line-275">    <span class="p">)</span></div>
+</span><span id="line-295">    <span class="n">marker</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-296">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Matplotlib marker style for data points (e.g. 'o', 's', None for no marker)."</span>
+</span><span id="line-297">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.marker_size">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.marker_size">[docs]</a>
-</span><span id="line-276">    <span class="n">marker_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Size of markers if used."</span><span class="p">)</span></div>
+</span><span id="line-298">    <span class="n">marker_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Size of markers if used."</span><span class="p">)</span></div>
 
-</span><span id="line-277">
-</span><span id="line-278">    <span class="c1"># Ticks</span>
+</span><span id="line-299">
+</span><span id="line-300">    <span class="c1"># Ticks</span>
 <div class="viewcode-block" id="ScheduleStyle.xtick_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.xtick_fontsize">[docs]</a>
-</span><span id="line-279">    <span class="n">xtick_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for x-axis tick labels."</span><span class="p">)</span></div>
+</span><span id="line-301">    <span class="n">xtick_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for x-axis tick labels."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.ytick_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.ytick_fontsize">[docs]</a>
-</span><span id="line-280">    <span class="n">ytick_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for y-axis tick labels."</span><span class="p">)</span></div>
+</span><span id="line-302">    <span class="n">ytick_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for y-axis tick labels."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduleStyle.tick_color">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.tick_color">[docs]</a>
-</span><span id="line-281">    <span class="n">tick_color</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-282">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Color for tick labels (None uses theme.on_background)."</span>
-</span><span id="line-283">    <span class="p">)</span></div>
+</span><span id="line-303">    <span class="n">tick_color</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-304">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Color for tick labels (None uses theme.on_background)."</span>
+</span><span id="line-305">    <span class="p">)</span></div>
 
-</span><span id="line-284">
-</span><span id="line-285">    <span class="c1"># Misc</span>
+</span><span id="line-306">
+</span><span id="line-307">    <span class="c1"># Misc</span>
 <div class="viewcode-block" id="ScheduleStyle.tight_layout">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.ScheduleStyle.tight_layout">[docs]</a>
-</span><span id="line-286">    <span class="n">tight_layout</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_TIGHT_LAYOUT_DESCRIPTION</span><span class="p">)</span></div>
+</span><span id="line-308">    <span class="n">tight_layout</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_TIGHT_LAYOUT_DESCRIPTION</span><span class="p">)</span></div>
 </div>
 
-</span><span id="line-287">
-</span><span id="line-288">
+</span><span id="line-309">
+</span><span id="line-310">
 <div class="viewcode-block" id="DatasetStyle">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle">[docs]</a>
-</span><span id="line-289"><span class="k">class</span><span class="w"> </span><span class="nc">DatasetStyle</span><span class="p">(</span><span class="n">Style</span><span class="p">):</span>
-</span><span id="line-290"><span class="w">    </span><span class="sd">"""</span>
-</span><span id="line-291"><span class="sd">    Customization options for matplotlib dataset plots, with theme support.</span>
-</span><span id="line-292">
-</span><span id="line-293"><span class="sd">    Controls only the *appearance* of a dataset plot (theme, fonts, colours,</span>
-</span><span id="line-294"><span class="sd">    grid, markers, ...). The *kind* of plot (``"1d"``, ``"2d"`` or ``"3d"``) is</span>
-</span><span id="line-295"><span class="sd">    selected separately via the ``style`` argument of :meth:`Dataset.draw`.</span>
-</span><span id="line-296"><span class="sd">    """</span>
-</span><span id="line-297">
-</span><span id="line-298">    <span class="c1"># Figure and axes</span>
+</span><span id="line-311"><span class="k">class</span><span class="w"> </span><span class="nc">DatasetStyle</span><span class="p">(</span><span class="n">Style</span><span class="p">):</span>
+</span><span id="line-312"><span class="w">    </span><span class="sd">"""</span>
+</span><span id="line-313"><span class="sd">    Customization options for matplotlib dataset plots, with theme support.</span>
+</span><span id="line-314">
+</span><span id="line-315"><span class="sd">    Controls only the *appearance* of a dataset plot (theme, fonts, colours,</span>
+</span><span id="line-316"><span class="sd">    grid, markers, ...). The *kind* of plot (``"1d"``, ``"2d"`` or ``"3d"``) is</span>
+</span><span id="line-317"><span class="sd">    selected separately via the ``style`` argument of :meth:`Dataset.draw`.</span>
+</span><span id="line-318"><span class="sd">    """</span>
+</span><span id="line-319">
+</span><span id="line-320">    <span class="c1"># Figure and axes</span>
 <div class="viewcode-block" id="DatasetStyle.figsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.figsize">[docs]</a>
-</span><span id="line-299">    <span class="n">figsize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">description</span><span class="o">=</span><span class="n">_FIGSIZE_DESCRIPTION</span><span class="p">)</span></div>
+</span><span id="line-321">    <span class="n">figsize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">tuple</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">description</span><span class="o">=</span><span class="n">_FIGSIZE_DESCRIPTION</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DatasetStyle.grid">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.grid">[docs]</a>
-</span><span id="line-300">    <span class="n">grid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to show grid lines on the plot."</span><span class="p">)</span></div>
+</span><span id="line-322">    <span class="n">grid</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Whether to show grid lines on the plot."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DatasetStyle.grid_style">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.grid_style">[docs]</a>
-</span><span id="line-301">    <span class="n">grid_style</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-302">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">"linestyle"</span><span class="p">:</span> <span class="s2">"--"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#e0e0e0"</span><span class="p">,</span> <span class="s2">"alpha"</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">},</span>
-</span><span id="line-303">        <span class="n">description</span><span class="o">=</span><span class="s2">"Style dictionary for grid lines (linestyle, color, alpha, etc.)."</span><span class="p">,</span>
-</span><span id="line-304">    <span class="p">)</span></div>
+</span><span id="line-323">    <span class="n">grid_style</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-324">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">"linestyle"</span><span class="p">:</span> <span class="s2">"--"</span><span class="p">,</span> <span class="s2">"color"</span><span class="p">:</span> <span class="s2">"#e0e0e0"</span><span class="p">,</span> <span class="s2">"alpha"</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">},</span>
+</span><span id="line-325">        <span class="n">description</span><span class="o">=</span><span class="s2">"Style dictionary for grid lines (linestyle, color, alpha, etc.)."</span><span class="p">,</span>
+</span><span id="line-326">    <span class="p">)</span></div>
 
-</span><span id="line-305">
-</span><span id="line-306">    <span class="c1"># Title and labels</span>
+</span><span id="line-327">
+</span><span id="line-328">    <span class="c1"># Title and labels</span>
 <div class="viewcode-block" id="DatasetStyle.title_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.title_fontsize">[docs]</a>
-</span><span id="line-307">    <span class="n">title_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_TITLE_FONTSIZE_DESCRIPTION</span><span class="p">)</span></div>
+</span><span id="line-329">    <span class="n">title_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_TITLE_FONTSIZE_DESCRIPTION</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DatasetStyle.label_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.label_fontsize">[docs]</a>
-</span><span id="line-308">    <span class="n">label_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for axis labels."</span><span class="p">)</span></div>
+</span><span id="line-330">    <span class="n">label_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">14</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for axis labels."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DatasetStyle.xlabel">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.xlabel">[docs]</a>
-</span><span id="line-309">    <span class="n">xlabel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-310">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Override for the x-axis label (None uses a sensible default)."</span>
-</span><span id="line-311">    <span class="p">)</span></div>
+</span><span id="line-331">    <span class="n">xlabel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-332">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Override for the x-axis label (None uses a sensible default)."</span>
+</span><span id="line-333">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="DatasetStyle.ylabel">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.ylabel">[docs]</a>
-</span><span id="line-312">    <span class="n">ylabel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-313">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Override for the y-axis label (None uses a sensible default)."</span>
-</span><span id="line-314">    <span class="p">)</span></div>
+</span><span id="line-334">    <span class="n">ylabel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-335">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Override for the y-axis label (None uses a sensible default)."</span>
+</span><span id="line-336">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="DatasetStyle.zlabel">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.zlabel">[docs]</a>
-</span><span id="line-315">    <span class="n">zlabel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-316">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Override for the z-axis label (None uses a sensible default)."</span>
-</span><span id="line-317">    <span class="p">)</span></div>
+</span><span id="line-337">    <span class="n">zlabel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-338">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Override for the z-axis label (None uses a sensible default)."</span>
+</span><span id="line-339">    <span class="p">)</span></div>
 
-</span><span id="line-318">
-</span><span id="line-319">    <span class="c1"># Legend</span>
+</span><span id="line-340">
+</span><span id="line-341">    <span class="c1"># Legend</span>
 <div class="viewcode-block" id="DatasetStyle.legend_loc">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.legend_loc">[docs]</a>
-</span><span id="line-320">    <span class="n">legend_loc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-321">        <span class="n">default</span><span class="o">=</span><span class="s2">"best"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Location of the legend (matplotlib string, e.g. 'best', 'upper right')."</span>
-</span><span id="line-322">    <span class="p">)</span></div>
+</span><span id="line-342">    <span class="n">legend_loc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-343">        <span class="n">default</span><span class="o">=</span><span class="s2">"best"</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Location of the legend (matplotlib string, e.g. 'best', 'upper right')."</span>
+</span><span id="line-344">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="DatasetStyle.legend_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.legend_fontsize">[docs]</a>
-</span><span id="line-323">    <span class="n">legend_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_LEGEND_FONTSIZE_DESCRIPTION</span><span class="p">)</span></div>
+</span><span id="line-345">    <span class="n">legend_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_LEGEND_FONTSIZE_DESCRIPTION</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DatasetStyle.legend_frame">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.legend_frame">[docs]</a>
-</span><span id="line-324">    <span class="n">legend_frame</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_LEGEND_FRAME_DESCRIPTION</span><span class="p">)</span></div>
+</span><span id="line-346">    <span class="n">legend_frame</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_LEGEND_FRAME_DESCRIPTION</span><span class="p">)</span></div>
 
-</span><span id="line-325">
-</span><span id="line-326">    <span class="c1"># Trajectory rendering</span>
+</span><span id="line-347">
+</span><span id="line-348">    <span class="c1"># Trajectory rendering</span>
 <div class="viewcode-block" id="DatasetStyle.trajectory_style">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.trajectory_style">[docs]</a>
-</span><span id="line-327">    <span class="n">trajectory_style</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"scatter"</span><span class="p">,</span> <span class="s2">"line"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-328">        <span class="n">default</span><span class="o">=</span><span class="s2">"scatter"</span><span class="p">,</span>
-</span><span id="line-329">        <span class="n">description</span><span class="o">=</span><span class="s2">"How to render 2-D/3-D phase portraits: 'scatter' (points coloured by time) or 'line'."</span><span class="p">,</span>
-</span><span id="line-330">    <span class="p">)</span></div>
+</span><span id="line-349">    <span class="n">trajectory_style</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"scatter"</span><span class="p">,</span> <span class="s2">"line"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-350">        <span class="n">default</span><span class="o">=</span><span class="s2">"scatter"</span><span class="p">,</span>
+</span><span id="line-351">        <span class="n">description</span><span class="o">=</span><span class="s2">"How to render 2-D/3-D phase portraits: 'scatter' (points coloured by time) or 'line'."</span><span class="p">,</span>
+</span><span id="line-352">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="DatasetStyle.line_style">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.line_style">[docs]</a>
-</span><span id="line-331">    <span class="n">line_style</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-332">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">"linestyle"</span><span class="p">:</span> <span class="s2">"-"</span><span class="p">,</span> <span class="s2">"linewidth"</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">},</span>
-</span><span id="line-333">        <span class="n">description</span><span class="o">=</span><span class="s2">"Line style used for 1-D series and 'line' trajectories."</span><span class="p">,</span>
-</span><span id="line-334">    <span class="p">)</span></div>
+</span><span id="line-353">    <span class="n">line_style</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-354">        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">"linestyle"</span><span class="p">:</span> <span class="s2">"-"</span><span class="p">,</span> <span class="s2">"linewidth"</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">},</span>
+</span><span id="line-355">        <span class="n">description</span><span class="o">=</span><span class="s2">"Line style used for 1-D series and 'line' trajectories."</span><span class="p">,</span>
+</span><span id="line-356">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="DatasetStyle.marker">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.marker">[docs]</a>
-</span><span id="line-335">    <span class="n">marker</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-336">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Matplotlib marker for 1-D series data points (e.g. 'o', None for no marker)."</span>
-</span><span id="line-337">    <span class="p">)</span></div>
+</span><span id="line-357">    <span class="n">marker</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-358">        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Matplotlib marker for 1-D series data points (e.g. 'o', None for no marker)."</span>
+</span><span id="line-359">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="DatasetStyle.marker_size">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.marker_size">[docs]</a>
-</span><span id="line-338">    <span class="n">marker_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Marker size for 1-D series markers."</span><span class="p">)</span></div>
+</span><span id="line-360">    <span class="n">marker_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Marker size for 1-D series markers."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DatasetStyle.point_size">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.point_size">[docs]</a>
-</span><span id="line-339">    <span class="n">point_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Point size (area) for scatter trajectories."</span><span class="p">)</span></div>
+</span><span id="line-361">    <span class="n">point_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Point size (area) for scatter trajectories."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DatasetStyle.color_by_time">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.color_by_time">[docs]</a>
-</span><span id="line-340">    <span class="n">color_by_time</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-341">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Colour 2-D/3-D scatter trajectories by time index using a theme gradient."</span>
-</span><span id="line-342">    <span class="p">)</span></div>
+</span><span id="line-362">    <span class="n">color_by_time</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-363">        <span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Colour 2-D/3-D scatter trajectories by time index using a theme gradient."</span>
+</span><span id="line-364">    <span class="p">)</span></div>
 
 <div class="viewcode-block" id="DatasetStyle.colorbar">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.colorbar">[docs]</a>
-</span><span id="line-343">    <span class="n">colorbar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Show a colour bar for time when colouring trajectories by time."</span><span class="p">)</span></div>
+</span><span id="line-365">    <span class="n">colorbar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Show a colour bar for time when colouring trajectories by time."</span><span class="p">)</span></div>
 
-</span><span id="line-344">
-</span><span id="line-345">    <span class="c1"># Delay embedding</span>
+</span><span id="line-366">
+</span><span id="line-367">    <span class="c1"># Delay embedding</span>
 <div class="viewcode-block" id="DatasetStyle.delay">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.delay">[docs]</a>
-</span><span id="line-346">    <span class="n">delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-</span><span id="line-347">        <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-</span><span id="line-348">        <span class="n">description</span><span class="o">=</span><span class="s2">"Delay (in samples) used to embed lower-dimensional series into a 2-D/3-D phase portrait."</span><span class="p">,</span>
-</span><span id="line-349">    <span class="p">)</span></div>
+</span><span id="line-368">    <span class="n">delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+</span><span id="line-369">        <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+</span><span id="line-370">        <span class="n">description</span><span class="o">=</span><span class="s2">"Delay (in samples) used to embed lower-dimensional series into a 2-D/3-D phase portrait."</span><span class="p">,</span>
+</span><span id="line-371">    <span class="p">)</span></div>
 
-</span><span id="line-350">
-</span><span id="line-351">    <span class="c1"># Ticks</span>
+</span><span id="line-372">
+</span><span id="line-373">    <span class="c1"># Ticks</span>
 <div class="viewcode-block" id="DatasetStyle.xtick_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.xtick_fontsize">[docs]</a>
-</span><span id="line-352">    <span class="n">xtick_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for x-axis tick labels."</span><span class="p">)</span></div>
+</span><span id="line-374">    <span class="n">xtick_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for x-axis tick labels."</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DatasetStyle.ytick_fontsize">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.ytick_fontsize">[docs]</a>
-</span><span id="line-353">    <span class="n">ytick_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for y-axis tick labels."</span><span class="p">)</span></div>
+</span><span id="line-375">    <span class="n">ytick_fontsize</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"Font size for y-axis tick labels."</span><span class="p">)</span></div>
 
-</span><span id="line-354">
-</span><span id="line-355">    <span class="c1"># Misc</span>
+</span><span id="line-376">
+</span><span id="line-377">    <span class="c1"># Misc</span>
 <div class="viewcode-block" id="DatasetStyle.tight_layout">
 <a class="viewcode-back" href="../../../../code/api/qilisdk/utils/visualization/style/index.html#qilisdk.utils.visualization.style.DatasetStyle.tight_layout">[docs]</a>
-</span><span id="line-356">    <span class="n">tight_layout</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_TIGHT_LAYOUT_DESCRIPTION</span><span class="p">)</span></div>
+</span><span id="line-378">    <span class="n">tight_layout</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">_TIGHT_LAYOUT_DESCRIPTION</span><span class="p">)</span></div>
 </div>
 
 </span></code></pre></div>

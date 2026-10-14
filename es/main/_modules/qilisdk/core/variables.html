@@ -225,6 +225,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/logging/logging.html">Registro</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Referencia de la API</span></p>
 <ul>
@@ -362,6 +363,9 @@
     </p>
     <ul>
       <li class="toctree-l1">
+        <a class="reference internal" href="../../../../0.3.1/index.html">0.3.1</a>
+      </li>
+      <li class="toctree-l1">
         <a class="reference internal" href="../../../../0.3.0/index.html">0.3.0</a>
       </li>
       <li class="toctree-l1">
@@ -465,7 +469,7 @@
 </span><span id="line-27"><span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 </span><span id="line-28"><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 </span><span id="line-29"><span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-</span><span id="line-30"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">cast</span>
+</span><span id="line-30"><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">cast</span>
 </span><span id="line-31">
 </span><span id="line-32"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </span><span id="line-33"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
@@ -1197,451 +1201,469 @@
 </span><span id="line-610">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="line-611">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Domain</span><span class="o">.</span><span class="n">BINARY</span><span class="p">)</span>
 </span><span id="line-612">
-</span><span id="line-613">    <span class="nd">@property</span>
 <div class="viewcode-block" id="BinaryVariable.is_idempotent_under_mul">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.BinaryVariable.is_idempotent_under_mul">[documentos]</a>
-</span><span id="line-614">    <span class="k">def</span><span class="w"> </span><span class="nf">is_idempotent_under_mul</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-615">        <span class="k">return</span> <span class="kc">True</span></div>
+</span><span id="line-613">    <span class="n">is_idempotent_under_mul</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span></div>
 
-</span><span id="line-616">
+</span><span id="line-614">
 <div class="viewcode-block" id="BinaryVariable.num_binary_equivalent">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.BinaryVariable.num_binary_equivalent">[documentos]</a>
-</span><span id="line-617">    <span class="k">def</span><span class="w"> </span><span class="nf">num_binary_equivalent</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>  <span class="c1"># ruff: ignore[no-self-use]</span>
-</span><span id="line-618">        <span class="k">return</span> <span class="mi">1</span></div>
+</span><span id="line-615">    <span class="k">def</span><span class="w"> </span><span class="nf">num_binary_equivalent</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>  <span class="c1"># ruff: ignore[no-self-use]</span>
+</span><span id="line-616">        <span class="k">return</span> <span class="mi">1</span></div>
 
-</span><span id="line-619">
+</span><span id="line-617">
 <div class="viewcode-block" id="BinaryVariable.evaluate">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.BinaryVariable.evaluate">[documentos]</a>
-</span><span id="line-620">    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Number</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RealNumber</span><span class="p">:</span>
-</span><span id="line-621">        <span class="n">env</span> <span class="o">=</span> <span class="n">env</span> <span class="k">if</span> <span class="n">env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
-</span><span id="line-622">        <span class="k">if</span> <span class="bp">self</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">env</span><span class="p">:</span>
-</span><span id="line-623">            <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No value was provided to evaluate the binary variable </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
-</span><span id="line-624">        <span class="n">value</span> <span class="o">=</span> <span class="n">env</span><span class="p">[</span><span class="bp">self</span><span class="p">]</span>
-</span><span id="line-625">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-</span><span id="line-626">            <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">{</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">}:</span>
-</span><span id="line-627">                <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-</span><span id="line-628">            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-</span><span id="line-629">                <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Evaluating a Binary variable with a value </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> that is outside the domain."</span><span class="p">)</span>
-</span><span id="line-630">            <span class="k">return</span> <span class="n">value</span>
-</span><span id="line-631">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-</span><span id="line-632">            <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Evaluating a Binary variable with an unsupported value </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">."</span><span class="p">)</span>
-</span><span id="line-633">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-634">            <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="s2">"Evaluating a Binary variable with a binary list of more than one item."</span><span class="p">)</span>
-</span><span id="line-635">        <span class="k">return</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+</span><span id="line-618">    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Number</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RealNumber</span><span class="p">:</span>
+</span><span id="line-619">        <span class="n">env</span> <span class="o">=</span> <span class="n">env</span> <span class="k">if</span> <span class="n">env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+</span><span id="line-620">        <span class="k">if</span> <span class="bp">self</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">env</span><span class="p">:</span>
+</span><span id="line-621">            <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No value was provided to evaluate the binary variable </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+</span><span id="line-622">        <span class="n">value</span> <span class="o">=</span> <span class="n">env</span><span class="p">[</span><span class="bp">self</span><span class="p">]</span>
+</span><span id="line-623">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+</span><span id="line-624">            <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">{</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">}:</span>
+</span><span id="line-625">                <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</span><span id="line-626">            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+</span><span id="line-627">                <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Evaluating a Binary variable with a value </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> that is outside the domain."</span><span class="p">)</span>
+</span><span id="line-628">            <span class="k">return</span> <span class="n">value</span>
+</span><span id="line-629">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+</span><span id="line-630">            <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Evaluating a Binary variable with an unsupported value </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">."</span><span class="p">)</span>
+</span><span id="line-631">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-632">            <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="s2">"Evaluating a Binary variable with a binary list of more than one item."</span><span class="p">)</span>
+</span><span id="line-633">        <span class="k">return</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
-</span><span id="line-636">
+</span><span id="line-634">
 <div class="viewcode-block" id="BinaryVariable.update_variable">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.BinaryVariable.update_variable">[documentos]</a>
-</span><span id="line-637">    <span class="k">def</span><span class="w"> </span><span class="nf">update_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-638">        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+</span><span id="line-635">    <span class="k">def</span><span class="w"> </span><span class="nf">update_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-636">        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
-</span><span id="line-639">
-</span><span id="line-640">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BinaryVariable</span><span class="p">:</span>
-</span><span id="line-641">        <span class="k">return</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span></div>
+</span><span id="line-637">
+</span><span id="line-638">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BinaryVariable</span><span class="p">:</span>
+</span><span id="line-639">        <span class="k">return</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span></div>
 
-</span><span id="line-642">
-</span><span id="line-643">
-</span><span id="line-644"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-640">
+</span><span id="line-641">
+</span><span id="line-642"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="SpinVariable">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.SpinVariable">[documentos]</a>
-</span><span id="line-645"><span class="k">class</span><span class="w"> </span><span class="nc">SpinVariable</span><span class="p">(</span><span class="n">BaseVariable</span><span class="p">):</span>
-</span><span id="line-646"><span class="w">    </span><span class="sd">"""Spin decision variable restricted to ``{-1, 1}``."""</span>
-</span><span id="line-647">
-</span><span id="line-648">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-649">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Domain</span><span class="o">.</span><span class="n">SPIN</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span><span id="line-643"><span class="k">class</span><span class="w"> </span><span class="nc">SpinVariable</span><span class="p">(</span><span class="n">BaseVariable</span><span class="p">):</span>
+</span><span id="line-644"><span class="w">    </span><span class="sd">"""Spin decision variable restricted to ``{-1, 1}``.</span>
+</span><span id="line-645">
+</span><span id="line-646"><span class="sd">    Example:</span>
+</span><span id="line-647"><span class="sd">        .. code-block:: python</span>
+</span><span id="line-648">
+</span><span id="line-649"><span class="sd">            from qilisdk.core.variables import SpinVariable</span>
 </span><span id="line-650">
+</span><span id="line-651"><span class="sd">            s = SpinVariable("s")</span>
+</span><span id="line-652"><span class="sd">    """</span>
+</span><span id="line-653">
+</span><span id="line-654">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-655">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">Domain</span><span class="o">.</span><span class="n">SPIN</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span><span id="line-656">
 <div class="viewcode-block" id="SpinVariable.num_binary_equivalent">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.SpinVariable.num_binary_equivalent">[documentos]</a>
-</span><span id="line-651">    <span class="k">def</span><span class="w"> </span><span class="nf">num_binary_equivalent</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>  <span class="c1"># ruff: ignore[no-self-use]</span>
-</span><span id="line-652">        <span class="k">return</span> <span class="mi">1</span></div>
+</span><span id="line-657">    <span class="k">def</span><span class="w"> </span><span class="nf">num_binary_equivalent</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>  <span class="c1"># ruff: ignore[no-self-use]</span>
+</span><span id="line-658">        <span class="k">return</span> <span class="mi">1</span></div>
 
-</span><span id="line-653">
+</span><span id="line-659">
+<div class="viewcode-block" id="SpinVariable.to_binary">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.SpinVariable.to_binary">[documentos]</a>
+</span><span id="line-660">    <span class="k">def</span><span class="w"> </span><span class="nf">to_binary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expression</span><span class="p">:</span>
+</span><span id="line-661"><span class="w">        </span><span class="sd">"""Encode the spin as ``2 * b - 1`` over a binary variable named like any other encoding.</span>
+</span><span id="line-662">
+</span><span id="line-663"><span class="sd">        The encoding is exact and needs no penalty: ``b = 0`` maps the spin to ``-1`` and ``b = 1``</span>
+</span><span id="line-664"><span class="sd">        maps it to ``+1``, so every binary assignment is a valid spin assignment.</span>
+</span><span id="line-665">
+</span><span id="line-666"><span class="sd">        Returns:</span>
+</span><span id="line-667"><span class="sd">            Expression: an equivalent expression over a single binary variable.</span>
+</span><span id="line-668"><span class="sd">        """</span>
+</span><span id="line-669">        <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">BinaryVariable</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">(0)"</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span></div>
+
+</span><span id="line-670">
 <div class="viewcode-block" id="SpinVariable.update_variable">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.SpinVariable.update_variable">[documentos]</a>
-</span><span id="line-654">    <span class="k">def</span><span class="w"> </span><span class="nf">update_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-655">        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+</span><span id="line-671">    <span class="k">def</span><span class="w"> </span><span class="nf">update_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-672">        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 
-</span><span id="line-656">
+</span><span id="line-673">
 <div class="viewcode-block" id="SpinVariable.evaluate">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.SpinVariable.evaluate">[documentos]</a>
-</span><span id="line-657">    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Number</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RealNumber</span><span class="p">:</span>
-</span><span id="line-658">        <span class="n">env</span> <span class="o">=</span> <span class="n">env</span> <span class="k">if</span> <span class="n">env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
-</span><span id="line-659">        <span class="k">if</span> <span class="bp">self</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">env</span><span class="p">:</span>
-</span><span id="line-660">            <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No value was provided to evaluate the spin variable </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
-</span><span id="line-661">        <span class="n">value</span> <span class="o">=</span> <span class="n">env</span><span class="p">[</span><span class="bp">self</span><span class="p">]</span>
-</span><span id="line-662">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
-</span><span id="line-663">            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-664">                <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Evaluating a Spin variable with a value </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> that is outside the domain."</span><span class="p">)</span>
-</span><span id="line-665">            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">}</span> <span class="k">else</span> <span class="mi">1</span>
-</span><span id="line-666">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-667">            <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="s2">"Evaluating a Spin variable with a list of more than one item."</span><span class="p">)</span>
-</span><span id="line-668">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">}</span> <span class="k">else</span> <span class="mi">1</span></div>
+</span><span id="line-674">    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Number</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RealNumber</span><span class="p">:</span>
+</span><span id="line-675">        <span class="n">env</span> <span class="o">=</span> <span class="n">env</span> <span class="k">if</span> <span class="n">env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+</span><span id="line-676">        <span class="k">if</span> <span class="bp">self</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">env</span><span class="p">:</span>
+</span><span id="line-677">            <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No value was provided to evaluate the spin variable </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+</span><span id="line-678">        <span class="n">value</span> <span class="o">=</span> <span class="n">env</span><span class="p">[</span><span class="bp">self</span><span class="p">]</span>
+</span><span id="line-679">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
+</span><span id="line-680">            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-681">                <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Evaluating a Spin variable with a value </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> that is outside the domain."</span><span class="p">)</span>
+</span><span id="line-682">            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">}</span> <span class="k">else</span> <span class="mi">1</span>
+</span><span id="line-683">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-684">            <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="s2">"Evaluating a Spin variable with a list of more than one item."</span><span class="p">)</span>
+</span><span id="line-685">        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">}</span> <span class="k">else</span> <span class="mi">1</span></div>
 
-</span><span id="line-669">
-</span><span id="line-670">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SpinVariable</span><span class="p">:</span>
-</span><span id="line-671">        <span class="k">return</span> <span class="n">SpinVariable</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span></div>
+</span><span id="line-686">
+</span><span id="line-687">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SpinVariable</span><span class="p">:</span>
+</span><span id="line-688">        <span class="k">return</span> <span class="n">SpinVariable</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span></div>
 
-</span><span id="line-672">
-</span><span id="line-673">
-</span><span id="line-674"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
+</span><span id="line-689">
+</span><span id="line-690">
+</span><span id="line-691"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span>
 <div class="viewcode-block" id="Variable">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable">[documentos]</a>
-</span><span id="line-675"><span class="k">class</span><span class="w"> </span><span class="nc">Variable</span><span class="p">(</span><span class="n">BaseVariable</span><span class="p">):</span>
-</span><span id="line-676"><span class="w">    </span><span class="sd">"""Generic (possibly continuous) optimization variable with a configurable binary encoding.</span>
-</span><span id="line-677">
-</span><span id="line-678"><span class="sd">    Example:</span>
-</span><span id="line-679"><span class="sd">        .. code-block:: python</span>
-</span><span id="line-680">
-</span><span id="line-681"><span class="sd">            from qilisdk.core.variables import Domain, Variable</span>
-</span><span id="line-682">
-</span><span id="line-683"><span class="sd">            price = Variable("price", domain=Domain.REAL, bounds=(0, 10))</span>
-</span><span id="line-684"><span class="sd">            binary_term = price.to_binary()</span>
-</span><span id="line-685"><span class="sd">    """</span>
-</span><span id="line-686">
-</span><span id="line-687">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-688">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-689">        <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="line-690">        <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">,</span>
-</span><span id="line-691">        <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-</span><span id="line-692">        <span class="n">encoding</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Encoding</span><span class="p">]</span> <span class="o">=</span> <span class="n">Bitwise</span><span class="p">,</span>
-</span><span id="line-693">        <span class="n">precision</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
-</span><span id="line-694">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-695"><span class="w">        </span><span class="sd">"""Initialize a new generic variable.</span>
-</span><span id="line-696">
-</span><span id="line-697"><span class="sd">        Args:</span>
-</span><span id="line-698"><span class="sd">            label (str): The name of the variable.</span>
-</span><span id="line-699"><span class="sd">            domain (Domain, optional): The domain of the values this variable can take. Defaults to</span>
-</span><span id="line-700"><span class="sd">                Domain.INTEGER, which is much cheaper to binarize than Domain.REAL.</span>
-</span><span id="line-701"><span class="sd">            bounds (tuple[float | None, float | None], optional): the (lower, upper) bounds, both</span>
-</span><span id="line-702"><span class="sd">                included. ``None`` selects the domain's extreme. Defaults to (None, None).</span>
-</span><span id="line-703"><span class="sd">            encoding (type[Encoding], optional): the binary encoding. Defaults to Bitwise.</span>
-</span><span id="line-704"><span class="sd">            precision (float, optional): the floating point precision for REAL variables. Defaults to 1e-2.</span>
-</span><span id="line-705"><span class="sd">        """</span>
-</span><span id="line-706">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
-</span><span id="line-707">        <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="o">=</span> <span class="n">encoding</span>
-</span><span id="line-708">        <span class="bp">self</span><span class="o">.</span><span class="n">_precision</span> <span class="o">=</span> <span class="n">precision</span>
-</span><span id="line-709">        <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span><span class="p">:</span> <span class="n">Expression</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-710">        <span class="bp">self</span><span class="o">.</span><span class="n">_bin_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-711">        <span class="bp">self</span><span class="o">.</span><span class="n">_num_binary_equivalent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-712">
-</span><span id="line-713">    <span class="nd">@property</span>
+</span><span id="line-692"><span class="k">class</span><span class="w"> </span><span class="nc">Variable</span><span class="p">(</span><span class="n">BaseVariable</span><span class="p">):</span>
+</span><span id="line-693"><span class="w">    </span><span class="sd">"""Generic (possibly continuous) optimization variable with a configurable binary encoding.</span>
+</span><span id="line-694">
+</span><span id="line-695"><span class="sd">    Example:</span>
+</span><span id="line-696"><span class="sd">        .. code-block:: python</span>
+</span><span id="line-697">
+</span><span id="line-698"><span class="sd">            from qilisdk.core.variables import Domain, Variable</span>
+</span><span id="line-699">
+</span><span id="line-700"><span class="sd">            price = Variable("price", domain=Domain.REAL, bounds=(0, 10))</span>
+</span><span id="line-701"><span class="sd">            binary_term = price.to_binary()</span>
+</span><span id="line-702"><span class="sd">    """</span>
+</span><span id="line-703">
+</span><span id="line-704">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-705">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-706">        <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="line-707">        <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="o">.</span><span class="n">INTEGER</span><span class="p">,</span>
+</span><span id="line-708">        <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+</span><span id="line-709">        <span class="n">encoding</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Encoding</span><span class="p">]</span> <span class="o">=</span> <span class="n">Bitwise</span><span class="p">,</span>
+</span><span id="line-710">        <span class="n">precision</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
+</span><span id="line-711">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-712"><span class="w">        </span><span class="sd">"""Initialize a new generic variable.</span>
+</span><span id="line-713">
+</span><span id="line-714"><span class="sd">        Args:</span>
+</span><span id="line-715"><span class="sd">            label (str): The name of the variable.</span>
+</span><span id="line-716"><span class="sd">            domain (Domain, optional): The domain of the values this variable can take. Defaults to</span>
+</span><span id="line-717"><span class="sd">                Domain.INTEGER, which is much cheaper to binarize than Domain.REAL.</span>
+</span><span id="line-718"><span class="sd">            bounds (tuple[float | None, float | None], optional): the (lower, upper) bounds, both</span>
+</span><span id="line-719"><span class="sd">                included. ``None`` selects the domain's extreme. Defaults to (None, None).</span>
+</span><span id="line-720"><span class="sd">            encoding (type[Encoding], optional): the binary encoding. Defaults to Bitwise.</span>
+</span><span id="line-721"><span class="sd">            precision (float, optional): the floating point precision for REAL variables. Defaults to 1e-2.</span>
+</span><span id="line-722"><span class="sd">        """</span>
+</span><span id="line-723">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+</span><span id="line-724">        <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="o">=</span> <span class="n">encoding</span>
+</span><span id="line-725">        <span class="bp">self</span><span class="o">.</span><span class="n">_precision</span> <span class="o">=</span> <span class="n">precision</span>
+</span><span id="line-726">        <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span><span class="p">:</span> <span class="n">Expression</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-727">        <span class="bp">self</span><span class="o">.</span><span class="n">_bin_vars</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-728">        <span class="bp">self</span><span class="o">.</span><span class="n">_num_binary_equivalent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-729">
+</span><span id="line-730">    <span class="nd">@property</span>
 <div class="viewcode-block" id="Variable.encoding">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.encoding">[documentos]</a>
-</span><span id="line-714">    <span class="k">def</span><span class="w"> </span><span class="nf">encoding</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Encoding</span><span class="p">]:</span>
-</span><span id="line-715">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span></div>
-
-</span><span id="line-716">
-</span><span id="line-717">    <span class="nd">@property</span>
-<div class="viewcode-block" id="Variable.precision">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.precision">[documentos]</a>
-</span><span id="line-718">    <span class="k">def</span><span class="w"> </span><span class="nf">precision</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-719">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision</span></div>
-
-</span><span id="line-720">
-</span><span id="line-721">    <span class="nd">@property</span>
-<div class="viewcode-block" id="Variable.expression">
-<a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.expression">[documentos]</a>
-</span><span id="line-722">    <span class="k">def</span><span class="w"> </span><span class="nf">expression</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expression</span><span class="p">:</span>
-</span><span id="line-723"><span class="w">        </span><span class="sd">"""The binary-encoded expression for this variable, computed once and cached."""</span>
-</span><span id="line-724">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-725">            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">LARGE_BOUND</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">LARGE_BOUND</span><span class="p">:</span>
-</span><span id="line-726">                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-</span><span id="line-727">                    <span class="s2">"[Variables] Encoding variable </span><span class="si">{}</span><span class="s2"> which has the bounds </span><span class="si">{}</span><span class="s2"> is very expensive and may take a very long time."</span><span class="p">,</span>
-</span><span id="line-728">                    <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
-</span><span id="line-729">                    <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
-</span><span id="line-730">                <span class="p">)</span>
-</span><span id="line-731">            <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_binary</span><span class="p">()</span>
-</span><span id="line-732">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span></div>
+</span><span id="line-731">    <span class="k">def</span><span class="w"> </span><span class="nf">encoding</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">type</span><span class="p">[</span><span class="n">Encoding</span><span class="p">]:</span>
+</span><span id="line-732">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span></div>
 
 </span><span id="line-733">
 </span><span id="line-734">    <span class="nd">@property</span>
+<div class="viewcode-block" id="Variable.precision">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.precision">[documentos]</a>
+</span><span id="line-735">    <span class="k">def</span><span class="w"> </span><span class="nf">precision</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-736">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision</span></div>
+
+</span><span id="line-737">
+</span><span id="line-738">    <span class="nd">@property</span>
+<div class="viewcode-block" id="Variable.expression">
+<a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.expression">[documentos]</a>
+</span><span id="line-739">    <span class="k">def</span><span class="w"> </span><span class="nf">expression</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expression</span><span class="p">:</span>
+</span><span id="line-740"><span class="w">        </span><span class="sd">"""The binary-encoded expression for this variable, computed once and cached."""</span>
+</span><span id="line-741">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-742">            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">LARGE_BOUND</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">LARGE_BOUND</span><span class="p">:</span>
+</span><span id="line-743">                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+</span><span id="line-744">                    <span class="s2">"[Variables] Encoding variable </span><span class="si">{}</span><span class="s2"> which has the bounds </span><span class="si">{}</span><span class="s2"> is very expensive and may take a very long time."</span><span class="p">,</span>
+</span><span id="line-745">                    <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+</span><span id="line-746">                    <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
+</span><span id="line-747">                <span class="p">)</span>
+</span><span id="line-748">            <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_binary</span><span class="p">()</span>
+</span><span id="line-749">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span></div>
+
+</span><span id="line-750">
+</span><span id="line-751">    <span class="nd">@property</span>
 <div class="viewcode-block" id="Variable.bin_vars">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.bin_vars">[documentos]</a>
-</span><span id="line-735">    <span class="k">def</span><span class="w"> </span><span class="nf">bin_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">]:</span>
-</span><span id="line-736">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-737">            <span class="bp">self</span><span class="o">.</span><span class="n">to_binary</span><span class="p">()</span>
-</span><span id="line-738">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bin_vars</span></div>
+</span><span id="line-752">    <span class="k">def</span><span class="w"> </span><span class="nf">bin_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">]:</span>
+</span><span id="line-753">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-754">            <span class="bp">self</span><span class="o">.</span><span class="n">to_binary</span><span class="p">()</span>
+</span><span id="line-755">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bin_vars</span></div>
 
-</span><span id="line-739">
-</span><span id="line-740">    <span class="k">def</span><span class="w"> </span><span class="nf">_invalidate_encoding</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-741"><span class="w">        </span><span class="sd">"""Drop everything derived from the domain, bounds, encoding and precision."""</span>
-</span><span id="line-742">        <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-743">        <span class="bp">self</span><span class="o">.</span><span class="n">_bin_vars</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-744">        <span class="bp">self</span><span class="o">.</span><span class="n">_num_binary_equivalent</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="line-745">
+</span><span id="line-756">
+</span><span id="line-757">    <span class="k">def</span><span class="w"> </span><span class="nf">_invalidate_encoding</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-758"><span class="w">        </span><span class="sd">"""Drop everything derived from the domain, bounds, encoding and precision."""</span>
+</span><span id="line-759">        <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-760">        <span class="bp">self</span><span class="o">.</span><span class="n">_bin_vars</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-761">        <span class="bp">self</span><span class="o">.</span><span class="n">_num_binary_equivalent</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="line-762">
 <div class="viewcode-block" id="Variable.set_precision">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.set_precision">[documentos]</a>
-</span><span id="line-746">    <span class="k">def</span><span class="w"> </span><span class="nf">set_precision</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">precision</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-747">        <span class="bp">self</span><span class="o">.</span><span class="n">_precision</span> <span class="o">=</span> <span class="n">precision</span>
-</span><span id="line-748">        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_encoding</span><span class="p">()</span></div>
+</span><span id="line-763">    <span class="k">def</span><span class="w"> </span><span class="nf">set_precision</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">precision</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-764">        <span class="bp">self</span><span class="o">.</span><span class="n">_precision</span> <span class="o">=</span> <span class="n">precision</span>
+</span><span id="line-765">        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_encoding</span><span class="p">()</span></div>
 
-</span><span id="line-749">
+</span><span id="line-766">
 <div class="viewcode-block" id="Variable.set_bounds">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.set_bounds">[documentos]</a>
-</span><span id="line-750">    <span class="k">def</span><span class="w"> </span><span class="nf">set_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-751">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">)</span>
-</span><span id="line-752">        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_encoding</span><span class="p">()</span></div>
+</span><span id="line-767">    <span class="k">def</span><span class="w"> </span><span class="nf">set_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-768">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">)</span>
+</span><span id="line-769">        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_encoding</span><span class="p">()</span></div>
 
-</span><span id="line-753">
-</span><span id="line-754">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
-</span><span id="line-755">        <span class="k">return</span> <span class="n">Variable</span><span class="p">(</span>
-</span><span id="line-756">            <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
-</span><span id="line-757">            <span class="n">domain</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span>
-</span><span id="line-758">            <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
-</span><span id="line-759">            <span class="n">encoding</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="p">,</span>
-</span><span id="line-760">            <span class="n">precision</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_precision</span><span class="p">,</span>
-</span><span id="line-761">        <span class="p">)</span>
-</span><span id="line-762">
-</span><span id="line-763">    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseVariable</span><span class="p">:</span>
-</span><span id="line-764">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-765">            <span class="bp">self</span><span class="o">.</span><span class="n">to_binary</span><span class="p">()</span>
-</span><span id="line-766">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bin_vars</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
-</span><span id="line-767">
+</span><span id="line-770">
+</span><span id="line-771">    <span class="k">def</span><span class="w"> </span><span class="nf">__copy__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Variable</span><span class="p">:</span>
+</span><span id="line-772">        <span class="k">return</span> <span class="n">Variable</span><span class="p">(</span>
+</span><span id="line-773">            <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+</span><span id="line-774">            <span class="n">domain</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span>
+</span><span id="line-775">            <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
+</span><span id="line-776">            <span class="n">encoding</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="p">,</span>
+</span><span id="line-777">            <span class="n">precision</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_precision</span><span class="p">,</span>
+</span><span id="line-778">        <span class="p">)</span>
+</span><span id="line-779">
+</span><span id="line-780">    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseVariable</span><span class="p">:</span>
+</span><span id="line-781">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-782">            <span class="bp">self</span><span class="o">.</span><span class="n">to_binary</span><span class="p">()</span>
+</span><span id="line-783">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bin_vars</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+</span><span id="line-784">
 <div class="viewcode-block" id="Variable.update_variable">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.update_variable">[documentos]</a>
-</span><span id="line-768">    <span class="k">def</span><span class="w"> </span><span class="nf">update_variable</span><span class="p">(</span>
-</span><span id="line-769">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-770">        <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span>
-</span><span id="line-771">        <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-</span><span id="line-772">        <span class="n">encoding</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Encoding</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="line-773">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-774">        <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="o">=</span> <span class="n">encoding</span> <span class="k">if</span> <span class="n">encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span>
-</span><span id="line-775">        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_encoding</span><span class="p">()</span>
-</span><span id="line-776">        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_variable</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span></div>
+</span><span id="line-785">    <span class="k">def</span><span class="w"> </span><span class="nf">update_variable</span><span class="p">(</span>
+</span><span id="line-786">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-787">        <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span>
+</span><span id="line-788">        <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+</span><span id="line-789">        <span class="n">encoding</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">Encoding</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="line-790">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-791">        <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span> <span class="o">=</span> <span class="n">encoding</span> <span class="k">if</span> <span class="n">encoding</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span>
+</span><span id="line-792">        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_encoding</span><span class="p">()</span>
+</span><span id="line-793">        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update_variable</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span></div>
 
-</span><span id="line-777">
+</span><span id="line-794">
 <div class="viewcode-block" id="Variable.evaluate">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.evaluate">[documentos]</a>
-</span><span id="line-778">    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Number</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RealNumber</span><span class="p">:</span>
-</span><span id="line-779">        <span class="n">env</span> <span class="o">=</span> <span class="n">env</span> <span class="k">if</span> <span class="n">env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
-</span><span id="line-780">        <span class="k">if</span> <span class="bp">self</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">env</span><span class="p">:</span>
-</span><span id="line-781">            <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No value was provided to evaluate the variable </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
-</span><span id="line-782">        <span class="n">value</span> <span class="o">=</span> <span class="n">env</span><span class="p">[</span><span class="bp">self</span><span class="p">]</span>
-</span><span id="line-783">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
-</span><span id="line-784">            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-</span><span id="line-785">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The value </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> is invalid for the domain </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</span><span id="line-786">            <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">:</span>
-</span><span id="line-787">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The value </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> is outside the defined bounds </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-</span><span id="line-788">            <span class="k">return</span> <span class="n">value</span>
-</span><span id="line-789">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-</span><span id="line-790">            <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Evaluating variable </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> with an unsupported value </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">."</span><span class="p">)</span>
-</span><span id="line-791">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision</span><span class="p">)</span></div>
+</span><span id="line-795">    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Number</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RealNumber</span><span class="p">:</span>
+</span><span id="line-796">        <span class="n">env</span> <span class="o">=</span> <span class="n">env</span> <span class="k">if</span> <span class="n">env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+</span><span id="line-797">        <span class="k">if</span> <span class="bp">self</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">env</span><span class="p">:</span>
+</span><span id="line-798">            <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No value was provided to evaluate the variable </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
+</span><span id="line-799">        <span class="n">value</span> <span class="o">=</span> <span class="n">env</span><span class="p">[</span><span class="bp">self</span><span class="p">]</span>
+</span><span id="line-800">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+</span><span id="line-801">            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+</span><span id="line-802">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The value </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> is invalid for the domain </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-803">            <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">:</span>
+</span><span id="line-804">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The value </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> is outside the defined bounds </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span id="line-805">            <span class="k">return</span> <span class="n">value</span>
+</span><span id="line-806">        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+</span><span id="line-807">            <span class="k">raise</span> <span class="n">EvaluationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Evaluating variable </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> with an unsupported value </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">."</span><span class="p">)</span>
+</span><span id="line-808">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_precision</span><span class="p">)</span></div>
 
-</span><span id="line-792">
+</span><span id="line-809">
 <div class="viewcode-block" id="Variable.to_binary">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.to_binary">[documentos]</a>
-</span><span id="line-793">    <span class="k">def</span><span class="w"> </span><span class="nf">to_binary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expression</span><span class="p">:</span>
-</span><span id="line-794">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-795">            <span class="n">expression</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_precision</span><span class="p">)</span>
-</span><span id="line-796">            <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">expression</span><span class="p">)</span>
-</span><span id="line-797">            <span class="bp">self</span><span class="o">.</span><span class="n">_bin_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">BinaryVariable</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_binary_equivalent</span><span class="p">())]</span>
-</span><span id="line-798">            <span class="bp">self</span><span class="o">.</span><span class="n">_bin_vars</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bin_vars</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">_extract_number</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">label</span><span class="p">))</span>
-</span><span id="line-799">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span></div>
+</span><span id="line-810">    <span class="k">def</span><span class="w"> </span><span class="nf">to_binary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expression</span><span class="p">:</span>
+</span><span id="line-811">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-812">            <span class="n">expression</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_precision</span><span class="p">)</span>
+</span><span id="line-813">            <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">expression</span><span class="p">)</span>
+</span><span id="line-814">            <span class="bp">self</span><span class="o">.</span><span class="n">_bin_vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">BinaryVariable</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_binary_equivalent</span><span class="p">())]</span>
+</span><span id="line-815">            <span class="bp">self</span><span class="o">.</span><span class="n">_bin_vars</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bin_vars</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">_extract_number</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">label</span><span class="p">))</span>
+</span><span id="line-816">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expression</span></div>
 
-</span><span id="line-800">
+</span><span id="line-817">
 <div class="viewcode-block" id="Variable.num_binary_equivalent">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.num_binary_equivalent">[documentos]</a>
-</span><span id="line-801">    <span class="k">def</span><span class="w"> </span><span class="nf">num_binary_equivalent</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-</span><span id="line-802"><span class="w">        </span><span class="sd">"""Number of binary variables needed to encode the continuous variable.</span>
-</span><span id="line-803">
-</span><span id="line-804"><span class="sd">        Cached; :meth:`_invalidate_encoding` drops it when the domain, bounds, encoding or</span>
-</span><span id="line-805"><span class="sd">        precision change.</span>
-</span><span id="line-806">
-</span><span id="line-807"><span class="sd">        Returns:</span>
-</span><span id="line-808"><span class="sd">            int: the number of binary variables in the variable's encoding.</span>
-</span><span id="line-809"><span class="sd">        """</span>
-</span><span id="line-810">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_binary_equivalent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-811">            <span class="bp">self</span><span class="o">.</span><span class="n">_num_binary_equivalent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">num_binary_equivalent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_precision</span><span class="p">)</span>
-</span><span id="line-812">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_binary_equivalent</span></div>
+</span><span id="line-818">    <span class="k">def</span><span class="w"> </span><span class="nf">num_binary_equivalent</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+</span><span id="line-819"><span class="w">        </span><span class="sd">"""Number of binary variables needed to encode the continuous variable.</span>
+</span><span id="line-820">
+</span><span id="line-821"><span class="sd">        Cached; :meth:`_invalidate_encoding` drops it when the domain, bounds, encoding or</span>
+</span><span id="line-822"><span class="sd">        precision change.</span>
+</span><span id="line-823">
+</span><span id="line-824"><span class="sd">        Returns:</span>
+</span><span id="line-825"><span class="sd">            int: the number of binary variables in the variable's encoding.</span>
+</span><span id="line-826"><span class="sd">        """</span>
+</span><span id="line-827">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_binary_equivalent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-828">            <span class="bp">self</span><span class="o">.</span><span class="n">_num_binary_equivalent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">num_binary_equivalent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_precision</span><span class="p">)</span>
+</span><span id="line-829">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_binary_equivalent</span></div>
 
-</span><span id="line-813">
+</span><span id="line-830">
 <div class="viewcode-block" id="Variable.check_valid">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.check_valid">[documentos]</a>
-</span><span id="line-814">    <span class="k">def</span><span class="w"> </span><span class="nf">check_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">binary_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-</span><span id="line-815"><span class="w">        </span><span class="sd">"""Check whether ``binary_list`` is a valid sample in the variable's encoding.</span>
-</span><span id="line-816">
-</span><span id="line-817"><span class="sd">        Returns:</span>
-</span><span id="line-818"><span class="sd">            tuple[bool, int]: whether the sample is valid, and the encoding error.</span>
-</span><span id="line-819"><span class="sd">        """</span>
-</span><span id="line-820">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">check_valid</span><span class="p">(</span><span class="n">binary_list</span><span class="p">)</span></div>
+</span><span id="line-831">    <span class="k">def</span><span class="w"> </span><span class="nf">check_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">binary_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+</span><span id="line-832"><span class="w">        </span><span class="sd">"""Check whether ``binary_list`` is a valid sample in the variable's encoding.</span>
+</span><span id="line-833">
+</span><span id="line-834"><span class="sd">        Returns:</span>
+</span><span id="line-835"><span class="sd">            tuple[bool, int]: whether the sample is valid, and the encoding error.</span>
+</span><span id="line-836"><span class="sd">        """</span>
+</span><span id="line-837">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">check_valid</span><span class="p">(</span><span class="n">binary_list</span><span class="p">)</span></div>
 
-</span><span id="line-821">
+</span><span id="line-838">
 <div class="viewcode-block" id="Variable.encoding_constraint">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Variable.encoding_constraint">[documentos]</a>
-</span><span id="line-822">    <span class="k">def</span><span class="w"> </span><span class="nf">encoding_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Comparison</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-823"><span class="w">        </span><span class="sd">"""Return a constraint that ensures the variable's encoding is respected, or None if it needs none."""</span>
-</span><span id="line-824">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">encoding_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_precision</span><span class="p">)</span></div>
+</span><span id="line-839">    <span class="k">def</span><span class="w"> </span><span class="nf">encoding_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Comparison</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-840"><span class="w">        </span><span class="sd">"""Return a constraint that ensures the variable's encoding is respected, or None if it needs none."""</span>
+</span><span id="line-841">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoding</span><span class="o">.</span><span class="n">encoding_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">precision</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_precision</span><span class="p">)</span></div>
 </div>
 
-</span><span id="line-825">
-</span><span id="line-826">
-</span><span id="line-827"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span><span class="p">(</span><span class="n">shared</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span><span id="line-842">
+</span><span id="line-843">
+</span><span id="line-844"><span class="nd">@yaml</span><span class="o">.</span><span class="n">register_class</span><span class="p">(</span><span class="n">shared</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <div class="viewcode-block" id="Parameter">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter">[documentos]</a>
-</span><span id="line-828"><span class="k">class</span><span class="w"> </span><span class="nc">Parameter</span><span class="p">(</span><span class="n">BaseVariable</span><span class="p">):</span>
-</span><span id="line-829"><span class="w">    </span><span class="sd">"""Symbolic scalar used to parametrize expressions while remaining differentiable.</span>
-</span><span id="line-830">
-</span><span id="line-831"><span class="sd">    Example:</span>
-</span><span id="line-832"><span class="sd">        .. code-block:: python</span>
-</span><span id="line-833">
-</span><span id="line-834"><span class="sd">            from qilisdk.core.variables import Parameter</span>
-</span><span id="line-835">
-</span><span id="line-836"><span class="sd">            theta = Parameter("theta", value=0.5)</span>
-</span><span id="line-837"><span class="sd">            theta.set_value(0.75)</span>
-</span><span id="line-838"><span class="sd">    """</span>
-</span><span id="line-839">
-</span><span id="line-840">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="line-841">        <span class="bp">self</span><span class="p">,</span>
-</span><span id="line-842">        <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="line-843">        <span class="n">value</span><span class="p">:</span> <span class="n">RealNumber</span><span class="p">,</span>
-</span><span id="line-844">        <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="o">.</span><span class="n">REAL</span><span class="p">,</span>
-</span><span id="line-845">        <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-</span><span id="line-846">        <span class="n">trainable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="line-847">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-848">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
-</span><span id="line-849">
-</span><span id="line-850">        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-</span><span id="line-851">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-852">                <span class="sa">f</span><span class="s2">"Parameter value provided (</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">) doesn't correspond to the parameter's domain (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">)"</span>
-</span><span id="line-853">            <span class="p">)</span>
-</span><span id="line-854">        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">value</span>
-</span><span id="line-855">        <span class="bp">self</span><span class="o">.</span><span class="n">_trainable</span> <span class="o">=</span> <span class="n">trainable</span>
-</span><span id="line-856">        <span class="bp">self</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-</span><span id="line-857">
-</span><span id="line-858">    <span class="nd">@property</span>
+</span><span id="line-845"><span class="k">class</span><span class="w"> </span><span class="nc">Parameter</span><span class="p">(</span><span class="n">BaseVariable</span><span class="p">):</span>
+</span><span id="line-846"><span class="w">    </span><span class="sd">"""Symbolic scalar used to parametrize expressions while remaining differentiable.</span>
+</span><span id="line-847">
+</span><span id="line-848"><span class="sd">    Example:</span>
+</span><span id="line-849"><span class="sd">        .. code-block:: python</span>
+</span><span id="line-850">
+</span><span id="line-851"><span class="sd">            from qilisdk.core.variables import Parameter</span>
+</span><span id="line-852">
+</span><span id="line-853"><span class="sd">            theta = Parameter("theta", value=0.5)</span>
+</span><span id="line-854"><span class="sd">            theta.set_value(0.75)</span>
+</span><span id="line-855"><span class="sd">    """</span>
+</span><span id="line-856">
+</span><span id="line-857">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+</span><span id="line-858">        <span class="bp">self</span><span class="p">,</span>
+</span><span id="line-859">        <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="line-860">        <span class="n">value</span><span class="p">:</span> <span class="n">RealNumber</span><span class="p">,</span>
+</span><span id="line-861">        <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="o">.</span><span class="n">REAL</span><span class="p">,</span>
+</span><span id="line-862">        <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+</span><span id="line-863">        <span class="n">trainable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+</span><span id="line-864">    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-865">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+</span><span id="line-866">
+</span><span id="line-867">        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+</span><span id="line-868">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-869">                <span class="sa">f</span><span class="s2">"Parameter value provided (</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">) doesn't correspond to the parameter's domain (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">)"</span>
+</span><span id="line-870">            <span class="p">)</span>
+</span><span id="line-871">        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">value</span>
+</span><span id="line-872">        <span class="bp">self</span><span class="o">.</span><span class="n">_trainable</span> <span class="o">=</span> <span class="n">trainable</span>
+</span><span id="line-873">        <span class="bp">self</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span id="line-874">
 <div class="viewcode-block" id="Parameter.is_parameter">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.is_parameter">[documentos]</a>
-</span><span id="line-859">    <span class="k">def</span><span class="w"> </span><span class="nf">is_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-860">        <span class="k">return</span> <span class="kc">True</span></div>
+</span><span id="line-875">    <span class="n">is_parameter</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span></div>
 
-</span><span id="line-861">
-</span><span id="line-862">    <span class="nd">@property</span>
+</span><span id="line-876">
+</span><span id="line-877">    <span class="nd">@property</span>
 <div class="viewcode-block" id="Parameter.value">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.value">[documentos]</a>
-</span><span id="line-863">    <span class="k">def</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RealNumber</span><span class="p">:</span>
-</span><span id="line-864">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span></div>
+</span><span id="line-878">    <span class="k">def</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RealNumber</span><span class="p">:</span>
+</span><span id="line-879">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span></div>
 
-</span><span id="line-865">
-</span><span id="line-866">    <span class="nd">@property</span>
+</span><span id="line-880">
+</span><span id="line-881">    <span class="nd">@property</span>
 <div class="viewcode-block" id="Parameter.is_trainable">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.is_trainable">[documentos]</a>
-</span><span id="line-867">    <span class="k">def</span><span class="w"> </span><span class="nf">is_trainable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-868">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trainable</span></div>
+</span><span id="line-882">    <span class="k">def</span><span class="w"> </span><span class="nf">is_trainable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-883">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trainable</span></div>
 
-</span><span id="line-869">
+</span><span id="line-884">
 <div class="viewcode-block" id="Parameter.check_value">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.check_value">[documentos]</a>
-</span><span id="line-870">    <span class="k">def</span><span class="w"> </span><span class="nf">check_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">RealNumber</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-871">        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-</span><span id="line-872">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-873">                <span class="sa">f</span><span class="s2">"Parameter value provided (</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">) doesn't correspond to the parameter's domain (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">)"</span>
-</span><span id="line-874">            <span class="p">)</span>
-</span><span id="line-875">        <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
-</span><span id="line-876">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The value provided (</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">) is outside the bound of the parameter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+</span><span id="line-885">    <span class="k">def</span><span class="w"> </span><span class="nf">check_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">RealNumber</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-886">        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+</span><span id="line-887">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-888">                <span class="sa">f</span><span class="s2">"Parameter value provided (</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">) doesn't correspond to the parameter's domain (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">)"</span>
+</span><span id="line-889">            <span class="p">)</span>
+</span><span id="line-890">        <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+</span><span id="line-891">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"The value provided (</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">) is outside the bound of the parameter </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
 
-</span><span id="line-877">
+</span><span id="line-892">
 <div class="viewcode-block" id="Parameter.set_value">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.set_value">[documentos]</a>
-</span><span id="line-878">    <span class="k">def</span><span class="w"> </span><span class="nf">set_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">RealNumber</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-879">        <span class="bp">self</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-</span><span id="line-880">        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"RealNumber"</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">)</span> <span class="k">else</span> <span class="n">value</span></div>
+</span><span id="line-893">    <span class="k">def</span><span class="w"> </span><span class="nf">set_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">RealNumber</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-894">        <span class="bp">self</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</span><span id="line-895">        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"RealNumber"</span><span class="p">,</span> <span class="n">value</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">generic</span><span class="p">)</span> <span class="k">else</span> <span class="n">value</span></div>
 
-</span><span id="line-881">
+</span><span id="line-896">
 <div class="viewcode-block" id="Parameter.num_binary_equivalent">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.num_binary_equivalent">[documentos]</a>
-</span><span id="line-882">    <span class="k">def</span><span class="w"> </span><span class="nf">num_binary_equivalent</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>  <span class="c1"># ruff: ignore[no-self-use]</span>
-</span><span id="line-883"><span class="w">        </span><span class="sd">"""A parameter has no binary representation.</span>
-</span><span id="line-884">
-</span><span id="line-885"><span class="sd">        Returns:</span>
-</span><span id="line-886"><span class="sd">            int: always 0; parameters are not encoded into binary variables.</span>
-</span><span id="line-887"><span class="sd">        """</span>
-</span><span id="line-888">        <span class="k">return</span> <span class="mi">0</span></div>
+</span><span id="line-897">    <span class="k">def</span><span class="w"> </span><span class="nf">num_binary_equivalent</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>  <span class="c1"># ruff: ignore[no-self-use]</span>
+</span><span id="line-898"><span class="w">        </span><span class="sd">"""A parameter has no binary representation.</span>
+</span><span id="line-899">
+</span><span id="line-900"><span class="sd">        Returns:</span>
+</span><span id="line-901"><span class="sd">            int: always 0; parameters are not encoded into binary variables.</span>
+</span><span id="line-902"><span class="sd">        """</span>
+</span><span id="line-903">        <span class="k">return</span> <span class="mi">0</span></div>
 
-</span><span id="line-889">
+</span><span id="line-904">
 <div class="viewcode-block" id="Parameter.evaluate">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.evaluate">[documentos]</a>
-</span><span id="line-890">    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Number</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RealNumber</span><span class="p">:</span>
-</span><span id="line-891"><span class="w">        </span><span class="sd">"""Evaluate the parameter, using the value from ``env`` if present else its stored value.</span>
-</span><span id="line-892">
-</span><span id="line-893"><span class="sd">        Args:</span>
-</span><span id="line-894"><span class="sd">            env (Mapping[BaseVariable, Number | list[int]] | None): an optional assignment.</span>
-</span><span id="line-895">
-</span><span id="line-896"><span class="sd">        Returns:</span>
-</span><span id="line-897"><span class="sd">            RealNumber: the parameter's value.</span>
-</span><span id="line-898"><span class="sd">        """</span>
-</span><span id="line-899">        <span class="n">env</span> <span class="o">=</span> <span class="n">env</span> <span class="k">if</span> <span class="n">env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
-</span><span id="line-900">        <span class="k">if</span> <span class="bp">self</span> <span class="ow">in</span> <span class="n">env</span><span class="p">:</span>
-</span><span id="line-901">            <span class="n">value</span> <span class="o">=</span> <span class="n">env</span><span class="p">[</span><span class="bp">self</span><span class="p">]</span>
-</span><span id="line-902">            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">RealNumber</span><span class="p">):</span>
-</span><span id="line-903">                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Evaluating the value of a parameter with a list is not supported."</span><span class="p">)</span>
-</span><span id="line-904">            <span class="bp">self</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-</span><span id="line-905">            <span class="k">return</span> <span class="n">value</span>
-</span><span id="line-906">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span></div>
-
+</span><span id="line-905">    <span class="k">def</span><span class="w"> </span><span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">BaseVariable</span><span class="p">,</span> <span class="n">Number</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RealNumber</span><span class="p">:</span>
+</span><span id="line-906"><span class="w">        </span><span class="sd">"""Evaluate the parameter, using the value from ``env`` if present else its stored value.</span>
 </span><span id="line-907">
+</span><span id="line-908"><span class="sd">        Args:</span>
+</span><span id="line-909"><span class="sd">            env (Mapping[BaseVariable, Number | list[int]] | None): an optional assignment.</span>
+</span><span id="line-910">
+</span><span id="line-911"><span class="sd">        Returns:</span>
+</span><span id="line-912"><span class="sd">            RealNumber: the parameter's value.</span>
+</span><span id="line-913"><span class="sd">        """</span>
+</span><span id="line-914">        <span class="n">env</span> <span class="o">=</span> <span class="n">env</span> <span class="k">if</span> <span class="n">env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+</span><span id="line-915">        <span class="k">if</span> <span class="bp">self</span> <span class="ow">in</span> <span class="n">env</span><span class="p">:</span>
+</span><span id="line-916">            <span class="n">value</span> <span class="o">=</span> <span class="n">env</span><span class="p">[</span><span class="bp">self</span><span class="p">]</span>
+</span><span id="line-917">            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">RealNumber</span><span class="p">):</span>
+</span><span id="line-918">                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Evaluating the value of a parameter with a list is not supported."</span><span class="p">)</span>
+</span><span id="line-919">            <span class="bp">self</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</span><span id="line-920">            <span class="k">return</span> <span class="n">value</span>
+</span><span id="line-921">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span></div>
+
+</span><span id="line-922">
 <div class="viewcode-block" id="Parameter.to_binary">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.to_binary">[documentos]</a>
-</span><span id="line-908">    <span class="k">def</span><span class="w"> </span><span class="nf">to_binary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expression</span><span class="p">:</span>
-</span><span id="line-909"><span class="w">        </span><span class="sd">"""Return the constant representation of the parameter."""</span>
-</span><span id="line-910">        <span class="k">return</span> <span class="n">Constant</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
+</span><span id="line-923">    <span class="k">def</span><span class="w"> </span><span class="nf">to_binary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Expression</span><span class="p">:</span>
+</span><span id="line-924"><span class="w">        </span><span class="sd">"""Return the constant representation of the parameter."""</span>
+</span><span id="line-925">        <span class="k">return</span> <span class="n">Constant</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
 
-</span><span id="line-911">
+</span><span id="line-926">
 <div class="viewcode-block" id="Parameter.set_bounds">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.set_bounds">[documentos]</a>
-</span><span id="line-912">    <span class="k">def</span><span class="w"> </span><span class="nf">set_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-913">        <span class="n">upper_bound</span> <span class="o">=</span> <span class="n">upper_bound</span> <span class="k">if</span> <span class="n">upper_bound</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
-</span><span id="line-914">        <span class="n">lower_bound</span> <span class="o">=</span> <span class="n">lower_bound</span> <span class="k">if</span> <span class="n">lower_bound</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
-</span><span id="line-915">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&gt;</span> <span class="n">upper_bound</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;</span> <span class="n">lower_bound</span><span class="p">:</span>
-</span><span id="line-916">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-917">                <span class="sa">f</span><span class="s2">"The current value of the parameter (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">) is outside the bounds (</span><span class="si">{</span><span class="n">lower_bound</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">upper_bound</span><span class="si">}</span><span class="s2">)"</span>
-</span><span id="line-918">            <span class="p">)</span>
-</span><span id="line-919">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">)</span></div>
+</span><span id="line-927">    <span class="k">def</span><span class="w"> </span><span class="nf">set_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lower_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-928">        <span class="n">upper_bound</span> <span class="o">=</span> <span class="n">upper_bound</span> <span class="k">if</span> <span class="n">upper_bound</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+</span><span id="line-929">        <span class="n">lower_bound</span> <span class="o">=</span> <span class="n">lower_bound</span> <span class="k">if</span> <span class="n">lower_bound</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+</span><span id="line-930">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&gt;</span> <span class="n">upper_bound</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;</span> <span class="n">lower_bound</span><span class="p">:</span>
+</span><span id="line-931">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-932">                <span class="sa">f</span><span class="s2">"The current value of the parameter (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">) is outside the bounds (</span><span class="si">{</span><span class="n">lower_bound</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">upper_bound</span><span class="si">}</span><span class="s2">)"</span>
+</span><span id="line-933">            <span class="p">)</span>
+</span><span id="line-934">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">)</span></div>
 
-</span><span id="line-920">
+</span><span id="line-935">
 <div class="viewcode-block" id="Parameter.update_variable">
 <a class="viewcode-back" href="../../../code/api/qilisdk/core/variables/index.html#qilisdk.core.variables.Parameter.update_variable">[documentos]</a>
-</span><span id="line-921">    <span class="k">def</span><span class="w"> </span><span class="nf">update_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-922">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># ruff: ignore[magic-value-comparison]</span>
-</span><span id="line-923">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-924">                <span class="s2">"Invalid bounds provided: the bounds need to be a tuple with the format (lower_bound, upper_bound)"</span>
-</span><span id="line-925">            <span class="p">)</span>
-</span><span id="line-926">        <span class="k">if</span> <span class="n">domain</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">):</span>
-</span><span id="line-927">            <span class="bp">self</span><span class="o">.</span><span class="n">_domain</span> <span class="o">=</span> <span class="n">domain</span>
-</span><span id="line-928">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-929">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-930">                <span class="sa">f</span><span class="s2">"The provided domain (</span><span class="si">{</span><span class="n">domain</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">) is incompatible with the current parameter value (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">)"</span>
-</span><span id="line-931">            <span class="p">)</span>
-</span><span id="line-932">        <span class="bp">self</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">lower_bound</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">upper_bound</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></div>
+</span><span id="line-936">    <span class="k">def</span><span class="w"> </span><span class="nf">update_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">bounds</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-937">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># ruff: ignore[magic-value-comparison]</span>
+</span><span id="line-938">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-939">                <span class="s2">"Invalid bounds provided: the bounds need to be a tuple with the format (lower_bound, upper_bound)"</span>
+</span><span id="line-940">            <span class="p">)</span>
+</span><span id="line-941">        <span class="k">if</span> <span class="n">domain</span><span class="o">.</span><span class="n">check_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">):</span>
+</span><span id="line-942">            <span class="bp">self</span><span class="o">.</span><span class="n">_domain</span> <span class="o">=</span> <span class="n">domain</span>
+</span><span id="line-943">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-944">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-945">                <span class="sa">f</span><span class="s2">"The provided domain (</span><span class="si">{</span><span class="n">domain</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">) is incompatible with the current parameter value (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">)"</span>
+</span><span id="line-946">            <span class="p">)</span>
+</span><span id="line-947">        <span class="bp">self</span><span class="o">.</span><span class="n">set_bounds</span><span class="p">(</span><span class="n">lower_bound</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">upper_bound</span><span class="o">=</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></div>
 
-</span><span id="line-933">
-</span><span id="line-934">    <span class="fm">__hash__</span> <span class="o">=</span> <span class="n">Expression</span><span class="o">.</span><span class="fm">__hash__</span>
-</span><span id="line-935">
-</span><span id="line-936">    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-937">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Expression</span><span class="p">):</span>
-</span><span id="line-938">            <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">hash</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-</span><span id="line-939">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
-</span><span id="line-940">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">other</span>
-</span><span id="line-941">        <span class="k">return</span> <span class="kc">False</span>
-</span><span id="line-942">
-</span><span id="line-943">    <span class="k">def</span><span class="w"> </span><span class="fm">__le__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-944">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
-</span><span id="line-945">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;=</span> <span class="n">other</span>
-</span><span id="line-946">        <span class="k">return</span> <span class="bp">NotImplemented</span>
-</span><span id="line-947">
-</span><span id="line-948">    <span class="k">def</span><span class="w"> </span><span class="fm">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-</span><span id="line-949">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
-</span><span id="line-950">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;</span> <span class="n">other</span>
-</span><span id="line-951">        <span class="k">return</span> <span class="bp">NotImplemented</span>
-</span><span id="line-952">
-</span><span id="line-953">    <span class="k">def</span><span class="w"> </span><span class="fm">__ge__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-948">
+</span><span id="line-949">    <span class="fm">__hash__</span> <span class="o">=</span> <span class="n">Expression</span><span class="o">.</span><span class="fm">__hash__</span>
+</span><span id="line-950">
+</span><span id="line-951">    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-952">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Expression</span><span class="p">):</span>
+</span><span id="line-953">            <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">hash</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
 </span><span id="line-954">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
-</span><span id="line-955">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&gt;=</span> <span class="n">other</span>
-</span><span id="line-956">        <span class="k">return</span> <span class="bp">NotImplemented</span>
+</span><span id="line-955">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">other</span>
+</span><span id="line-956">        <span class="k">return</span> <span class="kc">False</span>
 </span><span id="line-957">
-</span><span id="line-958">    <span class="k">def</span><span class="w"> </span><span class="fm">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-958">    <span class="k">def</span><span class="w"> </span><span class="fm">__le__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 </span><span id="line-959">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
-</span><span id="line-960">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&gt;</span> <span class="n">other</span>
-</span><span id="line-961">        <span class="k">return</span> <span class="bp">NotImplemented</span></div>
+</span><span id="line-960">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;=</span> <span class="n">other</span>
+</span><span id="line-961">        <span class="k">return</span> <span class="bp">NotImplemented</span>
+</span><span id="line-962">
+</span><span id="line-963">    <span class="k">def</span><span class="w"> </span><span class="fm">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-964">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+</span><span id="line-965">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&lt;</span> <span class="n">other</span>
+</span><span id="line-966">        <span class="k">return</span> <span class="bp">NotImplemented</span>
+</span><span id="line-967">
+</span><span id="line-968">    <span class="k">def</span><span class="w"> </span><span class="fm">__ge__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-969">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+</span><span id="line-970">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&gt;=</span> <span class="n">other</span>
+</span><span id="line-971">        <span class="k">return</span> <span class="bp">NotImplemented</span>
+</span><span id="line-972">
+</span><span id="line-973">    <span class="k">def</span><span class="w"> </span><span class="fm">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span id="line-974">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+</span><span id="line-975">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">&gt;</span> <span class="n">other</span>
+</span><span id="line-976">        <span class="k">return</span> <span class="bp">NotImplemented</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">

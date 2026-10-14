@@ -1,0 +1,204 @@
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("PlusJakartaSans-VariableFont_wght.ttf") format("truetype-variations");
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("PlusJakartaSans-Italic-VariableFont_wght.ttf") format("truetype-variations");
+}
+
+/* No search term highlighting of the titles */
+h1 span.highlighted, h2 span.highlighted, h3 span.highlighted, h4 span.highlighted, h5 span.highlighted, h6 span.highlighted {
+    background-color: transparent;
+}
+
+html, body {
+  font-family: "Plus Jakarta Sans", sans-serif !important;
+}
+
+code, pre {
+  font-family: "Plus Jakarta Sans", monospace !important;
+}
+
+:root {
+  --qili-blue: 254 72% 62%;
+  --qili-purple: 304 33% 54%;
+  --qili-red: 351 66% 65%;
+  --qili-dark-blue: 244 45% 13%;
+  --primary: var(--qili-blue);
+  --inline-code-text: var(--foreground);
+  --qili-gradient: linear-gradient(
+    90deg,
+    hsl(var(--qili-red))    0%,
+    hsl(var(--qili-purple)) 50%,
+    hsl(var(--qili-blue))   100%
+  );
+  --qili-code-bg: 250 40% 97.5%;
+  --qili-code-border: 250 25% 89%;
+}
+
+.dark {
+  --primary: var(--qili-red);
+  --background: var(--qili-dark-blue);
+  --accent: var(--qili-blue);
+  --card: var(--qili-dark-blue);
+  --inline-code-bg: 240 18% 25%;
+  --inline-code-border: 240 20% 35%;
+  --inline-code-text: 349.14deg 63.74% 64.3; /* 40 93% 85%; */
+  --qili-code-bg: 244 38% 18%;
+  --qili-code-border: 244 28% 27%;
+}
+
+.mr-4 {
+  width: 100%;
+}
+
+.language-switcher {
+  margin-left: auto;
+  margin-right: 0.5em;
+}
+
+.lang-link, .lang-active {
+  margin-left: 0.5em;
+}
+
+.lang-active {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+#content h1, #content h2, #content h3, #content h4, #content h5, #content h6 {
+    background: var(--qili-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+
+    /* Remove this to have a full-width gradient */
+    width: fit-content;
+}
+
+#content h1 > a, #content h2 > a, #content h3 > a, #content h4 > a, #content h5 > a, #content h6 > a {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit;
+  background: none;
+  text-decoration: none;
+}
+
+#content h1 > code > span, #content h2 > code > span, #content h3 > code > span, #content h4 > code > span, #content h5 > code > span, #content h6 > code > span {
+  color: hsl(var(--inline-code-text));
+  -webkit-text-fill-color: hsl(var(--inline-code-text));
+  background: none;
+  text-decoration: none;
+}
+
+#content h1 > a > code, #content h2 > a > code, #content h3 > a > code, #content h4 > a > code, h5 > a > code, #content h6 > a > code {
+  background: none;
+  position: static;
+}
+
+/* Dark/light image switching */
+.only-dark { display: none; }
+.only-light { display: block; }
+.dark .only-dark { display: block; }
+.dark .only-light { display: none; }
+
+.dark :not(pre) > code {
+  color: hsl(var(--inline-code-text));
+  background-color: hsl(var(--inline-code-bg));
+  border: 1px solid hsl(var(--inline-code-border));
+  border-radius: 0.35rem;
+  padding: 0.05rem 0.3rem;
+}
+
+.dark .highlight {
+  background-color: transparent;
+}
+
+/* Lift code blocks slightly off the page background so they read as a block,
+   without turning into a high-contrast box. */
+#content pre,
+#content pre[data-theme="light"],
+#content pre[data-theme="dark"] {
+  background-color: hsl(var(--qili-code-bg));
+  border-color: hsl(var(--qili-code-border));
+}
+
+.sphinx-tabs {
+  margin-top: 1em;
+}
+
+.sphinx-tabs [role="tablist"] {
+  border-bottom: 1px solid hsl(var(--qili-code-border));
+}
+
+.sphinx-tabs-tab {
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.6rem 1.1rem;
+  /* The transparent bottom border keeps every tab the same height as the
+     selected one, and the negative margin lays it over the tab-list line. */
+  margin: 0 0 -1px 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background-color: transparent;
+  color: hsl(var(--muted-foreground));
+  transition: color 0.15s ease-in-out;
+}
+
+.sphinx-tabs-tab:hover {
+  color: hsl(var(--foreground));
+}
+
+/* The selected tab gets the same gradient as the section titles, both on the
+   label and on the bar underneath it. */
+.sphinx-tabs-tab[aria-selected="true"] {
+  font-weight: 700;
+  margin: 0 0 -1px 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-image: var(--qili-gradient) 1;
+  background-color: transparent;
+  background-image: var(--qili-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.sphinx-tabs-panel {
+  background-color: hsl(var(--qili-code-bg));
+  color: inherit;
+  border: 1px solid hsl(var(--qili-code-border));
+  border-top: 0;
+}
+
+/* A code block is already a panel-wide box, so don't nest two of them. */
+.sphinx-tabs-panel:has(> div[class^="highlight-"]) {
+  padding: 0;
+}
+
+#content .sphinx-tabs-panel pre {
+  background-color: transparent;
+  border: 0;
+  margin-top: 0;
+}
+
+.title-image {
+  margin: 1em 0;
+}
+
+/* On pages that use a logo image as their title, hide the (still-present
+   for the toctree/browser-title) document H1 so only the logo shows. */
+#content:has(.title-image) > section > h1,
+#content:has(.title-image) > h1 {
+  display: none;
+}
