@@ -7,7 +7,7 @@
 [![Docs](https://img.shields.io/badge/docs-latest-pink.svg)](https://qilimanjaro-tech.github.io/qilisdk/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17819870.svg)](https://doi.org/10.5281/zenodo.17819870)
 
-**QiliSDK** is [Qilimanjaro's](https://qilimanjaro.tech/) open-source Python framework for designing and executing **analog, digital, and hybrid quantum algorithms**. Its modular structure unifies circuit-based and Hamiltonian-based workflows within a single API. It provides high-level abstractions for gates, circuits, Hamiltonians, and more, while remaining fully backend-agnostic allowing a seamless switch between CPU, GPU, or QPU execution. Fast CPU simulation can be done locally using **QiliSim**, our quantum simulator written in C++.
+**QiliSDK** is [Qilimanjaro Quantum Tech's](https://qilimanjaro.tech/) open-source Python framework for designing and executing **analog, digital, and hybrid quantum algorithms**. Its modular structure unifies circuit-based and Hamiltonian-based workflows within a single API. It provides high-level abstractions for gates, circuits, Hamiltonians, and more, while remaining fully backend-agnostic allowing a seamless switch between CPU, GPU, or QPU execution. Fast CPU simulation can be done locally using **QiliSim**, our quantum simulator written in C++.
 
 ## Why QiliSDK?
 
