@@ -194,6 +194,101 @@ TEST(ExponentialAnsatz, LocalEnergyHasCorrectSize) {
     EXPECT_EQ(El.size(), 50);
 }
 
+namespace {
+DenseMatrix dense_pauli_string(const PauliString& ps, int n_qubits) {
+    // Same qubit ordering as ExponentialAnsatz::to_dense, so that basis index == sample bitset value
+    DenseMatrix pauli_x(2, 2), pauli_y(2, 2), pauli_z(2, 2);
+    pauli_x << Complex(0), Complex(1), Complex(1), Complex(0);
+    pauli_y << Complex(0), Complex(0, -1), Complex(0, 1), Complex(0);
+    pauli_z << Complex(1), Complex(0), Complex(0), Complex(-1);
+    DenseMatrix op = DenseMatrix::Identity(1, 1);
+    for (int i = 0; i < n_qubits; ++i) {
+        DenseMatrix single = DenseMatrix::Identity(2, 2);
+        if (ps.x_mask[i] && ps.z_mask[i])
+            single = pauli_y;
+        else if (ps.x_mask[i])
+            single = pauli_x;
+        else if (ps.z_mask[i])
+            single = pauli_z;
+        op = Eigen::kroneckerProduct(op, single).eval();
+    }
+    return op;
+}
+}  // namespace
+
+TEST(ExponentialAnsatz, LocalEnergyMatchesExactAmplitudeRatios) {
+    // E_loc(x) must equal (H psi)(x) / psi(x) for the dense state, including X, Y and mixed terms
+    const int n = 3;
+    ExponentialAnsatz ea(n, 2, 40, 2, 11);
+    double c = 0.05;
+    for (auto& [ps, coeff] : ea.get_terms().get_operators()) {
+        coeff = Complex(c, -0.5 * c);
+        c += 0.07;
+    }
+    MatrixFreeHamiltonian H(n);
+    H.add(Complex(0.7, 0.0), MatrixFreeOperator("X", 0));
+    H.add(Complex(-0.4, 0.0), MatrixFreeOperator("Y", 1));
+    H.add(Complex(0.3, 0.0), MatrixFreeOperator("Z", 2));
+    H.add(Complex(0.9, 0.0), std::vector<MatrixFreeOperator>{MatrixFreeOperator("X", 0), MatrixFreeOperator("X", 1)});
+    H.add(Complex(-0.6, 0.0), std::vector<MatrixFreeOperator>{MatrixFreeOperator("Z", 0), MatrixFreeOperator("Z", 1)});
+    H.add(Complex(0.2, 0.0), std::vector<MatrixFreeOperator>{MatrixFreeOperator("Y", 0), MatrixFreeOperator("Z", 2)});
+
+    DenseMatrix H_dense = DenseMatrix::Zero(1 << n, 1 << n);
+    for (const auto& [ps, coeff] : H.get_operators()) {
+        H_dense += coeff * dense_pauli_string(ps, n);
+    }
+    DenseMatrix psi = ea.to_dense();
+    DenseMatrix H_psi = H_dense * psi;
+
+    SampleSet samples = ea.draw_samples();
+    DenseVector El = ea.local_energy(samples, H);
+    for (size_t s = 0; s < samples.configs.size(); ++s) {
+        const auto index = static_cast<Eigen::Index>(samples.configs[s].to_ulong());
+        Complex expected = H_psi(index, 0) / psi(index, 0);
+        EXPECT_NEAR(El(s).real(), expected.real(), 1e-9);
+        EXPECT_NEAR(El(s).imag(), expected.imag(), 1e-9);
+    }
+}
+
+TEST(ExponentialAnsatz, LocalEnergyRejectsSamplesFromDifferentAnsatz) {
+    ExponentialAnsatz order_one(3, 1, 20, 0);
+    ExponentialAnsatz order_two(3, 2, 20, 0);
+    SampleSet samples = order_one.draw_samples();
+    MatrixFreeHamiltonian H(3);
+    H.add(Complex(1.0, 0.0), MatrixFreeOperator("X", 0));
+    EXPECT_THROW(order_two.local_energy(samples, H), std::invalid_argument);
+}
+
+// --- seeding ---
+
+TEST(ExponentialAnsatz, SameSeedDrawsSameSamples) {
+    ExponentialAnsatz first(5, 2, 60, 3, 1234);
+    ExponentialAnsatz second(5, 2, 60, 3, 1234);
+    SampleSet a = first.draw_samples();
+    SampleSet b = second.draw_samples();
+    EXPECT_EQ(a.configs, b.configs);
+    EXPECT_EQ(a.O_mat, b.O_mat);
+}
+
+TEST(ExponentialAnsatz, SetSeedRestartsTheStream) {
+    ExponentialAnsatz ea(5, 2, 60, 3, 99);
+    SampleSet first = ea.draw_samples();
+    ea.set_seed(99);
+    SampleSet again = ea.draw_samples();
+    EXPECT_EQ(first.configs, again.configs);
+}
+
+TEST(ExponentialAnsatz, CopiesShareTheRandomStream) {
+    // RK4 stage copies must not replay the samples of the state they were copied from
+    ExponentialAnsatz original(5, 2, 60, 3, 7);
+    ExponentialAnsatz copy = original.zeroed();
+    ExponentialAnsatz fresh(5, 2, 60, 3, 7);
+    SampleSet from_fresh = fresh.draw_samples();
+    original.draw_samples();
+    SampleSet from_copy = copy.draw_samples();
+    EXPECT_NE(from_copy.configs, from_fresh.configs);
+}
+
 // --- to_dense() ---
 
 TEST(ExponentialAnsatz, ToDenseCorrectShape) {
