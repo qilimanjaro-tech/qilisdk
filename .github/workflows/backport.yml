@@ -61,7 +61,7 @@ jobs:
       # ${target_branch} and ${pull_title} placeholders are expanded by
       # backport-action itself, not by GitHub expression syntax.
       - name: Create backport PRs
-        uses: korthout/backport-action@6b65649031ac6d18ffdfd0c0820e9436f3fde22b  # v4.6.1
+        uses: korthout/backport-action@8560fb503c275d433c56f05a2f64850093baa9f7  # v4.7.0
         with:
           github_token: ${{ steps.app-token.outputs.token }}
           label_pattern: '^backport ([^ ]+)$'
