@@ -35,6 +35,7 @@ std::vector<MatrixFreeHamiltonian> parse_observables_matrix_free(int nqubits, co
 std::vector<std::vector<double>> parse_coefficients(const py::object& schedule, const py::list& hamiltonians_keys, const py::object& steps);
 std::vector<double> parse_time_steps(const py::object& steps);
 SparseMatrix parse_initial_state(const py::object& initial_state, double atol, int nqubits);
+DenseMatrix parse_initial_state_as_dense(const py::object& initial_state, int n_qubits, const QiliSimConfig& config);
 StabilizerStateSum parse_initial_state_stabilizer(const py::object& initial_state, int nqubits);
 std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::object& noise_model);
 int gate_num_controls(const std::string& name);
