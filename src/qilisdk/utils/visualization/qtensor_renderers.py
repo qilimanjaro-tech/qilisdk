@@ -57,17 +57,25 @@ class MatplotlibQTensorRenderer:
         """
         Render the QTensor on the current axes.
 
+        State vectors (kets and bras) are converted to their density matrix before being drawn, so that pure and
+        mixed states follow the same code path. Mixed states, such as those obtained from
+        :meth:`~qilisdk.core.qtensor.QTensor.partial_trace`, sit strictly inside the Bloch sphere.
+
         Raises:
-            ValueError: If the QTensor is not a single-qubit state vector (ket or bra).
-            ValueError: If the QTensor has more than one qubit.
+            ValueError: If the QTensor does not represent a single qubit.
+            ValueError: If the QTensor is neither a state vector (ket or bra) nor a density matrix.
         """
 
-        if not self.qtensor.is_ket() and not self.qtensor.is_bra():
-            raise ValueError("Drawing is only supported for state vectors (kets or bras)")
         if self.qtensor.nqubits != 1:
             raise ValueError(
-                "Drawing is only supported for single-qubit states: consider using .partial_trace([i]) to reduce to a single qubit i"
+                "Drawing is only supported for single-qubit states: consider using .partial_trace({i}) to reduce to a single qubit i"
             )
+
+        if not self.qtensor.is_ket() and not self.qtensor.is_bra() and not self.qtensor.is_density_matrix():
+            raise ValueError("Drawing is only supported for state vectors (kets or bras) and density matrices")
+
+        # State vectors are turned into their density matrix so that both cases share the same Bloch vector formula
+        rho = self.qtensor.as_density_matrix().dense()
 
         logger.debug("[QTensorRenderer] Rendering single-qubit state on Bloch sphere")
 
@@ -108,11 +116,10 @@ class MatplotlibQTensorRenderer:
         # Fix the aspect ratio to be equal
         ax.set_box_aspect([1, 1, 1])
 
-        # Draw the arrow
-        coeffs = self.qtensor.dense().flatten()
-        x = 2 * np.real(coeffs[0] * np.conj(coeffs[1]))
-        y = 2 * np.imag(coeffs[0] * np.conj(coeffs[1]))
-        z = np.abs(coeffs[0]) ** 2 - np.abs(coeffs[1]) ** 2
+        # Draw the arrow, the Bloch vector being (tr(rho X), tr(rho Y), tr(rho Z))
+        x = 2 * np.real(rho[0, 1])
+        y = 2 * np.imag(rho[1, 0])
+        z = np.real(rho[0, 0] - rho[1, 1])
         ax.quiver(0, 0, 0, x, y, z, color=arrow_color, arrow_length_ratio=arrow_length_ratio)
 
         # Draw some key points for reference
