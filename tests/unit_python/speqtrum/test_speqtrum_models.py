@@ -27,6 +27,7 @@ import pytest
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliZ
 from qilisdk.analog.schedule import Schedule
+from qilisdk.core import Model
 from qilisdk.core.qtensor import ket
 from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
 from qilisdk.experiments.experiment_functional import ExperimentFunctional
@@ -40,6 +41,7 @@ from qilisdk.speqtrum.speqtrum_models import (
     TypedJobDetail,
     _require_experiment_result,
     _require_functional_result,
+    _require_model_result,
     _require_variational_program_result,
 )
 
@@ -53,6 +55,7 @@ pytest.importorskip(
 
 from unittest.mock import MagicMock
 
+from qilisdk.core import ModelResult
 from qilisdk.digital import RY, Circuit
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
@@ -66,10 +69,12 @@ from qilisdk.speqtrum.speqtrum_models import (
     ExecuteResult,
     ExperimentPayload,
     JobHandle,
+    ModelPayload,
     QuantumReservoirPayload,
     VariationalProgramPayload,
     _require_experiment_result_typed,
 )
+from qilisdk.utils.classical_solvers import BruteForceSolver
 
 
 class SweepExperimentResult(ExperimentResult):
@@ -170,6 +175,17 @@ def test_quantum_reservoir_payload_round_trips_through_validation():
 
     assert isinstance(restored.quantum_reservoir, QuantumReservoir)
     assert restored.quantum_reservoir.initial_state == quantum_reservoir.initial_state
+
+
+def test_model_payload_round_trips_through_validation():
+    model = Model.random_ising(3)
+    payload = ModelPayload(model=model)
+
+    restored = ModelPayload.model_validate_json(payload.model_dump_json())
+
+    assert isinstance(restored.model, Model)
+    assert restored.model.variables() == model.variables()
+    assert ModelPayload(model=model).model is model
 
 
 def test_payloads_load_serialized_readout():
@@ -314,16 +330,41 @@ def test_execute_result_experiment_serializes_none():
     assert result._serialize_experiment_result(experiment_result=result.experiment_result, _info={}) is None
 
 
+def test_execute_result_model_round_trips_through_validation():
+    model_result = BruteForceSolver().solve(Model.random_ising(3))
+    serialized_result = ExecuteResult(type=ExecuteType.MODEL, model_result=model_result).model_dump_json()
+
+    result = ExecuteResult.model_validate_json(serialized_result)
+
+    assert isinstance(result.model_result, ModelResult)
+    assert result.model_result.objective == pytest.approx(model_result.objective)
+    assert ExecuteResult(type=ExecuteType.MODEL, model_result=model_result).model_result is model_result
+
+
+def test_execute_result_model_serializes_none():
+    result = ExecuteResult(type=ExecuteType.MODEL)
+    assert result._serialize_model_result(model_result=result.model_result, _info={}) is None
+
+
+def test_job_handle_model():
+    handle = JobHandle.model(12)
+    assert handle.id == 12
+    assert handle.execute_type is ExecuteType.MODEL
+    assert handle.extractor is _require_model_result
+
+
 def test_requires():
     good_result = MagicMock()
     good_result.functional_result = MagicMock()
     good_result.variational_program_result = MagicMock()
     good_result.experiment_result = MagicMock()
+    good_result.model_result = MagicMock()
 
     bad_result = MagicMock()
     bad_result.functional_result = None
     bad_result.variational_program_result = None
     bad_result.experiment_result = None
+    bad_result.model_result = None
 
     assert _require_variational_program_result(good_result) is good_result.variational_program_result
     with pytest.raises(RuntimeError, match="did not return a variational_program_result"):
@@ -336,6 +377,10 @@ def test_requires():
     assert _require_experiment_result(good_result) is good_result.experiment_result
     with pytest.raises(RuntimeError, match="did not return an experiment_result"):
         _require_experiment_result(bad_result)
+
+    assert _require_model_result(good_result) is good_result.model_result
+    with pytest.raises(RuntimeError, match="did not return a model_result"):
+        _require_model_result(bad_result)
 
 
 def test_typed_job_detail():

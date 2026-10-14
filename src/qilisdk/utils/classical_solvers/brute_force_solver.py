@@ -17,9 +17,10 @@ import itertools
 from loguru import logger
 
 from qilisdk.core import Model
+from qilisdk.core.model_result import ModelResult
 from qilisdk.core.variables import BinaryVariable, SpinVariable, Variable
 
-from .base_solver import ClassicalSolver, ClassicalSolverResult, _assert_real
+from .base_solver import ClassicalSolver, _assert_real
 
 
 class BruteForceSolver(ClassicalSolver):
@@ -35,7 +36,7 @@ class BruteForceSolver(ClassicalSolver):
             result = BruteForceSolver().solve(model)
     """
 
-    def solve(self, model: Model) -> ClassicalSolverResult:  # ruff: ignore[no-self-use]
+    def solve(self, model: Model) -> ModelResult:  # ruff: ignore[no-self-use]
         """Solve the given model by brute-force enumeration of all variable assignments.
 
         Binary variables are assigned values from {0, 1} and spin variables values from {-1, 1}.
@@ -47,7 +48,7 @@ class BruteForceSolver(ClassicalSolver):
             model: The ``Model`` instance to solve.
 
         Returns:
-            ClassicalSolverResult: the results of the optimization, including the objective value and best solution.
+            ModelResult: the results of the optimization, including the objective value and best solution.
 
         Raises:
             ValueError: if the model contains a variable that has no encoding (i.e. is not a
@@ -95,4 +96,4 @@ class BruteForceSolver(ClassicalSolver):
             if objective_value + penalty < best_objective_value:
                 best_objective_value = objective_value + penalty
                 best_sample = sample
-        return ClassicalSolverResult.from_model(model, best_sample)
+        return ModelResult.from_model(model, best_sample)

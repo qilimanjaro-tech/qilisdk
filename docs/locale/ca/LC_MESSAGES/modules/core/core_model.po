@@ -322,11 +322,11 @@ msgstr "Es poden utilitzar de la manera següent:"
 #: ../../modules/core/core_model.rst:211
 msgid ""
 "Each of them returns a "
-":class:`~qilisdk.utils.classical_solvers.base_solver.ClassicalSolverResult`,"
+":class:`~qilisdk.core.model_result.ModelResult`,"
 " which exposes the solution found:"
 msgstr ""
 "Cadascun d'ells retorna un "
-":class:`~qilisdk.utils.classical_solvers.base_solver.ClassicalSolverResult`,"
+":class:`~qilisdk.core.model_result.ModelResult`,"
 " que exposa la solució trobada:"
 
 #: ../../modules/core/core_model.rst:214

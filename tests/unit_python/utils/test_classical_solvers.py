@@ -19,11 +19,11 @@ import pytest
 
 from qilisdk.core.comparison import EQ
 from qilisdk.core.model import QUBO, Model, ObjectiveSense
+from qilisdk.core.model_result import ModelResult
 from qilisdk.core.variables import BinaryVariable, Domain, OneHot, Parameter, SpinVariable, Variable
 from qilisdk.utils.classical_solvers import (
     BruteForceSolver,
     ClassicalSolver,
-    ClassicalSolverResult,
     ScipySolver,
     SimulatedAnnealingSolver,
 )
@@ -52,7 +52,7 @@ def test_assert_real_non_complex_int():
 def test_classical_solver_result_exposes_the_solution():
     x, y = BinaryVariable("x"), BinaryVariable("y")
     sample = {x: 1, y: 0}
-    result = ClassicalSolverResult({"obj": -3.0, "c1": 0.0, "c2": 5.0}, sample, "obj")
+    result = ModelResult({"obj": -3.0, "c1": 0.0, "c2": 5.0}, sample, "obj")
 
     assert result.objective == -3.0
     assert result.objective_label == "obj"
@@ -64,7 +64,7 @@ def test_classical_solver_result_exposes_the_solution():
 def test_classical_solver_result_copies_its_inputs():
     x = BinaryVariable("x")
     results, sample = {"obj": 1.0}, {x: 1}
-    result = ClassicalSolverResult(results, sample, "obj")
+    result = ModelResult(results, sample, "obj")
 
     # Mutating the inputs, or what the properties hand back, must not change the result
     results["obj"] = 99.0
@@ -77,12 +77,12 @@ def test_classical_solver_result_copies_its_inputs():
 
 
 def test_classical_solver_result_without_constraints():
-    result = ClassicalSolverResult({"obj": 2.0}, {}, "obj")
+    result = ModelResult({"obj": 2.0}, {}, "obj")
     assert result.constraints == {}
 
 
 def test_classical_solver_result_objective_missing_from_results_raises():
-    result = ClassicalSolverResult({"c1": 0.0}, {}, "obj")
+    result = ModelResult({"c1": 0.0}, {}, "obj")
     with pytest.raises(KeyError):
         _ = result.objective
 
@@ -94,7 +94,7 @@ def test_classical_solver_result_from_model_evaluates_the_sample():
     m.add_constraint("c1", EQ(x + y, 1), lagrange_multiplier=10)
     sample = {x: 1, y: 0}
 
-    result = ClassicalSolverResult.from_model(m, sample)
+    result = ModelResult.from_model(m, sample)
 
     assert result.objective_label == m.objective.label
     assert result.sample == sample
@@ -105,8 +105,8 @@ def test_classical_solver_result_from_model_evaluates_the_sample():
 
 def test_classical_solver_result_repr():
     x = BinaryVariable("x")
-    result = ClassicalSolverResult({"obj": -1.0}, {x: 1}, "obj")
-    assert repr(result) == "ClassicalSolverResult(objective=-1.0, sample={x: 1}, results={'obj': -1.0})"
+    result = ModelResult({"obj": -1.0}, {x: 1}, "obj")
+    assert repr(result) == "ModelResult(objective=-1.0, sample={x: 1}, results={'obj': -1.0})"
 
 
 def test_classical_solver_solve_raises():

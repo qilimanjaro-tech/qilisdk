@@ -31,6 +31,7 @@ from .comparison import (
 from .expression import Abs, Add, Constant, Cos, Exp, Expression, Function, Inv, Log, Mul, Pow, Sin, Sqrt, Tan
 from .interpolator import Interpolation, Interpolator, ParameterizedNumber
 from .model import QUBO, Constraint, Model, Objective, ObjectiveSense
+from .model_result import ModelResult
 from .qtensor import (
     InitialState,
     QTensor,
@@ -78,6 +79,7 @@ __all__ = [
     "LessThanOrEqual",
     "Log",
     "Model",
+    "ModelResult",
     "Mul",
     "NotEqual",
     "Objective",
