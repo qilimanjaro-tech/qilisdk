@@ -309,7 +309,7 @@ def test_submit_model_without_device_raises(monkeypatch):
     client = speqtrum.SpeQtrum()
     model = Model.random_ising(3)
     with pytest.raises(ValueError, match="A device is required"):
-        client.submit(model)
+        client.submit(model, device="")
 
 
 def test_submit_functional_without_device_raises(monkeypatch):
@@ -320,7 +320,7 @@ def test_submit_functional_without_device_raises(monkeypatch):
     functional = FakeDigitalPropagation()
     readout = Readout()
     with pytest.raises(ValueError, match="A device is required"):
-        client.submit(functional, readout=readout)
+        client.submit(functional, device="", readout=readout)
 
 
 _API_MESSAGE = "Scheduled maintenance window: results may be delayed."

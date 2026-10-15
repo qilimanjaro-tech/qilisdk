@@ -654,7 +654,7 @@ class SpeQtrum:
     @overload
     def submit(
         self,
-        functional: PrimitiveFunctional,
+        task: PrimitiveFunctional,
         device: str,
         readout: Readout[S, E, T],
         job_name: str | None = None,
@@ -663,7 +663,7 @@ class SpeQtrum:
     @overload
     def submit(
         self,
-        functional: VariationalProgram,
+        task: VariationalProgram,
         device: str,
         readout: Readout[S, E, T],
         job_name: str | None = None,
@@ -671,16 +671,16 @@ class SpeQtrum:
 
     @overload
     def submit(
-        self, functional: ExperimentFunctional, device: str, job_name: str | None = None
+        self, task: ExperimentFunctional, device: str, job_name: str | None = None
     ) -> JobHandle[ExperimentResult]: ...
 
     @overload
-    def submit(self, model: Model, /, device: str, *, job_name: str | None = None) -> JobHandle[SolverResult]: ...
+    def submit(self, task: Model, device: str, *, job_name: str | None = None) -> JobHandle[SolverResult]: ...
 
     def submit(
         self,
-        functional: Functional | Model,
-        device: str | None = None,
+        task: Functional | Model,
+        device: str,
         readout: Readout[S, E, T] | None = None,  # type: ignore[type-arg]
         job_name: str | None = None,
     ) -> JobHandle:
@@ -697,8 +697,7 @@ class SpeQtrum:
         * :class:`~qilisdk.core.model.Model`, returning a :class:`~qilisdk.utils.classical_solvers.SolverResult`
 
         Args:
-            functional: A fully configured functional instance that defines the quantum workload, or a
-                model to solve.
+            task: The workload to run: a fully configured functional or experiment, or a model to solve.
             device: Device code returned by :py:meth:`list_devices`.
             readout: Readout method(s) specifying how results should be measured.
                 Required for ``DigitalPropagation``, ``AnalogEvolution``, and ``VariationalProgram``.
@@ -708,40 +707,40 @@ class SpeQtrum:
             JobHandle: A typed handle carrying the numeric job identifier and result type metadata.
 
         Raises:
-            NotImplementedError: If *functional* is not of a supported type.
+            NotImplementedError: If *task* is not of a supported type.
             ValueError: If *device* or *readout* is required but not provided, or *readout* contains
                 invalid methods.
         """
 
-        if device is None:
-            raise ValueError("A device is required when submitting a job")
+        if not device:
+            raise ValueError("A device is required when submitting a job. Use `list_devices` to see available devices.")
 
-        if isinstance(functional, Model):
-            return self._submit_model(functional, device, job_name)
+        if isinstance(task, Model):
+            return self._submit_model(task, device, job_name)
 
         # Experiments (no readout) are dispatched generically via the plugin registry.
-        if isinstance(functional, ExperimentFunctional):
-            return self._submit_experiment(functional, device, job_name)
+        if isinstance(task, ExperimentFunctional):
+            return self._submit_experiment(task, device, job_name)
 
         # Functionals with readout
 
         if readout is None:
             raise ValueError("Readout can't be none when submitting a functional")
 
-        if isinstance(functional, VariationalProgram):
-            return self._submit_variational_program(functional, device, readout, job_name)
+        if isinstance(task, VariationalProgram):
+            return self._submit_variational_program(task, device, readout, job_name)
 
-        if isinstance(functional, DigitalPropagation):
-            return self._submit_digital_propagation(functional, device, readout, job_name)
+        if isinstance(task, DigitalPropagation):
+            return self._submit_digital_propagation(task, device, readout, job_name)
 
-        if isinstance(functional, AnalogEvolution):
-            return self._submit_analog_evolution(functional, device, readout, job_name)
+        if isinstance(task, AnalogEvolution):
+            return self._submit_analog_evolution(task, device, readout, job_name)
 
-        if isinstance(functional, QuantumReservoir):
-            return self._submit_quantum_reservoir_functional(functional, device, readout, job_name)
+        if isinstance(task, QuantumReservoir):
+            return self._submit_quantum_reservoir_functional(task, device, readout, job_name)
 
-        logger.error("[SpeQtrum] Unsupported functional type: {}", type(functional).__qualname__)
-        raise NotImplementedError(f"{type(self).__qualname__} does not support {type(functional).__qualname__}")
+        logger.error("[SpeQtrum] Unsupported task type: {}", type(task).__qualname__)
+        raise NotImplementedError(f"{type(self).__qualname__} does not support {type(task).__qualname__}")
 
     def _submit_digital_propagation(
         self, functional: DigitalPropagation, device: str, readout: Readout[S, E, T], job_name: str | None = None
