@@ -76,8 +76,12 @@ class QTensorCpp {
     // Backend-agnostic accessors
     StorageFormat get_format() const { return _format; }
     std::string get_format_string() const;
-    Eigen::Index rows() const;
-    Eigen::Index cols() const;
+    Eigen::Index rows() const {
+        return std::visit([](const auto& mat) { return Eigen::Index(mat.rows()); }, _data);
+    }
+    Eigen::Index cols() const {
+        return std::visit([](const auto& mat) { return Eigen::Index(mat.cols()); }, _data);
+    }
     Eigen::Index nnz() const;
     SparseMatrix to_row_sparse() const;
     DenseMatrix to_dense() const;

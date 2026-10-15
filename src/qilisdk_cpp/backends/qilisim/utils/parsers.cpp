@@ -15,6 +15,7 @@
 #include "parsers.h"
 #include <algorithm>
 #include <cmath>
+#include "../../../core/qtensor.h"
 #include "../../../libs/numpy.h"
 #include "../digital/gate.h"
 #include "../representations/matrix_free_hamiltonian.h"
@@ -104,6 +105,33 @@ inline void validate_qubit_index(int qubit, int nqubits, const char* context) {
     }
 }
 
+inline SparseMatrix from_qtensor(py::handle qtensor, double atol) {
+    /*
+    Read a Python QTensor straight from its C++ storage, skipping the SciPy round-trip of from_spmatrix(qtensor.data).
+    Objects without a C++ backing (anything else exposing a SciPy ``data`` attribute) fall back to from_spmatrix.
+
+    Args:
+        qtensor (py::handle): The Python QTensor, or any object with a SciPy sparse ``data`` attribute.
+        atol (double): Absolute tolerance for considering values as non-zero.
+
+    Returns:
+        SparseMatrix: The tensor as a row-major sparse matrix, with the same filtering as from_spmatrix.
+    */
+    if (!py::hasattr(qtensor, "_qtensor_cpp")) {
+        return from_spmatrix(qtensor.attr("data"), atol);
+    }
+    const auto& tensor = qtensor.attr("_qtensor_cpp").cast<const QTensorCpp&>();
+    Triplets entries;
+    tensor.for_each_nonzero([&](int row, int col, Complex val) {
+        if (std::abs(val) > atol || !std::isfinite(val.real()) || !std::isfinite(val.imag())) {
+            entries.emplace_back(row, col, val);
+        }
+    });
+    SparseMatrix mat(tensor.rows(), tensor.cols());
+    mat.setFromTriplets(entries.begin(), entries.end());
+    return mat;
+}
+
 // Build the per-step sqrt(rate(t)) multiplier used to scale a base jump operator across an analog
 // evolution. A constant rate yields a constant series; a callable rate(t) is evaluated at every time
 // point in step_list. Validates that each rate value is a finite, non-negative real number (negative
@@ -160,7 +188,7 @@ inline void collect_lindblad_jumps(py::handle py_noise_pass, double dt, double a
 
     if (!time_dependent) {
         for (auto& lindblad_op : lindblad_gen.attr("jump_operators_with_rates")) {
-            jump_operators.push_back(from_spmatrix(lindblad_op.attr("data"), atol));
+            jump_operators.push_back(from_qtensor(lindblad_op, atol));
             jump_rate_series.emplace_back();  // constant rate already folded in
         }
         return;
@@ -169,7 +197,7 @@ inline void collect_lindblad_jumps(py::handle py_noise_pass, double dt, double a
     py::list base_ops = lindblad_gen.attr("jump_operators").cast<py::list>();
     py::list rates = lindblad_gen.attr("rates").cast<py::list>();
     for (size_t i = 0; i < base_ops.size(); ++i) {
-        jump_operators.push_back(from_spmatrix(base_ops[i].attr("data"), atol));
+        jump_operators.push_back(from_qtensor(base_ops[i], atol));
         jump_rate_series.push_back(make_sqrt_rate_series(rates[i], *step_list, atol));
     }
 }
@@ -447,8 +475,7 @@ std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol, 
     */
     std::vector<SparseMatrix> hamiltonians;
     for (auto& hamiltonian : Hs) {
-        py::object spm = hamiltonian.attr("to_qtensor")("total_nqubits"_a = nqubits).attr("data");
-        SparseMatrix H = from_spmatrix(spm, atol);
+        SparseMatrix H = from_qtensor(hamiltonian.attr("to_qtensor")("total_nqubits"_a = nqubits), atol);
         hamiltonians.push_back(H);
     }
     if (hamiltonians.size() == 0) {
@@ -564,7 +591,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
             std::vector<SparseMatrix> kraus_operators;
             py::object as_kraus = py_noise_pass.attr("as_kraus")();
             for (auto& kraus_op : as_kraus.attr("operators")) {
-                kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                kraus_operators.push_back(from_qtensor(kraus_op, atol));
             }
             if (!kraus_operators.empty()) {
                 noise_model_cpp.add_kraus_operators_global(kraus_operators);
@@ -574,7 +601,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
                 std::vector<SparseMatrix> kraus_operators;
                 py::object as_kraus = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = dt);
                 for (auto& kraus_op : as_kraus.attr("operators")) {
-                    kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                    kraus_operators.push_back(from_qtensor(kraus_op, atol));
                 }
                 if (!kraus_operators.empty()) {
                     noise_model_cpp.add_kraus_operators_global(kraus_operators);
@@ -584,7 +611,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
                     std::vector<SparseMatrix> kraus_operators;
                     py::object as_kraus = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = gate_dt);
                     for (auto& kraus_op : as_kraus.attr("operators")) {
-                        kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                        kraus_operators.push_back(from_qtensor(kraus_op, atol));
                     }
                     if (!kraus_operators.empty()) {
                         noise_model_cpp.add_kraus_operators_per_gate(gate_name, kraus_operators);
@@ -647,7 +674,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
                 std::vector<SparseMatrix> kraus_operators;
                 py::object as_kraus = py_noise_pass.attr("as_kraus")();
                 for (auto& kraus_op : as_kraus.attr("operators")) {
-                    kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                    kraus_operators.push_back(from_qtensor(kraus_op, atol));
                 }
                 if (!kraus_operators.empty()) {
                     noise_model_cpp.add_kraus_operators_per_qubit(q, kraus_operators);
@@ -657,7 +684,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
                     std::vector<SparseMatrix> kraus_operators;
                     py::object as_kraus = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = dt);
                     for (auto& kraus_op : as_kraus.attr("operators")) {
-                        kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                        kraus_operators.push_back(from_qtensor(kraus_op, atol));
                     }
                     if (!kraus_operators.empty()) {
                         noise_model_cpp.add_kraus_operators_per_qubit(q, kraus_operators);
@@ -667,7 +694,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
                         std::vector<SparseMatrix> kraus_operators;
                         py::object as_kraus = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = gate_dt);
                         for (auto& kraus_op : as_kraus.attr("operators")) {
-                            kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                            kraus_operators.push_back(from_qtensor(kraus_op, atol));
                         }
                         if (!kraus_operators.empty()) {
                             noise_model_cpp.add_kraus_operators_per_gate_qubit(gate_name, q, kraus_operators);
@@ -711,15 +738,13 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
             if (py::isinstance(py_noise_pass, SupportsStaticKraus)) {
                 py::object as_kraus = py_noise_pass.attr("as_kraus")();
                 for (auto& kraus_op : as_kraus.attr("operators")) {
-                    py::object spm = kraus_op.attr("data");
-                    SparseMatrix K = from_spmatrix(spm, atol);
+                    SparseMatrix K = from_qtensor(kraus_op, atol);
                     kraus_operators.push_back(K);
                 }
             } else if (py::isinstance(py_noise_pass, SupportsTimeDerivedKraus)) {
                 py::object as_kraus_from_duration = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = gate_dt);
                 for (auto& kraus_op : as_kraus_from_duration.attr("operators")) {
-                    py::object spm = kraus_op.attr("data");
-                    SparseMatrix K = from_spmatrix(spm, atol);
+                    SparseMatrix K = from_qtensor(kraus_op, atol);
                     kraus_operators.push_back(K);
                 }
             }
@@ -745,15 +770,13 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
             if (py::isinstance(py_noise_pass, SupportsStaticKraus)) {
                 py::object as_kraus = py_noise_pass.attr("as_kraus")();
                 for (auto& kraus_op : as_kraus.attr("operators")) {
-                    py::object spm = kraus_op.attr("data");
-                    SparseMatrix K = from_spmatrix(spm, atol);
+                    SparseMatrix K = from_qtensor(kraus_op, atol);
                     kraus_operators.push_back(K);
                 }
             } else if (py::isinstance(py_noise_pass, SupportsTimeDerivedKraus)) {
                 py::object as_kraus_from_duration = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = gate_dt);
                 for (auto& kraus_op : as_kraus_from_duration.attr("operators")) {
-                    py::object spm = kraus_op.attr("data");
-                    SparseMatrix K = from_spmatrix(spm, atol);
+                    SparseMatrix K = from_qtensor(kraus_op, atol);
                     kraus_operators.push_back(K);
                 }
             }
@@ -849,8 +872,7 @@ std::vector<SparseMatrix> parse_observables(const py::object& observables, long 
 
         } else if (py::isinstance(obs, QTensor)) {
             // Get the data directly if it's a QTensor
-            py::object spm = obs.attr("data");
-            SparseMatrix O = from_spmatrix(spm, atol);
+            SparseMatrix O = from_qtensor(obs, atol);
             observable_matrices.push_back(O);
 
         } else {
@@ -1124,7 +1146,7 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
         // Get the matrix (if it's not a measurement, since those don't have matrices)
         SparseMatrix base_matrix;
         if (gate_type_str != "M") {
-            base_matrix = from_spmatrix(py_gate.attr("matrix").attr("data"), atol);
+            base_matrix = from_qtensor(py_gate.attr("matrix"), atol);
         } else {
             base_matrix = SparseMatrix(2, 2);
             base_matrix.coeffRef(0, 0) = 1.0;
