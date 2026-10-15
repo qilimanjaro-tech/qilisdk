@@ -25,7 +25,7 @@ import httpx
 from loguru import logger
 from pydantic import TypeAdapter, ValidationError
 
-from qilisdk.core import Model, ModelResult
+from qilisdk.core import Model
 from qilisdk.core.result import Result
 from qilisdk.experiments import ExperimentFunctional
 from qilisdk.functionals import (
@@ -63,6 +63,7 @@ if TYPE_CHECKING:
     from qilisdk.experiments.experiment_result import ExperimentResult
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
     from qilisdk.readout import E, Readout, S, T
+    from qilisdk.utils.classical_solvers import SolverResult
 
 
 TResult = TypeVar("TResult", bound=Result)
@@ -674,7 +675,7 @@ class SpeQtrum:
     ) -> JobHandle[ExperimentResult]: ...
 
     @overload
-    def submit(self, model: Model, /, *, job_name: str | None = None) -> JobHandle[ModelResult]: ...
+    def submit(self, model: Model, /, device: str, *, job_name: str | None = None) -> JobHandle[SolverResult]: ...
 
     def submit(
         self,
@@ -693,13 +694,12 @@ class SpeQtrum:
         * :class:`~qilisdk.functionals.variational_program.VariationalProgram`
         * :class:`~qilisdk.experiments.experiment_functional.ExperimentFunctional`
             (e.g. those provided by the ``qili-experiments`` plugin library)
-        * :class:`~qilisdk.core.model.Model`, returning a :class:`~qilisdk.core.model_result.ModelResult`
+        * :class:`~qilisdk.core.model.Model`, returning a :class:`~qilisdk.utils.classical_solvers.SolverResult`
 
         Args:
             functional: A fully configured functional instance that defines the quantum workload, or a
                 model to solve.
-            device: Device code returned by :py:meth:`list_devices`. Required for functionals and ignored
-                for models, since SpeQtrum chooses where to run them.
+            device: Device code returned by :py:meth:`list_devices`.
             readout: Readout method(s) specifying how results should be measured.
                 Required for ``DigitalPropagation``, ``AnalogEvolution``, and ``VariationalProgram``.
             job_name (optional): The name of the job. Default: None.
@@ -713,13 +713,11 @@ class SpeQtrum:
                 invalid methods.
         """
 
-        if isinstance(functional, Model):
-            if device is not None:
-                logger.warning("Device is ignored when submitting a model")
-            return self._submit_model(functional, job_name)
-
         if device is None:
-            raise ValueError("A device is required when submitting a functional")
+            raise ValueError("A device is required when submitting a job")
+
+        if isinstance(functional, Model):
+            return self._submit_model(functional, device, job_name)
 
         # Experiments (no readout) are dispatched generically via the plugin registry.
         if isinstance(functional, ExperimentFunctional):
@@ -950,25 +948,27 @@ class SpeQtrum:
             logger.warning("{}", job.message)
         return JobHandle.variational_program(job.id)
 
-    def _submit_model(self, model: Model, job_name: str | None = None) -> JobHandle[ModelResult]:
+    def _submit_model(self, model: Model, device: str, job_name: str | None = None) -> JobHandle[SolverResult]:
         """Submit an optimization ``Model`` to the SpeQtrum API.
 
         Args:
             model (Model): The model to solve.
+            device (str): Target device code.
             job_name (str | None): Optional human-readable job name.
 
         Returns:
-            JobHandle[ModelResult]: A handle for tracking the submitted job.
+            JobHandle[SolverResult]: A handle for tracking the submitted job.
         """
         payload = ExecutePayload(type=ExecuteType.MODEL, model_payload=ModelPayload(model=model))
         json = {
+            "device_code": device,
             "payload": payload.model_dump_json(),
             "job_type": JobType.MODEL,
             "meta": {},
         }
         if job_name:
             json["name"] = job_name
-        logger.debug("[SpeQtrum] Executing Model")
+        logger.debug("[SpeQtrum] Executing Model on device {}", device)
         with self._create_client() as client:
             response = client.post(_EXECUTE_URL, json=json, extensions=_request_extensions(context="Executing Model"))
         job = JobId(**response.json())

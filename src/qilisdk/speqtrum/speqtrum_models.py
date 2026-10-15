@@ -21,7 +21,6 @@ from typing import Any, Callable, Generic, TypeVar, cast, overload
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
 from qilisdk.core.model import Model
-from qilisdk.core.model_result import ModelResult
 from qilisdk.core.result import Result
 from qilisdk.experiments import (
     ExperimentFunctional,
@@ -36,6 +35,7 @@ from qilisdk.functionals import (
     VariationalProgramResult,
 )
 from qilisdk.readout import Readout
+from qilisdk.utils.classical_solvers import SolverResult
 from qilisdk.utils.serialization import deserialize, serialize
 
 
@@ -284,7 +284,7 @@ class ExecuteResult(SpeQtrumModel):
     functional_result: FunctionalResult | None = None
     variational_program_result: VariationalProgramResult | None = None
     experiment_result: ExperimentResult | None = None
-    model_result: ModelResult | None = None
+    model_result: SolverResult | None = None
 
     @field_serializer("functional_result")
     def _serialize_sampling_result(self, functional_result: FunctionalResult, _info):
@@ -317,13 +317,13 @@ class ExecuteResult(SpeQtrumModel):
         return v
 
     @field_serializer("model_result")
-    def _serialize_model_result(self, model_result: ModelResult, _info):
+    def _serialize_model_result(self, model_result: SolverResult, _info):
         return serialize(model_result) if model_result is not None else None
 
     @field_validator("model_result", mode="before")
     def _load_model_result(cls, v):
         if isinstance(v, str) and v.startswith("!"):
-            return deserialize(v, ModelResult)
+            return deserialize(v, SolverResult)
         return v
 
 
@@ -388,14 +388,14 @@ def _require_experiment_result(result: ExecuteResult) -> ExperimentResult:
     return result.experiment_result
 
 
-def _require_model_result(result: ExecuteResult) -> ModelResult:
-    """Extract and return the ``ModelResult`` from *result*.
+def _require_model_result(result: ExecuteResult) -> SolverResult:
+    """Extract and return the ``SolverResult`` from *result*.
 
     Args:
         result (ExecuteResult): The execution result to inspect.
 
     Returns:
-        ModelResult: The solution SpeQtrum found for the submitted model.
+        SolverResult: The solution SpeQtrum found for the submitted model.
 
     Raises:
         RuntimeError: If the ``model_result`` field is ``None``.
@@ -550,14 +550,14 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
         return cast("JobHandle[TExperimentResult]", handle)
 
     @classmethod
-    def model(cls: type[JobHandle[ModelResult]], job_id: int) -> JobHandle[ModelResult]:
+    def model(cls: type[JobHandle[SolverResult]], job_id: int) -> JobHandle[SolverResult]:
         """Create a handle for a ``Model`` job.
 
         Args:
             job_id (int): Numeric identifier returned by the SpeQtrum service.
 
         Returns:
-            JobHandle[ModelResult]: A handle whose result type is ``ModelResult``.
+            JobHandle[SolverResult]: A handle whose result type is ``SolverResult``.
         """
         return cls(id=job_id, execute_type=ExecuteType.MODEL, extractor=_require_model_result)
 

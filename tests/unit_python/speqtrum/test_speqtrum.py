@@ -53,13 +53,12 @@ pytest.importorskip(
 import httpx
 
 import qilisdk.speqtrum.speqtrum as speqtrum
-from qilisdk.core import ModelResult
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult
 from qilisdk.speqtrum.speqtrum_models import ExecuteResult
-from qilisdk.utils.classical_solvers import BruteForceSolver
+from qilisdk.utils.classical_solvers import BruteForceSolver, SolverResult
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -290,13 +289,13 @@ def test_submit_dispatches_to_model_handler(
         raising=True,
     )
     q = speqtrum.SpeQtrum()
-    handle = q.submit(Model.random_ising(3), job_name=job_name)
+    handle = q.submit(Model.random_ising(3), device="cpu_node", job_name=job_name)
 
     assert handle.id == 55
     assert handle.execute_type is speqtrum.ExecuteType.MODEL
     body = posted[0]
     assert body["job_type"] is speqtrum.JobType.MODEL
-    assert "device_code" not in body
+    assert body["device_code"] == "cpu_node"
     assert body.get("name") == job_name
     payload = speqtrum.ExecutePayload.model_validate_json(body["payload"])
     assert payload.type is speqtrum.ExecuteType.MODEL
@@ -304,25 +303,13 @@ def test_submit_dispatches_to_model_handler(
     assert "Model queued" in caplog.text
 
 
-def test_submit_model_with_device_warns_and_ignores_it(
-    monkeypatch,
-    caplog,  # ruff: ignore[redefined-while-unused]
-):
-    """SpeQtrum chooses where models run, so a given device is dropped with a warning."""
-    posted: list[dict] = []
+def test_submit_model_without_device_raises(monkeypatch):
+    """Models must name the device they run on, just like functionals."""
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
-    monkeypatch.setattr(
-        speqtrum.SpeQtrum,
-        "_create_client",
-        lambda self: RecordingPostClient(posted, post_payload={"id": 56}),
-        raising=True,
-    )
     client = speqtrum.SpeQtrum()
-    handle = client.submit(Model.random_ising(3), "some_device")
-
-    assert handle.id == 56
-    assert "device_code" not in posted[0]
-    assert "Device is ignored" in caplog.text
+    model = Model.random_ising(3)
+    with pytest.raises(ValueError, match="A device is required"):
+        client.submit(model)
 
 
 def test_submit_functional_without_device_raises(monkeypatch):
@@ -465,7 +452,7 @@ def test_wait_for_job_with_handle_returns_typed_detail(monkeypatch):
 
 
 def test_wait_for_job_with_model_handle_returns_solver_result(monkeypatch):
-    """A model handle should surface the ``ModelResult`` SpeQtrum returned."""
+    """A model handle should surface the ``SolverResult`` SpeQtrum returned."""
 
     monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
     q = speqtrum.SpeQtrum()
@@ -483,7 +470,7 @@ def test_wait_for_job_with_model_handle_returns_solver_result(monkeypatch):
     monkeypatch.setattr(speqtrum.SpeQtrum, "get_job", lambda self, _: detail, raising=True)
 
     typed_result = q.wait_for_job(speqtrum.JobHandle.model(8), poll_interval=0.0).get_results()
-    assert isinstance(typed_result, ModelResult)
+    assert isinstance(typed_result, SolverResult)
     assert typed_result.objective == model_result.objective
 
 

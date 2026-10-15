@@ -55,7 +55,6 @@ pytest.importorskip(
 
 from unittest.mock import MagicMock
 
-from qilisdk.core import ModelResult
 from qilisdk.digital import RY, Circuit
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
@@ -74,7 +73,7 @@ from qilisdk.speqtrum.speqtrum_models import (
     VariationalProgramPayload,
     _require_experiment_result_typed,
 )
-from qilisdk.utils.classical_solvers import BruteForceSolver
+from qilisdk.utils.classical_solvers import BruteForceSolver, SolverResult
 
 
 class SweepExperimentResult(ExperimentResult):
@@ -336,7 +335,7 @@ def test_execute_result_model_round_trips_through_validation():
 
     result = ExecuteResult.model_validate_json(serialized_result)
 
-    assert isinstance(result.model_result, ModelResult)
+    assert isinstance(result.model_result, SolverResult)
     assert result.model_result.objective == pytest.approx(model_result.objective)
     assert ExecuteResult(type=ExecuteType.MODEL, model_result=model_result).model_result is model_result
 
