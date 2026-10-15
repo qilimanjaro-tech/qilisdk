@@ -2210,4 +2210,49 @@ TEST(StorageFormatTest, ConversionsAgreeAcrossFormats) {
     EXPECT_EQ(row.nnz(), dense.nnz());
 }
 
+TEST(PermuteTest, SwapsKetQubits) {
+    SparseMatrix ket01(4, 1);
+    ket01.insert(1, 0) = 1.0;
+    ket01.makeCompressed();
+    QTensorCpp q(ket01);
+    QTensorCpp p = q.permute({1, 0});
+    EXPECT_EQ(p.coeff(2, 0), Complex(1.0, 0.0));
+    EXPECT_EQ(p.nnz(), 1);
+}
+
+TEST(PermuteTest, PreservesDenseFormat) {
+    SparseMatrix m(4, 4);
+    m.insert(1, 2) = Complex(0.0, 1.0);
+    m.makeCompressed();
+    QTensorCpp q(m, StorageFormat::Dense);
+    QTensorCpp p = q.permute({1, 0});
+    EXPECT_EQ(p.get_format(), StorageFormat::Dense);
+    EXPECT_EQ(p.coeff(2, 1), Complex(0.0, 1.0));
+}
+
+TEST(PermuteTest, InvalidOrder_Throws) {
+    QTensorCpp q(make_dm_pure0());
+    EXPECT_THROW(q.permute({}), py::value_error);
+    EXPECT_THROW(q.permute({1}), py::value_error);
+    EXPECT_THROW(q.permute({-1}), py::value_error);
+}
+
+TEST(PermuteTest, PythonVersion_ValidList) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(_order = [1, 0])");
+    SparseMatrix ket01(4, 1);
+    ket01.insert(1, 0) = 1.0;
+    ket01.makeCompressed();
+    QTensorCpp q(ket01);
+    QTensorCpp p = q.permute_python(py::globals()["_order"]);
+    EXPECT_EQ(p.coeff(2, 0), Complex(1.0, 0.0));
+}
+
+TEST(PermuteTest, PythonVersion_NonIntItem_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(_bad_order = ["a"])");
+    QTensorCpp q(make_dm_pure0());
+    EXPECT_THROW(q.permute_python(py::globals()["_bad_order"]), py::value_error);
+}
+
 // GCOV_EXCL_BR_STOP

@@ -2660,3 +2660,74 @@ QTensorCpp QTensorCpp::div(Complex scalar) const {
 }
 
 // GCOV_EXCL_BR_STOP
+
+QTensorCpp QTensorCpp::permute_python(const py::object& order) const {
+    /*
+    Reorder the qubits of this QTensor, returning a new QTensor as the result.
+
+    Args:
+        order (py::object): A Python iterable of integers, where qubit i of the result is qubit order[i] of this QTensor.
+
+    Returns:
+        QTensorCpp: A new QTensor with its qubits reordered.
+    */
+    std::vector<int> order_vec;
+    for (const auto& item : order) {
+        if (!py::isinstance<py::int_>(item)) {
+            throw py::value_error("Order must be an iterable of integers");
+        }
+        order_vec.push_back(item.cast<int>());
+    }
+    return permute(order_vec);
+}
+
+QTensorCpp QTensorCpp::permute(const std::vector<int>& order) const {
+    /*
+    Reorder the qubits of this QTensor, returning a new QTensor as the result.
+    Qubit 0 is the leftmost factor of the tensor product (the most significant bit of the index).
+    Works for kets, bras and operators, remapping the bits of the row and/or column index of each non-zero.
+
+    Args:
+        order (std::vector<int>): A permutation of 0..n-1, where qubit i of the result is qubit order[i] of this QTensor.
+
+    Returns:
+        QTensorCpp: A new QTensor with its qubits reordered.
+    */
+
+    // Validate that the order is a permutation of all qubits
+    int nqubits = get_nqubits();
+    if (int(order.size()) != nqubits) {
+        throw py::value_error("Permutation must contain exactly one entry per qubit");
+    }
+    std::vector<bool> seen(nqubits, false);
+    for (int q : order) {
+        if (q < 0 || q >= nqubits || seen[q]) {
+            throw py::value_error("Permutation must contain each qubit index exactly once");
+        }
+        seen[q] = true;
+    }
+
+    // Map an index of this QTensor to the corresponding index of the result
+    auto permute_index = [&](int index) {
+        int out = 0;
+        for (int new_q = 0; new_q < nqubits; ++new_q) {
+            int bit = (index >> (nqubits - 1 - order[new_q])) & 1;
+            out |= (bit << (nqubits - 1 - new_q));
+        }
+        return out;
+    };
+
+    // Rows of a bra and columns of a ket have dimension 1 and so are left untouched
+    bool permute_rows = rows() > 1;
+    bool permute_cols = cols() > 1;
+    Triplets triplets;
+    triplets.reserve(size_t(nnz()));
+    for_each_nonzero([&](int row, int col, Complex val) {
+        int new_row = permute_rows ? permute_index(row) : row;
+        int new_col = permute_cols ? permute_index(col) : col;
+        triplets.emplace_back(new_row, new_col, val);
+    });
+    SparseMatrix result(rows(), cols());
+    result.setFromTriplets(triplets.begin(), triplets.end());
+    return QTensorCpp(result, _format);
+}

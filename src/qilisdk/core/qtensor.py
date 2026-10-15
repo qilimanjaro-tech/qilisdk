@@ -559,18 +559,45 @@ class QTensor:
         return self._qtensor_cpp.coeff(index[0], index[1])
 
     @classmethod
-    def tensor_product(cls, others: list[QTensor]) -> QTensor:
+    def tensor_product(cls, others: list[QTensor], qubits: list[list[int]] | None = None) -> QTensor:
         """
         Compute the tensor product of a list of QTensor.
 
+        By default the factors are concatenated in the order given, so the first QTensor acts on the
+        lowest-indexed qubits. If ``qubits`` is provided, the j-th qubit of ``others[k]`` is instead
+        placed at qubit ``qubits[k][j]`` of the result. For example, ``tensor_product([a, b], qubits=[[1], [0, 2]])``
+        places the single-qubit ``a`` on qubit 1 and the two-qubit ``b`` on qubits 0 and 2.
+
         Args:
             others (list[QTensor]): A list of QTensors to tensor product.
+            qubits (list[list[int]] | None): For each QTensor, the qubits of the result it acts on. Together these
+                must contain each index from 0 to the total number of qubits minus one exactly once.
 
         Returns:
             QTensor: A new QTensor representing the tensor product.
+
+        Raises:
+            ValueError: If ``qubits`` does not have one entry per QTensor, if an entry does not match the number of
+                qubits of its QTensor, or if the entries are not a permutation of all qubits.
         """
         logger.trace("[QTensor] QTensor.tensor_product computing tensor product of {} tensors", len(others))
-        return QTensor(QTensorCpp.tensor_product_python(others))
+        product = QTensor(QTensorCpp.tensor_product_python(others))
+        if qubits is None:
+            return product
+        if len(qubits) != len(others):
+            raise ValueError(f"Expected {len(others)} lists of qubits, one per QTensor, but got {len(qubits)}.")
+        for other, other_qubits in zip(others, qubits):
+            if len(other_qubits) != other.nqubits:
+                raise ValueError(
+                    f"QTensor with {other.nqubits} qubits cannot be placed on {len(other_qubits)} qubits {other_qubits}."
+                )
+        targets = [q for other_qubits in qubits for q in other_qubits]
+        if sorted(targets) != list(range(product.nqubits)):
+            raise ValueError(f"Qubits {qubits} must contain each index from 0 to {product.nqubits - 1} exactly once.")
+        order = [0] * product.nqubits
+        for source, target in enumerate(targets):
+            order[target] = source
+        return product.permute(order)
 
     @classmethod
     def ket(cls, *state: int) -> QTensor:
@@ -703,6 +730,26 @@ class QTensor:
         added_qubits = nqubits - self.nqubits
         identity = self.identity(added_qubits)
         return tensor_prod([self, identity])
+
+    def permute(self, order: list[int]) -> QTensor:
+        """
+        Reorder the qubits of the QTensor.
+
+        Qubit ``i`` of the result is qubit ``order[i]`` of this QTensor. For example, ``order=[1, 0, 2]`` swaps
+        the first two qubits, and ``order=[2, 0, 1]`` moves the last qubit to the front. Works for kets, bras
+        and operators.
+
+        Args:
+            order (list[int]): A permutation of the qubit indices ``0`` to ``nqubits - 1``.
+
+        Returns:
+            QTensor: A new QTensor with its qubits reordered.
+
+        Raises:
+            ValueError: If ``order`` is not a permutation of all qubit indices.
+        """
+        logger.trace("[QTensor] QTensor.permute reordering qubits to {}", order)
+        return QTensor(self._qtensor_cpp.permute_python(order))
 
     def reset_qubits(self, qubits: set[int]) -> QTensor:
         """
@@ -1030,17 +1077,18 @@ def expect_val(operator: QTensor | Hamiltonian, state: QTensor, nshots: int = 0)
     return state.expectation_value(operator, nshots)
 
 
-def tensor_prod(states: list[QTensor]) -> QTensor:
+def tensor_prod(states: list[QTensor], qubits: list[list[int]] | None = None) -> QTensor:
     """
     Wrapper for backwards compatibility: see QTensor.tensor_product().
 
     Args:
         states (list[QTensor]): A list of QTensors to tensor product.
+        qubits (list[list[int]] | None): For each QTensor, the qubits of the result it acts on.
 
     Returns:
         QTensor: A new QTensor representing the tensor product.
     """
-    return QTensor.tensor_product(states)
+    return QTensor.tensor_product(states, qubits)
 
 
 def reset_qubits(state: QTensor, qubits: list[int]) -> QTensor:
