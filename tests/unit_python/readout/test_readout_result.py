@@ -20,9 +20,12 @@ import pytest
 
 from qilisdk.analog import Z as pauli_z
 from qilisdk.backends.backend import Backend
+from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core import QTensor, ket
+from qilisdk.digital import CNOT, Circuit, H, M
+from qilisdk.functionals import DigitalPropagation
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.readout import ExpectationReadout, ReadoutMethod, SamplingReadout, StateTomographyReadout
+from qilisdk.readout import ExpectationReadout, Readout, ReadoutMethod, SamplingReadout, StateTomographyReadout
 from qilisdk.readout.readout_result import (
     ExpectationReadoutResult,
     ReadoutCompositeResults,
@@ -607,6 +610,17 @@ def test_from_state_probabilities_share_keys_with_samples():
     # Marginalized exactly from the state: |01> for qubit 0 == 0, |10> + |11> for qubit 0 == 1.
     assert result.probabilities == pytest.approx({"0_": 1 / 3, "1_": 2 / 3})
     assert result.get_probability("1_") == pytest.approx(2 / 3)
+
+
+def test_qilisim_partial_measurement_probabilities_share_keys_with_samples():
+    # End-to-end regression test: QiliSim builds its results through from_samples with already filtered keys.
+    circuit = Circuit(2)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    circuit.add(M(0))
+    result = QiliSim().execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=1000))
+    assert set(result.get_probabilities()) == set(result.get_samples())
+    assert sum(result.get_probabilities().values()) == pytest.approx(1.0)
 
 
 def test_filter_empty_samples():
