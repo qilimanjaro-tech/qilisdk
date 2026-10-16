@@ -806,11 +806,11 @@ TEST_F(SamplingMonteCarloTest, KrausNoiseIsUnravelledOverTrajectories) {
     cfgMC.set_monte_carlo(true);
     cfgMC.set_num_monte_carlo_trajectories(4000);
 
-    DenseMatrix deterministic_state;
-    DenseMatrix sampled_state;
+    DenseMatrix deterministic_state = zeroState(n);
+    DenseMatrix sampled_state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), nm, deterministic_state, intermediate_results, cfg, readout);
-    sampling(gates, n, zeroStateSparse(n), nm, sampled_state, intermediate_results, cfgMC, readout);
+    sampling(gates, n, nm, deterministic_state, intermediate_results, cfg, readout);
+    sampling(gates, n, nm, sampled_state, intermediate_results, cfgMC, readout);
 
     ASSERT_EQ(sampled_state.rows(), 2);
     ASSERT_EQ(sampled_state.cols(), 2);
@@ -826,11 +826,11 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeKrausNoiseIsUnravelledOverTrajectories)
     cfgMC.set_monte_carlo(true);
     cfgMC.set_num_monte_carlo_trajectories(4000);
 
-    DenseMatrix deterministic_state;
-    DenseMatrix sampled_state;
+    DenseMatrix deterministic_state = zeroState(n);
+    DenseMatrix sampled_state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), nm, deterministic_state, intermediate_results, cfg, readout);
-    sampling_matrix_free(gates, n, zeroStateSparse(n), nm, sampled_state, intermediate_results, cfgMC, readout);
+    sampling_matrix_free(gates, n, nm, deterministic_state, intermediate_results, cfg, readout);
+    sampling_matrix_free(gates, n, nm, sampled_state, intermediate_results, cfgMC, readout);
 
     ASSERT_EQ(sampled_state.cols(), 2);
     EXPECT_LT((sampled_state - deterministic_state).cwiseAbs().maxCoeff(), kLoose);
@@ -842,9 +842,9 @@ TEST_F(SamplingMonteCarloTest, PureStateWithoutNoiseStaysASingleStateVector) {
     std::vector<Gate> gates = {makeH(0)};
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgMC, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfgMC, readout);
     EXPECT_EQ(state.cols(), 1);
 }
 
@@ -859,9 +859,9 @@ TEST_F(SamplingMonteCarloTest, MidCircuitReadoutMeasuresTheEnsemble) {
     NoiseModelCpp nm = dampingKrausNoise(0.2);
     py::list sampling_readout;
     sampling_readout.append(SamplingReadout("nshots"_a = 1000));
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), nm, state, intermediate_results, cfgMC, sampling_readout);
+    sampling(gates, n, nm, state, intermediate_results, cfgMC, sampling_readout);
 
     ASSERT_EQ(intermediate_results.size(), 1u);
     py::dict counts = intermediate_results[0].attr("get_samples")().cast<py::dict>();
@@ -882,9 +882,9 @@ TEST_F(SamplingMonteCarloTest, MidCircuitCollapseKeepsTheTrajectoryBatch) {
     cfgMC.set_num_monte_carlo_trajectories(256);
     cfgMC.set_measurement_collapse(true);
     NoiseModelCpp nm = dampingKrausNoise(0.1);
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), nm, state, intermediate_results, cfgMC, readout);
+    sampling(gates, n, nm, state, intermediate_results, cfgMC, readout);
     EXPECT_EQ(state.rows(), 2);
     EXPECT_EQ(state.cols(), 2);
     EXPECT_NEAR(std::real(state.trace()), 1.0, kTol);
@@ -898,9 +898,9 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMidCircuitCollapseKeepsTheTrajectoryBat
     cfgMC.set_num_monte_carlo_trajectories(256);
     cfgMC.set_measurement_collapse(true);
     NoiseModelCpp nm = dampingKrausNoise(0.1);
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), nm, state, intermediate_results, cfgMC, readout);
+    sampling_matrix_free(gates, n, nm, state, intermediate_results, cfgMC, readout);
     EXPECT_EQ(state.rows(), 2);
     EXPECT_EQ(state.cols(), 2);
     EXPECT_NEAR(std::real(state.trace()), 1.0, kTol);
@@ -913,9 +913,9 @@ TEST_F(SamplingMonteCarloTest, MidCircuitCollapseWithoutMonteCarloGivesADensityM
     std::vector<Gate> gates = {makeH(0), makeM(0), makeX(0)};
     QiliSimConfig cfgCollapse = cfg;
     cfgCollapse.set_measurement_collapse(true);
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgCollapse, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfgCollapse, readout);
     ASSERT_EQ(state.rows(), 2);
     ASSERT_EQ(state.cols(), 2);
     EXPECT_NEAR(std::real(state.trace()), 1.0, kTol);
