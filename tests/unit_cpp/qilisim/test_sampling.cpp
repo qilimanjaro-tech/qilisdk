@@ -56,19 +56,17 @@ SparseMatrix hadamard2() {
     return m;
 }
 
-SparseMatrixCol zeroStateSparse(int n_qubits) {
+DenseMatrix zeroState(int n_qubits) {
     long dim = 1L << n_qubits;
-    SparseMatrixCol m(dim, 1);
-    m.insert(0, 0) = cx(1, 0);
-    m.makeCompressed();
+    DenseMatrix m = DenseMatrix::Zero(dim, 1);
+    m(0, 0) = cx(1, 0);
     return m;
 }
 
-SparseMatrixCol zeroStateDenseSparse(int n_qubits) {
+DenseMatrix zeroStateDensity(int n_qubits) {
     long dim = 1L << n_qubits;
-    SparseMatrixCol m(dim, dim);
-    m.insert(0, 0) = cx(1, 0);
-    m.makeCompressed();
+    DenseMatrix m = DenseMatrix::Zero(dim, dim);
+    m(0, 0) = cx(1, 0);
     return m;
 }
 
@@ -300,9 +298,9 @@ TEST_F(SamplingTest, ZeroState_NoGates_AllCountsAreZeroString) {
     int n = 2;
     std::vector<Gate> gates;
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("00"), 1000);
@@ -312,9 +310,9 @@ TEST_F(SamplingTest, XGateOnQubit0_AllCountsAre10) {
     int n = 2;
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("10"), 1000);
@@ -328,9 +326,9 @@ TEST_F(SamplingTest, FusionWithSingleQubitGateCombiningEnabled) {
     cfg_fuse.set_num_threads(4);
     std::vector<Gate> gates = {makeX(0), makeX(0), makeX(1)};
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg_fuse, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfg_fuse, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg_fuse, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("01"), 1000);
@@ -346,20 +344,20 @@ TEST_F(SamplingTest, DivergingCircuitThrows) {
     huge.insert(1, 1) = std::complex<double>(1e200, 0);
     huge.makeCompressed();
     std::vector<Gate> gates = {Gate("HUGE", huge, {}, {0}, {}), Gate("HUGE", huge, {}, {0}, {})};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    EXPECT_THROW(sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout), std::invalid_argument);
+    EXPECT_THROW(sampling(gates, n, noNoise, state, intermediate_results, cfg, readout), std::invalid_argument);
 }
 
 TEST_F(SamplingTest, DoubleXGateOnQubit0_AllCountsAre00_NoCache) {
     int n = 2;
     std::vector<Gate> gates = {makeX(0), makeX(0)};
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
     QiliSimConfig cfgNoCache = cfg;
     cfgNoCache.set_max_cache_size(0);
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgNoCache, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfgNoCache, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgNoCache, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("00"), 1000);
@@ -369,11 +367,11 @@ TEST_F(SamplingTest, DoubleXGateOnQubit0_AllCountsAre00_SmallCache) {
     int n = 2;
     std::vector<Gate> gates = {makeX(0), makeX(0), makeH(0), makeH(0)};
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
     QiliSimConfig cfgNoCache = cfg;
     cfgNoCache.set_max_cache_size(1);
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgNoCache, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfgNoCache, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgNoCache, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("00"), 1000);
@@ -383,9 +381,9 @@ TEST_F(SamplingTest, XOnBothQubits_AllCountsAre11) {
     int n = 2;
     std::vector<Gate> gates = {makeX(0), makeX(1)};
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("11"), 1000);
@@ -411,10 +409,10 @@ TEST_F(SamplingTest, HadamardOnSingleQubit_ApproxFiftyFifty) {
     int n = 1;
     std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure = {true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
     const int shots = 10000;
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, shots, noNoise, cfg, measure);
     EXPECT_EQ(totalCounts(counts), shots);
     double f0 = fractionOf(counts, "0");
@@ -427,10 +425,10 @@ TEST_F(SamplingTest, HadamardOnBothQubits_FourOutcomesEquallyLikely) {
     int n = 2;
     std::vector<Gate> gates = {makeH(0), makeH(1)};
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
     const int shots = 10000;
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, shots, noNoise, cfg, measure);
     EXPECT_EQ(totalCounts(counts), shots);
     for (const std::string& key : {"00", "01", "10", "11"}) {
@@ -443,9 +441,9 @@ TEST_F(SamplingTest, ShotCountAlwaysPreserved) {
     std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure = {true, true};
     for (int shots : {1, 10, 100, 1000}) {
-        DenseMatrix state;
+        DenseMatrix state = zeroState(n);
         std::vector<py::object> intermediate_results;
-        sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+        sampling(gates, n, noNoise, state, intermediate_results, cfg, readout);
         std::map<std::string, int> counts = construct_samples(state, n, shots, noNoise, cfg, measure);
         EXPECT_EQ(totalCounts(counts), shots) << "shots=" << shots;
     }
@@ -455,9 +453,9 @@ TEST_F(SamplingTest, MeasureOnlyQubit0_OutputKeysAreSingleBit) {
     int n = 2;
     std::vector<Gate> gates = {makeH(0), makeH(1)};
     std::vector<bool> measure = {true, false};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     for (const auto& p : counts) {
         EXPECT_EQ(p.first.size(), 1u);
@@ -469,9 +467,9 @@ TEST_F(SamplingTest, MeasureNoQubits_SingleEmptyKeyWithAllShots) {
     int n = 2;
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {false, false};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 500, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at(""), 500);
@@ -481,9 +479,9 @@ TEST_F(SamplingTest, StateVectorHasCorrectDimension) {
     int n = 3;
     std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure(n, true);
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfg, readout);
     EXPECT_EQ(state.rows(), 1L << n);
 }
 
@@ -491,9 +489,9 @@ TEST_F(SamplingTest, XGate_StateIsExcitedState) {
     int n = 1;
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfg, readout);
     EXPECT_NEAR(std::norm(state(0, 0)), 0.0, kTol);
     EXPECT_NEAR(std::norm(state(1, 0)), 1.0, kTol);
 }
@@ -503,10 +501,10 @@ TEST_F(SamplingTest, WithReadoutNoise_TotalCountsStillPreserved) {
     auto nm = symmetricReadoutNoise(n, 0.1);
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     const int shots = 1000;
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), nm, state, intermediate_results, cfg, readout);
+    sampling(gates, n, nm, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, shots, nm, cfg, measure);
     EXPECT_EQ(totalCounts(counts), shots);
 }
@@ -516,10 +514,10 @@ TEST_F(SamplingTest, WithReadoutNoise_DominantOutcomeStillDominates) {
     auto nm = symmetricReadoutNoise(n, 0.05);
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     const int shots = 5000;
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), nm, state, intermediate_results, cfg, readout);
+    sampling(gates, n, nm, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, shots, nm, cfg, measure);
     EXPECT_GT(fractionOf(counts, "10"), 0.80);
 }
@@ -528,9 +526,9 @@ TEST_F(SamplingTest, DensityMatrixInitialState_ZeroState_AllCountsAreZero) {
     int n = 2;
     std::vector<Gate> gates;
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroStateDensity(n);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateDenseSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("00"), 1000);
@@ -544,9 +542,11 @@ TEST_F(SamplingTest, CombineSingleQubitGates_SameResultAsWithout) {
     std::vector<py::object> intermediate_resultsA, intermediate_resultsB;
     QiliSimConfig cfgOpt = cfg;
     cfgOpt.set_combine_single_qubit_gates(true);
-    sampling(gates, n, zeroStateSparse(n), noNoise, stateA, intermediate_resultsA, cfg, readout);
+    stateA = zeroState(n);
+    sampling(gates, n, noNoise, stateA, intermediate_resultsA, cfg, readout);
     std::map<std::string, int> countsA = construct_samples(stateA, n, 1000, noNoise, cfg, measure);
-    sampling(gates, n, zeroStateSparse(n), noNoise, stateB, intermediate_resultsB, cfgOpt, readout);
+    stateB = zeroState(n);
+    sampling(gates, n, noNoise, stateB, intermediate_resultsB, cfgOpt, readout);
     std::map<std::string, int> countsB = construct_samples(stateB, n, 1000, noNoise, cfgOpt, measure);
     EXPECT_EQ(countsA, countsB);
 }
@@ -565,9 +565,9 @@ TEST_F(SamplingMatrixFreeTest, ZeroState_NoGates_AllCountsAreZeroString) {
     int n = 2;
     std::vector<Gate> gates;
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("00"), 1000);
@@ -577,9 +577,9 @@ TEST_F(SamplingMatrixFreeTest, XGate_AllCountsAre10) {
     int n = 2;
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("10"), 1000);
@@ -589,9 +589,9 @@ TEST_F(SamplingMatrixFreeTest, XOnBothQubits_AllCountsAre11) {
     int n = 2;
     std::vector<Gate> gates = {makeX(0), makeX(1)};
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("11"), 1000);
@@ -601,10 +601,10 @@ TEST_F(SamplingMatrixFreeTest, HadamardOnSingleQubit_ApproxFiftyFifty) {
     int n = 1;
     std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure = {true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
     const int shots = 10000;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, shots, noNoise, cfg, measure);
     EXPECT_EQ(totalCounts(counts), shots);
     EXPECT_NEAR(fractionOf(counts, "0"), 0.5, kLoose);
@@ -616,9 +616,9 @@ TEST_F(SamplingMatrixFreeTest, ShotCountAlwaysPreserved) {
     std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure = {true, true};
     for (int shots : {1, 10, 100, 1000}) {
-        DenseMatrix state;
+        DenseMatrix state = zeroState(n);
         std::vector<py::object> intermediate_results;
-        sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+        sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfg, readout);
         std::map<std::string, int> counts = construct_samples(state, n, shots, noNoise, cfg, measure);
         EXPECT_EQ(totalCounts(counts), shots) << "shots=" << shots;
     }
@@ -628,9 +628,9 @@ TEST_F(SamplingMatrixFreeTest, MeasureOnlyQubit0_OutputKeysAreSingleBit) {
     int n = 2;
     std::vector<Gate> gates = {makeH(0), makeH(1)};
     std::vector<bool> measure = {true, false};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     for (const auto& p : counts) {
         EXPECT_EQ(p.first.size(), 1u);
@@ -642,9 +642,9 @@ TEST_F(SamplingMatrixFreeTest, StateVectorHasCorrectDimension) {
     int n = 3;
     std::vector<Gate> gates = {makeH(0)};
     std::vector<bool> measure(n, true);
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfg, readout);
     EXPECT_EQ(state.rows(), 1L << n);
 }
 
@@ -652,9 +652,9 @@ TEST_F(SamplingMatrixFreeTest, XGate_StateIsExcitedState) {
     int n = 1;
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfg, readout);
     EXPECT_NEAR(std::norm(state(0, 0)), 0.0, kTol);
     EXPECT_NEAR(std::norm(state(1, 0)), 1.0, kTol);
 }
@@ -664,9 +664,9 @@ TEST_F(SamplingMatrixFreeTest, WithReadoutNoise_TotalCountsStillPreserved) {
     auto nm = symmetricReadoutNoise(n, 0.1);
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), nm, state, intermediate_results, cfg, readout);
+    sampling_matrix_free(gates, n, nm, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, nm, cfg, measure);
     EXPECT_EQ(totalCounts(counts), 1000);
 }
@@ -677,10 +677,12 @@ TEST_F(SamplingMatrixFreeTest, PureZeroState_MatchesStandardSampling) {
     std::vector<bool> measure = {true, true};
     DenseMatrix stA, stB;
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), noNoise, stA, intermediate_results, cfg, readout);
+    stA = zeroState(n);
+    sampling(gates, n, noNoise, stA, intermediate_results, cfg, readout);
     std::map<std::string, int> cA = construct_samples(stA, n, 1000, noNoise, cfg, measure);
     std::vector<py::object> intermediate_results_2;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, stB, intermediate_results_2, cfg, readout);
+    stB = zeroState(n);
+    sampling_matrix_free(gates, n, noNoise, stB, intermediate_results_2, cfg, readout);
     std::map<std::string, int> cB = construct_samples(stB, n, 1000, noNoise, cfg, measure);
     EXPECT_EQ(cA, cB);
 }
@@ -692,11 +694,13 @@ TEST_F(SamplingMatrixFreeTest, HadamardCircuit_StatisticsMatchStandardSampling) 
     DenseMatrix stA, stB;
     const int shots = 10000;
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), noNoise, stA, intermediate_results, cfg, readout);
+    stA = zeroState(n);
+    sampling(gates, n, noNoise, stA, intermediate_results, cfg, readout);
     std::map<std::string, int> cA = construct_samples(stA, n, shots, noNoise, cfg, measure);
     std::vector<py::object> intermediate_results_mf;
     py::object readout_mf = py::object();
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, stB, intermediate_results_mf, cfg, readout_mf);
+    stB = zeroState(n);
+    sampling_matrix_free(gates, n, noNoise, stB, intermediate_results_mf, cfg, readout_mf);
     std::map<std::string, int> cB = construct_samples(stB, n, shots, noNoise, cfg, measure);
     for (const std::string& key : {"00", "01", "10", "11"}) {
         EXPECT_NEAR(fractionOf(cA, key), 0.25, kLoose) << "standard key=" << key;
@@ -714,18 +718,18 @@ TEST_F(SamplingMatrixFreeTest, DivergingCircuitThrows) {
     huge.insert(1, 1) = std::complex<double>(1e200, 0);
     huge.makeCompressed();
     std::vector<Gate> gates = {Gate("HUGE", huge, {}, {0}, {}), Gate("HUGE", huge, {}, {0}, {})};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    EXPECT_THROW(sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout), std::invalid_argument);
+    EXPECT_THROW(sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfg, readout), std::invalid_argument);
 }
 
 TEST_F(SamplingMatrixFreeTest, DensityMatrixInitialState_ZeroState_AllCountsAreZero) {
     int n = 2;
     std::vector<Gate> gates;
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroStateDensity(n);
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateDenseSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("00"), 1000);
@@ -749,12 +753,11 @@ TEST_F(SamplingMonteCarloTest, MonteCarloEnabled_ProducesNonDeterministicCounts)
     const int shots = 1000;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    SparseMatrixCol rho_mixed(2, 2);
-    rho_mixed.insert(0, 0) = cx(0.5, 0);
-    rho_mixed.insert(1, 1) = cx(0.5, 0);
-    rho_mixed.makeCompressed();
+    state = DenseMatrix::Zero(2, 2);
+    state(0, 0) = cx(0.5, 0);
+    state(1, 1) = cx(0.5, 0);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, rho_mixed, noNoise, state, intermediate_results, cfgMC, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfgMC, readout);
     std::map<std::string, int> counts = construct_samples(state, n, shots, noNoise, cfgMC, measure);
     EXPECT_TRUE(counts.count("0") > 0);
     EXPECT_TRUE(counts.count("1") > 0);
@@ -768,12 +771,11 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloEnabled_ProducesNonDeterminis
     const int shots = 1000;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    SparseMatrixCol rho_mixed(2, 2);
-    rho_mixed.insert(0, 0) = cx(0.5, 0);
-    rho_mixed.insert(1, 1) = cx(0.5, 0);
-    rho_mixed.makeCompressed();
+    state = DenseMatrix::Zero(2, 2);
+    state(0, 0) = cx(0.5, 0);
+    state(1, 1) = cx(0.5, 0);
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, rho_mixed, noNoise, state, intermediate_results, cfgMC, readout);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfgMC, readout);
     std::map<std::string, int> counts = construct_samples(state, n, shots, noNoise, cfgMC, measure);
     EXPECT_TRUE(counts.count("0") > 0);
     EXPECT_TRUE(counts.count("1") > 0);
@@ -789,14 +791,13 @@ TEST_F(SamplingMonteCarloTest, MonteCarloKeepsTrajectoriesWhenRequested) {
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
     cfgMC.set_num_monte_carlo_trajectories(8);
-    SparseMatrixCol rho_mixed(2, 2);
-    rho_mixed.insert(0, 0) = cx(0.5, 0);
-    rho_mixed.insert(1, 1) = cx(0.5, 0);
-    rho_mixed.makeCompressed();
+    state = DenseMatrix::Zero(2, 2);
+    state(0, 0) = cx(0.5, 0);
+    state(1, 1) = cx(0.5, 0);
     std::vector<py::object> intermediate_results;
 
     bool is_trajectories = false;
-    sampling(gates, n, rho_mixed, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+    sampling(gates, n, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
 
     EXPECT_TRUE(is_trajectories);
     EXPECT_EQ(state.rows(), 2);
@@ -811,14 +812,13 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloKeepsTrajectoriesWhenRequeste
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
     cfgMC.set_num_monte_carlo_trajectories(8);
-    SparseMatrixCol rho_mixed(2, 2);
-    rho_mixed.insert(0, 0) = cx(0.5, 0);
-    rho_mixed.insert(1, 1) = cx(0.5, 0);
-    rho_mixed.makeCompressed();
+    state = DenseMatrix::Zero(2, 2);
+    state(0, 0) = cx(0.5, 0);
+    state(1, 1) = cx(0.5, 0);
     std::vector<py::object> intermediate_results;
 
     bool is_trajectories = false;
-    sampling_matrix_free(gates, n, rho_mixed, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
 
     EXPECT_TRUE(is_trajectories);
     EXPECT_EQ(state.rows(), 2);
@@ -836,14 +836,13 @@ TEST_F(SamplingMonteCarloTest, MidCircuitCollapseDropsTrajectories) {
     cfgMC.set_monte_carlo(true);
     cfgMC.set_num_monte_carlo_trajectories(8);
     cfgMC.set_measurement_collapse(true);
-    SparseMatrixCol rho_mixed(2, 2);
-    rho_mixed.insert(0, 0) = cx(0.5, 0);
-    rho_mixed.insert(1, 1) = cx(0.5, 0);
-    rho_mixed.makeCompressed();
+    state = DenseMatrix::Zero(2, 2);
+    state(0, 0) = cx(0.5, 0);
+    state(1, 1) = cx(0.5, 0);
     std::vector<py::object> intermediate_results;
 
     bool is_trajectories = true;
-    sampling(gates, n, rho_mixed, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+    sampling(gates, n, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
 
     EXPECT_FALSE(is_trajectories);
     EXPECT_EQ(state.rows(), 2);
@@ -860,14 +859,13 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMidCircuitCollapseDropsTrajectories) {
     cfgMC.set_monte_carlo(true);
     cfgMC.set_num_monte_carlo_trajectories(8);
     cfgMC.set_measurement_collapse(true);
-    SparseMatrixCol rho_mixed(2, 2);
-    rho_mixed.insert(0, 0) = cx(0.5, 0);
-    rho_mixed.insert(1, 1) = cx(0.5, 0);
-    rho_mixed.makeCompressed();
+    state = DenseMatrix::Zero(2, 2);
+    state(0, 0) = cx(0.5, 0);
+    state(1, 1) = cx(0.5, 0);
     std::vector<py::object> intermediate_results;
 
     bool is_trajectories = true;
-    sampling_matrix_free(gates, n, rho_mixed, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
 
     EXPECT_FALSE(is_trajectories);
     EXPECT_EQ(state.rows(), 2);
@@ -883,9 +881,9 @@ TEST_F(SamplingMatrixFreeTest, BadGate_ThrowsException) {
     // sampling() has no gate-name validation, so this test only applies to matrix-free.
     int n = 2;
     std::vector<Gate> gates = {Gate("BadGate", SparseMatrix(2, 2), {}, {0, 1}, {})};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    EXPECT_ANY_THROW(sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout));
+    EXPECT_ANY_THROW(sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfg, readout));
 }
 
 TEST_F(SamplingMatrixFreeTest, GateFusionEnabled_MatchesUnfusedResult) {
@@ -898,9 +896,9 @@ TEST_F(SamplingMatrixFreeTest, GateFusionEnabled_MatchesUnfusedResult) {
     QiliSimConfig cfgFuse = cfg;
     cfgFuse.set_fuse_gates(true);
     cfgFuse.set_num_threads(4);
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgFuse, readout);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfgFuse, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgFuse, measure);
     EXPECT_NEAR(fractionOf(counts, "00"), 1.0, kLoose);
 }
@@ -916,9 +914,9 @@ TEST_F(SamplingMatrixFreeTest, GateFusionWithSingleQubitCombiningEnabled) {
     cfgFuse.set_fuse_gates(true);
     cfgFuse.set_combine_single_qubit_gates(true);
     cfgFuse.set_num_threads(4);
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgFuse, readout);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfgFuse, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgFuse, measure);
     EXPECT_NEAR(fractionOf(counts, "01"), 1.0, kLoose);
 }
@@ -927,9 +925,9 @@ TEST_F(SamplingTest, PureDensityMatrixInitialState_OutputIsMatrixNotStatevector)
     int n = 1;
     std::vector<Gate> gates;
     std::vector<bool> measure = {true};
-    DenseMatrix state;
+    DenseMatrix state = zeroStateDensity(n);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateDenseSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfg, readout);
     EXPECT_EQ(state.rows(), 2);
     EXPECT_EQ(state.cols(), 2);
 }
@@ -938,9 +936,9 @@ TEST_F(SamplingMatrixFreeTest, PureDensityMatrixInitialState_OutputIsMatrixNotSt
     int n = 1;
     std::vector<Gate> gates;
     std::vector<bool> measure = {true};
-    DenseMatrix state;
+    DenseMatrix state = zeroStateDensity(n);
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateDenseSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfg, readout);
     EXPECT_EQ(state.rows(), 2);
     EXPECT_EQ(state.cols(), 2);
 }
@@ -953,11 +951,11 @@ TEST_F(SamplingTest, NonUnitaryGate_NormalizationWorks) {
     shrink.makeCompressed();
     std::vector<Gate> gates = {Gate("Shrink", shrink, {}, {0}, {})};
     std::vector<bool> measure = {true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     QiliSimConfig cfgNorm = cfg;
     cfgNorm.set_normalize_after_gate(true);
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgNorm, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfgNorm, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgNorm, measure);
     EXPECT_NEAR(fractionOf(counts, "0"), 1.0, kLoose);
 }
@@ -970,11 +968,11 @@ TEST_F(SamplingMatrixFreeTest, NonUnitaryGate_NormalizationWorks) {
     shrink.makeCompressed();
     std::vector<Gate> gates = {Gate("Shrink", shrink, {}, {0}, {})};
     std::vector<bool> measure = {true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     QiliSimConfig cfgNorm = cfg;
     std::vector<py::object> intermediate_results;
     cfgNorm.set_normalize_after_gate(true);
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfgNorm, readout);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfgNorm, readout);
     std::map<std::string, int> counts = construct_samples(state, n, 1000, noNoise, cfgNorm, measure);
     EXPECT_NEAR(fractionOf(counts, "0"), 1.0, kLoose);
 }
@@ -983,7 +981,7 @@ TEST_F(SamplingTest, KrausNoise_BitflipOnSingleQubit) {
     int n = 1;
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     const int shots = 10000;
     NoiseModelCpp nm;
     SparseMatrix op(2, 2);
@@ -992,7 +990,7 @@ TEST_F(SamplingTest, KrausNoise_BitflipOnSingleQubit) {
     op.makeCompressed();
     nm.add_kraus_operators_global({op});
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), nm, state, intermediate_results, cfg, readout);
+    sampling(gates, n, nm, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, shots, nm, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("0"), shots);
@@ -1002,7 +1000,7 @@ TEST_F(SamplingMatrixFreeTest, KrausNoise_BitflipOnSingleQubit) {
     int n = 1;
     std::vector<Gate> gates = {makeX(0)};
     std::vector<bool> measure = {true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     const int shots = 10000;
     NoiseModelCpp nm;
     SparseMatrix op(2, 2);
@@ -1011,7 +1009,7 @@ TEST_F(SamplingMatrixFreeTest, KrausNoise_BitflipOnSingleQubit) {
     op.makeCompressed();
     nm.add_kraus_operators_global({op});
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), nm, state, intermediate_results, cfg, readout);
+    sampling_matrix_free(gates, n, nm, state, intermediate_results, cfg, readout);
     std::map<std::string, int> counts = construct_samples(state, n, shots, nm, cfg, measure);
     ASSERT_EQ(counts.size(), 1u);
     EXPECT_EQ(counts.at("0"), shots);
@@ -1027,9 +1025,11 @@ TEST_F(SamplingMatrixFreeTest, CombineSingleQubitGates_SameResultAsWithout) {
     std::vector<py::object> intermediate_resultsA, intermediate_resultsB;
     py::object readoutA = py::object();
     py::object readoutB = py::object();
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, stateA, intermediate_resultsA, cfg, readoutA);
+    stateA = zeroState(n);
+    sampling_matrix_free(gates, n, noNoise, stateA, intermediate_resultsA, cfg, readoutA);
     std::map<std::string, int> countsA = construct_samples(stateA, n, 1000, noNoise, cfg, measure);
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, stateB, intermediate_resultsB, cfgOpt, readoutB);
+    stateB = zeroState(n);
+    sampling_matrix_free(gates, n, noNoise, stateB, intermediate_resultsB, cfgOpt, readoutB);
     std::map<std::string, int> countsB = construct_samples(stateB, n, 1000, noNoise, cfgOpt, measure);
     EXPECT_EQ(countsA, countsB);
 }
@@ -1038,10 +1038,10 @@ TEST_F(SamplingMatrixFreeTest, MidCircuitMeasurements) {
     int n = 2;
     std::vector<Gate> gates = {makeX(0), makeM(0), makeX(0), makeM(0)};
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     const int shots = 10000;
     std::vector<py::object> intermediate_results;
-    sampling_matrix_free(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfg, readout);
     EXPECT_EQ(intermediate_results.size(), 1u);
 }
 
@@ -1049,10 +1049,10 @@ TEST_F(SamplingTest, MidCircuitMeasurements) {
     int n = 2;
     std::vector<Gate> gates = {makeX(0), makeM(0), makeX(0), makeM(0)};
     std::vector<bool> measure = {true, true};
-    DenseMatrix state;
+    DenseMatrix state = zeroState(n);
     const int shots = 10000;
     std::vector<py::object> intermediate_results;
-    sampling(gates, n, zeroStateSparse(n), noNoise, state, intermediate_results, cfg, readout);
+    sampling(gates, n, noNoise, state, intermediate_results, cfg, readout);
     EXPECT_EQ(intermediate_results.size(), 1u);
 }
 

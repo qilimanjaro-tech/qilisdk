@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 18:47+0300\n"
+"POT-Creation-Date: 2026-09-09 17:00+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -270,10 +270,23 @@ msgstr ""
 "màquina."
 
 #: ../../getting_started/installation.rst:231
+msgid "``-Ccmake.define.no_avx=ON``"
+msgstr "``-Ccmake.define.no_avx=ON``"
+
+#: ../../getting_started/installation.rst:232
+msgid ""
+"Build without the AVX2 and FMA instructions, which are used by default. "
+"Only needed for CPUs from before around 2013, which cannot run them."
+msgstr ""
+"Compila sense les instruccions AVX2 i FMA, que s'usen per defecte. Només "
+"és necessari per a CPUs anteriors al 2013 aproximadament, que no les poden"
+" executar."
+
+#: ../../getting_started/installation.rst:233
 msgid "``-Ccmake.define.single_precision=ON``"
 msgstr "``-Ccmake.define.single_precision=ON``"
 
-#: ../../getting_started/installation.rst:232
+#: ../../getting_started/installation.rst:234
 msgid ""
 "Use single precision (``float``) instead of double precision "
 "(``double``). Slightly faster, but less accurate."
@@ -281,31 +294,31 @@ msgstr ""
 "Utilitza precisió simple (``float``) en lloc de precisió doble "
 "(``double``). Lleugerament més ràpid, però menys precís."
 
-#: ../../getting_started/installation.rst:233
+#: ../../getting_started/installation.rst:235
 msgid "``-Ccmake.build-type=Debug``"
 msgstr "``-Ccmake.build-type=Debug``"
 
-#: ../../getting_started/installation.rst:234
+#: ../../getting_started/installation.rst:236
 msgid "Enable a debug build (no optimizations, debug symbols)."
 msgstr ""
 "Habilita una compilació de depuració (sense optimitzacions, amb símbols "
 "de depuració)."
 
-#: ../../getting_started/installation.rst:235
+#: ../../getting_started/installation.rst:237
 msgid "``-Ccmake.build-type=RelWithDebInfo``"
 msgstr "``-Ccmake.build-type=RelWithDebInfo``"
 
-#: ../../getting_started/installation.rst:236
+#: ../../getting_started/installation.rst:238
 msgid "Enable an optimized debug build (optimizations plus debug symbols)."
 msgstr ""
 "Habilita una compilació de depuració optimitzada (optimitzacions més "
 "símbols de depuració)."
 
-#: ../../getting_started/installation.rst:237
+#: ../../getting_started/installation.rst:239
 msgid "``-Ccmake.build-type=Release``"
 msgstr "``-Ccmake.build-type=Release``"
 
-#: ../../getting_started/installation.rst:238
+#: ../../getting_started/installation.rst:240
 msgid ""
 "Enable a release build (optimizations, no debug symbols). This is the "
 "default."
@@ -313,27 +326,27 @@ msgstr ""
 "Habilita una compilació de llançament (optimitzacions, sense símbols de "
 "depuració). Aquesta és l'opció predeterminada."
 
-#: ../../getting_started/installation.rst:239
+#: ../../getting_started/installation.rst:241
 msgid "``-Ccmake.define.tidy=ON``"
 msgstr "``-Ccmake.define.tidy=ON``"
 
-#: ../../getting_started/installation.rst:240
+#: ../../getting_started/installation.rst:242
 msgid "Run ``clang-tidy`` on the code during compilation."
 msgstr "Executa ``clang-tidy`` sobre el codi durant la compilació."
 
-#: ../../getting_started/installation.rst:241
+#: ../../getting_started/installation.rst:243
 msgid "``-Ccmake.define.verbose=ON``"
 msgstr "``-Ccmake.define.verbose=ON``"
 
-#: ../../getting_started/installation.rst:242
+#: ../../getting_started/installation.rst:244
 msgid "Enable (very) verbose output from the C++ code."
 msgstr "Habilita una sortida (molt) detallada del codi C++."
 
-#: ../../getting_started/installation.rst:243
+#: ../../getting_started/installation.rst:245
 msgid "``-Ccmake.define.tests=ON``"
 msgstr "``-Ccmake.define.tests=ON``"
 
-#: ../../getting_started/installation.rst:244
+#: ../../getting_started/installation.rst:246
 msgid ""
 "Build the C++ test suite, which will then be available as a ``test_cpp`` "
 "executable in the tests directory."
@@ -341,15 +354,15 @@ msgstr ""
 "Compila el conjunt de proves de C++, que després estarà disponible com a "
 "executable ``test_cpp`` al directori de proves."
 
-#: ../../getting_started/installation.rst:245
+#: ../../getting_started/installation.rst:247
 msgid "``-Ccmake.define.coverage=ON``"
 msgstr "``-Ccmake.define.coverage=ON``"
 
-#: ../../getting_started/installation.rst:246
+#: ../../getting_started/installation.rst:248
 msgid "Enable coverage instrumentation flags."
 msgstr "Habilita els indicadors d'instrumentació de cobertura."
 
-#: ../../getting_started/installation.rst:248
+#: ../../getting_started/installation.rst:250
 msgid ""
 "These can be passed to ``uv sync`` by simply appending to the build "
 "command, for example:"
@@ -357,7 +370,7 @@ msgstr ""
 "Aquests es poden passar a ``uv sync`` simplement afegint-los a l'ordre de"
 " compilació, per exemple:"
 
-#: ../../getting_started/installation.rst:254
+#: ../../getting_started/installation.rst:256
 msgid ""
 "You then have an environment with the latest version of QiliSDK "
 "installed. If you want to install other things to the environment you'll "
@@ -366,7 +379,7 @@ msgstr ""
 "Llavors tindreu un entorn amb la darrera versió de QiliSDK instal·lada. "
 "Si voleu instal·lar altres coses a l'entorn, haureu d'usar pip amb uv:"
 
-#: ../../getting_started/installation.rst:261
+#: ../../getting_started/installation.rst:263
 msgid "And then to run a Python script within the environment, you can use:"
 msgstr "I per executar un script de Python dins de l'entorn, podeu usar:"
 

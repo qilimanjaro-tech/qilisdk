@@ -1,3 +1,74 @@
+# qilisdk 0.3.1 (2026-10-14)
+
+## Features
+
+- The initial state for a `DigitalPropagaton` functional can now be set, just as in the case of the `AnalogEvolution` functional. It can be set to either an `InitialState` (i.e. `InitialState.ZERO`, `InitialState.ONE` or `InitialState.UNIFORM`), or a `QTensor`. Note that the `QTensor` input will not be supported on real hardware. Usage:
+
+  ```python
+  from qilisdk.digital import Circuit
+  from qilisdk.backends import QiliSim
+  from qilisdk.readout import Readout
+  from qilisdk.core import InitialState
+  from qilisdk.functionals import DigitalPropagation
+
+  c = Circuit(5)
+  digital = DigitalPropagation(circuit=c, initial_state=InitialState.ONE)
+  backend = QiliSim()
+  readout = Readout().with_sampling(1000)
+
+  results = backend.execute(digital, readout)
+  print(results.get_samples())
+  ``` ([PR #264](https://github.com/qilimanjaro-tech/qilisdk/pull/264))
+- All gates now return QTensors rather than a numpy array when their ` .matrix `property is queried, this allows for better compatibility with the rest of the library,
+
+  ```python
+  from qilisdk.digital import X
+
+  gate = X(0)
+  print(gate.matrix)
+  # prints a QTensor, not a numpy array
+  ``` ([PR #330](https://github.com/qilimanjaro-tech/qilisdk/pull/330))
+- Big circuits are now rendered better, both in notebooks and in normal Python. Circuits are wrapped and have better performance when scrolling, since now non-visible gate aren't rendered. The wrapping can be controlled with the new `fold`, `row_separation` and `fold_edges` attributes.
+
+  ```python
+  from qilisdk.digital import Circuit, X
+  from qilisdk.utils.visualization import CircuitStyle
+
+  circuit = Circuit(3)
+  for _ in range(30):
+      circuit.add(X(0))
+  circuit.draw(style=CircuitStyle(fold=10, row_separation=1.5, fold_edges="dashed"))
+  ``` ([PR #490](https://github.com/qilimanjaro-tech/qilisdk/pull/490))
+- Performance has been improved for Qubo.to_hamiltonian(). For a 100-qubit fully connected Ising model, the time to convert to Hamiltonian has been reduced from 128.7 s to 0.2 s, via smarter Hamiltonian construction and better hashing. ([PR #521](https://github.com/qilimanjaro-tech/qilisdk/pull/521))
+
+## Bugfixes
+
+- QiliSDK (specifically QiliSim) now uses some AVX2 CPU instructions, which means people running pre-2013 CPUs might have issues. A warning will now be raised if this is the case. This should not affect any users of QiliSDK, as pre-2013 CPUs are very rare to find these days, especially amongst those doing quantum simulation. ([PR #442](https://github.com/qilimanjaro-tech/qilisdk/pull/442))
+- The number of qubits is now checked when trying to densify a large stabilizer state, so that now it throws a nice error rather than crashing. ([PR #482](https://github.com/qilimanjaro-tech/qilisdk/pull/482))
+- There are now signal checks in the long running loops, which allow the user to stop a simulation part way through. They have been benchmarked and don't affect performance at all, since it's just checking a flag in memory. ([PR #486](https://github.com/qilimanjaro-tech/qilisdk/pull/486))
+- Fixed a typo in `conf.py` which would cause the `to_yaml` and `from_yaml` methods to not be skipped in the API docs are they were supposed to be. Added tests for the `conf.py` since previously there weren't any. ([PR #492](https://github.com/qilimanjaro-tech/qilisdk/pull/492))
+- `Model.ising()` and `Model.random_ising()` now return a model featuring SpinVariables rather than BinaryVariables, to better fit the literature. In doing so, the classical solvers have been updated to allow for optimization over spins, and SpinVariable has been given a `.to_binary()` like the other variable types to help conversion. ([PR #494](https://github.com/qilimanjaro-tech/qilisdk/pull/494))
+- Multiple quantum registers are now supported in the OpenQASM2 parser. ([PR #495](https://github.com/qilimanjaro-tech/qilisdk/pull/495))
+- `QTensor.draw()` now accepts single-qubit density matrices as well as kets and bras, so one qubit of a larger state can be drawn after reducing it with `partial_trace`. Kets with a complex phase were also drawn with the Y component flipped, so |+i⟩ pointed at |-i⟩. This is now fixed. ([PR #496](https://github.com/qilimanjaro-tech/qilisdk/pull/496))
+- `ExecutionConfig`, `MonteCarloConfig`, `AnalogMethod` and `DigitalMethod` now reject integer settings above `2**31 - 1` when they are built, with an error naming the field. Before, something like `ExecutionConfig(seed=2**40)` was accepted and only failed at `execute()` with a `RuntimeError` that didn't say which setting was wrong.
+
+  `DigitalMethod.stabilizer(max_states=...)` no longer accepts negative values. Use `0` for no limit. ([PR #497](https://github.com/qilimanjaro-tech/qilisdk/pull/497))
+- Doing `new_circuit = circuit_1 + circuit_2` no longer mutates the `circuit_1`, now `new_circuit` is an entirely new object which has the gates of `circuit_1` and `circuit_2` appended to it.
+
+  Fixed a bug in which doing `Circuit.insert(gate_list, index=-1)` would change the order of the gate list appended. ([PR #499](https://github.com/qilimanjaro-tech/qilisdk/pull/499))
+- Fixed a bug in which QiliSim would misbehave or error for qubit counts greater than 30 when doing dense simulation, as 2**31 caused some issues in SciPy and C++ due to integer overflows. ([PR #529](https://github.com/qilimanjaro-tech/qilisdk/pull/529))
+
+## Improved Documentation
+
+- Fixed the `U3` docstring, which claimed a global phase between `U3` and the OpenQASM `u` gate that doesn't exist, and had two typos in its matrix. The `U2` docstring now also says it matches OpenQASM `u2`. ([PR #487](https://github.com/qilimanjaro-tech/qilisdk/pull/487))
+- A section about logging in QiliSDK has been added to the docs. ([PR #504](https://github.com/qilimanjaro-tech/qilisdk/pull/504))
+- Improvements have been made to how QiliSDK's CudaqBackend handles multiple GPUs: we now ensure that the session is being ran with mpi and warn the user if not, as well as better debug logging. The docs have also been updated with a small paragraph about how one can use multiple GPUs. ([PR #532](https://github.com/qilimanjaro-tech/qilisdk/pull/532))
+
+## Misc
+
+- [PR #493](https://github.com/qilimanjaro-tech/qilisdk/pull/493)
+
+
 # qilisdk 0.3.0 (2026-09-09)
 
 ## Features
