@@ -84,6 +84,10 @@ def test_qilisim_config_builders_and_validation():
     with pytest.raises(ValidationError):
         DigitalMethod(max_cache_size=-5)
     with pytest.raises(ValidationError):
+        DigitalMethod(digital_method="statevector_matrix_fre")
+    with pytest.raises(ValidationError):
+        DigitalMethod(digital_method="")
+    with pytest.raises(ValidationError):
         ExecutionConfig(seed=-1)
     with pytest.raises(TypeError, match="does not accept positional arguments"):
         ExecutionConfig(1)
