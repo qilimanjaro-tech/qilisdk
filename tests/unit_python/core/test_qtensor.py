@@ -691,6 +691,108 @@ def test_reset_qubits_requires_density_matrix():
         reset_qubits(ket(0), [0])
 
 
+def _permute_reference(matrix: np.ndarray, order: list[int]) -> np.ndarray:
+    n = len(order)
+    tensor = matrix.reshape([2] * (2 * n))
+    return tensor.transpose(order + [n + q for q in order]).reshape(matrix.shape)
+
+
+def _random_operator(nqubits: int, seed: int) -> np.ndarray:
+    rng = np.random.default_rng(seed)
+    dim = 2**nqubits
+    return rng.normal(size=(dim, dim)) + 1j * rng.normal(size=(dim, dim))
+
+
+@pytest.mark.parametrize("order", list(itertools.permutations(range(3))))
+def test_permute_operator_matches_reference(order):
+    matrix = _random_operator(3, seed=7)
+    permuted = QTensor(matrix).permute(list(order))
+    np.testing.assert_allclose(permuted.dense(), _permute_reference(matrix, list(order)), atol=1e-12)
+
+
+def test_permute_ket_and_bra():
+    np.testing.assert_allclose(ket(0, 1, 1).permute([2, 0, 1]).dense(), ket(1, 0, 1).dense())
+    np.testing.assert_allclose(bra(0, 0, 1).permute([2, 1, 0]).dense(), bra(1, 0, 0).dense())
+
+
+def test_permute_identity_order_is_noop():
+    matrix = _random_operator(2, seed=3)
+    np.testing.assert_allclose(QTensor(matrix).permute([0, 1]).dense(), matrix)
+
+
+@pytest.mark.parametrize("order", [[0], [0, 0], [0, 2], [-1, 0], [0, 1, 2]])
+def test_permute_invalid_order_raises(order):
+    state = ket(0, 1)
+    with pytest.raises(ValueError, match="Permutation must contain"):
+        state.permute(order)
+
+
+def test_permute_non_integer_order_raises():
+    state = ket(0, 1)
+    with pytest.raises(ValueError, match="iterable of integers"):
+        state.permute(["a", 0])
+
+
+def test_tensor_product_with_qubits_places_factors():
+    a = _random_operator(1, seed=1)
+    b = _random_operator(2, seed=2)
+    result = QTensor.tensor_product([QTensor(a), QTensor(b)], qubits=[[1], [0, 2]])
+    expected = _permute_reference(np.kron(a, b), [1, 0, 2])
+    np.testing.assert_allclose(result.dense(), expected, atol=1e-12)
+
+
+def test_tensor_product_with_qubits_replaces_traced_out_qubit():
+    rho = QTensor(_random_operator(3, seed=5))
+    varrho = QTensor(np.array([[0.6, 0.1], [0.1, 0.4]]))
+    result = QTensor.tensor_product([varrho, rho.partial_trace({0, 2})], qubits=[[1], [0, 2]])
+    swap = QTensor(np.kron(np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]]), np.eye(2)))
+    expected = swap @ tensor_prod([varrho, rho.partial_trace({0, 2})]) @ swap
+    np.testing.assert_allclose(result.dense(), expected.dense(), atol=1e-12)
+
+
+def test_tensor_product_with_qubits_kets():
+    result = tensor_prod([ket(1), ket(0, 1)], qubits=[[2], [1, 0]])
+    np.testing.assert_allclose(result.dense(), ket(1, 0, 1).dense())
+
+
+def test_tensor_product_with_qubits_non_involutive_placement():
+    result = tensor_prod([ket(1), ket(0, 0)], qubits=[[1], [2, 0]])
+    np.testing.assert_allclose(result.dense(), ket(0, 1, 0).dense())
+
+
+def test_permute_accepts_numpy_integers():
+    np.testing.assert_allclose(ket(0, 1).permute(np.array([1, 0])).dense(), ket(1, 0).dense())
+    np.testing.assert_allclose(ket(0, 1).permute([np.int64(1), np.int64(0)]).dense(), ket(1, 0).dense())
+
+
+@pytest.mark.parametrize("order", [[True, False], [2**40, 0], [2**100, 0]])
+def test_permute_bool_or_out_of_range_order_raises(order):
+    state = ket(0, 1)
+    with pytest.raises(ValueError, match=r"iterable of integers|Permutation must contain"):
+        state.permute(order)
+
+
+def test_tensor_product_with_qubits_in_order_matches_default():
+    factors = [ket(1), ket(0), ket(1)]
+    result = QTensor.tensor_product(factors, qubits=[[0], [1], [2]])
+    np.testing.assert_allclose(result.dense(), QTensor.tensor_product(factors).dense())
+
+
+@pytest.mark.parametrize(
+    ("qubits", "match"),
+    [
+        ([[0]], "Expected 2 lists of qubits"),
+        ([[0, 1], [2]], "cannot be placed on 2 qubits"),
+        ([[0], [0, 1]], "exactly once"),
+        ([[3], [0, 1]], "exactly once"),
+    ],
+)
+def test_tensor_product_with_invalid_qubits_raises(qubits, match):
+    factors = [ket(0), ket(0, 1)]
+    with pytest.raises(ValueError, match=match):
+        QTensor.tensor_product(factors, qubits=qubits)
+
+
 def test_non_hermitian_trace_norm():
     arr = np.array([[0, 1], [0, 0]])
     qobj = QTensor(arr)
