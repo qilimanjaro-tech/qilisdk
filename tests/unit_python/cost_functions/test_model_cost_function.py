@@ -17,9 +17,10 @@ import numpy as np
 import pytest
 
 from qilisdk.core import Model
+from qilisdk.core.comparison import EQ
 from qilisdk.core.model import QUBO, ObjectiveSense
 from qilisdk.core.qtensor import QTensor, bra, ket, tensor_prod
-from qilisdk.core.variables import EQ, BinaryVariable
+from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions import ModelCostFunction
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.readout.readout_result import (

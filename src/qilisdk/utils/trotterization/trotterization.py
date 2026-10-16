@@ -19,26 +19,27 @@ from loguru import logger
 from numpy import pi
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
-from qilisdk.core.variables import Domain, Parameter, Term
+from qilisdk.core.expression import Expression
+from qilisdk.core.variables import Domain, Parameter
 from qilisdk.digital.gates import CNOT, RX, RZ, BasicGate, H
 
-CommutingParts: TypeAlias = list[dict[tuple[PauliOperator, ...], complex | Term | Parameter]]
-TimeParameter: TypeAlias = complex | Term | Parameter
+CommutingParts: TypeAlias = list[dict[tuple[PauliOperator, ...], complex | Expression | Parameter]]
+TimeParameter: TypeAlias = complex | Expression | Parameter
 GateIterator: TypeAlias = Iterator[BasicGate | CNOT]
 
 
 def _pauli_evolution(
     term: tuple[PauliOperator, ...],
-    coeff: complex | Term | Parameter,
-    time: complex | Term | Parameter,
+    coeff: complex | Expression | Parameter,
+    time: complex | Expression | Parameter,
 ) -> Iterator[BasicGate | CNOT]:
     """
     An iterator of parameterized gates performing the evolution of a given Pauli string.
 
     Args:
         term (tuple[PauliOperator, ...]): The Pauli string to evolve under.
-        coeff (complex | Term | Parameter): The coefficient of the Pauli string.
-        time (complex | Term | Parameter): The evolution time parameter (gamma or alpha).
+        coeff (complex | Expression | Parameter): The coefficient of the Pauli string.
+        time (complex | Expression | Parameter): The evolution time parameter (gamma or alpha).
 
     Yields:
         Iterator[BasicGate]: Gates implementing the evolution under the Pauli string.
@@ -96,7 +97,7 @@ def trotter_evolution(
 
     Args:
         hamiltonian (Hamiltonian): Hamiltonian object to be trotterized.
-        time (complex | Term | Parameter): The evolution time parameter.
+        time (complex | Expression | Parameter): The evolution time parameter.
         trotter_steps (int): Number of Trotter steps.
 
     Yields:

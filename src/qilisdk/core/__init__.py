@@ -12,7 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .interpolator import Interpolation, Interpolator
+from .comparison import (
+    EQ,
+    GEQ,
+    GT,
+    LEQ,
+    LT,
+    NEQ,
+    Comparison,
+    ComparisonOperation,
+    Equal,
+    GreaterThan,
+    GreaterThanOrEqual,
+    LessThan,
+    LessThanOrEqual,
+    NotEqual,
+)
+from .expression import Abs, Add, Constant, Cos, Exp, Expression, Function, Inv, Log, Mul, Pow, Sin, Sqrt, Tan
+from .interpolator import Interpolation, Interpolator, ParameterizedNumber
 from .model import QUBO, Constraint, Model, Objective, ObjectiveSense
 from .qtensor import (
     InitialState,
@@ -27,26 +44,7 @@ from .qtensor import (
     tensor_prod,
     zero,
 )
-from .variables import (
-    EQ,
-    GEQ,
-    GT,
-    LEQ,
-    LT,
-    NEQ,
-    BinaryVariable,
-    Domain,
-    Equal,
-    GreaterThan,
-    GreaterThanOrEqual,
-    LessThan,
-    LessThanOrEqual,
-    NotEqual,
-    Parameter,
-    SpinVariable,
-    Term,
-    Variable,
-)
+from .variables import BaseVariable, BinaryVariable, Domain, Parameter, SpinVariable, Variable
 
 __all__ = [
     "EQ",
@@ -56,25 +54,42 @@ __all__ = [
     "LT",
     "NEQ",
     "QUBO",
+    "Abs",
+    "Add",
+    "BaseVariable",
     "BinaryVariable",
+    "Comparison",
+    "ComparisonOperation",
+    "Constant",
     "Constraint",
+    "Cos",
     "Domain",
     "Equal",
+    "Exp",
+    "Expression",
+    "Function",
     "GreaterThan",
     "GreaterThanOrEqual",
     "InitialState",
     "Interpolation",
     "Interpolator",
+    "Inv",
     "LessThan",
     "LessThanOrEqual",
+    "Log",
     "Model",
+    "Mul",
     "NotEqual",
     "Objective",
     "ObjectiveSense",
     "Parameter",
+    "ParameterizedNumber",
+    "Pow",
     "QTensor",
+    "Sin",
     "SpinVariable",
-    "Term",
+    "Sqrt",
+    "Tan",
     "Variable",
     "basis_state",
     "bra",

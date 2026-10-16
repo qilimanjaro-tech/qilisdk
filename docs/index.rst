@@ -70,7 +70,9 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
    modules/backends/backends
    modules/cost_functions/cost_functions
    modules/noise/noise
+   modules/ml/ml
    modules/speqtrum/speqtrum
+   modules/logging/logging
 
 .. toctree::
    :maxdepth: 4

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 17:03+0200\n"
+"POT-Creation-Date: 2026-08-28 18:47+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -39,49 +39,53 @@ msgstr ""
 msgid "Installation"
 msgstr "Instal·lació"
 
-#: ../../modules/backends/backends_qutip.rst:13
-msgid "Linux"
-msgstr "Linux"
+#: ../../modules/backends/backends_qutip.rst:11
+msgid ""
+"QuTiP is not shipped with QiliSDK, install it yourself and the backend "
+"becomes available:"
+msgstr ""
+"QuTiP no es distribueix amb QiliSDK; instal·leu-lo vosaltres mateixos i "
+"el backend quedarà disponible:"
 
-#: ../../modules/backends/backends_qutip.rst:19
-msgid "Mac OSX"
-msgstr "Mac OSX"
+#: ../../modules/backends/backends_qutip.rst:18
+msgid ""
+"``QutipBackend`` requires QuTiP 5.2.2 or newer and qutip-qip 0.4.0 or "
+"newer."
+msgstr ""
+"``QutipBackend`` requereix QuTiP 5.2.2 o posterior i qutip-qip 0.4.0 o "
+"posterior."
 
-#: ../../modules/backends/backends_qutip.rst:25
-msgid "Windows"
-msgstr "Windows"
-
-#: ../../modules/backends/backends_qutip.rst:32
+#: ../../modules/backends/backends_qutip.rst:21
 msgid "Quick start"
 msgstr "Inici ràpid"
 
-#: ../../modules/backends/backends_qutip.rst:71
+#: ../../modules/backends/backends_qutip.rst:60
 msgid "Functional support"
 msgstr "Suport de funcionals"
 
-#: ../../modules/backends/backends_qutip.rst:77
+#: ../../modules/backends/backends_qutip.rst:66
 msgid "Functional"
 msgstr "Funcional"
 
-#: ../../modules/backends/backends_qutip.rst:78
+#: ../../modules/backends/backends_qutip.rst:67
 msgid "Support"
 msgstr "Suport"
 
-#: ../../modules/backends/backends_qutip.rst:79
+#: ../../modules/backends/backends_qutip.rst:68
 msgid "Notes"
 msgstr "Notes"
 
-#: ../../modules/backends/backends_qutip.rst:80
+#: ../../modules/backends/backends_qutip.rst:69
 msgid ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
 msgstr ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
 
-#: ../../modules/backends/backends_qutip.rst:81
-#: ../../modules/backends/backends_qutip.rst:84
-#: ../../modules/backends/backends_qutip.rst:90
+#: ../../modules/backends/backends_qutip.rst:70
+#: ../../modules/backends/backends_qutip.rst:73
+#: ../../modules/backends/backends_qutip.rst:79
 msgid "|y|"
 msgstr "|y|"
 
-#: ../../modules/backends/backends_qutip.rst:82
+#: ../../modules/backends/backends_qutip.rst:71
 msgid ""
 "Statevector simulation via ``qutip_qip``'s :class:`CircuitSimulator`. "
 "Mid-circuit measurements raise ``ValueError``; all measurements must be "
@@ -91,11 +95,11 @@ msgstr ""
 "de ``qutip_qip``. Les mesures a mig circuit llancen ``ValueError``; totes"
 " les mesures han d'estar al final del circuit."
 
-#: ../../modules/backends/backends_qutip.rst:83
+#: ../../modules/backends/backends_qutip.rst:72
 msgid ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`"
 msgstr ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`"
 
-#: ../../modules/backends/backends_qutip.rst:85
+#: ../../modules/backends/backends_qutip.rst:74
 msgid ""
 "Master-equation integration via QuTiP's :func:`qutip.mesolve`. ``nsteps``"
 " (default ``10_000``) caps the internal ODE substeps."
@@ -104,15 +108,15 @@ msgstr ""
 " ``nsteps`` (per defecte ``10_000``) limita els subpassos interns de "
 "l'integrador ODE."
 
-#: ../../modules/backends/backends_qutip.rst:86
+#: ../../modules/backends/backends_qutip.rst:75
 msgid ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
 msgstr ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
 
-#: ../../modules/backends/backends_qutip.rst:87
+#: ../../modules/backends/backends_qutip.rst:76
 msgid "|p|"
 msgstr "|p|"
 
-#: ../../modules/backends/backends_qutip.rst:88
+#: ../../modules/backends/backends_qutip.rst:77
 msgid ""
 "The QutipBackend does not natively implement "
 ":meth:`Backend._execute_quantum_reservoir "
@@ -128,37 +132,37 @@ msgstr ""
 "unitària ``QTensor`` densa a CPU; els passos ``Schedule`` segueixen "
 "utilitzant :func:`mesolve` de QuTiP."
 
-#: ../../modules/backends/backends_qutip.rst:89
+#: ../../modules/backends/backends_qutip.rst:78
 msgid ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
 msgstr ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
 
-#: ../../modules/backends/backends_qutip.rst:91
+#: ../../modules/backends/backends_qutip.rst:80
 msgid "Reuses the digital/analog handlers above for each optimization step."
 msgstr ""
 "Reutilitza els manejadors digital/analògic anteriors a cada pas "
 "d'optimització."
 
-#: ../../modules/backends/backends_qutip.rst:98
+#: ../../modules/backends/backends_qutip.rst:87
 msgid "Configuration"
 msgstr "Configuració"
 
-#: ../../modules/backends/backends_qutip.rst:100
+#: ../../modules/backends/backends_qutip.rst:89
 msgid "QutipBackend has a single constructor option:"
 msgstr "QutipBackend té una única opció de constructor:"
 
-#: ../../modules/backends/backends_qutip.rst:106
+#: ../../modules/backends/backends_qutip.rst:95
 msgid "Option"
 msgstr "Opció"
 
-#: ../../modules/backends/backends_qutip.rst:107
+#: ../../modules/backends/backends_qutip.rst:96
 msgid "Meaning"
 msgstr "Significat"
 
-#: ../../modules/backends/backends_qutip.rst:108
+#: ../../modules/backends/backends_qutip.rst:97
 msgid "``nsteps``"
 msgstr "``nsteps``"
 
-#: ../../modules/backends/backends_qutip.rst:109
+#: ../../modules/backends/backends_qutip.rst:98
 msgid ""
 "Upper bound on the number of internal ODE substeps used by "
 ":func:`qutip.mesolve` per schedule interval. Increase it if a long or "
@@ -170,17 +174,17 @@ msgstr ""
 "Augmenteu-lo si un schedule llarg o rígid fa que el solver de QuTiP falli"
 " amb un avís \"max steps exceeded\". Per defecte ``10_000``."
 
-#: ../../modules/backends/backends_qutip.rst:121
+#: ../../modules/backends/backends_qutip.rst:110
 msgid ""
 "QutipBackend does **not** accept a :class:`~qilisdk.noise.NoiseModel`. "
 "For noisy digital or analog simulations use "
 ":class:`~qilisdk.backends.qilisim.QiliSim` or "
-":class:`~qilisdk.backends.cuda_backend.CudaBackend` instead."
+":class:`~qilisdk.backends.cudaq_backend.CudaqBackend` instead."
 msgstr ""
 "QutipBackend **no** accepta cap :class:`~qilisdk.noise.NoiseModel`. Per a"
 " simulacions digitals o analògiques amb soroll utilitzeu en el seu lloc "
 ":class:`~qilisdk.backends.qilisim.QiliSim` o "
-":class:`~qilisdk.backends.cuda_backend.CudaBackend`."
+":class:`~qilisdk.backends.cudaq_backend.CudaqBackend`."
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Aneu a un subapartat específic d'una pàgina."
@@ -226,4 +230,13 @@ msgstr ""
 
 #~ msgid "**Output**"
 #~ msgstr "**Sortida**"
+
+#~ msgid "Linux"
+#~ msgstr "Linux"
+
+#~ msgid "Mac OSX"
+#~ msgstr "Mac OSX"
+
+#~ msgid "Windows"
+#~ msgstr "Windows"
 

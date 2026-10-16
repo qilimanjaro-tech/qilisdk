@@ -6,6 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import datetime
 import operator
 import os
 import posixpath
@@ -39,7 +40,7 @@ if shutil.which("pandoc") is None:
 # -- Project information -----------------------------------------------------
 
 project = "QiliSDK"
-copyright = "2025, Qilimanjaro Quantum Tech"
+copyright = f"{datetime.datetime.now(tz=datetime.timezone.utc).year}, Qilimanjaro Quantum Tech"
 author = "Qilimanjaro Quantum Tech"
 
 # -- General configuration ---------------------------------------------------
@@ -59,7 +60,7 @@ extensions = [
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-source_suffix = [".rst", ".pynb"]
+source_suffix = [".rst"]
 
 # Syntax highlighting
 pygments_style = "default"
@@ -147,7 +148,7 @@ logger = logging.getLogger(__name__)
 
 
 def skip_yaml_class_methods(app, what, name, obj, skip, options):  # noqa: ANN001, ANN201
-    if what == "methpod" and any(x in name for x in ("from_yaml", "to_yaml")):
+    if what == "method" and any(x in name for x in ("from_yaml", "to_yaml")):
         return True
     return skip
 

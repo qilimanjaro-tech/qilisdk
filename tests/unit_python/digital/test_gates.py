@@ -18,7 +18,9 @@ from hypothesis import example, given, strategies
 from numpy.testing import assert_allclose
 from scipy.linalg import expm
 
-from qilisdk.core.variables import Domain, Parameter, Term, Variable
+from qilisdk.core.expression import Expression
+from qilisdk.core.qtensor import QTensor
+from qilisdk.core.variables import Domain, Parameter, Variable
 from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.exceptions import GateHasNoMatrixError, InvalidParameterNameError, ParametersNotEqualError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled, Exponential, Gate, GateNotParameterizedError
@@ -30,10 +32,11 @@ COMPLEX_DTYPE = get_settings().complex_precision.dtype
 # ------------------------------------------------------------------------------
 # Helper to compare matrices
 # ------------------------------------------------------------------------------
-def assert_matrix_equal(actual: np.ndarray, expected: np.ndarray, rtol=1e-7, atol=1e-7):
+def assert_matrix_equal(actual: QTensor, expected: np.ndarray, rtol=1e-7, atol=1e-7):
     """
     Utility assertion for comparing two complex matrices for approximate equality.
     """
+    actual = actual.dense()
     assert actual.shape == expected.shape, f"Shape mismatch: {actual.shape} vs {expected.shape}"
     assert_allclose(actual, expected, rtol=rtol, atol=atol)
 
@@ -139,7 +142,7 @@ def test_rx_gate(angle: float):
 
 def test_rx_gate_term():
     """
-    Create an RX gate with a Term object as the angle parameter.
+    Create an RX gate with a Expression object as the angle parameter.
     """
     qubit = 2
     angle = np.pi
@@ -181,7 +184,7 @@ def test_ry_gate(angle: float):
 
 def test_ry_gate_term():
     """
-    Create an RY gate with a Term object as the angle parameter.
+    Create an RY gate with a Expression object as the angle parameter.
     """
     qubit = 3
     angle = np.pi
@@ -220,7 +223,7 @@ def test_rz_gate(angle: float):
 
 def test_rz_gate_term():
     """
-    Create an RZ gate with a Term object as the angle parameter.
+    Create an RZ gate with a Expression object as the angle parameter.
     """
     qubit = 3
     angle = np.pi
@@ -260,7 +263,7 @@ def test_u1_gate(angle: float):
 
 def test_u1_gate_term():
     """
-    Create a U1 gate with a Term object as the angle parameter.
+    Create a U1 gate with a Expression object as the angle parameter.
     """
     qubit = 5
     angle = np.pi
@@ -327,7 +330,7 @@ def test_u2_gate(phi, gamma):
 
 def test_u2_gate_term():
     """
-    Create a U2 gate with Term objects as the angle parameters.
+    Create a U2 gate with Expression objects as the angle parameters.
     """
     qubit = 7
     phi = np.pi / 2
@@ -408,7 +411,7 @@ def test_u3_gate(theta, phi, gamma):
 
 def test_u3_gate_term():
     """
-    Create a U3 gate with Term objects as the angle parameters.
+    Create a U3 gate with Expression objects as the angle parameters.
     """
     qubit = 8
     theta = np.pi / 2
@@ -757,7 +760,7 @@ def test_adjoint_gate():
     assert adj_gate.target_qubits == base_gate.target_qubits
 
     # The matrix should be the conjugate transpose of the base matrix.
-    expected_matrix = base_gate.matrix.conj().T
+    expected_matrix = base_gate.matrix.dense().conj().T
     assert_matrix_equal(adj_gate.matrix, expected_matrix)
 
 
@@ -778,7 +781,7 @@ def test_adjoint_gate_parameter_update():
     # Underlying gate parameters should be updated.
     assert adj_gate.get_parameters()["theta"] == new_theta
     # The adjoint matrix should update to be the conjugate transpose of the new base matrix.
-    expected_matrix = base_gate.matrix.conj().T
+    expected_matrix = base_gate.matrix.dense().conj().T
     assert_matrix_equal(adj_gate.matrix, expected_matrix)
 
 
@@ -805,7 +808,7 @@ def test_exponential_gate():
     assert exp_gate.target_qubits == base_gate.target_qubits
 
     # Verify that the matrix is the exponential of the base matrix.
-    expected_matrix = expm(base_gate.matrix)
+    expected_matrix = expm(base_gate.matrix.dense())
     assert_matrix_equal(exp_gate.matrix, expected_matrix)
 
 
@@ -826,7 +829,7 @@ def test_exponential_gate_parameter_update():
     # Underlying gate parameters should be updated.
     assert exp_gate.get_parameters()["theta"] == new_theta
     # The matrix should update to the exponential of the new base matrix.
-    expected_matrix = expm(base_gate.matrix)
+    expected_matrix = expm(base_gate.matrix.dense())
     assert_matrix_equal(exp_gate.matrix, expected_matrix)
 
 
@@ -872,7 +875,7 @@ class CustomGate(BasicGate):
     def __init__(
         self,
         target_qubits: tuple[int, ...],
-        parameter_transforms: dict[str, Term] | None = None,
+        parameter_transforms: dict[str, Expression] | None = None,
         parameters: dict[str, Parameter] | None = None,
     ):
         super().__init__(target_qubits=target_qubits, parameter_transforms=parameter_transforms, parameters=parameters)
@@ -881,8 +884,8 @@ class CustomGate(BasicGate):
     def name(self) -> str:
         return "CustomGate"
 
-    def _generate_matrix(self) -> np.ndarray:
-        return np.array([[0, 1], [1, 0]], dtype=complex)
+    def _generate_matrix(self) -> QTensor:
+        return QTensor(np.array([[0, 1], [1, 0]], dtype=complex))
 
 
 def test_basic_gate():
@@ -990,7 +993,7 @@ def test_param_gate_given_variable():
     qubit = 0
     var = Variable("theta", Domain.REAL, (0.0, 1.0))
     term = var * 2.0 + 1
-    with pytest.raises(ValueError, match="must contain a Parameter"):
+    with pytest.raises(ValueError, match="must contain only Parameters"):
         RX(qubit, theta=term)
 
 

@@ -29,7 +29,7 @@ Observables and shot counts are specified separately via readout objects passed 
     from qilisdk.analog import Schedule, X, Z, Y
     from qilisdk.core import QTensor
     from qilisdk.core.interpolator import Interpolation
-    from qilisdk.backends import QiliSim, CudaBackend
+    from qilisdk.backends import QiliSim, CudaqBackend
     from qilisdk.functionals import AnalogEvolution
 
     # Define total time and timestep

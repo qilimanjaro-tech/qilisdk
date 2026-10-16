@@ -19,9 +19,6 @@
 #include <unordered_map>
 #include "../../../libs/pybind.h"
 #include "matrix_utils.h"
-#if defined(_OPENMP)
-#include <omp.h>
-#endif
 
 // GCOV_EXCL_BR_START
 
@@ -93,24 +90,23 @@ std::map<std::string, int> sample_from_probabilities(double* probabilities, std:
         cdf[dim - 1] = 1.0;
     }
 
-    // Accumulate a sparse list of counts
+    // Accumulate a sparse list of counts, one deterministically seeded block of shots at a time
     std::map<size_t, int> index_counts;
+    constexpr int sampling_blocks = 64;
+    const int n_blocks = std::max(1, std::min(n_shots, sampling_blocks));
+    const int shots_per_block = n_shots / n_blocks;
+    const int leftover_shots = n_shots % n_blocks;
 #if defined(_OPENMP)
-#pragma omp parallel
+#pragma omp parallel for schedule(static)
 #endif
-    {
-        int thread_id = 0;
-#if defined(_OPENMP)
-        thread_id = omp_get_thread_num();
-#endif
-        std::seed_seq seq{static_cast<unsigned>(seed), static_cast<unsigned>(thread_id)};
+    for (int block = 0; block < n_blocks; ++block) {
+        // The first leftover_shots blocks take one extra shot each
+        const int block_shots = shots_per_block + (block < leftover_shots ? 1 : 0);
+        std::seed_seq seq{static_cast<unsigned>(seed), static_cast<unsigned>(block)};
         std::default_random_engine generator(seq);
         std::uniform_real_distribution<double> distribution(0.0, 1.0);
         std::unordered_map<size_t, int> local_counts;
-#if defined(_OPENMP)
-#pragma omp for schedule(static)
-#endif
-        for (int shot = 0; shot < n_shots; ++shot) {
+        for (int shot = 0; shot < block_shots; ++shot) {
             double random_value = distribution(generator);
             // First state whose cumulative probability reaches the draw
             size_t state_index = static_cast<size_t>(std::lower_bound(cdf, cdf + dim, random_value) - cdf);
@@ -120,7 +116,7 @@ std::map<std::string, int> sample_from_probabilities(double* probabilities, std:
             local_counts[state_index]++;
         }
 
-        // Merge this thread's sparse histogram into the shared result
+        // Merge this block's sparse histogram into the shared result
 #if defined(_OPENMP)
 #pragma omp critical
 #endif

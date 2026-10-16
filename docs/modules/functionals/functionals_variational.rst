@@ -22,7 +22,7 @@ Only parameters marked as trainable are optimized during this loop.
   to a scalar cost; frequently constructed from a :class:`~qilisdk.core.model.Model`.
 - **store_intermediate_results** (bool, optional): When True, the optimizer keeps the intermediate steps, which are
   exposed through :attr:`~qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results`.
-- **parameter_constraints** (list[:class:`~qilisdk.core.variables.ComparisonTerm`], optional): Constraints on functional
+- **parameter_constraints** (list[:class:`~qilisdk.core.comparison.Comparison`], optional): Constraints on functional
   parameters (e.g., ``theta >= 0.5``) evaluated before each optimizer update. This is the supported entry point for
   enforcing parameter relations in QiliSDK.
 
@@ -42,7 +42,8 @@ Only parameters marked as trainable are optimized during this loop.
 
     from qilisdk.backends import QiliSim
     from qilisdk.core.model import Model, ObjectiveSense
-    from qilisdk.core.variables import LEQ, BinaryVariable
+    from qilisdk.core.comparison import LEQ
+    from qilisdk.core.variables import BinaryVariable
     from qilisdk.cost_functions.model_cost_function import ModelCostFunction
     from qilisdk.digital import CNOT, U3, HardwareEfficientAnsatz
     from qilisdk.functionals import DigitalPropagation
@@ -106,7 +107,7 @@ This example optimizes a variational schedule under some parameter constraints.
 
 .. code-block:: python
 
-    from qilisdk.core.variables import LT, GreaterThan
+    from qilisdk.core.comparison import LT, GreaterThan
     from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
     from qilisdk.functionals import VariationalProgram, AnalogEvolution
     from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer

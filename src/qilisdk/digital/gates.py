@@ -22,8 +22,10 @@ from loguru import logger
 from scipy.linalg import expm
 from typing_extensions import Self
 
+from qilisdk.core.expression import Expression
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.variables import Parameter, Term
+from qilisdk.core.qtensor import QTensor
+from qilisdk.core.variables import Parameter
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
@@ -37,6 +39,8 @@ from .exceptions import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from qilisdk.core.interpolator import ParameterizedNumber
 
 TBasicGate = TypeVar("TBasicGate", bound="BasicGate")
 
@@ -68,7 +72,7 @@ class Gate(Parameterizable, ABC):
 
     @property
     @abstractmethod
-    def matrix(self) -> np.ndarray:
+    def matrix(self) -> QTensor:
         """
         Retrieve the matrix of the gate.
 
@@ -76,7 +80,7 @@ class Gate(Parameterizable, ABC):
             GateHasNoMatrixError: If gate has no matrix.
 
         Returns:
-            np.ndarray: The matrix of the gate.
+            QTensor: The matrix of the gate.
         """
 
     @property
@@ -270,14 +274,14 @@ class BasicGate(Gate):
         self,
         target_qubits: tuple[int, ...],
         parameters: dict[str, Parameter] | None = None,
-        parameter_transforms: dict[str, Term] | None = None,
+        parameter_transforms: dict[str, Expression] | None = None,
     ) -> None:
         """Build a basic gate.
 
         Args:
             target_qubits (tuple[int, ...]): Qubit indices the gate acts on. Duplicate indices are rejected.
             parameters (dict[str, Parameter] | None): Optional parameter objects keyed by label for parameterized gates.
-            parameter_transforms (dict[str, Term] | None): Optional symbolic transforms keyed by parameter name.
+            parameter_transforms (dict[str, Expression] | None): Optional symbolic transforms keyed by parameter name.
 
         Raises:
             ValueError: if duplicate target qubits are found.
@@ -292,12 +296,12 @@ class BasicGate(Gate):
 
         self._target_qubits: tuple[int, ...] = target_qubits
         self._parameters: dict[str, Parameter] = parameters or {}
-        self._parameter_transforms: dict[str, Term] = parameter_transforms or {}
+        self._parameter_transforms: dict[str, Expression] = parameter_transforms or {}
 
         # Check the transforms
         for term in self._parameter_transforms:
             # Ensure it's a parameterized term (i.e. no variables)
-            if not self._parameter_transforms[term].is_parameterized_term():
+            if not self._parameter_transforms[term].is_parameterized():
                 raise ValueError(
                     f"Parameter transform '{term}' must be a parameterized term containing only Parameters."
                 )
@@ -308,7 +312,7 @@ class BasicGate(Gate):
                     raise InvalidParameterNameError
 
     @cached_property
-    def matrix(self) -> np.ndarray:
+    def matrix(self) -> QTensor:
         return self._generate_matrix()
 
     @property
@@ -381,7 +385,7 @@ class BasicGate(Gate):
         return Exponential(basic_gate=self)
 
     @abstractmethod
-    def _generate_matrix(self) -> np.ndarray: ...
+    def _generate_matrix(self) -> QTensor: ...
 
 
 @yaml.register_class
@@ -397,7 +401,7 @@ class Modified(Gate, Generic[TBasicGate]):
         return self._basic_gate
 
     @cached_property
-    def matrix(self) -> np.ndarray:
+    def matrix(self) -> QTensor:
         return self._generate_matrix()
 
     @property
@@ -455,7 +459,7 @@ class Modified(Gate, Generic[TBasicGate]):
         self._basic_gate.set_parameter_bounds(ranges)
 
     @abstractmethod
-    def _generate_matrix(self) -> np.ndarray: ...
+    def _generate_matrix(self) -> QTensor: ...
 
     def is_modified_from(self, gate_type: type[TBasicGate]) -> bool:
         return isinstance(self.basic_gate, gate_type)
@@ -488,7 +492,7 @@ class Controlled(Modified[TBasicGate]):
 
         self._control_qubits = control_qubits + inner_gate.control_qubits
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         logger.trace("[Gates] Generating Controlled matrix for {} on {} qubits", self.name, self.nqubits)
         i_full = np.eye(1 << self.nqubits, dtype=_complex_dtype())
         # Construct projector P_control = |1...1><1...1| on the n control qubits.
@@ -498,8 +502,8 @@ class Controlled(Modified[TBasicGate]):
         # Extend the projector to the full space (control qubits ⊗ target qubit). It acts as P_control ⊗ I_target.
         i_target = np.eye(1 << self.basic_gate.nqubits, dtype=_complex_dtype())
         # The controlled gate is then:
-        controlled = i_full + np.kron(P, self.basic_gate.matrix - i_target)
-        return controlled
+        controlled = i_full + np.kron(P, self.basic_gate.matrix.dense() - i_target)
+        return QTensor(controlled)
 
     @property
     def control_qubits(self) -> tuple[int, ...]:
@@ -520,9 +524,9 @@ class Adjoint(Modified[TBasicGate]):
         super().__init__(basic_gate=basic_gate)
         logger.trace("[Gates] Constructing Adjoint of {}", type(basic_gate).__name__)
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         logger.trace("[Gates] Generating Adjoint matrix for {}", self.name)
-        return self.basic_gate.matrix.conj().T
+        return self.basic_gate.matrix.dagger()
 
     @property
     def name(self) -> str:
@@ -550,9 +554,9 @@ class Exponential(Modified[TBasicGate]):
         super().__init__(basic_gate=basic_gate)
         logger.trace("[Gates] Constructing Exponential of {}", type(basic_gate).__name__)
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         logger.trace("[Gates] Generating Exponential matrix for {}", self.name)
-        return expm(self.basic_gate.matrix)
+        return QTensor(expm(self.basic_gate.matrix.dense()))
 
     @property
     def name(self) -> str:
@@ -590,7 +594,7 @@ class M(Gate):
         return "M"
 
     @property
-    def matrix(self) -> np.ndarray:
+    def matrix(self) -> QTensor:
         raise GateHasNoMatrixError
 
     @property
@@ -625,8 +629,8 @@ class I(BasicGate):
     def name(self) -> str:
         return "I"
 
-    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
-        return np.array([[1, 0], [0, 1]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+        return QTensor(np.array([[1, 0], [0, 1]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -657,8 +661,8 @@ class X(BasicGate):
     def name(self) -> str:
         return "X"
 
-    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
-        return np.array([[0, 1], [1, 0]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+        return QTensor(np.array([[0, 1], [1, 0]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -689,8 +693,8 @@ class Y(BasicGate):
     def name(self) -> str:
         return "Y"
 
-    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
-        return np.array([[0, -1j], [1j, 0]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+        return QTensor(np.array([[0, -1j], [1j, 0]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -721,8 +725,8 @@ class Z(BasicGate):
     def name(self) -> str:
         return "Z"
 
-    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
-        return np.array([[1, 0], [0, -1]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+        return QTensor(np.array([[1, 0], [0, -1]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -753,8 +757,8 @@ class H(BasicGate):
     def name(self) -> str:
         return "H"
 
-    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
-        return (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+        return QTensor((1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -785,8 +789,8 @@ class S(BasicGate):
     def name(self) -> str:
         return "S"
 
-    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
-        return np.array([[1, 0], [0, 1j]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+        return QTensor(np.array([[1, 0], [0, 1j]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -817,32 +821,35 @@ class T(BasicGate):
     def name(self) -> str:
         return "T"
 
-    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
-        return np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+        return QTensor(np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=_complex_dtype()))
 
 
 def _process_param(
     name: str,
-    value: float | Parameter | Term,
+    value: ParameterizedNumber,
     params_to_init: dict[str, Parameter],
-    terms_to_init: dict[str, Term],
+    terms_to_init: dict[str, Expression],
 ) -> None:
     """
     Process a parameter value and update the params_to_init and terms_to_init dictionaries.
     Args:
         name (str): The name of the parameter.
-        value (float | Parameter | Term): The value of the parameter.
+        value (ParameterizedNumber): The value of the parameter — a float or an Expression whose
+            free leaves are all Parameters (the parameter-only invariant of ParameterizedNumber).
         params_to_init (dict[str, Parameter]): The dictionary to initialize parameters.
-        terms_to_init (dict[str, Term]): The dictionary to initialize terms.
+        terms_to_init (dict[str, Expression]): The dictionary to initialize terms.
     Raises:
-        ValueError: If a Term is provided that contains Variables instead of Parameters.
+        ValueError: If an Expression is provided that references decision Variables instead of
+            Parameters. This is the runtime check for the parameter-only invariant that
+            ParameterizedNumber documents but the type system cannot enforce.
     """
     logger.trace("[Gates] Processing parameter {}", name)
     if isinstance(value, Parameter):
         params_to_init[name] = value
-    elif isinstance(value, Term):
-        if not value.is_parameterized_term() and len(value.variables()) > 0:
-            raise ValueError(f"RX gate Term '{name}' must contain a Parameter and not Variables.")
+    elif isinstance(value, Expression):
+        if not value.is_parameterized() and len(value.variables()) > 0:
+            raise ValueError(f"Gate Expression '{name}' must contain only Parameters, not Variables.")
         for param in value.variables():
             if isinstance(param, Parameter):
                 params_to_init[param.label] = param
@@ -869,19 +876,19 @@ class RX(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
-    def __init__(self, qubit: int, *, theta: float | Parameter | Term) -> None:
+    def __init__(self, qubit: int, *, theta: ParameterizedNumber) -> None:
         """
         Initialize an RX gate.
 
         Args:
             qubit (int): The target qubit index for the rotation.
-            theta (float | Parameter | Term): The rotation angle (polar) in radians.
+            theta (ParameterizedNumber): The rotation angle (polar) in radians.
 
         """
 
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
-        terms_to_init: dict[str, Term] = {}
+        terms_to_init: dict[str, Expression] = {}
 
         # Process the parameters
         _process_param("theta", theta, params_to_init, terms_to_init)
@@ -906,11 +913,11 @@ class RX(BasicGate):
             return val
         return self.get_parameters()["theta"]
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         theta = self.theta
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
-        return np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=_complex_dtype())
+        return QTensor(np.array([[cos_half, -1j * sin_half], [-1j * sin_half, cos_half]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -931,19 +938,19 @@ class RY(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["theta"]
 
-    def __init__(self, qubit: int, *, theta: float | Parameter | Term) -> None:
+    def __init__(self, qubit: int, *, theta: ParameterizedNumber) -> None:
         """
         Initialize an RY gate.
 
         Args:
             qubit (int): The target qubit index for the rotation.
-            theta (float | Parameter | Term): The rotation angle (polar) in radians.
+            theta (ParameterizedNumber): The rotation angle (polar) in radians.
 
         """
 
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
-        terms_to_init: dict[str, Term] = {}
+        terms_to_init: dict[str, Expression] = {}
 
         # Process the parameters
         _process_param("theta", theta, params_to_init, terms_to_init)
@@ -968,11 +975,11 @@ class RY(BasicGate):
             return val
         return self.get_parameters()["theta"]
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         theta = self.theta
         cos_half = np.cos(theta / 2)
         sin_half = np.sin(theta / 2)
-        return np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=_complex_dtype())
+        return QTensor(np.array([[cos_half, -sin_half], [sin_half, cos_half]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -1001,19 +1008,19 @@ class RZ(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
-    def __init__(self, qubit: int, *, phi: float | Parameter | Term) -> None:
+    def __init__(self, qubit: int, *, phi: ParameterizedNumber) -> None:
         """
         Initialize an RZ gate.
 
         Args:
             qubit (int): The target qubit index for the rotation.
-            phi (float | Parameter | Term): The rotation angle (azimuthal) in radians.
+            phi (ParameterizedNumber): The rotation angle (azimuthal) in radians.
 
         """
 
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
-        terms_to_init: dict[str, Term] = {}
+        terms_to_init: dict[str, Expression] = {}
 
         # Process the parameters
         _process_param("phi", phi, params_to_init, terms_to_init)
@@ -1038,9 +1045,9 @@ class RZ(BasicGate):
             return val
         return self.get_parameters()["phi"]
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         phi = self.phi
-        return np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=_complex_dtype())
+        return QTensor(np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -1066,17 +1073,17 @@ class U1(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi"]
 
-    def __init__(self, qubit: int, *, phi: float | Parameter | Term) -> None:
+    def __init__(self, qubit: int, *, phi: ParameterizedNumber) -> None:
         """
         Initialize a U1 gate.
 
         Args:
             qubit (int): The target qubit index for the U1 gate.
-            phi (float | Parameter | Term): The phase to add, or equivalently the rotation angle (azimuthal) in radians.
+            phi (ParameterizedNumber): The phase to add, or equivalently the rotation angle (azimuthal) in radians.
         """
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
-        terms_to_init: dict[str, Term] = {}
+        terms_to_init: dict[str, Expression] = {}
 
         # Process the parameters
         _process_param("phi", phi, params_to_init, terms_to_init)
@@ -1101,9 +1108,9 @@ class U1(BasicGate):
             return val
         return self.get_parameters()["phi"]
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         phi = self.phi
-        return np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=_complex_dtype())
+        return QTensor(np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=_complex_dtype()))
 
 
 @yaml.register_class
@@ -1121,8 +1128,8 @@ class U2(BasicGate):
     Which is equivalent to two azimuthal rotations of `phi` and `gamma`, with a pi/2 polar rotation in between:
         ``U2(phi, gamma) = exp(i*(phi+gamma)/2) RZ(phi) RY(pi/2) RZ(gamma)``
 
-    This is the same matrix of `qiskit` and `pennylane`, differing from `qibo` implementation on a global phase:
-        ``U2(phi, gamma) = U2_qiskit/pennylane(phi, gamma) = exp(i*(phi+gamma)/2) U2_qibo(phi, gamma)``
+    This is the same matrix of `QASM`, `qiskit` and `pennylane`, differing from `qibo` implementation on a global phase:
+        ``U2(phi, gamma) = U2_QASM/qiskit/pennylane(phi, gamma) = exp(i*(phi+gamma)/2) U2_qibo(phi, gamma)``
 
     Other unitaries you can get from this one are:
         - ``U2(phi=0, gamma=pi) = H``
@@ -1132,19 +1139,19 @@ class U2(BasicGate):
 
     PARAMETER_NAMES: ClassVar[list[str]] = ["phi", "gamma"]
 
-    def __init__(self, qubit: int, *, phi: float | Parameter | Term, gamma: float | Parameter | Term) -> None:
+    def __init__(self, qubit: int, *, phi: ParameterizedNumber, gamma: ParameterizedNumber) -> None:
         """
         Initialize a U2 gate.
 
         Args:
             qubit (int): The target qubit index for the U2 gate.
-            phi (float | Parameter | Term): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
-            gamma (float | Parameter | Term): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
+            phi (ParameterizedNumber): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
+            gamma (ParameterizedNumber): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
 
         """
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
-        terms_to_init: dict[str, Term] = {}
+        terms_to_init: dict[str, Expression] = {}
 
         # Process the parameters
         _process_param("phi", phi, params_to_init, terms_to_init)
@@ -1179,15 +1186,18 @@ class U2(BasicGate):
             return val
         return self.get_parameters()["gamma"]
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         phi = self.phi
         gamma = self.gamma
-        return (1 / np.sqrt(2)) * np.array(
-            [
-                [1, -np.exp(1j * gamma)],
-                [np.exp(1j * phi), np.exp(1j * (phi + gamma))],
-            ],
-            dtype=_complex_dtype(),
+        return QTensor(
+            (1 / np.sqrt(2))
+            * np.array(
+                [
+                    [1, -np.exp(1j * gamma)],
+                    [np.exp(1j * phi), np.exp(1j * (phi + gamma))],
+                ],
+                dtype=_complex_dtype(),
+            )
         )
 
 
@@ -1200,14 +1210,14 @@ class U3(BasicGate):
 
     .. code-block:: text
 
-        [[cos(theta/2), -exp(i*gamma/2*sin(theta/2))],
-         [exp(i*phi/2)*sin(theta/2),    exp(i*(phi+gamma))*cos(theta/2)]]
+        [[cos(theta/2),                 -exp(i*gamma)*sin(theta/2)],
+         [exp(i*phi)*sin(theta/2),  exp(i*(phi+gamma))*cos(theta/2)]]
 
     Which is equivalent to two azimuthal rotations of `phi` and `gamma`, with a 'theta' polar rotation in between:
         ``U3(theta, phi, gamma) = exp(i*(phi+gamma)/2) RZ(phi) RY(theta) RZ(gamma)``
 
-    This is the same matrix of `qiskit` and `pennylane`, differing from `QASM` and `qibo` implementation on a global phase:
-        ``U3(theta, phi, gamma) = U3_qiskit/pennylane(theta, phi, gamma) = exp(-i*(phi+gamma)/2) U3_QASM/qibo(theta, phi, gamma)``
+    This is the same matrix of `QASM`, `qiskit` and `pennylane`, differing from `qibo` implementation on a global phase:
+        ``U3(theta, phi, gamma) = U3_QASM/qiskit/pennylane(theta, phi, gamma) = exp(i*(phi+gamma)/2) U3_qibo(theta, phi, gamma)``
 
     Other unitaries you can get from this one are:
         - ``U3(theta=pi/2, phi, gamma) = U2(phi, gamma)``
@@ -1222,24 +1232,24 @@ class U3(BasicGate):
         self,
         qubit: int,
         *,
-        theta: float | Parameter | Term,
-        phi: float | Parameter | Term,
-        gamma: float | Parameter | Term,
+        theta: ParameterizedNumber,
+        phi: ParameterizedNumber,
+        gamma: ParameterizedNumber,
     ) -> None:
         """
         Initialize a U3 gate.
 
         Args:
             qubit (int): The target qubit index for the U3 gate.
-            theta (float | Parameter | Term): The rotation angle (polar), in between both phase rotations (azimuthal).
-            phi (float | Parameter | Term): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
-            gamma (float | Parameter | Term): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
+            theta (ParameterizedNumber): The rotation angle (polar), in between both phase rotations (azimuthal).
+            phi (ParameterizedNumber): The first phase parameter, or equivalently the first rotation angle (azimuthal) in radians.
+            gamma (ParameterizedNumber): The second phase parameter, or equivalently the second rotation angle (azimuthal) in radians.
 
         """
 
         # Initialize parameter terms dictionary
         params_to_init: dict[str, Parameter] = {}
-        terms_to_init: dict[str, Term] = {}
+        terms_to_init: dict[str, Expression] = {}
 
         # Process the parameters
         _process_param("theta", theta, params_to_init, terms_to_init)
@@ -1284,16 +1294,18 @@ class U3(BasicGate):
             return val
         return self.get_parameters()["gamma"]
 
-    def _generate_matrix(self) -> np.ndarray:
+    def _generate_matrix(self) -> QTensor:
         theta = self.theta
         phi = self.phi
         gamma = self.gamma
-        return np.array(
-            [
-                [np.cos(theta / 2), -np.exp(1j * gamma) * np.sin(theta / 2)],
-                [np.exp(1j * phi) * np.sin(theta / 2), np.exp(1j * (phi + gamma)) * np.cos(theta / 2)],
-            ],
-            dtype=_complex_dtype(),
+        return QTensor(
+            np.array(
+                [
+                    [np.cos(theta / 2), -np.exp(1j * gamma) * np.sin(theta / 2)],
+                    [np.exp(1j * phi) * np.sin(theta / 2), np.exp(1j * (phi + gamma)) * np.cos(theta / 2)],
+                ],
+                dtype=_complex_dtype(),
+            )
         )
 
 
@@ -1376,5 +1388,5 @@ class SWAP(BasicGate):
     def name(self) -> str:
         return "SWAP"
 
-    def _generate_matrix(self) -> np.ndarray:  # ruff: ignore[no-self-use]
-        return np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=_complex_dtype())
+    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+        return QTensor(np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=_complex_dtype()))

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Annotated, Any, Literal, Optional
 
 import matplotlib.font_manager as fm
 from pydantic import BaseModel, Field
@@ -21,6 +21,13 @@ from pydantic import BaseModel, Field
 from .themes import Theme, light
 
 _DEFAULT_FONT_PATH = Path(__file__).parent / "PlusJakartaSans-SemiBold.ttf"
+
+# Descriptions of the fields shared by several of the styles below
+_FIGSIZE_DESCRIPTION = "Figure size in inches (width, height)."
+_TIGHT_LAYOUT_DESCRIPTION = "Whether to use matplotlib's tight_layout for figure spacing."
+_TITLE_FONTSIZE_DESCRIPTION = "Font size for the plot title."
+_LEGEND_FONTSIZE_DESCRIPTION = "Font size for legend text."
+_LEGEND_FRAME_DESCRIPTION = "Whether to draw a frame around the legend."
 
 
 class Style(BaseModel):
@@ -138,14 +145,36 @@ class CircuitStyle(Style):
         description="If 'compact' minimizes the layers to highlight circuit depth, if 'normal' conserves the order of the circuit",
     )
 
+    fold: Annotated[int, Field(gt=0)] | Literal["auto"] | None = Field(
+        default="auto",
+        description="How deep circuits are wrapped onto several rows. 'auto' starts a new row whenever the current one would grow past `max_row_width`, an integer puts exactly that many layers on each row, and None draws the whole circuit on a single row.",
+    )
+    max_row_width: float = Field(
+        default=12.0, description="Maximum width (inches) of a row of the circuit when `fold` is 'auto'.", gt=0.0
+    )
+    row_separation: float = Field(default=1.0, description="Vertical separation (inches) between wrapped rows.", gt=0.0)
+    fold_edges: Literal["dashed", "closed", "open"] = Field(
+        default="dashed",
+        description="How the wires are drawn where a folded circuit breaks off and picks up again. 'dashed' trails them off in dashes, 'closed' joins them with a vertical line, and 'open' leaves them as bare wire ends.",
+    )
+    fold_dash: float = Field(
+        default=0.25,
+        description="Length (inches) of the dashed wire drawn at a fold when `fold_edges` is 'dashed'.",
+        gt=0.0,
+    )
+    max_view_height: Annotated[float, Field(gt=0.0)] | None = Field(
+        default=7.0,
+        description="Height (inches) of the circuit shown when the figure first opens in a window. A taller circuit opens on its first rows and can be panned or zoomed out to reach the rest; a figure saved to file always holds the whole circuit. None opens on the whole circuit.",
+    )
+
 
 class HamiltonianStyle(Style):
     """All visual parameters controlling the appearance of a Hamiltonian interaction graph."""
 
     # Figure
-    figsize: Optional[tuple] = Field(default=(7, 6), description="Figure size in inches (width, height).")
-    tight_layout: bool = Field(default=True, description="Whether to use matplotlib's tight_layout for figure spacing.")
-    title_fontsize: int = Field(default=16, description="Font size for the plot title.")
+    figsize: Optional[tuple] = Field(default=(7, 6), description=_FIGSIZE_DESCRIPTION)
+    tight_layout: bool = Field(default=True, description=_TIGHT_LAYOUT_DESCRIPTION)
+    title_fontsize: int = Field(default=16, description=_TITLE_FONTSIZE_DESCRIPTION)
 
     # Graph layout
     layout: Literal["spring", "circular", "shell", "spiral", "random"] = Field(
@@ -217,8 +246,8 @@ class HamiltonianStyle(Style):
         default=True, description="Whether to draw a legend mapping coupling types to their line style."
     )
     legend_loc: str = Field(default="upper right", description="Location of the coupling type legend.")
-    legend_fontsize: int = Field(default=10, description="Font size for legend text.")
-    legend_frame: bool = Field(default=True, description="Whether to draw a frame around the legend.")
+    legend_fontsize: int = Field(default=10, description=_LEGEND_FONTSIZE_DESCRIPTION)
+    legend_frame: bool = Field(default=True, description=_LEGEND_FRAME_DESCRIPTION)
 
     # Misc
     show_identity_offset: bool = Field(
@@ -232,7 +261,7 @@ class ScheduleStyle(Style):
     """
 
     # Figure and axes
-    figsize: Optional[tuple] = Field(default=(8, 5), description="Figure size in inches (width, height).")
+    figsize: Optional[tuple] = Field(default=(8, 5), description=_FIGSIZE_DESCRIPTION)
     grid: bool = Field(default=True, description="Whether to show grid lines on the plot.")
     grid_style: dict[str, Any] = Field(
         default_factory=lambda: {"linestyle": "--", "color": "#e0e0e0", "alpha": 0.7},
@@ -240,7 +269,7 @@ class ScheduleStyle(Style):
     )
 
     # Title and labels
-    title_fontsize: int = Field(default=16, description="Font size for the plot title.")
+    title_fontsize: int = Field(default=16, description=_TITLE_FONTSIZE_DESCRIPTION)
     xlabel: str = Field(default="time", description="Label for the x-axis.")
     ylabel: str = Field(default="coefficient value", description="Label for the y-axis.")
     label_fontsize: int = Field(default=14, description="Font size for axis labels.")
@@ -249,8 +278,8 @@ class ScheduleStyle(Style):
     legend_loc: str = Field(
         default="best", description="Location of the legend (matplotlib string, e.g. 'best', 'upper right')."
     )
-    legend_fontsize: int = Field(default=12, description="Font size for legend text.")
-    legend_frame: bool = Field(default=True, description="Whether to draw a frame around the legend.")
+    legend_fontsize: int = Field(default=12, description=_LEGEND_FONTSIZE_DESCRIPTION)
+    legend_frame: bool = Field(default=True, description=_LEGEND_FRAME_DESCRIPTION)
 
     # Line style
     line_styles: dict[str, dict[str, Any]] = Field(
@@ -276,4 +305,74 @@ class ScheduleStyle(Style):
     )
 
     # Misc
-    tight_layout: bool = Field(default=True, description="Whether to use matplotlib's tight_layout for figure spacing.")
+    tight_layout: bool = Field(default=True, description=_TIGHT_LAYOUT_DESCRIPTION)
+
+
+class DatasetStyle(Style):
+    """
+    Customization options for matplotlib dataset plots, with theme support.
+
+    Controls only the *appearance* of a dataset plot (theme, fonts, colours,
+    grid, markers, ...). The *kind* of plot (``"1d"``, ``"2d"`` or ``"3d"``) is
+    selected separately via the ``style`` argument of :meth:`Dataset.draw`.
+    """
+
+    # Figure and axes
+    figsize: Optional[tuple] = Field(default=(8, 5), description=_FIGSIZE_DESCRIPTION)
+    grid: bool = Field(default=True, description="Whether to show grid lines on the plot.")
+    grid_style: dict[str, Any] = Field(
+        default_factory=lambda: {"linestyle": "--", "color": "#e0e0e0", "alpha": 0.7},
+        description="Style dictionary for grid lines (linestyle, color, alpha, etc.).",
+    )
+
+    # Title and labels
+    title_fontsize: int = Field(default=16, description=_TITLE_FONTSIZE_DESCRIPTION)
+    label_fontsize: int = Field(default=14, description="Font size for axis labels.")
+    xlabel: Optional[str] = Field(
+        default=None, description="Override for the x-axis label (None uses a sensible default)."
+    )
+    ylabel: Optional[str] = Field(
+        default=None, description="Override for the y-axis label (None uses a sensible default)."
+    )
+    zlabel: Optional[str] = Field(
+        default=None, description="Override for the z-axis label (None uses a sensible default)."
+    )
+
+    # Legend
+    legend_loc: str = Field(
+        default="best", description="Location of the legend (matplotlib string, e.g. 'best', 'upper right')."
+    )
+    legend_fontsize: int = Field(default=12, description=_LEGEND_FONTSIZE_DESCRIPTION)
+    legend_frame: bool = Field(default=True, description=_LEGEND_FRAME_DESCRIPTION)
+
+    # Trajectory rendering
+    trajectory_style: Literal["scatter", "line"] = Field(
+        default="scatter",
+        description="How to render 2-D/3-D phase portraits: 'scatter' (points coloured by time) or 'line'.",
+    )
+    line_style: dict[str, Any] = Field(
+        default_factory=lambda: {"linestyle": "-", "linewidth": 1.5},
+        description="Line style used for 1-D series and 'line' trajectories.",
+    )
+    marker: Optional[str] = Field(
+        default=None, description="Matplotlib marker for 1-D series data points (e.g. 'o', None for no marker)."
+    )
+    marker_size: float = Field(default=6, description="Marker size for 1-D series markers.")
+    point_size: float = Field(default=6, description="Point size (area) for scatter trajectories.")
+    color_by_time: bool = Field(
+        default=True, description="Colour 2-D/3-D scatter trajectories by time index using a theme gradient."
+    )
+    colorbar: bool = Field(default=True, description="Show a colour bar for time when colouring trajectories by time.")
+
+    # Delay embedding
+    delay: int = Field(
+        default=1,
+        description="Delay (in samples) used to embed lower-dimensional series into a 2-D/3-D phase portrait.",
+    )
+
+    # Ticks
+    xtick_fontsize: int = Field(default=12, description="Font size for x-axis tick labels.")
+    ytick_fontsize: int = Field(default=12, description="Font size for y-axis tick labels.")
+
+    # Misc
+    tight_layout: bool = Field(default=True, description=_TIGHT_LAYOUT_DESCRIPTION)

@@ -45,7 +45,7 @@ py::object construct_result_object(const StabilizerStateSum& state, const py::ob
     Raises:
         py::value_error: If an unsupported readout method is provided.
     */
-    state.set_seed(static_cast<uint64_t>(config.get_seed()));
+    state.set_seed(static_cast<uint64_t>(config.next_seed()));
     py::list results;
     for (py::handle ro_handle : readout) {
         py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
@@ -943,6 +943,71 @@ SparseMatrix parse_initial_state(const py::object& initial_state, double atol, i
     return rho;
 }
 
+static void fill_state(DenseMatrix& state, long rows, long cols, Complex value) {
+    /*
+    Resize a dense state and set every entry to the same value, in parallel since
+    the state can be many gigabytes.
+
+    Args:
+        state (DenseMatrix&): The state to resize and fill.
+        rows (long): The number of rows.
+        cols (long): The number of columns.
+        value (Complex): The value to write to every entry.
+    */
+    state.resize(rows, cols);
+    const long n = state.size();
+    Complex* __restrict data = state.data();
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+    for (long i = 0; i < n; ++i) {
+        data[i] = value;
+    }
+}
+
+DenseMatrix parse_initial_state_as_dense(const py::object& initial_state, int n_qubits, const QiliSimConfig& config) {
+    /*
+    Build the dense initial state for a full-state simulation.
+
+    Symbolic initial states are built directly in C++, since a round trip through
+    scipy and Eigen sparse matrices overflows their int indices past 30 qubits.
+    A QTensor (or anything with a ``data`` attribute) is converted from its sparse data.
+
+    Args:
+        initial_state (py::object): The initial state as None, an InitialState or a QTensor.
+        n_qubits (int): The number of qubits.
+        config (QiliSimConfig&): The simulation configuration.
+
+    Returns:
+        DenseMatrix: The initial state (statevector, density matrix or batch of trajectories).
+    */
+    DenseMatrix state;
+    if (initial_state.is_none() || py::isinstance(initial_state, InitialState)) {
+        std::string state_name = initial_state.is_none() ? "ZERO" : initial_state.attr("name").cast<std::string>();
+        long dim = 1L << n_qubits;
+        if (state_name == "UNIFORM") {
+            fill_state(state, dim, 1, Complex(1.0 / std::sqrt(static_cast<double>(dim)), 0.0));
+        } else {
+            fill_state(state, dim, 1, Complex(0.0, 0.0));
+            state(state_name == "ONE" ? dim - 1 : 0, 0) = 1.0;
+        }
+        return state;
+    }
+    SparseMatrixCol initial_state_cpp = parse_initial_state(initial_state, config.get_atol(), n_qubits);
+
+    // Start the evolution from a normalized state, unless the user opts out
+    if (config.get_normalize_state()) {
+        normalize_state(initial_state_cpp);
+    }
+    fill_state(state, initial_state_cpp.rows(), initial_state_cpp.cols(), Complex(0.0, 0.0));
+    for (long k = 0; k < initial_state_cpp.outerSize(); ++k) {
+        for (SparseMatrixCol::InnerIterator it(initial_state_cpp, k); it; ++it) {
+            state(it.row(), it.col()) = it.value();
+        }
+    }
+    return state;
+}
+
 StabilizerStateSum parse_initial_state_stabilizer(const py::object& initial_state, int nqubits) {
     /*
     Extract the initial state as a StabilizerStateSum from a StabilizerState or StabilizerStateSum object.
@@ -996,12 +1061,16 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
     std::vector<Gate> gates;
     int nqubits = circuit.attr("nqubits").cast<int>();
     py::list py_gates = circuit.attr("gates");
-    for (auto py_gate : py_gates) {
+    for (auto py_gate_handle : py_gates) {
+        py::object py_gate = py::reinterpret_borrow<py::object>(py_gate_handle);
+
         // Get the name
         std::string gate_type_str = py_gate.attr("name").cast<std::string>();
 
         // If we have a noise model, check if this gate has parameter perturbation noise and apply if so
         if (!noise_model.is_none() && py_gate.attr("is_parameterized").cast<bool>()) {
+            py_gate = py::module_::import("copy").attr("deepcopy")(py_gate);
+
             // Get the parameters and noise maps
             py::dict gate_parameters = py_gate.attr("get_parameters")();
             py::dict global_noise_map = noise_model.attr("global_perturbations");
@@ -1055,8 +1124,7 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
         // Get the matrix (if it's not a measurement, since those don't have matrices)
         SparseMatrix base_matrix;
         if (gate_type_str != "M") {
-            py::buffer matrix = py_gate.attr("matrix");
-            base_matrix = from_numpy(matrix, atol);
+            base_matrix = from_spmatrix(py_gate.attr("matrix").attr("data"), atol);
         } else {
             base_matrix = SparseMatrix(2, 2);
             base_matrix.coeffRef(0, 0) = 1.0;

@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pathlib import Path
-
 import pytest
 
 import qilisdk.utils.serialization
@@ -24,7 +22,7 @@ from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.utils.serialization import DeserializationError, deserialize, deserialize_from, serialize, serialize_to
 
 
-def test_analog_evolution_algorithm_serialization():
+def test_analog_evolution_algorithm_serialization(tmp_path):
     T = 100
     dt = 1
 
@@ -53,28 +51,26 @@ def test_analog_evolution_algorithm_serialization():
     deserialized_analog_evolution = deserialize(serialized_analog_evolution, AnalogEvolution)
     assert isinstance(deserialized_analog_evolution, AnalogEvolution)
 
-    serialize_to(analog_evolution, "analog_evolution.yml")
-    deserialized_from_analog_evolution = deserialize_from("analog_evolution.yml", AnalogEvolution)
+    path = str(tmp_path / "analog_evolution.yml")
+    serialize_to(analog_evolution, path)
+    deserialized_from_analog_evolution = deserialize_from(path, AnalogEvolution)
     assert isinstance(deserialized_from_analog_evolution, AnalogEvolution)
 
-    Path("analog_evolution.yml").unlink()
 
-
-def test_deserialization_with_wrong_yaml_raises_error():
+def test_deserialization_with_wrong_yaml_raises_error(tmp_path):
     not_valid_yaml = "!SomeClass _property: 100"
 
     with pytest.raises(DeserializationError):
         _ = deserialize(not_valid_yaml)
 
-    Path("not_valid_yaml.yml").write_text(not_valid_yaml, encoding="utf-8")
+    path = tmp_path / "not_valid_yaml.yml"
+    path.write_text(not_valid_yaml, encoding="utf-8")
 
     with pytest.raises(DeserializationError):
-        _ = deserialize_from("not_valid_yaml.yml")
-
-    Path("not_valid_yaml.yml").unlink()
+        _ = deserialize_from(str(path))
 
 
-def test_deserialization_with_wrong_cls_raises_error():
+def test_deserialization_with_wrong_cls_raises_error(tmp_path):
     operator = X(0)
 
     serialized_operator = serialize(operator)
@@ -82,15 +78,14 @@ def test_deserialization_with_wrong_cls_raises_error():
     with pytest.raises(DeserializationError):
         _ = deserialize(serialized_operator, PauliY)
 
-    serialize_to(operator, "pauli_x.yml")
+    path = str(tmp_path / "pauli_x.yml")
+    serialize_to(operator, path)
 
     with pytest.raises(DeserializationError):
-        _ = deserialize_from("pauli_x.yml", PauliY)
-
-    Path("pauli_x.yml").unlink()
+        _ = deserialize_from(path, PauliY)
 
 
-def test_arbitrary_serialize_errors(monkeypatch):
+def test_arbitrary_serialize_errors(monkeypatch, tmp_path):
     def new_dump(*args, **kwargs):
         raise ValueError("Serialization error")
 
@@ -106,6 +101,4 @@ def test_arbitrary_serialize_errors(monkeypatch):
         _ = serialize(operator)
 
     with pytest.raises(Exception, match="Serialization error"):
-        serialize_to(operator, "pauli_x.yml")
-
-    Path("pauli_x.yml").unlink(missing_ok=True)
+        serialize_to(operator, str(tmp_path / "pauli_x.yml"))

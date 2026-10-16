@@ -215,7 +215,7 @@ Execution and Monte Carlo
 optional Monte Carlo trajectory sampling for open-system simulations.
 
 - ``num_threads`` controls the number of threads used for parallelization, defaults to using all available cores.
-- ``seed`` controls the random number generator seed, defaults to a random seed.
+- ``seed`` controls the random number generator seed, defaults to a random seed. Subsequent runs will increment the seed automatically.
 - ``monte_carlo=MonteCarloConfig(trajectories=N)`` enabled Monte Carlo sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled.
 - ``measurement_collapse`` controls whether measurements collapse the statevector in place (relevant for mid-circuit measurement and reservoirs) - defaults to ``False``.
 - ``normalize_state`` controls whether the state should be renormalized - defaults to ``True``.

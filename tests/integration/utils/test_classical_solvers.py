@@ -45,10 +45,8 @@ def _cost(model: Model, sample: dict[BaseVariable, Number]) -> float:
 def _solve(solver_name: str, model: Model) -> dict[BaseVariable, Number]:
     """Solve ``model`` with the named solver and return the sample assignment."""
     if solver_name == "scipy":
-        _, sample = ScipySolver(method="differential_evolution", seed=1).solve(model)
-        return sample
-    _, sample = ScipSolver().solve(model)
-    return sample
+        return ScipySolver(method="differential_evolution", seed=1).solve(model).sample
+    return ScipSolver().solve(model).sample
 
 
 SOLVERS = [
@@ -64,7 +62,7 @@ SOLVERS = [
 @pytest.mark.parametrize("solver_name", SOLVERS)
 def test_solves_knapsack(solver_name: str):
     model = Model.knapsack(values=[5, 4, 3], weights=[3, 2, 1], max_weight=3)
-    _, brute_sample = BruteForceSolver().solve(model)
+    brute_sample = BruteForceSolver().solve(model).sample
     sample = _solve(solver_name, model)
     assert np.isclose(_cost(model, sample), _cost(model, brute_sample))
 
@@ -72,7 +70,7 @@ def test_solves_knapsack(solver_name: str):
 @pytest.mark.parametrize("solver_name", SOLVERS)
 def test_solves_max_cut(solver_name: str):
     model = Model.max_cut(edges=[(0, 1), (1, 2), (2, 0), (2, 3)])
-    _, brute_sample = BruteForceSolver().solve(model)
+    brute_sample = BruteForceSolver().solve(model).sample
     sample = _solve(solver_name, model)
     assert np.isclose(_cost(model, sample), _cost(model, brute_sample))
 
@@ -80,7 +78,7 @@ def test_solves_max_cut(solver_name: str):
 @pytest.mark.parametrize("solver_name", SOLVERS)
 def test_solves_random_ising(solver_name: str):
     model = Model.random_ising(num_variables=8, seed=1)
-    _, brute_sample = BruteForceSolver().solve(model)
+    brute_sample = BruteForceSolver().solve(model).sample
     sample = _solve(solver_name, model)
     assert np.isclose(_cost(model, sample), _cost(model, brute_sample))
 

@@ -22,7 +22,7 @@
 
 // GCOV_EXCL_BR_START
 
-std::map<std::string, int> apply_readout_error(const std::map<std::string, int>& counts, const NoiseModelCpp& noise_model_cpp, int n_qubits) {
+std::map<std::string, int> apply_readout_error(const std::map<std::string, int>& counts, const NoiseModelCpp& noise_model_cpp, int n_qubits, int seed) {
     /*
     Apply readout error to the measurement counts.
 
@@ -30,12 +30,13 @@ std::map<std::string, int> apply_readout_error(const std::map<std::string, int>&
         counts (std::map<std::string, int>&): The original measurement counts without readout error.
         noise_model_cpp (NoiseModelCpp&): The noise model containing the readout error probabilities.
         n_qubits (int): The number of qubits in the circuit.
+        seed (int): Random seed for the readout error draws.
 
     Returns:
         std::map<std::string, int>: The new measurement counts after applying readout error
     */
     std::default_random_engine generator;
-    generator.seed(42);
+    generator.seed(seed);
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
     std::map<std::string, int> noisy_counts;
     for (const auto& pair : counts) {
@@ -122,11 +123,11 @@ static std::map<std::string, int> sample_from_outcome_probabilities(Eigen::Vecto
     }
 
     // Sample from these probabilities
-    std::map<std::string, int> counts = sample_from_probabilities(probabilities.data(), static_cast<std::size_t>(probabilities.size()), n_qubits, n_shots, config.get_seed());
+    std::map<std::string, int> counts = sample_from_probabilities(probabilities.data(), static_cast<std::size_t>(probabilities.size()), n_qubits, n_shots, config.next_seed());
 
     // Apply readout error to counts
     if (!noise_model_cpp.is_empty()) {
-        counts = apply_readout_error(counts, noise_model_cpp, n_qubits);
+        counts = apply_readout_error(counts, noise_model_cpp, n_qubits, config.next_seed());
     }
 
     // Only keep measured qubits in the counts

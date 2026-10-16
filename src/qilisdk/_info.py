@@ -12,14 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import ctypes
 import platform
 import subprocess  # ruff: ignore[suspicious-subprocess-import]
 import sys
 from math import ceil, log2
+from pathlib import Path
 
 import cpuinfo
-import GPUtil
 import psutil
+from loguru import logger
+
+# The AVX2 flags only ever get used when building for x86
+_X86_MACHINES = frozenset({"x86", "x86_64", "amd64", "i386", "i486", "i586", "i686"})
+
+# The Windows PF_AVX2_INSTRUCTIONS_AVAILABLE query
+_PF_AVX2 = 40
+
+_PROC_CPUINFO = Path("/proc/cpuinfo")
 
 
 def about() -> str:
@@ -69,33 +79,40 @@ def about() -> str:
     # System info
     cpu_info = cpuinfo.get_cpu_info()
     ram = round(2 ** ceil(log2(psutil.virtual_memory().total / (1024**3))))
-    try:  # This can fail if there are driver issues
-        gpus = GPUtil.getGPUs()
-    except ValueError:
-        gpus = []
-    nvidia_smi_output = None
+    gpu_name = None
+    gpu_vram = None
     cuda_version = "Not Found"
     nvidia_driver_version = "Not Found"
     try:
-        nvidia_smi_output = subprocess.check_output(  # ruff: ignore[subprocess-popen-with-shell-equals-true]
-            ["nvidia-smi | grep 'Driver'"],  # ruff: ignore[start-process-with-partial-path]
-            shell=True,
+        gpu_query = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"],  # ruff: ignore[start-process-with-partial-path]
+            stderr=subprocess.DEVNULL,
+        ).decode()
+        name, separator, vram = gpu_query.strip().splitlines()[0].partition(",")
+        if separator:
+            gpu_name = name.strip()
+            gpu_vram = round(int(vram) / 1024)
+    except (subprocess.CalledProcessError, FileNotFoundError, IndexError, ValueError):
+        pass
+    try:
+        nvidia_smi_output = subprocess.check_output(
+            ["nvidia-smi"],  # ruff: ignore[start-process-with-partial-path]
             stderr=subprocess.STDOUT,
         ).decode()
         cuda_version = nvidia_smi_output.split("CUDA Version:")[-1].split()[0]
         nvidia_driver_version = nvidia_smi_output.split("Driver Version:")[-1].split()[0]
-        nvidia_smi_output = nvidia_smi_output.replace("|", "")
-        nvidia_smi_output = nvidia_smi_output.strip()
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError, IndexError):
         pass
     info += f"Platform: {platform.system()} {platform.release()} ({platform.version()})\n"
     info += f"Processor: {platform.processor()}\n"
     info += f"CPU Info: {cpu_info.get('brand_raw', 'Unknown')}\n"
+    info += f"CPU AVX2 Support: {'Yes' if _cpu_has_avx2() else 'No'}\n"
     info += f"Number of CPU Cores: {psutil.cpu_count(logical=False)}\n"
     info += f"Number of Logical Processors: {psutil.cpu_count(logical=True)}\n"
     info += f"Available Memory: {ram} GB\n"
-    if gpus:
-        info += f"GPU Info: {gpus[0].name} with {int(gpus[0].memoryTotal // 1024)} GB VRAM\n"
+    if gpu_name is not None:
+        vram_info = f" with {gpu_vram} GB VRAM" if gpu_vram is not None else ""
+        info += f"GPU Info: {gpu_name}{vram_info}\n"
         info += f"CUDA Version: {cuda_version}\n"
         info += f"NVIDIA Driver Version: {nvidia_driver_version}\n"
     else:
@@ -166,3 +183,52 @@ def about() -> str:
 
     info = info.strip()
     return info.strip()
+
+
+def _cpu_has_avx2() -> bool:
+    """
+    Check whether this machine's CPU supports AVX2.
+
+    Returns:
+        bool: Whether AVX2 is available, assuming that it is if the platform gives no easy way of asking.
+    """
+    system = platform.system()
+    if system == "Linux":
+        try:
+            return "avx2" in _PROC_CPUINFO.read_text(encoding="utf-8", errors="replace").lower()
+        except OSError:
+            return True
+    if system == "Windows":
+        try:
+            return bool(ctypes.windll.kernel32.IsProcessorFeaturePresent(_PF_AVX2))  # ty:ignore[unresolved-attribute]
+        except (AttributeError, OSError):
+            return True
+    if system == "Darwin":
+        try:
+            sysctl = subprocess.run(
+                ["/usr/sbin/sysctl", "-n", "machdep.cpu.leaf7_features"],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=30,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return True
+        return "avx2" in sysctl.stdout.lower()
+    return True
+
+
+def warn_if_no_avx() -> None:
+    """
+    Warn if the C++ modules were probably compiled with instructions this CPU cannot run.
+
+    The modules are compiled for AVX2 + FMA by default, which a pre-2013 CPU has no way of
+    executing, so this is worth saying before anything tries to load them.
+    """
+    if platform.machine().lower() in _X86_MACHINES and not _cpu_has_avx2():
+        logger.warning(
+            "This CPU does not support AVX2, but the QiliSDK C++ modules are compiled with AVX2 and FMA by default, so "
+            "they may be slow or crash outright. If that happens, reinstall QiliSDK from source with those instructions "
+            "disabled, for example 'uv sync -Ccmake.define.no_avx=ON' or 'pip install --no-binary qilisdk "
+            "-Ccmake.define.no_avx=ON qilisdk'."
+        )

@@ -62,11 +62,28 @@ def test_no_seed():
     backend = QiliSim(execution_config=ExecutionConfig(seed=None, num_threads=1))
     seed = backend.get_config()["seed"]
     assert isinstance(seed, int)
-    assert 0 <= seed < 2**15
+    assert 0 <= seed < 2**31 - 1
 
 
 @pytest.mark.parametrize("method", digital_methods)
-def test_monte_carlo_circuit(method):
+@pytest.mark.parametrize(
+    ("initial_state", "expected"),
+    [
+        (InitialState.ZERO, {"100"}),
+        (InitialState.ONE, {"011"}),
+        (InitialState.UNIFORM, {f"{i:03b}" for i in range(8)}),
+    ],
+)
+def test_digital_symbolic_initial_state(method, initial_state, expected):
+    backend = QiliSim(digital_simulation_method=method, execution_config=ExecutionConfig(seed=42, num_threads=1))
+    circuit = Circuit(nqubits=3)
+    circuit.add(X(0))
+    readout = [SamplingReadout(nshots=1000)]
+    result = backend._execute_digital_propagation(
+        DigitalPropagation(circuit=circuit), readout=readout, initial_state=initial_state
+    )
+    samples = result.get_samples()
+    assert set(samples) == expected
     p = 0.2
     initial_state_1 = ket(0).unit()
     initial_state_2 = ket(1).unit()
@@ -79,7 +96,7 @@ def test_monte_carlo_circuit(method):
     circuit.add(H(0))
     readout = [SamplingReadout(nshots=100)]
     result = backend._execute_digital_propagation(
-        DigitalPropagation(circuit=circuit), readout=readout, initial_state=initial_state
+        DigitalPropagation(circuit=circuit, initial_state=initial_state), readout=readout
     )
     assert isinstance(result, FunctionalResult)
     samples = result.get_samples()
@@ -130,6 +147,73 @@ def test_seed_different(method):
     result1 = backend1.execute(DigitalPropagation(circuit=circuit), readout=readout)
     result2 = backend2.execute(DigitalPropagation(circuit=circuit), readout=readout)
     assert result1.get_samples() != result2.get_samples()
+
+
+@pytest.mark.parametrize("method", digital_methods)
+def test_seed_different_between_calls_on_one_backend(method):
+    # The seed is a root seed, not a per-call seed: repeating an execution on one backend has
+    # to give fresh randomness, otherwise anything measuring statistical spread sees zero variance.
+    for seed in (42, None):
+        backend = QiliSim(execution_config=ExecutionConfig(seed=seed, num_threads=1), digital_simulation_method=method)
+        circuit = Circuit(nqubits=2)
+        circuit.add(H(0))
+        circuit.add(H(1))
+        readout = Readout().with_sampling(nshots=500)
+        samples = [
+            backend.execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples() for _ in range(3)
+        ]
+        assert samples[0] != samples[1]
+        assert samples[1] != samples[2]
+        assert samples[0] != samples[2]
+
+
+@pytest.mark.parametrize("method", digital_methods)
+def test_seed_reproduces_whole_sequence_of_calls(method):
+    # An explicit seed must reproduce the entire sequence of executions, not just the first one.
+    def run_sequence():
+        backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
+        circuit = Circuit(nqubits=2)
+        circuit.add(H(0))
+        circuit.add(H(1))
+        readout = Readout().with_sampling(nshots=500)
+        return [backend.execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples() for _ in range(4)]
+
+    first_run = run_sequence()
+    second_run = run_sequence()
+    assert first_run == second_run
+
+
+def test_reset_seed_rewinds_the_stream():
+    # reset_seed puts the backend's random stream back to where it started, so the next
+    # execution repeats the first one.
+    backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    circuit.add(H(1))
+    readout = Readout().with_sampling(nshots=500)
+
+    first = backend.execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples()
+    backend.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    backend.qili_sim.reset_seed()
+    assert backend.execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples() == first
+
+
+@pytest.mark.parametrize("method", digital_methods)
+def test_intermediate_and_final_draws_are_independent(method):
+    # Mid-circuit and final sampling used to share the seed, making them perfectly correlated.
+    backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    circuit.add(M(0))
+    circuit.add(X(1))
+    circuit.add(M(0))
+    circuit.add(M(1))
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=Readout().with_sampling(nshots=1000))
+
+    intermediate = result.intermediate_results[0].get_samples()
+    final = result.get_samples()
+    # Same marginal distribution on qubit 0, but drawn from independent streams
+    assert sorted(intermediate.values()) != sorted(final.values())
 
 
 @pytest.mark.parametrize("method", analog_methods)
@@ -183,9 +267,11 @@ def test_monte_carlo_time_evolution(method):
     mix = 0.2
     psi0 = ((1 - mix) * psi0 + mix * psi1).unit()
 
+    # 100 trajectories give this estimator a standard deviation of ~0.05, which is most of the
+    # tolerance below; use enough trajectories that the check does not depend on the draw.
     backend = QiliSim(
         analog_simulation_method=method,
-        execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=_MONTE_CARLO_CONFIG),
+        execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=MonteCarloConfig(trajectories=2000)),
     )
     res = backend.execute(
         AnalogEvolution(schedule=schedule, initial_state=psi0),
@@ -564,7 +650,6 @@ def _make_many_qubit_annealing_schedule(nqubits):
     ],
 )
 def test_variational_annealing_runs(readout):
-
     backend = QiliSim(
         analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=100, warmups=5),
         execution_config=ExecutionConfig(seed=42, num_threads=1),
@@ -603,7 +688,6 @@ def test_variational_annealing_wrong_initial_state_raises():
 
 
 def test_variational_annealing_non_x_first_hamiltonian_raises():
-
     bad_schedule = Schedule(
         dt=1,
         hamiltonians={"h_z1": pauli_z(0), "h_z2": pauli_z(0)},
@@ -621,7 +705,6 @@ def test_variational_annealing_non_x_first_hamiltonian_raises():
 
 
 def test_variational_annealing_non_z_final_hamiltonian_raises():
-
     bad_schedule = Schedule(
         dt=1,
         hamiltonians={"h_x": pauli_x(0), "h_y": pauli_y(0)},
@@ -1048,3 +1131,32 @@ def test_same_result_as_statevector_big_circuit():
 
     # Check to make sure the keys are the same (i.e. no unexpected outcomes)
     assert set(stab_result.keys()) == set(sv_result.keys()), f"Different outcome keys: {stab_result} vs {sv_result}"
+
+
+def test_qtensor_sample_is_unaffected_by_backend_thread_count():
+    """QTensor.sample has no thread knob of its own, and ``omp_set_num_threads`` is process
+    global, so a QiliSim run which sets the thread count used to change the counts every later
+    sample produced from the same seed. The seed alone must fix the outcome."""
+    qtensor = QTensor.uniform(3)
+    before = qtensor.sample(nshots=1000, seed=42)
+
+    circuit = Circuit(nqubits=1)
+    circuit.add(H(0))
+    QiliSim(execution_config=ExecutionConfig(num_threads=1, seed=1)).execute(
+        DigitalPropagation(circuit=circuit), readout=Readout().with_sampling(nshots=1)
+    )
+
+    assert qtensor.sample(nshots=1000, seed=42) == before
+
+
+def test_stabilizer_state_tomography_rejects_too_many_qubits():
+    """A stabilizer state of 32 qubits used to overflow ``1 << nqubits`` and hand back a 1x1
+    QTensor with nqubits == 0. Converting to a dense object must fail loudly instead."""
+    circuit = Circuit(nqubits=32)
+    circuit.add(H(0))
+    readout = Readout().with_state_tomography()
+    backend = _stabilizer_backend()
+    propagation = DigitalPropagation(circuit=circuit)
+
+    with pytest.raises(ValueError, match="too big to convert to a dense object"):
+        backend.execute(propagation, readout=readout)

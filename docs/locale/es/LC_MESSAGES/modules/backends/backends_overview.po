@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-27 17:03+0200\n"
+"POT-Creation-Date: 2026-08-28 14:44+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -44,10 +44,10 @@ msgstr ""
 
 #: ../../modules/backends/backends_overview.rst:8
 msgid ""
-":doc:`CUDA <backends_cuda>`: A GPU-accelerated backend leveraging NVIDIA "
-"hardware for large-scale simulations."
+":doc:`CUDA-Q <backends_cudaq>`: A GPU-accelerated backend leveraging "
+"NVIDIA hardware for large-scale simulations."
 msgstr ""
-":doc:`CUDA <backends_cuda>`: Un backend con aceleración GPU que aprovecha"
+":doc:`CUDA-Q <backends_cudaq>`: Un backend con aceleración GPU que aprovecha"
 " el hardware de NVIDIA para simulaciones a gran escala."
 
 #: ../../modules/backends/backends_overview.rst:9
@@ -62,25 +62,15 @@ msgstr ""
 
 #: ../../modules/backends/backends_overview.rst:13
 msgid ""
-"Backends other than QiliSim are optional; to install one, include its "
-"extra when installing QILISDK:"
+"Backends other than QiliSim run on third-party frameworks that QiliSDK "
+"does not distribute. Install the framework yourself and the backend "
+"becomes available:"
 msgstr ""
-"Los backends distintos de QiliSim son opcionales; para instalar uno, "
-"incluya su extra al instalar QILISDK:"
+"Los backends distintos de QiliSim funcionan sobre frameworks de terceros "
+"que QiliSDK no distribuye. Instale el framework usted mismo y el backend "
+"quedará disponible:"
 
-#: ../../modules/backends/backends_overview.rst:17
-msgid "Linux"
-msgstr "Linux"
-
-#: ../../modules/backends/backends_overview.rst:23
-msgid "Mac OSX"
-msgstr "Mac OSX"
-
-#: ../../modules/backends/backends_overview.rst:29
-msgid "Windows"
-msgstr "Windows"
-
-#: ../../modules/backends/backends_overview.rst:35
+#: ../../modules/backends/backends_overview.rst:21
 msgid ""
 "For more information check the :doc:`../../getting_started/installation` "
 "page."
@@ -88,7 +78,7 @@ msgstr ""
 "Para más información, consulte la página "
 ":doc:`../../getting_started/installation`."
 
-#: ../../modules/backends/backends_overview.rst:37
+#: ../../modules/backends/backends_overview.rst:23
 msgid ""
 "Once installed, any primitive functional can be executed by passing it to"
 " the backend's :meth:`~qilisdk.backends.backend.Backend.execute` method "
@@ -98,11 +88,11 @@ msgstr ""
 "pasándolo al método :meth:`~qilisdk.backends.backend.Backend.execute` del"
 " backend junto con las especificaciones de lectura:"
 
-#: ../../modules/backends/backends_overview.rst:52
+#: ../../modules/backends/backends_overview.rst:38
 msgid "Architecture Overview"
 msgstr "Descripción general de la arquitectura"
 
-#: ../../modules/backends/backends_overview.rst:54
+#: ../../modules/backends/backends_overview.rst:40
 msgid ""
 "All concrete backends subclass "
 ":class:`~qilisdk.backends.backend.Backend`, which centralizes the "
@@ -134,7 +124,7 @@ msgstr ""
 "programas variacionales mediante llamadas repetidas al funcional "
 "primitivo parametrizado subyacente."
 
-#: ../../modules/backends/backends_overview.rst:61
+#: ../../modules/backends/backends_overview.rst:47
 msgid ""
 "Backends register handlers for the functionals they support. If a "
 "functional is not implemented, "
@@ -147,11 +137,11 @@ msgstr ""
 "``NotImplementedError`` para detectar la incompatibilidad de forma "
 "temprana."
 
-#: ../../modules/backends/backends_overview.rst:65
+#: ../../modules/backends/backends_overview.rst:51
 msgid "Hardware & Dependencies"
 msgstr "Hardware y dependencias"
 
-#: ../../modules/backends/backends_overview.rst:67
+#: ../../modules/backends/backends_overview.rst:53
 msgid ""
 "Installing a backend extra pulls in the library stack required for that "
 "simulator. GPU backends also expect compatible drivers to be present on "
@@ -161,76 +151,76 @@ msgstr ""
 "para ese simulador. Los backends de GPU también requieren que haya "
 "controladores compatibles presentes en el sistema."
 
-#: ../../modules/backends/backends_overview.rst:74
-#: ../../modules/backends/backends_overview.rst:106
+#: ../../modules/backends/backends_overview.rst:60
+#: ../../modules/backends/backends_overview.rst:92
 msgid "Backend"
 msgstr "Backend"
 
-#: ../../modules/backends/backends_overview.rst:75
+#: ../../modules/backends/backends_overview.rst:61
 msgid "Extra"
 msgstr "Extra"
 
-#: ../../modules/backends/backends_overview.rst:76
+#: ../../modules/backends/backends_overview.rst:62
 msgid "Key dependency"
 msgstr "Dependencia principal"
 
-#: ../../modules/backends/backends_overview.rst:77
+#: ../../modules/backends/backends_overview.rst:63
 msgid "Notes"
 msgstr "Notas"
 
-#: ../../modules/backends/backends_overview.rst:78
-#: ../../modules/backends/backends_overview.rst:111
+#: ../../modules/backends/backends_overview.rst:64
+#: ../../modules/backends/backends_overview.rst:97
 msgid ":class:`QiliSim <qilisdk.backends.qilisim.QiliSim>`"
 msgstr ":class:`QiliSim <qilisdk.backends.qilisim.QiliSim>`"
 
-#: ../../modules/backends/backends_overview.rst:79
+#: ../../modules/backends/backends_overview.rst:65
 msgid "--"
 msgstr "--"
 
-#: ../../modules/backends/backends_overview.rst:80
+#: ../../modules/backends/backends_overview.rst:66
 msgid "None"
 msgstr "Ninguna"
 
-#: ../../modules/backends/backends_overview.rst:81
-#: ../../modules/backends/backends_overview.rst:89
+#: ../../modules/backends/backends_overview.rst:67
+#: ../../modules/backends/backends_overview.rst:75
 msgid "CPU based; no special hardware needs."
 msgstr "Basado en CPU; no requiere hardware especial."
 
-#: ../../modules/backends/backends_overview.rst:82
-#: ../../modules/backends/backends_overview.rst:116
-msgid ":class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`"
-msgstr ":class:`CudaBackend <qilisdk.backends.cuda_backend.CudaBackend>`"
+#: ../../modules/backends/backends_overview.rst:68
+#: ../../modules/backends/backends_overview.rst:102
+msgid ":class:`CudaqBackend <qilisdk.backends.cudaq_backend.CudaqBackend>`"
+msgstr ":class:`CudaqBackend <qilisdk.backends.cudaq_backend.CudaqBackend>`"
 
-#: ../../modules/backends/backends_overview.rst:83
+#: ../../modules/backends/backends_overview.rst:69
 msgid "``cuda``"
 msgstr "``cuda``"
 
-#: ../../modules/backends/backends_overview.rst:84
+#: ../../modules/backends/backends_overview.rst:70
 msgid "`cuda-quantum <https://github.com/NVIDIA/cuda-quantum>`_"
 msgstr "`cuda-quantum <https://github.com/NVIDIA/cuda-quantum>`_"
 
-#: ../../modules/backends/backends_overview.rst:85
+#: ../../modules/backends/backends_overview.rst:71
 msgid "Requires NVIDIA hardware with recent drivers."
 msgstr "Requiere hardware NVIDIA con controladores recientes."
 
-#: ../../modules/backends/backends_overview.rst:86
-#: ../../modules/backends/backends_overview.rst:121
+#: ../../modules/backends/backends_overview.rst:72
+#: ../../modules/backends/backends_overview.rst:107
 msgid ":class:`QutipBackend <qilisdk.backends.qutip_backend.QutipBackend>`"
 msgstr ":class:`QutipBackend <qilisdk.backends.qutip_backend.QutipBackend>`"
 
-#: ../../modules/backends/backends_overview.rst:87
+#: ../../modules/backends/backends_overview.rst:73
 msgid "``qutip``"
 msgstr "``qutip``"
 
-#: ../../modules/backends/backends_overview.rst:88
+#: ../../modules/backends/backends_overview.rst:74
 msgid "`QuTiP <https://qutip.org/>`_"
 msgstr "`QuTiP <https://qutip.org/>`_"
 
-#: ../../modules/backends/backends_overview.rst:92
+#: ../../modules/backends/backends_overview.rst:78
 msgid "Functional Support"
 msgstr "Soporte de funcionales"
 
-#: ../../modules/backends/backends_overview.rst:94
+#: ../../modules/backends/backends_overview.rst:80
 msgid ""
 "The table below summarizes which primitive :mod:`~qilisdk.functionals` "
 "each backend can execute."
@@ -238,15 +228,15 @@ msgstr ""
 "La tabla siguiente resume qué :mod:`~qilisdk.functionals` primitivos "
 "puede ejecutar cada backend."
 
-#: ../../modules/backends/backends_overview.rst:96
+#: ../../modules/backends/backends_overview.rst:82
 msgid "Legend:"
 msgstr "Leyenda:"
 
-#: ../../modules/backends/backends_overview.rst:98
+#: ../../modules/backends/backends_overview.rst:84
 msgid "|y| Fully supported by the backend's native simulator."
 msgstr "|y| Totalmente soportado por el simulador nativo del backend."
 
-#: ../../modules/backends/backends_overview.rst:99
+#: ../../modules/backends/backends_overview.rst:85
 msgid ""
 "|p| Partially supported — see the per-backend page for the exact "
 "limitation."
@@ -254,61 +244,80 @@ msgstr ""
 "|p| Parcialmente soportado — consulta la página de cada backend para ver "
 "la limitación exacta."
 
-#: ../../modules/backends/backends_overview.rst:100
+#: ../../modules/backends/backends_overview.rst:86
 msgid "|n| Not supported."
 msgstr "|n| No soportado."
 
-#: ../../modules/backends/backends_overview.rst:107
+#: ../../modules/backends/backends_overview.rst:93
 msgid "DigitalPropagation"
 msgstr "DigitalPropagation"
 
-#: ../../modules/backends/backends_overview.rst:108
+#: ../../modules/backends/backends_overview.rst:94
 msgid "AnalogEvolution"
 msgstr "AnalogEvolution"
 
-#: ../../modules/backends/backends_overview.rst:109
+#: ../../modules/backends/backends_overview.rst:95
 msgid "QuantumReservoir"
 msgstr "QuantumReservoir"
 
-#: ../../modules/backends/backends_overview.rst:110
+#: ../../modules/backends/backends_overview.rst:96
 msgid "VariationalProgram"
 msgstr "VariationalProgram"
 
-#: ../../modules/backends/backends_overview.rst:112
-#: ../../modules/backends/backends_overview.rst:113
-#: ../../modules/backends/backends_overview.rst:114
-#: ../../modules/backends/backends_overview.rst:115
-#: ../../modules/backends/backends_overview.rst:117
-#: ../../modules/backends/backends_overview.rst:118
-#: ../../modules/backends/backends_overview.rst:120
-#: ../../modules/backends/backends_overview.rst:122
-#: ../../modules/backends/backends_overview.rst:123
-#: ../../modules/backends/backends_overview.rst:125
+#: ../../modules/backends/backends_overview.rst:98
+#: ../../modules/backends/backends_overview.rst:99
+#: ../../modules/backends/backends_overview.rst:100
+#: ../../modules/backends/backends_overview.rst:101
+#: ../../modules/backends/backends_overview.rst:103
+#: ../../modules/backends/backends_overview.rst:104
+#: ../../modules/backends/backends_overview.rst:106
+#: ../../modules/backends/backends_overview.rst:108
+#: ../../modules/backends/backends_overview.rst:109
+#: ../../modules/backends/backends_overview.rst:111
 msgid "|y|"
 msgstr "|y|"
 
-#: ../../modules/backends/backends_overview.rst:119
-#: ../../modules/backends/backends_overview.rst:124
+#: ../../modules/backends/backends_overview.rst:105
+#: ../../modules/backends/backends_overview.rst:110
 msgid "|p|"
 msgstr "|p|"
 
-#: ../../modules/backends/backends_overview.rst:129
+#: ../../modules/backends/backends_overview.rst:115
 msgid ""
 "``QuantumReservoir`` is fully native only on QiliSim. On the "
-":class:`CudaBackend` and :class:`QutipBackend` the ``Circuit`` reservoir "
-"steps are evaluated as dense QTensor unitaries on CPU, while ``Schedule``"
-" steps still use the backend's native analog solver. Attaching a "
-":class:`~qilisdk.noise.NoiseModel` to a reservoir run is ignored on both "
-":class:`CudaBackend` and :class:`QutipBackend`. (a warning is logged)."
+":class:`CudaqBackend` and :class:`QutipBackend` the ``Circuit`` reservoir"
+" steps are evaluated as dense QTensor unitaries on CPU, while "
+"``Schedule`` steps still use the backend's native analog solver. "
+"Attaching a :class:`~qilisdk.noise.NoiseModel` to a reservoir run is "
+"ignored on both :class:`CudaqBackend` and :class:`QutipBackend`. (a "
+"warning is logged)."
 msgstr ""
 "``QuantumReservoir`` solo es totalmente nativo en QiliSim. En "
-":class:`CudaBackend` y :class:`QutipBackend`, los pasos ``Circuit`` del "
+":class:`CudaqBackend` y :class:`QutipBackend`, los pasos ``Circuit`` del "
 "reservorio se evalúan como unitarios QTensor densos en CPU, mientras que "
 "los pasos ``Schedule`` siguen utilizando el solver analógico nativo del "
 "backend. Asociar un :class:`~qilisdk.noise.NoiseModel` a una ejecución de"
-" reservorio se ignora tanto en :class:`CudaBackend` como en "
+" reservorio se ignora tanto en :class:`CudaqBackend` como en "
 ":class:`QutipBackend` (se emite un aviso en el log)."
 
 #~ msgid "``qilisim``"
 #~ msgstr "``qilisim``"
+
+#~ msgid ""
+#~ "Backends other than QiliSim are "
+#~ "optional; to install one, include its"
+#~ " extra when installing QILISDK:"
+#~ msgstr ""
+#~ "Los backends distintos de QiliSim son"
+#~ " opcionales; para instalar uno, incluya "
+#~ "su extra al instalar QILISDK:"
+
+#~ msgid "Linux"
+#~ msgstr "Linux"
+
+#~ msgid "Mac OSX"
+#~ msgstr "Mac OSX"
+
+#~ msgid "Windows"
+#~ msgstr "Windows"
 

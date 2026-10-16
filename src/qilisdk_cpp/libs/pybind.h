@@ -44,6 +44,8 @@ extern py::object logger;
 extern py::object logger_core;
 
 // Internal types
+extern py::object QUBO;
+extern py::object BaseVariable;
 extern py::object Circuit;
 extern py::object Schedule;
 extern py::object DigitalPropagation;
@@ -78,6 +80,9 @@ void finalize_all_pybind_types();
 void info(std::string message);
 void warning(std::string message);
 void error(std::string message);
+
+// This should be called regularly during long-running loops to check for things like Ctrl-C
+void check_signals();
 
 #pragma GCC visibility pop
 
