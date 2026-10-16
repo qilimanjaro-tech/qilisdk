@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
+
 #include "../../../libs/pybind.h"
 #include "../utils/matrix_utils.h"
 #include "iterations.h"
@@ -204,7 +206,7 @@ DenseMatrix iter_arnoldi(const DenseMatrix& rho_0, double dt, const SparseMatrix
             subspace_dim = int(V.size());
         } else if (!is_unitary) {
             arnoldi(L, rho_t, arnoldi_dim, V, A, atol);
-            subspace_dim = int(V.size()) - 1;
+            subspace_dim = std::min(int(V.size()), arnoldi_dim);
         } else {
             arnoldi_mat(currentH, rho_t, arnoldi_dim, V, A, atol);
             subspace_dim = int(V.size());
@@ -348,11 +350,11 @@ DenseMatrix iter_arnoldi_matrix_free(const DenseMatrix& rho_0, double dt, const 
             V.push_back(w);
         }
 
-        // The vectorized (non-unitary) case drops the trailing residual vector, while
-        // the state-vector and unitary density-matrix cases keep the full basis
+        // The non-unitary case drops the trailing residual vector (only present if the space did not close early),
+        // while the state-vector and unitary density-matrix cases keep the full basis
         subspace_dim = int(V.size());
         if (!is_unitary && !is_unitary_on_statevector) {
-            subspace_dim = int(V.size()) - 1;
+            subspace_dim = std::min(int(V.size()), arnoldi_dim);
         }
         A.conservativeResize(subspace_dim, subspace_dim);
         V.resize(subspace_dim);

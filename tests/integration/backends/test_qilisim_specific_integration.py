@@ -29,7 +29,7 @@ from qilisdk.core.qtensor import InitialState, QTensor, expect_val, ket
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, T, X, Y, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
-from qilisdk.noise import AmplitudeDamping, Dephasing, Depolarizing, NoiseModel
+from qilisdk.noise import AmplitudeDamping, Dephasing, Depolarizing, LindbladGenerator, NoiseModel
 from qilisdk.readout import ExpectationReadout, Readout, SamplingReadout, StateTomographyReadout
 
 random.seed(42)
@@ -1314,6 +1314,48 @@ def test_monte_carlo_reservoir_layers_stay_unbiased():
     sampled = _run(4000)
     assert np.allclose(sampled.get_expectation_values(), deterministic.get_expectation_values(), atol=0.05)
     assert np.isclose(np.trace(sampled.get_state().dense()), 1.0, atol=1e-6)
+
+
+@pytest.mark.parametrize("method", [AnalogMethod.arnoldi(matrix_free=True), AnalogMethod.integrator(matrix_free=True)])
+@pytest.mark.parametrize("trajectories", [None, 4000])
+def test_matrix_free_time_dependent_rate_matches_direct(method, trajectories):
+    """A rate gamma(t) = 3t must be applied step by step by the matrix-free methods, both
+    deterministically and when unravelled into quantum jumps, matching the direct evolution."""
+    noise_model = NoiseModel()
+    decay = QTensor(np.array([[0, 1], [0, 0]], dtype=complex))
+    noise_model.add(LindbladGenerator(jump_operators=[decay], rates=[lambda t: 3.0 * t]), qubits=[0])
+    schedule = Schedule(dt=0.01, hamiltonians={"h": pauli_z(0) + 0.3 * pauli_x(0)}, coefficients={"h": {(0, 1.0): 1.0}})
+    readout = Readout().with_expectation(observables=[pauli_z(0)])
+
+    def _run(analog_method, monte_carlo):
+        backend = QiliSim(
+            analog_simulation_method=analog_method,
+            noise_model=noise_model,
+            execution_config=ExecutionConfig(seed=7, num_threads=1, monte_carlo=monte_carlo),
+        )
+        result = backend.execute(AnalogEvolution(schedule=schedule, initial_state=ket(1)), readout=readout)
+        return np.real(result.get_expectation_values()[0])
+
+    reference = _run(AnalogMethod.direct(), None)
+    sampled = _run(method, MonteCarloConfig(trajectories=trajectories) if trajectories else None)
+    assert np.isclose(sampled, reference, atol=0.05 if trajectories else 1e-3)
+    # The decay has to be visible, otherwise the comparison above proves nothing
+    assert reference > 0.5
+
+
+@pytest.mark.parametrize("matrix_free", [False, True])
+def test_arnoldi_lindblad_keeps_basis_when_krylov_space_closes_early(matrix_free):
+    """Decay under a commuting Hamiltonian closes the Krylov space after two vectors, which must all be
+    kept: <Z>(T) = 1 - 2 exp(-gamma T)."""
+    noise_model = NoiseModel()
+    noise_model.add(AmplitudeDamping(t1=1.0))
+    schedule = Schedule(dt=0.01, hamiltonians={"hz": pauli_z(0)}, coefficients={"hz": {(0, 1.0): 1.0}})
+    backend = QiliSim(analog_simulation_method=AnalogMethod.arnoldi(matrix_free=matrix_free), noise_model=noise_model)
+    result = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=ket(1)),
+        readout=Readout().with_expectation(observables=[pauli_z(0)]),
+    )
+    assert np.isclose(np.real(result.get_expectation_values()[0]), 1.0 - 2.0 * np.exp(-1.0), atol=1e-3)
 
 
 @pytest.mark.parametrize("num_threads", [1, 4])

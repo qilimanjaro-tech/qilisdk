@@ -170,8 +170,9 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
         is_statevector = false;
     }
 
-    // Object for handling the seeds of each trajectory
-    TrajectoryUnraveling unraveling(config.next_seed());
+    // Object for handling the seeds of each trajectory, only drawing a seed when noise is unravelled
+    bool use_kraus_unraveling = monte_carlo && has_noise;
+    TrajectoryUnraveling unraveling(use_kraus_unraveling ? config.next_seed() : 0);
 
     // Whether the columns of `state` are currently Monte Carlo trajectories
     bool state_is_trajectories = monte_carlo;
@@ -422,8 +423,9 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseMod
         is_statevector = false;
     }
 
-    // Draws the noise outcome of each individual trajectory
-    TrajectoryUnraveling unraveling(config.next_seed());
+    // Draws the noise outcome of each individual trajectory, only drawing a seed when noise is unravelled
+    bool use_kraus_unraveling = monte_carlo && has_noise;
+    TrajectoryUnraveling unraveling(use_kraus_unraveling ? config.next_seed() : 0);
 
     // Whether the columns of `state` are currently Monte Carlo trajectories
     bool state_is_trajectories = monte_carlo;

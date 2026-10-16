@@ -127,7 +127,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
 
     // With trajectories and jump operators the noise is unravelled into quantum jumps
     bool use_jump_unraveling = !is_unitary_dynamics && (use_monte_carlo || input_is_trajectories);
-    TrajectoryUnraveling unraveling(config.next_seed());
+    TrajectoryUnraveling unraveling(use_jump_unraveling ? config.next_seed() : 0);
     SparseMatrix jump_drift;
     const std::vector<SparseMatrix> no_jumps;
     if (use_jump_unraveling) {
@@ -336,7 +336,7 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
 
     // With trajectories and jump operators the noise is unravelled into quantum jumps
     bool use_jump_unraveling = !is_unitary_dynamics && (use_monte_carlo || input_is_trajectories);
-    TrajectoryUnraveling unraveling(config.next_seed());
+    TrajectoryUnraveling unraveling(use_jump_unraveling ? config.next_seed() : 0);
     SparseMatrix jump_drift;
     const std::vector<SparseMatrix> no_jumps;
     const bool normalize_in_step = config.get_normalize_state() && !use_jump_unraveling;
@@ -360,6 +360,24 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
         } else {
             intermediate_rhos.push_back(current);
         }
+    };
+
+    // Re-scale each time-dependent jump operator by sqrt(rate(t)) at a step, keeping the jump drift in sync
+    auto jumps_at_step = [&](size_t step_ind) -> const std::vector<SparseMatrix>& {
+        if (!has_time_dependent_jumps) {
+            return jump_operators;
+        }
+        for (size_t j = 0; j < jump_operators.size(); ++j) {
+            if (jump_rate_series[j].empty()) {
+                step_jumps[j] = jump_operators[j];
+            } else {
+                step_jumps[j] = jump_operators[j] * jump_rate_series[j][step_ind];
+            }
+        }
+        if (use_jump_unraveling) {
+            jump_drift = jump_drift_operator(step_jumps);
+        }
+        return step_jumps;
     };
 
     // If doing adaptive step size with rk45
@@ -431,23 +449,8 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
             double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
             double dt = step_list[step_ind] - t_start;
 
-            // For time-dependent rates, re-scale each base jump operator by sqrt(rate(t)) at this
-            // step (piecewise-constant within the step, sampled at t = step_list[step_ind]).
-            if (has_time_dependent_jumps) {
-                for (size_t j = 0; j < jump_operators.size(); ++j) {
-                    if (jump_rate_series[j].empty()) {
-                        step_jumps[j] = jump_operators[j];
-                    } else {
-                        step_jumps[j] = jump_operators[j] * jump_rate_series[j][step_ind];
-                    }
-                }
-            }
-            const std::vector<SparseMatrix>& current_jumps = has_time_dependent_jumps ? step_jumps : jump_operators;
-
-            // A time-dependent rate changes the drift at every step
-            if (use_jump_unraveling && has_time_dependent_jumps) {
-                jump_drift = jump_drift_operator(current_jumps);
-            }
+            // Rates are piecewise-constant within the step, sampled at t = step_list[step_ind]
+            const std::vector<SparseMatrix>& current_jumps = jumps_at_step(step_ind);
 
             // Perform the iteration
             iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, use_jump_unraveling ? no_jumps : current_jumps, is_unitary_on_statevector, normalize_in_step, jump_drift_ptr);
@@ -486,15 +489,18 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
                 dt = step_list[step_ind] - step_list[step_ind - 1];
             }
 
+            // Rates are piecewise-constant within the step, sampled at t = step_list[step_ind]
+            const std::vector<SparseMatrix>& current_jumps = jumps_at_step(step_ind);
+
             // Perform the iteration
-            rho_t = iter_arnoldi_matrix_free(rho_t, dt, currentH, integrator_jumps, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol(), !use_jump_unraveling, jump_drift_ptr);
+            rho_t = iter_arnoldi_matrix_free(rho_t, dt, currentH, use_jump_unraveling ? no_jumps : current_jumps, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol(), !use_jump_unraveling, jump_drift_ptr);
 
             // Stop early if the integrator has diverged to a non-finite state
             check_state_diverged(rho_t);
 
             // Renormalize each trajectory and let the norm it lost decide whether it jumps
             if (use_jump_unraveling) {
-                unraveling.apply_jumps(rho_t, jump_operators);
+                unraveling.apply_jumps(rho_t, current_jumps);
             }
 
             // If we should store intermediates, do it here
