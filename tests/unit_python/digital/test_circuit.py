@@ -892,3 +892,18 @@ def test_gate_still_supports_addition_with_a_circuit():
     circuit.add(X(0))
     result = Y(0) + circuit
     assert result.gates == [Y(0), X(0)]
+
+
+def test_gate_minus_gate_is_not_supported():
+    """Subtracting one gate from another raises the usual TypeError."""
+    first, second = X(0), Y(0)
+    with pytest.raises(TypeError, match="unsupported operand type"):
+        _ = first - second
+
+
+def test_gate_minus_analog_hamiltonian_raises_helpful_error():
+    """Subtracting an analog Hamiltonian from a digital gate points at the import mixup."""
+    gate = X(0)
+    hamiltonian = analog_Y(0)
+    with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        _ = gate - hamiltonian

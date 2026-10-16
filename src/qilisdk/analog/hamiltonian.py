@@ -200,7 +200,8 @@ class PauliOperator(ABC):
     def __truediv__(self, other: Number | PauliOperator | Hamiltonian) -> Hamiltonian:
         return self.to_hamiltonian() / other
 
-    def __rtruediv__(self, _: Number | PauliOperator | Hamiltonian) -> Hamiltonian:
+    def __rtruediv__(self, other: Number | PauliOperator | Hamiltonian) -> Hamiltonian:
+        _reject_digital_object(other, _REJECT_TARGET)
         raise InvalidHamiltonianOperation(_DIVISION_BY_OPERATORS_MESSAGE)
 
     __itruediv__ = __truediv__
@@ -1451,6 +1452,7 @@ class Hamiltonian(Parameterizable):
 
     def __rtruediv__(self, other: Number | PauliOperator | Hamiltonian) -> Hamiltonian:
         # (other / self)
+        _reject_digital_object(other, _REJECT_TARGET)
         raise InvalidHamiltonianOperation(_DIVISION_BY_OPERATORS_MESSAGE)
 
     __iadd__ = __add__
@@ -1550,6 +1552,7 @@ class Hamiltonian(Parameterizable):
             other = other.to_hamiltonian()
 
         if not isinstance(other, Hamiltonian):
+            _reject_digital_object(other, _REJECT_TARGET)
             raise InvalidHamiltonianOperation(
                 f"Invalid multiplication between Hamiltonian and {other.__class__.__name__}."
             )
@@ -1577,6 +1580,7 @@ class Hamiltonian(Parameterizable):
     def _div_inplace(self, other: Number | PauliOperator | Hamiltonian) -> None:
         # Only valid for scalars
         if not isinstance(other, (int, float, complex)):
+            _reject_digital_object(other, _REJECT_TARGET)
             raise InvalidHamiltonianOperation(_DIVISION_BY_OPERATORS_MESSAGE)
         if abs(other) < get_settings().atol:
             raise ZeroDivisionError("Cannot divide by zero.")

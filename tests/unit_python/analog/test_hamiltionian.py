@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import operator
 import re
 from typing import ClassVar
 
@@ -1278,3 +1279,24 @@ def test_pauli_operator_plus_digital_gate_raises_helpful_error():
     gate = digital_X(0)
     with pytest.raises(NotAHamiltonianError, match="did you mean to import X, Y, Z or I from qilisdk"):
         _ = pauli + gate
+
+
+@pytest.mark.parametrize("make_analog", [lambda: X(0), lambda: PauliX(0)], ids=["hamiltonian", "pauli"])
+@pytest.mark.parametrize(
+    "operation",
+    [
+        operator.mul,
+        lambda a, b: operator.mul(b, a),
+        operator.truediv,
+        lambda a, b: operator.truediv(b, a),
+        operator.imul,
+        operator.itruediv,
+    ],
+    ids=["analog*gate", "gate*analog", "analog/gate", "gate/analog", "analog*=gate", "analog/=gate"],
+)
+def test_multiplying_or_dividing_analog_by_digital_gate_raises_helpful_error(make_analog, operation):
+    """Multiplication and division with a digital gate, in either order, give the same guidance as addition."""
+    analog = make_analog()
+    gate = digital_X(0)
+    with pytest.raises(NotAHamiltonianError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        operation(analog, gate)
