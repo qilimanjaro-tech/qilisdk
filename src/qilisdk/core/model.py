@@ -1542,6 +1542,7 @@ class QUBO(Model):
                 slack = Variable(
                     f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=Bitwise
                 )
+                self._check_encodable_bounds(slack)
                 slack_terms = slack.to_binary()
                 out = h - slack_terms
                 return (out) ** 2
@@ -1569,6 +1570,7 @@ class QUBO(Model):
                 slack = Variable(
                     f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=Bitwise
                 )
+                self._check_encodable_bounds(slack)
 
                 slack_terms = slack.to_binary()
                 out = h + slack_terms
@@ -1724,13 +1726,16 @@ class QUBO(Model):
             ValueError: if the variable's encoding would expand into more than ``_MAX_BINARY_VARS``
                 binary variables.
         """
-        num_binary = var.num_binary_equivalent()
+        span = float(var.upper_bound) - float(var.lower_bound)
+        if var.domain is Domain.REAL:
+            span /= var.precision
+        num_binary = var.num_binary_equivalent() if np.isfinite(span) else np.inf
         if num_binary > _MAX_BINARY_VARS:
+            hint = "" if var.encoding is Bitwise else ", or use a more compact encoding such as Bitwise"
             raise ValueError(
                 f"Variable {var} expands into too many binary variables ({num_binary:.3g}) under the"
                 f" {var.encoding.name} encoding, the maximum supported being {_MAX_BINARY_VARS}."
-                " Set tighter bounds on the variable (or a coarser precision for real variables), or"
-                " use a more compact encoding such as Bitwise."
+                f" Set tighter bounds on the variable (or a coarser precision for real variables){hint}."
             )
 
     def _check_variables(self, term: Expression | Comparison, lagrange_multiplier: RealNumber = 100) -> None:

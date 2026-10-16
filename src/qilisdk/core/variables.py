@@ -263,8 +263,8 @@ class Bitwise(Encoding):
         if var.domain is Domain.REAL:
             bounds = (bounds[0] / precision, bounds[1] / precision)
 
-        # Fixed vars for now are represented by a single (unused) binary variable
-        if bounds[1] - bounds[0] == 0:
+        # Ranges narrower than one step (fixed vars included) are represented by a single binary variable
+        if np.abs(bounds[1] - bounds[0]) < 1:
             return 1
 
         n_binary = int(np.floor(np.log2(np.abs(bounds[1] - bounds[0]))))
@@ -724,10 +724,10 @@ class Variable(BaseVariable):
         """
         super().__init__(label=label, domain=domain, bounds=bounds)
         self._encoding = encoding
-        self._precision = precision
         self._expression: Expression | None = None
         self._bin_vars: list[BaseVariable] = []
         self._num_binary_equivalent: int | None = None
+        self.set_precision(precision)
 
     @property
     def encoding(self) -> type[Encoding]:
@@ -763,6 +763,16 @@ class Variable(BaseVariable):
         self._num_binary_equivalent = None
 
     def set_precision(self, precision: float) -> None:
+        """Set the step between consecutive values a REAL variable can take once encoded.
+
+        Args:
+            precision (float): the new precision.
+
+        Raises:
+            ValueError: if ``precision`` is not a finite, strictly positive number.
+        """
+        if not (np.isfinite(precision) and precision > 0):
+            raise ValueError(f"The precision of variable {self.label} must be finite and positive, got {precision}.")
         self._precision = precision
         self._invalidate_encoding()
 
