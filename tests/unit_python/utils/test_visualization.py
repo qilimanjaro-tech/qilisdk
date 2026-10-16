@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from matplotlib import font_manager as fm
-from matplotlib.colors import to_hex, to_rgb
+from matplotlib.colors import same_color, to_rgb
 from matplotlib.text import Text
 from matplotlib.transforms import Bbox
 
@@ -33,10 +33,11 @@ from qilisdk.digital import CNOT, RX, SWAP, Circuit, Controlled, M
 from qilisdk.digital import X as XGate
 from qilisdk.digital import Y as YGate
 from qilisdk.utils.visualization.circuit_renderers import MatplotlibCircuitRenderer
+from qilisdk.utils.visualization.dataset_renderers import MatplotlibDatasetRenderer
 from qilisdk.utils.visualization.hamiltonian_renderers import MatplotlibHamiltonianRenderer
 from qilisdk.utils.visualization.qtensor_renderers import MatplotlibQTensorRenderer
 from qilisdk.utils.visualization.schedule_renderers import MatplotlibEigenvalueRenderer, MatplotlibScheduleRenderer
-from qilisdk.utils.visualization.style import CircuitStyle, HamiltonianStyle, QTensorStyle, ScheduleStyle
+from qilisdk.utils.visualization.style import CircuitStyle, DatasetStyle, HamiltonianStyle, QTensorStyle, ScheduleStyle
 from qilisdk.utils.visualization.themes import dark, light
 
 
@@ -54,6 +55,7 @@ def test_schedule_style_init():
     assert style.theme.background is not None
     assert style.fontsize == 10
     assert isinstance(style.font, fm.FontProperties)
+    assert style.tick_color is None
 
 
 def test_schedule_renderer_init():
@@ -429,6 +431,8 @@ def no_plot(monkeypatch):
     monkeypatch.setattr(qilisdk.utils.visualization.hamiltonian_renderers.plt, "show", mock_show)
     monkeypatch.setattr(qilisdk.utils.visualization.hamiltonian_renderers.plt, "draw", mock_show)
     monkeypatch.setattr(qilisdk.utils.visualization.hamiltonian_renderers.plt.Figure, "savefig", mock_save)
+    yield
+    plt.close("all")
 
 
 def test_hamiltonian_style_defaults():
@@ -717,19 +721,6 @@ def test_hamiltonian_renderer_separate_colorbar_texts_do_not_overlap(no_plot):
 ###############################################################################
 
 
-@pytest.fixture
-def no_plot_anywhere(monkeypatch):
-    for module in (
-        qilisdk.utils.visualization.circuit_renderers,
-        qilisdk.utils.visualization.hamiltonian_renderers,
-        qilisdk.utils.visualization.qtensor_renderers,
-        qilisdk.utils.visualization.schedule_renderers,
-    ):
-        monkeypatch.setattr(module.plt, "show", mock_show)
-        monkeypatch.setattr(module.plt, "draw", mock_show)
-        monkeypatch.setattr(module.plt.Figure, "savefig", mock_save)
-
-
 def _relative_luminance(color) -> float:
     """WCAG relative luminance of a matplotlib colour."""
     channels = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in to_rgb(color)[:3]]
@@ -740,6 +731,10 @@ def _contrast_ratio(first, second) -> float:
     """WCAG contrast ratio between two matplotlib colours (1 = identical, 21 = black on white)."""
     lighter, darker = sorted((_relative_luminance(first), _relative_luminance(second)), reverse=True)
     return (lighter + 0.05) / (darker + 0.05)
+
+
+# The built-in themes share on_surface and on_background, so only this theme tells the two apart.
+DARK_SURFACE_THEME = light.model_copy(update={"surface": "#2F2F2F", "on_surface": "#FFFFFF"})
 
 
 @pytest.mark.parametrize("theme", [light, dark])
@@ -759,46 +754,47 @@ def test_theme_foreground_colors_are_readable(theme, foreground, background):
 
 
 @pytest.mark.parametrize("theme", [light, dark])
-def test_circuit_renderer_title_is_readable_and_uses_style_font(no_plot_anywhere, theme):
-    renderer = MatplotlibCircuitRenderer(Circuit(2), style=CircuitStyle(title="My Circuit", theme=theme))
+def test_circuit_renderer_title_is_readable_and_uses_style_font(no_plot, theme):
+    renderer = MatplotlibCircuitRenderer(Circuit(2), style=CircuitStyle(title="My Circuit", theme=theme, fontsize=17))
     renderer.plot()
 
     title = renderer.axes.title
     assert title.get_text() == "My Circuit"
-    assert to_hex(title.get_color()) == theme.on_background.lower()
+    assert title.get_fontsize() == 17
+    assert same_color(title.get_color(), theme.on_background)
     assert _contrast_ratio(title.get_color(), renderer.axes.figure.get_facecolor()) >= 4.5
     # The bundled font is used instead of matplotlib's fallback.
     assert title.get_fontname() == fm.FontProperties(fname=CircuitStyle().fontfname).get_name()
 
 
-def test_circuit_renderer_figure_follows_theme(no_plot_anywhere):
+def test_circuit_renderer_figure_follows_theme(no_plot):
     renderer = MatplotlibCircuitRenderer(Circuit(1), style=CircuitStyle(theme=dark))
     renderer.plot()
-    assert to_hex(renderer.axes.figure.get_facecolor()) == dark.background.lower()
+    assert same_color(renderer.axes.figure.get_facecolor(), dark.background)
 
 
-def test_qtensor_renderer_centre_circle_color_is_used(no_plot_anywhere):
+def test_qtensor_renderer_centre_circle_color_is_used(no_plot):
     renderer = MatplotlibQTensorRenderer(QTensor.ket(0), style=QTensorStyle(centre_circle_color="red"))
     renderer.plot()
     dashed = [line for line in renderer.axes.lines if line.get_linestyle() == "--"]
     assert dashed, "the reference circle should be drawn by default"
-    assert all(to_hex(line.get_color()) == "#ff0000" for line in dashed)
+    assert all(same_color(line.get_color(), "red") for line in dashed)
 
 
 @pytest.mark.parametrize("theme", [light, dark])
-def test_qtensor_renderer_follows_theme(no_plot_anywhere, theme):
+def test_qtensor_renderer_follows_theme(no_plot, theme):
     renderer = MatplotlibQTensorRenderer(QTensor.ket(0), style=QTensorStyle(theme=theme))
     renderer.plot()
 
-    assert to_hex(renderer.axes.figure.get_facecolor()) == theme.background.lower()
-    assert to_hex(renderer.axes.title.get_color()) == theme.on_background.lower()
+    assert same_color(renderer.axes.figure.get_facecolor(), theme.background)
+    assert same_color(renderer.axes.title.get_color(), theme.on_background)
     # The |0>, |1>, ... reference labels have to stay visible on the canvas.
     labels = [text for text in renderer.axes.texts if text.get_text().startswith("|")]
     assert len(labels) == 6
-    assert all(to_hex(text.get_color()) == theme.on_background.lower() for text in labels)
+    assert all(same_color(text.get_color(), theme.on_background) for text in labels)
 
 
-def test_schedule_renderer_tick_color_overrides_theme(no_plot_anywhere):
+def test_schedule_renderer_tick_color_overrides_theme(no_plot):
     H0 = X(1) + X(0)
     schedule = Schedule(total_time=10, hamiltonians={"H0": H0}, coefficients={})
     renderer = MatplotlibScheduleRenderer(schedule=schedule, style=ScheduleStyle(tick_color="red"))
@@ -806,30 +802,42 @@ def test_schedule_renderer_tick_color_overrides_theme(no_plot_anywhere):
 
     ticks = renderer.ax.get_xticklabels() + renderer.ax.get_yticklabels()
     assert ticks
-    assert all(to_hex(tick.get_color()) == "#ff0000" for tick in ticks)
+    assert all(same_color(tick.get_color(), "red") for tick in ticks)
 
 
 @pytest.mark.parametrize("theme", [light, dark])
-def test_schedule_renderer_tick_color_defaults_to_theme(no_plot_anywhere, theme):
+def test_schedule_renderer_tick_color_defaults_to_theme(no_plot, theme):
     H0 = X(1) + X(0)
     schedule = Schedule(total_time=10, hamiltonians={"H0": H0}, coefficients={})
     renderer = MatplotlibScheduleRenderer(schedule=schedule, style=ScheduleStyle(theme=theme))
     renderer.plot()
 
-    assert ScheduleStyle().tick_color is None
     ticks = renderer.ax.get_xticklabels() + renderer.ax.get_yticklabels()
-    assert all(to_hex(tick.get_color()) == theme.on_background.lower() for tick in ticks)
+    assert ticks
+    assert all(same_color(tick.get_color(), theme.on_background) for tick in ticks)
 
 
-@pytest.mark.parametrize("theme", [light, dark])
-def test_schedule_renderer_legend_text_is_readable_on_its_surface(no_plot_anywhere, theme):
+def test_schedule_renderer_legend_text_uses_on_surface(no_plot):
     H0 = X(1) + X(0)
     schedule = Schedule(total_time=10, hamiltonians={"H0": H0}, coefficients={"H0": {(0, 10): 1.0}})
-    renderer = MatplotlibScheduleRenderer(schedule=schedule, style=ScheduleStyle(theme=theme))
+    renderer = MatplotlibScheduleRenderer(schedule=schedule, style=ScheduleStyle(theme=DARK_SURFACE_THEME))
     renderer.plot()
 
     legend = renderer.ax.get_legend()
     assert legend is not None
-    for text in legend.get_texts():
-        assert to_hex(text.get_color()) == theme.on_surface.lower()
-        assert _contrast_ratio(text.get_color(), theme.surface) >= 4.5
+    texts = legend.get_texts()
+    assert texts
+    assert all(same_color(text.get_color(), DARK_SURFACE_THEME.on_surface) for text in texts)
+
+
+def test_dataset_renderer_legend_text_uses_on_surface(no_plot):
+    # Two channels, so the renderer draws a legend.
+    series = np.column_stack([np.arange(10.0), np.arange(10.0) ** 2])
+    renderer = MatplotlibDatasetRenderer(series, "1d", config=DatasetStyle(theme=DARK_SURFACE_THEME))
+    renderer.plot()
+
+    legend = renderer.ax.get_legend()
+    assert legend is not None
+    texts = legend.get_texts()
+    assert len(texts) == 2
+    assert all(same_color(text.get_color(), DARK_SURFACE_THEME.on_surface) for text in texts)
