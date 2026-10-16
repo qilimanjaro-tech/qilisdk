@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <random>
 #include <sstream>
 
@@ -2659,8 +2660,6 @@ QTensorCpp QTensorCpp::div(Complex scalar) const {
     return QTensorCpp(SparseMatrix(to_row_sparse() / scalar));
 }
 
-// GCOV_EXCL_BR_STOP
-
 QTensorCpp QTensorCpp::permute_python(const py::object& order) const {
     /*
     Reorder the qubits of this QTensor, returning a new QTensor as the result.
@@ -2673,10 +2672,16 @@ QTensorCpp QTensorCpp::permute_python(const py::object& order) const {
     */
     std::vector<int> order_vec;
     for (const auto& item : order) {
-        if (!py::isinstance<py::int_>(item)) {
+        // Accept anything with __index__ (e.g. numpy integers) but not bools
+        if (PyBool_Check(item.ptr()) || !PyIndex_Check(item.ptr())) {
             throw py::value_error("Order must be an iterable of integers");
         }
-        order_vec.push_back(item.cast<int>());
+        int overflow = 0;
+        long long value = PyLong_AsLongLongAndOverflow(item.ptr(), &overflow);
+        if (overflow != 0 || value < std::numeric_limits<int>::min() || value > std::numeric_limits<int>::max()) {
+            throw py::value_error("Permutation must contain each qubit index exactly once");
+        }
+        order_vec.push_back(int(value));
     }
     return permute(order_vec);
 }
@@ -2731,3 +2736,5 @@ QTensorCpp QTensorCpp::permute(const std::vector<int>& order) const {
     result.setFromTriplets(triplets.begin(), triplets.end());
     return QTensorCpp(result, _format);
 }
+
+// GCOV_EXCL_BR_STOP

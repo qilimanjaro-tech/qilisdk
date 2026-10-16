@@ -755,6 +755,23 @@ def test_tensor_product_with_qubits_kets():
     np.testing.assert_allclose(result.dense(), ket(1, 0, 1).dense())
 
 
+def test_tensor_product_with_qubits_non_involutive_placement():
+    result = tensor_prod([ket(1), ket(0, 0)], qubits=[[1], [2, 0]])
+    np.testing.assert_allclose(result.dense(), ket(0, 1, 0).dense())
+
+
+def test_permute_accepts_numpy_integers():
+    np.testing.assert_allclose(ket(0, 1).permute(np.array([1, 0])).dense(), ket(1, 0).dense())
+    np.testing.assert_allclose(ket(0, 1).permute([np.int64(1), np.int64(0)]).dense(), ket(1, 0).dense())
+
+
+@pytest.mark.parametrize("order", [[True, False], [2**40, 0], [2**100, 0]])
+def test_permute_bool_or_out_of_range_order_raises(order):
+    state = ket(0, 1)
+    with pytest.raises(ValueError, match=r"iterable of integers|Permutation must contain"):
+        state.permute(order)
+
+
 def test_tensor_product_with_qubits_in_order_matches_default():
     factors = [ket(1), ket(0), ket(1)]
     result = QTensor.tensor_product(factors, qubits=[[0], [1], [2]])

@@ -2228,6 +2228,27 @@ TEST(PermuteTest, PreservesDenseFormat) {
     QTensorCpp p = q.permute({1, 0});
     EXPECT_EQ(p.get_format(), StorageFormat::Dense);
     EXPECT_EQ(p.coeff(2, 1), Complex(0.0, 1.0));
+    EXPECT_EQ(p.nnz(), 1);
+}
+
+TEST(PermuteTest, ThreeQubitCycle) {
+    // |011> with order {2, 0, 1} becomes |101>
+    SparseMatrix ket011(8, 1);
+    ket011.insert(3, 0) = 1.0;
+    ket011.makeCompressed();
+    QTensorCpp p = QTensorCpp(ket011).permute({2, 0, 1});
+    EXPECT_EQ(p.coeff(5, 0), Complex(1.0, 0.0));
+    EXPECT_EQ(p.nnz(), 1);
+}
+
+TEST(PermuteTest, ZeroAndOneQubit) {
+    SparseMatrix scalar(1, 1);
+    scalar.insert(0, 0) = Complex(2.0, 0.0);
+    scalar.makeCompressed();
+    QTensorCpp p0 = QTensorCpp(scalar).permute({});
+    EXPECT_EQ(p0.coeff(0, 0), Complex(2.0, 0.0));
+    QTensorCpp q1(make_dm_pure0());
+    EXPECT_TRUE(q1.permute({0}).equals(q1));
 }
 
 TEST(PermuteTest, InvalidOrder_Throws) {
@@ -2253,6 +2274,37 @@ TEST(PermuteTest, PythonVersion_NonIntItem_Throws) {
     py::exec(R"(_bad_order = ["a"])");
     QTensorCpp q(make_dm_pure0());
     EXPECT_THROW(q.permute_python(py::globals()["_bad_order"]), py::value_error);
+}
+
+TEST(PermuteTest, PythonVersion_NumpyInts) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+import numpy as np
+_np_order = np.array([1, 0])
+)");
+    SparseMatrix ket01(4, 1);
+    ket01.insert(1, 0) = 1.0;
+    ket01.makeCompressed();
+    QTensorCpp p = QTensorCpp(ket01).permute_python(py::globals()["_np_order"]);
+    EXPECT_EQ(p.coeff(2, 0), Complex(1.0, 0.0));
+}
+
+TEST(PermuteTest, PythonVersion_BoolItem_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(_bool_order = [False])");
+    QTensorCpp q(make_dm_pure0());
+    EXPECT_THROW(q.permute_python(py::globals()["_bool_order"]), py::value_error);
+}
+
+TEST(PermuteTest, PythonVersion_OutOfRange_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+_huge_order = [2**40]
+_overflow_order = [2**100]
+)");
+    QTensorCpp q(make_dm_pure0());
+    EXPECT_THROW(q.permute_python(py::globals()["_huge_order"]), py::value_error);
+    EXPECT_THROW(q.permute_python(py::globals()["_overflow_order"]), py::value_error);
 }
 
 // GCOV_EXCL_BR_STOP

@@ -581,9 +581,8 @@ class QTensor:
                 qubits of its QTensor, or if the entries are not a permutation of all qubits.
         """
         logger.trace("[QTensor] QTensor.tensor_product computing tensor product of {} tensors", len(others))
-        product = QTensor(QTensorCpp.tensor_product_python(others))
         if qubits is None:
-            return product
+            return QTensor(QTensorCpp.tensor_product_python(others))
         if len(qubits) != len(others):
             raise ValueError(f"Expected {len(others)} lists of qubits, one per QTensor, but got {len(qubits)}.")
         for other, other_qubits in zip(others, qubits):
@@ -592,12 +591,13 @@ class QTensor:
                     f"QTensor with {other.nqubits} qubits cannot be placed on {len(other_qubits)} qubits {other_qubits}."
                 )
         targets = [q for other_qubits in qubits for q in other_qubits]
-        if sorted(targets) != list(range(product.nqubits)):
-            raise ValueError(f"Qubits {qubits} must contain each index from 0 to {product.nqubits - 1} exactly once.")
-        order = [0] * product.nqubits
+        nqubits = len(targets)
+        if sorted(targets) != list(range(nqubits)):
+            raise ValueError(f"Qubits {qubits} must contain each index from 0 to {nqubits - 1} exactly once.")
+        order = [0] * nqubits
         for source, target in enumerate(targets):
             order[target] = source
-        return product.permute(order)
+        return QTensor(QTensorCpp.tensor_product_python(others)).permute(order)
 
     @classmethod
     def ket(cls, *state: int) -> QTensor:
