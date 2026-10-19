@@ -278,13 +278,13 @@ def test_reservoir_layer_set_parameters_invalidates_encoding_gate_matrix():
     pre_gate = pre.gates[0]
     post_gate = post.gates[0]
 
-    np.testing.assert_allclose(pre_gate.matrix, _ry_matrix(0.2), atol=1e-12)
-    np.testing.assert_allclose(post_gate.matrix, _ry_matrix(0.2), atol=1e-12)
+    np.testing.assert_allclose(pre_gate.matrix.dense(), _ry_matrix(0.2), atol=1e-12)
+    np.testing.assert_allclose(post_gate.matrix.dense(), _ry_matrix(0.2), atol=1e-12)
 
     layer.set_parameters({"input_encoding_p_in": 0.9, "output_encoding_p_out": 1.1})
 
-    np.testing.assert_allclose(pre_gate.matrix, _ry_matrix(0.9), atol=1e-12)
-    np.testing.assert_allclose(post_gate.matrix, _ry_matrix(1.1), atol=1e-12)
+    np.testing.assert_allclose(pre_gate.matrix.dense(), _ry_matrix(0.9), atol=1e-12)
+    np.testing.assert_allclose(post_gate.matrix.dense(), _ry_matrix(1.1), atol=1e-12)
 
 
 def test_reservoir_layer_set_parameter_values_invalidates_encoding_gate_matrix():
@@ -297,11 +297,11 @@ def test_reservoir_layer_set_parameter_values_invalidates_encoding_gate_matrix()
 
     layer = ReservoirLayer(evolution_dynamics=schedule, output_encoding=post)
     post_gate = post.gates[0]
-    np.testing.assert_allclose(post_gate.matrix, _ry_matrix(0.2), atol=1e-12)
+    np.testing.assert_allclose(post_gate.matrix.dense(), _ry_matrix(0.2), atol=1e-12)
 
     layer.set_parameter_values([0.5, 1.3], where=lambda param: param.is_trainable)
 
-    np.testing.assert_allclose(post_gate.matrix, _ry_matrix(1.3), atol=1e-12)
+    np.testing.assert_allclose(post_gate.matrix.dense(), _ry_matrix(1.3), atol=1e-12)
 
 
 def test_reservoir_layer_set_parameter_bounds_propagates_to_children():

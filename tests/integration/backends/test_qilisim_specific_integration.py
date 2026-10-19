@@ -66,7 +66,24 @@ def test_no_seed():
 
 
 @pytest.mark.parametrize("method", digital_methods)
-def test_monte_carlo_circuit(method):
+@pytest.mark.parametrize(
+    ("initial_state", "expected"),
+    [
+        (InitialState.ZERO, {"100"}),
+        (InitialState.ONE, {"011"}),
+        (InitialState.UNIFORM, {f"{i:03b}" for i in range(8)}),
+    ],
+)
+def test_digital_symbolic_initial_state(method, initial_state, expected):
+    backend = QiliSim(digital_simulation_method=method, execution_config=ExecutionConfig(seed=42, num_threads=1))
+    circuit = Circuit(nqubits=3)
+    circuit.add(X(0))
+    readout = [SamplingReadout(nshots=1000)]
+    result = backend._execute_digital_propagation(
+        DigitalPropagation(circuit=circuit), readout=readout, initial_state=initial_state
+    )
+    samples = result.get_samples()
+    assert set(samples) == expected
     p = 0.2
     initial_state_1 = ket(0).unit()
     initial_state_2 = ket(1).unit()
@@ -79,7 +96,7 @@ def test_monte_carlo_circuit(method):
     circuit.add(H(0))
     readout = [SamplingReadout(nshots=100)]
     result = backend._execute_digital_propagation(
-        DigitalPropagation(circuit=circuit), readout=readout, initial_state=initial_state
+        DigitalPropagation(circuit=circuit, initial_state=initial_state), readout=readout
     )
     assert isinstance(result, FunctionalResult)
     samples = result.get_samples()
@@ -1131,3 +1148,16 @@ def test_qtensor_sample_is_unaffected_by_backend_thread_count():
     )
 
     assert qtensor.sample(nshots=1000, seed=42) == before
+
+
+def test_stabilizer_state_tomography_rejects_too_many_qubits():
+    """A stabilizer state of 32 qubits used to overflow ``1 << nqubits`` and hand back a 1x1
+    QTensor with nqubits == 0. Converting to a dense object must fail loudly instead."""
+    circuit = Circuit(nqubits=32)
+    circuit.add(H(0))
+    readout = Readout().with_state_tomography()
+    backend = _stabilizer_backend()
+    propagation = DigitalPropagation(circuit=circuit)
+
+    with pytest.raises(ValueError, match="too big to convert to a dense object"):
+        backend.execute(propagation, readout=readout)

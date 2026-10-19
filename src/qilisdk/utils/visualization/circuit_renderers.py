@@ -927,8 +927,8 @@ class MatplotlibCircuitRenderer:
             self.axes.set_title(
                 self.style.title,
                 pad=self.style.padding * 72,
-                color=self.style.theme.surface_muted,
-                fontdict={"fontsize": self.style.fontsize},
+                color=self.style.theme.on_background,
+                fontproperties=self.style.font,
             )
 
         width, height = self._drawing_size()
