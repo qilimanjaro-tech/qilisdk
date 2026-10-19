@@ -431,10 +431,30 @@ def test_accessing_scip_solver_without_scip_warns_and_stubs(caplog):  # ruff: ig
         _forget_optional_symbols()
 
 
+def test_scip_solver_is_cached_after_first_access(caplog):  # ruff: ignore[redefined-while-unused]
+    """The first access caches ScipSolver on the module, so later ones skip ``__getattr__`` and stay silent."""
+    try:
+        with pytest.MonkeyPatch.context() as mp:
+            module = _reload_without_pyscipopt(mp)
+
+            first = module.ScipSolver
+            second = module.ScipSolver
+
+            assert first is second
+            assert "ScipSolver" in module.__dict__
+            assert caplog.text.count("Optional feature scip unavailable") == 1
+    finally:
+        importlib.reload(classical_solvers)
+        _forget_optional_symbols()
+
+
 def test_unknown_attribute_raises_attribute_error():
     with pytest.raises(AttributeError, match="has no attribute 'NotASolver'"):
         classical_solvers.NotASolver
 
 
 def test_dir_advertises_the_optional_solver():
+    _forget_optional_symbols()
+
+    assert "ScipSolver" not in classical_solvers.__dict__
     assert "ScipSolver" in dir(classical_solvers)
