@@ -255,7 +255,7 @@ inline double average_trajectory_expectation(const DenseMatrix& trajectories, co
     }
     total /= weight;
     if (std::abs(total.imag()) > atol) {
-        throw py::value_error("Encountered an imaginary expectation value while computing the expectation values, try reducing the total tolerance or improving simulation precision.");
+        throw py::value_error("Encountered an imaginary expectation value while computing the expectation values, try increasing the absolute tolerance or improving simulation precision.");
     }
     return total.real();
 }

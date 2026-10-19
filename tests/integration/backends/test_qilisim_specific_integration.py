@@ -1005,6 +1005,18 @@ def test_stabilizer_deterministic_circuit():
     assert samples["101"] == 50
 
 
+def test_stabilizer_expectation_values_are_floats():
+    """Stabilizer expectation values come back as real floats with the correct values."""
+    backend = _stabilizer_backend()
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(1))
+    readout = Readout().with_expectation(observables=[pauli_z(0), pauli_x(1), pauli_z(1)])
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    evs = result.get_expectation_values()
+    assert all(isinstance(ev, float) for ev in evs)
+    assert evs == pytest.approx([1.0, 1.0, 0.0], abs=1e-8)
+
+
 def test_stabilizer_t_gate_expands_sum():
     """T gate is non-Clifford: T|0⟩ is deterministic (no branching), T on |+⟩ branches the sum."""
     backend = _stabilizer_backend()
