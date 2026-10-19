@@ -17,7 +17,7 @@ import copy
 import re
 from abc import ABC
 from collections import defaultdict
-from itertools import combinations, product
+from itertools import combinations, pairwise, product
 from typing import TYPE_CHECKING, Callable, ClassVar, TypeAlias
 
 import numpy as np
@@ -336,9 +336,15 @@ class Hamiltonian(Parameterizable):
                         raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
                     for parameter in val.free_parameters():
                         self._add_parameter(parameter.label, parameter)
+                # For simple keys we can stop early
+                if len(key) == 1 or all(
+                    a.qubit < b.qubit and a.name != "I" and b.name != "I" for a, b in pairwise(key)
+                ):
+                    self._elements[key] += val
+                    continue
                 # Use _multiply_sets to combine operators on the same qubit and to sort things by qubit
                 phase, canonical_key = Hamiltonian._multiply_sets(key, ())
-                self._elements[canonical_key] += val * phase
+                self._elements[canonical_key] += val if phase == 1 else val * phase
             self.simplify()
 
     @property
@@ -545,7 +551,16 @@ class Hamiltonian(Parameterizable):
         return qili_hash(self._elements)
 
     def __copy__(self) -> Hamiltonian:
-        return Hamiltonian(elements=self._elements.copy())
+        # Assume the keys are already fine (i.e. canonical), so copy directly
+        out = Hamiltonian()
+        out._elements = self._elements.copy()
+
+        # Re-register the parameters
+        for val in out._elements.values():
+            if isinstance(val, Expression):
+                for parameter in val.free_parameters():
+                    out._add_parameter(parameter.label, parameter)
+        return out.simplify()
 
     # ------- String representation --------
 
