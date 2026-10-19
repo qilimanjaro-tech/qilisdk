@@ -80,6 +80,11 @@ def test_qili_hash_ndarray_support():
     assert qili_hash(a) != qili_hash(c)
 
 
+def test_qili_hash_distinguishes_numpy_datetimes():
+    assert qili_hash(np.datetime64("2020-01-01")) != qili_hash(np.datetime64("2021-06-01"))
+    assert qili_hash(np.timedelta64(1, "D")) != qili_hash(np.timedelta64(2, "D"))
+
+
 def test_qili_hash_uses_custom_hash_method_for_objects():
     a = _CustomHash(7)
     b = _CustomHash(7)
