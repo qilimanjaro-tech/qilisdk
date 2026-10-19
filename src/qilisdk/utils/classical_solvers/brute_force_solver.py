@@ -17,7 +17,7 @@ import itertools
 from loguru import logger
 
 from qilisdk.core import Model
-from qilisdk.core.variables import BinaryVariable, Variable
+from qilisdk.core.variables import BinaryVariable, SpinVariable, Variable
 
 from .base_solver import ClassicalSolver, ClassicalSolverResult, _assert_real
 
@@ -38,9 +38,10 @@ class BruteForceSolver(ClassicalSolver):
     def solve(self, model: Model) -> ClassicalSolverResult:  # ruff: ignore[no-self-use]
         """Solve the given model by brute-force enumeration of all variable assignments.
 
-        Binary variables are assigned values from {0, 1}. Any other ``Variable`` is decomposed
-        via its encoding, all bit patterns are enumerated and decoded to their representable
-        values, so the search covers every value the encoding can express regardless of domain.
+        Binary variables are assigned values from {0, 1} and spin variables values from {-1, 1}.
+        Any other ``Variable`` is decomposed via its encoding, all bit patterns are enumerated and
+        decoded to their representable values, so the search covers every value the encoding can
+        express regardless of domain.
 
         Args:
             model: The ``Model`` instance to solve.
@@ -50,7 +51,7 @@ class BruteForceSolver(ClassicalSolver):
 
         Raises:
             ValueError: if the model contains a variable that has no encoding (i.e. is not a
-                BinaryVariable or a bounded Variable).
+                BinaryVariable, a SpinVariable or a bounded Variable).
         """
         variables = model.variables()
 
@@ -58,6 +59,8 @@ class BruteForceSolver(ClassicalSolver):
         for v in variables:
             if isinstance(v, BinaryVariable):
                 domains.append([0, 1])
+            elif isinstance(v, SpinVariable):
+                domains.append([-1, 1])
             elif isinstance(v, Variable):
                 n_bits = v.num_binary_equivalent()
                 seen = set()
