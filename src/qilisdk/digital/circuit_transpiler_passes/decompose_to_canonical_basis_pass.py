@@ -45,6 +45,7 @@ from qilisdk.digital.gates import (
 )
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
+from .decompose_multi_controlled_gates_pass import _decompose
 from .numeric_helpers import (
     _wrap_angle,
     _zyz_from_unitary,
@@ -563,6 +564,18 @@ class DecomposeToCanonicalBasisPass(CircuitTranspilerPass):
         if _is_controlled(gate):
             control_qubits = list(gate.control_qubits)
             basic_gate: BasicGate = gate.basic_gate
+            if len(control_qubits) == 1 and isinstance(basic_gate, SWAP):
+                # Fredkin: CSWAP(c, a, b) = CNOT(b, a) · Toffoli(c, a, b) · CNOT(b, a)
+                first_target_qubit, second_target_qubit = basic_gate.target_qubits
+                return self._rewrite_list(
+                    [
+                        CNOT(second_target_qubit, first_target_qubit),
+                        *_decompose(
+                            Controlled(control_qubits[0], first_target_qubit, basic_gate=X(second_target_qubit))
+                        ),
+                        CNOT(second_target_qubit, first_target_qubit),
+                    ]
+                )
             if basic_gate.nqubits != 1:
                 raise NotImplementedError("Controlled of multi-qubit gates not supported.")
             if len(control_qubits) != 1:
