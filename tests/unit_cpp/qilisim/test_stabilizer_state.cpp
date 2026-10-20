@@ -24,6 +24,8 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <tuple>
+#include <vector>
 
 namespace {
 
@@ -582,6 +584,32 @@ TEST(StabilizerStateSum, ApplyGate_ControlledSwap_Throws) {
     StabilizerStateSum sss(3);
     Gate cswap("CSWAP", SparseMatrix(DenseMatrix::Identity(4, 4).sparseView()), {0}, {1, 2}, {});
     EXPECT_THROW(sss.apply_gate(cswap), std::runtime_error);
+}
+
+TEST(StabilizerStateSum, ApplyGate_ControlledHSY_Throws) {
+    // CH, CS and CY are not handled by the tableau, so they must raise rather than be silently skipped
+    for (const std::string name : {"CH", "CS", "CY"}) {
+        StabilizerStateSum sss(2);
+        Gate g = makeGate(name, {0}, {1});
+        EXPECT_THROW(sss.apply_gate(g), std::runtime_error) << name;
+    }
+}
+
+TEST(StabilizerState, ApplyGate_UnsupportedGates_Throw) {
+    // The tableau update must never treat an unsupported gate as a no-op
+    for (const auto& [name, controls, targets] : std::vector<std::tuple<std::string, std::vector<int>, std::vector<int>>>{{"CSWAP", {0}, {1, 2}}, {"RX", {}, {0}}, {"CH", {0}, {1}}, {"CCZ", {0, 1}, {2}}}) {
+        StabilizerState s(3);
+        Gate g = makeGate(name, controls, targets);
+        EXPECT_THROW(s.apply_gate(g), std::invalid_argument) << name;
+    }
+}
+
+TEST(StabilizerState, MatrixElement_ControlledSwap_IsNotSwapped) {
+    // A controlled SWAP must not be evaluated as a plain SWAP, so on |010> the amplitude of |001> is not picked up
+    StabilizerState s(3);
+    s.apply_gate(makeGate("X", {}, {1}));
+    Gate cswap = makeGate("CSWAP", {0}, {1, 2});
+    EXPECT_NEAR(std::abs(s.matrix_element(cswap, "001")), 0.0, 1e-9);
 }
 
 TEST(StabilizerStateSum, Stream_ContainsTermCount) {

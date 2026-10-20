@@ -70,8 +70,15 @@ void MatrixFreeOperator::apply(DenseMatrix& output_state, MatrixFreeApplicationT
     constexpr int kMaskBitWidth = std::numeric_limits<unsigned long long>::digits;
     constexpr int kStrideBitWidth = std::numeric_limits<long>::digits;
     constexpr int kSafeShiftBitWidth = std::min(kMaskBitWidth, kStrideBitWidth);
-    if (shift < 0 || shift >= kSafeShiftBitWidth) {
-        throw std::out_of_range("MatrixFreeOperator target qubit " + std::to_string(target_qubits[0]) + " is out of range for a " + std::to_string(num_qubits) + "-qubit state.");
+    for (int qubit : target_qubits) {
+        if (qubit < 0 || num_qubits - 1 - qubit < 0 || num_qubits - 1 - qubit >= kSafeShiftBitWidth) {
+            throw std::out_of_range("MatrixFreeOperator target qubit " + std::to_string(qubit) + " is out of range for a " + std::to_string(num_qubits) + "-qubit state.");
+        }
+    }
+    for (int qubit : control_qubits) {
+        if (qubit < 0 || num_qubits - 1 - qubit < 0 || num_qubits - 1 - qubit >= kSafeShiftBitWidth) {
+            throw std::out_of_range("MatrixFreeOperator control qubit " + std::to_string(qubit) + " is out of range for a " + std::to_string(num_qubits) + "-qubit state.");
+        }
     }
     long mask = static_cast<long>(1ULL << shift);
     long N = output_state.rows();
@@ -1314,6 +1321,7 @@ MatrixFreeOperator::MatrixFreeOperator(const std::string& name, const std::vecto
 
     Throws:
         py::value_error: If the operator has a number of target qubits not equal to 1 (other than SWAP)
+        py::value_error: If a qubit appears more than once among the controls and targets
 
     */
     this->name = normalize_gate_name(name);
@@ -1327,6 +1335,12 @@ MatrixFreeOperator::MatrixFreeOperator(const std::string& name, const std::vecto
     // Checks
     if (this->target_qubits.size() != 1 && this->name != "SWAP" && this->name != "M" && !is_dense_multi_qubit) {
         throw py::value_error("MatrixFreeOperator requires a gate with exactly 1 target qubit (other than SWAP, M, or a dense multi-qubit gate).");
+    }
+    std::vector<int> all_qubits = this->control_qubits;
+    all_qubits.insert(all_qubits.end(), this->target_qubits.begin(), this->target_qubits.end());
+    std::sort(all_qubits.begin(), all_qubits.end());
+    if (std::adjacent_find(all_qubits.begin(), all_qubits.end()) != all_qubits.end()) {
+        throw py::value_error("MatrixFreeOperator requires its control and target qubits to all be distinct.");
     }
 }
 

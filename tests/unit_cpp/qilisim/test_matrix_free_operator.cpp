@@ -325,6 +325,27 @@ TEST(MatrixFreeOperator, OutOfRangeTargetThrowsOnApply) {
     EXPECT_THROW(op.apply(state, MatrixFreeApplicationType::Left), std::out_of_range);
 }
 
+TEST(MatrixFreeOperator, NegativeTargetThrowsOnApply) {
+    MatrixFreeOperator op("X", -1);
+    DenseMatrix state = ket0();
+    EXPECT_THROW(op.apply(state, MatrixFreeApplicationType::Left), std::out_of_range);
+}
+
+TEST(MatrixFreeOperator, OutOfRangeControlThrowsOnApply) {
+    for (int control : {-1, 2, 70}) {
+        MatrixFreeOperator op("X", control, 0);
+        DenseMatrix state = DenseMatrix::Zero(4, 1);
+        state(0, 0) = 1.0;
+        EXPECT_THROW(op.apply(state, MatrixFreeApplicationType::Left), std::out_of_range) << control;
+    }
+}
+
+TEST(MatrixFreeOperator, OverlappingQubitsThrowOnInit) {
+    EXPECT_ANY_THROW(MatrixFreeOperator("X", 1, 1));
+    EXPECT_ANY_THROW(MatrixFreeOperator("X", {0, 0}, {1}, DenseMatrix()));
+    EXPECT_ANY_THROW(MatrixFreeOperator("SWAP", {2}, {1, 2}, DenseMatrix()));
+}
+
 TEST(MatrixFreeOperator, X_StateVector_Ket0ToKet1) {
     MatrixFreeOperator op("X", 0);
     DenseMatrix s = ket0();

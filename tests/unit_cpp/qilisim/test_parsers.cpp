@@ -2321,6 +2321,9 @@ TEST(GateNameParser, GatesControlCounts) {
     EXPECT_EQ(gate_num_controls("CustomH"), 0);
     EXPECT_EQ(gate_num_controls("CC"), 0);
     EXPECT_EQ(gate_num_controls(""), 0);
+    EXPECT_EQ(gate_num_controls("CPHASE"), 0);
+    EXPECT_EQ(gate_num_controls("C1"), 0);
+    EXPECT_EQ(gate_num_controls("CCPHASE"), 0);
 }
 
 TEST(GateNameParser, GateNamesNormalized) {
@@ -2343,6 +2346,14 @@ TEST(GateNameParser, GateNamesNormalized) {
     EXPECT_EQ(normalize_gate_name("Controlled"), "Controlled");
     EXPECT_EQ(normalize_gate_name("CustomH"), "CustomH");
     EXPECT_EQ(normalize_gate_name("CC"), "CC");
+    EXPECT_EQ(normalize_gate_name("CPHASE"), "CPHASE");
+    EXPECT_EQ(normalize_gate_name("C1"), "C1");
+}
+
+TEST(GateNameParser, NormalizationIsIdempotent) {
+    for (const std::string name : {"CNOT", "Toffoli", "CCX", "CSWAP", "CCCRX", "CPHASE", "CCPHASE", "Controlled", "H"}) {
+        EXPECT_EQ(normalize_gate_name(normalize_gate_name(name)), normalize_gate_name(name)) << name;
+    }
 }
 
 // GCOV_EXCL_BR_STOP

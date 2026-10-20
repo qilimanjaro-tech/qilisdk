@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "gate.h"
-#include <cctype>
+#include <set>
 
 // GCOV_EXCL_BR_START
 
@@ -31,8 +31,9 @@ int gate_num_controls(const std::string& name) {
 
     QiliSDK names a controlled gate by prefixing its base gate's name with one "C" per control
     (e.g. "CCZ", "CSWAP", "CCCRX"), plus the aliases "CNOT" and "Toffoli". The prefix only
-    counts when it is followed by the start of a gate name, so a class name like "Controlled"
-    is not mistaken for a controlled gate.
+    counts when what follows it is a QiliSDK basic gate, so names that merely start with a "C"
+    (e.g. "Controlled", "CPHASE") are not mistaken for controlled gates. Since no basic gate
+    name starts with a "C", a name that has already been stripped is never stripped again.
 
     Args:
         name (std::string): The gate name from QiliSDK.
@@ -40,6 +41,7 @@ int gate_num_controls(const std::string& name) {
     Returns:
         int: The number of control qubits (0 for a non-controlled gate).
     */
+    static const std::set<std::string> basic_gates = {"I", "X", "Y", "Z", "H", "S", "T", "RX", "RY", "RZ", "U1", "U2", "U3", "SWAP"};
     if (name == "CNOT") {
         return 1;
     }
@@ -47,7 +49,7 @@ int gate_num_controls(const std::string& name) {
         return 2;
     }
     size_t num_controls = name.find_first_not_of('C');
-    if (num_controls == 0 || num_controls == std::string::npos || std::islower(static_cast<unsigned char>(name[num_controls]))) {
+    if (num_controls == 0 || num_controls == std::string::npos || basic_gates.count(name.substr(num_controls)) == 0) {
         return 0;
     }
     return static_cast<int>(num_controls);
@@ -59,6 +61,7 @@ std::string normalize_gate_name(const std::string& name) {
 
     Controlled gates are represented internally by their base gate plus control qubits, so the
     "C" prefixes counted by gate_num_controls are stripped (e.g. "CCZ" -> "Z", "CSWAP" -> "SWAP").
+    This is idempotent, so normalizing an already normalized name leaves it unchanged.
 
     Args:
         name (std::string): The gate name from QiliSDK.
