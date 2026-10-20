@@ -14,12 +14,12 @@
 
 import pytest
 
-import qilisdk.utils.serialization
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliY, X, Z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.qtensor import ket, tensor_prod
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.utils.serialization import DeserializationError, deserialize, deserialize_from, serialize, serialize_to
+from qilisdk.yaml import QiliYAML
 
 
 def test_analog_evolution_algorithm_serialization(tmp_path):
@@ -48,6 +48,9 @@ def test_analog_evolution_algorithm_serialization(tmp_path):
     )
 
     serialized_analog_evolution = serialize(analog_evolution)
+    assert "!lambda" not in serialized_analog_evolution
+    assert "!function" not in serialized_analog_evolution
+    assert "python/" not in serialized_analog_evolution
     deserialized_analog_evolution = deserialize(serialized_analog_evolution, AnalogEvolution)
     assert isinstance(deserialized_analog_evolution, AnalogEvolution)
 
@@ -89,11 +92,7 @@ def test_arbitrary_serialize_errors(monkeypatch, tmp_path):
     def new_dump(*args, **kwargs):
         raise ValueError("Serialization error")
 
-    monkeypatch.setattr(
-        qilisdk.utils.serialization.yaml,
-        "dump",
-        new_dump,
-    )
+    monkeypatch.setattr(QiliYAML, "dump", new_dump)
 
     operator = X(0)
 

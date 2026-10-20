@@ -12,18 +12,95 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ruff: file-ignore[missing-type-function-argument, missing-return-type-undocumented-public-function, docstring-missing-returns, suspicious-pickle-import]
+# ruff: file-ignore[missing-type-function-argument, missing-return-type-undocumented-public-function, docstring-missing-returns]
 
-import base64
+"""Safe YAML handler for QiliSDK objects.
+
+The loader never imports modules or executes code taken from its input. Only built-in YAML types, the custom tags
+registered in this module, and classes registered through :meth:`QiliYAML.register_class` can be reconstructed, so
+payloads received from untrusted sources (e.g. sent to or returned by SpeQtrum) cannot trigger code execution.
+"""
+
+import functools
 import types
 from collections import defaultdict, deque
+from enum import Enum
 
 import numpy as np
-from dill import dumps, loads
 from loguru import logger
 from pydantic import BaseModel
 from ruamel.yaml import YAML
+from ruamel.yaml.constructor import ConstructorError, SafeConstructor
+from ruamel.yaml.nodes import SequenceNode
+from ruamel.yaml.representer import RepresenterError, SafeRepresenter
 from scipy import sparse
+
+_REGISTRY: dict[str, type] = {}
+"""Classes registered through :meth:`QiliYAML.register_class`, keyed by ``module.qualname``."""
+
+_ALLOWED_DTYPE_KINDS = frozenset("biufc")
+"""NumPy dtype kinds (bool, int, uint, float, complex) accepted when reconstructing arrays and scalars."""
+
+_DEFAULTDICT_FACTORIES: dict[str | None, type | None] = {
+    None: None,
+    "builtins.complex": complex,
+    "builtins.dict": dict,
+    "builtins.float": float,
+    "builtins.int": int,
+    "builtins.list": list,
+    "builtins.set": set,
+}
+"""Factories accepted when reconstructing a ``defaultdict``."""
+
+_LEGACY_APPLY_TAG = "tag:yaml.org,2002:python/object/apply:"
+"""Tag prefix emitted for enum members by QiliSDK versions that used the unsafe YAML handler."""
+
+
+def _qualified_name(cls: type) -> str:
+    return f"{cls.__module__}.{cls.__qualname__}"
+
+
+def _lookup_registered(name: str, node) -> type:
+    """
+    Resolve a registered class by its qualified name.
+
+    Raises:
+        ConstructorError: If no class with that name has been registered.
+    """
+    cls = _REGISTRY.get(name)
+    if cls is None:
+        raise ConstructorError(None, None, f"'{name}' is not a registered QiliSDK class", node.start_mark)
+    return cls
+
+
+def _check_dtype(dtype_name: str, node) -> np.dtype:
+    """
+    Parse a dtype name, accepting only numeric and boolean dtypes.
+
+    Raises:
+        ConstructorError: If the dtype is not numeric or boolean.
+    """
+    dtype = np.dtype(dtype_name)
+    if dtype.kind not in _ALLOWED_DTYPE_KINDS:
+        raise ConstructorError(None, None, f"dtype '{dtype_name}' is not allowed", node.start_mark)
+    return dtype
+
+
+class QiliConstructor(SafeConstructor):
+    """Safe YAML constructor holding the QiliSDK tags, isolated from other ``ruamel.yaml`` users."""
+
+
+class QiliRepresenter(SafeRepresenter):
+    """Safe YAML representer holding the QiliSDK tags, isolated from other ``ruamel.yaml`` users."""
+
+    def represent_yaml_object(self, tag, data, cls, flow_style=None):
+        """
+        Represent a registered object as a mapping of its state.
+
+        ``object.__getstate__`` returns ``None`` for instances without attributes, which is emitted as an empty mapping.
+        """
+        state = data.__getstate__()
+        return self.represent_mapping(tag, {} if state is None else state, flow_style=flow_style)
 
 
 def csr_representer(representer, data: sparse.csr_matrix):
@@ -63,11 +140,11 @@ def ndarray_representer(representer, data):
 
 def ndarray_constructor(constructor, node):
     """
-    Constructor for ndarray.
+    Constructor for ndarray. Only numeric and boolean dtypes are accepted.
     """
     logger.trace("[Yaml] Deserializing ndarray")
     mapping = constructor.construct_mapping(node, deep=True)
-    dtype = np.dtype(mapping["dtype"])
+    dtype = _check_dtype(mapping["dtype"], node)
     shape = tuple(mapping["shape"])
     data = mapping["data"]
     return np.array(data, dtype=dtype).reshape(shape)
@@ -86,11 +163,11 @@ def np_scalar_representer(representer, data: np.generic):
 
 def np_scalar_constructor(constructor, node):
     """
-    Reconstruct a NumPy scalar.
+    Reconstruct a NumPy scalar. Only numeric and boolean dtypes are accepted.
     """
     logger.trace("[Yaml] Deserializing numpy scalar")
     mapping = constructor.construct_mapping(node, deep=True)
-    dtype = np.dtype(mapping["dtype"])
+    dtype = _check_dtype(mapping["dtype"], node)
     return dtype.type(mapping["value"])
 
 
@@ -98,6 +175,9 @@ def defaultdict_representer(representer, data: defaultdict):
     """
     Represent a defaultdict by serializing its default_factory
     (as module+qualname) plus its items dict.
+
+    Raises:
+        RepresenterError: If the factory is not in the allowlist.
     """
     logger.trace("[Yaml] Serializing defaultdict")
     factory = data.default_factory
@@ -106,6 +186,8 @@ def defaultdict_representer(representer, data: defaultdict):
         if factory is not None and hasattr(factory, "__qualname__")
         else None
     )
+    if factory_name not in _DEFAULTDICT_FACTORIES:
+        raise RepresenterError(f"defaultdict factory '{factory_name}' cannot be serialized")
     return representer.represent_mapping(
         "!defaultdict",
         {"default_factory": factory_name, "items": dict(data)},
@@ -114,80 +196,77 @@ def defaultdict_representer(representer, data: defaultdict):
 
 def defaultdict_constructor(constructor, node):
     """
-    Reconstruct a defaultdict, restoring its factory and contents.
+    Reconstruct a defaultdict, restoring its factory from a fixed allowlist and its contents.
+
+    Raises:
+        ConstructorError: If the factory is not in the allowlist.
     """
     logger.trace("[Yaml] Deserializing defaultdict")
     mapping = constructor.construct_mapping(node, deep=True)
     fname = mapping["default_factory"]
-    if fname is None:
-        factory = None
-    else:
-        module, qual = fname.rsplit(".", 1)
-        mod = __import__(module, fromlist=[qual])
-        factory = getattr(mod, qual)
-    dd = defaultdict(factory)
+    if fname not in _DEFAULTDICT_FACTORIES:
+        raise ConstructorError(None, None, f"defaultdict factory '{fname}' is not allowed", node.start_mark)
+    dd = defaultdict(_DEFAULTDICT_FACTORIES[fname])
     dd.update(mapping["items"])
     return dd
 
 
-def function_representer(representer, data):
+def callable_representer(representer, data):
     """
-    Represent a non-lambda function by serializing it.
+    Refuse to serialize callables, since loading them back would require executing code from the payload.
+
+    Raises:
+        RepresenterError: Always.
     """
-    logger.trace("[Yaml] Serializing function")
-    serialized_function = base64.b64encode(dumps(data, recurse=True)).decode("utf-8")
-    return representer.represent_scalar("!function", serialized_function)
+    raise RepresenterError(
+        f"Cannot serialize callable {data!r}: functions and lambdas are not serializable. "
+        "Use an Expression or Parameter, or a named option, instead."
+    )
 
 
-def function_constructor(constructor, node):
+def code_constructor(constructor, node):
     """
-    Reconstruct a function from the serialized data.
-    """
-    logger.trace("[Yaml] Deserializing function")
-    serialized_function = base64.b64decode(node.value)
-    return loads(serialized_function)  # ruff: ignore[suspicious-pickle-usage]
+    Refuse to load legacy ``!function`` / ``!lambda`` payloads, which carry pickled code.
 
-
-def lambda_representer(representer, data):
+    Raises:
+        ConstructorError: Always.
     """
-    Represent a lambda function by serializing its code.
-    """
-    logger.trace("[Yaml] Serializing lambda")
-    serialized_lambda = base64.b64encode(dumps(data, recurse=True)).decode("utf-8")
-    return representer.represent_scalar("!lambda", serialized_lambda)
-
-
-def lambda_constructor(constructor, node):
-    """
-    Reconstruct a lambda function from the serialized data.
-    """
-    logger.trace("[Yaml] Deserializing lambda")
-    # Decode the base64-encoded string and load the lambda function
-    serialized_lambda = base64.b64decode(node.value)
-    return loads(serialized_lambda)  # ruff: ignore[suspicious-pickle-usage]
+    raise ConstructorError(
+        None,
+        None,
+        f"Tag '{node.tag}' carries pickled code and is no longer supported for security reasons",
+        node.start_mark,
+    )
 
 
 def pydantic_model_representer(representer, data):
     """
-    Representer for Pydantic Models.
+    Representer for registered Pydantic Models.
+
+    Raises:
+        RepresenterError: If the model class is not registered.
     """
     logger.trace("[Yaml] Serializing pydantic model {}", data.__class__.__name__)
-    value = {"type": f"{data.__class__.__module__}.{data.__class__.__name__}", "data": data.model_dump()}
+    model_type_str = _qualified_name(data.__class__)
+    if _REGISTRY.get(model_type_str) is not data.__class__:
+        raise RepresenterError(f"Pydantic model '{model_type_str}' is not registered for serialization")
+    value = {"type": model_type_str, "data": data.model_dump()}
     return representer.represent_mapping("!PydanticModel", value)
 
 
 def pydantic_model_constructor(constructor, node):
     """
-    Constructor for Pydantic Models.
+    Constructor for registered Pydantic Models.
+
+    Raises:
+        ConstructorError: If the type is not a registered Pydantic model.
     """
     logger.trace("[Yaml] Deserializing pydantic model")
     mapping = constructor.construct_mapping(node, deep=True)
-    model_type_str = mapping["type"]
-    data = mapping["data"]
-    module_name, class_name = model_type_str.rsplit(".", 1)
-    mod = __import__(module_name, fromlist=[class_name])
-    model_cls = getattr(mod, class_name)
-    return model_cls.model_validate(data)
+    model_cls = _lookup_registered(mapping["type"], node)
+    if not issubclass(model_cls, BaseModel):
+        raise ConstructorError(None, None, f"'{mapping['type']}' is not a Pydantic model", node.start_mark)
+    return model_cls.model_validate(mapping["data"])
 
 
 def complex_representer(representer, data: complex):
@@ -228,24 +307,24 @@ def tuple_constructor(constructor, node):
 
 def type_representer(representer, data: type):
     """
-    Represent any Python class/type by its import path.
-    E.g. datetime.datetime → 'datetime.datetime'
+    Represent a registered class by its import path.
+
+    Raises:
+        RepresenterError: If the class is not registered.
     """
     logger.trace("[Yaml] Serializing type {}", data.__qualname__)
-    path = f"{data.__module__}.{data.__qualname__}"
-    # emit as a simple scalar under !type
+    path = _qualified_name(data)
+    if _REGISTRY.get(path) is not data:
+        raise RepresenterError(f"Type '{path}' is not registered for serialization")
     return representer.represent_scalar("!type", path)
 
 
 def type_constructor(constructor, node):
     """
-    Reconstruct a class/type from its import path.
+    Reconstruct a registered class from its import path.
     """
     logger.trace("[Yaml] Deserializing type")
-    path = node.value  # e.g. "datetime.datetime"
-    module_name, qualname = path.rsplit(".", 1)
-    mod = __import__(module_name, fromlist=[qualname])
-    return getattr(mod, qualname)
+    return _lookup_registered(node.value, node)
 
 
 def deque_representer(representer, data):
@@ -258,28 +337,54 @@ def deque_representer(representer, data):
 
 def deque_constructor(constructor, node):
     """
-    Constructor for ndarray
+    Constructor for deque
     """
     logger.trace("[Yaml] Deserializing deque")
     return deque(constructor.construct_sequence(node))
 
 
-# Create YAML handler and register all custom types
+def legacy_enum_constructor(constructor, tag_suffix, node):
+    """
+    Load enum members written by QiliSDK versions that used the unsafe YAML handler
+    (``!!python/object/apply:<module>.<Enum> [value]``). Only registered enums are accepted.
+
+    Raises:
+        ConstructorError: If the tag does not name a registered enum with a single value.
+    """
+    logger.trace("[Yaml] Deserializing legacy enum {}", tag_suffix)
+    enum_cls = _lookup_registered(tag_suffix, node)
+    if not issubclass(enum_cls, Enum) or not isinstance(node, SequenceNode) or len(node.value) != 1:
+        raise ConstructorError(None, None, f"Unsupported legacy tag '{node.tag}'", node.start_mark)
+    (value,) = constructor.construct_sequence(node)
+    return enum_cls(value)
+
+
 class QiliYAML(YAML):
     """
-    Custom YAML handler for QiliSDK.
+    Safe YAML handler for QiliSDK.
+
+    All instances share the tags registered on :class:`QiliConstructor` and :class:`QiliRepresenter`, so a new
+    instance can be created per (de)serialization call without re-registering classes.
     """
 
-    def __init__(self, **kwargs: list[str] | str | None) -> None:
+    def __init__(self) -> None:
         """
-        Initialize the YAML handler with custom settings.
+        Initialize the YAML handler with the safe, pure-Python loader and dumper.
         """
         logger.debug("[Yaml] Initializing QiliYAML handler")
-        super().__init__(**kwargs)
+        super().__init__(typ="safe", pure=True)
+        self.Constructor = QiliConstructor
+        self.Representer = QiliRepresenter
 
     def register_class(self, cls=None, *, shared: bool = False):
         """
         Register a class with the YAML handler, assigning it a unique tag.
+
+        Registered classes are the only ones the loader reconstructs. Pydantic models are serialized through the
+        ``!PydanticModel`` tag (and validated on load), and enums without ``to_yaml`` are serialized by value.
+
+        Raises:
+            TypeError: If an enum without ``to_yaml`` has non-string values.
         """
         if cls is None:
 
@@ -288,51 +393,70 @@ class QiliYAML(YAML):
 
             return decorator
         logger.trace("[Yaml] Registering class {}", cls.__name__)
+        _REGISTRY[_qualified_name(cls)] = cls
+        if issubclass(cls, BaseModel):
+            return cls
         if not cls.__dict__.get("yaml_tag", None):
             cls.yaml_tag = f"!{cls.__module__.split('.')[0]}.{cls.__name__}" if shared else f"!{cls.__name__}"
+        if issubclass(cls, Enum) and not hasattr(cls, "to_yaml"):
+            if not all(isinstance(member.value, str) for member in cls):
+                raise TypeError(f"Enum {cls.__name__} must have string values to be registered")
+            tag = cls.yaml_tag
+            self.representer.add_representer(cls, lambda rep, data: rep.represent_scalar(tag, data.value))
+            self.constructor.add_constructor(tag, lambda _, node: cls(node.value))
+            return cls
         return super().register_class(cls)
 
 
-yaml = QiliYAML(typ="unsafe")
+yaml = QiliYAML()
 
 # SciPy CSR
-yaml.representer.add_representer(sparse.csr_matrix, csr_representer)
-yaml.constructor.add_constructor("!csr_matrix", csr_constructor)
+QiliRepresenter.add_representer(sparse.csr_matrix, csr_representer)
+QiliConstructor.add_constructor("!csr_matrix", csr_constructor)
 
 # NumPy scalars
-yaml.representer.add_multi_representer(np.generic, np_scalar_representer)
-yaml.constructor.add_constructor("!np_scalar", np_scalar_constructor)
+QiliRepresenter.add_multi_representer(np.generic, np_scalar_representer)
+QiliConstructor.add_constructor("!np_scalar", np_scalar_constructor)
 
 # defaultdict
-yaml.representer.add_representer(defaultdict, defaultdict_representer)
-yaml.constructor.add_constructor("!defaultdict", defaultdict_constructor)
+QiliRepresenter.add_representer(defaultdict, defaultdict_representer)
+QiliConstructor.add_constructor("!defaultdict", defaultdict_constructor)
 
 # NumPy arrays
-yaml.representer.add_representer(np.ndarray, ndarray_representer)
-yaml.constructor.add_constructor("!ndarray", ndarray_constructor)
+QiliRepresenter.add_representer(np.ndarray, ndarray_representer)
+QiliConstructor.add_constructor("!ndarray", ndarray_constructor)
 
-# Python functions and lambdas
-yaml.representer.add_representer(types.FunctionType, function_representer)
-yaml.constructor.add_constructor("!function", function_constructor)
-yaml.representer.add_representer(types.LambdaType, lambda_representer)
-yaml.constructor.add_constructor("!lambda", lambda_constructor)
+# Callables are never serialized; legacy pickled-code tags are rejected
+for _callable_type in (
+    types.FunctionType,
+    types.BuiltinFunctionType,
+    types.MethodType,
+    types.BuiltinMethodType,
+    functools.partial,
+):
+    QiliRepresenter.add_representer(_callable_type, callable_representer)
+QiliConstructor.add_constructor("!function", code_constructor)
+QiliConstructor.add_constructor("!lambda", code_constructor)
 
 # Pydantic models
-yaml.representer.add_representer(BaseModel, pydantic_model_representer)
-yaml.constructor.add_constructor("!PydanticModel", pydantic_model_constructor)
+QiliRepresenter.add_multi_representer(BaseModel, pydantic_model_representer)
+QiliConstructor.add_constructor("!PydanticModel", pydantic_model_constructor)
 
 # Built-in complex numbers
-yaml.representer.add_representer(complex, complex_representer)
-yaml.constructor.add_constructor("!complex", complex_constructor)
+QiliRepresenter.add_representer(complex, complex_representer)
+QiliConstructor.add_constructor("!complex", complex_constructor)
 
 # Built-in tuples
-yaml.representer.add_representer(tuple, tuple_representer)
-yaml.constructor.add_constructor("!tuple", tuple_constructor)
+QiliRepresenter.add_representer(tuple, tuple_representer)
+QiliConstructor.add_constructor("!tuple", tuple_constructor)
 
 # Built-in type
-yaml.representer.add_multi_representer(type, type_representer)
-yaml.constructor.add_constructor("!type", type_constructor)
+QiliRepresenter.add_multi_representer(type, type_representer)
+QiliConstructor.add_constructor("!type", type_constructor)
 
 # Built-in deque
-yaml.representer.add_representer(deque, deque_representer)
-yaml.constructor.add_constructor("!deque", deque_constructor)
+QiliRepresenter.add_representer(deque, deque_representer)
+QiliConstructor.add_constructor("!deque", deque_constructor)
+
+# Enum members written by older QiliSDK versions
+QiliConstructor.add_multi_constructor(_LEGACY_APPLY_TAG, legacy_enum_constructor)

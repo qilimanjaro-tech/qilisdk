@@ -20,9 +20,12 @@ from typing import Any, TypeVar, overload
 
 from loguru import logger
 
-from qilisdk.yaml import yaml
+from qilisdk.yaml import QiliYAML
 
 T = TypeVar("T")
+
+# A fresh QiliYAML is created per call: registered tags live on its constructor/representer classes, and a handler
+# left in a failed state by a previous call must not affect later ones.
 
 
 class SerializationError(Exception):
@@ -48,7 +51,7 @@ def serialize(obj: Any) -> str:
     logger.debug("[Serialization] Serializing object of type {} to YAML string", type(obj).__name__)
     try:
         with StringIO() as stream:
-            yaml.dump(obj, stream)
+            QiliYAML().dump(obj, stream)
             return stream.getvalue()
     except Exception as e:
         raise SerializationError(f"Failed to serialize object {e}") from e
@@ -66,7 +69,7 @@ def serialize_to(obj: Any, file: str) -> None:
     """
     logger.debug("[Serialization] Serializing object of type {} to file {}", type(obj).__name__, file)
     try:
-        yaml.dump(obj, Path(file))
+        QiliYAML().dump(obj, Path(file))
     except Exception as e:
         raise SerializationError(f"Failed to serialize object {e} to file {file}") from e
 
@@ -95,7 +98,7 @@ def deserialize(string: str, cls: type[T] | None = None) -> Any | T:
     logger.debug("[Serialization] Deserializing object from YAML string")
     try:
         with StringIO(string) as stream:
-            result = yaml.load(stream)
+            result = QiliYAML().load(stream)
     except Exception as e:
         raise DeserializationError(f"Failed to deserialize YAML string: {e}") from e
     if cls is not None and not isinstance(result, cls):
@@ -126,7 +129,7 @@ def deserialize_from(file: str, cls: type[T] | None = None) -> Any | T:
     """
     logger.debug("[Serialization] Deserializing object from file {}", file)
     try:
-        result = yaml.load(Path(file))
+        result = QiliYAML().load(Path(file))
     except Exception as e:
         raise DeserializationError(f"Failed to deserialize YAML string {e} from file {file}") from e
     if cls is not None and not isinstance(result, cls):
