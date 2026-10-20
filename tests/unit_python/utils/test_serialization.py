@@ -18,7 +18,14 @@ from qilisdk.analog.hamiltonian import Hamiltonian, PauliY, X, Z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.qtensor import ket, tensor_prod
 from qilisdk.functionals.analog_evolution import AnalogEvolution
-from qilisdk.utils.serialization import DeserializationError, deserialize, deserialize_from, serialize, serialize_to
+from qilisdk.utils.serialization import (
+    DeserializationError,
+    SerializationError,
+    deserialize,
+    deserialize_from,
+    serialize,
+    serialize_to,
+)
 from qilisdk.yaml import QiliYAML
 
 
@@ -101,3 +108,13 @@ def test_arbitrary_serialize_errors(monkeypatch, tmp_path):
 
     with pytest.raises(Exception, match="Serialization error"):
         serialize_to(operator, str(tmp_path / "pauli_x.yml"))
+
+
+def test_serialize_to_keeps_existing_file_on_failure(tmp_path):
+    path = tmp_path / "existing.yml"
+    path.write_text("previous content", encoding="utf-8")
+
+    with pytest.raises(SerializationError, match="not serializable"):
+        serialize_to(lambda t: t, str(path))
+
+    assert path.read_text(encoding="utf-8") == "previous content"

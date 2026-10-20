@@ -68,8 +68,12 @@ def serialize_to(obj: Any, file: str) -> None:
         SerializationError: If serialization to file fails.
     """
     logger.debug("[Serialization] Serializing object of type {} to file {}", type(obj).__name__, file)
+    # Serialize fully before opening the file, so a failure leaves any existing file untouched.
     try:
-        QiliYAML().dump(obj, Path(file))
+        with StringIO() as stream:
+            QiliYAML().dump(obj, stream)
+            content = stream.getvalue()
+        Path(file).write_text(content, encoding="utf-8")
     except Exception as e:
         raise SerializationError(f"Failed to serialize object {e} to file {file}") from e
 

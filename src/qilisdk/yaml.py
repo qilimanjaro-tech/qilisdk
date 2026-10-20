@@ -38,6 +38,9 @@ from scipy import sparse
 _REGISTRY: dict[str, type] = {}
 """Classes registered through :meth:`QiliYAML.register_class`, keyed by ``module.qualname``."""
 
+_TAGS: dict[str, type] = {}
+"""Classes registered through :meth:`QiliYAML.register_class`, keyed by YAML tag."""
+
 _ALLOWED_DTYPE_KINDS = frozenset("biufc")
 """NumPy dtype kinds (bool, int, uint, float, complex) accepted when reconstructing arrays and scalars."""
 
@@ -86,6 +89,32 @@ def _check_dtype(dtype_name: str, node) -> np.dtype:
     return dtype
 
 
+def _check_representable_dtype(dtype: np.dtype) -> None:
+    """
+    Reject dtypes that the loader would refuse, so they fail when saving rather than when loading.
+
+    Raises:
+        RepresenterError: If the dtype is not numeric or boolean.
+    """
+    if dtype.kind not in _ALLOWED_DTYPE_KINDS:
+        raise RepresenterError(f"dtype '{dtype}' cannot be serialized; only numeric and boolean dtypes are supported")
+
+
+def _checked_array(values, kinds: str, name: str, node) -> np.ndarray:
+    """
+    Convert a loaded list to an array, accepting only the given dtype kinds (empty lists are always accepted).
+
+    Raises:
+        ConstructorError: If the values do not form an array of an accepted kind.
+    """
+    array = np.asarray(values)
+    if array.size > 0 and array.dtype.kind not in kinds:
+        raise ConstructorError(
+            None, None, f"csr_matrix {name} of dtype '{array.dtype}' is not allowed", node.start_mark
+        )
+    return array
+
+
 class QiliConstructor(SafeConstructor):
     """Safe YAML constructor holding the QiliSDK tags, isolated from other ``ruamel.yaml`` users."""
 
@@ -108,6 +137,7 @@ def csr_representer(representer, data: sparse.csr_matrix):
     Representer for CSR matrix.
     """
     logger.trace("[Yaml] Serializing csr_matrix")
+    _check_representable_dtype(data.dtype)
     value = {
         "data": data.data.tolist(),
         "indices": data.indices.tolist(),
@@ -119,14 +149,14 @@ def csr_representer(representer, data: sparse.csr_matrix):
 
 def csr_constructor(constructor, node):
     """
-    Constructor for CSR matrix.
+    Constructor for CSR matrix. Only numeric and boolean data and integer indices are accepted.
     """
     logger.trace("[Yaml] Deserializing csr_matrix")
     mapping = constructor.construct_mapping(node, deep=True)
-    return sparse.csr_matrix(
-        (mapping["data"], mapping["indices"], mapping["indptr"]),
-        shape=tuple(mapping["shape"]),
-    )
+    data = _checked_array(mapping["data"], "".join(_ALLOWED_DTYPE_KINDS), "data", node)
+    indices = _checked_array(mapping["indices"], "iu", "indices", node).astype(np.int64)
+    indptr = _checked_array(mapping["indptr"], "iu", "indptr", node).astype(np.int64)
+    return sparse.csr_matrix((data, indices, indptr), shape=tuple(mapping["shape"]))
 
 
 def ndarray_representer(representer, data):
@@ -134,6 +164,7 @@ def ndarray_representer(representer, data):
     Representer for ndarray.
     """
     logger.trace("[Yaml] Serializing ndarray")
+    _check_representable_dtype(data.dtype)
     value = {"dtype": str(data.dtype), "shape": data.shape, "data": data.ravel().tolist()}
     return representer.represent_mapping("!ndarray", value)
 
@@ -155,6 +186,7 @@ def np_scalar_representer(representer, data: np.generic):
     Represent any NumPy scalar (e.g. np.int64, np.float32).
     """
     logger.trace("[Yaml] Serializing numpy scalar")
+    _check_representable_dtype(data.dtype)
     return representer.represent_mapping(
         "!np_scalar",
         {"dtype": str(data.dtype), "value": data.item()},
@@ -181,13 +213,9 @@ def defaultdict_representer(representer, data: defaultdict):
     """
     logger.trace("[Yaml] Serializing defaultdict")
     factory = data.default_factory
-    factory_name = (
-        f"{factory.__module__}.{factory.__qualname__}"
-        if factory is not None and hasattr(factory, "__qualname__")
-        else None
-    )
-    if factory_name not in _DEFAULTDICT_FACTORIES:
-        raise RepresenterError(f"defaultdict factory '{factory_name}' cannot be serialized")
+    factory_name = None if factory is None else _qualified_name(factory) if isinstance(factory, type) else None
+    if factory is not None and (factory_name is None or _DEFAULTDICT_FACTORIES.get(factory_name) is not factory):
+        raise RepresenterError(f"defaultdict factory {factory!r} cannot be serialized")
     return representer.represent_mapping(
         "!defaultdict",
         {"default_factory": factory_name, "items": dict(data)},
@@ -384,6 +412,7 @@ class QiliYAML(YAML):
         ``!PydanticModel`` tag (and validated on load), and enums without ``to_yaml`` are serialized by value.
 
         Raises:
+            ValueError: If another class is already registered under the same tag.
             TypeError: If an enum without ``to_yaml`` has non-string values.
         """
         if cls is None:
@@ -393,15 +422,26 @@ class QiliYAML(YAML):
 
             return decorator
         logger.trace("[Yaml] Registering class {}", cls.__name__)
-        _REGISTRY[_qualified_name(cls)] = cls
+        name = _qualified_name(cls)
         if issubclass(cls, BaseModel):
+            _REGISTRY[name] = cls
             return cls
-        if not cls.__dict__.get("yaml_tag", None):
-            cls.yaml_tag = f"!{cls.__module__.split('.')[0]}.{cls.__name__}" if shared else f"!{cls.__name__}"
+        tag = cls.__dict__.get("yaml_tag", None) or (
+            f"!{cls.__module__.split('.')[0]}.{cls.__name__}" if shared else f"!{cls.__name__}"
+        )
+        # Re-registering a class with the same qualified name (e.g. after a module reload) replaces it.
+        existing = _TAGS.get(tag)
+        if existing is not None and _qualified_name(existing) != name:
+            raise ValueError(
+                f"Cannot register {name} under tag '{tag}': already used by {_qualified_name(existing)}. "
+                "Rename the class or give it a distinct yaml_tag."
+            )
+        _REGISTRY[name] = cls
+        _TAGS[tag] = cls
+        cls.yaml_tag = tag
         if issubclass(cls, Enum) and not hasattr(cls, "to_yaml"):
             if not all(isinstance(member.value, str) for member in cls):
                 raise TypeError(f"Enum {cls.__name__} must have string values to be registered")
-            tag = cls.yaml_tag
             self.representer.add_representer(cls, lambda rep, data: rep.represent_scalar(tag, data.value))
             self.constructor.add_constructor(tag, lambda _, node: cls(node.value))
             return cls

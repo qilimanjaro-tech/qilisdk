@@ -88,6 +88,37 @@ def test_ndarray_rejects_object_dtype():
         load("!ndarray {dtype: object, shape: !tuple [1], data: [1]}")
 
 
+@pytest.mark.parametrize(
+    "arr",
+    [np.array(["a", "b"]), np.array([1, "a"], dtype=object), np.array(["2024-01-01"], dtype="datetime64[D]")],
+    ids=["str", "object", "datetime"],
+)
+def test_ndarray_with_unsupported_dtype_is_not_serializable(arr):
+    with pytest.raises(RepresenterError, match="only numeric and boolean dtypes are supported"):
+        dump(arr)
+
+
+def test_csr_matrix_empty_roundtrip():
+    m = sparse.csr_matrix((2, 3))
+    loaded = dump_load(m)
+
+    assert loaded.shape == (2, 3)
+    assert loaded.nnz == 0
+
+
+@pytest.mark.parametrize(
+    ("payload", "field"),
+    [
+        ("!csr_matrix {data: [a], indices: [0], indptr: [0, 1], shape: !tuple [1, 1]}", "data"),
+        ("!csr_matrix {data: [1.0], indices: [0.5], indptr: [0, 1], shape: !tuple [1, 1]}", "indices"),
+        ("!csr_matrix {data: [1.0], indices: [0], indptr: [a, b], shape: !tuple [1, 1]}", "indptr"),
+    ],
+)
+def test_csr_matrix_rejects_non_numeric_fields(payload, field):
+    with pytest.raises(ConstructorError, match=f"csr_matrix {field} of dtype"):
+        load(payload)
+
+
 # -----------------------
 # NumPy scalar
 # -----------------------
@@ -104,6 +135,12 @@ def test_numpy_scalar_roundtrip():
 def test_numpy_scalar_rejects_object_dtype():
     with pytest.raises(ConstructorError, match="dtype 'object' is not allowed"):
         load("!np_scalar {dtype: object, value: 1}")
+
+
+@pytest.mark.parametrize("scalar", [np.str_("a"), np.datetime64("2024-01-01")], ids=["str", "datetime"])
+def test_numpy_scalar_with_unsupported_dtype_is_not_serializable(scalar):
+    with pytest.raises(RepresenterError, match="only numeric and boolean dtypes are supported"):
+        dump(scalar)
 
 
 # -----------------------
@@ -138,9 +175,19 @@ def test_defaultdict_rejects_unknown_factory_on_load():
         load("!defaultdict {default_factory: os.system, items: {}}")
 
 
-def test_defaultdict_rejects_unknown_factory_on_dump():
+class _CallableFactory:
+    def __call__(self):
+        return 0
+
+
+@pytest.mark.parametrize(
+    "factory",
+    [Model, functools.partial(int), _CallableFactory(), lambda: 0],
+    ids=["unlisted-type", "partial", "callable-instance", "lambda"],
+)
+def test_defaultdict_rejects_unknown_factory_on_dump(factory):
     with pytest.raises(RepresenterError, match="cannot be serialized"):
-        dump(defaultdict(Model))
+        dump(defaultdict(factory))
 
 
 # -----------------------
@@ -456,6 +503,40 @@ def test_register_class_shared():
 
     assert hasattr(Bar, "yaml_tag")
     assert "." in Bar.yaml_tag
+
+
+def _register_other_clash():
+    class Clash:
+        pass
+
+    return QiliYAML().register_class(Clash)
+
+
+def test_register_class_rejects_duplicate_tag():
+    class Clash:
+        def __init__(self):
+            self.value = 1
+
+    QiliYAML().register_class(Clash)
+
+    with pytest.raises(ValueError, match="already used by"):
+        _register_other_clash()
+
+    loaded = dump_load(Clash())
+    assert type(loaded) is Clash
+    assert loaded.value == 1
+
+
+def test_register_class_allows_reregistering_same_class():
+    y = QiliYAML()
+
+    class Again:
+        pass
+
+    y.register_class(Again)
+    y.register_class(Again)
+
+    assert Again.yaml_tag == "!Again"
 
 
 def test_unregistered_class_is_not_serializable():
