@@ -80,7 +80,7 @@ def test_digital_symbolic_initial_state(method, initial_state, expected):
     circuit.add(X(0))
     readout = [SamplingReadout(nshots=1000)]
     result = backend._execute_digital_propagation(
-        DigitalPropagation(circuit=circuit), readout=readout, initial_state=initial_state
+        DigitalPropagation(circuit=circuit, initial_state=initial_state), readout=readout
     )
     samples = result.get_samples()
     assert set(samples) == expected
@@ -123,9 +123,8 @@ def test_monte_carlo_mid_circuit_readout(method):
 
     observables = [pauli_z(0), pauli_x(1), pauli_z(0) * pauli_z(1)]
     result = backend._execute_digital_propagation(
-        DigitalPropagation(circuit=circuit),
+        DigitalPropagation(circuit=circuit, initial_state=initial_state),
         readout=[ExpectationReadout(observables=observables), StateTomographyReadout()],
-        initial_state=initial_state,
     )
 
     assert len(result.intermediate_results) > 0
