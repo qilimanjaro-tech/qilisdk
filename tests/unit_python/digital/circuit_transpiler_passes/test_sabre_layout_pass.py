@@ -352,6 +352,39 @@ def test_sabre_layout_simulation_uses_sampled_candidate_when_neighbors_are_unava
         )
 
 
+def test_sabre_layout_release_valve_breaks_swap_cycles() -> None:
+    pairs = [(3, 2), (1, 4), (3, 2), (4, 2), (3, 0), (1, 0), (3, 1), (1, 2)]
+    pairs += [(1, 2), (4, 0), (0, 4), (3, 2), (1, 0), (2, 3), (1, 0), (0, 4)]
+    circuit = Circuit(5)
+    for control, target in pairs:
+        circuit.add(CNOT(control, target))
+    layout_pass = SabreLayoutPass([(0, 1), (1, 2), (2, 3), (3, 4)], seed=2, num_trials=1)
+
+    layout_pass.run(circuit)
+
+    assert sorted(layout_pass.last_layout) == [0, 1, 2, 3, 4]
+
+
+def test_sabre_layout_release_valve_stops_on_disconnected_topology() -> None:
+    graph = make_graph([(0, 1), (2, 3)])
+    layout_pass = SabreLayoutPass(graph, num_trials=1, seed=0)
+    physical_nodes = [0, 1, 2, 3]
+    physical_to_dense_index = {node: node for node in physical_nodes}
+    distance_matrix = layout_pass._all_pairs_shortest_path_unweighted(graph, physical_nodes, physical_to_dense_index)
+
+    final_layout, _ = layout_pass._sabre_simulate_layout(
+        [0, 2],
+        distance_matrix,
+        [(0, 1)],
+        [[0], [0]],
+        random.Random(0),
+        physical_nodes,
+        physical_to_dense_index,
+    )
+
+    assert len(set(final_layout)) == 2
+
+
 def test_sabre_layout_cost_front_penalizes_unreachable_interactions() -> None:
     cost = SabreLayoutPass._cost_front(
         {0},

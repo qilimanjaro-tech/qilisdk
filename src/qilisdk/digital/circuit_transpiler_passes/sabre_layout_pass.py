@@ -337,6 +337,10 @@ class SabreLayoutPass(CircuitTranspilerPass):
         for logical_qubit in range(num_logical_qubits):
             advance_front_for(logical_qubit)
 
+        # Release valve: after this many swaps without scheduling a gate, force the closest front gate through
+        release_valve_threshold = 10 * num_physical_qubits
+        swaps_since_progress = 0
+
         # Main loop: continue until all 2Q gates are scheduled
         remaining = len(two_qubit_pairs)
         while remaining:
@@ -360,6 +364,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
                         scheduled[gate_idx] = True
                         remaining -= 1
                         progressed = True
+                        swaps_since_progress = 0
                         # Diagnostic score: adjacency cost is 1 by definition
                         score_accum += 1.0
                         # Advance fronts for both logical qubits involved
@@ -369,8 +374,46 @@ class SabreLayoutPass(CircuitTranspilerPass):
             if not remaining:
                 break  # done
 
-            # No front gate was executable: pick a simulated SWAP using SABRE heuristic.
             front_gate_indices: list[int] = list(front_set())
+
+            if swaps_since_progress >= release_valve_threshold:
+                # Greedy swaps are cycling: walk the closest front gate's qubits together along a shortest path.
+                closest_gate_idx = min(
+                    sorted(front_gate_indices),
+                    key=lambda gate_idx: distance_matrix[physical_to_dense_index[layout[two_qubit_pairs[gate_idx][0]]]][
+                        physical_to_dense_index[layout[two_qubit_pairs[gate_idx][1]]]
+                    ],
+                )
+                logical_qubit_a, logical_qubit_b = two_qubit_pairs[closest_gate_idx]
+                current_physical = layout[logical_qubit_a]
+                target_dense_index = physical_to_dense_index[layout[logical_qubit_b]]
+                current_distance = distance_matrix[physical_to_dense_index[current_physical]][target_dense_index]
+                if current_distance >= SabreLayoutPass._UNREACHABLE_DISTANCE:
+                    # Disconnected topology: no swap sequence helps, so let SabreSwapPass report it.
+                    break
+                while current_distance > 1:
+                    next_physical = next(
+                        int(neighbor)
+                        for neighbor in self.topology.neighbors(current_physical)
+                        if distance_matrix[physical_to_dense_index[int(neighbor)]][target_dense_index]
+                        == current_distance - 1
+                    )
+                    self._swap_mapping(
+                        layout,
+                        inverse_layout,
+                        physical_to_dense_index,
+                        current_physical,
+                        next_physical,
+                        inverse_layout[physical_to_dense_index[current_physical]],
+                        inverse_layout[physical_to_dense_index[next_physical]],
+                    )
+                    current_physical = next_physical
+                    current_distance -= 1
+                swaps_since_progress = 0
+                decay = [0.0] * num_physical_qubits
+                continue
+
+            # No front gate was executable: pick a simulated SWAP using SABRE heuristic.
             # Build candidate physical edges from neighbors of endpoints of non-executable front gates.
             candidate_edges: set[tuple[int, int]] = set()
             touched_physical_nodes: set[int] = set()
@@ -483,6 +526,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
                 # Increase decay on touched physical qubits
                 decay[physical_to_dense_index[chosen_physical_a]] += self.decay_delta
                 decay[physical_to_dense_index[chosen_physical_b]] += self.decay_delta
+                swaps_since_progress += 1
 
         # Final diagnostic cost: re-evaluate sum of distances for the entire 2Q list under final layout
         final_distance_cost = self._cost_front(
