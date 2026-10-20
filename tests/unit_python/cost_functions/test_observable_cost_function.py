@@ -177,6 +177,13 @@ def test_imag_sampling_result():
     assert cost == 1j
 
 
+def test_imag_hamiltonian_density_matrix():
+    rho = QTensor(np.array([[1, 0], [0, 0]]))
+    readout_result = StateTomographyReadoutResult(state=rho)
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
+    assert np.isclose(ObservableCostFunction(1j * Z(0)).compute_cost(result), 1j)
+
+
 def test_repr():
     ob = QTensor(np.eye(4))
     ocf = ObservableCostFunction(ob)

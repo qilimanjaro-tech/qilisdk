@@ -1753,7 +1753,7 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int ns
 #endif
 #endif
         for (int i = 0; i < H_rho_dense.rows(); ++i) {
-            expectation += std::real(H_rho_dense(i, i));
+            expectation += H_rho_dense(i, i);
         }
     }
 

@@ -109,7 +109,7 @@ def test_compute_cost_sampling():
     readout_result = SamplingReadoutResult.from_samples(samples={"0": 100})
     result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
 
-    with pytest.raises(ValueError, match=r"Mapping samples to the model's variables is ambiguous."):
+    with pytest.raises(ValueError, match=r"The sample has 1 qubits but the model has 2 variables"):
         _ = mcf.compute_cost(result)
 
     readout_result = SamplingReadoutResult.from_samples(samples={"01": 50, "10": 50})
@@ -163,7 +163,7 @@ def test_complex_return_values():
     fake_ham = (return_val + 1) / 2 * I(0) + (return_val - 1) / 2 * Z(0)
     model = MagicMock(spec=QUBO)
     model.to_hamiltonian = MagicMock(return_value=fake_ham)
-    rho = ket(0)
+    rho = QTensor(np.array([[1, 0], [0, 0]]))
     eval_results = MagicMock()
     eval_results.values = MagicMock(return_value=[return_val])
     model.evaluate = MagicMock(return_value=eval_results)
@@ -190,6 +190,27 @@ def test_ket_state_wider_than_model():
     mcf = ModelCostFunction(model)
     state = StateTomographyReadoutResult(state=tensor_prod([ket(1), ket(0), ket(0)]))
     cost = mcf.compute_cost(FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=state)))
+    assert np.isclose(cost, 1)
+
+
+def test_state_narrower_than_model():
+    b = [BinaryVariable(f"b{i}") for i in range(3)]
+    model = Model("test")
+    model.set_objective(term=sum(b), label="obj")
+    mcf = ModelCostFunction(model)
+    state = StateTomographyReadoutResult(state=tensor_prod([ket(1), ket(0)]))
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=state))
+    with pytest.raises(ValueError, match=r"The state has 2 qubits but the model has 3 variables"):
+        mcf.compute_cost(result)
+
+
+def test_samples_wider_than_model():
+    b = BinaryVariable("b")
+    model = Model("test")
+    model.set_objective(term=b, label="obj")
+    mcf = ModelCostFunction(model)
+    readout_result = SamplingReadoutResult.from_samples(samples={"100": 100})
+    cost = mcf.compute_cost(FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result)))
     assert np.isclose(cost, 1)
 
 

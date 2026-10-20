@@ -102,7 +102,7 @@ class ObservableCostFunction(CostFunction):
             raise ValueError(
                 f"The result has {nqubits} qubits but the observable acts on {self._observable.nqubits} qubits"
             )
-        if isinstance(self._observable, QTensor):
+        if isinstance(self._observable, QTensor) and self._observable.nqubits < nqubits:
             return self._observable.expand(nqubits)
         return self._observable
 
