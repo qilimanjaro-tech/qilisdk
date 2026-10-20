@@ -16,6 +16,7 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
+from qilisdk.analog.hamiltonian import I, Z
 from qilisdk.core import Model
 from qilisdk.core.comparison import EQ
 from qilisdk.core.model import QUBO, ObjectiveSense
@@ -159,11 +160,10 @@ def test_complex_return_values():
     assert cost == return_val
 
     # state tomography (qubo)
-    fake_ham = MagicMock()
-    fake_ham.to_matrix = MagicMock(return_value=np.array([[return_val, 0], [0, 1]]))
+    fake_ham = (return_val + 1) / 2 * I(0) + (return_val - 1) / 2 * Z(0)
     model = MagicMock(spec=QUBO)
     model.to_hamiltonian = MagicMock(return_value=fake_ham)
-    rho = QTensor(np.array([[1, 0], [0, 0]]))
+    rho = ket(0)
     eval_results = MagicMock()
     eval_results.values = MagicMock(return_value=[return_val])
     model.evaluate = MagicMock(return_value=eval_results)
@@ -172,6 +172,25 @@ def test_complex_return_values():
     state_result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=st_readout_result))
     cost = mcf._compute_from_state(state_result)
     assert cost == return_val
+
+
+def test_qubo_state_wider_than_model():
+    model = MagicMock(spec=QUBO)
+    model.to_hamiltonian = MagicMock(return_value=Z(0))
+    mcf = ModelCostFunction(model)
+    state = StateTomographyReadoutResult(state=tensor_prod([ket(1), ket(0), ket(0)]))
+    cost = mcf.compute_cost(FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=state)))
+    assert np.isclose(cost, -1)
+
+
+def test_ket_state_wider_than_model():
+    b = BinaryVariable("b")
+    model = Model("test")
+    model.set_objective(term=b, label="obj")
+    mcf = ModelCostFunction(model)
+    state = StateTomographyReadoutResult(state=tensor_prod([ket(1), ket(0), ket(0)]))
+    cost = mcf.compute_cost(FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=state)))
+    assert np.isclose(cost, 1)
 
 
 def test_repr():

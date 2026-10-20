@@ -33,8 +33,11 @@ class ObservableCostFunction(CostFunction):
 
     The observable can be supplied as a :class:`~qilisdk.core.qtensor.QTensor`,
     a :class:`~qilisdk.analog.hamiltonian.Hamiltonian`, or a
-    :class:`~qilisdk.analog.hamiltonian.PauliOperator`. It is stored internally
-    as a ``QTensor``.
+    :class:`~qilisdk.analog.hamiltonian.PauliOperator`. A ``PauliOperator`` is
+    stored as a one-term ``Hamiltonian``, and the observable is resolved against
+    the width of the evaluated state at compute time, so ``Z(0)`` measures qubit
+    0 of a state of any size. A ``QTensor`` observable acts on the leading qubits
+    and is padded with identities on the rest.
 
     When a ``FunctionalResult`` (from a ``DigitalPropagation`` or
     ``AnalogEvolution``) is passed to :meth:`compute_cost`, the expectation
@@ -61,24 +64,46 @@ class ObservableCostFunction(CostFunction):
             ValueError: If the provided observable type is unsupported.
         """
         super().__init__()
-        if isinstance(observable, QTensor):
+        self._observable: QTensor | Hamiltonian
+        if isinstance(observable, (QTensor, Hamiltonian)):
             self._observable = observable
-        elif isinstance(observable, Hamiltonian):
-            self._observable = QTensor(observable.to_matrix())
         elif isinstance(observable, PauliOperator):
-            self._observable = QTensor(observable.matrix)
+            self._observable = observable.to_hamiltonian()
         else:
             raise ValueError(
                 f"Observable needs to be of type QTensor, Hamiltonian, or PauliOperator but {type(observable)} was provided"
             )
 
     @property
-    def observable(self) -> QTensor:
-        """Return the observable in ``QTensor`` form.
+    def observable(self) -> QTensor | Hamiltonian:
+        """Return the observable, with a ``PauliOperator`` converted to a ``Hamiltonian``.
 
         Returns:
-            QTensor: The matrix representation of the observable.
+            QTensor | Hamiltonian: The observable whose expectation value defines the cost.
         """
+        return self._observable
+
+    def _observable_expanded(self, nqubits: int) -> QTensor | Hamiltonian:
+        """Resolve the observable against a state of ``nqubits`` qubits.
+
+        A ``QTensor`` is padded with identities on the trailing qubits, while a
+        ``Hamiltonian`` is returned as-is since it is evaluated term by term.
+
+        Args:
+            nqubits (int): Number of qubits of the state being evaluated.
+
+        Returns:
+            QTensor | Hamiltonian: An observable acting on ``nqubits`` qubits.
+
+        Raises:
+            ValueError: If the observable acts on more qubits than the state has.
+        """
+        if self._observable.nqubits > nqubits:
+            raise ValueError(
+                f"The result has {nqubits} qubits but the observable acts on {self._observable.nqubits} qubits"
+            )
+        if isinstance(self._observable, QTensor):
+            return self._observable.expand(nqubits)
         return self._observable
 
     def compute_cost(self, results: FunctionalResult) -> Number:
@@ -117,7 +142,8 @@ class ObservableCostFunction(CostFunction):
             for mixed states).
         """
         final_state = results.get_state()
-        total_cost = complex(np.real_if_close(expect_val(self._observable, final_state), tol=get_settings().atol))
+        observable = self._observable_expanded(final_state.nqubits)
+        total_cost = complex(np.real_if_close(expect_val(observable, final_state), tol=get_settings().atol))
         if abs(total_cost.imag) < get_settings().atol:
             return total_cost.real
         return total_cost
@@ -137,21 +163,17 @@ class ObservableCostFunction(CostFunction):
             Number: The probability-weighted expectation value.
 
         Raises:
-            ValueError: If the number of qubits in a sample does not match the
-                number of qubits of the observable.
+            ValueError: If the samples have fewer qubits than the observable
+                acts on.
         """
         total_cost = complex(0.0)
-        nqubits = self._observable.nqubits
         samples = results.get_samples()
         nshots = sum(samples.values())
+        observable = self._observable_expanded(len(next(iter(samples))))
         logger.trace("[ObservableCostFunction] Estimating expectation value from {} distinct samples", len(samples))
         for sample, prob in samples.items():
             state = ket(*[int(bit) for bit in sample])
-            if nqubits != state.nqubits:
-                raise ValueError(
-                    f"The samples provided have {state.nqubits} qubits but the observable has {nqubits} qubits"
-                )
-            evaluate_results = complex(np.real_if_close(expect_val(self._observable, state), tol=get_settings().atol))
+            evaluate_results = complex(np.real_if_close(expect_val(observable, state), tol=get_settings().atol))
             total_cost += evaluate_results * (prob / nshots)
 
         if abs(total_cost.imag) < get_settings().atol:

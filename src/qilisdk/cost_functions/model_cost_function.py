@@ -19,7 +19,7 @@ import numpy as np
 from loguru import logger
 
 from qilisdk.core.model import QUBO, Model
-from qilisdk.core.qtensor import QTensor, expect_val, ket
+from qilisdk.core.qtensor import expect_val, ket
 from qilisdk.cost_functions.cost_function import CostFunction
 from qilisdk.settings import get_settings
 
@@ -117,9 +117,7 @@ class ModelCostFunction(CostFunction):
         if isinstance(self.model, QUBO):
             logger.trace("[ModelCostFunction] Computing QUBO Hamiltonian expectation value from state")
             ham = self.model.to_hamiltonian()
-            total_cost = complex(
-                np.real_if_close(expect_val(QTensor(ham.to_matrix()), final_state), tol=get_settings().atol)
-            )
+            total_cost = complex(np.real_if_close(expect_val(ham, final_state), tol=get_settings().atol))
             if abs(total_cost.imag) < get_settings().atol:
                 return total_cost.real
             return total_cost
@@ -153,7 +151,7 @@ class ModelCostFunction(CostFunction):
         if dense_state is None:
             raise ValueError("The final state is invalid.")
 
-        n = len(self.model.variables())
+        n = final_state.nqubits
 
         for i, prob in enumerate(dense_state):
             state = [int(b) for b in f"{i:0{n}b}"]
