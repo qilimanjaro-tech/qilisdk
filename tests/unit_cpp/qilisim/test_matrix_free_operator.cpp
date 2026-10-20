@@ -280,10 +280,12 @@ TEST(MatrixFreeOperator, InitWithMultiTargetGate) {
 }
 
 TEST(MatrixFreeOperator, InitWithMultiControlGate) {
-    DenseMatrix x_matrix(2, 2);
-    x_matrix << 0, 1, 1, 0;
-    Gate g("Y", x_matrix.sparseView(), {1, 2}, {1}, {});
-    EXPECT_ANY_THROW(MatrixFreeOperator op(g));
+    DenseMatrix y_matrix(2, 2);
+    y_matrix << 0, Complex(0.0, -1.0), Complex(0.0, 1.0), 0;
+    Gate g("CCY", y_matrix.sparseView(), {0, 1}, {2}, {});
+    MatrixFreeOperator op(g);
+    EXPECT_EQ(op.get_name(), "Y");
+    EXPECT_EQ(op.get_control_qubits().size(), 2u);
 }
 
 TEST(MatrixFreeOperator, EqualitySameOperator) {
@@ -1272,6 +1274,66 @@ TEST(MatrixFreeOperator, DenseMultiQubit_ThrowsOnDensityMatrix) {
     rho.setZero();
     rho(1, 1) = 1.0;
     EXPECT_ANY_THROW(op.apply(rho, MatrixFreeApplicationType::LeftAndRight));
+}
+
+// --- Multi-controlled single-qubit gates ------------------------------------
+
+namespace {
+
+DenseMatrix multiControlBase(const std::string& name) {
+    DenseMatrix m(2, 2);
+    if (name == "X") {
+        m << 0, 1, 1, 0;
+    } else if (name == "Y") {
+        m << 0, Complex(0.0, -1.0), Complex(0.0, 1.0), 0;
+    } else if (name == "Z") {
+        m << 1, 0, 0, -1;
+    } else {
+        m = asymComplexU();
+    }
+    return m;
+}
+
+// Check every application type of a multi-controlled gate against its full matrix.
+void checkMultiControlled(const std::string& name, const std::vector<int>& controls, int target, int n) {
+    DenseMatrix base = multiControlBase(name);
+    Gate g(name, base.sparseView(), controls, {target}, {});
+    DenseMatrix full = DenseMatrix(g.get_full_matrix(n));
+    MatrixFreeOperator op(g);
+    long dim = 1L << n;
+
+    DenseMatrix state = randomState(n, 11);
+    DenseMatrix expected_state = full * state;
+    op.apply(state, MatrixFreeApplicationType::Left);
+    ASSERT_TRUE(state.isApprox(expected_state, 1e-10)) << name << " statevector mismatch";
+
+    DenseMatrix rho(dim, dim);
+    for (long c = 0; c < dim; ++c) {
+        rho.col(c) = randomState(n, 100 + static_cast<unsigned>(c));
+    }
+    DenseMatrix left = rho;
+    op.apply(left, MatrixFreeApplicationType::Left);
+    ASSERT_TRUE(left.isApprox(full * rho, 1e-10)) << name << " Left mismatch";
+    DenseMatrix right = rho;
+    op.apply(right, MatrixFreeApplicationType::Right);
+    ASSERT_TRUE(right.isApprox(rho * full.adjoint(), 1e-10)) << name << " Right mismatch";
+    DenseMatrix both = rho;
+    op.apply(both, MatrixFreeApplicationType::LeftAndRight);
+    ASSERT_TRUE(both.isApprox(full * rho * full.adjoint(), 1e-10)) << name << " LeftAndRight mismatch";
+}
+
+}  // namespace
+
+TEST(MatrixFreeOperator, TwoControls_MatchesFullMatrix) {
+    for (const std::string name : {"X", "Y", "Z", "AsymU"}) {
+        checkMultiControlled(name, {0, 2}, 1, 3);
+    }
+}
+
+TEST(MatrixFreeOperator, ThreeControls_MatchesFullMatrix) {
+    for (const std::string name : {"X", "Y", "Z", "AsymU"}) {
+        checkMultiControlled(name, {3, 0, 1}, 2, 4);
+    }
 }
 
 // GCOV_EXCL_BR_STOP
