@@ -667,7 +667,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         two_qubit_pairs: list[tuple[int, int]] = []
         for gate_idx, gate in enumerate(circuit.gates):
             gate_qubits = gate.qubits
-            if len(gate_qubits) == SabreLayoutPass._TWO_QUBIT_ARITY:
+            if len(gate_qubits) == SabreLayoutPass._TWO_QUBIT_ARITY and not isinstance(gate, M):
                 two_qubit_gate_indices.append(gate_idx)
                 two_qubit_pairs.append((gate_qubits[0], gate_qubits[1]))
         gate_indices_per_qubit: list[list[int]] = [[] for _ in range(num_logical_qubits)]
