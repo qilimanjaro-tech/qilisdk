@@ -15,6 +15,7 @@
 import math
 import random
 from itertools import starmap
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -283,27 +284,6 @@ def test_layout_tie_break(monkeypatch):
     assert layout_pass.last_layout is not None
 
 
-def test_sabre_layout_simulation_skips_stale_scheduled_front_entries() -> None:
-    graph = _line_graph(3)
-    layout_pass = SabreLayoutPass(graph, num_trials=1, seed=0)
-    physical_nodes = [0, 1, 2]
-    physical_to_dense_index = {node: node for node in physical_nodes}
-    distance_matrix = layout_pass._all_pairs_shortest_path_unweighted(graph, physical_nodes, physical_to_dense_index)
-
-    final_layout, score = layout_pass._sabre_simulate_layout(
-        [0, 1, 2],
-        distance_matrix,
-        [(0, 1), (1, 2)],
-        [[0], [0, 1], [0, 1]],
-        random.Random(0),
-        physical_nodes,
-        physical_to_dense_index,
-    )
-
-    assert final_layout == [0, 1, 2]
-    assert score > 0.0
-
-
 def test_sabre_layout_simulation_breaks_on_degenerate_no_candidate_case() -> None:
     graph = make_graph([], nodes=[0, 1])
     layout_pass = SabreLayoutPass(graph, num_trials=1, seed=0)
@@ -352,27 +332,65 @@ def test_sabre_layout_simulation_uses_sampled_candidate_when_neighbors_are_unava
         )
 
 
-def test_sabre_layout_release_valve_breaks_swap_cycles() -> None:
+def test_sabre_layout_release_valve_breaks_swap_cycles(monkeypatch: pytest.MonkeyPatch) -> None:
+    class SwapBudgetExceeded(RuntimeError):
+        pass
+
     pairs = [(3, 2), (1, 4), (3, 2), (4, 2), (3, 0), (1, 0), (3, 1), (1, 2)]
     pairs += [(1, 2), (4, 0), (0, 4), (3, 2), (1, 0), (2, 3), (1, 0), (0, 4)]
     circuit = Circuit(5)
     for control, target in pairs:
         circuit.add(CNOT(control, target))
     layout_pass = SabreLayoutPass([(0, 1), (1, 2), (2, 3), (3, 4)], seed=2, num_trials=1)
+    original_swap_mapping = SabreLayoutPass._swap_mapping
+    swap_calls = 0
+
+    def bounded_swap_mapping(*args: Any) -> None:
+        nonlocal swap_calls
+        swap_calls += 1
+        if swap_calls > 100_000:
+            raise SwapBudgetExceeded
+        original_swap_mapping(*args)
+
+    monkeypatch.setattr(SabreLayoutPass, "_swap_mapping", staticmethod(bounded_swap_mapping))
 
     layout_pass.run(circuit)
 
     assert sorted(layout_pass.last_layout) == [0, 1, 2, 3, 4]
 
 
+def test_sabre_layout_release_valve_walks_closest_gate_into_adjacency() -> None:
+    circuit = Circuit(2)
+    circuit.add(CNOT(0, 1))
+    layout_pass = SabreLayoutPass([(0, 1), (1, 2), (2, 3), (3, 4)], num_trials=1, seed=0, release_valve_factor=0)
+    physical_nodes = [0, 1, 2, 3, 4]
+    physical_to_dense_index = {node: node for node in physical_nodes}
+    distance_matrix = layout_pass._all_pairs_shortest_path_unweighted(
+        layout_pass.topology, physical_nodes, physical_to_dense_index
+    )
+
+    final_layout, score = layout_pass._sabre_simulate_layout(
+        [0, 4],
+        distance_matrix,
+        [(0, 1)],
+        [[0], [0]],
+        random.Random(0),
+        physical_nodes,
+        physical_to_dense_index,
+    )
+
+    assert final_layout == [3, 4]
+    assert math.isclose(score, 1.0)
+
+
 def test_sabre_layout_release_valve_stops_on_disconnected_topology() -> None:
     graph = make_graph([(0, 1), (2, 3)])
-    layout_pass = SabreLayoutPass(graph, num_trials=1, seed=0)
+    layout_pass = SabreLayoutPass(graph, num_trials=1, seed=0, release_valve_factor=0)
     physical_nodes = [0, 1, 2, 3]
     physical_to_dense_index = {node: node for node in physical_nodes}
     distance_matrix = layout_pass._all_pairs_shortest_path_unweighted(graph, physical_nodes, physical_to_dense_index)
 
-    final_layout, _ = layout_pass._sabre_simulate_layout(
+    final_layout, score = layout_pass._sabre_simulate_layout(
         [0, 2],
         distance_matrix,
         [(0, 1)],
@@ -382,7 +400,8 @@ def test_sabre_layout_release_valve_stops_on_disconnected_topology() -> None:
         physical_to_dense_index,
     )
 
-    assert len(set(final_layout)) == 2
+    assert final_layout == [0, 2]
+    assert math.isclose(score, 0.5 * 1e6)
 
 
 def test_sabre_layout_cost_front_penalizes_unreachable_interactions() -> None:
