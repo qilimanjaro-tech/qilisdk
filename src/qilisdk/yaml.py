@@ -213,9 +213,11 @@ def defaultdict_representer(representer, data: defaultdict):
     """
     logger.trace("[Yaml] Serializing defaultdict")
     factory = data.default_factory
-    factory_name = None if factory is None else _qualified_name(factory) if isinstance(factory, type) else None
-    if factory is not None and (factory_name is None or _DEFAULTDICT_FACTORIES.get(factory_name) is not factory):
-        raise RepresenterError(f"defaultdict factory {factory!r} cannot be serialized")
+    factory_name = None
+    if factory is not None:
+        factory_name = _qualified_name(factory) if isinstance(factory, type) else ""
+        if _DEFAULTDICT_FACTORIES.get(factory_name) is not factory:
+            raise RepresenterError(f"defaultdict factory {factory!r} cannot be serialized")
     return representer.represent_mapping(
         "!defaultdict",
         {"default_factory": factory_name, "items": dict(data)},
@@ -442,8 +444,8 @@ class QiliYAML(YAML):
         if issubclass(cls, Enum) and not hasattr(cls, "to_yaml"):
             if not all(isinstance(member.value, str) for member in cls):
                 raise TypeError(f"Enum {cls.__name__} must have string values to be registered")
-            self.representer.add_representer(cls, lambda rep, data: rep.represent_scalar(tag, data.value))
-            self.constructor.add_constructor(tag, lambda _, node: cls(node.value))
+            QiliRepresenter.add_representer(cls, lambda rep, data: rep.represent_scalar(tag, data.value))
+            QiliConstructor.add_constructor(tag, lambda _, node: cls(node.value))
             return cls
         return super().register_class(cls)
 

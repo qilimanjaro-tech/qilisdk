@@ -186,8 +186,10 @@ class _CallableFactory:
     ids=["unlisted-type", "partial", "callable-instance", "lambda"],
 )
 def test_defaultdict_rejects_unknown_factory_on_dump(factory):
+    dd = defaultdict(factory)
+
     with pytest.raises(RepresenterError, match="cannot be serialized"):
-        dump(defaultdict(factory))
+        dump(dd)
 
 
 # -----------------------
@@ -238,8 +240,10 @@ def test_python_tags_are_rejected(payload):
 
 
 def test_registrations_do_not_leak_into_other_yaml_handlers():
+    handler = YAML(typ="safe", pure=True)
+
     with pytest.raises(ConstructorError):
-        YAML(typ="safe", pure=True).load("!complex {real: 1, imag: 2}")
+        handler.load("!complex {real: 1, imag: 2}")
 
 
 # -----------------------
@@ -266,8 +270,10 @@ def test_pydantic_model_roundtrip():
 
 
 def test_pydantic_model_unregistered_is_not_serializable():
+    user = UnregisteredUser(id=1)
+
     with pytest.raises(RepresenterError, match="is not registered for serialization"):
-        dump(UnregisteredUser(id=1))
+        dump(user)
 
 
 def test_pydantic_model_unregistered_is_rejected_on_load():
@@ -473,8 +479,10 @@ def test_register_enum_requires_string_values():
     class IntEnum(Enum):
         ONE = 1
 
+    handler = QiliYAML()
+
     with pytest.raises(TypeError, match="must have string values"):
-        QiliYAML().register_class(IntEnum)
+        handler.register_class(IntEnum)
 
 
 # -----------------------
@@ -543,5 +551,7 @@ def test_unregistered_class_is_not_serializable():
     class NotRegistered:
         pass
 
+    obj = NotRegistered()
+
     with pytest.raises(RepresenterError, match="cannot represent an object"):
-        dump(NotRegistered())
+        dump(obj)

@@ -14,6 +14,8 @@
 
 # ruff: file-ignore[any-type]
 
+import importlib
+from functools import cache
 from io import StringIO
 from pathlib import Path
 from typing import Any, TypeVar, overload
@@ -26,6 +28,44 @@ T = TypeVar("T")
 
 # A fresh QiliYAML is created per call: registered tags live on its constructor/representer classes, and a handler
 # left in a failed state by a previous call must not affect later ones.
+
+_REGISTERING_MODULES = (
+    "qilisdk.analog.hamiltonian",
+    "qilisdk.analog.schedule",
+    "qilisdk.core.comparison",
+    "qilisdk.core.expression",
+    "qilisdk.core.interpolator",
+    "qilisdk.core.model",
+    "qilisdk.core.qtensor",
+    "qilisdk.core.variables",
+    "qilisdk.cost_functions.model_cost_function",
+    "qilisdk.cost_functions.observable_cost_function",
+    "qilisdk.digital.ansatz",
+    "qilisdk.digital.circuit",
+    "qilisdk.digital.gates",
+    "qilisdk.experiments.experiment_functional",
+    "qilisdk.experiments.experiment_result",
+    "qilisdk.functionals.analog_evolution",
+    "qilisdk.functionals.digital_propagation",
+    "qilisdk.functionals.functional_result",
+    "qilisdk.functionals.quantum_reservoirs",
+    "qilisdk.functionals.variational_program",
+    "qilisdk.functionals.variational_program_result",
+    "qilisdk.optimizers.optimizer_result",
+    "qilisdk.optimizers.scipy_optimizer",
+    "qilisdk.readout.readout",
+    "qilisdk.readout.readout_result",
+    "qilisdk.readout.readout_spec",
+    "qilisdk.utils.classical_solvers.base_solver",
+)
+"""Modules that register classes with ``@yaml.register_class``, i.e. every tag QiliSDK can load."""
+
+
+@cache
+def _import_registering_modules() -> None:
+    """Import every module that registers classes, so loading does not depend on what the caller has imported."""
+    for module in _REGISTERING_MODULES:
+        importlib.import_module(module)
 
 
 class SerializationError(Exception):
@@ -100,6 +140,7 @@ def deserialize(string: str, cls: type[T] | None = None) -> Any | T:
         Any | T: The deserialized object, optionally cast to the specified class type.
     """
     logger.debug("[Serialization] Deserializing object from YAML string")
+    _import_registering_modules()
     try:
         with StringIO(string) as stream:
             result = QiliYAML().load(stream)
@@ -132,6 +173,7 @@ def deserialize_from(file: str, cls: type[T] | None = None) -> Any | T:
         Any | T: The deserialized object, optionally cast to the specified class type.
     """
     logger.debug("[Serialization] Deserializing object from file {}", file)
+    _import_registering_modules()
     try:
         result = QiliYAML().load(Path(file))
     except Exception as e:

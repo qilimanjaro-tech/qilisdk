@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
+import subprocess
+import sys
+from pathlib import Path
+
 import pytest
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliY, X, Z
@@ -19,6 +24,7 @@ from qilisdk.analog.schedule import Schedule
 from qilisdk.core.qtensor import ket, tensor_prod
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.utils.serialization import (
+    _REGISTERING_MODULES,
     DeserializationError,
     SerializationError,
     deserialize,
@@ -114,7 +120,34 @@ def test_serialize_to_keeps_existing_file_on_failure(tmp_path):
     path = tmp_path / "existing.yml"
     path.write_text("previous content", encoding="utf-8")
 
+    target = str(path)
+
     with pytest.raises(SerializationError, match="not serializable"):
-        serialize_to(lambda t: t, str(path))
+        serialize_to(lambda t: t, target)
 
     assert path.read_text(encoding="utf-8") == "previous content"
+
+
+def test_registering_modules_cover_every_registered_class():
+    src = Path(__file__).resolve().parents[3] / "src"
+    registering = {
+        ".".join(path.relative_to(src).with_suffix("").parts)
+        for path in (src / "qilisdk").rglob("*.py")
+        if re.search(r"^@yaml\.register_class", path.read_text(encoding="utf-8"), re.MULTILINE)
+    }
+
+    assert registering == set(_REGISTERING_MODULES)
+
+
+def test_deserialize_does_not_depend_on_prior_imports():
+    code = (
+        "from qilisdk.utils.serialization import deserialize\n"
+        "print(deserialize('!InitialState zero').name)\n"
+        "print(deserialize('!!python/object/apply:qilisdk.core.qtensor.InitialState [one]').name)\n"
+        "print(type(deserialize('!QTensor {data: !csr_matrix {data: [1.0], indices: [0], indptr: [0, 1, 1], "
+        "shape: !tuple [2, 1]}}')).__name__)\n"
+    )
+
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
+
+    assert result.stdout.split() == ["ZERO", "ONE", "QTensor"]
