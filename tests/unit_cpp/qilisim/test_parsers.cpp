@@ -2313,6 +2313,14 @@ TEST(GateNameParser, GatesControlCounts) {
     EXPECT_EQ(gate_num_controls("CCY"), 2);
     EXPECT_EQ(gate_num_controls("CCZ"), 2);
     EXPECT_EQ(gate_num_controls("Toffoli"), 2);
+    EXPECT_EQ(gate_num_controls("CCCZ"), 3);
+    EXPECT_EQ(gate_num_controls("CSWAP"), 1);
+    EXPECT_EQ(gate_num_controls("CCSWAP"), 2);
+    EXPECT_EQ(gate_num_controls("CRX"), 1);
+    EXPECT_EQ(gate_num_controls("Controlled"), 0);
+    EXPECT_EQ(gate_num_controls("CustomH"), 0);
+    EXPECT_EQ(gate_num_controls("CC"), 0);
+    EXPECT_EQ(gate_num_controls(""), 0);
 }
 
 TEST(GateNameParser, GateNamesNormalized) {
@@ -2328,6 +2336,13 @@ TEST(GateNameParser, GateNamesNormalized) {
     EXPECT_EQ(normalize_gate_name("CCY"), "Y");
     EXPECT_EQ(normalize_gate_name("CCZ"), "Z");
     EXPECT_EQ(normalize_gate_name("Toffoli"), "X");
+    EXPECT_EQ(normalize_gate_name("CCCZ"), "Z");
+    EXPECT_EQ(normalize_gate_name("CSWAP"), "SWAP");
+    EXPECT_EQ(normalize_gate_name("CCSWAP"), "SWAP");
+    EXPECT_EQ(normalize_gate_name("CRX"), "RX");
+    EXPECT_EQ(normalize_gate_name("Controlled"), "Controlled");
+    EXPECT_EQ(normalize_gate_name("CustomH"), "CustomH");
+    EXPECT_EQ(normalize_gate_name("CC"), "CC");
 }
 
 // GCOV_EXCL_BR_STOP

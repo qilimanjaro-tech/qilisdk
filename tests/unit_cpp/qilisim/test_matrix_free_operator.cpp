@@ -1295,9 +1295,8 @@ DenseMatrix multiControlBase(const std::string& name) {
 }
 
 // Check every application type of a multi-controlled gate against its full matrix.
-void checkMultiControlled(const std::string& name, const std::vector<int>& controls, int target, int n) {
-    DenseMatrix base = multiControlBase(name);
-    Gate g(name, base.sparseView(), controls, {target}, {});
+void checkMultiControlled(const std::string& name, const DenseMatrix& base, const std::vector<int>& controls, const std::vector<int>& targets, int n) {
+    Gate g(name, base.sparseView(), controls, targets, {});
     DenseMatrix full = DenseMatrix(g.get_full_matrix(n));
     MatrixFreeOperator op(g);
     long dim = 1L << n;
@@ -1324,16 +1323,45 @@ void checkMultiControlled(const std::string& name, const std::vector<int>& contr
 
 }  // namespace
 
+TEST(MatrixFreeOperator, OneControl_MatchesFullMatrix) {
+    for (const std::string name : {"X", "Y", "Z", "AsymU"}) {
+        checkMultiControlled(name, multiControlBase(name), {2}, {0}, 3);
+    }
+}
+
 TEST(MatrixFreeOperator, TwoControls_MatchesFullMatrix) {
     for (const std::string name : {"X", "Y", "Z", "AsymU"}) {
-        checkMultiControlled(name, {0, 2}, 1, 3);
+        checkMultiControlled(name, multiControlBase(name), {0, 2}, {1}, 3);
     }
 }
 
 TEST(MatrixFreeOperator, ThreeControls_MatchesFullMatrix) {
     for (const std::string name : {"X", "Y", "Z", "AsymU"}) {
-        checkMultiControlled(name, {3, 0, 1}, 2, 4);
+        checkMultiControlled(name, multiControlBase(name), {3, 0, 1}, {2}, 4);
     }
+}
+
+TEST(MatrixFreeOperator, Swap_AllQubitPairs_MatchesFullMatrix) {
+    for (int a = 0; a < 4; ++a) {
+        for (int b = 0; b < 4; ++b) {
+            if (a != b) {
+                checkMultiControlled("SWAP", swap4(), {}, {a, b}, 4);
+            }
+        }
+    }
+}
+
+TEST(MatrixFreeOperator, ControlledSwap_MatchesFullMatrix) {
+    checkMultiControlled("CSWAP", swap4(), {0}, {1, 2}, 3);
+    checkMultiControlled("CSWAP", swap4(), {2}, {3, 0}, 4);
+    checkMultiControlled("CCSWAP", swap4(), {1, 3}, {0, 2}, 4);
+}
+
+TEST(MatrixFreeOperator, ControlledNamesUseBaseGate) {
+    MatrixFreeOperator ccy("CCCY", {0, 1, 2}, {3}, multiControlBase("Y"));
+    EXPECT_EQ(ccy.get_name(), "Y");
+    MatrixFreeOperator cswap("CSWAP", {0}, {1, 2}, swap4());
+    EXPECT_EQ(cswap.get_name(), "SWAP");
 }
 
 // GCOV_EXCL_BR_STOP

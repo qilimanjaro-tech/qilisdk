@@ -577,6 +577,13 @@ TEST(StabilizerStateSum, ApplyGate_UnsupportedGate_Throws) {
     EXPECT_THROW(sss.apply_gate(bad), std::runtime_error);
 }
 
+TEST(StabilizerStateSum, ApplyGate_ControlledSwap_Throws) {
+    // A controlled SWAP is not Clifford, so it must not be applied as a plain SWAP
+    StabilizerStateSum sss(3);
+    Gate cswap("CSWAP", SparseMatrix(DenseMatrix::Identity(4, 4).sparseView()), {0}, {1, 2}, {});
+    EXPECT_THROW(sss.apply_gate(cswap), std::runtime_error);
+}
+
 TEST(StabilizerStateSum, Stream_ContainsTermCount) {
     StabilizerStateSum sss(2);
     std::ostringstream oss;

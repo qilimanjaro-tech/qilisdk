@@ -1168,8 +1168,8 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
     const auto& controls = gate.get_control_qubits();
     const auto& targets = gate.get_target_qubits();
 
-    // If it's a clifford gate with at most one control, we can just apply it to each state in the sum
-    if ((name == "H" || name == "S" || name == "X" || name == "Y" || name == "Z" || name == "SWAP") && controls.size() <= 1) {
+    // If it's a clifford gate with at most one control, we can just apply it to each state in the sum (a controlled SWAP is not Clifford)
+    if ((name == "H" || name == "S" || name == "X" || name == "Y" || name == "Z" || (name == "SWAP" && controls.empty())) && controls.size() <= 1) {
         // The dropped global phase is a relative phase only when there is more than one term
         const bool track = states.size() > 1;
         // Each term is an independent StabilizerState (its own tableau and rng), and apply_gate's
