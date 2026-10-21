@@ -869,7 +869,7 @@ class OpenQasmParser:
         if gate_name in self.custom_gate_definitions:
             gate_def = self.custom_gate_definitions[gate_name]
             # Arguments and qubits are substituted positionally, keeping any index the call site gives a qubit
-            replacement_map = dict(zip(gate_def["args"], arguments))
+            replacement_map: dict = dict(zip(gate_def["args"], arguments))
             replacement_map.update(zip(gate_def["qubits"], statement.qubits[num_controls:]))
             control_qubits = qubits[:num_controls]
             for gate_statement in gate_def["body"]:
