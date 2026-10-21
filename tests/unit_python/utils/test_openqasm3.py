@@ -20,7 +20,7 @@ import tempfile
 import numpy as np
 import pytest
 
-from qilisdk.core import Parameter
+from qilisdk.core import Parameter, QTensor
 from qilisdk.digital import (
     CNOT,
     CZ,
@@ -32,6 +32,7 @@ from qilisdk.digital import (
     U2,
     U3,
     Adjoint,
+    BasicGate,
     Circuit,
     Controlled,
     Exponential,
@@ -444,6 +445,49 @@ def test_custom_gate_indexing():
         """)
     expected = Circuit(1)
     expected.add(RX(0, theta=1.5))
+    assert c == expected
+
+
+def test_custom_gate_on_two_qubits_of_one_register():
+    c = from_qasm3("""
+            OPENQASM 3.0;
+            include "stdgates.inc";
+            gate bell a, b { h a; cx a, b; }
+            qubit[2] q;
+            bell q[0], q[1];
+        """)
+    expected = Circuit(2)
+    expected.add(H(0))
+    expected.add(CNOT(0, 1))
+    assert c == expected
+
+
+def test_custom_gate_keeps_the_index_of_each_qubit():
+    c = from_qasm3("""
+            OPENQASM 3.0;
+            include "stdgates.inc";
+            gate bell a, b { h a; cx a, b; }
+            qubit[2] x;
+            qubit[2] y;
+            bell x[1], y[0];
+        """)
+    expected = Circuit(4)
+    expected.add(H(1))
+    expected.add(CNOT(1, 2))
+    assert c == expected
+
+
+def test_custom_gate_with_repeated_argument_values():
+    c = from_qasm3("""
+            OPENQASM 3.0;
+            include "stdgates.inc";
+            gate rxry(theta, phi) a { rx(theta) a; ry(phi) a; }
+            qubit[1] q;
+            rxry(0.5, 0.5) q[0];
+        """)
+    expected = Circuit(1)
+    expected.add(RX(0, theta=0.5))
+    expected.add(RY(0, theta=0.5))
     assert c == expected
 
 
@@ -2000,9 +2044,24 @@ def test_qasm3_round_trip_preserves_an_adjoint_matrix(gate):
     assert np.allclose(reconstructed.gates[0].matrix.dense(), gate.matrix.dense())
 
 
-def test_to_qasm3_raises_on_gates_it_cannot_name():
+class _UnnamedGate(BasicGate):
+    """A gate with a valid identifier for a name that is not a gate of stdgates.inc."""
+
+    def __init__(self, qubit: int) -> None:
+        super().__init__((qubit,))
+
+    @property
+    def name(self) -> str:
+        return "Foo"
+
+    def _generate_matrix(self) -> QTensor:
+        return QTensor(np.eye(2, dtype=complex))
+
+
+@pytest.mark.parametrize("gate", [Exponential(X(0)), _UnnamedGate(0)])
+def test_to_qasm3_raises_on_gates_it_cannot_name(gate):
     circuit = Circuit(1)
-    circuit.add(Exponential(X(0)))
+    circuit.add(gate)
     with pytest.raises(UnsupportedGateError, match="Cannot express"):
         to_qasm3(circuit)
 
