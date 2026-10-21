@@ -1079,4 +1079,15 @@ TEST_F(SamplingTest, Stabilizer_MonteCarlo_IgnoredWithWarning) {
     EXPECT_EQ(final_state.sample(1).begin()->first, "1");  // X|0> = |1>
 }
 
+// Measurements are skipped by the stabilizer simulator rather than applied, so a multi-target M
+// neither throws nor branches the sum into one term per outcome.
+TEST_F(SamplingTest, Stabilizer_Measurements_NotAppliedAsGates) {
+    int n = 2;
+    std::vector<Gate> gates = {makeH(0), makeH(1), Gate("M", SparseMatrix(), {}, {0, 1}, {})};
+    StabilizerStateSum initial(n);
+    StabilizerStateSum final_state(n);
+    EXPECT_NO_THROW(sampling_stabilizer(gates, n, initial, noNoise, final_state, cfg, readout));
+    EXPECT_EQ(final_state.get_states().size(), 1u);
+}
+
 // GCOV_EXCL_BR_STOP

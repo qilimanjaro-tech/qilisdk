@@ -52,14 +52,16 @@ py::object construct_result_object(const StabilizerStateSum& state, const py::ob
         if (py::isinstance(ro, SamplingReadout)) {
             int nshots = ro.attr("nshots").cast<int>();
             bool expand_samples = ro.attr("expand_samples").cast<bool>();
-            std::map<std::string, int> counts = state.sample(nshots);
+            std::map<std::string, int> counts = filter_counts(state.sample(nshots), qubits_to_measure);
             py::dict samples_py;
             for (const auto& pair : counts) {
                 samples_py[py::cast(pair.first)] = py::cast(pair.second);
             }
             py::list qubits_to_measure_list;
-            for (size_t i = 0; i < size_t(n_qubits); ++i) {
-                qubits_to_measure_list.append(i);
+            for (size_t i = 0; i < qubits_to_measure.size(); ++i) {
+                if (qubits_to_measure[i]) {
+                    qubits_to_measure_list.append(i);
+                }
             }
             results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples_py, "qubits_to_measure"_a = qubits_to_measure_list, "nqubits"_a = n_qubits, "expand_samples"_a = expand_samples));
         } else if (py::isinstance(ro, ExpectationReadout)) {

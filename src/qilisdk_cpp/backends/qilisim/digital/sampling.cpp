@@ -556,12 +556,16 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
     state.set_max_terms(config.get_stabilizer_max_states());
 
     // Then we apply each gate
-    std::vector<bool> qubits_measured(n_qubits, false);
     for (int i = 0; i < int(gates.size()); ++i) {
         const auto& gate = gates[i];
 
         // Let Ctrl-C interrupt the circuit between gates
         check_signals();
+
+        // Measurements are not gates, the measured qubits are masked when constructing the result
+        if (gate.get_name() == "M") {
+            continue;
+        }
 
         state.apply_gate(gate);
     }

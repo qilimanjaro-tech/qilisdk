@@ -25,7 +25,7 @@ from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core import QTensor, ket
-from qilisdk.digital import Circuit, H, X
+from qilisdk.digital import Circuit, H, M, X
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.noise import Dephasing, LindbladGenerator, NoiseModel
@@ -149,6 +149,24 @@ def test_stabilizer_method_creates_okay():
     method = DigitalMethod.stabilizer(max_states=50)
     assert method.digital_method == "stabilizer"
     assert method.stabilizer_max_states == 50
+
+
+def test_stabilizer_measurements_are_not_applied_as_gates():
+    # Applying M as a gate would branch into 16 terms and get truncated to 4 outcomes
+    backend = QiliSim(digital_simulation_method=DigitalMethod.stabilizer(max_states=4), execution_config=ExecutionConfig(seed=1234))
+    circuit = Circuit(nqubits=4)
+    circuit.add([H(q) for q in range(4)])
+    circuit.add(M(0, 1, 2, 3))
+    samples = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=2000)).get_samples()
+    assert len(samples) == 16
+
+
+def test_stabilizer_masks_unmeasured_qubits():
+    backend = QiliSim(digital_simulation_method=DigitalMethod.stabilizer(), execution_config=ExecutionConfig(seed=1234))
+    circuit = Circuit(nqubits=2)
+    circuit.add([X(0), X(1), M(1)])
+    samples = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=100)).get_samples()
+    assert samples == {"_1": 100}
 
 
 def test_adaptive_creates_okay():
