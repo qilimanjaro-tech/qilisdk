@@ -477,6 +477,48 @@ def test_custom_gate_keeps_the_index_of_each_qubit():
     assert c == expected
 
 
+def test_custom_gate_qubit_named_like_the_register():
+    c = from_qasm3("""
+            OPENQASM 3.0;
+            include "stdgates.inc";
+            gate g q { h q; }
+            qubit[2] q;
+            g q[1];
+        """)
+    expected = Circuit(2)
+    expected.add(H(1))
+    assert c == expected
+
+
+def test_custom_gate_qubits_named_like_the_register():
+    c = from_qasm3("""
+            OPENQASM 3.0;
+            include "stdgates.inc";
+            gate bell q, r { h q; cx q, r; }
+            qubit[2] q;
+            bell q[0], q[1];
+        """)
+    expected = Circuit(2)
+    expected.add(H(0))
+    expected.add(CNOT(0, 1))
+    assert c == expected
+
+
+def test_custom_gate_qubits_named_like_crossed_registers():
+    c = from_qasm3("""
+            OPENQASM 3.0;
+            include "stdgates.inc";
+            gate g a, b { h a; cx a, b; }
+            qubit[2] b;
+            qubit[1] a;
+            g b[0], a[0];
+        """)
+    expected = Circuit(3)
+    expected.add(H(0))
+    expected.add(CNOT(0, 2))
+    assert c == expected
+
+
 def test_custom_gate_with_repeated_argument_values():
     c = from_qasm3("""
             OPENQASM 3.0;

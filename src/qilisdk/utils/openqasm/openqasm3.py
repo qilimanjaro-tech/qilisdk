@@ -216,9 +216,9 @@ class OpenQasmParser:
             and not hasattr(new_statement.name, "name")
             and new_statement.name in replacement_map
         ):
-            # If we're changing to an identifier, possibly indexed
+            # If we're changing to an identifier, possibly indexed, it comes from the call site so isn't recursed into
             if isinstance(replacement_map[new_statement.name], (Identifier, IndexedIdentifier)):
-                new_statement = copy(replacement_map[new_statement.name])
+                return copy(replacement_map[new_statement.name])
 
             # If we're changing to a string, change the name
             elif isinstance(replacement_map[new_statement.name], str):
