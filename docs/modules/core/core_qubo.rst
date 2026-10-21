@@ -90,14 +90,18 @@ to an equivalent constraint with integer coefficients before its penalty is buil
 
 For example, :math:`2.5 a + 2.5 b \leq 4.9` becomes :math:`25 a + 25 b \leq 49`, and then :math:`a + b \leq 1`, which
 needs a single slack bit. With integer coefficients every feasible assignment has a slack value that makes its penalty
-exactly zero, and every violation costs at least :math:`\lambda`. The ground state of the QUBO is therefore the
-optimum of the original model whenever :math:`\lambda` is larger than what violating a constraint could gain in the
-objective.
+exactly zero. The penalty is then scaled back by the square of the rescaling, :math:`(25 / 10)^2` here, so it is
+measured in the constraint's own units and a Lagrange multiplier calibrated for the original constraint keeps its
+meaning. Every violation is at least one step of :math:`2.5` from the rounded bound, so it costs at least
+:math:`6.25 \lambda`.
 
-Each extra decimal place multiplies the slack range by ten, adding roughly 3.3 slack bits. To bound this,
-:meth:`~qilisdk.core.model.Model.to_qubo` rounds coefficients to ``max_decimals_in_slack`` decimal places (default
-``6``) and logs a warning when it does. Rounding uses fewer qubits, but the rounded constraint is only an approximation
-of the original one.
+Each extra decimal place multiplies the slack range by ten, adding roughly 3.3 slack bits. By default each constraint
+keeps as many decimal places as float64 can resolve in its penalty: the range of its integer form is kept within
+:math:`2^{26}`, so that the squared penalty is exactly representable. The ``max_decimals_in_slack`` argument of
+:meth:`~qilisdk.core.model.Model.to_qubo` sets a different number of decimal places. Digits beyond it are rounded
+towards infeasibility, up for :math:`\leq` and down for :math:`\geq`, so the rounded constraint is slightly tighter
+than the original but never admits an assignment that the original rejects. Equalities are rounded to the nearest
+value, and a warning is logged whenever coefficients are rounded.
 
 .. code-block:: python
 
@@ -109,13 +113,13 @@ of the original one.
     model.add_constraint("capacity", LEQ(2.53 * a + 1.01 * b, 3.1))
 
     exact = model.to_qubo()  # 253a + 101b <= 310, with a 9 bit slack
-    rounded = model.to_qubo(max_decimals_in_slack=1)  # 2.5a + 1.0b <= 3.1, i.e. 5a + 2b <= 6, with a 3 bit slack
+    rounded = model.to_qubo(max_decimals_in_slack=1)  # 2.6a + 1.1b <= 3.1, i.e. 26a + 11b <= 31, with a 5 bit slack
 
     print(len(exact.variables()), len(rounded.variables()))
 
 **Output**::
 
-    11 5
+    11 7
 
 
 
