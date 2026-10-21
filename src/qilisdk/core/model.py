@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import copy
 import itertools
+import math
 from typing import TYPE_CHECKING, Literal, Mapping, Type, cast
 
 import numpy as np
@@ -36,6 +37,14 @@ _EMPTY_GRAPH_MSG = "The graph must have at least one edge."
 
 # Used to prevent unbounded vars from expanding into infinite binary vars
 _MAX_ENCODING_SPAN = 2**32
+
+
+def _to_real(num: Number) -> RealNumber:
+    if isinstance(num, RealNumber):
+        return num
+    if isinstance(num, complex) and abs(num.imag) < get_settings().atol:
+        return num.real
+    raise ValueError("Complex values encountered in the constraint.")
 
 
 def _validate_undirected_edges(edges: list[tuple[int, int]]) -> None:
@@ -558,6 +567,7 @@ class Model:
         parameters: list[float] | None = None,
         linearize: bool = True,
         linearization_lagrange_multiplier: float = 100,
+        max_decimals_in_slack: int = 6,
     ) -> QUBO:
         """Export the model to a qubo model.
 
@@ -579,6 +589,10 @@ class Model:
                             Defaults to ``True``.
             linearization_lagrange_multiplier (float, optional): The Lagrange multiplier applied to each Rosenberg
                             penalty constraint added during linearization. Defaults to 100.
+            max_decimals_in_slack (int, optional): Constraint coefficients are scaled to integers before their penalty
+                            is built, so that the penalty is exact. Digits beyond this many decimal places are rounded,
+                            which bounds the number of slack variables at the cost of an approximate constraint.
+                            Defaults to 6.
 
         Returns:
             QUBO: A QUBO model that is generated from the model object.
@@ -595,6 +609,7 @@ class Model:
             parameters,
             linearize=linearize,
             linearization_lagrange_multiplier=linearization_lagrange_multiplier,
+            max_decimals_in_slack=max_decimals_in_slack,
         )
 
     @classmethod
@@ -1417,21 +1432,14 @@ class QUBO(Model):
             ValueError: if the operation the term uses is not addition or multiplication.
         """
 
-        def to_real(num: Number) -> RealNumber:
-            if isinstance(num, RealNumber):
-                return num
-            if isinstance(num, complex) and abs(num.imag) < get_settings().atol:
-                return num.real
-            raise ValueError("Complex values encountered in the constraint.")
-
         # Distribute first: ``Mul`` no longer auto-distributes, so an un-expanded term such as
         # ``-1 * (1 - (x + y))`` would otherwise report an additive constant of 0 instead of -1.
         expanded = term.expand()
-        const: RealNumber = to_real(expanded.get_constant())
+        const: RealNumber = _to_real(expanded.get_constant())
         term_upper_limit: RealNumber = 0
         term_lower_limit: RealNumber = 0
         for _monomial, coeff in expanded.as_coefficients_dict().items():
-            coeff_value = to_real(coeff)
+            coeff_value = _to_real(coeff)
             if coeff_value > 0:
                 term_upper_limit += coeff_value
             elif coeff_value < 0:
@@ -1482,12 +1490,68 @@ class QUBO(Model):
 
         return ub_slack
 
+    def _to_integer_constraint(  # ruff: ignore[no-self-use]
+        self, label: str, h: Expression, operation: ComparisonOperation, max_decimals: int = 6
+    ) -> Expression:
+        """Rescales the constraint ``h == 0``, ``h <= 0`` or ``h >= 0`` to an equivalent one with integer coefficients.
+
+        The coefficients are scaled by the smallest power of ten that makes them all integers, then divided by their
+        greatest common divisor, rounding the constant so that the binary assignments satisfying the constraint are
+        unchanged. With integer coefficients every feasible assignment has an integer slack value that zeroes its
+        penalty, and every violation costs at least one unit.
+
+        Args:
+            label (str): the label of the constraint.
+            h (Expression): the left hand side of the constraint, compared against zero.
+            operation (ComparisonOperation): the comparison operation between ``h`` and zero.
+            max_decimals (int, optional): the number of decimal places kept before rounding. Defaults to 6.
+
+        Raises:
+            ValueError: if the constraint is an equality whose constant is not a multiple of the coefficients' gcd.
+
+        Returns:
+            Expression: the rescaled left hand side, compared against zero with the same operation.
+        """
+        expanded = h.expand()
+        const = _to_real(expanded.get_constant())
+        coeffs = {monomial: _to_real(coeff) for monomial, coeff in expanded.as_coefficients_dict().items()}
+        values = np.array([const, *coeffs.values()], dtype=float)
+
+        decimals = next(
+            (
+                d
+                for d in range(max_decimals + 1)
+                if np.allclose(values * 10**d, np.round(values * 10**d), rtol=1e-9, atol=get_settings().atol)
+            ),
+            None,
+        )
+        if decimals is None:
+            decimals = max_decimals
+            logger.warning(
+                '[Model] constraint "{}" has coefficients with more than {} decimal places, so they are rounded.',
+                label,
+                max_decimals,
+            )
+
+        int_coeffs = {monomial: round(coeff * 10**decimals) for monomial, coeff in coeffs.items()}
+        int_const = round(const * 10**decimals)
+        divisor = math.gcd(*int_coeffs.values()) or 1
+        # Dividing the constant by the gcd leaves a fraction: round the bound down for h <= 0 and up for h >= 0
+        if operation is ComparisonOperation.EQ and int_const % divisor != 0:
+            raise ValueError(f"Constraint {label} is unsatisfiable.")
+        if operation in {ComparisonOperation.LEQ, ComparisonOperation.LT}:
+            int_const = -(-int_const // divisor)
+        else:
+            int_const //= divisor
+        return Constant(int_const) + sum(coeff // divisor * monomial for monomial, coeff in int_coeffs.items())
+
     def _transform_constraint(
         self,
         label: str,
         term: Comparison,
         penalization: Literal["unbalanced", "slack"] = "slack",
         parameters: list[float] | None = None,
+        max_decimals_in_slack: int = 6,
     ) -> Expression | None:
         """Transforms a constraint into QUBO format.
 
@@ -1498,6 +1562,8 @@ class QUBO(Model):
                             handel inequality constraints. Defaults to "slack".
             parameters (list[float] | None, optional): the parameters used for the unbalanced penalization method.
                             Defaults to None.
+            max_decimals_in_slack (int, optional): the decimal places of the constraint's coefficients kept before
+                            rounding them to integers. Defaults to 6.
 
         Raises:
             ValueError: if a penalization method is provided that is not (&quot;unbalanced&quot;, &quot;slack&quot;)
@@ -1517,7 +1583,7 @@ class QUBO(Model):
             parameters = []
 
         if term.operation is ComparisonOperation.EQ:
-            h = term.lhs - term.rhs
+            h = self._to_integer_constraint(label, term.lhs - term.rhs, term.operation, max_decimals_in_slack)
             ub_slack = self._check_valid_constraint(label, h, term.operation)
             if ub_slack is None:
                 return None
@@ -1535,6 +1601,7 @@ class QUBO(Model):
                 return -parameters[0] * h + parameters[1] * (h**2)
 
             if lower_penalization == "slack":
+                h = self._to_integer_constraint(label, h, term.operation, max_decimals_in_slack)
                 ub_slack = self._check_valid_constraint(label, h, term.operation)
 
                 if ub_slack is None:
@@ -1561,7 +1628,7 @@ class QUBO(Model):
                 return -parameters[0] * h + parameters[1] * (h**2)
             if lower_penalization == "slack":
                 # assuming the operation is h <= 0 or h < 0
-                h = term.lhs - term.rhs
+                h = self._to_integer_constraint(label, term.lhs - term.rhs, term.operation, max_decimals_in_slack)
                 ub_slack = self._check_valid_constraint(label, h, term.operation)
 
                 if ub_slack is None:
@@ -1587,6 +1654,7 @@ class QUBO(Model):
         parameters: list[float] | None = None,
         transform_to_qubo: bool = True,
         linearize: bool = True,
+        max_decimals_in_slack: int = 6,
     ) -> None:
         """Adds a constraint to the QUBO model.
 
@@ -1602,6 +1670,8 @@ class QUBO(Model):
             transform_to_qubo (bool, optional): Automatically transform a given constraint to QUBO format.
                                                 Defaults to True.
             linearize (bool, optional): linearize the constraints if they are above degree 2.
+            max_decimals_in_slack (int, optional): the decimal places of the constraint's coefficients kept before
+                            rounding them to integers. Defaults to 6.
 
         Raises:
             ValueError: if constraint label already exists in the model.
@@ -1653,7 +1723,13 @@ class QUBO(Model):
                     rhs=self._linearizer.reduce(c.rhs),
                     operation=c.operation,
                 )
-            transformed_c = self._transform_constraint(label, c, penalization=penalization, parameters=parameters)
+            transformed_c = self._transform_constraint(
+                label,
+                c,
+                penalization=penalization,
+                parameters=parameters,
+                max_decimals_in_slack=max_decimals_in_slack,
+            )
             if transformed_c is None:
                 return
             transformed_c = self._reduce(transformed_c)
@@ -1834,6 +1910,7 @@ class QUBO(Model):
         parameters: list[float] | None = None,
         linearize: bool = True,
         linearization_lagrange_multiplier: float = 100,
+        max_decimals_in_slack: int = 6,
     ) -> QUBO:
         """A class method that constructs a QUBO model from a regular model if possible.
 
@@ -1864,6 +1941,8 @@ class QUBO(Model):
                             each Rosenberg penalty constraint added as part of the linearization.
                             Must be large enough to dominate any incentive to violate the
                             auxiliary equalities ``w = a * b``. Defaults to 100.
+            max_decimals_in_slack (int, optional): the decimal places of the constraint's coefficients kept before
+                            rounding them to integers. Defaults to 6.
         Returns:
             QUBO: a QUBO model equivalent to the input model, with any high-degree terms rewritten
             via auxiliary binary variables when ``linearize`` is enabled.
@@ -1886,6 +1965,7 @@ class QUBO(Model):
                 penalization=penalization,
                 parameters=parameters,
                 linearize=linearize,
+                max_decimals_in_slack=max_decimals_in_slack,
             )
         if instance._linearizer is not None:
             for pen_label, pen_term in instance._linearizer.rosenberg_constraints():
@@ -1951,10 +2031,11 @@ class QUBO(Model):
         parameters: list[float] | None = None,
         linearize: bool = True,
         linearization_lagrange_multiplier: float = 100,
+        max_decimals_in_slack: int = 6,
     ) -> QUBO:
         """Return a copy of this QUBO model.
 
-        QUBO models are already in quadratic form, so the linearization arguments are accepted for
+        QUBO models are already in quadratic form, so the conversion arguments are accepted for
         signature compatibility with :meth:`Model.to_qubo` but have no effect. A warning is
         emitted noting that no conversion was performed.
         """

@@ -77,6 +77,46 @@ To translate these into penalties, two strategies are supported:
 
     where :math:`a, b > 0` are parameters that control the penalty strength for violations above and below the bound, respectively.
 
+Real-valued Coefficients
+''''''''''''''''''''''''
+
+The formulas above assume integer coefficients. When a constraint has real-valued coefficients, it is first rescaled
+to an equivalent constraint with integer coefficients before its penalty is built:
+
+1. The constraint is multiplied by the smallest power of ten that makes every coefficient and the constant an integer.
+2. It is then divided by the greatest common divisor of its coefficients, rounding the bound down for :math:`\leq` and
+   up for :math:`\geq`. This keeps exactly the same binary assignments feasible. An equality whose constant is not a
+   multiple of that divisor has no solution, and raises a ``ValueError``.
+
+For example, :math:`2.5 a + 2.5 b \leq 4.9` becomes :math:`25 a + 25 b \leq 49`, and then :math:`a + b \leq 1`, which
+needs a single slack bit. With integer coefficients every feasible assignment has a slack value that makes its penalty
+exactly zero, and every violation costs at least :math:`\lambda`. The ground state of the QUBO is therefore the
+optimum of the original model whenever :math:`\lambda` is larger than what violating a constraint could gain in the
+objective.
+
+Each extra decimal place multiplies the slack range by ten, adding roughly 3.3 slack bits. To bound this,
+:meth:`~qilisdk.core.model.Model.to_qubo` rounds coefficients to ``max_decimals_in_slack`` decimal places (default
+``6``) and logs a warning when it does. Rounding uses fewer qubits, but the rounded constraint is only an approximation
+of the original one.
+
+.. code-block:: python
+
+    from qilisdk.core import LEQ, BinaryVariable, Model, ObjectiveSense
+
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    model = Model("knapsack")
+    model.set_objective(3 * a + 2 * b, sense=ObjectiveSense.MAXIMIZE)
+    model.add_constraint("capacity", LEQ(2.53 * a + 1.01 * b, 3.1))
+
+    exact = model.to_qubo()  # 253a + 101b <= 310, with a 9 bit slack
+    rounded = model.to_qubo(max_decimals_in_slack=1)  # 2.5a + 1.0b <= 3.1, i.e. 5a + 2b <= 6, with a 3 bit slack
+
+    print(len(exact.variables()), len(rounded.variables()))
+
+**Output**::
+
+    11 5
+
 
 
 

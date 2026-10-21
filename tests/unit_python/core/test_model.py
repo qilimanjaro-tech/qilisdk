@@ -1050,23 +1050,19 @@ def test_qubo_model_evaluation():
     v = Variable("v", Domain.POSITIVE_INTEGER, (0, 10), encoding=OneHot)
 
     m.set_objective(v * 2 + 3, sense=ObjectiveSense.MAXIMIZE)
+    # 2v < 15 is rescaled to v <= 7, whose slack takes 3 bits
     m.add_constraint("c", LT(v * 2, 15), lagrange_multiplier=20)
     variables = m.variables()
     values = dict.fromkeys(m.variables(), 0)
     values[v[5]] = 1
-    values[variables[0]] = 1
-    values[variables[1]] = 0
-    values[variables[2]] = 1
-    values[variables[3]] = 0
+    values[variables[0]] = 0
+    values[variables[1]] = 1
+    values[variables[2]] = 0
     results = m.evaluate(values)
     assert results["obj"] == -(5 * 2 + 3)
     assert results["c"] == 0
     values = dict.fromkeys(m.variables(), 0)
     values[v[7]] = 1
-    values[variables[0]] = 1
-    values[variables[1]] = 0
-    values[variables[2]] = 0
-    values[variables[3]] = 0
 
     results = m.evaluate(values)
     assert results["obj"] == -(7 * 2 + 3)
@@ -1805,6 +1801,92 @@ def test_slack_penalty_matches_feasible_set_across_domains(domain, bounds, opera
             assert penalty == pytest.approx(0), f"feasible x={value} was penalised ({penalty})"
         else:
             assert penalty > 0, f"infeasible x={value} was not penalised"
+
+
+@pytest.mark.parametrize(
+    ("name", "operation", "coefficient", "rhs", "feasible"),
+    [
+        ("2.5x <= 4.9", LEQ, 2.5, 4.9, {-3, -2, -1, 0, 1}),
+        ("2.5x >= -4.9", GEQ, 2.5, -4.9, {-1, 0, 1, 2, 3}),
+        ("0.3x <= 0.1", LEQ, 0.1 + 0.2, 0.1, {-3, -2, -1, 0}),
+        ("2.5x == -5.0", EQ, 2.5, -5.0, {-2}),
+        ("0.3x == 0.6", EQ, 0.1 + 0.2, 0.6, {2}),
+    ],
+)
+def test_slack_penalty_vanishes_exactly_on_real_valued_feasible_set(name, operation, coefficient, rhs, feasible):
+    # Real coefficients are rescaled to integers before the penalty is built. With an integer slack on the raw
+    # coefficients, feasible values whose distance to the bound is not an integer would still be penalised.
+    x = Variable("x", Domain.INTEGER, bounds=(-3, 3), encoding=Bitwise)
+
+    penalties = _min_penalty_by_value(x, operation(coefficient * x, rhs))
+
+    for value, penalty in sorted(penalties.items()):
+        if value in feasible:
+            assert penalty == pytest.approx(0), f"{name}: feasible x={value} was penalised ({penalty})"
+        else:
+            assert penalty > 0, f"{name}: infeasible x={value} was not penalised"
+
+
+def test_max_decimals_in_slack_rounds_coefficients():
+    # Kept exact, 2.53a + 1.01b <= 3.1 becomes 253a + 101b <= 310 and needs a 9 bit slack. Rounded to one decimal it
+    # becomes 5a + 2b <= 6, which needs 3 bits and still only excludes a = b = 1.
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", LEQ(2.53 * a + 1.01 * b, 3.1))
+
+    exact = m.to_qubo()
+    rounded = m.to_qubo(max_decimals_in_slack=1)
+
+    assert len(exact.variables()) == 2 + 9
+    assert len(rounded.variables()) == 2 + 3
+    term = rounded.qubo_objective.term
+    bins = term.variables()
+    penalties = {}
+    for i in range(2 ** len(bins)):
+        assignment = {v: (i >> k) & 1 for k, v in enumerate(bins)}
+        key = (assignment[a], assignment[b])
+        penalties[key] = min(penalties.get(key, np.inf), term.evaluate(assignment))
+    assert penalties[1, 1] > 0
+    for key in [(0, 0), (0, 1), (1, 0)]:
+        assert penalties[key] == pytest.approx(0), f"feasible (a, b)={key} was penalised"
+
+
+def test_real_valued_equality_with_no_integer_solution_is_unsatisfiable():
+    # 0.5a + 0.5b == 0.75 rescales to a + b == 1.5, which no binary assignment can satisfy.
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    q = QUBO("q")
+    ct = EQ(0.5 * a + 0.5 * b, 0.75)
+
+    with pytest.raises(ValueError, match=r"Constraint c is unsatisfiable."):
+        q.add_constraint("c", ct)
+
+
+@pytest.mark.parametrize(
+    ("objective", "constraint", "optimum"),
+    [
+        # Overfilling by 0.1 used to cost less than the value it gained
+        ((3, 2), lambda a, b: LEQ(2.5 * a + 2.5 * b, 4.9), (1, 0)),
+        # Missing the target by 0.1 used to cost less than the value it gained
+        ((0, 3), lambda a, b: EQ(2.5 * a + 2.4 * b, 2.5), (1, 0)),
+    ],
+)
+def test_real_valued_qubo_minimum_is_model_optimum(objective, constraint, optimum):
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(objective[0] * a + objective[1] * b, sense=ObjectiveSense.MAXIMIZE)
+    m.add_constraint("c", constraint(a, b))
+    term = m.to_qubo().qubo_objective.term
+    bins = term.variables()
+
+    energies = {}
+    for i in range(2 ** len(bins)):
+        assignment = {v: (i >> k) & 1 for k, v in enumerate(bins)}
+        energies[assignment[a], assignment[b]] = min(
+            energies.get((assignment[a], assignment[b]), np.inf), term.evaluate(assignment)
+        )
+
+    assert min(energies, key=energies.get) == optimum
 
 
 # ---------------------------------------------------------------------------
