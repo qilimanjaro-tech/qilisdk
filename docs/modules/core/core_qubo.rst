@@ -87,6 +87,8 @@ to an equivalent constraint with integer coefficients before its penalty is buil
 2. It is then divided by the greatest common divisor of its coefficients, rounding the bound down for :math:`\leq` and
    up for :math:`\geq`. This keeps exactly the same binary assignments feasible. An equality whose constant is not a
    multiple of that divisor has no solution, and raises a ``ValueError``.
+3. Since the integer form only takes integer values, a strict inequality becomes a non-strict one a unit further in:
+   :math:`h < 0` becomes :math:`h + 1 \leq 0`, and :math:`h > 0` becomes :math:`h - 1 \geq 0`.
 
 For example, :math:`2.5 a + 2.5 b \leq 4.9` becomes :math:`25 a + 25 b \leq 49`, and then :math:`a + b \leq 1`, which
 needs a single slack bit. With integer coefficients every feasible assignment has a slack value that makes its penalty
@@ -96,12 +98,16 @@ meaning. Every violation is at least one step of :math:`2.5` from the rounded bo
 :math:`6.25 \lambda`.
 
 Each extra decimal place multiplies the slack range by ten, adding roughly 3.3 slack bits. By default each constraint
-keeps as many decimal places as float64 can resolve in its penalty: the range of its integer form is kept within
-:math:`2^{26}`, so that the squared penalty is exactly representable. The ``max_decimals_in_slack`` argument of
-:meth:`~qilisdk.core.model.Model.to_qubo` sets a different number of decimal places. Digits beyond it are rounded
-towards infeasibility, up for :math:`\leq` and down for :math:`\geq`, so the rounded constraint is slightly tighter
-than the original but never admits an assignment that the original rejects. Equalities are rounded to the nearest
-value, and a warning is logged whenever coefficients are rounded.
+may use as many decimal places as float64 can resolve in its penalty: the range of its integer form is kept within
+:math:`2^{26}`, so that the squared penalty is exactly representable. A constraint whose coefficients need more decimal
+places, such as :math:`a / 3 + b / 3 \leq 2 / 3`, is not rescaled, and keeps its real-valued penalty, which may be
+positive on some feasible assignments. A warning is logged when this happens.
+
+The ``max_decimals_in_slack`` argument of :meth:`~qilisdk.core.model.Model.to_qubo` sets the number of decimal places
+instead, which also bounds the number of slack bits. Digits of an inequality beyond it are rounded towards
+infeasibility, up for :math:`\leq` and down for :math:`\geq`, so the rounded constraint is slightly tighter than the
+original but never admits an assignment that the original rejects, and a warning is logged. An equality has no safe
+direction to round in, so an equality with more decimal places is kept real-valued instead.
 
 .. code-block:: python
 

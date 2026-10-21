@@ -850,20 +850,20 @@ def test_qubo_transform_slack_penalization():
     q = QUBO(label="test")
     x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
 
+    # x > 1 is penalised as x >= 2, and x < 2 as x <= 1
     ct = GT(x, 1)
 
-    ub_slack = q._check_valid_constraint("c", (ct.lhs - ct.rhs).to_binary(), ComparisonOperation.GT)
+    ub_slack = q._check_valid_constraint("c", (ct.lhs - ct.rhs - 1).to_binary(), ComparisonOperation.GEQ)
     slack = Variable("c_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=Bitwise)
-    assert ub_slack == 2
+    assert ub_slack == 1
     q.add_constraint("c", ct, penalization="slack")
 
     c = q._constraints["c"].term.lhs - q._constraints["c"].term.rhs
     assert slack[0] in c
-    assert slack[1] in c
 
     ct = LT(x, 2)
 
-    ub_slack = q._check_valid_constraint("c2", (ct.lhs - ct.rhs).to_binary(), ComparisonOperation.GT)
+    ub_slack = q._check_valid_constraint("c2", (ct.lhs - ct.rhs + 1).to_binary(), ComparisonOperation.LEQ)
     slack = Variable("c2_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=Bitwise)
     assert ub_slack == 1
     q.add_constraint("c2", ct, penalization="slack")
@@ -886,7 +886,7 @@ def test_qubo_transform_gt_always_feasible():
     q = QUBO(label="test")
     x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
 
-    ct = GT(x, 0)
+    ct = GT(x, -1)
 
     q.add_constraint("c", ct, penalization="slack")
     assert len(q._constraints) == 1
@@ -1703,7 +1703,7 @@ def _min_penalty_by_value(x, comparison, penalization="slack"):
 
 
 _STRICT_INEQUALITY_XFAIL = pytest.mark.xfail(
-    reason="strict inequalities are transformed as non-strict ones: `x > 0` does not penalise x == 0",
+    reason="unbalanced penalization treats strict inequalities as non-strict: `x > 0` does not penalise x == 0",
     strict=True,
 )
 
@@ -1718,8 +1718,8 @@ _STRICT_INEQUALITY_XFAIL = pytest.mark.xfail(
         ("x <= -2", LEQ, -2, {-3, -2}),
         ("x == 1", EQ, 1, {1}),
         ("x == -2", EQ, -2, {-2}),
-        pytest.param("x > 0", GT, 0, {1, 2, 3}, marks=_STRICT_INEQUALITY_XFAIL),
-        pytest.param("x < 0", LT, 0, {-3, -2, -1}, marks=_STRICT_INEQUALITY_XFAIL),
+        ("x > 0", GT, 0, {1, 2, 3}),
+        ("x < 0", LT, 0, {-3, -2, -1}),
     ],
 )
 def test_slack_penalty_vanishes_exactly_on_the_feasible_set(name, operation, rhs, feasible):
@@ -1811,6 +1811,8 @@ def test_slack_penalty_matches_feasible_set_across_domains(domain, bounds, opera
         ("0.3x <= 0.1", LEQ, 0.1 + 0.2, 0.1, {-3, -2, -1, 0}),
         ("2.5x == -5.0", EQ, 2.5, -5.0, {-2}),
         ("0.3x == 0.6", EQ, 0.1 + 0.2, 0.6, {2}),
+        ("2.5x < 5.0", LT, 2.5, 5.0, {-3, -2, -1, 0, 1}),
+        ("2.5x > -2.5", GT, 2.5, -2.5, {0, 1, 2, 3}),
     ],
 )
 def test_slack_penalty_vanishes_exactly_on_real_valued_feasible_set(name, operation, coefficient, rhs, feasible):
@@ -1907,6 +1909,63 @@ def test_real_valued_equality_with_no_integer_solution_is_unsatisfiable():
 
     with pytest.raises(ValueError, match=r"Constraint c is unsatisfiable."):
         q.add_constraint("c", ct)
+
+
+def test_non_terminating_coefficients_keep_feasible_assignments_on_the_bound():
+    # a/3 + 2b/3 <= 2/3 cannot be scaled to integers exactly, so it is kept real-valued instead of rounded up, which
+    # would exclude b = 1 although it lies exactly on the bound.
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", LEQ(a / 3 + 2 * b / 3, 2 / 3))
+
+    penalties = _min_energy_by_items(m.to_qubo(), a, b)
+
+    assert penalties[0, 1] == pytest.approx(0)
+    assert penalties[1, 1] > 0
+
+
+@pytest.mark.parametrize(
+    ("constraint", "max_decimals_in_slack"),
+    [
+        (lambda a, b: EQ(a / 3 + b / 3, 2 / 3), None),
+        (lambda a, b: EQ(0.33 * a + 0.33 * b, 0.66), 1),
+    ],
+)
+def test_inexact_real_valued_equality_is_not_rounded(constraint, max_decimals_in_slack):
+    # Rounded to integers these become 33333333a + 33333333b == 66666667 and 3a + 3b == 7, which no assignment
+    # satisfies, so they are kept real-valued.
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", constraint(a, b))
+
+    penalties = _min_energy_by_items(m.to_qubo(max_decimals_in_slack=max_decimals_in_slack), a, b)
+
+    assert penalties[1, 1] == pytest.approx(0)
+    assert penalties[0, 1] > 0
+
+
+def test_negative_max_decimals_in_slack_is_rejected():
+    a = BinaryVariable("a")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", LEQ(0.5 * a, 0.25))
+
+    with pytest.raises(ValueError, match=r"max_decimals_in_slack must be non-negative"):
+        m.to_qubo(max_decimals_in_slack=-1)
+
+
+def test_tiny_real_valued_coefficients_are_not_taken_for_zero():
+    a = BinaryVariable("a")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", LEQ(1e-11 * a, 5e-12))
+
+    term = m.to_qubo().qubo_objective.term
+
+    assert term.evaluate({a: 0}) == pytest.approx(0)
+    assert term.evaluate({a: 1}) > 0
 
 
 def test_real_valued_knapsack_qubo_minimum_is_model_optimum():
