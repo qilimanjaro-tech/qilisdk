@@ -63,10 +63,12 @@ class BruteForceSolver(ClassicalSolver):
                 domains.append([-1, 1])
             elif isinstance(v, Variable):
                 n_bits = v.num_binary_equivalent()
-                patterns = ([(bits_int >> b) & 1 for b in range(n_bits)] for bits_int in range(2**n_bits))
-                domains.append(
-                    list(dict.fromkeys(v.evaluate({v: bits}) for bits in patterns if v.check_valid(bits)[0]))
-                )
+                vals = {}
+                for bits_int in range(2**n_bits):
+                    bits = [(bits_int >> b) & 1 for b in range(n_bits)]
+                    if v.check_valid(bits)[0]:
+                        vals[v.evaluate({v: bits})] = None
+                domains.append(list(vals))
             else:
                 raise ValueError(f"Brute-force enumeration is not supported for variable {v} of domain {v.domain}.")
 

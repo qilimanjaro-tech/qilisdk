@@ -154,6 +154,17 @@ def test_brute_force_skips_invalid_code_words(encoding, sense):
     assert result.sample[v] == expected
 
 
+@pytest.mark.parametrize("encoding", [OneHot, DomainWall])
+@pytest.mark.parametrize("sense", [ObjectiveSense.MINIMIZE, ObjectiveSense.MAXIMIZE])
+def test_brute_force_skips_invalid_code_words_real(encoding, sense):
+    v = Variable("v", Domain.REAL, bounds=(0, 1), encoding=encoding, precision=0.5)
+    m = Model("encoded_real_model")
+    m.set_objective(v * 1, sense=sense)
+    result = BruteForceSolver().solve(m)
+    expected = 0 if sense == ObjectiveSense.MINIMIZE else 1
+    assert result.sample[v] == pytest.approx(expected)
+
+
 def test_brute_force_spin_variable():
     s = SpinVariable("s")
     m = Model("spin_model")
