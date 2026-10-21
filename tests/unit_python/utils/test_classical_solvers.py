@@ -19,7 +19,7 @@ import pytest
 
 from qilisdk.core.comparison import EQ
 from qilisdk.core.model import QUBO, Model, ObjectiveSense
-from qilisdk.core.variables import BinaryVariable, Domain, OneHot, Parameter, SpinVariable, Variable
+from qilisdk.core.variables import BinaryVariable, Domain, DomainWall, OneHot, Parameter, SpinVariable, Variable
 from qilisdk.utils.classical_solvers import (
     BruteForceSolver,
     ClassicalSolver,
@@ -141,6 +141,17 @@ def test_brute_force_integer_variable_enumeration():
     m.set_objective(v * 1)
     result = BruteForceSolver().solve(m)
     assert result.sample[v] == 0
+
+
+@pytest.mark.parametrize("encoding", [OneHot, DomainWall])
+@pytest.mark.parametrize("sense", [ObjectiveSense.MINIMIZE, ObjectiveSense.MAXIMIZE])
+def test_brute_force_skips_invalid_code_words(encoding, sense):
+    v = Variable("v", Domain.POSITIVE_INTEGER, bounds=(0, 2), encoding=encoding)
+    m = Model("encoded_model")
+    m.set_objective(v * 1, sense=sense)
+    result = BruteForceSolver().solve(m)
+    expected = 0 if sense == ObjectiveSense.MINIMIZE else 2
+    assert result.sample[v] == expected
 
 
 def test_brute_force_spin_variable():
