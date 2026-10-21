@@ -1946,6 +1946,55 @@ def test_inexact_real_valued_equality_is_not_rounded(constraint, max_decimals_in
     assert penalties[0, 1] > 0
 
 
+@pytest.mark.parametrize(
+    ("constraint", "feasible"),
+    [
+        # Rounding the bound already makes these strict, so a further unit would also exclude a + b == 1
+        (lambda a, b: LT(a + b, 1.5), {(0, 0), (0, 1), (1, 0)}),
+        (lambda a, b: GT(a + b, 0.5), {(0, 1), (1, 0), (1, 1)}),
+    ],
+)
+def test_rounded_strict_inequality_keeps_feasible_assignments(constraint, feasible):
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", constraint(a, b))
+
+    penalties = _min_energy_by_items(m.to_qubo(max_decimals_in_slack=0), a, b)
+
+    for key, penalty in penalties.items():
+        if key in feasible:
+            assert penalty == pytest.approx(0), f"feasible (a, b)={key} was penalised"
+        else:
+            assert penalty > 0, f"infeasible (a, b)={key} was not penalised"
+
+
+@pytest.mark.parametrize("max_decimals_in_slack", [12, 15])
+def test_many_decimals_do_not_take_fractions_for_integers(max_decimals_in_slack):
+    # Scaled by 10**12, a relative tolerance alone would take a/3 for an integer and round each value to the nearest
+    # on its own, giving an equality that no assignment satisfies
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", EQ(a / 3 + b / 3, 2 / 3))
+
+    penalties = _min_energy_by_items(m.to_qubo(max_decimals_in_slack=max_decimals_in_slack), a, b)
+
+    assert penalties[1, 1] == pytest.approx(0)
+    assert penalties[0, 1] > 0
+
+
+def test_constant_constraint_is_not_reported_as_real_valued(monkeypatch):
+    h = Constant(-0.5)
+    warning = MagicMock()
+    monkeypatch.setattr(model_module.logger, "warning", warning)
+
+    result = QUBO._to_integer_constraint("c", h, ComparisonOperation.LEQ)
+
+    assert result == (h, 1, ComparisonOperation.LEQ)
+    warning.assert_not_called()
+
+
 def test_negative_max_decimals_in_slack_is_rejected():
     a = BinaryVariable("a")
     m = Model("m")

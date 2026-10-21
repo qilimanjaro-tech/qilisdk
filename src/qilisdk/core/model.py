@@ -1547,6 +1547,9 @@ class QUBO(Model):
             raise ValueError(f"max_decimals_in_slack must be non-negative, but {max_decimals} was given.")
 
         const, coeffs = _real_coefficients(h)
+        if not coeffs:
+            # A constant constraint is always feasible or unsatisfiable, which _check_valid_constraint decides as is
+            return h, 1, operation
         values = np.array([const, *coeffs.values()], dtype=float)
 
         decimals_limit = max_decimals
@@ -1558,8 +1561,9 @@ class QUBO(Model):
             scaled = values * 10**decimals
             nearest = np.round(scaled)
             # Relative to the largest value, so that only float64 noise counts as integer: tiny coefficients are not
-            # taken for zero, nor large ones with a fractional part for integers
-            is_integer = np.abs(scaled - nearest) <= 1e-12 * np.abs(scaled).max()
+            # taken for zero, nor large ones with a fractional part for integers. Capped at the integer form's range,
+            # past which a relative tolerance would also accept genuine fractional parts
+            is_integer = np.abs(scaled - nearest) <= 1e-12 * min(np.abs(scaled).max(), _MAX_INTEGER_SPAN)
             if is_integer.all():
                 break
         else:
@@ -1588,11 +1592,13 @@ class QUBO(Model):
         }.get(operation, np.round)
         rounded = np.where(is_integer, nearest, towards_infeasible(scaled))
         int_const, *int_values = (int(value) for value in rounded)
+        # A constant rounded up (or down) is already strictly past the original one, so only an integer constant needs
+        # the extra unit to make the strict inequality non-strict
         if operation is ComparisonOperation.LT:
-            int_const += 1
+            int_const += int(is_integer[0])
             operation = ComparisonOperation.LEQ
         elif operation is ComparisonOperation.GT:
-            int_const -= 1
+            int_const -= int(is_integer[0])
             operation = ComparisonOperation.GEQ
         int_coeffs = dict(zip(coeffs, int_values, strict=True))
         divisor = math.gcd(*int_coeffs.values()) or 1
@@ -1603,7 +1609,9 @@ class QUBO(Model):
             int_const = -(-int_const // divisor)
         else:
             int_const //= divisor
-        int_h = Constant(int_const) + sum(coeff // divisor * monomial for monomial, coeff in int_coeffs.items())
+        int_h = Add.build(
+            (Constant(int_const), *(coeff // divisor * monomial for monomial, coeff in int_coeffs.items()))
+        )
         return int_h, divisor / 10**decimals, operation
 
     def _transform_constraint(
