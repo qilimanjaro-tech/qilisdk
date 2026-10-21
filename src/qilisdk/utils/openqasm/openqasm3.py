@@ -221,7 +221,7 @@ class OpenQasmParser:
                 return copy(replacement_map[new_statement.name])
 
             # If we're changing to a string, change the name
-            elif isinstance(replacement_map[new_statement.name], str):
+            if isinstance(replacement_map[new_statement.name], str):
                 setattr(new_statement, "name", replacement_map[new_statement.name])
 
             # If changing to something else (i.e. a number), change the value
