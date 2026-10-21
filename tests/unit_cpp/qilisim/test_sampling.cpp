@@ -1090,4 +1090,14 @@ TEST_F(SamplingTest, Stabilizer_Measurements_NotAppliedAsGates) {
     EXPECT_EQ(final_state.get_states().size(), 1u);
 }
 
+// The stabilizer simulator ignores mid-circuit measurements, warning the user. The circuit still runs.
+TEST_F(SamplingTest, Stabilizer_MidCircuitMeasurement_IgnoredWithWarning) {
+    int n = 1;
+    std::vector<Gate> gates = {Gate("M", SparseMatrix(), {}, {0}, {}), makeX(0), Gate("M", SparseMatrix(), {}, {0}, {})};
+    StabilizerStateSum initial(n);
+    StabilizerStateSum final_state(n);
+    EXPECT_NO_THROW(sampling_stabilizer(gates, n, initial, noNoise, final_state, cfg, readout));
+    EXPECT_EQ(final_state.sample(1).begin()->first, "1");  // X|0> = |1>
+}
+
 // GCOV_EXCL_BR_STOP

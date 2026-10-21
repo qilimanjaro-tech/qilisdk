@@ -153,7 +153,9 @@ def test_stabilizer_method_creates_okay():
 
 def test_stabilizer_measurements_are_not_applied_as_gates():
     # Applying M as a gate would branch into 16 terms and get truncated to 4 outcomes
-    backend = QiliSim(digital_simulation_method=DigitalMethod.stabilizer(max_states=4), execution_config=ExecutionConfig(seed=1234))
+    backend = QiliSim(
+        digital_simulation_method=DigitalMethod.stabilizer(max_states=4), execution_config=ExecutionConfig(seed=1234)
+    )
     circuit = Circuit(nqubits=4)
     circuit.add([H(q) for q in range(4)])
     circuit.add(M(0, 1, 2, 3))
