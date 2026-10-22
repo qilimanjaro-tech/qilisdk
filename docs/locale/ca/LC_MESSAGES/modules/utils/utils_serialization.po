@@ -1,0 +1,234 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version:  QiliSDK\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-22 11:23+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/utils/utils_serialization.rst:2
+msgid "Serialization and Hashing"
+msgstr "Serialització i hashing"
+
+#: ../../modules/utils/utils_serialization.rst:4
+msgid ""
+"Almost every object in QiliSDK can be written to disk and read back, and "
+"every object that takes part in symbolic expressions needs a hash that "
+"stays the same across processes. Both of these are provided by "
+":mod:`qilisdk.utils.serialization`."
+msgstr ""
+"Gairebé tots els objectes de QiliSDK es poden escriure a disc i tornar a "
+"llegir, i tot objecte que participi en expressions simbòliques necessita "
+"un hash que es mantingui igual entre processos. "
+":mod:`qilisdk.utils.serialization` proporciona totes dues coses."
+
+#: ../../modules/utils/utils_serialization.rst:9
+msgid "Serialization"
+msgstr "Serialització"
+
+#: ../../modules/utils/utils_serialization.rst:11
+msgid ""
+":mod:`qilisdk.utils.serialization` offers four entry-points, built on the"
+" YAML handler in :mod:`qilisdk.yaml`:"
+msgstr ""
+":mod:`qilisdk.utils.serialization` ofereix quatre punts d'entrada, "
+"construïts sobre el gestor de YAML de :mod:`qilisdk.yaml`:"
+
+#: ../../modules/utils/utils_serialization.rst:14
+msgid ""
+":func:`~qilisdk.utils.serialization.serialize` — serialize an object to a"
+" YAML string."
+msgstr ""
+":func:`~qilisdk.utils.serialization.serialize` — serialitzar un objecte "
+"en una cadena YAML."
+
+#: ../../modules/utils/utils_serialization.rst:15
+msgid ""
+":func:`~qilisdk.utils.serialization.serialize_to` — serialize an object "
+"to a YAML file."
+msgstr ""
+":func:`~qilisdk.utils.serialization.serialize_to` — serialitzar un "
+"objecte en un fitxer YAML."
+
+#: ../../modules/utils/utils_serialization.rst:16
+msgid ""
+":func:`~qilisdk.utils.serialization.deserialize` — rebuild an object from"
+" a YAML string."
+msgstr ""
+":func:`~qilisdk.utils.serialization.deserialize` — reconstruir un objecte"
+" a partir d'una cadena YAML."
+
+#: ../../modules/utils/utils_serialization.rst:17
+msgid ""
+":func:`~qilisdk.utils.serialization.deserialize_from` — rebuild an object"
+" from a YAML file."
+msgstr ""
+":func:`~qilisdk.utils.serialization.deserialize_from` — reconstruir un "
+"objecte a partir d'un fitxer YAML."
+
+#: ../../modules/utils/utils_serialization.rst:27
+msgid "**Output**::"
+msgstr "**Sortida**::"
+
+#: ../../modules/utils/utils_serialization.rst:44
+msgid ""
+"Each ``!Tag`` in the output names the class that produced the node, which"
+" allows the object graph to be rebuilt exactly."
+msgstr ""
+"Cada ``!Tag`` de la sortida anomena la classe que va produir el node, "
+"cosa que permet reconstruir exactament el graf d'objectes."
+
+#: ../../modules/utils/utils_serialization.rst:47
+msgid "Writing to and reading from a file works in the same way:"
+msgstr "Escriure en un fitxer i llegir-ne funciona de la mateixa manera:"
+
+#: ../../modules/utils/utils_serialization.rst:63
+msgid "Checking the type on the way back"
+msgstr "Comprovar el tipus a la tornada"
+
+#: ../../modules/utils/utils_serialization.rst:65
+msgid ""
+"Both ``deserialize`` functions accept an optional class as their second "
+"argument. When given, the rebuilt object is checked against it and the "
+"call is typed as returning that class."
+msgstr ""
+"Totes dues funcions ``deserialize`` accepten una classe opcional com a "
+"segon argument. Si s'indica, l'objecte reconstruït es comprova contra "
+"ella i la crida queda tipada com si retornés aquesta classe."
+
+#: ../../modules/utils/utils_serialization.rst:76
+msgid "Errors"
+msgstr "Errors"
+
+#: ../../modules/utils/utils_serialization.rst:78
+msgid "Failures are wrapped so that callers only have to catch two exceptions:"
+msgstr ""
+"Les fallades s'embolcallen perquè qui fa la crida només hagi de capturar "
+"dues excepcions:"
+
+#: ../../modules/utils/utils_serialization.rst:80
+msgid ""
+":class:`~qilisdk.utils.serialization.SerializationError` — the object "
+"could not be written."
+msgstr ""
+":class:`~qilisdk.utils.serialization.SerializationError` — no s'ha pogut "
+"escriure l'objecte."
+
+#: ../../modules/utils/utils_serialization.rst:81
+msgid ""
+":class:`~qilisdk.utils.serialization.DeserializationError` — the YAML "
+"could not be parsed, or the result is not an instance of the requested "
+"class."
+msgstr ""
+":class:`~qilisdk.utils.serialization.DeserializationError` — no s'ha "
+"pogut analitzar el YAML, o el resultat no és una instància de la classe "
+"sol·licitada."
+
+#: ../../modules/utils/utils_serialization.rst:84
+msgid "Registering your own classes"
+msgstr "Registrar les teves pròpies classes"
+
+#: ../../modules/utils/utils_serialization.rst:86
+msgid ""
+"A class becomes serializable by registering it with the shared YAML "
+"handler. The decorator assigns the tag automatically from the class name,"
+" and every public QiliSDK class that you can serialize uses it:"
+msgstr ""
+"Una classe esdevé serialitzable en registrar-la al gestor de YAML "
+"compartit. El decorador assigna l'etiqueta automàticament a partir del "
+"nom de la classe, i totes les classes públiques de QiliSDK que pots "
+"serialitzar l'utilitzen:"
+
+#: ../../modules/utils/utils_serialization.rst:99
+msgid ""
+"Pass ``shared=True`` to prefix the tag with the top-level package name, "
+"which avoids collisions with tags defined elsewhere."
+msgstr ""
+"Passa ``shared=True`` per anteposar a l'etiqueta el nom del paquet de "
+"nivell superior, cosa que evita col·lisions amb etiquetes definides en un"
+" altre lloc."
+
+#: ../../modules/utils/utils_serialization.rst:104
+msgid ""
+"The handler is a ruamel ``YAML(typ=\"unsafe\")`` instance, so "
+"deserializing constructs arbitrary Python objects named in the document. "
+"Only load files you trust."
+msgstr ""
+"El gestor és una instància ``YAML(typ=\"unsafe\")`` de ruamel, així que "
+"deserialitzar construeix objectes de Python arbitraris anomenats al "
+"document. Carrega només fitxers en què confiïs."
+
+#: ../../modules/utils/utils_serialization.rst:108
+msgid "Hashing"
+msgstr "Hashing"
+
+#: ../../modules/utils/utils_serialization.rst:110
+msgid ""
+":func:`qilisdk.utils.hashing.hash` produces a stable hash for the objects"
+" QiliSDK builds expressions out of. It is used by "
+":class:`~qilisdk.core.variables.BaseVariable`, "
+":class:`~qilisdk.core.expression.Expression`, "
+":class:`~qilisdk.core.qtensor.QTensor`, "
+":class:`~qilisdk.analog.hamiltonian.Hamiltonian`, "
+":class:`~qilisdk.digital.circuit.Circuit` and the gates, so that terms "
+"can be collected in dictionaries and compared reliably."
+msgstr ""
+":func:`qilisdk.utils.hashing.hash` produeix un hash estable per als "
+"objectes amb què QiliSDK construeix expressions. L'utilitzen "
+":class:`~qilisdk.core.variables.BaseVariable`, "
+":class:`~qilisdk.core.expression.Expression`, "
+":class:`~qilisdk.core.qtensor.QTensor`, "
+":class:`~qilisdk.analog.hamiltonian.Hamiltonian`, "
+":class:`~qilisdk.digital.circuit.Circuit` i les portes, de manera que els"
+" termes es poden agrupar en diccionaris i comparar de manera fiable."
+
+#: ../../modules/utils/utils_serialization.rst:122
+msgid "It differs from Python's built-in ``hash`` in two main ways:"
+msgstr "Es diferencia del ``hash`` integrat de Python en dos aspectes principals:"
+
+#: ../../modules/utils/utils_serialization.rst:124
+msgid ""
+"It is **stable across processes**. Python randomizes string hashing per "
+"interpreter run, whereas this one is a `blake2b "
+"<https://www.blake2.net/>`_ digest of a canonical encoding, so the same "
+"object hashes to the same integer every time."
+msgstr ""
+"És **estable entre processos**. Python aleatoritza el hash de les cadenes"
+" a cada execució de l'intèrpret, mentre que aquest és un resum `blake2b "
+"<https://www.blake2.net/>`_ d'una codificació canònica, així que el "
+"mateix objecte produeix sempre el mateix enter."
+
+#: ../../modules/utils/utils_serialization.rst:125
+msgid ""
+"It is **consistent across numeric types**. Values are encoded as exact "
+"integer ratios, so ``1``, ``1.0`` and ``(1+0j)`` all hash alike, and "
+"``nan``, ``inf`` and NumPy scalars are handled explicitly."
+msgstr ""
+"És **coherent entre tipus numèrics**. Els valors es codifiquen com a "
+"raons exactes d'enters, de manera que ``1``, ``1.0`` i ``(1+0j)`` "
+"produeixen el mateix hash, i ``nan``, ``inf`` i els escalars de NumPy es "
+"tracten explícitament."
+
+#: ../../modules/utils/utils_serialization.rst:129
+msgid ""
+"The returned integer is compatible with Python's ``__hash__`` protocol, "
+"so it can be returned directly from a ``__hash__`` method. It is not a "
+"cryptographic commitment and should not be used as one."
+msgstr ""
+"L'enter retornat és compatible amb el protocol ``__hash__`` de Python, "
+"així que es pot retornar directament des d'un mètode ``__hash__``. No és "
+"un compromís criptogràfic i no s'ha d'utilitzar com a tal."
+

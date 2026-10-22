@@ -1,0 +1,89 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version:  QiliSDK\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-22 11:23+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/utils/utils_overview.rst:2
+msgid "Overview"
+msgstr "Visió general"
+
+#: ../../modules/utils/utils_overview.rst:4
+msgid ""
+"The :mod:`qilisdk.utils` module collects a variety of tools that are "
+"useful in quantum workflows, but are otherwise somewhat independent:"
+msgstr ""
+"El mòdul :mod:`qilisdk.utils` aplega una varietat d'eines que resulten "
+"útils en els fluxos de treball quàntics, però que d'altra banda són força"
+" independents:"
+
+#: ../../modules/utils/utils_overview.rst:7
+msgid ""
+":doc:`utils_classical_solvers` provides a common interface to brute "
+"force, SciPy, simulated annealing and SCIP, so that any "
+":class:`~qilisdk.core.model.Model` can be solved classically for "
+"reference."
+msgstr ""
+":doc:`utils_classical_solvers` proporciona una interfície comuna per a la"
+" força bruta, SciPy, el recuit simulat i SCIP, de manera que qualsevol "
+":class:`~qilisdk.core.model.Model` es pugui resoldre de forma clàssica "
+"com a referència."
+
+#: ../../modules/utils/utils_overview.rst:8
+msgid ""
+":doc:`utils_interoperability` converts circuits and Hamiltonians to and "
+"from OpenQASM, QIR and OpenFermion."
+msgstr ""
+":doc:`utils_interoperability` converteix circuits i hamiltonians cap a i "
+"des d'OpenQASM, QIR i OpenFermion."
+
+#: ../../modules/utils/utils_overview.rst:9
+msgid ""
+":doc:`utils_serialization` writes any QiliSDK object to YAML and reads it"
+" back, and provides the stable hash used throughout the SDK."
+msgstr ""
+":doc:`utils_serialization` escriu qualsevol objecte de QiliSDK en YAML i "
+"el torna a llegir, i proporciona el hash estable que s'utilitza a tot el "
+"SDK."
+
+#: ../../modules/utils/utils_overview.rst:11
+msgid ""
+"Unlike the other modules, :mod:`qilisdk.utils` has no top-level re-"
+"exports, i.e. each submodule is imported by its full path:"
+msgstr ""
+"A diferència dels altres mòduls, :mod:`qilisdk.utils` no reexporta res al"
+" seu nivell superior, és a dir, cada submòdul s'importa per la seva ruta "
+"completa:"
+
+#~ msgid ""
+#~ "The :mod:`qilisdk.utils` module collects the"
+#~ " supporting tools that the rest of"
+#~ " the SDK is built on. Nothing "
+#~ "here describes a quantum process of "
+#~ "its own: these are just useful "
+#~ "tools to support the rest of the"
+#~ " SDK:"
+#~ msgstr ""
+#~ "El mòdul :mod:`qilisdk.utils` aplega les "
+#~ "eines de suport sobre les quals es"
+#~ " construeix la resta del SDK. Res "
+#~ "del que hi ha aquí descriu un "
+#~ "procés quàntic propi: són simplement "
+#~ "eines útils que donen suport a la"
+#~ " resta del SDK:"
+
