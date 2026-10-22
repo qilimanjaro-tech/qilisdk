@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import math
-import re
 from copy import copy
 from pathlib import Path
 from typing import Any
@@ -45,6 +44,7 @@ from openqasm3.ast import (
     Identifier,
     ImaginaryLiteral,
     Include,
+    IndexedIdentifier,
     IndexExpression,
     IntType,
     IODeclaration,
@@ -91,8 +91,23 @@ from qilisdk.digital import (
 )
 from qilisdk.digital.exceptions import UnsupportedGateError
 
-# Gates whose OpenQASM 3.0 name is not simply their lowercased QiliSDK name.
-_OPENQASM3_NAMES: dict[type[Gate], str] = {I: "id"}
+# The gates that can be written out, by their name in stdgates.inc. Controls and adjoints are written as modifiers.
+_OPENQASM3_NAMES: dict[type[Gate], str] = {
+    I: "id",
+    X: "x",
+    Y: "y",
+    Z: "z",
+    H: "h",
+    S: "s",
+    T: "t",
+    RX: "rx",
+    RY: "ry",
+    RZ: "rz",
+    U1: "u1",
+    U2: "u2",
+    U3: "u3",
+    SWAP: "swap",
+}
 
 # The names of the OpenQASM 3.0 gates that act on more than one qubit and are not built from modifiers.
 _QASM3_TOFFOLI_NAMES = frozenset({"ccx", "toffoli"})
@@ -101,9 +116,6 @@ _QASM3_CNOT_NQUBITS = 2
 
 # The modifiers that add a control qubit to a gate.
 _QASM3_CONTROL_MODIFIERS = frozenset({"ctrl", "negctrl"})
-
-# A valid OpenQASM 3.0 gate name, which every gate name is checked against before being written out.
-_QASM3_GATE_NAME = re.compile(r"[A-Za-z]\w*", re.ASCII)
 
 
 class OpenQasmParser:
@@ -204,12 +216,12 @@ class OpenQasmParser:
             and not hasattr(new_statement.name, "name")
             and new_statement.name in replacement_map
         ):
-            # If we're changing to an identifier
-            if isinstance(replacement_map[new_statement.name], Identifier):
-                new_statement = copy(replacement_map[new_statement.name])
+            # If we're changing to an identifier, possibly indexed, it comes from the call site so isn't recursed into
+            if isinstance(replacement_map[new_statement.name], (Identifier, IndexedIdentifier)):
+                return copy(replacement_map[new_statement.name])
 
             # If we're changing to a string, change the name
-            elif isinstance(replacement_map[new_statement.name], str):
+            if isinstance(replacement_map[new_statement.name], str):
                 setattr(new_statement, "name", replacement_map[new_statement.name])
 
             # If changing to something else (i.e. a number), change the value
@@ -856,14 +868,9 @@ class OpenQasmParser:
         # If it's a custom
         if gate_name in self.custom_gate_definitions:
             gate_def = self.custom_gate_definitions[gate_name]
-            replacement_map = {}
-            for actual_arg in arguments:
-                arg_name_in_body = gate_def["args"][arguments.index(actual_arg)]
-                replacement_map[arg_name_in_body] = actual_arg
-            reg_names = [qubit.name for qubit in statement.qubits]
-            for reg_name in reg_names[num_controls : num_controls + len(gate_def["qubits"])]:
-                reg_name_in_body = gate_def["qubits"][reg_names.index(reg_name) - num_controls]
-                replacement_map[reg_name_in_body] = reg_name
+            # Arguments and qubits are substituted positionally, keeping any index the call site gives a qubit
+            replacement_map: dict = dict(zip(gate_def["args"], arguments))
+            replacement_map.update(zip(gate_def["qubits"], statement.qubits[num_controls:]))
             control_qubits = qubits[:num_controls]
             for gate_statement in gate_def["body"]:
                 self._process_statement(
@@ -1242,8 +1249,8 @@ class OpenQasmParser:
                 else:
                     modifiers.append("inv @")
                 base_gate = base_gate.basic_gate
-            qasm_gate_name = _OPENQASM3_NAMES.get(type(base_gate), base_gate.name.lower())
-            if _QASM3_GATE_NAME.fullmatch(qasm_gate_name) is None:
+            qasm_gate_name = _OPENQASM3_NAMES.get(type(base_gate))
+            if qasm_gate_name is None:
                 raise UnsupportedGateError(f"Cannot express the {gate.name} gate in OpenQASM 3.0.")
             qasm_parameter_str = ""
             if base_gate.is_parameterized:
