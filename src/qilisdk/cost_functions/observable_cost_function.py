@@ -149,7 +149,7 @@ class ObservableCostFunction(CostFunction):
         if np.any(np.abs(off_diagonal) > get_settings().atol):
             raise ValueError(
                 "ObservableCostFunction can only estimate observables that are diagonal in the computational basis "
-                "from samples. Use a StateTomography readout, or rotate the circuit into the observable's basis."
+                "from samples. Use a StateTomography readout, or rotate into the observable's basis before sampling."
             )
 
         total_cost = complex(0.0)
