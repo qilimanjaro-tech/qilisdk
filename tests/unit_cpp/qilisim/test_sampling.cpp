@@ -1056,6 +1056,17 @@ TEST_F(SamplingTest, MidCircuitMeasurements) {
     EXPECT_EQ(intermediate_results.size(), 1u);
 }
 
+TEST_F(SamplingTest, MidCircuitMeasurementsStabilizer) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeM(0), makeX(0), makeM(0)};
+    StabilizerStateSum initial(n);
+    StabilizerStateSum final_state(n);
+    std::vector<py::object> intermediate_results;
+    sampling_stabilizer(gates, n, initial, noNoise, final_state, intermediate_results, cfg, readout);
+    EXPECT_EQ(intermediate_results.size(), 1u);
+    EXPECT_EQ(final_state.sample(1).begin()->first, "00");  // X X |00> = |00>
+}
+
 // The stabilizer simulator ignores noise models, warning the user. The circuit still runs.
 TEST_F(SamplingTest, Stabilizer_NoiseModel_IgnoredWithWarning) {
     int n = 1;
@@ -1063,7 +1074,8 @@ TEST_F(SamplingTest, Stabilizer_NoiseModel_IgnoredWithWarning) {
     StabilizerStateSum initial(n);
     StabilizerStateSum final_state(n);
     NoiseModelCpp nm = symmetricReadoutNoise(n, 0.1);  // non-empty -> triggers the warning
-    EXPECT_NO_THROW(sampling_stabilizer(gates, n, initial, nm, final_state, cfg, readout));
+    std::vector<py::object> intermediate_results;
+    EXPECT_NO_THROW(sampling_stabilizer(gates, n, initial, nm, final_state, intermediate_results, cfg, readout));
     EXPECT_EQ(final_state.sample(1).begin()->first, "1");  // X|0> = |1>
 }
 
@@ -1075,7 +1087,8 @@ TEST_F(SamplingTest, Stabilizer_MonteCarlo_IgnoredWithWarning) {
     StabilizerStateSum final_state(n);
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);  // triggers the warning
-    EXPECT_NO_THROW(sampling_stabilizer(gates, n, initial, noNoise, final_state, cfgMC, readout));
+    std::vector<py::object> intermediate_results;
+    EXPECT_NO_THROW(sampling_stabilizer(gates, n, initial, noNoise, final_state, intermediate_results, cfgMC, readout));
     EXPECT_EQ(final_state.sample(1).begin()->first, "1");  // X|0> = |1>
 }
 
