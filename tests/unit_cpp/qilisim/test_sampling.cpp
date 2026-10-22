@@ -1071,7 +1071,7 @@ TEST_F(SamplingTest, MidCircuitMeasurementsStabilizer) {
     ASSERT_EQ(intermediate_results.size(), 1u);
     py::dict samples = intermediate_results[0].attr("sampling").attr("samples");
     EXPECT_EQ(samples.size(), 1u);
-    EXPECT_EQ(samples["1"].cast<int>(), 10);               // only qubit 0 was measured, after X
+    EXPECT_EQ(samples["1"].cast<int>(), 10);                // only qubit 0 was measured, after X
     EXPECT_EQ(final_state.sample(1).begin()->first, "00");  // X X |00> = |00>
 }
 
