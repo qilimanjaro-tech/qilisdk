@@ -185,6 +185,8 @@ class QTensorCpp {
     QTensorCpp anticommutator_python(const py::object& other) const;
     QTensorCpp reset_qubits_python(const py::object& qubits);
     QTensorCpp reset_qubits(const std::set<int>& qubits);
+    QTensorCpp permute_python(const py::object& order) const;
+    QTensorCpp permute(const std::vector<int>& order) const;
 
     // Static initializers for common states
     static QTensorCpp identity(int nqubits);
