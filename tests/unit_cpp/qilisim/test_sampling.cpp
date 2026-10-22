@@ -1061,10 +1061,36 @@ TEST_F(SamplingTest, MidCircuitMeasurementsStabilizer) {
     std::vector<Gate> gates = {makeX(0), makeM(0), makeX(0), makeM(0)};
     StabilizerStateSum initial(n);
     StabilizerStateSum final_state(n);
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout
+        _stab_mid_ro = [SamplingReadout(nshots=10, expand_samples=False)]
+    )");
+    py::list sampling_readout = py::globals()["_stab_mid_ro"].cast<py::list>();
     std::vector<py::object> intermediate_results;
-    sampling_stabilizer(gates, n, initial, noNoise, final_state, intermediate_results, cfg, readout);
-    EXPECT_EQ(intermediate_results.size(), 1u);
+    sampling_stabilizer(gates, n, initial, noNoise, final_state, intermediate_results, cfg, sampling_readout);
+    ASSERT_EQ(intermediate_results.size(), 1u);
+    py::dict samples = intermediate_results[0].attr("sampling").attr("samples");
+    EXPECT_EQ(samples.size(), 1u);
+    EXPECT_EQ(samples["1"].cast<int>(), 10);               // only qubit 0 was measured, after X
     EXPECT_EQ(final_state.sample(1).begin()->first, "00");  // X X |00> = |00>
+}
+
+TEST_F(SamplingTest, MidCircuitMeasurementsStabilizer_AdjacentMeasurementsGrouped) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeM(0), makeM(1), makeX(1), makeM(1)};
+    StabilizerStateSum initial(n);
+    StabilizerStateSum final_state(n);
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout
+        _stab_grouped_ro = [SamplingReadout(nshots=10, expand_samples=False)]
+    )");
+    py::list sampling_readout = py::globals()["_stab_grouped_ro"].cast<py::list>();
+    std::vector<py::object> intermediate_results;
+    sampling_stabilizer(gates, n, initial, noNoise, final_state, intermediate_results, cfg, sampling_readout);
+    ASSERT_EQ(intermediate_results.size(), 1u);
+    py::dict samples = intermediate_results[0].attr("sampling").attr("samples");
+    EXPECT_EQ(samples.size(), 1u);
+    EXPECT_EQ(samples["10"].cast<int>(), 10);  // M(0) and M(1) give one result over both qubits
 }
 
 // The stabilizer simulator ignores noise models, warning the user. The circuit still runs.

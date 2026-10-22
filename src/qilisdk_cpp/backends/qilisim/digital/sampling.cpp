@@ -78,6 +78,28 @@ DenseMatrix collapse_state(const DenseMatrix& state, const std::vector<bool>& qu
     return density_matrix;
 }
 
+static int group_measurements(const std::vector<Gate>& gates, int start, std::vector<bool>& qubits_to_measure) {
+    /*
+    Group the run of adjacent measurement gates starting at a given index, so they can be done all at once.
+
+    Args:
+        gates (std::vector<Gate>&): The gates of the circuit.
+        start (int): The index of the first measurement gate in the run.
+        qubits_to_measure (std::vector<bool>&): Set to true for every qubit measured in the run.
+
+    Returns:
+        int: The number of adjacent measurement gates in the run.
+    */
+    int num_measurements = 0;
+    for (int j = start; j < int(gates.size()) && gates[j].get_name() == "M"; ++j) {
+        for (int target : gates[j].get_target_qubits()) {
+            qubits_to_measure[target] = true;
+        }
+        num_measurements++;
+    }
+    return num_measurements;
+}
+
 void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories) {
     /*
     Execute a sampling functional using a simple statevector simulator.
@@ -209,22 +231,9 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
         // If it's a measurement
         if (gate.get_name() == "M") {
             // Check for adjacent measurements and if we have any, do them all at once
-            int num_measurements = 0;
-            bool are_final_measurements = false;
             std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
-            for (int j = i; j < int(optimized_gates.size()); ++j) {
-                if (optimized_gates[j].get_name() == "M") {
-                    for (int target : optimized_gates[j].get_target_qubits()) {
-                        qubits_to_measure_after_gate[target] = true;
-                    }
-                    num_measurements++;
-                    if (j == int(optimized_gates.size()) - 1) {
-                        are_final_measurements = true;
-                    }
-                } else {
-                    break;
-                }
-            }
+            int num_measurements = group_measurements(optimized_gates, i, qubits_to_measure_after_gate);
+            bool are_final_measurements = (i + num_measurements == int(optimized_gates.size()));
 
             qilisdk::log_trace("[Sampling, C++] Measuring " + std::to_string(num_measurements) + " qubits at gate index " + std::to_string(i));
 
@@ -424,22 +433,9 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseMod
         // If it's a measurement
         if (gate.get_name() == "M") {
             // Check for adjacent measurements and if we have any, do them all at once
-            int num_measurements = 0;
-            bool are_final_measurements = false;
             std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
-            for (int j = i; j < int(optimized_gates.size()); ++j) {
-                if (optimized_gates[j].get_name() == "M") {
-                    for (int target : optimized_gates[j].get_target_qubits()) {
-                        qubits_to_measure_after_gate[target] = true;
-                    }
-                    num_measurements++;
-                    if (j == int(optimized_gates.size()) - 1) {
-                        are_final_measurements = true;
-                    }
-                } else {
-                    break;
-                }
-            }
+            int num_measurements = group_measurements(optimized_gates, i, qubits_to_measure_after_gate);
+            bool are_final_measurements = (i + num_measurements == int(optimized_gates.size()));
 
             // Construct the result
             if (!are_final_measurements) {
@@ -570,22 +566,9 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
         // If it's a measurement
         if (gate.get_name() == "M") {
             // Check for adjacent measurements and if we have any, do them all at once
-            int num_measurements = 0;
-            bool are_final_measurements = false;
             std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
-            for (int j = i; j < int(gates.size()); ++j) {
-                if (gates[j].get_name() == "M") {
-                    for (int target : gates[j].get_target_qubits()) {
-                        qubits_to_measure_after_gate[target] = true;
-                    }
-                    num_measurements++;
-                    if (j == int(gates.size()) - 1) {
-                        are_final_measurements = true;
-                    }
-                } else {
-                    break;
-                }
-            }
+            int num_measurements = group_measurements(gates, i, qubits_to_measure_after_gate);
+            bool are_final_measurements = (i + num_measurements == int(gates.size()));
 
             // Construct the result
             if (!are_final_measurements) {
