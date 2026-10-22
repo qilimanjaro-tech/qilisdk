@@ -1648,7 +1648,7 @@ void QTensorCpp::clear_cache() {
     _eigenvectors.clear();
 }
 
-Complex QTensorCpp::expectation_value_python(const py::object& other, int nshots) const {
+Complex QTensorCpp::expectation_value_python(const py::object& other, int nshots, int seed) const {
     /*
     Compute the expectation value of another QTensor with respect to this QTensor.
     If nshots <= 0, compute the exact expectation value using the trace formula.
@@ -1659,27 +1659,28 @@ Complex QTensorCpp::expectation_value_python(const py::object& other, int nshots
     Args:
         other (py::object): The other QTensor for which to compute the expectation value with respect to this QTensor.
         nshots (int): The number of samples to use when estimating the expectation value. If nshots <= 0, the exact expectation value is computed using the trace formula.
+        seed (int): The random seed used for the sampling when nshots > 0.
 
     Returns:
         Complex: The expectation value of the other QTensor with respect to this QTensor.
     */
     if (py::isinstance<QTensorCpp>(other)) {
-        return expectation_value(other.cast<QTensorCpp&>(), nshots);
+        return expectation_value(other.cast<QTensorCpp&>(), nshots, seed);
     } else if (py::hasattr(other, "_elements")) {
         int nqubits = int(std::log2(std::max(rows(), cols())));
         py::list hamiltonians_py;
         hamiltonians_py.append(other);
         std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(nqubits, hamiltonians_py);
-        return expectation_value(hamiltonians[0], nshots);
+        return expectation_value(hamiltonians[0], nshots, seed);
     } else if (py::hasattr(other, "_qtensor_cpp")) {
         py::object other_cpp = other.attr("_qtensor_cpp");
-        return expectation_value(other_cpp.cast<QTensorCpp&>(), nshots);
+        return expectation_value(other_cpp.cast<QTensorCpp&>(), nshots, seed);
     } else {
         throw py::value_error("Other object must be a QTensor");
     }
 }
 
-Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int nshots) const {
+Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int nshots, int seed) const {
     /*
     Compute the expectation value of a matrix-free Hamiltonian with respect to this QTensor.
     If nshots <= 0, compute the exact expectation value by applying the Hamiltonian to this QTensor.
@@ -1690,15 +1691,15 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int ns
     Args:
         other (MatrixFreeHamiltonian): The matrix-free Hamiltonian for which to compute the expectation value with respect to this QTensor.
         nshots (int): The number of samples to use per Pauli term when estimating the expectation value. If nshots <= 0, the exact expectation value is computed instead.
+        seed (int): The random seed used for the sampling when nshots > 0.
 
     Returns:
         Complex: The expectation value of the matrix-free Hamiltonian with respect to this QTensor.
     */
 
     if (nshots > 0) {
-        // Create the random device
-        std::random_device rd;
-        std::mt19937 gen(rd());
+        // Create the random generator from the given seed
+        std::mt19937 gen(static_cast<std::mt19937::result_type>(seed));
 
         // The expectation value of the identity gives the normalization of this QTensor
         double normalization = expectation_value(MatrixFreeHamiltonian(other.get_nqubits(), 1.0)).real();
@@ -1761,7 +1762,7 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int ns
     return expectation;
 }
 
-Complex QTensorCpp::expectation_value(const QTensorCpp& other, int nshots) const {
+Complex QTensorCpp::expectation_value(const QTensorCpp& other, int nshots, int seed) const {
     /*
     Compute the expectation value of another QTensor with respect to this QTensor.
     If nshots <= 0, compute the exact expectation value using the trace formula.
@@ -1772,6 +1773,7 @@ Complex QTensorCpp::expectation_value(const QTensorCpp& other, int nshots) const
     Args:
         other (QTensorCpp): The other QTensor for which to compute the expectation value with respect to this QTensor.
         nshots (int): The number of samples to use when estimating the expectation value. If nshots <= 0, the exact expectation value is computed using the trace formula.
+        seed (int): The random seed used for the sampling when nshots > 0.
 
     Returns:
         Complex: The expectation value of the other QTensor with respect to this QTensor.
@@ -1796,9 +1798,8 @@ Complex QTensorCpp::expectation_value(const QTensorCpp& other, int nshots) const
             return expectation;
         }
     } else {
-        // Create the random device
-        std::random_device rd;
-        std::mt19937 gen(rd());
+        // Create the random generator from the given seed
+        std::mt19937 gen(static_cast<std::mt19937::result_type>(seed));
 
         // Get the eigenvalues and eigenvectors of the operator
         QTensorCpp& observable = const_cast<QTensorCpp&>(other);

@@ -612,6 +612,17 @@ def test_expect_qtensor_sampled():
     assert len(observable.eigenvalues) == 4
 
 
+def test_expect_sampled_seed():
+    """Test that a fixed seed makes sampled expectation values reproducible."""
+    state = QTensor.uniform(2)
+    for observable in [Z(0) + X(1) * Z(0), (Z(0) + 0.5 * Z(1)).to_qtensor(2)]:
+        first = state.expectation_value(observable, nshots=100, seed=42)
+        second = state.expectation_value(observable, nshots=100, seed=42)
+        other = [state.expectation_value(observable, nshots=100, seed=seed) for seed in range(10)]
+        assert first == second
+        assert len(set(other)) > 1
+
+
 def test_expect_hamiltonian_sampled_shapes():
     """Test that sampling a Hamiltonian observable works for kets, bras and density matrices."""
     for state in [ket(0, 1), bra(0, 1), ket(0, 1).to_density_matrix()]:
