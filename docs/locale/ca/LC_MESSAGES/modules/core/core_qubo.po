@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-14 16:25+0300\n"
+"POT-Creation-Date: 2026-10-21 16:32+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -206,11 +206,131 @@ msgstr ""
 "penalització per a violacions per sobre i per sota del límit, "
 "respectivament."
 
+#: ../../modules/core/core_qubo.rst:81
+msgid "Real-valued Coefficients"
+msgstr "Coeficients reals"
+
+#: ../../modules/core/core_qubo.rst:83
+msgid ""
+"The formulas above assume integer coefficients. When a constraint has "
+"real-valued coefficients, it is first rescaled to an equivalent "
+"constraint with integer coefficients before its penalty is built:"
+msgstr ""
+"Les fórmules anteriors suposen coeficients enters. Quan una restricció té"
+" coeficients reals, primer es reescala a una restricció equivalent amb "
+"coeficients enters abans de construir-ne la penalització:"
+
+#: ../../modules/core/core_qubo.rst:86
+msgid ""
+"The constraint is multiplied by the smallest power of ten that makes "
+"every coefficient and the constant an integer."
+msgstr ""
+"La restricció es multiplica per la potència de deu més petita que "
+"converteix en enters tots els coeficients i la constant."
+
 #: ../../modules/core/core_qubo.rst:87
+msgid ""
+"It is then divided by the greatest common divisor of its coefficients, "
+"rounding the bound down for :math:`\\leq` and up for :math:`\\geq`. This "
+"keeps exactly the same binary assignments feasible. An equality whose "
+"constant is not a multiple of that divisor has no solution, and raises a "
+"``ValueError``."
+msgstr ""
+"Després es divideix pel màxim comú divisor dels seus coeficients, "
+"arrodonint la cota cap avall per a :math:`\\leq` i cap amunt per a "
+":math:`\\geq`. Així es mantenen factibles exactament les mateixes "
+"assignacions binàries. Una igualtat la constant de la qual no és múltiple"
+" d'aquest divisor no té solució i llança un ``ValueError``."
+
+#: ../../modules/core/core_qubo.rst:90
+msgid ""
+"Since the integer form only takes integer values, a strict inequality "
+"becomes a non-strict one a unit further in: :math:`h < 0` becomes "
+":math:`h + 1 \\leq 0`, and :math:`h > 0` becomes :math:`h - 1 \\geq 0`."
+msgstr ""
+"Com que la forma entera només pren valors enters, una desigualtat "
+"estricta es converteix en una de no estricta desplaçada una unitat cap a "
+"dins: :math:`h < 0` es converteix en :math:`h + 1 \\leq 0`, i :math:`h > "
+"0` en :math:`h - 1 \\geq 0`."
+
+#: ../../modules/core/core_qubo.rst:93
+msgid ""
+"For example, :math:`2.5 a + 2.5 b \\leq 4.9` becomes :math:`25 a + 25 b "
+"\\leq 49`, and then :math:`a + b \\leq 1`, which needs a single slack "
+"bit. With integer coefficients every feasible assignment has a slack "
+"value that makes its penalty exactly zero. The penalty is then scaled "
+"back by the square of the rescaling, :math:`(25 / 10)^2` here, so it is "
+"measured in the constraint's own units and a Lagrange multiplier "
+"calibrated for the original constraint keeps its meaning. Every violation"
+" is at least one step of :math:`2.5` from the rounded bound, so it costs "
+"at least :math:`6.25 \\lambda`."
+msgstr ""
+"Per exemple, :math:`2.5 a + 2.5 b \\leq 4.9` es converteix en :math:`25 a"
+" + 25 b \\leq 49` i, a continuació, en :math:`a + b \\leq 1`, que "
+"necessita un únic bit de relaxació. Amb coeficients enters, tota "
+"assignació factible té un valor de relaxació que n'anul·la exactament la "
+"penalització. Després, la penalització es multiplica pel quadrat del "
+"factor de reescalat, aquí :math:`(25 / 10)^2`, de manera que es mesura en"
+" les unitats pròpies de la restricció i un multiplicador de Lagrange "
+"calibrat per a la restricció original en conserva el significat. Tota "
+"violació és com a mínim a un pas de :math:`2.5` de la cota arrodonida, de"
+" manera que costa com a mínim :math:`6.25 \\lambda`."
+
+#: ../../modules/core/core_qubo.rst:100
+#, python-brace-format
+msgid ""
+"Each extra decimal place multiplies the slack range by ten, adding "
+"roughly 3.3 slack bits. By default each constraint may use as many "
+"decimal places as float64 can resolve in its penalty: the range of its "
+"integer form is kept within :math:`2^{26}`, so that the squared penalty "
+"is exactly representable. A constraint whose coefficients need more "
+"decimal places, such as :math:`a / 3 + b / 3 \\leq 2 / 3`, is not "
+"rescaled, and keeps its real-valued penalty, which may be positive on "
+"some feasible assignments. A warning is logged when this happens."
+msgstr ""
+"Cada decimal addicional multiplica per deu el rang de relaxació, cosa que"
+" afegeix aproximadament 3.3 bits de relaxació. Per defecte, cada "
+"restricció pot fer servir tants decimals com float64 pot resoldre en la "
+"seva penalització: el rang de la seva forma entera es manté dins de "
+":math:`2^{26}`, de manera que la penalització al quadrat es pot "
+"representar exactament. Una restricció els coeficients de la qual "
+"necessiten més decimals, com ara :math:`a / 3 + b / 3 \\leq 2 / 3`, no es"
+" reescala i conserva la seva penalització real, que pot ser positiva en "
+"algunes assignacions factibles. En aquest cas es registra un avís."
+
+#: ../../modules/core/core_qubo.rst:106
+msgid ""
+"The ``max_decimals_in_slack`` argument of "
+":meth:`~qilisdk.core.model.Model.to_qubo` sets the number of decimal "
+"places instead, which also bounds the number of slack bits. Digits of an "
+"inequality beyond it are rounded towards infeasibility, up for "
+":math:`\\leq` and down for :math:`\\geq`, so the rounded constraint is "
+"slightly tighter than the original but never admits an assignment that "
+"the original rejects, and a warning is logged. An equality has no safe "
+"direction to round in, so an equality with more decimal places is kept "
+"real-valued instead."
+msgstr ""
+"L'argument ``max_decimals_in_slack`` de "
+":meth:`~qilisdk.core.model.Model.to_qubo` fixa en canvi el nombre de "
+"decimals, cosa que també limita el nombre de bits de relaxació. Les "
+"xifres d'una desigualtat que el superen s'arrodoneixen cap a la "
+"infactibilitat, cap amunt per a :math:`\\leq` i cap avall per a "
+":math:`\\geq`, de manera que la restricció arrodonida és una mica més "
+"estricta que l'original, però mai no admet una assignació que l'original "
+"rebutgi, i es registra un avís. Una igualtat no té cap direcció segura "
+"cap a la qual arrodonir, de manera que una igualtat amb més decimals "
+"conserva en canvi la seva forma real."
+
+#: ../../modules/core/core_qubo.rst:126 ../../modules/core/core_qubo.rst:185
+#: ../../modules/core/core_qubo.rst:209
+msgid "**Output**::"
+msgstr "**Sortida**::"
+
+#: ../../modules/core/core_qubo.rst:137
 msgid "Why QUBO?"
 msgstr "Per què QUBO?"
 
-#: ../../modules/core/core_qubo.rst:89
+#: ../../modules/core/core_qubo.rst:139
 msgid ""
 "**Unconstrained form**: Many quantum annealers and specialized solvers "
 "accept only unconstrained binary quadratic forms, making QUBO the lingua "
@@ -221,7 +341,7 @@ msgstr ""
 "restringides, cosa que fa del QUBO la lingua franca de l'optimització "
 "quàntica."
 
-#: ../../modules/core/core_qubo.rst:90
+#: ../../modules/core/core_qubo.rst:140
 msgid ""
 "**Penalty encoding**: Instead of throwing away constraint structure, you "
 "transform each constraint into a quadratic penalty, preserving problem "
@@ -231,7 +351,7 @@ msgstr ""
 "les restriccions, cada restricció es transforma en una penalització "
 "quadràtica, preservant la fidelitat del problema."
 
-#: ../../modules/core/core_qubo.rst:91
+#: ../../modules/core/core_qubo.rst:141
 msgid ""
 "**Direct mapping**: Once in QUBO form, you can directly translate the "
 "problem to Ising/Hamiltonian terms for hardware execution."
@@ -239,19 +359,19 @@ msgstr ""
 "**Mapatge directe**: un cop en forma QUBO, podeu traduir directament el "
 "problema a termes Ising/Hamiltonian per a l'execució en maquinari."
 
-#: ../../modules/core/core_qubo.rst:94
+#: ../../modules/core/core_qubo.rst:144
 msgid "Defining a QUBO"
 msgstr "Definir un QUBO"
 
-#: ../../modules/core/core_qubo.rst:96
+#: ../../modules/core/core_qubo.rst:146
 msgid "**Model creation**"
 msgstr "**Creació del model**"
 
-#: ../../modules/core/core_qubo.rst:103
+#: ../../modules/core/core_qubo.rst:153
 msgid "**Objective**"
 msgstr "**Objectiu**"
 
-#: ../../modules/core/core_qubo.rst:114
+#: ../../modules/core/core_qubo.rst:164
 msgid ""
 "If **transform_to_qubo=True**, your constraint **must be linear** (no "
 "quadratic terms), because it will be rewritten as (lhs-rhs)^2."
@@ -259,7 +379,7 @@ msgstr ""
 "Si **transform_to_qubo=True**, la restricció **ha de ser lineal** (sense "
 "termes quadràtics), perquè es rescriurà com a (lhs-rhs)^2."
 
-#: ../../modules/core/core_qubo.rst:115
+#: ../../modules/core/core_qubo.rst:165
 msgid ""
 "If **transform_to_qubo=False**, you assume the constraint is already a "
 "valid quadratic penalty, and it will be added verbatim."
@@ -267,19 +387,15 @@ msgstr ""
 "Si **transform_to_qubo=False**, s'assumeix que la restricció ja és una "
 "penalització quadràtica vàlida i s'afegirà tal qual."
 
-#: ../../modules/core/core_qubo.rst:118
+#: ../../modules/core/core_qubo.rst:168
 msgid "Example: Slack Penalization"
 msgstr "Exemple: penalització per variable de relaxació"
 
-#: ../../modules/core/core_qubo.rst:135 ../../modules/core/core_qubo.rst:159
-msgid "**Output**::"
-msgstr "**Sortida**::"
-
-#: ../../modules/core/core_qubo.rst:142
+#: ../../modules/core/core_qubo.rst:192
 msgid "Example: Unbalanced Penalization"
 msgstr "Exemple: penalització no equilibrada"
 
-#: ../../modules/core/core_qubo.rst:164
+#: ../../modules/core/core_qubo.rst:214
 msgid ""
 "Montañez-Barrera, Jhon Alejandro, et al. \"Unbalanced penalization: A new"
 " approach to encode inequality constraints of combinatorial problems for "
@@ -291,11 +407,11 @@ msgstr ""
 "quantum optimization algorithms.» Quantum Science and Technology 9.2 "
 "(2024): 025022."
 
-#: ../../modules/core/core_qubo.rst:167
+#: ../../modules/core/core_qubo.rst:217
 msgid "High-degree Monomial Linearization"
 msgstr "Linearització de monomis de grau alt"
 
-#: ../../modules/core/core_qubo.rst:169
+#: ../../modules/core/core_qubo.rst:219
 msgid ""
 "By definition, a QUBO objective is at most quadratic. However, both user-"
 "defined objectives and the squared residuals produced when penalizing "
@@ -314,7 +430,7 @@ msgstr ""
 "qualsevol monomi pseudo-booleà de grau més gran que dos introduint "
 "variables binàries auxiliars."
 
-#: ../../modules/core/core_qubo.rst:175
+#: ../../modules/core/core_qubo.rst:225
 msgid ""
 "For each pair of binary factors :math:`a, b` that needs to be collapsed, "
 "a fresh auxiliary :math:`w` is created and the equality :math:`w = a "
@@ -324,7 +440,7 @@ msgstr ""
 "crea una nova variable auxiliar :math:`w` i la igualtat :math:`w = a "
 "\\cdot b` s'imposa mitjançant la penalització de **Rosenberg**"
 
-#: ../../modules/core/core_qubo.rst:179
+#: ../../modules/core/core_qubo.rst:229
 msgid ""
 "P(a, b, w) = a \\cdot b - 2 \\cdot a \\cdot w - 2 \\cdot b \\cdot w + 3 "
 "\\cdot w,"
@@ -332,7 +448,7 @@ msgstr ""
 "P(a, b, w) = a \\cdot b - 2 \\cdot a \\cdot w - 2 \\cdot b \\cdot w + 3 "
 "\\cdot w,"
 
-#: ../../modules/core/core_qubo.rst:183
+#: ../../modules/core/core_qubo.rst:233
 #, python-brace-format
 msgid ""
 "which is quadratic, non-negative for :math:`a, b, w \\in \\{0, 1\\}`, and"
@@ -354,7 +470,7 @@ msgstr ""
 "reutilitzen tots dos :math:`x \\cdot y`) introdueixen una única variable "
 "auxiliar i una única penalització de Rosenberg."
 
-#: ../../modules/core/core_qubo.rst:190
+#: ../../modules/core/core_qubo.rst:240
 msgid ""
 "Two keyword arguments on :meth:`~qilisdk.core.model.Model.to_qubo` "
 "control this behavior:"
@@ -362,7 +478,7 @@ msgstr ""
 "Dos arguments per paraula clau de "
 ":meth:`~qilisdk.core.model.Model.to_qubo` controlen aquest comportament:"
 
-#: ../../modules/core/core_qubo.rst:192
+#: ../../modules/core/core_qubo.rst:242
 msgid ""
 "``linearize`` (default ``True``): toggles the reduction. Set "
 "``linearize=False`` to keep the previous strict behavior where exporting "
@@ -373,7 +489,7 @@ msgstr ""
 "anterior, en què exportar un model amb termes de grau tres o superior "
 "llança un ``ValueError``."
 
-#: ../../modules/core/core_qubo.rst:195
+#: ../../modules/core/core_qubo.rst:245
 msgid ""
 "``linearization_lagrange_multiplier`` (default ``100``): the Lagrange "
 "multiplier applied to each Rosenberg penalty constraint. It must be large"
@@ -385,11 +501,11 @@ msgstr ""
 "Rosenberg. Ha de ser prou gran per dominar qualsevol incentiu a violar "
 "les igualtats auxiliars :math:`w = a \\cdot b`."
 
-#: ../../modules/core/core_qubo.rst:200
+#: ../../modules/core/core_qubo.rst:250
 msgid "Example: Cubic Objective and Constraint"
 msgstr "Exemple: objectiu i restricció cúbics"
 
-#: ../../modules/core/core_qubo.rst:215
+#: ../../modules/core/core_qubo.rst:265
 msgid ""
 "After ``to_qubo`` runs, the resulting :class:`~qilisdk.core.model.QUBO` "
 "contains a single auxiliary binary variable standing in for :math:`x "
@@ -408,15 +524,15 @@ msgstr ""
 "que :meth:`~qilisdk.core.model.QUBO.to_hamiltonian` es pot invocar "
 "directament."
 
-#: ../../modules/core/core_qubo.rst:222
+#: ../../modules/core/core_qubo.rst:272
 msgid "Interoperability"
 msgstr "Interoperabilitat"
 
-#: ../../modules/core/core_qubo.rst:224
+#: ../../modules/core/core_qubo.rst:274
 msgid "**Convert any Model to QUBO**"
 msgstr "**Convertir qualsevol model a QUBO**"
 
-#: ../../modules/core/core_qubo.rst:225
+#: ../../modules/core/core_qubo.rst:275
 msgid ""
 "Any generic :class:`~qilisdk.core.model.Model` can be converted into a "
 "QUBO. Higher-degree monomials are reduced to quadratic form via the "
@@ -428,11 +544,11 @@ msgstr ""
 "mitjançant la linealització amb penalització de Rosenberg descrita "
 "anteriorment (establiu ``linearize=False`` per desactivar-la):"
 
-#: ../../modules/core/core_qubo.rst:233
+#: ../../modules/core/core_qubo.rst:283
 msgid "**Export to Hamiltonian**"
 msgstr "**Exportar a Hamiltonian**"
 
-#: ../../modules/core/core_qubo.rst:234
+#: ../../modules/core/core_qubo.rst:284
 msgid ""
 "Once in QUBO form, translate directly into an analog Ising "
 ":class:`~qilisdk.analog.hamiltonian.Hamiltonian` for simulation or "
