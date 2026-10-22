@@ -58,6 +58,18 @@ def test_seed_same(method):
     assert result1.get_samples() == result2.get_samples()
 
 
+@pytest.mark.parametrize("method", digital_methods)
+def test_seed_same_expectation_with_shots(method):
+    backend1 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
+    backend2 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
+    circuit = Circuit(nqubits=1)
+    circuit.add(H(0))
+    readout = Readout().with_expectation(observables=[pauli_z(0)], nshots=100)
+    result1 = backend1.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    result2 = backend2.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    assert result1.get_expectation_values() == result2.get_expectation_values()
+
+
 def test_no_seed():
     backend = QiliSim(execution_config=ExecutionConfig(seed=None, num_threads=1))
     seed = backend.get_config()["seed"]

@@ -20,6 +20,7 @@
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
+#include <set>
 
 namespace py = pybind11;
 
@@ -1253,6 +1254,15 @@ TEST(ExpectationValueTest, SampledSuperposition_ConvergesToExactValue) {
     QTensorCpp op_z(Z);
     EXPECT_NEAR(std::abs(ket.expectation_value(op_z, 1).real()), 1.0, 1e-10);
     EXPECT_NEAR(ket.expectation_value(op_z, 100000).real(), 0.0, 0.05);
+
+    // A fixed seed is reproducible, while no seed draws fresh randomness each call
+    Complex seeded = ket.expectation_value(op_z, 100, 7);
+    EXPECT_EQ(seeded, ket.expectation_value(op_z, 100, 7));
+    std::set<double> unseeded;
+    for (int i = 0; i < 10; ++i) {
+        unseeded.insert(ket.expectation_value(op_z, 100).real());
+    }
+    EXPECT_GT(unseeded.size(), 1u);
 }
 
 TEST(ExpectationValueTest, SampledNonNormalizedState_KeepsNormalization) {

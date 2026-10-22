@@ -13,7 +13,9 @@
 // limitations under the License.
 #pragma once
 
+#include <cstdint>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <type_traits>
@@ -174,9 +176,9 @@ class QTensorCpp {
     py::list probabilities_python() const;
     std::map<std::string, int> sample(int nshots = 1000, int seed = 42) const;
     py::dict sample_python(int nshots = 1000, int seed = 42) const;
-    Complex expectation_value(const QTensorCpp& other, int nshots = 0) const;
-    Complex expectation_value(const MatrixFreeHamiltonian& other, int nshots = 0) const;
-    Complex expectation_value_python(const py::object& other, int nshots = 0) const;
+    Complex expectation_value(const QTensorCpp& other, int nshots = 0, std::optional<std::uint32_t> seed = std::nullopt) const;
+    Complex expectation_value(const MatrixFreeHamiltonian& other, int nshots = 0, std::optional<std::uint32_t> seed = std::nullopt) const;
+    Complex expectation_value_python(const py::object& other, int nshots = 0, const py::object& seed = py::none()) const;
     QTensorCpp partial_trace_python(const py::object& keep) const;
     QTensorCpp partial_trace(const std::set<int>& keep) const;
     QTensorCpp commutator(const QTensorCpp& other) const;

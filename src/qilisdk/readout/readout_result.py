@@ -343,10 +343,12 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
         return cls(expectation_values=real_expectation_values, nshots=nshots)
 
     @classmethod
-    def from_state(cls, expectation_readout: ExpectationReadout, state: QTensor) -> Self:
+    def from_state(cls, expectation_readout: ExpectationReadout, state: QTensor, seed: int | None = None) -> Self:
+        # Each observable gets its own seed so that their shot noise is not correlated
+        rng = np.random.default_rng(seed)
         try:
             expectation_values: list[int | float] = [
-                _assert_real((expect_val(o, state, expectation_readout.nshots)))
+                _assert_real(expect_val(o, state, expectation_readout.nshots, seed=int(rng.integers(2**31 - 1))))
                 for o in expectation_readout.expanded_observables(nqubits=state.nqubits)
             ]
         except ValueError as e:

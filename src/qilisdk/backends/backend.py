@@ -281,7 +281,7 @@ class Backend(ABC):
             elif isinstance(ro, ExpectationReadout):
                 ro.expanded_observables(nqubits=final_state.nqubits)
                 expectation_result: ExpectationReadoutResult = ExpectationReadoutResult.from_state(
-                    expectation_readout=ro, state=final_state
+                    expectation_readout=ro, state=final_state, seed=seed
                 )
             elif isinstance(ro, SamplingReadout):
                 sampling_result: SamplingReadoutResult = SamplingReadoutResult.from_state(

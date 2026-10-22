@@ -965,7 +965,7 @@ class QTensor:
         self._qtensor_cpp.compute_eigendecomposition()
         return [QTensor(vec) for vec in self._qtensor_cpp.get_eigenvectors_python()]
 
-    def expectation_value(self, other: QTensor | Hamiltonian, nshots: int = 0) -> complex:
+    def expectation_value(self, other: QTensor | Hamiltonian, nshots: int = 0, seed: int | None = None) -> complex:
         """
         Compute the expectation value of another QTensor with respect to this QTensor.
 
@@ -978,6 +978,7 @@ class QTensor:
         Args:
             other (QTensor | Hamiltonian): The other QTensor or Hamiltonian to compute the expectation value with.
             nshots (int, optional): The number of shots to use for a stochastic estimation of the expectation value. If 0 or negative, the exact expectation value is computed using the trace formula.
+            seed (int | None, optional): The random seed used for the shot sampling. If None, a random seed is generated.
 
         Returns:
             complex: The computed expectation value, which may be a complex number.
@@ -987,7 +988,8 @@ class QTensor:
             nshots,
             self.nqubits,
         )
-        return self._qtensor_cpp.expectation_value_python(other, nshots)
+        # The C++ generator takes a 32-bit seed, so reduce larger or negative seeds into that range
+        return self._qtensor_cpp.expectation_value_python(other, nshots, None if seed is None else seed % 2**32)
 
     def __getstate__(self) -> dict[str, csr_matrix]:
         """
@@ -1062,7 +1064,7 @@ def bra(*state: int) -> QTensor:
     return QTensor.bra(*state)
 
 
-def expect_val(operator: QTensor | Hamiltonian, state: QTensor, nshots: int = 0) -> complex:
+def expect_val(operator: QTensor | Hamiltonian, state: QTensor, nshots: int = 0, seed: int | None = None) -> complex:
     """
     Wrapper for backwards compatibility: see QTensor.expectation_value().
 
@@ -1070,11 +1072,12 @@ def expect_val(operator: QTensor | Hamiltonian, state: QTensor, nshots: int = 0)
         state (QTensor): The state vector or density matrix to compute the expectation value with respect to.
         operator (QTensor): The operator for which to compute the expectation value.
         nshots (int, optional): The number of shots to use for a stochastic estimation of the expectation value. If 0 or negative, the exact expectation value is computed using the trace formula.
+        seed (int | None, optional): The random seed used for the shot sampling. If None, a random seed is generated.
 
     Returns:
         complex: The computed expectation value, which may be a complex number.
     """
-    return state.expectation_value(operator, nshots)
+    return state.expectation_value(operator, nshots, seed)
 
 
 def tensor_prod(states: list[QTensor], qubits: list[list[int]] | None = None) -> QTensor:

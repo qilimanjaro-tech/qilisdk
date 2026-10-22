@@ -357,7 +357,7 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
                 py::list expectations_py = trajectory_expectation_values(state_dense, ro, n_qubits, config.get_atol());
                 results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py, "nshots"_a = ro.attr("nshots")));
             } else {
-                results.append(ExpectationReadoutResult.attr("from_state")("expectation_readout"_a = py::module_::import("copy").attr("copy")(ro), "state"_a = QTensor(state_numpy())));
+                results.append(ExpectationReadoutResult.attr("from_state")("expectation_readout"_a = py::module_::import("copy").attr("copy")(ro), "state"_a = QTensor(state_numpy()), "seed"_a = config.next_seed()));
             }
 
             // If we have a sampling readout, sample from the state and return the counts directly
