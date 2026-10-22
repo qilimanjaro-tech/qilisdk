@@ -127,7 +127,8 @@ class ObservableCostFunction(CostFunction):
 
         Each bitstring sample is converted to a computational-basis ket and the
         observable is evaluated against it; the total is a probability-weighted
-        sum of those evaluations.
+        sum of those evaluations. Since this only sees the diagonal of the
+        observable, the observable must be diagonal in the computational basis.
 
         Args:
             results (FunctionalResult): A result whose ``probabilities``
@@ -137,9 +138,20 @@ class ObservableCostFunction(CostFunction):
             Number: The probability-weighted expectation value.
 
         Raises:
+            ValueError: If the observable is not diagonal in the computational
+                basis (e.g. contains ``X`` or ``Y`` terms).
             ValueError: If the number of qubits in a sample does not match the
                 number of qubits of the observable.
         """
+        # Off-diagonal elements would silently contribute nothing to <b|O|b>
+        observable_coo = self._observable.data.tocoo()
+        off_diagonal = observable_coo.data[observable_coo.row != observable_coo.col]
+        if np.any(np.abs(off_diagonal) > get_settings().atol):
+            raise ValueError(
+                "ObservableCostFunction can only estimate observables that are diagonal in the computational basis "
+                "from samples. Use a StateTomography readout, or rotate the circuit into the observable's basis."
+            )
+
         total_cost = complex(0.0)
         nqubits = self._observable.nqubits
         samples = results.get_samples()

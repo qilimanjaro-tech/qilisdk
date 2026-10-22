@@ -14,7 +14,7 @@
 import numpy as np
 import pytest
 
-from qilisdk.analog.hamiltonian import PauliZ, Z
+from qilisdk.analog.hamiltonian import PauliZ, X, Y, Z
 from qilisdk.core.qtensor import QTensor, ket, tensor_prod
 from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
 from qilisdk.functionals.functional_result import FunctionalResult
@@ -106,6 +106,23 @@ def test_compute_cost_sampling():
     cost = ocf.compute_cost(result)
 
     assert cost == 0
+
+
+@pytest.mark.parametrize("observable", [X(0), Y(0), X(0) + Z(0)])
+def test_compute_cost_sampling_rejects_off_diagonal_observable(observable):
+    ocf = ObservableCostFunction(observable)
+    readout_result = SamplingReadoutResult.from_samples(samples={"0": 50, "1": 50})
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=readout_result))
+    with pytest.raises(ValueError, match=r"diagonal in the computational basis"):
+        ocf.compute_cost(result)
+
+
+def test_compute_cost_state_tomography_accepts_off_diagonal_observable():
+    ocf = ObservableCostFunction(X(0))
+    plus = QTensor(np.array([[1.0], [1.0]]) / np.sqrt(2))
+    readout_result = StateTomographyReadoutResult(state=plus)
+    result = FunctionalResult(readout_results=ReadoutCompositeResults(state_tomography=readout_result))
+    assert ocf.compute_cost(result) == pytest.approx(1.0)
 
 
 def test_imag_state_tomography_result():
