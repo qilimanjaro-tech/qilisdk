@@ -80,13 +80,13 @@ To translate these into penalties, two strategies are supported:
 Real-valued Coefficients
 ''''''''''''''''''''''''
 
-The formulas above assume integer coefficients. When a constraint has real-valued coefficients, it is first rescaled
-to an equivalent constraint with integer coefficients before its penalty is built:
+The slack formulas above assume integer coefficients. When an inequality has real-valued coefficients, it is first
+rescaled to an equivalent one with integer coefficients before its penalty is built:
 
-1. The constraint is multiplied by the smallest power of ten that makes every coefficient and the constant an integer.
+1. The constraint is multiplied by the smallest common denominator of its coefficients, such as :math:`10` for
+   :math:`2.5` or :math:`3` for :math:`1 / 3`.
 2. It is then divided by the greatest common divisor of its coefficients, rounding the bound down for :math:`\leq` and
-   up for :math:`\geq`. This keeps exactly the same binary assignments feasible. An equality whose constant is not a
-   multiple of that divisor has no solution, and raises a ``ValueError``.
+   up for :math:`\geq`. This keeps exactly the same binary assignments feasible.
 3. Since the integer form only takes integer values, a strict inequality becomes a non-strict one a unit further in:
    :math:`h < 0` becomes :math:`h + 1 \leq 0`, and :math:`h > 0` becomes :math:`h - 1 \geq 0`.
 
@@ -97,17 +97,17 @@ measured in the constraint's own units and a Lagrange multiplier calibrated for 
 meaning. Every violation is at least one step of :math:`2.5` from the rounded bound, so it costs at least
 :math:`6.25 \lambda`.
 
-Each extra decimal place multiplies the slack range by ten, adding roughly 3.3 slack bits. By default each constraint
-may use as many decimal places as float64 can resolve in its penalty: the range of its integer form is kept within
-:math:`2^{26}`, so that the squared penalty is exactly representable. A constraint whose coefficients need more decimal
-places, such as :math:`a / 3 + b / 3 \leq 2 / 3`, is not rescaled, and keeps its real-valued penalty, which may be
-positive on some feasible assignments. A warning is logged when this happens.
+Each extra decimal place multiplies the slack range by ten, adding roughly 3.3 slack bits. By default the scale keeps
+three significant digits of the largest coefficient, so next to :math:`2.53` a coefficient of :math:`1.01` is kept
+exactly, but coefficients such as :math:`\pi` or randomly generated weights are rounded. Coefficients are rounded to the nearest
+integer, and the bound is moved past the largest error this can make, so the rounded constraint never admits an
+assignment that the original rejects. It may exclude a few feasible assignments very close to the bound, and a warning
+is logged when coefficients are rounded. Inequalities that every assignment satisfies are dropped before any rounding.
 
 The ``max_decimals_in_slack`` argument of :meth:`~qilisdk.core.model.Model.to_qubo` sets the number of decimal places
-instead, which also bounds the number of slack bits. Digits of an inequality beyond it are rounded towards
-infeasibility, up for :math:`\leq` and down for :math:`\geq`, so the rounded constraint is slightly tighter than the
-original but never admits an assignment that the original rejects, and a warning is logged. An equality has no safe
-direction to round in, so an equality with more decimal places is kept real-valued instead.
+kept instead: fewer gives fewer slack bits, more gives a constraint closer to the original. It is capped at what keeps
+the range of the integer form within :math:`2^{26}`, so that the squared penalty stays exactly representable in
+float64. Equalities need no slack, so their squared penalty is used as it is.
 
 .. code-block:: python
 
@@ -119,13 +119,13 @@ direction to round in, so an equality with more decimal places is kept real-valu
     model.add_constraint("capacity", LEQ(2.53 * a + 1.01 * b, 3.1))
 
     exact = model.to_qubo()  # 253a + 101b <= 310, with a 9 bit slack
-    rounded = model.to_qubo(max_decimals_in_slack=1)  # 2.6a + 1.1b <= 3.1, i.e. 26a + 11b <= 31, with a 5 bit slack
+    rounded = model.to_qubo(max_decimals_in_slack=1)  # 25a + 10b <= 30, i.e. 5a + 2b <= 6, with a 3 bit slack
 
     print(len(exact.variables()), len(rounded.variables()))
 
 **Output**::
 
-    11 7
+    11 5
 
 
 

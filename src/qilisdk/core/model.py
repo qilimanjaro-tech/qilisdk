@@ -16,6 +16,7 @@ from __future__ import annotations
 import copy
 import itertools
 import math
+from fractions import Fraction
 from typing import TYPE_CHECKING, Literal, Mapping, Type, cast
 
 import numpy as np
@@ -41,6 +42,10 @@ _MAX_ENCODING_SPAN = 2**32
 # The integer form of a real-valued constraint is kept within this range, so that its squared penalty (up to 2**52)
 # is exactly representable in float64
 _MAX_INTEGER_SPAN = 2**26
+
+# By default the integer form of an inequality keeps this many significant digits of its largest coefficient, which
+# bounds its slack to roughly 3.3 bits per digit
+_SLACK_SIGNIFICANT_DIGITS = 3
 
 
 def _real_coefficients(term: Expression) -> tuple[RealNumber, dict[Expression, RealNumber]]:
@@ -609,13 +614,13 @@ class Model:
                             Defaults to ``True``.
             linearization_lagrange_multiplier (float, optional): The Lagrange multiplier applied to each Rosenberg
                             penalty constraint added during linearization. Defaults to 100.
-            max_decimals_in_slack (int | None, optional): Constraint coefficients are scaled to integers before their
-                            penalty is built, so that the penalty is exact. Digits of inequalities beyond this many
-                            decimal places are rounded towards infeasibility, which bounds the number of slack variables
-                            at the cost of a slightly tighter constraint. If None, each constraint may use as many
-                            decimal places as float64 can resolve in its penalty. A constraint that is not exact within
-                            them, and an equality that is not exact within max_decimals_in_slack, keeps its real-valued
-                            penalty. Defaults to None.
+            max_decimals_in_slack (int | None, optional): The coefficients of an inequality are scaled to integers
+                            before its slack penalty is built, so that the penalty vanishes on every feasible
+                            assignment. Digits beyond this many decimal places are rounded, never admitting an
+                            assignment that the original constraint rejects, which bounds the number of slack variables
+                            at the cost of a slightly tighter constraint. It is capped at the decimal places that float64
+                            can resolve in the penalty. If None, enough for three significant digits of the largest
+                            coefficient. Must be non-negative. Defaults to None.
 
         Returns:
             QUBO: A QUBO model that is generated from the model object.
@@ -1513,98 +1518,96 @@ class QUBO(Model):
     def _to_integer_constraint(
         label: str, h: Expression, operation: ComparisonOperation, max_decimals: int | None = None
     ) -> tuple[Expression, RealNumber, ComparisonOperation]:
-        """Rescales the constraint ``h == 0``, ``h <= 0`` or ``h >= 0`` to an equivalent one with integer coefficients.
+        """Rescales the inequality ``h <= 0`` or ``h >= 0`` to an equivalent one with integer coefficients.
 
-        The coefficients are scaled by the smallest power of ten that makes them all integers, then divided by their
-        greatest common divisor, rounding the constant so that the binary assignments satisfying the constraint are
-        unchanged. With integer coefficients every feasible assignment has an integer slack value that zeroes its
-        penalty. Multiplying the integer form by the returned step brings it back to the constraint's own units, so
-        that a penalty built from it keeps the meaning of the constraint's Lagrange multiplier. Since the integer form
-        only takes integer values, a strict inequality becomes the non-strict one a unit further in.
+        The coefficients are scaled by their smallest common denominator, then divided by their greatest common
+        divisor, rounding the constant so that the binary assignments satisfying the constraint are unchanged. With
+        integer coefficients every feasible assignment has an integer slack value that zeroes its penalty. Multiplying
+        the integer form by the returned step brings it back to the constraint's own units, so that a penalty built
+        from it keeps the meaning of the constraint's Lagrange multiplier. Since the integer form only takes integer
+        values, a strict inequality becomes the non-strict one a unit further in.
 
-        If ``max_decimals`` is given, inequalities with more decimal places are rounded towards infeasibility, up for
-        ``h <= 0`` and down for ``h >= 0``, so that every assignment satisfying the rounded constraint also satisfies
-        the original one. Equalities have no such direction, and without ``max_decimals`` there is no request to
-        round, so a constraint that is not exact within the decimal places is returned unchanged.
+        The scale is at most ``10**max_decimals``, and never past what keeps the integer form's squared penalty exactly
+        representable in float64. Coefficients that are not exact within it are rounded to the nearest integer, and
+        the constant past the largest error this can make, so that every assignment satisfying the rounded constraint
+        also satisfies the original one. A constraint that is satisfied by every assignment is returned unchanged,
+        since rounding it could only tighten it.
 
         Args:
             label (str): the label of the constraint.
             h (Expression): the left hand side of the constraint, compared against zero.
             operation (ComparisonOperation): the comparison operation between ``h`` and zero.
-            max_decimals (int | None, optional): the number of decimal places kept before rounding. If None, the most
-                that keep the integer form's squared penalty exactly representable in float64. Defaults to None.
-
-        Raises:
-            ValueError: if ``max_decimals`` is negative.
-            ValueError: if the constraint is an equality whose constant is not a multiple of the coefficients' gcd.
+            max_decimals (int | None, optional): the number of decimal places kept before rounding. If None, enough to
+                keep ``_SLACK_SIGNIFICANT_DIGITS`` significant digits of the largest coefficient. Defaults to None.
 
         Returns:
             tuple[Expression, RealNumber, ComparisonOperation]: the rescaled left hand side, the step, the value in the
                 constraint's units of one unit of the rescaled left hand side, and the operation comparing the rescaled
                 left hand side against zero.
         """
-        if max_decimals is not None and max_decimals < 0:
-            raise ValueError(f"max_decimals_in_slack must be non-negative, but {max_decimals} was given.")
-
         const, coeffs = _real_coefficients(h)
-        if not coeffs:
-            # A constant constraint is always feasible or unsatisfiable, which _check_valid_constraint decides as is
-            return h, 1, operation
         values = np.array([const, *coeffs.values()], dtype=float)
+        coeff_values = values[1:]
+        never_binds = {
+            ComparisonOperation.LEQ: const + coeff_values[coeff_values > 0].sum() <= 0,
+            ComparisonOperation.LT: const + coeff_values[coeff_values > 0].sum() < 0,
+            ComparisonOperation.GEQ: const + coeff_values[coeff_values < 0].sum() >= 0,
+            ComparisonOperation.GT: const + coeff_values[coeff_values < 0].sum() > 0,
+        }[operation]
+        span = float(np.abs(coeff_values).sum())
+        if span == 0 or never_binds:
+            # _check_valid_constraint decides these as they are: the constraint is constant, or never binds
+            return h, 1, operation
 
-        decimals_limit = max_decimals
-        if decimals_limit is None:
-            span = float(np.abs(values[1:]).sum())
-            decimals_limit = max(0, math.floor(math.log10(_MAX_INTEGER_SPAN / span))) if span > 0 else 0
+        if max_decimals is None:
+            max_decimals = _SLACK_SIGNIFICANT_DIGITS - 1 - math.floor(math.log10(np.abs(coeff_values).max()))
+        scale_limit = 10 ** max(0, min(max_decimals, math.floor(math.log10(_MAX_INTEGER_SPAN / span))))
+        denominator = math.lcm(*(Fraction(value).limit_denominator(scale_limit).denominator for value in coeff_values))
 
-        for decimals in range(decimals_limit + 1):
-            scaled = values * 10**decimals
+        for scale in sorted({min(denominator, scale_limit), scale_limit}):
+            scaled = values * scale
             nearest = np.round(scaled)
             # Relative to the largest value, so that only float64 noise counts as integer: tiny coefficients are not
             # taken for zero, nor large ones with a fractional part for integers. Capped at the integer form's range,
             # past which a relative tolerance would also accept genuine fractional parts
-            is_integer = np.abs(scaled - nearest) <= 1e-12 * min(np.abs(scaled).max(), _MAX_INTEGER_SPAN)
-            if is_integer.all():
+            tolerance = 1e-12 * min(np.abs(scaled).max(), _MAX_INTEGER_SPAN)
+            is_integer = np.abs(scaled - nearest) <= tolerance
+            if is_integer[1:].all():
                 break
         else:
-            if max_decimals is None or operation is ComparisonOperation.EQ:
-                logger.warning(
-                    '[Model] constraint "{}" has coefficients with more than {} decimal places, so it is kept '
-                    "real-valued and its penalty may not vanish on every feasible assignment. "
-                    "Setting max_decimals_in_slack rounds the coefficients of inequalities.",
-                    label,
-                    decimals_limit,
-                )
-                return h, 1, operation
             logger.warning(
-                '[Model] constraint "{}" has coefficients with more than {} decimal places, so they are rounded.',
+                '[Model] constraint "{}" has coefficients that are not exact within {} decimal places, so they are '
+                "rounded and assignments close to its bound may be excluded. Setting max_decimals_in_slack keeps more.",
                 label,
-                max_decimals,
+                round(math.log10(scale_limit)),
             )
 
-        # Every monomial is a product of binary variables, so it is never negative: rounding all the coefficients and
-        # the constant up can only increase h, and rounding them all down can only decrease it.
-        towards_infeasible = {
-            ComparisonOperation.LEQ: np.ceil,
-            ComparisonOperation.LT: np.ceil,
-            ComparisonOperation.GEQ: np.floor,
-            ComparisonOperation.GT: np.floor,
-        }.get(operation, np.round)
-        rounded = np.where(is_integer, nearest, towards_infeasible(scaled))
-        int_const, *int_values = (int(value) for value in rounded)
-        # A constant rounded up (or down) is already strictly past the original one, so only an integer constant needs
-        # the extra unit to make the strict inequality non-strict
-        if operation is ComparisonOperation.LT:
-            int_const += int(is_integer[0])
-            operation = ComparisonOperation.LEQ
-        elif operation is ComparisonOperation.GT:
-            int_const -= int(is_integer[0])
-            operation = ComparisonOperation.GEQ
-        int_coeffs = dict(zip(coeffs, int_values, strict=True))
+        # Every monomial is a product of binary variables, so it is never negative: the rounded coefficients change h
+        # by at least the sum of the negative rounding errors, and at most the sum of the positive ones. Moving the
+        # constant past the error in the direction of the inequality keeps every assignment satisfying the rounded
+        # constraint feasible in the original one.
+        errors = np.where(is_integer, 0, nearest - scaled)[1:]
+        if operation in {ComparisonOperation.LEQ, ComparisonOperation.LT}:
+            bound = scaled[0] - errors[errors < 0].sum()
+        else:
+            bound = scaled[0] - errors[errors > 0].sum()
+        if abs(bound - round(bound)) <= tolerance:
+            bound = round(bound)
+        # The integer form only takes integer values, so a strict inequality becomes the non-strict one a unit further in
+        int_const = {
+            ComparisonOperation.LEQ: math.ceil(bound),
+            ComparisonOperation.LT: math.floor(bound) + 1,
+            ComparisonOperation.GEQ: math.floor(bound),
+            ComparisonOperation.GT: math.ceil(bound) - 1,
+        }[operation]
+        operation = (
+            ComparisonOperation.LEQ
+            if operation in {ComparisonOperation.LEQ, ComparisonOperation.LT}
+            else ComparisonOperation.GEQ
+        )
+        int_coeffs = {monomial: int(value) for monomial, value in zip(coeffs, nearest[1:], strict=True) if value != 0}
         divisor = math.gcd(*int_coeffs.values()) or 1
         # Dividing the constant by the gcd leaves a fraction: round the bound down for h <= 0 and up for h >= 0
-        if operation is ComparisonOperation.EQ and int_const % divisor != 0:
-            raise ValueError(f"Constraint {label} is unsatisfiable.")
         if operation is ComparisonOperation.LEQ:
             int_const = -(-int_const // divisor)
         else:
@@ -1612,7 +1615,7 @@ class QUBO(Model):
         int_h = Add.build(
             (Constant(int_const), *(coeff // divisor * monomial for monomial, coeff in int_coeffs.items()))
         )
-        return int_h, divisor / 10**decimals, operation
+        return int_h, divisor / scale, operation
 
     def _transform_constraint(
         self,
@@ -1631,9 +1634,9 @@ class QUBO(Model):
                             handel inequality constraints. Defaults to "slack".
             parameters (list[float] | None, optional): the parameters used for the unbalanced penalization method.
                             Defaults to None.
-            max_decimals_in_slack (int | None, optional): the decimal places of the constraint's coefficients kept
-                            before rounding them to integers. If None, as many as float64 can resolve in the penalty,
-                            without rounding. Defaults to None.
+            max_decimals_in_slack (int | None, optional): the decimal places of an inequality's coefficients kept
+                            before rounding them to integers. If None, enough for three significant digits of its
+                            largest coefficient. Defaults to None.
 
         Raises:
             ValueError: if a penalization method is provided that is not (&quot;unbalanced&quot;, &quot;slack&quot;)
@@ -1653,13 +1656,11 @@ class QUBO(Model):
             parameters = []
 
         if term.operation is ComparisonOperation.EQ:
-            h, step, operation = self._to_integer_constraint(
-                label, term.lhs - term.rhs, term.operation, max_decimals_in_slack
-            )
-            ub_slack = self._check_valid_constraint(label, h, operation)
+            h = term.lhs - term.rhs
+            ub_slack = self._check_valid_constraint(label, h, term.operation)
             if ub_slack is None:
                 return None
-            return step**2 * h**2
+            return h**2
 
         if term.operation in {
             ComparisonOperation.GEQ,
@@ -1744,12 +1745,13 @@ class QUBO(Model):
             transform_to_qubo (bool, optional): Automatically transform a given constraint to QUBO format.
                                                 Defaults to True.
             linearize (bool, optional): linearize the constraints if they are above degree 2.
-            max_decimals_in_slack (int | None, optional): the decimal places of the constraint's coefficients kept
-                            before rounding them to integers. If None, as many as float64 can resolve in the penalty,
-                            without rounding. Defaults to None.
+            max_decimals_in_slack (int | None, optional): the decimal places of an inequality's coefficients kept
+                            before rounding them to integers. If None, enough for three significant digits of its
+                            largest coefficient. Defaults to None.
 
         Raises:
             ValueError: if constraint label already exists in the model.
+            ValueError: if max_decimals_in_slack is negative.
             ValueError: if a penalization method is provided that is not (&quot;unbalanced&quot;, &quot;slack&quot;)
             ValueError: if unbalanced penalization method is used and not enough parameters are provided.
             ValueError: if the degree of the provided term is larger than 2.
@@ -1759,6 +1761,8 @@ class QUBO(Model):
 
         if label in self._constraints:
             raise ValueError((f'Constraint "{label}" already exists:\n \t\t{self._constraints[label]}'))
+        if max_decimals_in_slack is not None and max_decimals_in_slack < 0:
+            raise ValueError(f"max_decimals_in_slack must be non-negative, but {max_decimals_in_slack} was given.")
 
         # Adding a constraint changes the QUBO objective, so we need a refresh
         self.__qubo_objective_needs_refresh = True
@@ -2016,13 +2020,19 @@ class QUBO(Model):
                             each Rosenberg penalty constraint added as part of the linearization.
                             Must be large enough to dominate any incentive to violate the
                             auxiliary equalities ``w = a * b``. Defaults to 100.
-            max_decimals_in_slack (int | None, optional): the decimal places of the constraint's coefficients kept
-                            before rounding them to integers. If None, as many as float64 can resolve in the penalty,
-                            without rounding. Defaults to None.
+            max_decimals_in_slack (int | None, optional): the decimal places of an inequality's coefficients kept
+                            before rounding them to integers. If None, enough for three significant digits of its
+                            largest coefficient. Defaults to None.
+
+        Raises:
+            ValueError: if max_decimals_in_slack is negative.
+
         Returns:
             QUBO: a QUBO model equivalent to the input model, with any high-degree terms rewritten
             via auxiliary binary variables when ``linearize`` is enabled.
         """
+        if max_decimals_in_slack is not None and max_decimals_in_slack < 0:
+            raise ValueError(f"max_decimals_in_slack must be non-negative, but {max_decimals_in_slack} was given.")
         instance = QUBO(label="QUBO_" + model.label)
         if linearize:
             instance._linearizer = _Linearizer()

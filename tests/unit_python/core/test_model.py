@@ -1842,8 +1842,9 @@ def _min_energy_by_items(qubo, a, b):
 
 
 def test_max_decimals_in_slack_rounds_coefficients():
-    # Kept exact, 2.53a + 1.01b <= 3.1 becomes 253a + 101b <= 310 and needs a 9 bit slack. Rounded up to one decimal
-    # it becomes 26a + 11b <= 31, which needs 5 bits and still only excludes a = b = 1.
+    # Kept exact, 2.53a + 1.01b <= 3.1 becomes 253a + 101b <= 310 and needs a 9 bit slack. Rounded to one decimal it
+    # becomes 25a + 10b <= 30, with the bound lowered by the 0.4 the coefficients were rounded down, so 5a + 2b <= 6,
+    # which needs 3 bits and still only excludes a = b = 1.
     a, b = BinaryVariable("a"), BinaryVariable("b")
     m = Model("m")
     m.set_objective(0 * a)
@@ -1854,7 +1855,7 @@ def test_max_decimals_in_slack_rounds_coefficients():
     penalties = _min_energy_by_items(rounded, a, b)
 
     assert len(exact.variables()) == 2 + 9
-    assert len(rounded.variables()) == 2 + 5
+    assert len(rounded.variables()) == 2 + 3
     assert penalties[1, 1] > 0
     for key in [(0, 0), (0, 1), (1, 0)]:
         assert penalties[key] == pytest.approx(0), f"feasible (a, b)={key} was penalised"
@@ -1901,19 +1902,21 @@ def test_slack_penalty_is_in_the_constraints_units():
         assert real_penalties[key] == pytest.approx(penalty / 100), f"(a, b)={key}"
 
 
-def test_real_valued_equality_with_no_integer_solution_is_unsatisfiable():
-    # 0.5a + 0.5b == 0.75 rescales to a + b == 1.5, which no binary assignment can satisfy.
+def test_real_valued_equality_with_no_binary_solution_is_penalised_everywhere():
+    # Equalities keep their squared penalty, so one that no binary assignment satisfies still gives a QUBO
     a, b = BinaryVariable("a"), BinaryVariable("b")
-    q = QUBO("q")
-    ct = EQ(0.5 * a + 0.5 * b, 0.75)
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", EQ(0.5 * a + 0.5 * b, 0.75))
 
-    with pytest.raises(ValueError, match=r"Constraint c is unsatisfiable."):
-        q.add_constraint("c", ct)
+    penalties = _min_energy_by_items(m.to_qubo(penalization="unbalanced"), a, b)
+
+    assert all(penalty > 0 for penalty in penalties.values())
 
 
 def test_non_terminating_coefficients_keep_feasible_assignments_on_the_bound():
-    # a/3 + 2b/3 <= 2/3 cannot be scaled to integers exactly, so it is kept real-valued instead of rounded up, which
-    # would exclude b = 1 although it lies exactly on the bound.
+    # a/3 + 2b/3 <= 2/3 has no exact decimal form, but scaled by the common denominator 3 it becomes a + 2b <= 2
+    # exactly, instead of being rounded to one that excludes b = 1 although it lies exactly on the bound.
     a, b = BinaryVariable("a"), BinaryVariable("b")
     m = Model("m")
     m.set_objective(0 * a)
@@ -1972,16 +1975,77 @@ def test_rounded_strict_inequality_keeps_feasible_assignments(constraint, feasib
 @pytest.mark.parametrize("max_decimals_in_slack", [12, 15])
 def test_many_decimals_do_not_take_fractions_for_integers(max_decimals_in_slack):
     # Scaled by 10**12, a relative tolerance alone would take a/3 for an integer and round each value to the nearest
-    # on its own, giving an equality that no assignment satisfies
+    # on its own, excluding b = 1 although it lies exactly on the bound
     a, b = BinaryVariable("a"), BinaryVariable("b")
     m = Model("m")
     m.set_objective(0 * a)
-    m.add_constraint("c", EQ(a / 3 + b / 3, 2 / 3))
+    m.add_constraint("c", LEQ(a / 3 + 2 * b / 3, 2 / 3))
 
     penalties = _min_energy_by_items(m.to_qubo(max_decimals_in_slack=max_decimals_in_slack), a, b)
 
-    assert penalties[1, 1] == pytest.approx(0)
-    assert penalties[0, 1] > 0
+    assert penalties[0, 1] == pytest.approx(0)
+    assert penalties[1, 1] > 0
+
+
+def test_max_decimals_in_slack_is_capped_at_float64_resolution():
+    # Scaled by 10**20, pi and e would be taken for integers and need a 53 bit slack whose squared penalty float64
+    # cannot represent. Capped at 10**7, the integer form stays within 2**26.
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", LEQ(np.pi * a + np.e * b, 5))
+
+    qubo = m.to_qubo(max_decimals_in_slack=20)
+
+    assert len(qubo.variables()) <= 2 + 26
+
+
+def test_real_valued_coefficients_are_rounded_to_three_significant_digits_by_default():
+    # 3.14159a + 2.71828b + c <= 4 is rounded to 314a + 272b + 100c, with the bound lowered by the 0.159 that pi was
+    # rounded down, so 157a + 136b + 50c <= 199: an 8 bit slack, with the same feasible assignments
+    a, b, c = BinaryVariable("a"), BinaryVariable("b"), BinaryVariable("c")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", LEQ(np.pi * a + np.e * b + c, 4))
+
+    qubo = m.to_qubo()
+    term = qubo.qubo_objective.term
+    bins = term.variables()
+    penalties = {}
+    for i in range(2 ** len(bins)):
+        assignment = {v: (i >> k) & 1 for k, v in enumerate(bins)}
+        key = (assignment[a], assignment[b], assignment[c])
+        penalties[key] = min(penalties.get(key, np.inf), term.evaluate(assignment))
+
+    assert len(qubo.variables()) == 3 + 8
+    for key, penalty in penalties.items():
+        if np.pi * key[0] + np.e * key[1] + key[2] <= 4:
+            assert penalty == pytest.approx(0), f"feasible (a, b, c)={key} was penalised"
+        else:
+            assert penalty > 0, f"infeasible (a, b, c)={key} was not penalised"
+
+
+@pytest.mark.parametrize(
+    ("constraint", "max_decimals_in_slack"),
+    [
+        (lambda a, b: LEQ(a / 3 + b / 3, 2 / 3), None),
+        # Rounded up to integers this would become a + b <= 0, excluding three feasible assignments
+        (lambda a, b: LEQ(0.7 * a + 0.2 * b, 0.9), 0),
+    ],
+)
+def test_constraint_that_never_binds_is_dropped_without_rounding(monkeypatch, constraint, max_decimals_in_slack):
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", constraint(a, b))
+    warning = MagicMock()
+    monkeypatch.setattr(model_module.logger, "warning", warning)
+
+    qubo = m.to_qubo(max_decimals_in_slack=max_decimals_in_slack)
+
+    assert qubo.constraints == []
+    warning.assert_called_once()
+    assert "always feasible" in warning.call_args.args[0]
 
 
 def test_constant_constraint_is_not_reported_as_real_valued(monkeypatch):
@@ -1995,11 +2059,13 @@ def test_constant_constraint_is_not_reported_as_real_valued(monkeypatch):
     warning.assert_not_called()
 
 
-def test_negative_max_decimals_in_slack_is_rejected():
+@pytest.mark.parametrize("has_constraint", [True, False])
+def test_negative_max_decimals_in_slack_is_rejected(has_constraint):
     a = BinaryVariable("a")
     m = Model("m")
     m.set_objective(0 * a)
-    m.add_constraint("c", LEQ(0.5 * a, 0.25))
+    if has_constraint:
+        m.add_constraint("c", LEQ(0.5 * a, 0.25))
 
     with pytest.raises(ValueError, match=r"max_decimals_in_slack must be non-negative"):
         m.to_qubo(max_decimals_in_slack=-1)
