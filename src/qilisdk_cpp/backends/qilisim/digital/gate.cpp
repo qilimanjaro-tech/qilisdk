@@ -13,24 +13,66 @@
 // limitations under the License.
 
 #include "gate.h"
+#include <set>
 
 // GCOV_EXCL_BR_START
 
 Gate::Gate(const std::string& gate_type_, const SparseMatrix& base_matrix_, const std::vector<int>& controls_, const std::vector<int>& targets_, const std::vector<std::pair<std::string, double>>& parameters_) {
-    this->gate_type = gate_type_;
+    this->gate_type = normalize_gate_name(gate_type_);
     this->base_matrix = base_matrix_;
     this->control_qubits = controls_;
     this->target_qubits = targets_;
     this->parameters = parameters_;
+}
 
-    // Convert common names to standard
-    if (this->gate_type == "Toffoli" || this->gate_type == "CCX" || this->gate_type == "CNOT" || this->gate_type == "CX") {
-        this->gate_type = "X";
-    } else if (this->gate_type == "CCY" || this->gate_type == "CY") {
-        this->gate_type = "Y";
-    } else if (this->gate_type == "CCZ" || this->gate_type == "CZ") {
-        this->gate_type = "Z";
+int gate_num_controls(const std::string& name) {
+    /*
+    Number of control qubits implied by a QiliSDK controlled-gate name.
+
+    QiliSDK names a controlled gate by prefixing its base gate's name with one "C" per control
+    (e.g. "CCZ", "CSWAP", "CCCRX"), plus the aliases "CNOT" and "Toffoli". The prefix only
+    counts when what follows it is a QiliSDK basic gate, so names that merely start with a "C"
+    (e.g. "Controlled", "CPHASE") are not mistaken for controlled gates. Since no basic gate
+    name starts with a "C", a name that has already been stripped is never stripped again.
+
+    Args:
+        name (std::string): The gate name from QiliSDK.
+
+    Returns:
+        int: The number of control qubits (0 for a non-controlled gate).
+    */
+    static const std::set<std::string> basic_gates = {"I", "X", "Y", "Z", "H", "S", "T", "RX", "RY", "RZ", "U1", "U2", "U3", "SWAP"};
+    if (name == "CNOT") {
+        return 1;
     }
+    if (name == "Toffoli") {
+        return 2;
+    }
+    size_t num_controls = name.find_first_not_of('C');
+    if (num_controls == 0 || num_controls == std::string::npos || basic_gates.count(name.substr(num_controls)) == 0) {
+        return 0;
+    }
+    return static_cast<int>(num_controls);
+}
+
+std::string normalize_gate_name(const std::string& name) {
+    /*
+    Map a gate's QiliSDK name to the name used internally during simulation.
+
+    Controlled gates are represented internally by their base gate plus control qubits, so the
+    "C" prefixes counted by gate_num_controls are stripped (e.g. "CCZ" -> "Z", "CSWAP" -> "SWAP").
+    This is idempotent, so normalizing an already normalized name leaves it unchanged.
+
+    Args:
+        name (std::string): The gate name from QiliSDK.
+
+    Returns:
+        std::string: The internal gate name.
+    */
+    if (name == "CNOT" || name == "Toffoli") {
+        return "X";
+    }
+    return name.substr(static_cast<size_t>(gate_num_controls(name)));
 }
 
 int Gate::permute_bits(int index, const std::vector<int>& perm) const {

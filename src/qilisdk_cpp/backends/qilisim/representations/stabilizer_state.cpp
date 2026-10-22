@@ -721,7 +721,7 @@ std::complex<double> StabilizerState::apply_gate(const Gate& gate, bool track_gl
     }
 
     // SWAP is easy, we just swap the corresponding rows in the tableau
-    if (name == "SWAP") {
+    if (name == "SWAP" && controls.empty()) {
         int i = targets[0];
         int j = targets[1];
         std::swap(x_bits[i], x_bits[j]);
@@ -752,6 +752,8 @@ std::complex<double> StabilizerState::apply_gate(const Gate& gate, bool track_gl
             // Z means X -> -X
         } else if (name == "Z") {
             phases ^= x_bits[i];
+        } else {
+            throw std::invalid_argument("Unsupported gate with name " + name + " and controls " + std::to_string(controls.size()));
         }
 
         // Gates with a single control
@@ -769,18 +771,17 @@ std::complex<double> StabilizerState::apply_gate(const Gate& gate, bool track_gl
             phases ^= (x_bits[i] & x_bits[j] & (z_bits[i] ^ z_bits[j]));
             z_bits[j] ^= x_bits[i];
             z_bits[i] ^= x_bits[j];
+        } else {
+            throw std::invalid_argument("Unsupported gate with name " + name + " and controls " + std::to_string(controls.size()));
         }
 
         // Gates with two controls (Toffoli family): called by StabilizerStateSum after branching on controls[0]=1,
         // so the effective operation is CNOT(controls[1], target)
-    } else if (controls.size() == 2) {
+    } else if (controls.size() == 2 && name == "X") {
         int i = controls[1], j = targets[0];
-
-        if (name == "X") {
-            phases ^= (x_bits[i] & z_bits[j] & ~(x_bits[j] ^ z_bits[i]));
-            x_bits[j] ^= x_bits[i];
-            z_bits[i] ^= z_bits[j];
-        }
+        phases ^= (x_bits[i] & z_bits[j] & ~(x_bits[j] ^ z_bits[i]));
+        x_bits[j] ^= x_bits[i];
+        z_bits[i] ^= z_bits[j];
     } else {
         throw std::invalid_argument("Unsupported gate with name " + name + " and controls " + std::to_string(controls.size()));
     }
@@ -1055,7 +1056,7 @@ std::complex<double> StabilizerState::matrix_element(const Gate& gate, const std
     const auto& targets = gate.get_target_qubits();
 
     // SWAP is easy, we just swap the corresponding bits in b and look up the amplitude
-    if (name == "SWAP") {
+    if (name == "SWAP" && controls.empty()) {
         std::string bp = b;
         std::swap(bp[targets[0]], bp[targets[1]]);
         return amplitude(bp);
@@ -1168,8 +1169,10 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
     const auto& controls = gate.get_control_qubits();
     const auto& targets = gate.get_target_qubits();
 
-    // If it's a clifford gate with at most one control, we can just apply it to each state in the sum
-    if ((name == "H" || name == "S" || name == "X" || name == "Y" || name == "Z" || name == "SWAP") && controls.size() <= 1) {
+    // If it's a Clifford gate the tableau supports (an uncontrolled H, S, Pauli or SWAP, or a CNOT or CZ), we can just apply it to each state in the sum
+    const bool uncontrolled_clifford = controls.empty() && (name == "H" || name == "S" || name == "X" || name == "Y" || name == "Z" || name == "SWAP");
+    const bool controlled_clifford = controls.size() == 1 && (name == "X" || name == "Z");
+    if (uncontrolled_clifford || controlled_clifford) {
         // The dropped global phase is a relative phase only when there is more than one term
         const bool track = states.size() > 1;
         // Each term is an independent StabilizerState (its own tableau and rng), and apply_gate's
@@ -1251,7 +1254,7 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
 
         // Otherwise not supported
     } else {
-        throw std::runtime_error("Gate " + name + " not supported for StabilizerStateSum yet");
+        throw std::runtime_error("Gate " + name + " with " + std::to_string(controls.size()) + " controls not supported for StabilizerStateSum yet");
     }
 
     // Branch: for each current (state, coeff), split on the Z eigenvalue of branch_qubit
