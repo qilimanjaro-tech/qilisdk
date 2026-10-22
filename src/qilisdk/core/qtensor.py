@@ -983,14 +983,13 @@ class QTensor:
         Returns:
             complex: The computed expectation value, which may be a complex number.
         """
-        if seed is None:
-            seed = secrets.randbelow(2**15)
         logger.trace(
             "[QTensor] QTensor.expectation_value computing expectation value with {} shots on {} qubits",
             nshots,
             self.nqubits,
         )
-        return self._qtensor_cpp.expectation_value_python(other, nshots, seed)
+        # The C++ generator takes a 32-bit seed, so reduce larger or negative seeds into that range
+        return self._qtensor_cpp.expectation_value_python(other, nshots, None if seed is None else seed % 2**32)
 
     def __getstate__(self) -> dict[str, csr_matrix]:
         """
