@@ -1,4 +1,4 @@
-# QiliSDK
+<img src="docs/_static/QiliSDK_wht.svg" alt="QiliSDK" height="80">
 
 [![Python Versions](https://img.shields.io/pypi/pyversions/qilisdk.svg)](https://pypi.org/project/qilisdk/)
 [![PyPI Version](https://img.shields.io/pypi/v/qilisdk.svg)](https://pypi.org/project/qilisdk/)
@@ -7,7 +7,17 @@
 [![Docs](https://img.shields.io/badge/docs-latest-pink.svg)](https://qilimanjaro-tech.github.io/qilisdk/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17819870.svg)](https://doi.org/10.5281/zenodo.17819870)
 
-**QiliSDK** is an open-source Python framework for designing and executing **analog, digital, and hybrid quantum algorithms**. Its modular structure unifies circuit-based and Hamiltonian-based workflows within a single API. It provides high-level abstractions for gates, circuits, Hamiltonians, and more, while remaining fully backend-agnostic allowing a seamless switch between CPU, GPU, or QPU execution. Fast CPU simulation can be done locally using **QiliSim**, our quantum simulator written in C++.
+**QiliSDK** is [Qilimanjaro Quantum Tech's](https://qilimanjaro.tech/) open-source Python framework for designing and executing **analog, digital, and hybrid quantum algorithms**. Its modular structure unifies circuit-based and Hamiltonian-based workflows within a single API. It provides high-level abstractions for gates, circuits, Hamiltonians, and more, while remaining fully backend-agnostic allowing a seamless switch between CPU, GPU, or QPU execution. Fast CPU simulation can be done locally using **QiliSim**, our quantum simulator written in C++.
+
+## Why QiliSDK?
+
+There are several other quantum frameworks out there, but QiliSDK has many unique advantages:
+
+ - We use a single framework for digital, analog and hybrid workflows, running on CPU, GPU or a Qilimanjaro QPU. Everything is one unified stack.
+ - All core functionality is included in the package, with performance critical parts pre-compiled from C++, all easily installable with a single `pip install` command.
+ - At the highest level we have our Model class, which lets you write problems in their simplest form and simplify the conversion to quantum jobs.
+ - At a slightly lower level we have our functionals, describing specific quantum tasks: VariationalProgram, AnalogEvolution, DigitalPropagation and even QuantumReservoirs.
+ - Meanwhile, on the more fundamental side, we have symbolic Hamiltonians and Expression classes, fully customizable analog Schedules, all standard quantum gates, parametrizable objects, our quantum object class QTensor which has a wide range of quantum information utilities, and many more.
 
 ## Installation
 
@@ -25,29 +35,102 @@ Here are just a few examples to get you started, for tutorials and full document
 
 ### Digital Circuits
 
-To create a simple quantum circuit:
+To create a simple quantum circuit and simulate it on your CPU:
 
 ```python
 from qilisdk.digital import Circuit, H, RX, CNOT
+from qilisdk.functionals import DigitalPropagation
+from qilisdk.readout import Readout
+from qilisdk.backends import QiliSim
 
-circuit = Circuit(2)  # Create a circuit with 2 qubits
-circuit.add(H(0))  # Apply Hadamard on qubit 0
-circuit.add(RX(1, theta=3.14))  # Apply RX rotation on qubit 1
-circuit.add(CNOT(0, 1))  # Add a CNOT gate between qubit 0 and 1
+# Create a simple two-qubit circuit
+circuit = Circuit(2)
+circuit.add(H(0))
+circuit.add(RX(1, theta=3.14))
+circuit.add(CNOT(0, 1))
+
+# Set up the quantum task
+functional = DigitalPropagation(circuit)
+readout = Readout().with_sampling(1000)
+
+# Simulate it with CPU
+backend = QiliSim()
+results = backend.execute(functional, readout)
+print(results)
 ```
 
 ### Analog Evolution
 
-To create a linear interpolation between an initial and final Hamiltonian:
+To create a linear interpolation between an initial and final Hamiltonian, then simulate it using your GPU:
 
 ```python
 from qilisdk.analog import Schedule, X, Z
+from qilisdk.functionals import AnalogEvolution
+from qilisdk.readout import Readout
+from qilisdk.core import InitialState
+from qilisdk.backends import QiliSim, AnalogMethod, ExecutionConfig
 
+# Construct the interpolation between Hamiltonians
 initial_hamiltonian = -X(0) - X(1)
 final_hamiltonian = Z(0) + Z(1) + 0.5 * Z(0) * Z(1)
-
 schedule = Schedule.linear(initial_hamiltonian, final_hamiltonian, total_time=10.0, dt=0.5)
+
+# Set up the quantum task
+functional = AnalogEvolution(schedule, initial_state=InitialState.UNIFORM)
+readout = Readout().with_expectation([final_hamiltonian])
+
+# Simulate it with GPU
+config = ExecutionConfig(gpu=True)
+method = AnalogMethod.variational_annealing()
+backend = QiliSim(execution_config=config, analog_simulation_method=method)
+results = backend.execute(functional, readout)
+print(results)
 ```
+
+### Quantum Reservoirs
+
+```python
+import numpy as np
+from qilisdk.backends import QiliSim
+from qilisdk.core import ket
+from qilisdk.digital import Circuit, U2
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+from qilisdk.analog import Schedule, X, Z
+from qilisdk.readout import Readout
+
+# Set up the quantum reservoir
+pre_processing = Circuit(2)
+pre_processing.add(U2(1, phi=ReservoirInput("phi_1", 0.1), gamma=ReservoirInput("gamma_1", 0.1)))
+res_layer = ReservoirLayer(
+    evolution_dynamics=Schedule(
+        hamiltonians={"h": Z(0) + Z(1) + Z(0) * Z(1) + 0.5 * (X(0) + X(1))},
+        total_time=1.0,
+        dt=0.1,
+    ),
+    input_encoding=pre_processing,
+    qubits_to_reset=[1],
+)
+reservoir = QuantumReservoir(
+    initial_state=(np.random.rand() * ket(0, 0) + np.random.rand() * ket(1, 1)).unit(),
+    reservoir_layer=res_layer,
+    input_per_layer=[
+        {"phi_1": 0.2, "gamma_1": 0.1},
+        {"phi_1": 0.3, "gamma_1": 0.2},
+        {"phi_1": 0.4, "gamma_1": 0.3},
+    ],
+)
+
+# Simulate it with CPU
+results = QiliSim().execute(
+    reservoir,
+    Readout().with_expectation(observables=[Z(0), Z(1), Z(0) * Z(1)]),
+)
+print(results.get_expectation_values())
+```
+
+## Benchmarks
+
+<img src="docs/_static/benchmark_digital.png" alt="QiliSDK">
 
 ## Development Guide
 
@@ -154,7 +237,7 @@ bash scripts/docs.sh
 
 To generate a full coverage report of all code, run:
 ```bash
-bash scripts/cov.sh
+bash scripts/coverage.sh
 ```
 This will generate a html file which you can open in your browser to see which lines (in both the C++ and Python) are covered by the tests. We aim for 100% coverage!
 
@@ -164,13 +247,14 @@ We manage our changelog using [**towncrier**](https://github.com/twisted/towncri
 
 For example, if you create a PR with id #123 adding a new feature, you add:
 ```
-changes/123.feature.rst
+changes/123.feature.md
 ```
 Inside this file, you briefly describe the new feature:
-```rst
+```markdown
 Added a new `cool_feature` in the `qilisdk.backends` module.
 ```
-Instead of manually creating the file, you can run:
+These change fragments should be written in Markdown, so use standard Markdown syntax.
+Also, instead of manually creating the file, you can run:
 ```bash
 towncrier create --no-edit
 ```
@@ -186,15 +270,12 @@ We welcome contributions! Here’s the workflow:
 
 1. **Fork** this repository and create a feature branch.
 2. **Write** your changes (code, docs, or tests).
-3. **Add a news fragment** (if applicable) in `changes/` describing the user-facing impact.
+3. **Add a news fragment** in `changes/` describing the user-facing impact.
 4. **Run** the following checks locally:
    ```bash
-   ruff check --fix
-   ruff format
-   ty check
-   pytest tests
+   bash scripts/checks.sh
    ```
-5. **Commit** and push your branch to your fork. `pre-commit` will also run the checks automatically.
+5. **Commit** and push your branch to your fork.
 6. **Open a Pull Request** against the `main` branch here.
 
 Our CI will run tests, linting, and type checks. Please make sure your branch passes these checks before requesting a review.

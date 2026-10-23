@@ -33,10 +33,10 @@ from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.utils.visualization.style import HamiltonianStyle
 from qilisdk.yaml import yaml
 
-from .exceptions import InvalidHamiltonianOperation
+from .exceptions import InvalidHamiltonianOperation, NotAHamiltonianError
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
 
     from qilisdk.core.variables import Parameter
 
@@ -46,9 +46,36 @@ _GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE = (
     "Only Parameters are allowed to be used in hamiltonians. Generic Variables are not supported"
 )
 
+# Name used for this class in the error messages raised for digital objects.
+_REJECT_TARGET = "a Hamiltonian"
+
 
 def _complex_dtype() -> np.dtype:
     return np.dtype(get_settings().complex_precision.dtype)
+
+
+def _reject_digital_object(obj: object, target: str) -> None:
+    """Raise a descriptive error if a digital object is used where a Hamiltonian is expected.
+
+    Importing the digital gates (``qilisdk.digital.X`` and friends) instead of the analog Paulis of
+    the same name is a common mistake.
+
+    Args:
+        obj (object): The object that is being combined with the analog object.
+        target (str): The analog object being combined with, used in the error message.
+
+    Raises:
+        NotAHamiltonianError: If the object is a digital gate.
+    """
+    # Imported here to avoid a circular import between the analog and digital subpackages.
+    from qilisdk.digital.gates import Gate  # ruff: ignore[import-outside-top-level]
+
+    if isinstance(obj, Gate):
+        raise NotAHamiltonianError(
+            f"Cannot use the digital gate {obj!r} with {target}, only Hamiltonian objects are supported. "
+            "This usually means the digital gates were imported instead of the analog Paulis: "
+            "did you mean to import X, Y, Z or I from qilisdk.analog rather than from qilisdk.digital?"
+        )
 
 
 ###############################################################################
@@ -96,11 +123,10 @@ class PauliOperator(ABC):
         cls._MATRIX_CACHE = {}
 
     def __init__(self, qubit: int) -> None:
-        # QSDK-05: reject negative qubit indices at construction (the upper bound
-        # depends on the Hamiltonian / circuit and is enforced at execution).
         if qubit < 0:
             raise ValueError(f"Qubit index must be non-negative, got {qubit}.")
         self._qubit = qubit
+        self._hash_cache: int | None = None
 
     @property
     def qubit(self) -> int:
@@ -131,7 +157,26 @@ class PauliOperator(ABC):
         return Hamiltonian({(self,): 1})
 
     def __hash__(self) -> int:
-        return qili_hash(self._NAME, self._qubit)
+        """Return the stable hash of this operator.
+
+        Operators are immutable, and the stable hash is expensive next to the dictionary lookups it
+        feeds, so it is computed once on first use and cached from then on.
+
+        Returns:
+            int: the cached blake2b-based hash of the operator name and qubit index.
+        """
+        if self._hash_cache is None:
+            self._hash_cache = qili_hash(self._NAME, self._qubit)
+        return self._hash_cache
+
+    def __getstate__(self) -> dict:
+        state = self.__dict__.copy()
+        state.pop("_hash_cache", None)
+        return state
+
+    def __setstate__(self, state: dict) -> None:
+        self.__dict__.update(state)
+        self._hash_cache = None
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Hamiltonian):
@@ -173,7 +218,8 @@ class PauliOperator(ABC):
     def __truediv__(self, other: Number | PauliOperator | Hamiltonian) -> Hamiltonian:
         return self.to_hamiltonian() / other
 
-    def __rtruediv__(self, _: Number | PauliOperator | Hamiltonian) -> Hamiltonian:
+    def __rtruediv__(self, other: Number | PauliOperator | Hamiltonian) -> Hamiltonian:
+        _reject_digital_object(other, _REJECT_TARGET)
         raise InvalidHamiltonianOperation(_DIVISION_BY_OPERATORS_MESSAGE)
 
     __itruediv__ = __truediv__
@@ -1206,6 +1252,33 @@ class Hamiltonian(Parameterizable):
         hamiltonian.simplify()
         return hamiltonian
 
+    @classmethod
+    def sum(cls, terms: Iterable[Number | PauliOperator | Hamiltonian | Expression | Parameter]) -> Hamiltonian:
+        """Add many terms together in a single pass.
+
+        Chaining ``h1 + h2 + ...`` (or the builtin :func:`sum`) copies and re-simplifies the growing
+        accumulator on every step, which costs quadratic time in the number of terms. This
+        accumulates everything into one Hamiltonian and simplifies once at the end instead.
+
+        Args:
+            terms (Iterable[Number | PauliOperator | Hamiltonian | Expression | Parameter]): The
+                terms to add together.
+
+        Returns:
+            Hamiltonian: The sum of all the given terms.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian, Z
+
+                h = Hamiltonian.sum(Z(i) * Z(i + 1) for i in range(1000))
+        """
+        out = cls()
+        for term in terms:
+            out._add_inplace(term)
+        return out.simplify()
+
     def commutator(self, h: Hamiltonian) -> Hamiltonian:
         """compute the commutator of the current hamiltonian with another hamiltonian (h)
 
@@ -1424,6 +1497,7 @@ class Hamiltonian(Parameterizable):
 
     def __rtruediv__(self, other: Number | PauliOperator | Hamiltonian) -> Hamiltonian:
         # (other / self)
+        _reject_digital_object(other, _REJECT_TARGET)
         raise InvalidHamiltonianOperation(_DIVISION_BY_OPERATORS_MESSAGE)
 
     __iadd__ = __add__
@@ -1434,7 +1508,7 @@ class Hamiltonian(Parameterizable):
     def _add_inplace(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> None:
         if isinstance(other, Hamiltonian):
             # If it's empty, do nothing
-            if not other.elements:
+            if not other._elements:  # ruff: ignore[private-member-access]
                 return
             # Otherwise, add each term
             for key, val in other._elements.items():  # ruff: ignore[private-member-access]
@@ -1456,6 +1530,7 @@ class Hamiltonian(Parameterizable):
                 self._add_parameter(parameter.label, parameter)
             self._elements[PauliI(0),] += other
         else:
+            _reject_digital_object(other, _REJECT_TARGET)
             raise InvalidHamiltonianOperation(f"Invalid addition between Hamiltonian and {other.__class__.__name__}.")
 
     def _sub_inplace(self, other: Number | PauliOperator | Hamiltonian | Expression | Parameter) -> None:
@@ -1476,6 +1551,7 @@ class Hamiltonian(Parameterizable):
                 self._add_parameter(parameter.label, parameter)
             self._elements[PauliI(0),] -= other
         else:
+            _reject_digital_object(other, _REJECT_TARGET)
             raise InvalidHamiltonianOperation(
                 f"Invalid subtraction between Hamiltonian and {other.__class__.__name__}."
             )
@@ -1521,6 +1597,7 @@ class Hamiltonian(Parameterizable):
             other = other.to_hamiltonian()
 
         if not isinstance(other, Hamiltonian):
+            _reject_digital_object(other, _REJECT_TARGET)
             raise InvalidHamiltonianOperation(
                 f"Invalid multiplication between Hamiltonian and {other.__class__.__name__}."
             )
@@ -1548,6 +1625,7 @@ class Hamiltonian(Parameterizable):
     def _div_inplace(self, other: Number | PauliOperator | Hamiltonian) -> None:
         # Only valid for scalars
         if not isinstance(other, (int, float, complex)):
+            _reject_digital_object(other, _REJECT_TARGET)
             raise InvalidHamiltonianOperation(_DIVISION_BY_OPERATORS_MESSAGE)
         if abs(other) < get_settings().atol:
             raise ZeroDivisionError("Cannot divide by zero.")

@@ -79,31 +79,7 @@ DenseMatrix collapse_state(const DenseMatrix& state, const std::vector<bool>& qu
     return density_matrix;
 }
 
-static void densify_initial_state(const SparseMatrixCol& initial_state, DenseMatrix& state) {
-    /*
-    Densify a sparse initial state into `state`, zeroing in parallel.
-
-    Args:
-        initial_state (SparseMatrixCol&): The sparse initial state.
-        state (DenseMatrix&): The dense state to be filled.
-    */
-    state.resize(initial_state.rows(), initial_state.cols());
-    const long n = state.size();
-    Complex* __restrict data = state.data();
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (long i = 0; i < n; ++i) {
-        data[i] = Complex(0.0, 0.0);
-    }
-    for (int k = 0; k < initial_state.outerSize(); ++k) {
-        for (SparseMatrixCol::InnerIterator it(initial_state, k); it; ++it) {
-            state(it.row(), it.col()) = it.value();
-        }
-    }
-}
-
-void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCol& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories) {
+void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories) {
     /*
     Execute a sampling functional using a simple statevector simulator.
 
@@ -111,9 +87,8 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
         gates (std::vector<Gate>&): The list of gates in the circuit.
         n_qubits (int): The number of qubits in the circuit.
         n_shots (int): The number of shots to sample.
-        initial_state (SparseMatrix&): The initial state of the system (statevector or density matrix).
         noise_model_cpp (NoiseModelCpp&): The noise model to apply during simulation.
-        state (DenseMatrix&): The final state after applying all gates (statevector or density matrix).
+        state (DenseMatrix&): On entry the initial state, on exit the final state after applying all gates (statevector or density matrix).
         intermediate_results (std::vector<py::object>&): A vector to store the intermediate results after each measurement.
         config (QiliSimConfig): The simulation configuration.
         readout (py::object): A list with readout information to determine when and what to measure.
@@ -133,9 +108,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
     Eigen::setNbThreads(config.get_num_threads());
 #endif
 
-    // Start with the zero state
     long dim = 1L << n_qubits;
-    densify_initial_state(initial_state, state);
     bool is_statevector = (state.cols() == 1 && state.rows() == dim);
     bool initially_was_statevector = is_statevector;
     qilisdk::log_debug("[Sampling, C++] Preparing initial state for " + std::to_string(n_qubits) + " qubits (" + (is_statevector ? "statevector" : "density matrix") + ")");
@@ -230,6 +203,9 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
     bool gate_is_new = false;
     for (int i = 0; i < int(optimized_gates.size()); ++i) {
         const auto& gate = optimized_gates[i];
+
+        // Let Ctrl-C interrupt the circuit between gates
+        check_signals();
 
         // If it's a measurement
         if (gate.get_name() == "M") {
@@ -345,7 +321,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCo
     qilisdk::log_debug("[Sampling, C++] Applied " + std::to_string(gate_count) + " gates, circuit sampling complete");
 }
 
-void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const SparseMatrixCol& initial_state, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories) {
+void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories) {
     /*
     Execute a sampling functional using a matrix-free simulator.
 
@@ -353,9 +329,8 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
         gates (std::vector<Gate>&): The list of gates in the circuit.
         n_qubits (int): The number of qubits in the circuit.
         n_shots (int): The number of shots to sample.
-        initial_state (SparseMatrix&): The initial state of the system (statevector or density matrix).
         noise_model_cpp (NoiseModelCpp&): The noise model to apply during simulation.
-        state (DenseMatrix&): The final state after applying all gates (statevector or density matrix).
+        state (DenseMatrix&): On entry the initial state, on exit the final state after applying all gates (statevector or density matrix).
         intermediate_results (std::vector<py::object>&): A vector to store intermediate results after each set of measurements.
         config (QiliSimConfig): The simulation configuration.
         readout (py::object): A list with readout information to determine when and what to measure.
@@ -375,8 +350,6 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     Eigen::setNbThreads(config.get_num_threads());
 #endif
 
-    // Start in the initial state
-    densify_initial_state(initial_state, state);
     bool is_statevector = (state.cols() == 1 && state.rows() == (1L << n_qubits));
     bool initially_was_statevector = is_statevector;
     qilisdk::log_debug("[Sampling, C++] Preparing initial state for " + std::to_string(n_qubits) + " qubits (matrix-free, " + (is_statevector ? "statevector" : "density matrix") + ")");
@@ -442,6 +415,9 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, const Sp
     // Apply each gate
     for (int i = 0; i < int(optimized_gates.size()); ++i) {
         const auto& gate = optimized_gates[i];
+
+        // Let Ctrl-C interrupt the circuit between gates
+        check_signals();
 
         // Convert gate to a matrix-free operator
         MatrixFreeOperator op(gate);
@@ -584,6 +560,10 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
     std::vector<bool> qubits_measured(n_qubits, false);
     for (int i = 0; i < int(gates.size()); ++i) {
         const auto& gate = gates[i];
+
+        // Let Ctrl-C interrupt the circuit between gates
+        check_signals();
+
         state.apply_gate(gate);
     }
 }
