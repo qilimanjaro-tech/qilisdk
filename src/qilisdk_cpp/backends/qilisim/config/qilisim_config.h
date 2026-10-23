@@ -45,7 +45,7 @@ class QiliSimConfig {
     bool gpu = false;
     int stabilizer_max_states = 100;
     int mps_max_bond_dimension = 64;
-    double mps_truncation_cutoff = 1e-10;
+    double mps_truncation_cutoff = 1e-7;
 
     // Counter of many times we've advanced the seed
     mutable uint64_t seed_stream = 0;

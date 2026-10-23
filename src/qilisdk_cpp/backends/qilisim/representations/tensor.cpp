@@ -114,17 +114,17 @@ bool is_identity_permutation(const std::vector<int>& perm) {
 
 void orthonormalize(Eigen::Ref<DenseMatrix> columns) {
     /*
-    Re-orthonormalise the columns of an already nearly-orthonormal block, in place, by
+    Re-orthonormalize the columns of an already nearly-orthonormal block, in place, by
     modified Gram-Schmidt.
 
-    This is a Gram-Schmidt orthonormalisation of the columns of a matrix, but it
+    This is a Gram-Schmidt orthonormalization of the columns of a matrix, but it
     is done in place and modifies the columns directly. It assumes that the columns are
     already nearly orthonormal, so it does not check for linear dependence or zero-length
     columns. It is used to repair numerical drift in a matrix that should be orthonormal,
-    rather than to orthonormalise an arbitrary set of vectors.
+    rather than to orthonormalize an arbitrary set of vectors.
 
     Args:
-        columns (Eigen::Ref<DenseMatrix>): The block to orthonormalise, modified in place.
+        columns (Eigen::Ref<DenseMatrix>): The block to orthonormalize, modified in place.
     */
     for (Eigen::Index i = 0; i < columns.cols(); ++i) {
         for (Eigen::Index j = 0; j < i; ++j) {
@@ -356,7 +356,7 @@ DenseMatrix Tensor::as_matrix(const std::vector<int>& row_legs) const {
         row_legs (std::vector<int>&): The legs making up the rows, in order.
 
     Returns:
-        DenseMatrix: The matricised tensor.
+        DenseMatrix: The matricized tensor.
     */
     Tensor fused = fuse({row_legs, remaining_legs(rank(), row_legs)});
     return fused.matrix_view(1);
@@ -367,8 +367,8 @@ Tensor Tensor::from_matrix(Eigen::Ref<const DenseMatrix> m, const std::vector<in
     Reinterpret a column-major matrix as a tensor of the given shape.
 
     Args:
-        m (Eigen::Ref<const DenseMatrix>): The matrix holding the values. A contiguous
-            block binds straight through, anything else is evaluated first.
+        m (Eigen::Ref<const DenseMatrix>): The matrix holding the values, which may be a
+            strided block of a larger matrix.
         shape (std::vector<int>&): The shape to give the result.
 
     Returns:
@@ -384,7 +384,11 @@ Tensor Tensor::from_matrix(Eigen::Ref<const DenseMatrix> m, const std::vector<in
     Tensor out;
     out.shape = shape;
     out.data.reserve(static_cast<size_t>(m.size()));
-    out.data.insert(out.data.end(), m.data(), m.data() + m.size());
+
+    // Copy column by column, since a block of a larger matrix has an outer stride longer than its column
+    for (Eigen::Index col = 0; col < m.cols(); ++col) {
+        out.data.insert(out.data.end(), m.col(col).data(), m.col(col).data() + m.rows());
+    }
     return out;
 }
 
@@ -488,10 +492,12 @@ void Tensor::split(const std::vector<int>& left_legs, int max_bond_dimension, Re
     caller can decide which side absorbs them.
 
     Singular values below `cutoff` times the largest are dropped, then at most
-    `max_bond_dimension` are kept (pass 0 or less for no cap).
+    `max_bond_dimension` are kept (pass 0 or less for no cap). The singular values come
+    from the Gram matrix, unless the cutoff is below sqrt(std::numeric_limits<Real>::epsilon()),
+    which is as finely as the Gram matrix resolves them, in which case a full SVD is used.
 
     For example, a rank-4 tensor with shape [2, 3, 5, 7] can be split into a rank-3
-    tensor with shape [2, 3, k] and a rank-3 tensor with shape [k, 5, 7] for some k <= 5.
+    tensor with shape [2, 3, k] and a rank-3 tensor with shape [k, 5, 7] for some k <= 6.
 
     Args:
         left_legs (std::vector<int>&): The legs that end up on the left of the bond.
@@ -521,39 +527,46 @@ void Tensor::split(const std::vector<int>& left_legs, int max_bond_dimension, Re
     const bool gram_on_the_right = (cols <= rows);
     int available = static_cast<int>(available_index);
 
-    // Get the eigenvalues of the Gram matrix, which are the singular values squared, filling only the triangle read
+    // A cutoff below what the Gram matrix can resolve needs a full SVD to mean anything
+    const Real resolvable = std::sqrt(std::numeric_limits<Real>::epsilon());
     DenseMatrix left_factor;
     DenseMatrix right_factor;
+    DenseMatrix* derived = nullptr;
     RealVector values(available_index);
-    if (gram_on_the_right) {
+    if (cutoff < resolvable) {
+        Eigen::BDCSVD<DenseMatrix, Eigen::ComputeThinU | Eigen::ComputeThinV> svd(matrix);
+        values = svd.singularValues();
+        left_factor = svd.matrixU();
+        right_factor = svd.matrixV();
+
+        // Otherwise get the eigenvalues of the Gram matrix, which are the singular values squared, filling only the triangle read
+    } else if (gram_on_the_right) {
         DenseMatrix product = DenseMatrix::Zero(cols, cols);
         product.selfadjointView<Eigen::Lower>().rankUpdate(matrix.adjoint());
         Eigen::SelfAdjointEigenSolver<DenseMatrix> gram(product);
         right_factor.resize(cols, available_index);
         for (Eigen::Index i = 0; i < available_index; ++i) {
-            values(i) = std::sqrt(std::max(Real(0), gram.eigenvalues()(available_index - 1 - i)));
+            values(i) = std::sqrt(std::max(gram.eigenvalues()(available_index - 1 - i), Real(0)));
             right_factor.col(i) = gram.eigenvectors().col(available_index - 1 - i);
         }
         left_factor = matrix * right_factor;
+        derived = &left_factor;
     } else {
         DenseMatrix product = DenseMatrix::Zero(rows, rows);
         product.selfadjointView<Eigen::Lower>().rankUpdate(matrix);
         Eigen::SelfAdjointEigenSolver<DenseMatrix> gram(product);
         left_factor.resize(rows, available_index);
         for (Eigen::Index i = 0; i < available_index; ++i) {
-            values(i) = std::sqrt(std::max(Real(0), gram.eigenvalues()(available_index - 1 - i)));
+            values(i) = std::sqrt(std::max(gram.eigenvalues()(available_index - 1 - i), Real(0)));
             left_factor.col(i) = gram.eigenvectors().col(available_index - 1 - i);
         }
         right_factor = matrix.adjoint() * left_factor;
+        derived = &right_factor;
     }
-
-    // Pick out the factor that came through the matrix rather than the eigensolver
-    DenseMatrix& derived = gram_on_the_right ? left_factor : right_factor;
 
     // Drop everything below the relative cutoff, then apply the hard cap
     int keep = 0;
-    Real resolvable = std::sqrt(std::numeric_limits<Real>::epsilon());
-    Real threshold = std::max(cutoff, resolvable) * values(0);
+    Real threshold = cutoff * values(0);
     while (keep < available && values(keep) > threshold) {
         ++keep;
     }
@@ -585,7 +598,9 @@ void Tensor::split(const std::vector<int>& left_legs, int max_bond_dimension, Re
     }
 
     // Turn the kept columns of U S into U, repairing what the Gram matrix cost them
-    orthonormalize(derived.leftCols(keep));
+    if (derived != nullptr) {
+        orthonormalize(derived->leftCols(keep));
+    }
 
     // The left factor is contiguous so it goes straight through, whilst the right is transposed
     left = from_matrix(left_factor.leftCols(keep), left_shape);

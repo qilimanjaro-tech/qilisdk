@@ -39,7 +39,7 @@ class Tensor {
     int extent(int leg) const { return shape[leg]; }
     const std::vector<int>& get_shape() const { return shape; }
     const std::vector<Complex>& raw() const { return data; }
-    std::vector<Complex>& raw() { return data; }
+    Eigen::Map<DenseVector> raw() { return Eigen::Map<DenseVector>(data.data(), static_cast<Eigen::Index>(data.size())); }
     Complex operator()(const std::vector<int>& index) const { return data[flat_index(index)]; }
     Complex& operator()(const std::vector<int>& index) { return data[flat_index(index)]; }
 

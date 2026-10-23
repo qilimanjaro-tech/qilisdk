@@ -109,7 +109,7 @@ py::object construct_result_object(const MPSState& state, const py::object& read
     Raises:
         py::value_error: If an unsupported readout method is provided.
     */
-    state.set_seed(static_cast<uint64_t>(config.get_seed()));
+    state.set_seed(static_cast<uint64_t>(config.next_seed()));
     py::list results;
     for (py::handle ro_handle : readout) {
         py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
@@ -151,6 +151,8 @@ py::object construct_result_object(const MPSState& state, const py::object& read
     return ReadoutCompositeResults.attr("from_list")(results);
 }
 
+namespace {
+
 inline void validate_qubit_index(int qubit, int nqubits, const char* context) {
     /*
     Make sure the qubit index is within the valid range [0, nqubits).
@@ -179,6 +181,9 @@ inline std::vector<double> make_sqrt_rate_series(py::handle rate, const std::vec
 
     Returns:
         std::vector<double>: A vector of sqrt(rate(t)) values corresponding to each time point in step_list.
+
+    Raises:
+        py::value_error: If any rate value is not finite, or is negative beyond atol.
     */
     if (!PyCallable_Check(rate.ptr())) {
         double value = rate.cast<double>();
@@ -255,6 +260,8 @@ inline void collect_lindblad_jumps(py::handle py_noise_pass, double dt, double a
         jump_rate_series.push_back(make_sqrt_rate_series(rates[i], *step_list, atol));
     }
 }
+
+}  // namespace
 
 py::object construct_result_object(const ExponentialAnsatz& state, const py::object& readout, int n_qubits) {
     /*
@@ -1143,7 +1150,7 @@ MPSState parse_initial_state_mps(const py::object& initial_state, int nqubits) {
         MPSState: The initial state as an MPSState.
 
     Raises:
-        py::value_error: If the initial state is not an InitialState or None.
+        py::value_error: If the initial state is not an InitialState or None, or is an InitialState the MPS backend does not know.
     */
     if (initial_state.is_none()) {
         return MPSState(nqubits);
@@ -1165,7 +1172,10 @@ MPSState parse_initial_state_mps(const py::object& initial_state, int nqubits) {
         }
         return state;
     }
-    return MPSState(nqubits);
+    if (name == "ZERO") {
+        return MPSState(nqubits);
+    }
+    throw py::value_error("InitialState." + name + " is not supported by the MPS backend.");  // GCOV_EXCL_LINE (ZERO, ONE and UNIFORM are every InitialState)
 }
 
 std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::object& noise_model) {

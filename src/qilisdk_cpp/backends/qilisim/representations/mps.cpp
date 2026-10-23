@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <ostream>
 #include <stdexcept>
@@ -211,64 +212,96 @@ int MPSState::get_max_bond_dimension_used() const {
     return largest;
 }
 
-void MPSState::move_centre(int q) {
+void MPSState::set_max_bond_dimension(int d) {
     /*
-    Move the orthogonality centre to qubit `q`, QR sweeping one site at a time. Exact:
-    the state is unchanged, only its gauge.
-
-    For example, if the centre is on qubit 0 and we move it to qubit 2, we do
-
-        A_0 A_1 A_2 -> Q R A_2 -> Q (R A_2) = A'_0 A'_1 A'_2
-
-    where the new site tensors are
-
-        A'_0 = Q
-        A'_1 = R A_2
-        A'_2 = I
+    Set the largest bond dimension kept after each two-qubit gate.
 
     Args:
-        q (int): The qubit to centre on.
+        d (int): The bond dimension cap.
+
+    Raises:
+        std::invalid_argument: If d is not positive.
+    */
+    if (d <= 0) {
+        throw std::invalid_argument("The maximum MPS bond dimension must be positive, got " + std::to_string(d));
+    }
+    max_bond_dimension = d;
+}
+
+void MPSState::set_truncation_cutoff(Real c) {
+    /*
+    Set the relative cutoff below which singular values are discarded.
+
+    Args:
+        c (Real): The cutoff, as a fraction of the largest singular value.
+
+    Raises:
+        std::invalid_argument: If c is NaN, negative, or 1 or more.
+    */
+    if (!(c >= Real(0) && c < Real(1))) {
+        throw std::invalid_argument("The MPS truncation cutoff must be in [0, 1), got " + std::to_string(c));
+    }
+    truncation_cutoff = c;
+}
+
+void MPSState::move_center(int q) {
+    /*
+    Move the orthogonality center to qubit `q`, QR sweeping one site at a time. Exact:
+    the state is unchanged, only its gauge.
+
+    For example, if the center is on qubit 0 and we move it to qubit 2, we do
+
+        A_0 A_1 A_2 -> Q_0 (R_0 A_1) A_2 -> Q_0 Q_1 (R_1 A_2) = A'_0 A'_1 A'_2
+
+    where R_0 A_1 = Q_1 R_1, so the new site tensors are
+
+        A'_0 = Q_0
+        A'_1 = Q_1
+        A'_2 = R_1 A_2
+
+    Args:
+        q (int): The qubit to center on.
 
     Raises:
         std::out_of_range: If q is not a valid qubit index.
     */
     if (q < 0 || q >= nqubits) {
-        throw std::out_of_range("Cannot centre a " + std::to_string(nqubits) + " qubit MPS on qubit " + std::to_string(q));
+        throw std::out_of_range("Cannot center a " + std::to_string(nqubits) + " qubit MPS on qubit " + std::to_string(q));
     }
 
     // Sweeping right: A = Q R, keep Q here and push R into the next site
-    while (centre < q) {
-        int left = sites[centre].left();
-        DenseMatrix matrix = sites[centre].left_fused();
+    while (center < q) {
+        int left = sites[center].left();
+        DenseMatrix matrix = sites[center].left_fused();
         int bond = static_cast<int>(std::min(matrix.rows(), matrix.cols()));
         Eigen::HouseholderQR<DenseMatrix> qr(matrix);
         DenseMatrix q_factor = qr.householderQ() * DenseMatrix::Identity(matrix.rows(), bond);
         DenseMatrix r_factor = qr.matrixQR().topRows(bond).triangularView<Eigen::Upper>();
-        int next_right = sites[centre + 1].right();
-        sites[centre] = MPSTensor(Tensor::from_matrix(q_factor, {left, MPSTensor::PHYSICAL_DIMENSION, bond}));
-        sites[centre + 1] = MPSTensor(Tensor::from_matrix(DenseMatrix(r_factor * sites[centre + 1].right_fused()), {bond, MPSTensor::PHYSICAL_DIMENSION, next_right}));
-        ++centre;
+        int next_right = sites[center + 1].right();
+        sites[center] = MPSTensor(Tensor::from_matrix(q_factor, {left, MPSTensor::PHYSICAL_DIMENSION, bond}));
+        sites[center + 1] = MPSTensor(Tensor::from_matrix(DenseMatrix(r_factor * sites[center + 1].right_fused()), {bond, MPSTensor::PHYSICAL_DIMENSION, next_right}));
+        ++center;
     }
 
     // Sweeping left: the same QR on the transpose, which is an LQ decomposition
-    while (centre > q) {
-        int right = sites[centre].right();
-        DenseMatrix matrix = sites[centre].right_fused().adjoint();
+    while (center > q) {
+        int right = sites[center].right();
+        DenseMatrix matrix = sites[center].right_fused().adjoint();
         int bond = static_cast<int>(std::min(matrix.rows(), matrix.cols()));
         Eigen::HouseholderQR<DenseMatrix> qr(matrix);
         DenseMatrix q_factor = qr.householderQ() * DenseMatrix::Identity(matrix.rows(), bond);
         DenseMatrix r_factor = qr.matrixQR().topRows(bond).triangularView<Eigen::Upper>();
-        int previous_left = sites[centre - 1].left();
-        sites[centre] = MPSTensor(Tensor::from_matrix(DenseMatrix(q_factor.adjoint()), {bond, MPSTensor::PHYSICAL_DIMENSION, right}));
-        sites[centre - 1] = MPSTensor(Tensor::from_matrix(DenseMatrix(sites[centre - 1].left_fused() * r_factor.adjoint()), {previous_left, MPSTensor::PHYSICAL_DIMENSION, bond}));
-        --centre;
+        int previous_left = sites[center - 1].left();
+        sites[center] = MPSTensor(Tensor::from_matrix(DenseMatrix(q_factor.adjoint()), {bond, MPSTensor::PHYSICAL_DIMENSION, right}));
+        sites[center - 1] = MPSTensor(Tensor::from_matrix(DenseMatrix(sites[center - 1].left_fused() * r_factor.adjoint()), {previous_left, MPSTensor::PHYSICAL_DIMENSION, bond}));
+        --center;
     }
 }
 
 Real MPSState::apply_one_site(const DenseMatrix& u, int q) {
     /*
     Apply a single-qubit matrix to qubit `q`. Exact, so no truncation error, but the
-    centre is moved onto `q` first so that a non-unitary u cannot break the canonical
+    center is moved onto `q` first so that a non-unitary u cannot break the canonical
     form of the sites around it.
 
     Args:
@@ -288,9 +321,9 @@ Real MPSState::apply_one_site(const DenseMatrix& u, int q) {
     if (q < 0 || q >= nqubits) {
         throw std::out_of_range("Qubit " + std::to_string(q) + " is out of range for a " + std::to_string(nqubits) + " qubit MPS");
     }
-    // Only non-unitary gates can break the canonical form, so only move the centre if necessary
+    // Only non-unitary gates can break the canonical form, so only move the center if necessary
     if (!is_unitary(u)) {
-        move_centre(q);
+        move_center(q);
     }
     MPSTensor& site = sites[q];
     DenseMatrix mixed_zero = u(0, 0) * site.physical_slice(0) + u(0, 1) * site.physical_slice(1);
@@ -304,7 +337,7 @@ Real MPSState::apply_one_site(const DenseMatrix& u, int q) {
     return 0.0;
 }
 
-Real MPSState::apply_two_site(const DenseMatrix& u, int q, bool keep_centre_left) {
+Real MPSState::apply_two_site(const DenseMatrix& u, int q, bool keep_center_left) {
     /*
     Apply a two-qubit matrix to the adjacent pair (q, q + 1), with qubit q the most
     significant index of u. The pair is contracted into one block, the gate applied,
@@ -313,7 +346,7 @@ Real MPSState::apply_two_site(const DenseMatrix& u, int q, bool keep_centre_left
     Args:
         u (DenseMatrix&): The 4 x 4 matrix to apply.
         q (int): The left qubit of the pair.
-        keep_centre_left (bool): Leave the orthogonality centre on q rather than on
+        keep_center_left (bool): Leave the orthogonality center on q rather than on
             q + 1. Either choice leaves the same state.
 
     Returns:
@@ -330,7 +363,7 @@ Real MPSState::apply_two_site(const DenseMatrix& u, int q, bool keep_centre_left
     if (q < 0 || q + 1 >= nqubits) {
         throw std::out_of_range("Qubits (" + std::to_string(q) + ", " + std::to_string(q + 1) + ") are out of range for a " + std::to_string(nqubits) + " qubit MPS");
     }
-    move_centre(q);
+    move_center(q);
 
     // The legs of the block are (left bond, physical q, physical q + 1, right bond)
     int left_bond = sites[q].left();
@@ -339,10 +372,10 @@ Real MPSState::apply_two_site(const DenseMatrix& u, int q, bool keep_centre_left
     block.matrix_view(2).noalias() = sites[q].left_fused() * sites[q + 1].right_fused();
 
     // The block runs qubit q's index fastest and the gate runs it slowest, so relabel the gate rather than move the block
-    DenseMatrix relabelled(pair_dimension, pair_dimension);
+    DenseMatrix relabeled(pair_dimension, pair_dimension);
     for (int row = 0; row < pair_dimension; ++row) {
         for (int column = 0; column < pair_dimension; ++column) {
-            relabelled(row, column) = u(swap_pair_index(row), swap_pair_index(column));
+            relabeled(row, column) = u(swap_pair_index(row), swap_pair_index(column));
         }
     }
 
@@ -350,20 +383,20 @@ Real MPSState::apply_two_site(const DenseMatrix& u, int q, bool keep_centre_left
     Complex* values = block.raw().data();
     for (int r = 0; r < right_bond; ++r) {
         Eigen::Map<DenseMatrix> slice(values + static_cast<int64_t>(pair_dimension) * left_bond * r, left_bond, pair_dimension);
-        slice = slice * relabelled.transpose();
+        slice = slice * relabeled.transpose();
     }
-    return split_two_site(q, block, keep_centre_left ? q : q + 1);
+    return split_two_site(q, block, keep_center_left ? q : q + 1);
 }
 
-Real MPSState::split_two_site(int q, const Tensor& theta, int keep_centre_on) {
+Real MPSState::split_two_site(int q, const Tensor& theta, int keep_center_on) {
     /*
     Split a two-site block back into sites q and q + 1.
 
     Args:
         q (int): The left qubit of the pair.
         theta (Tensor&): The block, with legs (left bond, physical q, physical q + 1, right bond).
-        keep_centre_on (int): Which of the two qubits should end up as the orthogonality
-            centre, and so absorb the singular values.
+        keep_center_on (int): Which of the two qubits should end up as the orthogonality
+            center, and so absorb the singular values.
 
     Returns:
         Real: The discarded weight from the SVD.
@@ -374,20 +407,20 @@ Real MPSState::split_two_site(int q, const Tensor& theta, int keep_centre_on) {
     Real error = 0.0;
     theta.split({0, 1}, max_bond_dimension, truncation_cutoff, left, singular_values, right, &error);
 
-    // Whichever site becomes the centre takes the singular values with it
+    // Whichever site becomes the center takes the singular values with it
     int bond = static_cast<int>(singular_values.size());
-    if (keep_centre_on == q) {
+    if (keep_center_on == q) {
         Eigen::Map<DenseMatrix> matrix = left.matrix_view(2);
         for (int b = 0; b < bond; ++b) {
             matrix.col(b) *= singular_values(b);
         }
-        centre = q;
+        center = q;
     } else {
         Eigen::Map<DenseMatrix> matrix = right.matrix_view(1);
         for (int b = 0; b < bond; ++b) {
             matrix.row(b) *= singular_values(b);
         }
-        centre = q + 1;
+        center = q + 1;
     }
     sites[q] = MPSTensor(left);
     sites[q + 1] = MPSTensor(right);
@@ -456,9 +489,9 @@ void MPSState::normalize() {
     */
     Real current = norm();
     if (!(current > Real(0))) {
-        throw std::runtime_error("Cannot normalize an MPS whose norm is zero");
+        throw std::runtime_error("Cannot normalize an MPS whose norm is zero or NaN");
     }
-    sites[centre].scale(Complex(1.0 / current, 0.0));
+    sites[center].scale(Complex(1.0 / current, 0.0));
 }
 
 Real MPSState::norm() const {
@@ -466,9 +499,9 @@ Real MPSState::norm() const {
     The Frobenius norm of the state, sqrt(<psi|psi>).
 
     Returns:
-        Real: The norm.
+        Real: The norm, or NaN if the state contains NaN.
     */
-    return std::sqrt(std::max(Real(0), overlap(*this).real()));
+    return std::sqrt(std::max(overlap(*this).real(), Real(0)));
 }
 
 Complex MPSState::overlap(const MPSState& other) const {
@@ -686,8 +719,17 @@ std::string MPSState::sample(std::mt19937_64& engine) const {
     Raises:
         std::runtime_error: If the state has zero norm.
     */
+    return sample(engine, right_environments());
+}
 
-    // Build the right environments for each site
+std::vector<DenseMatrix> MPSState::right_environments() const {
+    /*
+    Contract the norm of the chain from the right, one site at a time. Entry q is
+    the environment seen by everything left of qubit q, and entry nqubits is 1.
+
+    Returns:
+        std::vector<DenseMatrix>: The nqubits + 1 right environments.
+    */
     std::vector<DenseMatrix> right_environment(nqubits + 1);
     right_environment[nqubits] = DenseMatrix::Ones(1, 1);
     for (int q = nqubits - 1; q >= 0; --q) {
@@ -698,6 +740,23 @@ std::string MPSState::sample(std::mt19937_64& engine) const {
         }
         right_environment[q] = next;
     }
+    return right_environment;
+}
+
+std::string MPSState::sample(std::mt19937_64& engine, const std::vector<DenseMatrix>& right_environment) const {
+    /*
+    Draw one shot given the right environments of the chain, sweeping left to right.
+
+    Args:
+        engine (std::mt19937_64&): The random engine to draw from.
+        right_environment (std::vector<DenseMatrix>&): The output of right_environments().
+
+    Returns:
+        std::string: The outcome, one character per qubit, qubit 0 first.
+
+    Raises:
+        std::runtime_error: If the state has zero norm or contains NaN.
+    */
 
     // Build the left environment and sample each qubit in turn
     std::string outcome(nqubits, '0');
@@ -706,18 +765,18 @@ std::string MPSState::sample(std::mt19937_64& engine) const {
     for (int q = 0; q < nqubits; ++q) {
         const MPSTensor& site = sites[q];
 
-        // Get the proability of each outcome, this is kind of like a partial trace
+        // Get the probability of each outcome, this is kind of like a partial trace
         std::array<DenseMatrix, MPSTensor::PHYSICAL_DIMENSION> extended;
         std::array<Real, MPSTensor::PHYSICAL_DIMENSION> weight;
         for (int p = 0; p < MPSTensor::PHYSICAL_DIMENSION; ++p) {
             extended[p] = site.physical_slice(p).adjoint() * left_environment * site.physical_slice(p);
-            weight[p] = std::max(Real(0), (extended[p] * right_environment[q + 1]).trace().real());
+            weight[p] = std::max((extended[p] * right_environment[q + 1]).trace().real(), Real(0));
         }
 
         // Get the norm of the conditional distribution
         Real total = weight[0] + weight[1];
         if (!(total > Real(0))) {
-            throw std::runtime_error("Cannot sample an MPS whose norm is zero");
+            throw std::runtime_error("Cannot sample an MPS whose norm is zero or NaN");
         }
 
         // Sample from these weights
@@ -747,8 +806,9 @@ std::map<std::string, int> MPSState::sample(int nshots) const {
         throw std::invalid_argument("Number of shots must be positive, got " + std::to_string(nshots));
     }
     std::map<std::string, int> counts;
+    std::vector<DenseMatrix> right_environment = right_environments();
     for (int shot = 0; shot < nshots; ++shot) {
-        counts[sample(rng)] += 1;
+        counts[sample(rng, right_environment)] += 1;
     }
     return counts;
 }
@@ -763,10 +823,10 @@ DenseMatrix MPSState::as_dense() const {
         DenseMatrix: The 2^n x 1 statevector, qubit 0 the most significant bit.
 
     Raises:
-        std::runtime_error: If the register is too large to materialise.
+        std::runtime_error: If the register is too large to materialize.
     */
     if (nqubits > MAX_DENSE_QUBITS) {
-        throw std::runtime_error("Cannot materialise the statevector of a " + std::to_string(nqubits) + " qubit MPS since it would need too much memory");
+        throw std::runtime_error("Cannot materialize the statevector of a " + std::to_string(nqubits) + " qubit MPS since it would need too much memory");
     }
     DenseMatrix block = DenseMatrix::Ones(1, 1);
     for (int q = 0; q < nqubits; ++q) {

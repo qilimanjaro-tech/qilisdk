@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -168,6 +169,12 @@ def test_mps_method_creates_okay():
         DigitalMethod(mps_max_bond_dimension=0)
     with pytest.raises(ValidationError):
         DigitalMethod(mps_truncation_cutoff=-1e-3)
+
+    # A cutoff of 1 or more, or NaN, would collapse every bond to dimension 1
+    with pytest.raises(ValidationError):
+        DigitalMethod(mps_truncation_cutoff=1.0)
+    with pytest.raises(ValidationError):
+        DigitalMethod(mps_truncation_cutoff=math.nan)
 
 
 def test_mps_method_circuit_optimization_flags():

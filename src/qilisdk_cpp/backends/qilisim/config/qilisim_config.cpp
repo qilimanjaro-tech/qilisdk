@@ -92,8 +92,8 @@ void QiliSimConfig::validate() const {
     if (mps_max_bond_dimension <= 0) {
         throw py::value_error("Maximum MPS bond dimension must be positive.");
     }
-    if (mps_truncation_cutoff < 0) {
-        throw py::value_error("MPS truncation cutoff cannot be negative.");
+    if (!(mps_truncation_cutoff >= 0 && mps_truncation_cutoff < 1)) {
+        throw py::value_error("MPS truncation cutoff must be in [0, 1).");
     }
     if (order > 4) {
         throw py::value_error("Order greater than 4 not supported yet.");

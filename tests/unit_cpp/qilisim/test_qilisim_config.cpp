@@ -15,8 +15,10 @@
 // GCOV_EXCL_BR_START
 
 #include <gtest/gtest.h>
+#include <cmath>
 #include <set>
 #include "../../../src/qilisdk_cpp/backends/qilisim/config/qilisim_config.h"
+#include "../../../src/qilisdk_cpp/libs/pybind.h"
 
 TEST(QilisimConfig, BadValidateThrows) {
     QiliSimConfig default_config;
@@ -147,11 +149,14 @@ TEST(QilisimConfig, MPSMethod_ValidatesAndRejectsBadTruncation) {
 
     QiliSimConfig zero_bond;
     zero_bond.set_mps_max_bond_dimension(0);
-    EXPECT_ANY_THROW(zero_bond.validate());
+    EXPECT_THROW(zero_bond.validate(), py::value_error);
 
-    QiliSimConfig negative_cutoff;
-    negative_cutoff.set_mps_truncation_cutoff(-1e-3);
-    EXPECT_ANY_THROW(negative_cutoff.validate());
+    // A cutoff that is negative, NaN, or 1 or more would collapse every bond, so all are rejected
+    for (double cutoff : {-1e-3, 1.0, 2.0, std::nan("")}) {
+        QiliSimConfig bad_cutoff;
+        bad_cutoff.set_mps_truncation_cutoff(cutoff);
+        EXPECT_THROW(bad_cutoff.validate(), py::value_error) << "cutoff " << cutoff;
+    }
 }
 
 TEST(QilisimConfig, NextSeedGivesDistinctStreams) {

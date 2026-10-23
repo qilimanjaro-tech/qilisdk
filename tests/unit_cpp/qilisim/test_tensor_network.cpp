@@ -131,7 +131,7 @@ TEST(TensorTest, ConstructsZeroFilledAndFromValues) {
     EXPECT_EQ(filled(std::vector<int>{1, 0}), Complex(2.0, 0.0));
     EXPECT_EQ(filled(std::vector<int>{0, 1}), Complex(3.0, 0.0));
     EXPECT_EQ(filled(std::vector<int>{1, 1}), Complex(4.0, 0.0));
-    EXPECT_EQ(filled.raw().size(), 4u);
+    EXPECT_EQ(filled.raw().size(), 4);
 
     // A rank-0 tensor is a scalar, which contraction of every leg produces
     Tensor scalar(std::vector<int>{});
@@ -263,6 +263,12 @@ TEST(TensorTest, AsMatrixAndFromMatrixRoundTrip) {
     EXPECT_EQ(rebuilt.get_shape(), t.get_shape());
     EXPECT_EQ(rebuilt(std::vector<int>{1, 2}), t(std::vector<int>{1, 2}));
     EXPECT_THROW(Tensor::from_matrix(leading, {2, 2}), std::invalid_argument);
+
+    // A block of a taller matrix has an outer stride longer than its columns, which has to be honored
+    DenseMatrix tall = DenseMatrix::Constant(4, 3, Complex(-1.0, 0.0));
+    tall.topRows(2) = leading;
+    Tensor from_block = Tensor::from_matrix(tall.topRows(2), {2, 3});
+    EXPECT_NEAR((from_block.matrix_view(1) - leading).norm(), 0.0, 0.0);
 }
 
 TEST(TensorTest, ContractsAgainstAnExplicitReference) {
@@ -320,7 +326,7 @@ TEST(TensorTest, ContractsAgainstAnExplicitReference) {
     EXPECT_THROW(a.contract(b, {5}, {0}), std::out_of_range);
 }
 
-TEST(TensorTest, SplitFactorisesAndReportsDiscardedWeight) {
+TEST(TensorTest, SplitFactorizesAndReportsDiscardedWeight) {
     Tensor t({2, 3});
     std::mt19937_64 engine(9);
     std::uniform_real_distribution<double> uniform(-1.0, 1.0);
@@ -360,7 +366,7 @@ TEST(TensorTest, SplitFactorisesAndReportsDiscardedWeight) {
     t.split({0}, 0, 2.0, capped_left, capped_values, capped_right, &capped_error);
     EXPECT_EQ(capped_values.size(), 1);
 
-    // Splitting on a leg that is not the leading one has to reorder before factorising
+    // Splitting on a leg that is not the leading one has to reorder before factorizing
     Tensor trailing_left;
     Tensor trailing_right;
     RealVector trailing_values;
@@ -375,6 +381,31 @@ TEST(TensorTest, SplitFactorisesAndReportsDiscardedWeight) {
     Tensor zeros({2, 2});
     zeros.split({0}, 0, 1e-10, capped_left, capped_values, capped_right, &capped_error);
     EXPECT_NEAR(capped_error, 0.0, 1e-15);
+}
+
+TEST(TensorTest, SplitCutoffIsExactBelowTheGramResolution) {
+    // Singular values 1 and 1e-9, hidden behind a random unitary on each side
+    DenseMatrix diagonal = DenseMatrix::Zero(2, 2);
+    diagonal(0, 0) = 1.0;
+    diagonal(1, 1) = 1e-9;
+    DenseMatrix m = random_unitary(2, 61) * diagonal * random_unitary(2, 62);
+    Tensor t = Tensor::from_matrix(m, {2, 2});
+    Tensor left;
+    Tensor right;
+    RealVector values;
+
+    // A cutoff below the small singular value keeps it, resolved by the full SVD
+    t.split({0}, 0, 1e-10, left, values, right);
+    ASSERT_EQ(values.size(), 2);
+    EXPECT_NEAR(values(1), 1e-9, 1e-15);
+    DenseMatrix reassembled = left.matrix_view(1) * values.cast<Complex>().asDiagonal() * right.matrix_view(1);
+    EXPECT_NEAR((reassembled - m).norm(), 0.0, 1e-14);
+
+    // A cutoff above it discards it, whichever factorization is used
+    t.split({0}, 0, 1e-8, left, values, right);
+    EXPECT_EQ(values.size(), 1);
+    t.split({0}, 0, 1e-7, left, values, right);
+    EXPECT_EQ(values.size(), 1);
 }
 
 TEST(TensorTest, ElementwiseHelpers) {
@@ -484,7 +515,7 @@ TEST(MPSStateTest, ConstructsProductStates) {
     EXPECT_THROW(zero.amplitude("0x0"), std::invalid_argument);
 }
 
-TEST(MPSStateTest, MoveCentreLeavesTheStateUnchanged) {
+TEST(MPSStateTest, MoveCenterLeavesTheStateUnchanged) {
     MPSState state(4);
     state.set_truncation_cutoff(0.0);
     state.apply_one_site(hadamard(), 0);
@@ -494,11 +525,11 @@ TEST(MPSStateTest, MoveCentreLeavesTheStateUnchanged) {
     DenseMatrix before = state.as_dense();
 
     for (int q : {3, 0, 2, 1, 0}) {
-        state.move_centre(q);
+        state.move_center(q);
         EXPECT_NEAR((state.as_dense() - before).norm(), 0.0, 1e-12);
     }
-    EXPECT_THROW(state.move_centre(4), std::out_of_range);
-    EXPECT_THROW(state.move_centre(-1), std::out_of_range);
+    EXPECT_THROW(state.move_center(4), std::out_of_range);
+    EXPECT_THROW(state.move_center(-1), std::out_of_range);
 }
 
 TEST(MPSStateTest, ApplyOneSiteMatchesTheStatevector) {
@@ -789,55 +820,123 @@ TEST(MPSStateTest, AsDenseRefusesHugeRegisters) {
     EXPECT_THROW(huge.as_dense(), std::runtime_error);
 }
 
-TEST(MPSStateTest, SplitTwoSiteKeepsTheCentreOnEitherSite) {
-    /*
-    apply_two_site always leaves the centre on the right of the pair, so drive
-    split_two_site directly to cover both choices. The physical state is the same either
-    way, only the gauge differs, so each arm is checked by which site comes out canonical.
-    */
-
-    // A Bell block over the pair, legs (left bond, physical q, physical q + 1, right bond),
-    // so the buffer is column major over (p0 + 2 * p1)
+TEST(MPSStateTest, ApplyTwoSiteKeepsTheCenterOnEitherSite) {
+    // Build the same Bell state twice, leaving the center on a different site each time
     Real amplitude = 1.0 / std::sqrt(2.0);
-    Tensor theta({1, 2, 2, 1}, {amplitude, 0.0, 0.0, amplitude});
-
-    // Centre on the right, which is what apply_two_site does
-    MPSState right_centred(2);
-    EXPECT_NEAR(right_centred.split_two_site(0, theta, 1), 0.0, 1e-15);
-    EXPECT_EQ(right_centred.get_bond_dimension(0), 2);
-
-    // Centre on the left, the arm no other caller reaches
-    MPSState left_centred(2);
-    EXPECT_NEAR(left_centred.split_two_site(0, theta, 0), 0.0, 1e-15);
-    EXPECT_EQ(left_centred.get_bond_dimension(0), 2);
+    MPSState right_centered(2);
+    right_centered.apply_one_site(hadamard(), 0);
+    EXPECT_NEAR(right_centered.apply_two_site(cnot_matrix(), 0), 0.0, 1e-15);
+    MPSState left_centered(2);
+    left_centered.apply_one_site(hadamard(), 0);
+    EXPECT_NEAR(left_centered.apply_two_site(cnot_matrix(), 0, true), 0.0, 1e-15);
+    EXPECT_EQ(right_centered.get_bond_dimension(0), 2);
+    EXPECT_EQ(left_centered.get_bond_dimension(0), 2);
 
     // Both hold the same physical state
     for (const std::string& b : {"00", "01", "10", "11"}) {
         Complex expected = (b == "00" || b == "11") ? Complex(amplitude, 0.0) : Complex(0.0, 0.0);
-        EXPECT_NEAR(std::abs(right_centred.amplitude(b) - expected), 0.0, 1e-12) << "bitstring " << b;
-        EXPECT_NEAR(std::abs(left_centred.amplitude(b) - expected), 0.0, 1e-12) << "bitstring " << b;
+        EXPECT_NEAR(std::abs(right_centered.amplitude(b) - expected), 0.0, 1e-12) << "bitstring " << b;
+        EXPECT_NEAR(std::abs(left_centered.amplitude(b) - expected), 0.0, 1e-12) << "bitstring " << b;
     }
-    EXPECT_NEAR(right_centred.norm(), 1.0, 1e-12);
-    EXPECT_NEAR(left_centred.norm(), 1.0, 1e-12);
+    EXPECT_NEAR(right_centered.norm(), 1.0, 1e-12);
+    EXPECT_NEAR(left_centered.norm(), 1.0, 1e-12);
 
-    // Centre on the right means site 0 is left canonical, sum_p A^p dagger A^p = I
-    const MPSTensor& left_site = right_centred.get_site_tensor(0);
+    // Center on the right means site 0 is left canonical, sum_p A^p dagger A^p = I
+    const MPSTensor& left_site = right_centered.get_site_tensor(0);
     DenseMatrix left_gram = DenseMatrix::Zero(left_site.right(), left_site.right());
     for (int p = 0; p < MPSTensor::PHYSICAL_DIMENSION; ++p) {
         left_gram += left_site.physical_slice(p).adjoint() * left_site.physical_slice(p);
     }
     EXPECT_NEAR((left_gram - DenseMatrix::Identity(left_gram.rows(), left_gram.cols())).norm(), 0.0, 1e-12);
 
-    // Centre on the left means site 1 is right canonical instead, sum_p A^p A^p dagger = I
-    const MPSTensor& right_site = left_centred.get_site_tensor(1);
+    // Center on the left means site 1 is right canonical instead, sum_p A^p A^p dagger = I
+    const MPSTensor& right_site = left_centered.get_site_tensor(1);
     DenseMatrix right_gram = DenseMatrix::Zero(right_site.left(), right_site.left());
     for (int p = 0; p < MPSTensor::PHYSICAL_DIMENSION; ++p) {
         right_gram += right_site.physical_slice(p) * right_site.physical_slice(p).adjoint();
     }
     EXPECT_NEAR((right_gram - DenseMatrix::Identity(right_gram.rows(), right_gram.cols())).norm(), 0.0, 1e-12);
+}
 
-    // Truncation error accumulates on the state, and an exact split discards nothing
-    EXPECT_NEAR(left_centred.get_truncation_error(), 0.0, 1e-15);
+TEST(MPSStateTest, SettersRejectInvalidTruncation) {
+    MPSState state(2);
+    EXPECT_THROW(state.set_max_bond_dimension(0), std::invalid_argument);
+    EXPECT_THROW(state.set_max_bond_dimension(-3), std::invalid_argument);
+    EXPECT_THROW(state.set_truncation_cutoff(-1e-3), std::invalid_argument);
+    EXPECT_THROW(state.set_truncation_cutoff(1.0), std::invalid_argument);
+    EXPECT_THROW(state.set_truncation_cutoff(std::nan("")), std::invalid_argument);
+    EXPECT_NO_THROW(state.set_max_bond_dimension(1));
+    EXPECT_NO_THROW(state.set_truncation_cutoff(0.0));
+}
+
+TEST(MPSStateTest, TruncationErrorIsTheDiscardedSchmidtWeight) {
+    // RY(theta) then CNOT gives cos(theta / 2) |00> + sin(theta / 2) |11>, whose Schmidt weights are known
+    const Real theta = 0.6;
+    DenseMatrix ry(2, 2);
+    ry << std::cos(theta / 2), -std::sin(theta / 2), std::sin(theta / 2), std::cos(theta / 2);
+    MPSState state(2);
+    state.set_max_bond_dimension(1);
+    state.apply_one_site(ry, 0);
+    Real error = state.apply_two_site(cnot_matrix(), 0);
+    Real expected = std::sin(theta / 2) * std::sin(theta / 2);
+    EXPECT_NEAR(error, expected, 1e-12);
+    EXPECT_NEAR(state.get_truncation_error(), expected, 1e-12);
+
+    // Only the larger Schmidt vector survives, with its amplitude unchanged
+    EXPECT_NEAR(std::abs(state.amplitude("00") - Complex(std::cos(theta / 2), 0.0)), 0.0, 1e-12);
+    EXPECT_NEAR(std::abs(state.amplitude("11")), 0.0, 1e-12);
+}
+
+TEST(MPSStateTest, BondCapAboveOneHoldsOnEveryBond) {
+    const int nqubits = 6;
+    const int cap = 3;
+    MPSState state(nqubits);
+    state.set_max_bond_dimension(cap);
+    for (int layer = 0; layer < 3; ++layer) {
+        for (int q = 0; q + 1 < nqubits; ++q) {
+            state.apply_two_site(random_unitary(4, 70 + 10 * layer + q), q);
+        }
+    }
+    EXPECT_EQ(state.get_max_bond_dimension_used(), cap);
+    for (int bond = 0; bond + 1 < nqubits; ++bond) {
+        EXPECT_LE(state.get_bond_dimension(bond), cap) << "bond " << bond;
+    }
+    EXPECT_GT(state.get_truncation_error(), 0.0);
+}
+
+TEST(MPSStateTest, NonUnitaryGatesOnEntangledAndDistantQubitsMatchTheStatevector) {
+    const int nqubits = 4;
+    std::vector<Gate> gates;
+    gates.push_back(make_gate("H", hadamard(), {}, {0}));
+    gates.push_back(make_gate("X", pauli_x_matrix(), {0}, {1}));
+    gates.push_back(make_gate("U2", random_unitary(4, 81), {}, {1, 2}));
+
+    // A damping on a qubit that is entangled with its neighbours
+    DenseMatrix damping = DenseMatrix::Zero(2, 2);
+    damping(0, 0) = 1.0;
+    damping(1, 1) = 0.3;
+    gates.push_back(make_gate("D", damping, {}, {1}));
+
+    // A generic non-unitary two-qubit matrix on a distant pair, which has to be routed with swaps
+    DenseMatrix generic = random_unitary(4, 82) * 0.5 + random_unitary(4, 83) * 0.25;
+    gates.push_back(make_gate("G", generic, {}, {3, 0}));
+
+    MPSState state(nqubits);
+    state.set_truncation_cutoff(0.0);
+    for (const Gate& gate : gates) {
+        state.apply_gate(gate);
+    }
+    EXPECT_NEAR((state.as_dense() - statevector(gates, nqubits)).norm(), 0.0, 1e-10);
+}
+
+TEST(MPSStateTest, NaNPropagatesInsteadOfLookingLikeZero) {
+    MPSState state(2);
+    DenseMatrix poisoned = hadamard();
+    poisoned(0, 1) = Complex(std::nan(""), 0.0);
+    state.apply_one_site(poisoned, 0);
+    EXPECT_TRUE(std::isnan(state.norm()));
+    EXPECT_THROW(state.normalize(), std::runtime_error);
+    EXPECT_THROW(state.sample(), std::runtime_error);
 }
 
 TEST(MPSStateTest, StreamsASummary) {

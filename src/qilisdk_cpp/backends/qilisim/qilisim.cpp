@@ -137,7 +137,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
         MPSState state_mps = initial_state_mps;
 
         // Run the simulation
-        sampling_mps(gates, n_qubits, initial_state_mps, noise_model_cpp, state_mps, config, readout);
+        sampling_mps(gates, n_qubits, initial_state_mps, noise_model_cpp, state_mps, intermediate_results, config, readout);
 
         // Construct the final result object
         result = construct_result_object(state_mps, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
@@ -379,6 +379,14 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
         throw py::value_error("nqubits must be positive.");
     }
 
+    // Reservoirs carry a density matrix between layers, so only the statevector methods can run their circuits
+    bool statevector_method = config.get_digital_method() == "statevector" || config.get_digital_method() == "statevector_matrix_free";
+    for (py::handle step : functional.attr("reservoir_layer")) {
+        if (!statevector_method && py::isinstance(step, Circuit)) {
+            throw py::value_error("Unsupported digital method for reservoirs: " + config.get_digital_method() + ". Use a statevector method instead.");
+        }
+    }
+
     qilisdk::log_debug("[QiliSim, C++] Quantum reservoir: " + std::to_string(n_qubits) + " qubits, " + std::to_string(py::len(functional.attr("input_per_layer"))) + " layers");
 
     // Parse the Python objects into C++ objects
@@ -443,7 +451,9 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 } else if (config.get_digital_method() == "statevector") {
                     sampling(gates, n_qubits, noise_model_cpp, state, intermediate_results, config, readout);
                 } else {
-                    throw py::value_error("Unsupported sampling method for reservoirs: " + config.get_digital_method());  // GCOV_EXCL_LINE
+                    // GCOV_EXCL_START (any other method is rejected before the first layer runs)
+                    throw py::value_error("Unsupported sampling method for reservoirs: " + config.get_digital_method());
+                    // GCOV_EXCL_STOP
                 }
 
                 // If we have a time evolution layer

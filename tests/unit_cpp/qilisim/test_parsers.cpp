@@ -2342,7 +2342,7 @@ TEST(ParseInitialStateMPS, OneReturnsAllOnes) {
     EXPECT_NEAR(std::abs(state.amplitude("11") - Complex(1.0, 0.0)), 0.0, 1e-12);
 }
 
-TEST(ParseInitialStateMPS, OtherNamedStateFallsBackToZero) {
+TEST(ParseInitialStateMPS, ZeroReturnsAllZeros) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         from qilisdk.core.qtensor import InitialState
@@ -2373,7 +2373,9 @@ TEST(ConstructResultsMPS, SamplingReadout_Succeeds) {
     NoiseModelCpp noise_model_cpp;
     QiliSimConfig config;
     std::vector<bool> qubits_to_measure = {true};
-    EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); });
+    py::dict samples = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure).attr("sampling").attr("samples");
+    ASSERT_EQ(py::len(samples), 1u);
+    EXPECT_EQ(samples["1"].cast<int>(), 10);
 }
 
 TEST(ConstructResultsMPS, ExpectationReadout_Succeeds) {
@@ -2383,13 +2385,18 @@ TEST(ConstructResultsMPS, ExpectationReadout_Succeeds) {
         from qilisdk.analog.hamiltonian import X
         _mps_ro_exp = [ExpectationReadout(observables=[X(0)])]
     )");
-    // |0> has <X(0)> = 0; this exercises the MPS ExpectationReadout branch.
+    // |+> has <X(0)> = 1
     MPSState state(1);
+    DenseMatrix hadamard(2, 2);
+    hadamard << 1.0, 1.0, 1.0, -1.0;
+    state.apply_one_site(hadamard / std::sqrt(2.0), 0);
     py::list readout = py::globals()["_mps_ro_exp"].cast<py::list>();
     NoiseModelCpp noise_model_cpp;
     QiliSimConfig config;
     std::vector<bool> qubits_to_measure = {true};
-    EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); });
+    py::list values = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure).attr("expectation_values").attr("expectation_values");
+    ASSERT_EQ(py::len(values), 1u);
+    EXPECT_NEAR(std::abs(values[0].cast<Complex>() - Complex(1.0, 0.0)), 0.0, 1e-12);
 }
 
 TEST(ConstructResultsMPS, StateTomographyReadoutExact_Succeeds) {
@@ -2398,12 +2405,15 @@ TEST(ConstructResultsMPS, StateTomographyReadoutExact_Succeeds) {
         from qilisdk.readout import StateTomographyReadout
         _mps_ro_tomo = [StateTomographyReadout()]
     )");
-    MPSState state(1);
+    MPSState state(1, "1");
     py::list readout = py::globals()["_mps_ro_tomo"].cast<py::list>();
     NoiseModelCpp noise_model_cpp;
     QiliSimConfig config;
     std::vector<bool> qubits_to_measure = {true};
-    EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); });
+    py::object tomography = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure).attr("state_tomography").attr("state");
+    EXPECT_EQ(tomography.attr("nqubits").cast<int>(), 1);
+    EXPECT_NEAR(std::abs(tomography.attr("__getitem__")(py::make_tuple(0, 0)).cast<Complex>()), 0.0, 1e-12);
+    EXPECT_NEAR(std::abs(tomography.attr("__getitem__")(py::make_tuple(1, 0)).cast<Complex>() - Complex(1.0, 0.0)), 0.0, 1e-12);
 }
 
 TEST(ConstructResultsMPS, StateTomographyReadoutNonExact_Throws) {

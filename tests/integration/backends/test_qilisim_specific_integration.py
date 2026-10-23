@@ -49,7 +49,7 @@ from qilisdk.digital import (
 )
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
-from qilisdk.noise import AmplitudeDamping, Dephasing, NoiseModel
+from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, NoiseModel, ReadoutAssignment
 from qilisdk.readout import ExpectationReadout, Readout, SamplingReadout, StateTomographyReadout
 
 random.seed(42)
@@ -63,7 +63,7 @@ analog_methods = [
 ]
 digital_methods = [DigitalMethod.statevector(matrix_free=False), DigitalMethod.statevector(matrix_free=True)]
 
-# The MPS simulator ignores noise and Monte Carlo, so it only joins the tests that use neither
+# The MPS simulator rejects Kraus noise and ignores Monte Carlo, so it only joins the tests that use neither
 digital_methods_with_mps = [*digital_methods, DigitalMethod.mps(max_bond_dimension=64)]
 
 _MONTE_CARLO_CONFIG = MonteCarloConfig(trajectories=100)
@@ -220,7 +220,7 @@ def test_reset_seed_rewinds_the_stream():
     assert backend.execute(DigitalPropagation(circuit=circuit), readout=readout).get_samples() == first
 
 
-@pytest.mark.parametrize("method", digital_methods)
+@pytest.mark.parametrize("method", digital_methods_with_mps)
 def test_intermediate_and_final_draws_are_independent(method):
     # Mid-circuit and final sampling used to share the seed, making them perfectly correlated.
     backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
@@ -1219,7 +1219,7 @@ def test_mps_matches_statevector_expectation_values(seed):
     ],
 )
 def test_mps_single_qubit_gates_match_statevector(gate):
-    """A one-qubit gate is applied without moving the orthogonality centre when it is unitary, so
+    """A one-qubit gate is applied without moving the orthogonality center when it is unitary, so
     every gate in the basis set has to leave the same state the statevector does."""
     circuit = Circuit(nqubits=3)
     circuit.add(H(0))
@@ -1298,8 +1298,8 @@ def test_mps_fidelity_improves_with_bond_dimension():
 
 
 @pytest.mark.parametrize("max_bond_dimension", [1, 2, 3, 5])
-def test_mps_state_stays_normalised_under_truncation(max_bond_dimension):
-    """Truncation throws weight away, so the state has to be renormalised or every expectation
+def test_mps_state_stays_normalized_under_truncation(max_bond_dimension):
+    """Truncation throws weight away, so the state has to be renormalized or every expectation
     value drifts towards zero as the cap is tightened."""
     circuit = _chain_circuit(nqubits=7, layers=3, seed=13)
     state = _final_state(_mps_backend(max_bond_dimension=max_bond_dimension), circuit)
@@ -1332,7 +1332,7 @@ def test_mps_circuit_optimizations_do_not_change_the_result(fuse_gates, combine_
 
 
 def test_mps_trotterized_schedule_matches_statevector():
-    """The workload the MPS method exists for: a Trotterised anneal, whose wrap-around coupling
+    """The workload the MPS method exists for: a Trotterized anneal, whose wrap-around coupling
     forces the longest swap route in the chain."""
     nqubits, total_time, steps = 6, 4.0, 20
     h_x = -sum(pauli_x(i) for i in range(nqubits))
@@ -1395,18 +1395,90 @@ def test_matrix_free_statevector_swap_gate_is_wrong(qubit_a, qubit_b):
     )
 
 
-def test_mps_ignores_mid_circuit_measurements():
-    """Documents a current limitation: the MPS method skips M gates, so unlike the statevector it
-    neither collapses the state nor reports intermediate results. Update this test when that changes."""
+def test_mps_reports_mid_circuit_measurements():
+    """A mid-circuit measurement is read out without collapsing the state, as the statevector does by default."""
     circuit = Circuit(nqubits=2)
     circuit.add(H(0))
     circuit.add(M(0))
     circuit.add(CNOT(0, 1))
     circuit.add(M(0, 1))
-    mps = _mps_backend().execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=64))
-    exact = _statevector_backend().execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=64))
-    assert len(mps.intermediate_results) == 0
-    assert len(exact.intermediate_results) > 0
+    readout = Readout().with_sampling(nshots=2000).with_expectation([pauli_z(0), pauli_x(0)])
+    mps = _mps_backend().execute(DigitalPropagation(circuit=circuit), readout)
+    exact = _statevector_backend().execute(DigitalPropagation(circuit=circuit), readout)
+    assert len(mps.intermediate_results) == len(exact.intermediate_results) == 1
+    np.testing.assert_allclose(
+        mps.intermediate_results[0].get_expectation_values(),
+        exact.intermediate_results[0].get_expectation_values(),
+        atol=1e-10,
+    )
+    assert set(mps.intermediate_results[0].get_samples()) == set(exact.intermediate_results[0].get_samples())
+    assert set(mps.get_samples()) == {"00", "11"}
+
+
+def test_mps_rejects_measurement_collapse():
+    """Collapsing after a mid-circuit measurement leaves a mixed state, which an MPS cannot hold."""
+    circuit = Circuit(nqubits=1)
+    circuit.add(H(0))
+    circuit.add(M(0))
+    circuit.add(H(0))
+    circuit.add(M(0))
+    backend = QiliSim(
+        digital_simulation_method=DigitalMethod.mps(),
+        execution_config=ExecutionConfig(seed=42, num_threads=1, measurement_collapse=True),
+    )
+    propagation = DigitalPropagation(circuit=circuit)
+    readout = Readout().with_sampling(nshots=10)
+    with pytest.raises(ValueError, match="measurement"):
+        backend.execute(propagation, readout)
+
+
+def test_mps_ghz_beyond_statevector_size():
+    """A 50 qubit GHZ state needs a 2^50 statevector but only bond dimension 2 as an MPS."""
+    nqubits = 50
+    circuit = Circuit(nqubits=nqubits)
+    circuit.add(H(0))
+    for qubit in range(nqubits - 1):
+        circuit.add(CNOT(qubit, qubit + 1))
+    readout = Readout().with_sampling(nshots=200).with_expectation([pauli_z(0) * pauli_z(nqubits - 1), pauli_z(0)])
+    result = QiliSim(digital_simulation_method=DigitalMethod.mps()).execute(
+        DigitalPropagation(circuit=circuit), readout
+    )
+    samples = result.get_samples()
+    assert set(samples) == {"0" * nqubits, "1" * nqubits}
+    np.testing.assert_allclose(result.get_expectation_values(), [1.0, 0.0], atol=1e-10)
+
+
+def test_mps_rejects_kraus_noise_but_applies_readout_error():
+    """Kraus noise would make the state mixed, so it is refused, while readout error happens after sampling."""
+    circuit = Circuit(nqubits=1)
+    circuit.add(X(0))
+    readout = Readout().with_sampling(nshots=50)
+    bit_flip = NoiseModel()
+    bit_flip.add(BitFlip(probability=0.1), qubits=[0])
+    damped = QiliSim(digital_simulation_method=DigitalMethod.mps(), noise_model=bit_flip)
+    propagation = DigitalPropagation(circuit=circuit)
+    with pytest.raises(ValueError, match="Kraus or Lindblad"):
+        damped.execute(propagation, readout)
+
+    flip = NoiseModel()
+    flip.add(ReadoutAssignment(p01=0.0, p10=1.0), qubits=[0])
+    flipped = QiliSim(digital_simulation_method=DigitalMethod.mps(), noise_model=flip)
+    assert flipped.execute(propagation, readout).get_samples() == {"0": 50}
+
+
+def test_mps_reservoir_is_rejected_before_any_layer_runs():
+    """A reservoir carries a density matrix between layers, which an MPS cannot hold."""
+    encoding = Circuit(1)
+    encoding.add(RX(0, theta=ReservoirInput("u", 0.1)))
+    layer = ReservoirLayer(
+        evolution_dynamics=Schedule(hamiltonians={"h": pauli_z(0)}, total_time=1.0, dt=0.1),
+        input_encoding=encoding,
+    )
+    reservoir = QuantumReservoir(initial_state=ket(0), reservoir_layer=layer, input_per_layer=[{"u": 0.2}])
+    backend = QiliSim(digital_simulation_method=DigitalMethod.mps())
+    readout = Readout().with_state_tomography()
+    with pytest.raises(ValueError, match="reservoirs"):
+        backend.execute(reservoir, readout)
 
 
 # ──────────────────────────────────────────────────────────────────────────────

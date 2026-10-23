@@ -208,8 +208,8 @@ at the cost of being slower if the circuit contains many non-Clifford gates. It 
         digital_simulation_method=DigitalMethod.stabilizer(max_states=100),
     )
 
-The third is a matrix product state simulator, which represents the state as a chain of tensors and contracts it exactly.
-Its cost grows with the entanglement the circuit generates rather than with the qubit count, so weakly entangling circuits on
+The third is a matrix product state simulator, which represents the state as a chain of tensors truncated after each two-qubit gate.
+Its cost grows with the entanglement the circuit generates and only linearly with the qubit count, so weakly entangling circuits on
 many qubits are cheap. It supports one- and two-qubit gates, and has the following options:
 
 .. list-table::
