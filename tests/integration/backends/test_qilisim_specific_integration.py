@@ -1415,21 +1415,22 @@ def test_mps_reports_mid_circuit_measurements():
     assert set(mps.get_samples()) == {"00", "11"}
 
 
-def test_mps_rejects_measurement_collapse():
-    """Collapsing after a mid-circuit measurement leaves a mixed state, which an MPS cannot hold."""
+def test_mps_ignores_measurement_collapse():
+    """Collapsing after a mid-circuit measurement leaves a mixed state, which an MPS cannot hold, so it is
+    ignored and the run matches the uncollapsed one."""
     circuit = Circuit(nqubits=1)
     circuit.add(H(0))
     circuit.add(M(0))
     circuit.add(H(0))
     circuit.add(M(0))
-    backend = QiliSim(
+    readout = Readout().with_sampling(nshots=10)
+    collapsing = QiliSim(
         digital_simulation_method=DigitalMethod.mps(),
         execution_config=ExecutionConfig(seed=42, num_threads=1, measurement_collapse=True),
     )
-    propagation = DigitalPropagation(circuit=circuit)
-    readout = Readout().with_sampling(nshots=10)
-    with pytest.raises(ValueError, match="measurement"):
-        backend.execute(propagation, readout)
+    result = collapsing.execute(DigitalPropagation(circuit=circuit), readout)
+    assert len(result.intermediate_results) == 1
+    assert result.get_samples() == {"0": 10}
 
 
 def test_mps_ghz_beyond_statevector_size():

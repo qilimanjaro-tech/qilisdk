@@ -79,6 +79,28 @@ DenseMatrix collapse_state(const DenseMatrix& state, const std::vector<bool>& qu
     return density_matrix;
 }
 
+static int group_measurements(const std::vector<Gate>& gates, int start, std::vector<bool>& qubits_to_measure) {
+    /*
+    Group the run of adjacent measurement gates starting at a given index, so they can be done all at once.
+
+    Args:
+        gates (std::vector<Gate>&): The gates of the circuit.
+        start (int): The index of the first measurement gate in the run.
+        qubits_to_measure (std::vector<bool>&): Set to true for every qubit measured in the run.
+
+    Returns:
+        int: The number of adjacent measurement gates in the run.
+    */
+    int num_measurements = 0;
+    for (int j = start; j < int(gates.size()) && gates[j].get_name() == "M"; ++j) {
+        for (int target : gates[j].get_target_qubits()) {
+            qubits_to_measure[target] = true;
+        }
+        num_measurements++;
+    }
+    return num_measurements;
+}
+
 void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories) {
     /*
     Execute a sampling functional using a simple statevector simulator.
@@ -572,9 +594,6 @@ void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& 
     /*
     Execute a sampling functional using a matrix product state simulator.
 
-    Mid-circuit measurements are read out into intermediate_results without collapsing
-    the state, since the non-selective collapse leaves a mixed state that an MPS cannot hold.
-
     Args:
         gates (std::vector<Gate>&): The list of gates in the circuit.
         n_qubits (int): The number of qubits in the circuit.
@@ -586,8 +605,7 @@ void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& 
         readout (py::object): A list with readout information to determine when and what to measure.
 
     Raises:
-        py::value_error: If the noise model has Kraus or Lindblad terms, if measurement collapse is
-            requested for a mid-circuit measurement, or if the state diverges to NaN during the simulation.
+        py::value_error: If the noise model has Kraus or Lindblad terms, or if the state diverges to NaN during the simulation.
     */
 
     // Set the number of threads
@@ -612,6 +630,11 @@ void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& 
         warning("Monte Carlo sampling is not supported in the MPS simulator. Monte Carlo will be ignored.");
     }
 
+    // Throw a warning if we are using measurement collapse, since an MPS cannot represent the resulting mixed state
+    if (config.get_measurement_collapse()) {
+        warning("Measurement collapse is not supported in the MPS simulator. Measurement collapse will be ignored.");
+    }
+
     // We start with the initial state, with the settings from the config
     state = initial_state;
     state.set_max_bond_dimension(config.get_mps_max_bond_dimension());
@@ -633,42 +656,42 @@ void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& 
     }
 
     // Then we apply each gate
-    for (size_t i = 0; i < optimized_gates.size(); ++i) {
+    for (int i = 0; i < int(optimized_gates.size()); ++i) {
+        const auto& gate = optimized_gates[i];
+
         // Let Ctrl-C interrupt the circuit between gates
         check_signals();
 
-        // If it's a measurement, find the whole run of adjacent measurements
-        if (optimized_gates[i].get_name() == "M") {
-            size_t run_end = i;
+        // If it's a measurement
+        if (gate.get_name() == "M") {
+            // Check for adjacent measurements and if we have any, do them all at once
             std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
-            while (run_end < optimized_gates.size() && optimized_gates[run_end].get_name() == "M") {
-                for (int target : optimized_gates[run_end].get_target_qubits()) {
-                    qubits_to_measure_after_gate[target] = true;
-                }
-                ++run_end;
+            int num_measurements = group_measurements(optimized_gates, i, qubits_to_measure_after_gate);
+            bool are_final_measurements = (i + num_measurements == int(optimized_gates.size()));
+
+            // Construct the result
+            if (!are_final_measurements) {
+                py::object result = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure_after_gate);
+                intermediate_results.push_back(result);
             }
 
-            // Final measurements are read out by the caller, mid-circuit ones are read out here
-            if (run_end < optimized_gates.size()) {
-                if (config.get_measurement_collapse()) {
-                    throw py::value_error("The MPS simulator cannot collapse the state after a mid-circuit measurement, since the result is a mixed state. Disable measurement_collapse or use a statevector method.");
-                }
-                intermediate_results.push_back(construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure_after_gate));
-            }
-            i = run_end - 1;
+            qilisdk::log_trace("[Sampling, C++] Measuring " + std::to_string(num_measurements) + " qubits at gate index " + std::to_string(i));
+
+            // Skip the next measurements since we did them all at once
+            i += (num_measurements - 1);
             continue;
         }
 
         // Apply the gate
-        state.apply_gate(optimized_gates[i]);
+        state.apply_gate(gate);
 
         // Check for nan anywhere the gate touched, before normalizing would hide it
-        std::vector<int> qubits = optimized_gates[i].get_qubits();
+        std::vector<int> qubits = gate.get_qubits();
         int first = *std::min_element(qubits.begin(), qubits.end());
         int last = *std::max_element(qubits.begin(), qubits.end());
         for (int q = first; q <= last; ++q) {
             if (state.get_site_tensor(q).has_nan()) {
-                throw py::value_error("State has become NaN while applying gate " + optimized_gates[i].get_id() + ".");
+                throw py::value_error("State has become NaN while applying gate " + gate.get_id() + ".");
             }
         }
 

@@ -524,7 +524,7 @@ class DigitalMethod(BaseSimulatorConfig):
         discarded is reported as a warning when it exceeds 1%.
 
         Mid-circuit measurements are reported as intermediate results, but cannot collapse
-        the state, so ``measurement_collapse`` is rejected for them. Noise models are
+        the state, so ``measurement_collapse`` is ignored with a warning. Noise models are
         limited to readout error and parameter perturbations.
 
         Args:
