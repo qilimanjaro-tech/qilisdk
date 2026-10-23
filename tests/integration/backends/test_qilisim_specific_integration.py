@@ -1103,7 +1103,7 @@ def test_mps_initial_states():
         (InitialState.UNIFORM, [0.5, 0.5, 0.5, 0.5]),
     ):
         result = backend._execute_digital_propagation(
-            DigitalPropagation(circuit=Circuit(nqubits=2)), readout, initial_state
+            DigitalPropagation(circuit=Circuit(nqubits=2), initial_state=initial_state), readout
         )
         assert np.allclose(_dense_state(result.get_state()).ravel(), expected, atol=1e-12)
 
@@ -1366,11 +1366,10 @@ def test_mps_rejects_a_density_matrix_initial_state():
     circuit = Circuit(nqubits=2)
     circuit.add(H(0))
     backend = _mps_backend()
-    propagation = DigitalPropagation(circuit=circuit)
+    propagation = DigitalPropagation(circuit=circuit, initial_state=ket(0, 0).to_density_matrix())
     readout = [SamplingReadout(nshots=8)]
-    density_matrix = ket(0, 0).to_density_matrix()
     with pytest.raises(ValueError, match="MPS backend"):
-        backend._execute_digital_propagation(propagation, readout=readout, initial_state=density_matrix)
+        backend._execute_digital_propagation(propagation, readout=readout)
 
 
 @pytest.mark.parametrize(("qubit_a", "qubit_b"), [(1, 2), (2, 3), (1, 3)])
