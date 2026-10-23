@@ -121,6 +121,35 @@ def test_backend_variational_program(monkeypatch):
     assert np.isclose(res.optimal_parameters[0], 0.5)
 
 
+def test_variational_program_clamps_out_of_bounds_parameters(monkeypatch):
+    backend = Backend()
+
+    circ = Circuit(1)
+    param = Parameter("phi", 0.5, bounds=(0.0, 1.0))
+    circ.add(RZ(0, phi=param))
+    func = DigitalPropagation(circuit=circ)
+    readout = [SamplingReadout(nshots=100)]
+
+    class OutOfBoundsOptimizer:
+        def optimize(self, cost_function, bounds, init_parameters, store_intermediate_results=False):
+            assert np.isclose(cost_function([2.9]), 1.0)
+            assert np.isclose(param.value, 1.0)
+            cost_function([-0.3])
+            assert np.isclose(param.value, 0.0)
+            return MockOptimizerResult(optimal_parameters=[2.9], optimal_value=1.0)
+
+    var_prog = VariationalProgram(functional=func, optimizer=OutOfBoundsOptimizer(), cost_function=MockCostFunction())
+
+    monkeypatch.setattr(
+        backend,
+        "_execute_digital_propagation",
+        lambda f, ro: _make_mock_result(f),
+    )
+
+    backend._execute_variational_program(functional=var_prog, readout=readout)
+    assert np.isclose(param.value, 1.0)
+
+
 def test_non_parameterized_functional():
     backend = Backend()
 
