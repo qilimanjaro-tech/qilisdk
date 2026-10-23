@@ -551,17 +551,32 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
         warning("Monte Carlo sampling is not supported in the stabilizer simulator. Monte Carlo will be ignored.");
     }
 
+    // Throw a warning if we have mid-circuit measurements (any M followed by a gate), since the stabilizer simulator only supports final measurements
+    bool gate_after_measurement = false;
+    for (int i = int(gates.size()) - 1; i >= 0; --i) {
+        if (gates[i].get_name() != "M") {
+            gate_after_measurement = true;
+        } else if (gate_after_measurement) {
+            warning("Mid-circuit measurements are not supported in the stabilizer simulator. Only final measurements will be used.");
+            break;
+        }
+    }
+
     // We start with the initial state
     state = initial_state;
     state.set_max_terms(config.get_stabilizer_max_states());
 
     // Then we apply each gate
-    std::vector<bool> qubits_measured(n_qubits, false);
     for (int i = 0; i < int(gates.size()); ++i) {
         const auto& gate = gates[i];
 
         // Let Ctrl-C interrupt the circuit between gates
         check_signals();
+
+        // Measurements are not gates, the measured qubits are masked when constructing the result
+        if (gate.get_name() == "M") {
+            continue;
+        }
 
         state.apply_gate(gate);
     }
