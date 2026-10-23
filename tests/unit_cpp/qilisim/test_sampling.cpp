@@ -1079,4 +1079,164 @@ TEST_F(SamplingTest, Stabilizer_MonteCarlo_IgnoredWithWarning) {
     EXPECT_EQ(final_state.sample(1).begin()->first, "1");  // X|0> = |1>
 }
 
+// Readout error is applied after sampling, so the MPS simulator accepts it and runs the circuit.
+TEST_F(SamplingTest, MPS_ReadoutNoise_Accepted) {
+    int n = 1;
+    std::vector<Gate> gates = {makeX(0)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    std::vector<py::object> intermediate_results;
+    NoiseModelCpp nm = symmetricReadoutNoise(n, 0.1);
+    EXPECT_NO_THROW(sampling_mps(gates, n, initial, nm, final_state, intermediate_results, cfg, readout));
+    EXPECT_EQ(final_state.sample(1).begin()->first, "1");  // X|0> = |1>
+}
+
+// Kraus and Lindblad noise would make the state mixed, so both are rejected rather than dropped.
+TEST_F(SamplingTest, MPS_KrausAndLindbladNoise_Throw) {
+    int n = 1;
+    std::vector<Gate> gates = {makeX(0)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    std::vector<py::object> intermediate_results;
+    SparseMatrix identity = pauliX2() * pauliX2();
+    NoiseModelCpp kraus_global;
+    kraus_global.add_kraus_operators_global({identity});
+    NoiseModelCpp kraus_per_qubit;
+    kraus_per_qubit.add_kraus_operators_per_qubit(0, {identity});
+    NoiseModelCpp kraus_per_gate;
+    kraus_per_gate.add_kraus_operators_per_gate("X", {identity});
+    NoiseModelCpp kraus_per_gate_qubit;
+    kraus_per_gate_qubit.add_kraus_operators_per_gate_qubit("X", 0, {identity});
+    NoiseModelCpp lindblad;
+    lindblad.add_jump_operator(identity);
+    for (NoiseModelCpp* nm : {&kraus_global, &kraus_per_qubit, &kraus_per_gate, &kraus_per_gate_qubit, &lindblad}) {
+        EXPECT_THROW(sampling_mps(gates, n, initial, *nm, final_state, intermediate_results, cfg, readout), py::value_error);
+    }
+}
+
+// The MPS simulator ignores Monte Carlo sampling, warning the user. The circuit still runs.
+TEST_F(SamplingTest, MPS_MonteCarlo_IgnoredWithWarning) {
+    int n = 1;
+    std::vector<Gate> gates = {makeX(0)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    std::vector<py::object> intermediate_results;
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);  // triggers the warning
+    EXPECT_NO_THROW(sampling_mps(gates, n, initial, noNoise, final_state, intermediate_results, cfgMC, readout));
+    EXPECT_EQ(final_state.sample(1).begin()->first, "1");
+}
+
+// A mid-circuit measurement is read out without collapsing, final measurements are left to the caller.
+TEST_F(SamplingTest, MPS_MeasurementsAndSingleQubitMerging) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeM(0), makeX(0), makeX(0), makeM(1)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    std::vector<py::object> intermediate_results;
+    QiliSimConfig cfgMerge = cfg;
+    cfgMerge.set_combine_single_qubit_gates(true);
+    cfgMerge.set_normalize_after_gate(true);
+    EXPECT_NO_THROW(sampling_mps(gates, n, initial, noNoise, final_state, intermediate_results, cfgMerge, readout));
+    EXPECT_EQ(intermediate_results.size(), 1u);
+    EXPECT_EQ(final_state.sample(1).begin()->first, "10");
+    EXPECT_NEAR(final_state.get_truncation_error(), 0.0, 1e-12);
+}
+
+// Collapsing after a mid-circuit measurement leaves a mixed state, so it is ignored with a warning.
+TEST_F(SamplingTest, MPS_MeasurementCollapse_IgnoredWithWarning) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0), makeM(0), makeH(0), makeM(0)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    std::vector<py::object> intermediate_results;
+    QiliSimConfig cfgCollapse = cfg;
+    cfgCollapse.set_measurement_collapse(true);
+    EXPECT_NO_THROW(sampling_mps(gates, n, initial, noNoise, final_state, intermediate_results, cfgCollapse, readout));
+    EXPECT_EQ(intermediate_results.size(), 1u);
+    EXPECT_EQ(final_state.sample(1).begin()->first, "0");  // H H |0> = |0>, uncollapsed
+}
+
+TEST_F(SamplingTest, MidCircuitMeasurementsMPS) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeM(0), makeX(0), makeM(0)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout
+        _mps_mid_ro = [SamplingReadout(nshots=10, expand_samples=False)]
+    )");
+    py::list sampling_readout = py::globals()["_mps_mid_ro"].cast<py::list>();
+    std::vector<py::object> intermediate_results;
+    sampling_mps(gates, n, initial, noNoise, final_state, intermediate_results, cfg, sampling_readout);
+    ASSERT_EQ(intermediate_results.size(), 1u);
+    py::dict samples = intermediate_results[0].attr("sampling").attr("samples");
+    EXPECT_EQ(samples.size(), 1u);
+    EXPECT_EQ(samples["1"].cast<int>(), 10);                // only qubit 0 was measured, after X
+    EXPECT_EQ(final_state.sample(1).begin()->first, "00");  // X X |00> = |00>
+}
+
+TEST_F(SamplingTest, MidCircuitMeasurementsMPS_AdjacentMeasurementsGrouped) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeM(0), makeM(1), makeX(1), makeM(1)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout
+        _mps_grouped_ro = [SamplingReadout(nshots=10, expand_samples=False)]
+    )");
+    py::list sampling_readout = py::globals()["_mps_grouped_ro"].cast<py::list>();
+    std::vector<py::object> intermediate_results;
+    sampling_mps(gates, n, initial, noNoise, final_state, intermediate_results, cfg, sampling_readout);
+    ASSERT_EQ(intermediate_results.size(), 1u);
+    py::dict samples = intermediate_results[0].attr("sampling").attr("samples");
+    EXPECT_EQ(samples.size(), 1u);
+    EXPECT_EQ(samples["10"].cast<int>(), 10);  // M(0) and M(1) give one result over both qubits
+}
+
+// A gate that turns the state into NaN is reported as such, rather than as a zero norm.
+TEST_F(SamplingTest, MPS_NaNGateThrows) {
+    int n = 2;
+    SparseMatrix nan_matrix = pauliX2();
+    nan_matrix.coeffRef(0, 1) = Complex(std::nan(""), 0.0);
+    std::vector<Gate> gates = {Gate("U1", nan_matrix, {}, {1}, {})};
+    MPSState initial(n);
+    MPSState final_state(n);
+    std::vector<py::object> intermediate_results;
+    QiliSimConfig cfgNormalize = cfg;
+    cfgNormalize.set_normalize_after_gate(true);
+    std::string message;
+    try {
+        sampling_mps(gates, n, initial, noNoise, final_state, intermediate_results, cfgNormalize, readout);
+    } catch (const py::value_error& e) {
+        message = e.what();
+    }
+    EXPECT_NE(message.find("NaN"), std::string::npos);
+}
+
+// A bond dimension of one cannot hold a Bell state, so the discarded weight is warned about.
+TEST_F(SamplingTest, MPS_TruncationWarnsWhenSignificant) {
+    int n = 2;
+    std::vector<Gate> gates = {makeH(0), Gate("X", pauliX2(), {0}, {1}, {})};
+    MPSState initial(n);
+    MPSState final_state(n);
+    std::vector<py::object> intermediate_results;
+    QiliSimConfig cfgTight = cfg;
+    cfgTight.set_mps_max_bond_dimension(1);
+    cfgTight.set_mps_truncation_cutoff(1e-12);
+    EXPECT_NO_THROW(sampling_mps(gates, n, initial, noNoise, final_state, intermediate_results, cfgTight, readout));
+    EXPECT_NEAR(final_state.get_truncation_error(), 0.5, 1e-12);
+    EXPECT_GT(final_state.get_truncation_error(), MPSState::TRUNCATION_WARNING_THRESHOLD);
+    EXPECT_EQ(final_state.get_max_bond_dimension_used(), 1);
+}
+
+// The circuit and the state must agree on how many qubits there are.
+TEST_F(SamplingTest, MPS_QubitCountMismatchThrows) {
+    std::vector<Gate> gates = {makeX(0)};
+    MPSState initial(2);
+    MPSState final_state(2);
+    std::vector<py::object> intermediate_results;
+    EXPECT_THROW(sampling_mps(gates, 3, initial, noNoise, final_state, intermediate_results, cfg, readout), py::value_error);
+}
+
 // GCOV_EXCL_BR_STOP
