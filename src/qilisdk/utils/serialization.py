@@ -14,15 +14,58 @@
 
 # ruff: file-ignore[any-type]
 
+import importlib
+from functools import cache
 from io import StringIO
 from pathlib import Path
 from typing import Any, TypeVar, overload
 
 from loguru import logger
 
-from qilisdk.yaml import yaml
+from qilisdk.yaml import QiliYAML
 
 T = TypeVar("T")
+
+# A fresh QiliYAML is created per call: registered tags live on its constructor/representer classes, and a handler
+# left in a failed state by a previous call must not affect later ones.
+
+_REGISTERING_MODULES = (
+    "qilisdk.analog.hamiltonian",
+    "qilisdk.analog.schedule",
+    "qilisdk.core.comparison",
+    "qilisdk.core.expression",
+    "qilisdk.core.interpolator",
+    "qilisdk.core.model",
+    "qilisdk.core.qtensor",
+    "qilisdk.core.variables",
+    "qilisdk.cost_functions.model_cost_function",
+    "qilisdk.cost_functions.observable_cost_function",
+    "qilisdk.digital.ansatz",
+    "qilisdk.digital.circuit",
+    "qilisdk.digital.gates",
+    "qilisdk.experiments.experiment_functional",
+    "qilisdk.experiments.experiment_result",
+    "qilisdk.functionals.analog_evolution",
+    "qilisdk.functionals.digital_propagation",
+    "qilisdk.functionals.functional_result",
+    "qilisdk.functionals.quantum_reservoirs",
+    "qilisdk.functionals.variational_program",
+    "qilisdk.functionals.variational_program_result",
+    "qilisdk.optimizers.optimizer_result",
+    "qilisdk.optimizers.scipy_optimizer",
+    "qilisdk.readout.readout",
+    "qilisdk.readout.readout_result",
+    "qilisdk.readout.readout_spec",
+    "qilisdk.utils.classical_solvers.base_solver",
+)
+"""Modules that register classes with ``@yaml.register_class``, i.e. every tag QiliSDK can load."""
+
+
+@cache
+def _import_registering_modules() -> None:
+    """Import every module that registers classes, so loading does not depend on what the caller has imported."""
+    for module in _REGISTERING_MODULES:
+        importlib.import_module(module)
 
 
 class SerializationError(Exception):
@@ -48,7 +91,7 @@ def serialize(obj: Any) -> str:
     logger.debug("[Serialization] Serializing object of type {} to YAML string", type(obj).__name__)
     try:
         with StringIO() as stream:
-            yaml.dump(obj, stream)
+            QiliYAML().dump(obj, stream)
             return stream.getvalue()
     except Exception as e:
         raise SerializationError(f"Failed to serialize object {e}") from e
@@ -65,8 +108,12 @@ def serialize_to(obj: Any, file: str) -> None:
         SerializationError: If serialization to file fails.
     """
     logger.debug("[Serialization] Serializing object of type {} to file {}", type(obj).__name__, file)
+    # Serialize fully before opening the file, so a failure leaves any existing file untouched.
     try:
-        yaml.dump(obj, Path(file))
+        with StringIO() as stream:
+            QiliYAML().dump(obj, stream)
+            content = stream.getvalue()
+        Path(file).write_text(content, encoding="utf-8")
     except Exception as e:
         raise SerializationError(f"Failed to serialize object {e} to file {file}") from e
 
@@ -93,9 +140,10 @@ def deserialize(string: str, cls: type[T] | None = None) -> Any | T:
         Any | T: The deserialized object, optionally cast to the specified class type.
     """
     logger.debug("[Serialization] Deserializing object from YAML string")
+    _import_registering_modules()
     try:
         with StringIO(string) as stream:
-            result = yaml.load(stream)
+            result = QiliYAML().load(stream)
     except Exception as e:
         raise DeserializationError(f"Failed to deserialize YAML string: {e}") from e
     if cls is not None and not isinstance(result, cls):
@@ -125,8 +173,9 @@ def deserialize_from(file: str, cls: type[T] | None = None) -> Any | T:
         Any | T: The deserialized object, optionally cast to the specified class type.
     """
     logger.debug("[Serialization] Deserializing object from file {}", file)
+    _import_registering_modules()
     try:
-        result = yaml.load(Path(file))
+        result = QiliYAML().load(Path(file))
     except Exception as e:
         raise DeserializationError(f"Failed to deserialize YAML string {e} from file {file}") from e
     if cls is not None and not isinstance(result, cls):

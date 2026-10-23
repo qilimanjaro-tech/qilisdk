@@ -57,7 +57,7 @@ msgstr ""
 #: ../../modules/core/core_terms_maps_comparisons.rst:128
 #: ../../modules/core/core_terms_maps_comparisons.rst:152
 #: ../../modules/core/core_terms_maps_comparisons.rst:194
-#: ../../modules/core/core_terms_maps_comparisons.rst:251
+#: ../../modules/core/core_terms_maps_comparisons.rst:252
 msgid "**Output**:"
 msgstr "**Sortida**:"
 
@@ -226,20 +226,22 @@ msgid ""
 "To write your own function, subclass "
 ":class:`~qilisdk.core.expression.Function` with a ``NAME``, a numeric "
 "kernel and a derivative. Everything else (canonicalization, equality, "
-"``derivative``, ``expand``, ``substitute``, serialization) comes from the"
-" base class."
+"``derivative``, ``expand``, ``substitute``) comes from the base class. To "
+"make the function serializable, also decorate it with "
+"``@yaml.register_class`` (``from qilisdk.yaml import yaml``)."
 msgstr ""
 "Per escriure la vostra pròpia funció, creeu una subclasse de "
 ":class:`~qilisdk.core.expression.Function` amb un ``NAME``, un nucli "
 "numèric i una derivada. Tota la resta (canonització, igualtat, "
-"``derivative``, ``expand``, ``substitute``, serialització) la proporciona "
-"la classe base."
+"``derivative``, ``expand``, ``substitute``) la proporciona la classe base. "
+"Perquè la funció sigui serialitzable, decoreu-la també amb "
+"``@yaml.register_class`` (``from qilisdk.yaml import yaml``)."
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:207
+#: ../../modules/core/core_terms_maps_comparisons.rst:208
 msgid "Comparisons"
 msgstr "Comparacions"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:209
+#: ../../modules/core/core_terms_maps_comparisons.rst:210
 msgid ""
 "A :class:`~qilisdk.core.comparison.Comparison` relates two expressions "
 "and is what a :class:`~qilisdk.core.model.Constraint` is built from. It "
@@ -251,83 +253,83 @@ msgstr ""
 ":class:`~qilisdk.core.model.Constraint`. No és una ``Expression`` en si "
 "mateixa. Utilitzeu els operadors següents per construir-ne una:"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:218
+#: ../../modules/core/core_terms_maps_comparisons.rst:219
 msgid "Comparison Operation"
 msgstr "Operació de comparació"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:219
+#: ../../modules/core/core_terms_maps_comparisons.rst:220
 msgid "QiliSDK Method"
 msgstr "Mètode QiliSDK"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:220
+#: ../../modules/core/core_terms_maps_comparisons.rst:221
 msgid "Alias"
 msgstr "Àlies"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:221
+#: ../../modules/core/core_terms_maps_comparisons.rst:222
 msgid "Equality"
 msgstr "Igualtat"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:222
+#: ../../modules/core/core_terms_maps_comparisons.rst:223
 msgid ":meth:`Equal(lhs, rhs)<qilisdk.core.comparison.Equal>`"
 msgstr ":meth:`Equal(lhs, rhs)<qilisdk.core.comparison.Equal>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:223
+#: ../../modules/core/core_terms_maps_comparisons.rst:224
 msgid ":meth:`EQ(lhs, rhs)<qilisdk.core.comparison.EQ>`"
 msgstr ":meth:`EQ(lhs, rhs)<qilisdk.core.comparison.EQ>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:224
+#: ../../modules/core/core_terms_maps_comparisons.rst:225
 msgid "Not Equal"
 msgstr "Diferent de"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:225
+#: ../../modules/core/core_terms_maps_comparisons.rst:226
 msgid ":meth:`NotEqual(lhs, rhs)<qilisdk.core.comparison.NotEqual>`"
 msgstr ":meth:`NotEqual(lhs, rhs)<qilisdk.core.comparison.NotEqual>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:226
+#: ../../modules/core/core_terms_maps_comparisons.rst:227
 msgid ":meth:`NEQ(lhs, rhs)<qilisdk.core.comparison.NEQ>`"
 msgstr ":meth:`NEQ(lhs, rhs)<qilisdk.core.comparison.NEQ>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:227
+#: ../../modules/core/core_terms_maps_comparisons.rst:228
 msgid "Less Than"
 msgstr "Menor que"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:228
+#: ../../modules/core/core_terms_maps_comparisons.rst:229
 msgid ":meth:`LessThan(lhs, rhs)<qilisdk.core.comparison.LessThan>`"
 msgstr ":meth:`LessThan(lhs, rhs)<qilisdk.core.comparison.LessThan>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:229
+#: ../../modules/core/core_terms_maps_comparisons.rst:230
 msgid ":meth:`LT(lhs, rhs)<qilisdk.core.comparison.LT>`"
 msgstr ":meth:`LT(lhs, rhs)<qilisdk.core.comparison.LT>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:230
+#: ../../modules/core/core_terms_maps_comparisons.rst:231
 msgid "Less Than or Equal"
 msgstr "Menor o igual que"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:231
+#: ../../modules/core/core_terms_maps_comparisons.rst:232
 msgid ":meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.comparison.LessThanOrEqual>`"
 msgstr ":meth:`LessThanOrEqual(lhs, rhs)<qilisdk.core.comparison.LessThanOrEqual>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:232
+#: ../../modules/core/core_terms_maps_comparisons.rst:233
 msgid ":meth:`LEQ(lhs, rhs)<qilisdk.core.comparison.LEQ>`"
 msgstr ":meth:`LEQ(lhs, rhs)<qilisdk.core.comparison.LEQ>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:233
+#: ../../modules/core/core_terms_maps_comparisons.rst:234
 msgid "Greater Than"
 msgstr "Major que"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:234
+#: ../../modules/core/core_terms_maps_comparisons.rst:235
 msgid ":meth:`GreaterThan(lhs, rhs)<qilisdk.core.comparison.GreaterThan>`"
 msgstr ":meth:`GreaterThan(lhs, rhs)<qilisdk.core.comparison.GreaterThan>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:235
+#: ../../modules/core/core_terms_maps_comparisons.rst:236
 msgid ":meth:`GT(lhs, rhs)<qilisdk.core.comparison.GT>`"
 msgstr ":meth:`GT(lhs, rhs)<qilisdk.core.comparison.GT>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:236
+#: ../../modules/core/core_terms_maps_comparisons.rst:237
 msgid "Greater Than or Equal"
 msgstr "Major o igual que"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:237
+#: ../../modules/core/core_terms_maps_comparisons.rst:238
 msgid ""
 ":meth:`GreaterThanOrEqual(lhs, "
 "rhs)<qilisdk.core.comparison.GreaterThanOrEqual>`"
@@ -335,11 +337,11 @@ msgstr ""
 ":meth:`GreaterThanOrEqual(lhs, "
 "rhs)<qilisdk.core.comparison.GreaterThanOrEqual>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:238
+#: ../../modules/core/core_terms_maps_comparisons.rst:239
 msgid ":meth:`GEQ(lhs, rhs)<qilisdk.core.comparison.GEQ>`"
 msgstr ":meth:`GEQ(lhs, rhs)<qilisdk.core.comparison.GEQ>`"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:240
+#: ../../modules/core/core_terms_maps_comparisons.rst:241
 msgid ""
 "*Note*: `lhs` and `rhs` refer to the left-hand side and right-hand side "
 "expressions, respectively."
@@ -347,11 +349,11 @@ msgstr ""
 "*Nota*: `lhs` i `rhs` fan referència a les expressions del costat "
 "esquerre i del costat dret, respectivament."
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:242
+#: ../../modules/core/core_terms_maps_comparisons.rst:243
 msgid "Example:"
 msgstr "Exemple:"
 
-#: ../../modules/core/core_terms_maps_comparisons.rst:257
+#: ../../modules/core/core_terms_maps_comparisons.rst:258
 msgid ""
 "When a comparison term is created, constants are automatically moved to "
 "the right-hand side, and variable terms to the left-hand side."

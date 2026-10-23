@@ -16,12 +16,15 @@ import numpy as np
 
 from qilisdk.experiments import ExperimentFunctional, ExperimentResult
 from qilisdk.utils.serialization import deserialize, serialize
+from qilisdk.yaml import yaml
 
 
+@yaml.register_class
 class SweepExperimentResult(ExperimentResult):
     plot_title = "Sweep Experiment"
 
 
+@yaml.register_class
 class SweepExperiment(ExperimentFunctional[SweepExperimentResult]):
     """Minimal backend-defined experiment, used to exercise the extension point."""
 
