@@ -33,6 +33,7 @@ from typing import Any
 import pytest
 from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 
+from qilisdk.core import Model
 from qilisdk.core.qtensor import InitialState
 from qilisdk.experiments.experiment_functional import ExperimentFunctional
 from qilisdk.experiments.experiment_result import ExperimentResult
@@ -57,6 +58,7 @@ from qilisdk.functionals.variational_program_result import VariationalProgramRes
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult
 from qilisdk.speqtrum.speqtrum_models import ExecuteResult
+from qilisdk.utils.classical_solvers import BruteForceSolver, SolverResult
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -260,6 +262,67 @@ def test_submit_functional_without_readout_raises(monkeypatch):
         client.submit(functional, device="some_device", readout=None)
 
 
+class RecordingPostClient(DummyClient):
+    """``DummyClient`` that records the JSON body of every ``post``."""
+
+    def __init__(self, posted: list[dict], **kwargs):
+        super().__init__(**kwargs)
+        self._posted = posted
+
+    def post(self, *_, json=None, **__):
+        self._posted.append(json)
+        return DummyResponse(self._post_payload)
+
+
+@pytest.mark.parametrize("job_name", [None, "model_job"])
+def test_submit_dispatches_to_model_handler(
+    monkeypatch,
+    caplog,  # ruff: ignore[redefined-while-unused]
+    job_name,
+):
+    posted: list[dict] = []
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    monkeypatch.setattr(
+        speqtrum.SpeQtrum,
+        "_create_client",
+        lambda self: RecordingPostClient(posted, post_payload={"id": 55, "message": "Model queued"}),
+        raising=True,
+    )
+    q = speqtrum.SpeQtrum()
+    handle = q.submit(Model.random_ising(3), device="cpu_node", job_name=job_name)
+
+    assert handle.id == 55
+    assert handle.execute_type is speqtrum.ExecuteType.MODEL
+    body = posted[0]
+    assert body["job_type"] is speqtrum.JobType.MODEL
+    assert body["device_code"] == "cpu_node"
+    assert body.get("name") == job_name
+    payload = speqtrum.ExecutePayload.model_validate_json(body["payload"])
+    assert payload.type is speqtrum.ExecuteType.MODEL
+    assert isinstance(payload.model_payload.model, Model)
+    assert "Model queued" in caplog.text
+
+
+def test_submit_model_without_device_raises(monkeypatch):
+    """Models must name the device they run on, just like functionals."""
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    client = speqtrum.SpeQtrum()
+    model = Model.random_ising(3)
+    with pytest.raises(ValueError, match="A device is required"):
+        client.submit(model, device="")
+
+
+def test_submit_functional_without_device_raises(monkeypatch):
+    """Functionals must name the device they run on."""
+    monkeypatch.setattr(speqtrum, "DigitalPropagation", FakeDigitalPropagation)
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    client = speqtrum.SpeQtrum()
+    functional = FakeDigitalPropagation()
+    readout = Readout()
+    with pytest.raises(ValueError, match="A device is required"):
+        client.submit(functional, device="", readout=readout)
+
+
 _API_MESSAGE = "Scheduled maintenance window: results may be delayed."
 
 
@@ -386,6 +449,29 @@ def test_wait_for_job_with_handle_returns_typed_detail(monkeypatch):
     typed_result = typed_detail.get_results()
     assert isinstance(typed_result, FunctionalResult)
     assert typed_result.get_samples() == functional_result.get_samples()
+
+
+def test_wait_for_job_with_model_handle_returns_solver_result(monkeypatch):
+    """A model handle should surface the ``SolverResult`` SpeQtrum returned."""
+
+    monkeypatch.setattr(speqtrum, "load_credentials", lambda: ("u", SimpleNamespace(access_token="t")))
+    q = speqtrum.SpeQtrum()
+
+    model_result = BruteForceSolver().solve(Model.random_ising(3))
+    detail = speqtrum.JobDetail(
+        id=8,
+        name="job",
+        description="desc",
+        device_id=1,
+        status=speqtrum.JobStatus.COMPLETED,
+        created_at=datetime.now(timezone.utc),
+        result=ExecuteResult(type=speqtrum.ExecuteType.MODEL, model_result=model_result),
+    )
+    monkeypatch.setattr(speqtrum.SpeQtrum, "get_job", lambda self, _: detail, raising=True)
+
+    typed_result = q.wait_for_job(speqtrum.JobHandle.model(8), poll_interval=0.0).get_results()
+    assert isinstance(typed_result, SolverResult)
+    assert typed_result.objective == model_result.objective
 
 
 def test_ensure_ok_raises_with_api_payload():
