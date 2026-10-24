@@ -516,7 +516,7 @@ class SabreSwapPass(CircuitTranspilerPass):
         """
         for gate in circuit.gates:
             gate_qubits = gate.qubits
-            if len(gate_qubits) != SabreSwapPass._TWO_QUBIT_ARITY:
+            if len(gate_qubits) != SabreSwapPass._TWO_QUBIT_ARITY or isinstance(gate, M):
                 continue
             if not self.topology.has_edge(layout[gate_qubits[0]], layout[gate_qubits[1]]):
                 return False
@@ -630,7 +630,7 @@ class SabreSwapPass(CircuitTranspilerPass):
         two_qubit_pairs: list[tuple[int, int]] = []
         for operation_index, gate in enumerate(circuit.gates):
             gate_qubits = gate.qubits
-            if len(gate_qubits) == SabreSwapPass._TWO_QUBIT_ARITY:
+            if len(gate_qubits) == SabreSwapPass._TWO_QUBIT_ARITY and not isinstance(gate, M):
                 two_qubit_operation_indices.append(operation_index)
                 two_qubit_pairs.append((gate_qubits[0], gate_qubits[1]))
         gate_indices_per_qubit: list[list[int]] = [[] for _ in range(num_logical_qubits)]
