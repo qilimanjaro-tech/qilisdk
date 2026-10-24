@@ -1357,6 +1357,9 @@ class CudaqBackend(Backend):
                 "[CudaqBackend] Controlled gate with {} control qubits not supported", len(gate.control_qubits)
             )
             raise UnsupportedGateError
+        if gate.basic_gate.nqubits != 1:
+            logger.error("[CudaqBackend] Controlled multi-qubit gate {} not supported", type(gate.basic_gate).__name__)
+            raise UnsupportedGateError
         target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
         handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
         if handler is None:

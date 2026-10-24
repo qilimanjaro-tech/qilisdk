@@ -429,6 +429,16 @@ def test_controlled_with_unsupported_basic_gate_raises(monkeypatch):
         be.execute(func, read)
 
 
+def test_controlled_with_multi_qubit_basic_gate_raises():
+    circuit = Circuit(3)
+    circuit.add(Controlled(0, basic_gate=SWAP(1, 2)))
+    func = DigitalPropagation(circuit)
+    read = Readout().with_sampling(nshots=10)
+    backend = CudaqBackend()
+    with pytest.raises(UnsupportedGateError):
+        backend.execute(func, read)
+
+
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
 @patch("cudaq.sample", return_value={"000": 1000})
 @patch("cudaq.set_target")
