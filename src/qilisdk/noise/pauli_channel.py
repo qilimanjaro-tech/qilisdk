@@ -24,7 +24,8 @@ from .protocols import AttachmentScope, HasAllowedScopes, SupportsStaticKraus, S
 from .representations import KrausChannel, LindbladGenerator
 from .utils import _check_probability, _identity, _sigma_x, _sigma_y, _sigma_z
 
-_NEGATIVE_RATE_TOLERANCE = 1e-12
+_RELATIVE_RATE_TOLERANCE = 1e-10
+_MIN_BLOCH_SCALING = 1e-12
 
 
 class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasAllowedScopes):
@@ -49,6 +50,7 @@ class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasA
         self._pZ = _check_probability(pZ, "pZ")
         if self._pX + self._pY + self._pZ > 1.0 + 1e-12:
             raise ValueError("pX + pY + pZ must be <= 1.")
+        self._lindblad_warning_logged = False
 
     @property
     def pX(self) -> float:
@@ -101,8 +103,16 @@ class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasA
         exp(-2 (gamma_Y + gamma_Z) t), exp(-2 (gamma_X + gamma_Z) t) and exp(-2 (gamma_X + gamma_Y) t). Matching
         the two gives gamma_X = (a_y + a_z - a_x) / 2 (and cyclically), where a_i = -ln(lambda_i) / (2 t).
 
-        Some Pauli channels (e.g. pX = pY = 0.2) need a negative rate, so no Lindbladian reproduces them. Those
-        rates are clamped to zero with a warning, giving the closest Markovian approximation.
+        Some Pauli channels cannot be reproduced by any Lindbladian, so they are approximated with a warning
+        (logged once per channel instance):
+
+        - If pX + pY, pX + pZ or pY + pZ exceeds 0.5, the channel inverts a Bloch component. That component's
+          scaling is clamped to a tiny positive value, i.e. the component is fully decohered instead of inverted.
+        - If the matching rates include a negative one (e.g. pX = pY = 0.2), it is clamped to zero, giving the
+          closest Markovian approximation.
+
+        A pair sum of exactly 0.5 (e.g. Depolarizing(0.75) or BitFlip(0.5)) fully decoheres a component, which is
+        reproduced up to the same tiny scaling without a warning.
 
         Args:
             duration (float): Duration over which the noise acts.
@@ -111,30 +121,33 @@ class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasA
             LindbladGenerator: Pauli jump operators with the matching rates.
 
         Raises:
-            ValueError: If the duration is not positive, or if any of pX + pY, pX + pZ, pY + pZ is at least 0.5,
-                in which case the channel removes or inverts a Bloch component and has no finite-rate Lindblad form.
+            ValueError: If the duration is not positive.
         """
         if duration <= 0:
             raise ValueError("Duration must be positive.")
         logger.debug("[PauliChannel] Building Lindblad representation from duration {}", duration)
-        probabilities = np.array([self._pX, self._pY, self._pZ])
-        lambdas = 1.0 - 2.0 * (probabilities.sum() - probabilities)
-        if np.any(lambdas <= 0):
-            raise ValueError("PauliChannel has no Lindblad form: pX + pY, pX + pZ and pY + pZ must all be below 0.5.")
-        decays = -np.log(lambdas) / (2.0 * duration)
+        pair_sums = np.array([self._pY + self._pZ, self._pX + self._pZ, self._pX + self._pY])
+        inverts_component = bool(np.any(pair_sums > 0.5 + 1e-12))
+        decays = -np.log1p(-np.minimum(2.0 * pair_sums, 1.0 - _MIN_BLOCH_SCALING)) / (2.0 * duration)
         rates = decays.sum() / 2.0 - decays
-        if np.any(rates < -_NEGATIVE_RATE_TOLERANCE):
+        tolerance = _RELATIVE_RATE_TOLERANCE * decays.max()
+        has_negative_rate = bool(np.any(rates < -tolerance))
+        if (inverts_component or has_negative_rate) and not self._lindblad_warning_logged:
             logger.warning(
-                "[PauliChannel] Channel with pX={}, pY={}, pZ={} is not reachable by a Lindbladian, clamping its "
-                "negative rates to zero.",
+                "[PauliChannel] Channel with pX={}, pY={}, pZ={} is not reachable by a Lindbladian, approximating it "
+                "by fully decohering inverted Bloch components and clamping negative rates to zero.",
                 self._pX,
                 self._pY,
                 self._pZ,
             )
-        rates = np.maximum(rates, 0.0)
-        paulis = (_sigma_x, _sigma_y, _sigma_z)
-        operators = [QTensor(pauli()) for pauli, rate in zip(paulis, rates) if rate > 0]
-        return LindbladGenerator(operators, [float(rate) for rate in rates if rate > 0])
+            self._lindblad_warning_logged = True
+        operators = []
+        kept_rates = []
+        for pauli, rate in zip((_sigma_x, _sigma_y, _sigma_z), rates):
+            if rate > tolerance:
+                operators.append(QTensor(pauli()))
+                kept_rates.append(float(rate))
+        return LindbladGenerator(operators, kept_rates)
 
     @classmethod
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:

@@ -179,16 +179,68 @@ def test_lindblad_from_duration_single_axis_rate():
 
 
 @pytest.mark.parametrize(
-    "channel", [PhaseFlip(probability=0.5), BitFlip(probability=0.7), PauliChannel(pX=0.3, pY=0.3)]
+    "channel",
+    [Depolarizing(probability=0.75), BitFlip(probability=0.5), PhaseFlip(probability=0.5), PauliChannel(pX=0.5)],
 )
-def test_lindblad_from_duration_rejects_non_invertible_channels(channel):
-    with pytest.raises(ValueError, match="no Lindblad form"):
-        channel.as_lindblad_from_duration(duration=1.0)
+def test_lindblad_from_duration_full_decoherence_boundary(channel, caplog):  # ruff: ignore[redefined-while-unused]
+    rho = np.array([[1.0, 1.0], [1.0, 1.0]], dtype=complex) / 2
+    generator = channel.as_lindblad_from_duration(duration=1.0)
+
+    kraus_rho = _kraus_apply(channel.as_kraus(), rho)
+    lindblad_rho = _lindblad_evolve(generator, rho, 1.0)
+
+    np.testing.assert_allclose(lindblad_rho, kraus_rho, atol=1e-10)
+    assert "not reachable by a Lindbladian" not in caplog.text
+
+
+@pytest.mark.parametrize(
+    "channel",
+    [Depolarizing(probability=0.9), BitFlip(probability=0.7), PauliChannel(pX=1.0), PauliChannel(pX=0.3, pY=0.3)],
+)
+def test_lindblad_from_duration_approximates_inverting_channels(channel, caplog):  # ruff: ignore[redefined-while-unused]
+    generator = channel.as_lindblad_from_duration(duration=1.0)
+
+    assert "not reachable by a Lindbladian" in caplog.text
+    assert len(generator.jump_operators) > 0
+    assert all(np.isfinite(rate) and rate > 0 for rate in generator.rates)
+
+
+def test_lindblad_from_duration_depolarizing_beyond_boundary_fully_mixes():
+    rho = np.array([[1.0, 0.0], [0.0, 0.0]], dtype=complex)
+    generator = Depolarizing(probability=0.9).as_lindblad_from_duration(duration=1.0)
+
+    np.testing.assert_allclose(_lindblad_evolve(generator, rho, 1.0), np.eye(2) / 2, atol=1e-10)
 
 
 def test_lindblad_from_duration_clamps_negative_rates(caplog):  # ruff: ignore[redefined-while-unused]
     generator = PauliChannel(pX=0.2, pY=0.2).as_lindblad_from_duration(duration=1.0)
 
-    assert "clamping its negative rates to zero" in caplog.text
+    assert "not reachable by a Lindbladian" in caplog.text
     assert len(generator.jump_operators) == 2
     assert all(rate > 0 for rate in generator.rates)
+
+
+def test_lindblad_from_duration_warns_once_per_channel(caplog):  # ruff: ignore[redefined-while-unused]
+    channel = PauliChannel(pX=0.2, pY=0.2)
+    for _ in range(3):
+        channel.as_lindblad_from_duration(duration=1.0)
+
+    assert caplog.text.count("not reachable by a Lindbladian") == 1
+
+
+def test_lindblad_from_duration_short_duration_drops_cancelled_rate(caplog):  # ruff: ignore[redefined-while-unused]
+    q1, q2 = 0.37, 0.2
+    channel = PauliChannel(pX=q1 * (1 - q2), pY=q2 * (1 - q1), pZ=q1 * q2)
+    generator = channel.as_lindblad_from_duration(duration=1e-9)
+
+    assert "not reachable by a Lindbladian" not in caplog.text
+    assert len(generator.jump_operators) == 2
+    np.testing.assert_allclose(generator.jump_operators[0].dense(), np.array([[0.0, 1.0], [1.0, 0.0]]))
+    np.testing.assert_allclose(generator.jump_operators[1].dense(), np.array([[0.0, -1j], [1j, 0.0]]))
+
+
+def test_lindblad_from_duration_keeps_tiny_probabilities():
+    generator = PauliChannel(pX=1e-17).as_lindblad_from_duration(duration=1.0)
+
+    assert len(generator.jump_operators) == 1
+    assert np.isclose(generator.rates[0], 1e-17, rtol=1e-6)
