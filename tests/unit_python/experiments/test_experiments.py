@@ -21,7 +21,9 @@ from loguru import logger
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib.figure import Figure
 
+from qilisdk.core.result import Result
 from qilisdk.experiments import Dimension, ExperimentResult
+from qilisdk.functionals.functional_result import FunctionalResult
 
 _FIT_WARNING = (
     "[ExperimentResult] Fitting is only implemented for amplitude plots. Ignoring fit request for non-amplitude plot."
@@ -159,6 +161,14 @@ def test_experiment_result_init():
     assert exp_result.averages == averages
     assert np.array_equal(exp_result.data, data)
     assert exp_result.dims == dims
+
+
+def test_experiment_result_is_not_a_functional_result():
+    exp_result = ExperimentResult(qubit=0, averages=1, data=np.zeros((2, 2)), dims=[])
+
+    assert isinstance(exp_result, Result)
+    assert not isinstance(exp_result, FunctionalResult)
+    assert exp_result.execution_time is None
 
 
 def test_experiment_s21_computation():
