@@ -373,9 +373,13 @@ DenseMatrix collapse_trajectories(const DenseMatrix& trajectories, unsigned long
         // Per-trajectory RNG, offset by the column so parallel runs stay deterministic.
         std::mt19937_64 rng(static_cast<unsigned long long>(seed) + 0x9e3779b97f4a7c15ULL * static_cast<unsigned long long>(c));
         std::uniform_real_distribution<double> unif(0.0, 1.0);
-        const double r = unif(rng);
 
-        // Choose a configuration, weighted by its Born probability
+        // Choose a configuration, weighted by its Born probability relative to the trajectory's norm
+        double total = 0.0;
+        for (const auto& kv : config_probs) {
+            total += kv.second;
+        }
+        const double r = unif(rng) * total;
         unsigned long long chosen = config_probs.rbegin()->first;
         double cumulative = 0.0;
         for (const auto& kv : config_probs) {
@@ -416,50 +420,15 @@ DenseMatrix reset_trajectories(const DenseMatrix& trajectories, unsigned long lo
     Returns:
         DenseMatrix: The reset trajectories (same shape).
     */
-    const long dim = trajectories.rows();
-    const long n_traj = trajectories.cols();
-    DenseMatrix out = DenseMatrix::Zero(dim, n_traj);
-
+    // Collapse onto a Born-sampled outcome of the reset qubits, then relabel those qubits to |0>
+    const DenseMatrix collapsed = collapse_trajectories(trajectories, reset_mask, seed);
+    DenseMatrix out = DenseMatrix::Zero(collapsed.rows(), collapsed.cols());
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-    for (long c = 0; c < n_traj; ++c) {
-        // Born probabilities of each joint configuration of the reset qubits.
-        // std::map keeps a deterministic iteration order for reproducible sampling.
-        std::map<unsigned long long, double> config_probs;
-        for (long i = 0; i < dim; ++i) {
-            double w = std::norm(trajectories(i, c));
-            if (w == 0.0) {
-                continue;
-            }
-            config_probs[static_cast<unsigned long long>(i) & reset_mask] += w;
-        }
-        if (config_probs.empty()) {
-            continue;  // zero column, leave it zero
-        }
-
-        // Per-trajectory RNG, offset by the column so parallel runs stay deterministic.
-        std::mt19937_64 rng(static_cast<unsigned long long>(seed) + 0x9e3779b97f4a7c15ULL * static_cast<unsigned long long>(c));
-        std::uniform_real_distribution<double> unif(0.0, 1.0);
-        const double r = unif(rng);
-
-        unsigned long long chosen = config_probs.rbegin()->first;  // fallback: last bucket
-        double cumulative = 0.0;
-        for (const auto& kv : config_probs) {
-            cumulative += kv.second;
-            if (r <= cumulative) {
-                chosen = kv.first;
-                break;
-            }
-        }
-
-        // Collapse onto the chosen configuration, renormalise, and clear the reset bits.
-        const double norm = std::sqrt(config_probs[chosen]);
-        for (long i = 0; i < dim; ++i) {
-            if ((static_cast<unsigned long long>(i) & reset_mask) == chosen) {
-                long target = static_cast<long>(static_cast<unsigned long long>(i) & ~reset_mask);
-                out(target, c) = trajectories(i, c) / norm;
-            }
+    for (long c = 0; c < collapsed.cols(); ++c) {
+        for (long i = 0; i < collapsed.rows(); ++i) {
+            out(static_cast<long>(static_cast<unsigned long long>(i) & ~reset_mask), c) += collapsed(i, c);
         }
     }
 

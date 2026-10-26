@@ -119,7 +119,25 @@ void lindblad_rhs(DenseMatrix& drho, const DenseMatrix& rho, const MatrixFreeHam
             drho(i) = Complex(v.imag(), -v.real());
         }
         if (jump_drift != nullptr) {
-            drho -= (*jump_drift) * rho;
+            // Applied in place and in parallel, since Eigen's sparse product would allocate a full temporary single-threaded
+            const long rows = rho.rows();
+            const long cols = rho.cols();
+#if defined(_OPENMP)
+#pragma omp parallel for collapse(2) schedule(static)
+#endif
+            for (long c = 0; c < cols; ++c) {
+                for (long i = 0; i < rows; ++i) {
+                    Real acc_re = 0.0;
+                    Real acc_im = 0.0;
+                    for (SparseMatrix::InnerIterator it(*jump_drift, i); it; ++it) {
+                        const Complex d = it.value();
+                        const Complex x = rho(it.col(), c);
+                        acc_re += d.real() * x.real() - d.imag() * x.imag();
+                        acc_im += d.real() * x.imag() + d.imag() * x.real();
+                    }
+                    drho(i, c) -= Complex(acc_re, acc_im);
+                }
+            }
         }
     } else {
         DenseMatrix Hrho(rho.rows(), rho.cols());

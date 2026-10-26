@@ -161,33 +161,6 @@ double max_jump_rate_bound(const SparseMatrix& drift) {
     return 2.0 * largest_row_sum;
 }
 
-std::pair<double, double> schedule_step_extremes(const std::vector<double>& step_list) {
-    /*
-    Find the shortest and longest step of a schedule. The first time point is measured from t = 0, and
-    gaps of zero (a schedule whose first point is t = 0, for instance) are ignored.
-
-    Args:
-        step_list (std::vector<double>): The schedule time points.
-
-    Returns:
-        std::pair<double, double>: The shortest and longest step. If the schedule has no step at all,
-            the shortest is infinite and the longest is zero, so neither bounds anything.
-    */
-    double shortest = std::numeric_limits<double>::infinity();
-    double longest = 0.0;
-    double previous = 0.0;
-    for (double time_point : step_list) {
-        const double gap = time_point - previous;
-        previous = time_point;
-        if (gap <= 0.0) {
-            continue;
-        }
-        shortest = std::min(shortest, gap);
-        longest = std::max(longest, gap);
-    }
-    return {shortest, longest};
-}
-
 namespace {
 
 // Whether the under-resolved jump warning has already been emitted in this process
@@ -208,7 +181,13 @@ void warn_if_jumps_underresolved(const SparseMatrix& jump_drift, const std::vect
         step_list (std::vector<double>): The schedule time points.
         max_expected_jumps_per_step (double): How many jumps per step are tolerated before warning.
     */
-    const double longest_dt = schedule_step_extremes(step_list).second;
+    // Find the longest step, measuring the first time point from t = 0
+    double longest_dt = 0.0;
+    double previous = 0.0;
+    for (double time_point : step_list) {
+        longest_dt = std::max(longest_dt, time_point - previous);
+        previous = time_point;
+    }
     const double expected_jumps = max_jump_rate_bound(jump_drift) * longest_dt;
     if (expected_jumps <= max_expected_jumps_per_step) {
         return;
@@ -250,7 +229,7 @@ void TrajectoryUnraveling::ensure_capacity(long num_trajectories) {
     }
 }
 
-void TrajectoryUnraveling::apply_jumps(DenseMatrix& trajectories, const std::vector<SparseMatrix>& jump_operators) {
+void TrajectoryUnraveling::apply_jumps(DenseMatrix& trajectories, const DenseMatrix& pre_step, const std::vector<SparseMatrix>& jump_operators) {
     /*
     Advance the quantum-jump part of a Monte Carlo step: renormalise every trajectory and let the
     norm it lost decide whether it jumps.
@@ -259,62 +238,79 @@ void TrajectoryUnraveling::apply_jumps(DenseMatrix& trajectories, const std::vec
     probability of *not* having jumped during that step, so drawing u ~ U(0, 1) and jumping when
     u > ||psi||^2 reproduces the correct jump statistics.
 
-    Which jump fires is then drawn with probability proportional to ||L_k psi||^2.
+    Which jump fires is then drawn with probability proportional to ||L_k psi||^2. If the survival
+    probability underflowed to zero the evolved state no longer says where the trajectory was, so the
+    jump is applied to the state at the start of the step instead.
 
     Args:
         trajectories (DenseMatrix&): The (dim x num_trajectories) batch of state vectors, updated in
             place and left normalised column by column.
+        pre_step (DenseMatrix): The unit-norm trajectories at the start of the step.
         jump_operators (std::vector<SparseMatrix>): The jump operators used to build the drift, with
             their rates already folded in.
 
     Raises:
-        std::invalid_argument: If any trajectory has collapsed to a zero or non-finite norm.
+        std::invalid_argument: If any trajectory has diverged to a non-finite norm.
     */
     if (jump_operators.empty() || trajectories.cols() == 0) {
         return;
     }
     const long num_trajectories = trajectories.cols();
+    const long dim = trajectories.rows();
     ensure_capacity(num_trajectories);
 
-    // For each trajectory
     bool diverged = false;
 #if defined(_OPENMP)
-#pragma omp parallel for schedule(static) reduction(|| : diverged)
+#pragma omp parallel reduction(|| : diverged)
 #endif
-    for (long c = 0; c < num_trajectories; ++c) {
-        // The squared norm left after the effective-Hamiltonian step is the survival probability
-        const double survival = trajectories.col(c).squaredNorm();
-        if (!std::isfinite(survival) || survival <= 0.0) {
-            diverged = true;
-            continue;
-        }
-        trajectories.col(c) /= std::sqrt(survival);
-
-        // Integration error can leave the norm marginally above one, which simply never jumps
-        if (next_uniform(streams[c]) <= survival) {
-            continue;
-        }
-
-        // Pick a jump channel, weighted by how much of the state it would keep
-        DenseVector psi = trajectories.col(c);
-        std::vector<DenseVector> jumped(jump_operators.size());
+    {
+        // Scratch space is allocated once per thread rather than once per trajectory
+        std::vector<DenseVector> jumped(jump_operators.size(), DenseVector(dim));
         std::vector<double> weights(jump_operators.size());
-        for (std::size_t k = 0; k < jump_operators.size(); ++k) {
-            jumped[k] = jump_operators[k] * psi;
-            weights[k] = jumped[k].squaredNorm();
-        }
-        const std::size_t chosen = sample_index(weights, next_uniform(streams[c]));
-        if (chosen >= jump_operators.size()) {
-            continue;
-        }
 
-        // Renormalise the jumped state and replace the trajectory with it
-        const double norm = std::sqrt(weights[chosen]);
-        if (!std::isfinite(norm) || norm == 0.0) {
-            diverged = true;
-            continue;
+        // For each trajectory
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+        for (long c = 0; c < num_trajectories; ++c) {
+            // The squared norm left after the effective-Hamiltonian step is the survival probability
+            const double survival = trajectories.col(c).squaredNorm();
+            if (!std::isfinite(survival)) {
+                diverged = true;
+                continue;
+            }
+            if (survival > 0.0) {
+                trajectories.col(c) /= std::sqrt(survival);
+            }
+
+            // Integration error can leave the norm marginally above one, which simply never jumps
+            if (survival > 0.0 && next_uniform(streams[c]) <= survival) {
+                continue;
+            }
+
+            // Pick a jump channel, weighted by how much of the state it would keep
+            for (std::size_t k = 0; k < jump_operators.size(); ++k) {
+                if (survival > 0.0) {
+                    jumped[k].noalias() = jump_operators[k] * trajectories.col(c);
+                } else {
+                    jumped[k].noalias() = jump_operators[k] * pre_step.col(c);
+                }
+                weights[k] = jumped[k].squaredNorm();
+            }
+            const std::size_t chosen = sample_index(weights, next_uniform(streams[c]));
+            if (chosen >= jump_operators.size()) {
+                diverged = diverged || survival <= 0.0;
+                continue;
+            }
+
+            // Renormalise the jumped state and replace the trajectory with it
+            const double norm = std::sqrt(weights[chosen]);
+            if (!std::isfinite(norm) || norm == 0.0) {
+                diverged = true;
+                continue;
+            }
+            trajectories.col(c) = jumped[chosen] / norm;
         }
-        trajectories.col(c) = jumped[chosen] / norm;
     }
 
     // Check for any trajectories that have diverged to a non-finite state
@@ -342,35 +338,42 @@ void TrajectoryUnraveling::apply_kraus(DenseMatrix& trajectories, const std::vec
         return;
     }
     const long num_trajectories = trajectories.cols();
+    const long dim = trajectories.rows();
     ensure_capacity(num_trajectories);
 
-    // For each trajectory
     bool diverged = false;
 #if defined(_OPENMP)
-#pragma omp parallel for schedule(static) reduction(|| : diverged)
+#pragma omp parallel reduction(|| : diverged)
 #endif
-    for (long c = 0; c < num_trajectories; ++c) {
-        // Choose a Kraus operator, weighted by how much of the state it would keep
-        DenseVector psi = trajectories.col(c);
-        std::vector<DenseVector> applied(kraus_operators.size());
+    {
+        // Scratch space is allocated once per thread rather than once per trajectory
+        std::vector<DenseVector> applied(kraus_operators.size(), DenseVector(dim));
         std::vector<double> weights(kraus_operators.size());
-        for (std::size_t k = 0; k < kraus_operators.size(); ++k) {
-            applied[k] = kraus_operators[k] * psi;
-            weights[k] = applied[k].squaredNorm();
-        }
-        const std::size_t chosen = sample_index(weights, next_uniform(streams[c]));
-        if (chosen >= kraus_operators.size()) {
-            diverged = true;
-            continue;
-        }
 
-        // Renormalise the chosen Kraus outcome and replace the trajectory with it
-        const double norm = std::sqrt(weights[chosen]);
-        if (!std::isfinite(norm) || norm == 0.0) {
-            diverged = true;
-            continue;
+        // For each trajectory
+#if defined(_OPENMP)
+#pragma omp for schedule(static)
+#endif
+        for (long c = 0; c < num_trajectories; ++c) {
+            // Choose a Kraus operator, weighted by how much of the state it would keep
+            for (std::size_t k = 0; k < kraus_operators.size(); ++k) {
+                applied[k].noalias() = kraus_operators[k] * trajectories.col(c);
+                weights[k] = applied[k].squaredNorm();
+            }
+            const std::size_t chosen = sample_index(weights, next_uniform(streams[c]));
+            if (chosen >= kraus_operators.size()) {
+                diverged = true;
+                continue;
+            }
+
+            // Renormalise the chosen Kraus outcome and replace the trajectory with it
+            const double norm = std::sqrt(weights[chosen]);
+            if (!std::isfinite(norm) || norm == 0.0) {
+                diverged = true;
+                continue;
+            }
+            trajectories.col(c) = applied[chosen] / norm;
         }
-        trajectories.col(c) = applied[chosen] / norm;
     }
 
     // Check if anything diverged

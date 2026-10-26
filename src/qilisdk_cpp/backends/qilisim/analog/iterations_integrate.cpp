@@ -13,6 +13,8 @@
 // limitations under the License.
 
 #include <cmath>
+#include <initializer_list>
+#include <utility>
 
 #include "../../../libs/gpu.h"
 #include "../../../libs/pybind.h"
@@ -388,6 +390,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     // Sadly we need to do a lot of matrix allocations :(
     long rho_rows = rho_t.rows();
     long rho_cols = rho_t.cols();
+    const long rho_size = rho_t.size();
     bool already_have_first_step = (k_saved.rows() != 0);
     DenseMatrix k1 = already_have_first_step ? k_saved : DenseMatrix(rho_rows, rho_cols);
     DenseMatrix k2(rho_rows, rho_cols);
@@ -398,160 +401,123 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     DenseMatrix k7(rho_rows, rho_cols);
     DenseMatrix rho_tmp(rho_rows, rho_cols);
     DenseMatrix rho_4(rho_rows, rho_cols);
-    DenseMatrix rho_5(rho_rows, rho_cols);
+
+    // Form rho_t + dt * sum_s c_s k_s, walking the column-major storage in order so that wide trajectory batches stay cache friendly
+    const Complex* rt_ptr = rho_t.data();
+    auto form_stage = [&](DenseMatrix& out, std::initializer_list<std::pair<double, const DenseMatrix*>> terms) {
+        Real coeffs[6];
+        const Complex* stages[6];
+        int num_terms = 0;
+        for (const auto& term : terms) {
+            coeffs[num_terms] = static_cast<Real>(dt * term.first);
+            stages[num_terms] = term.second->data();
+            ++num_terms;
+        }
+        Complex* out_ptr = out.data();
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+        for (long idx = 0; idx < rho_size; ++idx) {
+            Complex value = rt_ptr[idx];
+            for (int s = 0; s < num_terms; ++s) {
+                value += coeffs[s] * stages[s][idx];
+            }
+            out_ptr[idx] = value;
+        }
+    };
 
     if (!already_have_first_step) {
         double t_1 = t;
         lindblad_rhs(k1, rho_t, construct_current_hamiltonian(t_1, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
     }
 
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (long i = 0; i < rho_rows; ++i) {
-        for (long j = 0; j < rho_cols; ++j) {
-            rho_tmp(i, j) = rho_t(i, j) + static_cast<Real>(dt * b21) * k1(i, j);
-        }
-    }
+    form_stage(rho_tmp, {{b21, &k1}});
     double t_2 = t + a2 * dt;
     lindblad_rhs(k2, rho_tmp, construct_current_hamiltonian(t_2, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
 
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (long i = 0; i < rho_rows; ++i) {
-        for (long j = 0; j < rho_cols; ++j) {
-            rho_tmp(i, j) = rho_t(i, j) + static_cast<Real>(dt * b31) * k1(i, j) + static_cast<Real>(dt * b32) * k2(i, j);
-        }
-    }
+    form_stage(rho_tmp, {{b31, &k1}, {b32, &k2}});
     double t_3 = t + a3 * dt;
     lindblad_rhs(k3, rho_tmp, construct_current_hamiltonian(t_3, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
 
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (long i = 0; i < rho_rows; ++i) {
-        for (long j = 0; j < rho_cols; ++j) {
-            rho_tmp(i, j) = rho_t(i, j) + static_cast<Real>(dt * b41) * k1(i, j) + static_cast<Real>(dt * b42) * k2(i, j) + static_cast<Real>(dt * b43) * k3(i, j);
-        }
-    }
+    form_stage(rho_tmp, {{b41, &k1}, {b42, &k2}, {b43, &k3}});
     double t_4 = t + a4 * dt;
     lindblad_rhs(k4, rho_tmp, construct_current_hamiltonian(t_4, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
 
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (long i = 0; i < rho_rows; ++i) {
-        for (long j = 0; j < rho_cols; ++j) {
-            rho_tmp(i, j) = rho_t(i, j) + static_cast<Real>(dt * b51) * k1(i, j) + static_cast<Real>(dt * b52) * k2(i, j) + static_cast<Real>(dt * b53) * k3(i, j) + static_cast<Real>(dt * b54) * k4(i, j);
-        }
-    }
+    form_stage(rho_tmp, {{b51, &k1}, {b52, &k2}, {b53, &k3}, {b54, &k4}});
     double t_5 = t + a5 * dt;
     lindblad_rhs(k5, rho_tmp, construct_current_hamiltonian(t_5, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
 
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (long i = 0; i < rho_rows; ++i) {
-        for (long j = 0; j < rho_cols; ++j) {
-            rho_tmp(i, j) = rho_t(i, j) + static_cast<Real>(dt * b61) * k1(i, j) + static_cast<Real>(dt * b62) * k2(i, j) + static_cast<Real>(dt * b63) * k3(i, j) + static_cast<Real>(dt * b64) * k4(i, j) + static_cast<Real>(dt * b65) * k5(i, j);
-        }
-    }
+    form_stage(rho_tmp, {{b61, &k1}, {b62, &k2}, {b63, &k3}, {b64, &k4}, {b65, &k5}});
     double t_6 = t + a6 * dt;
     lindblad_rhs(k6, rho_tmp, construct_current_hamiltonian(t_6, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
 
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-    for (long i = 0; i < rho_rows; ++i) {
-        for (long j = 0; j < rho_cols; ++j) {
-            rho_tmp(i, j) = rho_t(i, j) + static_cast<Real>(dt * b71) * k1(i, j) + static_cast<Real>(dt * b73) * k3(i, j) + static_cast<Real>(dt * b74) * k4(i, j) + static_cast<Real>(dt * b75) * k5(i, j) + static_cast<Real>(dt * b76) * k6(i, j);
-        }
-    }
+    // The 7th stage point is also the 5th order solution
+    form_stage(rho_tmp, {{b71, &k1}, {b73, &k3}, {b74, &k4}, {b75, &k5}, {b76, &k6}});
+    DenseMatrix& rho_5 = rho_tmp;
     double t_7 = t + a7 * dt;
-    lindblad_rhs(k7, rho_tmp, construct_current_hamiltonian(t_7, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
+    lindblad_rhs(k7, rho_5, construct_current_hamiltonian(t_7, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
+    form_stage(rho_4, {{c41, &k1}, {c43, &k3}, {c44, &k4}, {c45, &k5}, {c46, &k6}, {c47, &k7}});
 
-    // All these loops combined into one
-    Complex rho_4_norm = 0.0;
-    Complex rho_5_norm = 0.0;
-    Complex overlap = 0.0;
+    // Both the error and the divergence check use the relative Frobenius distance ||rho4-rho5||_F / ||rho5||_F, which
+    // for state vectors also controls the norm that Monte Carlo trajectories read as their survival probability
+    const Complex* r4_ptr = rho_4.data();
+    Complex* r5_ptr = rho_5.data();
+    double diff_frob_sq = 0.0;
+    double rho_4_frob_sq = 0.0;
     double rho_5_frob_sq = 0.0;
-    double err_norm = 0.0;
-
-    // Comparing statevectors we use their fidelity, since it's phase invariant
-    if (is_unitary_on_statevector) {
-#ifndef _WIN32
 #if defined(_OPENMP)
-#pragma omp parallel for reduction(complex_double_reduction : overlap, rho_4_norm, rho_5_norm) schedule(static)
+#pragma omp parallel for reduction(+ : diff_frob_sq, rho_4_frob_sq, rho_5_frob_sq) schedule(static)
 #endif
-#endif
-        for (long i = 0; i < rho_rows; ++i) {
-            for (long j = 0; j < rho_cols; ++j) {
-                rho_4(i, j) = rho_t(i, j) + static_cast<Real>(dt * c41) * k1(i, j) + static_cast<Real>(dt * c43) * k3(i, j) + static_cast<Real>(dt * c44) * k4(i, j) + static_cast<Real>(dt * c45) * k5(i, j) + static_cast<Real>(dt * c46) * k6(i, j) + static_cast<Real>(dt * c47) * k7(i, j);
-                rho_5(i, j) = rho_tmp(i, j);
-                rho_4_norm += std::norm(rho_4(i, j));
-                rho_5_norm += std::norm(rho_5(i, j));
-                overlap += std::conj(rho_4(i, j)) * rho_5(i, j);
-            }
-        }
-        rho_4_norm = std::sqrt(std::abs(rho_4_norm));
-        rho_5_norm = std::sqrt(std::abs(rho_5_norm));
-        overlap /= rho_4_norm;
-        overlap /= rho_5_norm;
-        err_norm = std::sqrt(std::abs(1.0 - std::pow(std::abs(overlap), 2)));
-    } else {
-// For density matrices use the relative Frobenius distance: ||rho4-rho5||_F / ||rho5||_F
-#ifndef _WIN32
-#if defined(_OPENMP)
-#pragma omp parallel for reduction(+ : rho_5_frob_sq) reduction(complex_double_reduction : overlap, rho_4_norm, rho_5_norm) schedule(static)
-#endif
-#endif
-        for (long i = 0; i < rho_rows; ++i) {
-            for (long j = 0; j < rho_cols; ++j) {
-                rho_4(i, j) = rho_t(i, j) + static_cast<Real>(dt * c41) * k1(i, j) + static_cast<Real>(dt * c43) * k3(i, j) + static_cast<Real>(dt * c44) * k4(i, j) + static_cast<Real>(dt * c45) * k5(i, j) + static_cast<Real>(dt * c46) * k6(i, j) + static_cast<Real>(dt * c47) * k7(i, j);
-                rho_5(i, j) = rho_tmp(i, j);
-                overlap += std::pow(std::abs(rho_4(i, j) - rho_5(i, j)), 2);
-                rho_5_frob_sq += std::norm(rho_5(i, j));
-            }
-            rho_4_norm += rho_4(i, i);
-            rho_5_norm += rho_5(i, i);
-        }
-        err_norm = std::sqrt(std::abs(overlap)) / std::sqrt(rho_5_frob_sq);
+    for (long idx = 0; idx < rho_size; ++idx) {
+        diff_frob_sq += std::norm(r4_ptr[idx] - r5_ptr[idx]);
+        rho_4_frob_sq += std::norm(r4_ptr[idx]);
+        rho_5_frob_sq += std::norm(r5_ptr[idx]);
     }
-
-    // Scale the error by the tolerance
-    err_norm /= tol;
 
     // Make sure we haven't diverged
-    const double norm_4 = std::abs(rho_4_norm);
-    const double norm_5 = std::abs(rho_5_norm);
-    check_valid_divisor(norm_4);
-    check_valid_divisor(norm_5);
+    check_valid_divisor(std::sqrt(rho_4_frob_sq));
+    check_valid_divisor(std::sqrt(rho_5_frob_sq));
 
-    // Normalize the 5th order solution
-    const std::complex<double> norm_divisor = normalize ? rho_5_norm : std::complex<double>(1.0, 0.0);
+    // Scale the error by the tolerance
+    double err_norm = std::sqrt(diff_frob_sq / rho_5_frob_sq) / tol;
+
+    // Normalize the 5th order solution, and the last stage that seeds the next step with it
+    if (normalize && is_unitary_on_statevector) {
+        bool diverged = false;
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static) reduction(|| : diverged)
+#endif
+        for (long j = 0; j < rho_cols; ++j) {
+            const double col_norm = rho_5.col(j).norm();
+            if (!std::isfinite(col_norm) || col_norm == 0.0) {
+                diverged = true;
+                continue;
+            }
+            rho_5.col(j) /= col_norm;
+            k7.col(j) /= col_norm;
+        }
+        if (diverged) {
+            nan_error();
+        }
+    } else if (normalize) {
+        const Complex rho_5_trace = rho_5.trace();
+        check_valid_divisor(rho_5_trace);
+        const Complex inv_trace = Complex(1.0, 0.0) / rho_5_trace;
+        Complex* k7_ptr = k7.data();
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-    for (long i = 0; i < rho_rows; ++i) {
-        for (long j = 0; j < rho_cols; ++j) {
-            rho_5(i, j) /= norm_divisor;
+        for (long idx = 0; idx < rho_size; ++idx) {
+            r5_ptr[idx] *= inv_trace;
+            k7_ptr[idx] *= inv_trace;
         }
     }
 
     // Whether we accept the time step or not
     double dt_taken = 0.0;
     if (err_norm <= 1.0) {
-        rho_t = rho_5;
-        k_saved.resize(rho_rows, rho_cols);
-#if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
-#endif
-        for (long i = 0; i < rho_rows; ++i) {
-            for (long j = 0; j < rho_cols; ++j) {
-                k_saved(i, j) = k7(i, j) / norm_divisor;
-            }
-        }
+        rho_t.swap(rho_5);
+        k_saved.swap(k7);
         dt_taken = dt;
     }
 

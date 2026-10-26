@@ -161,14 +161,14 @@ TEST(TrajectoryUnravelingJumpsTest, NoJumpOperatorsLeavesTheBatchUntouched) {
     TrajectoryUnraveling unraveling(1);
     DenseMatrix trajectories = excitedTrajectories(4) * 0.5;  // deliberately not normalized
     DenseMatrix before = trajectories;
-    unraveling.apply_jumps(trajectories, {});
+    unraveling.apply_jumps(trajectories, DenseMatrix(trajectories), {});
     EXPECT_TRUE(trajectories.isApprox(before, kTol));
 }
 
 TEST(TrajectoryUnravelingJumpsTest, EveryTrajectoryEndsUpNormalized) {
     TrajectoryUnraveling unraveling(2);
     DenseMatrix trajectories = excitedTrajectories(32) * 0.3;
-    unraveling.apply_jumps(trajectories, {dampingJump()});
+    unraveling.apply_jumps(trajectories, DenseMatrix(trajectories), {dampingJump()});
     for (long c = 0; c < trajectories.cols(); ++c) {
         EXPECT_NEAR(trajectories.col(c).norm(), 1.0, kTol);
     }
@@ -178,7 +178,7 @@ TEST(TrajectoryUnravelingJumpsTest, FullNormMeansNoJump) {
     // A trajectory that lost no norm has survival probability one and can never jump
     TrajectoryUnraveling unraveling(3);
     DenseMatrix trajectories = excitedTrajectories(64);
-    unraveling.apply_jumps(trajectories, {dampingJump()});
+    unraveling.apply_jumps(trajectories, DenseMatrix(trajectories), {dampingJump()});
     EXPECT_NEAR(excitedFraction(trajectories), 1.0, kTol);
 }
 
@@ -186,7 +186,7 @@ TEST(TrajectoryUnravelingJumpsTest, LostNormBecomesTheJumpProbability) {
     // Trajectories scaled to a squared norm of 0.75 must jump a quarter of the time
     TrajectoryUnraveling unraveling(4);
     DenseMatrix trajectories = excitedTrajectories(20000) * std::sqrt(0.75);
-    unraveling.apply_jumps(trajectories, {dampingJump()});
+    unraveling.apply_jumps(trajectories, DenseMatrix(trajectories), {dampingJump()});
     // Amplitude damping takes |1> to |0>, so the surviving excited fraction is the survival probability
     EXPECT_NEAR(excitedFraction(trajectories), 0.75, kLoose);
 }
@@ -196,7 +196,7 @@ TEST(TrajectoryUnravelingJumpsTest, JumpChannelIsChosenByItsWeight) {
     // so half of the jumping trajectories should end up relaxed
     TrajectoryUnraveling unraveling(5);
     DenseMatrix trajectories = excitedTrajectories(20000) * std::sqrt(0.5);
-    unraveling.apply_jumps(trajectories, {dampingJump(), dephasingJump()});
+    unraveling.apply_jumps(trajectories, DenseMatrix(trajectories), {dampingJump(), dephasingJump()});
     EXPECT_NEAR(excitedFraction(trajectories), 0.75, kLoose);
 }
 
@@ -205,8 +205,8 @@ TEST(TrajectoryUnravelingJumpsTest, SameSeedGivesTheSameTrajectories) {
     DenseMatrix second = first;
     TrajectoryUnraveling one(6);
     TrajectoryUnraveling two(6);
-    one.apply_jumps(first, {dampingJump()});
-    two.apply_jumps(second, {dampingJump()});
+    one.apply_jumps(first, DenseMatrix(first), {dampingJump()});
+    two.apply_jumps(second, DenseMatrix(second), {dampingJump()});
     EXPECT_TRUE(first.isApprox(second, kTol));
 }
 
@@ -215,8 +215,8 @@ TEST(TrajectoryUnravelingJumpsTest, DifferentSeedsGiveDifferentTrajectories) {
     DenseMatrix second = first;
     TrajectoryUnraveling one(7);
     TrajectoryUnraveling two(8);
-    one.apply_jumps(first, {dampingJump()});
-    two.apply_jumps(second, {dampingJump()});
+    one.apply_jumps(first, DenseMatrix(first), {dampingJump()});
+    two.apply_jumps(second, DenseMatrix(second), {dampingJump()});
     EXPECT_FALSE(first.isApprox(second, kTol));
 }
 
@@ -225,10 +225,10 @@ TEST(TrajectoryUnravelingJumpsTest, ConsecutiveStepsAreNotCorrelated) {
     // reproduce each other's jump pattern
     DenseMatrix trajectories = excitedTrajectories(512) * std::sqrt(0.5);
     TrajectoryUnraveling unraveling(9);
-    unraveling.apply_jumps(trajectories, {dampingJump()});
+    unraveling.apply_jumps(trajectories, DenseMatrix(trajectories), {dampingJump()});
     DenseMatrix after_first_step = trajectories;
     trajectories *= std::sqrt(0.5);
-    unraveling.apply_jumps(trajectories, {dampingJump()});
+    unraveling.apply_jumps(trajectories, DenseMatrix(trajectories), {dampingJump()});
 
     int relaxed_in_first = 0;
     int relaxed_in_both = 0;
@@ -247,14 +247,14 @@ TEST(TrajectoryUnravelingJumpsTest, ConsecutiveStepsAreNotCorrelated) {
 TEST(TrajectoryUnravelingJumpsTest, CollapsedTrajectoryThrows) {
     TrajectoryUnraveling unraveling(10);
     DenseMatrix trajectories = DenseMatrix::Zero(2, 2);
-    EXPECT_ANY_THROW(unraveling.apply_jumps(trajectories, {dampingJump()}));
+    EXPECT_ANY_THROW(unraveling.apply_jumps(trajectories, DenseMatrix(trajectories), {dampingJump()}));
 }
 
 TEST(TrajectoryUnravelingJumpsTest, NonFiniteTrajectoryThrows) {
     TrajectoryUnraveling unraveling(11);
     DenseMatrix trajectories = excitedTrajectories(2);
     trajectories(0, 0) = std::numeric_limits<double>::quiet_NaN();
-    EXPECT_ANY_THROW(unraveling.apply_jumps(trajectories, {dampingJump()}));
+    EXPECT_ANY_THROW(unraveling.apply_jumps(trajectories, DenseMatrix(trajectories), {dampingJump()}));
 }
 
 TEST(TrajectoryUnravelingJumpsTest, StateWithNoAvailableChannelKeepsEvolving) {
@@ -263,7 +263,17 @@ TEST(TrajectoryUnravelingJumpsTest, StateWithNoAvailableChannelKeepsEvolving) {
     TrajectoryUnraveling unraveling(12);
     DenseMatrix trajectories = DenseMatrix::Zero(2, 4);
     trajectories.row(0).setConstant(std::sqrt(0.5));  // |0>, scaled so that a jump is always drawn
-    unraveling.apply_jumps(trajectories, {dampingJump()});
+    unraveling.apply_jumps(trajectories, DenseMatrix(trajectories), {dampingJump()});
+    for (long c = 0; c < trajectories.cols(); ++c) {
+        EXPECT_NEAR(std::abs(trajectories(0, c)), 1.0, kTol);
+    }
+}
+
+TEST(TrajectoryUnravelingJumpsTest, UnderflowedSurvivalJumpsFromThePreStepState) {
+    // A survival probability that underflowed to zero means a certain jump, taken from where the step began
+    TrajectoryUnraveling unraveling(18);
+    DenseMatrix trajectories = DenseMatrix::Zero(2, 8);
+    unraveling.apply_jumps(trajectories, excitedTrajectories(8), {dampingJump()});
     for (long c = 0; c < trajectories.cols(); ++c) {
         EXPECT_NEAR(std::abs(trajectories(0, c)), 1.0, kTol);
     }
@@ -365,16 +375,25 @@ TEST(JumpResolutionWarningTest, WarningStateSurvivesADifferentDrift) {
     EXPECT_EQ(py::len(records), 1u);
 }
 
-TEST(ScheduleStepExtremesTest, IgnoresNonPositiveGaps) {
-    const std::pair<double, double> extremes = schedule_step_extremes({0.0, 1.0, 1.0, 4.0});
-    EXPECT_NEAR(extremes.first, 1.0, kTol);
-    EXPECT_NEAR(extremes.second, 3.0, kTol);
+TEST(JumpResolutionWarningTest, JudgesTheLongestStep) {
+    // The steps are 1 and 3 long, and the drift bounds the jump rate at 1
+    const SparseMatrix drift = jump_drift_operator({dampingJump(1.0)});
+    const std::vector<double> schedule = {0.0, 1.0, 1.0, 4.0};
+
+    reset_jump_resolution_warning();
+    py::list tolerant = captureWarnings([&]() { warn_if_jumps_underresolved(drift, schedule, 3.5); });
+    EXPECT_EQ(py::len(tolerant), 0u);
+
+    reset_jump_resolution_warning();
+    py::list strict = captureWarnings([&]() { warn_if_jumps_underresolved(drift, schedule, 2.5); });
+    EXPECT_EQ(py::len(strict), 1u);
 }
 
-TEST(ScheduleStepExtremesTest, AnEmptyScheduleBoundsNothing) {
-    const std::pair<double, double> extremes = schedule_step_extremes({});
-    EXPECT_TRUE(std::isinf(extremes.first));
-    EXPECT_EQ(extremes.second, 0.0);
+TEST(JumpResolutionWarningTest, AnEmptyScheduleNeverWarns) {
+    const SparseMatrix drift = jump_drift_operator({dampingJump(100.0)});
+    reset_jump_resolution_warning();
+    py::list records = captureWarnings([&]() { warn_if_jumps_underresolved(drift, {}, 0.5); });
+    EXPECT_EQ(py::len(records), 0u);
 }
 
 // GCOV_EXCL_BR_STOP

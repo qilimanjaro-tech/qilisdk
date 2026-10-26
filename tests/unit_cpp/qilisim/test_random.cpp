@@ -269,6 +269,18 @@ TEST(CollapseTrajectoriesTest, ZeroColumnStaysZero) {
     EXPECT_TRUE(out.isZero(1e-12));
 }
 
+TEST(CollapseTrajectoriesTest, OutcomesFollowTheBornWeightsOfAnUnnormalizedColumn) {
+    // An equal superposition scaled well below unit norm must still collapse onto each outcome half the time
+    const long n_traj = 2000;
+    DenseMatrix traj = DenseMatrix::Constant(2, n_traj, Complex(0.1 / std::sqrt(2.0), 0.0));
+    DenseMatrix out = collapse_trajectories(traj, 1ULL, 5);
+    long excited = 0;
+    for (long c = 0; c < n_traj; ++c) {
+        excited += std::abs(out(1, c)) > 0.5 ? 1 : 0;
+    }
+    EXPECT_NEAR(static_cast<double>(excited) / n_traj, 0.5, 0.05);
+}
+
 TEST(ResetTrajectoriesTest, ResetsMaskedQubitToZeroAcrossTrajectories) {
     const long dim = 2;
     const long n_traj = 3;
