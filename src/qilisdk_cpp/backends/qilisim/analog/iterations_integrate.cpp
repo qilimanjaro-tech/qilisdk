@@ -620,10 +620,9 @@ void iter_rk4(ExponentialAnsatz& rho_t, double t, double dt, const std::vector<d
     rhs(k, rho_tmp, current_hamiltonian);
     rho_t += k * dt_over_3;
 
-    // Third step: compute k3 at time t + dt/2
+    // Third step: compute k3 at time t + dt/2, reusing the Hamiltonian from the second step
     rho_tmp = rho_old;
     rho_tmp += k * dt_over_2;
-    current_hamiltonian = construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list);
     rhs(k, rho_tmp, current_hamiltonian);
     rho_t += k * dt_over_3;
 

@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cmath>
 #include <random>
+#include <unordered_map>
 #include <utility>
 #if defined(_OPENMP)
 #include <omp.h>
@@ -22,7 +23,12 @@
 
 // GCOV_EXCL_BR_START
 
-ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int order, int shots, int warmups) {
+namespace {
+// Below this much work (samples x terms touched) using many threads costs more than it saves
+constexpr long long kMinParallelWork = 1 << 15;
+}  // namespace
+
+ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int order, int shots, int warmups, uint64_t seed) : rng(std::make_shared<std::mt19937_64>(seed)) {
     /*
     Construct an ExponentialAnsatz with the given number of qubits and maximum number of terms.
 
@@ -34,6 +40,7 @@ ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int order, int shots, int w
         order (int): The maximum order of terms to include in the ansatz.
         shots (int): The number of shots to use for sampling.
         warmups (int): The number of warmup steps to use for sampling.
+        seed (uint64_t): Seed of the random stream used when sampling. Copies of the ansatz share this stream.
 
     Returns:
         ExponentialAnsatz: The constructed ExponentialAnsatz object.
@@ -101,6 +108,7 @@ ExponentialAnsatz::ExponentialAnsatz(int num_qubits, int order, int shots, int w
 
 ExponentialAnsatz ExponentialAnsatz::zeroed() const {
     ExponentialAnsatz result(num_qubits, 0, shots, warmups);
+    result.rng = rng;
     for (const auto& [ps, coeff] : terms.get_operators()) {
         result.terms.add(0.0, ps);
     }
@@ -108,16 +116,15 @@ ExponentialAnsatz ExponentialAnsatz::zeroed() const {
 }
 
 std::vector<Bitset> ExponentialAnsatz::build_z_bits() const {
-    const auto& ops = terms.get_operators();
-    const int p = static_cast<int>(ops.size());
-    std::vector<std::pair<PauliString, Complex>> terms_vec(ops.begin(), ops.end());
-    std::vector<Bitset> z_bits(p, Bitset());
-    for (int k = 0; k < p; ++k) {
-        const auto& ps = terms_vec[k].first;
+    std::vector<Bitset> z_bits;
+    z_bits.reserve(terms.get_operators().size());
+    for (const auto& [ps, coeff] : terms.get_operators()) {
+        Bitset bits;
         for (int i = 0; i < num_qubits; ++i) {
             if (ps.z_mask[i])
-                z_bits[k].set(num_qubits - 1 - i);
+                bits.set(num_qubits - 1 - i);
         }
+        z_bits.push_back(bits);
     }
     return z_bits;
 }
@@ -137,9 +144,11 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
     Draw samples from the probability distribution defined by the ansatz.
 
     One Markov chain per thread runs independently. Each chain warms up for n_warmup
-    sweeps from a random start, then draws its share of the N_s samples with n_warmup
-    sweeps of thinning between consecutive samples. This keeps chains well-mixed while
-    eliminating autocorrelation across the chains.
+    sweeps from a random start, then draws its share of the N_s samples with one
+    sweep of thinning between consecutive samples. Small workloads use a single chain
+    on the calling thread, since waking the thread pool would cost more than the sampling.
+    The chains are seeded from the ansatz's random stream, so results are reproducible
+    for a given seed and thread count.
 
     Args:
         N_s (int): The number of samples to draw.
@@ -150,8 +159,12 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
     */
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
-    std::vector<std::pair<PauliString, Complex>> terms_vec(ops.begin(), ops.end());
     std::vector<Bitset> z_bits = build_z_bits();
+    std::vector<double> two_coeffs;
+    two_coeffs.reserve(p);
+    for (const auto& [ps, coeff] : ops) {
+        two_coeffs.push_back(2.0 * coeff.real());
+    }
 
     // For each qubit i, the indices of terms k whose z-support includes qubit i.
     // When bit i is flipped, only these terms change parity (and thus sign in lp).
@@ -164,16 +177,16 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
         }
     }
 
-    // One RNG per thread to avoid data races under OpenMP.
+    // One seed per potential chain, drawn up front so the chains don't race on the shared stream
 #if defined(_OPENMP)
-    const int nthreads = omp_get_max_threads();
+    const int max_chains = omp_get_max_threads();
 #else
-    const int nthreads = 1;
+    const int max_chains = 1;
 #endif
-    std::random_device rd;
-    std::vector<std::mt19937> rngs(nthreads);
-    for (auto& r : rngs)
-        r.seed(rd());
+    const bool parallel = static_cast<long long>(N_s) * (n_warmup + 1) * std::max(p, 1) >= kMinParallelWork;
+    std::vector<uint64_t> chain_seeds(max_chains);
+    for (auto& chain_seed : chain_seeds)
+        chain_seed = (*rng)();
 
     SampleSet result;
     result.configs.resize(N_s, Bitset());
@@ -181,7 +194,7 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
 
     // Each thread runs one long chain for its share of the samples.
 #if defined(_OPENMP)
-#pragma omp parallel
+#pragma omp parallel if (parallel)
 #endif
     {
 #if defined(_OPENMP)
@@ -194,54 +207,39 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
         const int s_start = (tid * N_s) / actual_nthreads;
         const int s_end = ((tid + 1) * N_s) / actual_nthreads;
 
-        std::mt19937& rng = rngs[tid];
+        std::mt19937_64 chain_rng(chain_seeds[tid]);
         std::uniform_int_distribution<int> rand_qubit(0, num_qubits - 1);
         std::uniform_real_distribution<double> rand01(0.0, 1.0);
 
         // Start from a random bitstring.
         Bitset x;
         for (int i = 0; i < num_qubits; ++i) {
-            if (rand01(rng) < 0.5) {
+            if (rand01(chain_rng) < 0.5) {
                 x.set(i);
             }
         }
 
-        // Per-term parity and weighted contribution: contrib[k] = 2*coeff_k * (-1)^parity_k
-        std::vector<bool> parity(p);
+        // Per-term sign (-1)^parity_k and weighted contribution contrib[k] = 2*coeff_k * sign_k
+        std::vector<int8_t> sign(p);
         std::vector<double> contrib(p);
-        double lp = 0.0;
         for (int k = 0; k < p; ++k) {
-            bool neg = ((x & z_bits[k]).count()) & 1;
-            parity[k] = neg;
-            contrib[k] = 2.0 * terms_vec[k].second.real() * (neg ? -1.0 : 1.0);
-            lp += contrib[k];
+            sign[k] = ((x & z_bits[k]).count() & 1) ? int8_t(-1) : int8_t(1);
+            contrib[k] = two_coeffs[k] * sign[k];
         }
 
-        // Calculate the change in log-probability if we flip a given qubit
-        auto compute_delta = [&](int qubit) -> double {
-            double delta = 0.0;
-            for (int k : qubit_to_terms[qubit])
-                delta -= 2.0 * contrib[k];
-            return delta;
-        };
-
-        // Accept a proposed flip of a given qubit, updating the state, parity, contrib
-        auto accept_flip = [&](int qubit) {
-            x.flip(num_qubits - 1 - qubit);
-            for (int k : qubit_to_terms[qubit]) {
-                contrib[k] = -contrib[k];
-                parity[k] = !parity[k];
-            }
-        };
-
-        // Advance the chain by the given number of full sweeps.
+        // Advance the chain by the given number of full sweeps, accepting flips with the Metropolis rule.
         auto mh_sweep = [&](int nsweeps) {
             for (int t = 0; t < nsweeps * num_qubits; ++t) {
-                int i = rand_qubit(rng);
-                double lp_new = lp + compute_delta(i);
-                if (std::log(rand01(rng)) < lp_new - lp) {
-                    accept_flip(i);
-                    lp = lp_new;
+                int i = rand_qubit(chain_rng);
+                double delta = 0.0;
+                for (int k : qubit_to_terms[i])
+                    delta -= 2.0 * contrib[k];
+                if (delta >= 0.0 || std::log(rand01(chain_rng)) < delta) {
+                    x.flip(num_qubits - 1 - i);
+                    for (int k : qubit_to_terms[i]) {
+                        contrib[k] = -contrib[k];
+                        sign[k] = static_cast<int8_t>(-sign[k]);
+                    }
                 }
             }
         };
@@ -256,7 +254,7 @@ SampleSet ExponentialAnsatz::draw_samples(int N_s, int n_warmup) const {
             }
             result.configs[s] = x;
             for (int k = 0; k < p; ++k) {
-                result.O_mat(s, k) = parity[k] ? int8_t(-1) : int8_t(1);
+                result.O_mat(s, k) = sign[k];
             }
         }
     }
@@ -268,75 +266,120 @@ DenseVector ExponentialAnsatz::local_energy(const SampleSet& samples, const Matr
     /*
     Compute the local energy E_loc(x) = ∑_{x'} H_{x,x'} Ψ(x')/Ψ(x) for each sample x.
 
+    A Hamiltonian term flipping the bits in mask f maps x to x' = x ^ f, and the amplitude ratio is
+    Ψ(x')/Ψ(x) = exp(-2 ∑_{k : P_k anticommutes with f} a_k O_k(x)), using the log-derivatives O_k(x)
+    already stored in the samples. Terms are grouped by flip mask, so all diagonal (Z-type) terms share
+    a ratio of one and each off-diagonal mask costs a single exponential per sample.
+
     Args:
-        samples (const SampleSet&): The samples to compute the local energy for.
+        samples (const SampleSet&): The samples to compute the local energy for, drawn from this ansatz.
         H (const MatrixFreeHamiltonian&): The Hamiltonian to compute the local energy with respect to.
 
     Returns:
         DenseVector: A vector containing the local energy for each sample.
+
+    Raises:
+        std::invalid_argument: If the samples' log-derivatives don't match this ansatz's terms.
     */
 
     // Get the operators and coefficients from the ansatz
     const auto& ops = terms.get_operators();
     const int p = static_cast<int>(ops.size());
-    std::vector<std::pair<PauliString, Complex>> terms_vec(ops.begin(), ops.end());
-    std::vector<Bitset> z_bits = build_z_bits();
     const int N_s = static_cast<int>(samples.configs.size());
+    if (samples.O_mat.rows() != N_s || samples.O_mat.cols() != p) {
+        throw std::invalid_argument("Samples do not match the terms of the ansatz.");
+    }
+    std::vector<Bitset> z_bits = build_z_bits();
+    std::vector<Complex> two_coeffs;
+    two_coeffs.reserve(p);
+    for (const auto& [ps, coeff] : ops) {
+        two_coeffs.push_back(static_cast<Real>(2.0) * coeff);
+    }
 
-    // Precompute the effect of each Hamiltonian term on the samples
-    static const Complex i_powers[4] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
-    struct HTerm {
-        Complex base_phase;
-        Bitset flip_mask;
+    // Group the Hamiltonian terms by the bits they flip, since terms sharing a flip share the amplitude ratio.
+    // Each Y contributes <x|Y|x^1> = -i (-1)^x, hence the powers of -i and the Y qubits in the sign mask.
+    static const Complex minus_i_powers[4] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
+    struct SignedPhase {
         Bitset sign_mask;
-        std::vector<bool> flips_Pk;
+        Complex phase;
     };
-    const auto& h_ops = H.get_operators();
-    std::vector<HTerm> h_terms;
-    h_terms.reserve(h_ops.size());
-    for (const auto& [ps, coeff] : h_ops) {
+    struct FlipGroup {
+        std::vector<int> flipped_terms;
+        std::vector<SignedPhase> phases;
+    };
+    std::vector<FlipGroup> groups;
+    std::unordered_map<Bitset, size_t> group_of_mask;
+    for (const auto& [ps, coeff] : H.get_operators()) {
         Bitset flip_mask, sign_mask;
         int n_y = 0;
         for (int i = 0; i < num_qubits; ++i) {
-            if (ps.x_mask[i] && !ps.z_mask[i]) {
-                flip_mask.flip(num_qubits - 1 - i);
-            } else if (!ps.x_mask[i] && ps.z_mask[i]) {
+            if (ps.x_mask[i]) {
+                flip_mask.set(num_qubits - 1 - i);
+            }
+            if (ps.z_mask[i]) {
                 sign_mask.set(num_qubits - 1 - i);
-            } else if (ps.x_mask[i] && ps.z_mask[i]) {
-                flip_mask.flip(num_qubits - 1 - i);
-                sign_mask.set(num_qubits - 1 - i);
+            }
+            if (ps.x_mask[i] && ps.z_mask[i]) {
                 ++n_y;
             }
         }
-        Complex base_phase = coeff * i_powers[n_y & 3];
-        std::vector<bool> flips(p);
-        for (int k = 0; k < p; ++k) {
-            flips[k] = ((flip_mask & z_bits[k]).count() & 1) != 0;
+        auto [it, inserted] = group_of_mask.try_emplace(flip_mask, groups.size());
+        if (inserted) {
+            FlipGroup group;
+            for (int k = 0; k < p; ++k) {
+                if ((flip_mask & z_bits[k]).count() & 1) {
+                    group.flipped_terms.push_back(k);
+                }
+            }
+            groups.push_back(std::move(group));
         }
-        h_terms.push_back({base_phase, std::move(flip_mask), std::move(sign_mask), std::move(flips)});
+        groups[it->second].phases.push_back({sign_mask, coeff * minus_i_powers[n_y & 3]});
     }
 
-    // Compute the local energy for each sample using the precomputed Hamiltonian term effects
+    // Each sample's log-derivatives contiguous in memory
+    const Eigen::Matrix<int8_t, Eigen::Dynamic, Eigen::Dynamic> O_t = samples.O_mat.transpose();
+    long long work_per_sample = 0;
+    for (const auto& group : groups) {
+        work_per_sample += static_cast<long long>(group.phases.size() + group.flipped_terms.size());
+    }
+    const bool parallel = N_s * work_per_sample >= kMinParallelWork;
+
+    // Compute the local energy for each sample using the grouped Hamiltonian terms
     DenseVector El(N_s);
 #if defined(_OPENMP)
-#pragma omp parallel for
+#pragma omp parallel for if (parallel)
 #endif
     for (int s = 0; s < N_s; ++s) {
         const Bitset& x = samples.configs[s];
-        Complex el = 0.0;
-        for (const auto& ht : h_terms) {
-            bool neg_sign = ((x & ht.sign_mask).count()) & 1;
-            Complex h_elem = neg_sign ? -ht.base_phase : ht.base_phase;
-            Complex log_ratio = 0.0;
-            for (int k = 0; k < p; ++k) {
-                if (ht.flips_Pk[k]) {
-                    bool neg = ((x & z_bits[k]).count()) & 1;
-                    log_ratio -= static_cast<Real>(2.0) * terms_vec[k].second * Complex(neg ? -1.0 : 1.0, 0.0);
-                }
+        const int8_t* O_s = O_t.data() + static_cast<Eigen::Index>(s) * p;
+        Real el_re = 0.0;
+        Real el_im = 0.0;
+        for (const auto& group : groups) {
+            Real h_re = 0.0;
+            Real h_im = 0.0;
+            for (const auto& term : group.phases) {
+                const Real sign = ((x & term.sign_mask).count() & 1) ? Real(-1.0) : Real(1.0);
+                h_re += sign * term.phase.real();
+                h_im += sign * term.phase.imag();
             }
-            el += h_elem * std::exp(log_ratio);
+            if (group.flipped_terms.empty()) {
+                el_re += h_re;
+                el_im += h_im;
+                continue;
+            }
+            Real log_re = 0.0;
+            Real log_im = 0.0;
+            for (int k : group.flipped_terms) {
+                log_re -= two_coeffs[k].real() * O_s[k];
+                log_im -= two_coeffs[k].imag() * O_s[k];
+            }
+            const Real magnitude = std::exp(log_re);
+            const Real ratio_re = magnitude * std::cos(log_im);
+            const Real ratio_im = magnitude * std::sin(log_im);
+            el_re += h_re * ratio_re - h_im * ratio_im;
+            el_im += h_re * ratio_im + h_im * ratio_re;
         }
-        El(s) = el;
+        El(s) = Complex(el_re, el_im);
     }
 
     return El;
