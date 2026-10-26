@@ -15,7 +15,7 @@
 import pytest
 from rustworkx import PyGraph
 
-from qilisdk.digital import CZ, RX, RY, RZ, SWAP, U3, Circuit, Gate, M
+from qilisdk.digital import CNOT, CZ, RX, U1, Adjoint, Circuit, Controlled, H, M, S, X
 from qilisdk.digital.circuit_transpiler_passes.custom_layout_pass import CustomLayoutPass
 from qilisdk.digital.circuit_transpiler_passes.transpilation_context import TranspilationContext
 
@@ -50,6 +50,9 @@ def test_custom_layout_routing_inserts_swaps_when_needed():
     assert [gate.qubits for gate in output.gates] == [(2,), (1, 0), (2, 1), (1, 0), (0,)]
     assert [gate.qubits for gate in circuit.gates] == [(0,), (0, 1), (1,)]
     assert context.initial_layout == [2, 0]
+    assert layout_pass.last_layout == [2, 0]
+    assert layout_pass.last_swap_count == 2
+    assert context.metrics == {"swap_count": 2}
     assert "CustomLayoutPass" in context.circuits
     assert context.circuits["CustomLayoutPass"] is output
 
@@ -71,6 +74,32 @@ def test_custom_layout_respects_adjacent_mapping_without_swaps():
 
     assert [type(g).__name__ for g in output.gates] == ["RX", "CZ", "M"]
     assert [gate.qubits for gate in output.gates] == [(0,), (0, 1), (1,)]
+    assert layout_pass.last_swap_count == 0
+
+
+def test_custom_layout_retargets_non_basis_gates():
+    topology = _make_topology(3)
+    topology.add_edge(0, 1, None)
+    topology.add_edge(1, 2, None)
+
+    circuit = Circuit(2)
+    circuit.add(H(0))
+    circuit.add(X(1))
+    circuit.add(S(0))
+    circuit.add(U1(1, phi=0.3))
+    circuit.add(Controlled(0, basic_gate=RX(1, theta=0.4)))
+    circuit.add(Adjoint(S(1)))
+    circuit.add(CNOT(1, 0))
+
+    layout_pass = CustomLayoutPass(topology, {0: 2, 1: 1})
+
+    output = layout_pass.run(circuit)
+
+    assert [type(g) for g in output.gates] == [type(g) for g in circuit.gates]
+    assert [gate.qubits for gate in output.gates] == [(2,), (1,), (2,), (1,), (2, 1), (1,), (1, 2)]
+    assert output.gates[3].phi == pytest.approx(0.3)
+    assert output.gates[4].basic_gate.theta == pytest.approx(0.4)
+    assert [gate.qubits for gate in circuit.gates][4] == (0, 1)
 
 
 def test_custom_layout_restores_mapping_after_two_qubit_gate():
@@ -184,43 +213,6 @@ def test_custom_layout_raises_for_multi_qubit_gate():
 
     with pytest.raises(NotImplementedError, match="FakeGate"):
         layout_pass.run(circuit)
-
-
-@pytest.mark.parametrize(
-    ("gate", "mapped_qubits", "expected_type"),
-    [
-        (RY(0, theta=0.2), (2,), RY),
-        (RZ(0, phi=0.3), (1,), RZ),
-        (U3(0, theta=0.4, phi=0.5, gamma=0.6), (2,), U3),
-        (SWAP(0, 1), (2, 0), SWAP),
-        (M(0), (1,), M),
-    ],
-)
-def test_custom_layout_retarget_gate_supports_all_specialized_branches(
-    gate: Gate, mapped_qubits, expected_type
-) -> None:
-    retargeted = CustomLayoutPass._retarget_gate(gate, mapped_qubits)
-
-    assert isinstance(retargeted, expected_type)
-    assert retargeted.qubits == mapped_qubits
-
-
-def test_custom_layout_retarget_gate_rejects_unsupported_type() -> None:
-    class UnsupportedGate(Gate):
-        @property
-        def name(self) -> str:
-            return "Unsupported"
-
-        @property
-        def matrix(self):
-            return None
-
-        @property
-        def target_qubits(self) -> tuple[int, ...]:
-            return (0, 1, 2)
-
-    with pytest.raises(NotImplementedError, match="UnsupportedGate"):
-        CustomLayoutPass._retarget_gate(UnsupportedGate(), (0, 1, 2))
 
 
 def test_custom_layout_shortest_path_handles_identical_endpoints() -> None:

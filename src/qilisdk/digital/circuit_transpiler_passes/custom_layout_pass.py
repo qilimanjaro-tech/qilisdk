@@ -19,10 +19,11 @@ from typing import TYPE_CHECKING
 
 from loguru import logger
 
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U3, Circuit, Gate, M
+from qilisdk.digital import SWAP, Circuit, M
 from qilisdk.digital.topology import build_topology_graph
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
+from .retargeting_helpers import _retarget_gate
 
 if TYPE_CHECKING:
     from rustworkx import PyGraph
@@ -59,7 +60,9 @@ class CustomLayoutPass(CircuitTranspilerPass):
     - Returns a *new* `Circuit` whose `nqubits` equals the chip size
       (len of topology's qubits) and whose gates are retargeted to the mapped
       physical qubits.
-    - Exposes `last_layout` (list[int]) for diagnostics, mirroring SabreLayout.
+    - Exposes `last_layout` (list[int]) and `last_swap_count` (int) for
+      diagnostics, mirroring SabreLayoutPass and SabreSwapPass; the swap count
+      is also stored in ``context.metrics["swap_count"]``.
 
     Notes
     -----
@@ -82,6 +85,8 @@ class CustomLayoutPass(CircuitTranspilerPass):
         self.topology: PyGraph[int, None] = build_topology_graph(topology)
         # Store a copy with explicit int coercion
         self._user_layout: LayoutMap = {int(k): int(v) for k, v in layout.items()}
+        self.last_layout: list[int] | None = None
+        self.last_swap_count: int | None = None
 
     def run(self, circuit: Circuit) -> Circuit:
         """Retarget a circuit using the user layout, inserting temporary SWAPs when needed.
@@ -159,13 +164,14 @@ class CustomLayoutPass(CircuitTranspilerPass):
         # would otherwise violate the coupling constraints. SWAPs are added in pairs so
         # that the logical-to-physical mapping is restored after each routed 2Q gate.
         output_circuit = Circuit(num_physical_qubits)
+        swap_count = 0
 
         for gate in circuit.gates:
             gate_qubits = gate.qubits
 
             if len(gate_qubits) <= 1 or isinstance(gate, M):
                 mapped_qubits = tuple(logical_to_physical_layout[logical_qubit] for logical_qubit in gate_qubits)
-                output_circuit.add(self._retarget_gate(gate, mapped_qubits))
+                output_circuit.add(_retarget_gate(gate, mapped_qubits))
                 continue
 
             if len(gate_qubits) != CustomLayoutPass._TWO_QUBIT_ARITY:
@@ -184,7 +190,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
                     logical_to_physical_layout[logical_qubit_a],
                     logical_to_physical_layout[logical_qubit_b],
                 )
-                output_circuit.add(self._retarget_gate(gate, mapped_qubits))
+                output_circuit.add(_retarget_gate(gate, mapped_qubits))
                 continue
 
             routing_path = self._shortest_path(
@@ -215,6 +221,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
                     physical_node_b,
                 )
                 applied_swap_edges.append((physical_node_a, physical_node_b))
+                swap_count += 1
 
             mapped_qubits = (
                 logical_to_physical_layout[logical_qubit_a],
@@ -224,7 +231,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
                 raise RuntimeError(
                     "Failed to route gate after inserting swaps; resulting qubits are still non-adjacent."
                 )
-            output_circuit.add(self._retarget_gate(gate, mapped_qubits))
+            output_circuit.add(_retarget_gate(gate, mapped_qubits))
 
             # Restore the original mapping so later 1Q gates remain on the requested qubits.
             for physical_node_a, physical_node_b in reversed(applied_swap_edges):
@@ -235,11 +242,15 @@ class CustomLayoutPass(CircuitTranspilerPass):
                     physical_node_a,
                     physical_node_b,
                 )
+                swap_count += 1
 
+        self.last_layout = initial_layout
+        self.last_swap_count = swap_count
         if self.context is not None:
             self.context.initial_layout = initial_layout
             self.context.layout_applied = True
             self.context.final_layout = self._user_layout
+            self.context.metrics["swap_count"] = swap_count
 
         logger.debug(
             "[CustomLayoutPass] Produced circuit with {} qubits and {} gates",
@@ -249,48 +260,6 @@ class CustomLayoutPass(CircuitTranspilerPass):
         self.append_circuit_to_context(output_circuit)
 
         return output_circuit
-
-    # --------- retargeting helpers (mirrors SabreLayoutPass) ---------
-
-    @staticmethod
-    def _retarget_gate(gate: Gate, mapped_qubits: tuple[int, ...]) -> Gate:
-        """Recreate a supported gate on new qubit indices.
-
-        Args:
-            gate (Gate): Gate to retarget.
-            mapped_qubits (tuple[int, ...]): Physical qubits where the gate should act.
-
-        Returns:
-            Gate: Retargeted gate equivalent to ``gate`` on ``mapped_qubits``.
-
-        Raises:
-            NotImplementedError: If the gate type is not supported by this pass.
-        """
-        # 1-qubit basics
-        if isinstance(gate, RX):
-            return RX(mapped_qubits[0], theta=gate.theta)
-        if isinstance(gate, RY):
-            return RY(mapped_qubits[0], theta=gate.theta)
-        if isinstance(gate, RZ):
-            return RZ(mapped_qubits[0], phi=gate.phi)
-        if isinstance(gate, U3):
-            return U3(mapped_qubits[0], theta=gate.theta, phi=gate.phi, gamma=gate.gamma)
-
-        # 2-qubit basics
-        if isinstance(gate, CNOT):
-            return CNOT(mapped_qubits[0], mapped_qubits[1])
-        if isinstance(gate, CZ):
-            return CZ(mapped_qubits[0], mapped_qubits[1])
-        if isinstance(gate, SWAP):
-            return SWAP(mapped_qubits[0], mapped_qubits[1])
-
-        # Measurement (possibly multi-qubit)
-        if isinstance(gate, M):
-            return M(*mapped_qubits)
-
-        raise NotImplementedError(
-            f"Retargeting not implemented for gate type {type(gate).__name__} with arity {gate.nqubits}"
-        )
 
     @staticmethod
     def _apply_swap_to_layout(

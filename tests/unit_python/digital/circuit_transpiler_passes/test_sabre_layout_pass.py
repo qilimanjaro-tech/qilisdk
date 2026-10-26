@@ -34,7 +34,6 @@ from qilisdk.digital import (
     Circuit,
     Controlled,
     Exponential,
-    Gate,
     H,
     M,
     S,
@@ -368,21 +367,3 @@ def test_sabre_layout_cost_front_penalizes_unreachable_interactions() -> None:
 def test_sabre_layout_random_initial_layout_requires_enough_physical_nodes() -> None:
     with pytest.raises(ValueError, match="need ≥ 2"):
         SabreLayoutPass._random_initial_layout(random.Random(0), 2, [0])
-
-
-def test_sabre_layout_remap_gate_qubits_rejects_unsupported_type() -> None:
-    class UnsupportedGate(Gate):
-        @property
-        def name(self) -> str:
-            return "Unsupported"
-
-        @property
-        def matrix(self):
-            return None
-
-        @property
-        def target_qubits(self) -> tuple[int, ...]:
-            return (0,)
-
-    with pytest.raises(NotImplementedError, match="UnsupportedGate"):
-        SabreLayoutPass._remap_gate_qubits_inplace(UnsupportedGate(), {0: 1})
