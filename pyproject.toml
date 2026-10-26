@@ -141,7 +141,7 @@ docs = [
     "sphinx-design>=0.7.0",
     "sphinx-mdinclude>=0.6.2",
     "sphinx-multiversion==0.2.4",
-    "sphinxawesome-theme==6.0.5",
+    "sphinxawesome-theme==6.0.6",
     "sphinx-intl",
     "sphinx-tabs>=3.5.0",
 ]
