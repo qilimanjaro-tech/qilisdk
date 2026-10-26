@@ -29,7 +29,7 @@ from qilisdk.digital.circuit_transpiler_passes.decompose_multi_controlled_gates_
 from qilisdk.digital.circuit_transpiler_passes.numeric_helpers import _wrap_angle, _zyz_from_unitary
 from qilisdk.digital.gates import BasicGate, Controlled, Gate
 
-from .utils import _sequence_matrix, _sequences_equivalent
+from .utils import _sequence_matrix, _sequences_equivalent, _unitaries_equivalent
 
 ATOL = 1e-9
 
@@ -645,7 +645,7 @@ def test_zyz_unitary(factory_name: str, factory) -> None:
     unitary = gate.matrix.dense()
     theta, phi, gamma = _zyz_from_unitary(unitary)
     reconstructed = U3(0, theta=theta, phi=phi, gamma=gamma).matrix.dense()
-    assert np.allclose(unitary, reconstructed), f"ZYZ reconstruction failed for {factory_name}"
+    assert _unitaries_equivalent(unitary, reconstructed), f"ZYZ reconstruction failed for {factory_name}"
 
 
 def test_zyz_unitary_errors():
