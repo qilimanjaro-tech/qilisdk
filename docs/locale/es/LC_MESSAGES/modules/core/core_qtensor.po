@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-15 11:16+0200\n"
+"POT-Creation-Date: 2026-10-16 17:49+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -41,8 +41,8 @@ msgid ""
 "the optimal storage format based on its shape and sparsity. It supports a"
 " variety of quantum objects, including:"
 msgstr ""
-"El :class:`~qilisdk.core.qtensor.QTensor` envuelve un array y lo almacena "
-"en el formato de almacenamiento óptimo según su forma y su dispersión. "
+"El :class:`~qilisdk.core.qtensor.QTensor` envuelve un array y lo almacena"
+" en el formato de almacenamiento óptimo según su forma y su dispersión. "
 "Admite una variedad de objetos cuánticos, entre ellos:"
 
 #: ../../modules/core/core_qtensor.rst:11
@@ -71,8 +71,8 @@ msgstr "Ejemplos de creación de distintos objetos cuánticos:"
 
 #: ../../modules/core/core_qtensor.rst:42
 #: ../../modules/core/core_qtensor.rst:88
-#: ../../modules/core/core_qtensor.rst:178
-#: ../../modules/core/core_qtensor.rst:228
+#: ../../modules/core/core_qtensor.rst:179
+#: ../../modules/core/core_qtensor.rst:230
 msgid "**Output**"
 msgstr "**Salida**"
 
@@ -368,30 +368,50 @@ msgstr ""
 " restablece los qubits especificados a 0"
 
 #: ../../modules/core/core_qtensor.rst:144
+msgid ""
+":meth:`.permute(order)<qilisdk.core.qtensor.QTensor.permute>`: reorder "
+"the qubits, so that qubit ``i`` of the result is qubit ``order[i]`` of "
+"the original"
+msgstr ""
+":meth:`.permute(order)<qilisdk.core.qtensor.QTensor.permute>`: reordena "
+"los qubits, de modo que el qubit ``i`` del resultado es el qubit "
+"``order[i]`` del original"
+
+#: ../../modules/core/core_qtensor.rst:145
 msgid ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias for adjoint"
 msgstr ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias de adjoint"
 
-#: ../../modules/core/core_qtensor.rst:146
+#: ../../modules/core/core_qtensor.rst:147
 msgid "Examples:"
 msgstr "Ejemplos:"
 
-#: ../../modules/core/core_qtensor.rst:205
+#: ../../modules/core/core_qtensor.rst:206
 msgid "Extra Utilities"
 msgstr "Utilidades adicionales"
 
-#: ../../modules/core/core_qtensor.rst:207
+#: ../../modules/core/core_qtensor.rst:208
 msgid "**Tensor product** with :func:`~qilisdk.core.qtensor.tensor_prod`"
 msgstr "**Producto tensorial** con :func:`~qilisdk.core.qtensor.tensor_prod`"
 
-#: ../../modules/core/core_qtensor.rst:208
+#: ../../modules/core/core_qtensor.rst:209
+msgid ""
+"**Tensor product on chosen qubits** by passing ``qubits``, e.g. "
+"``tensor_prod([a, b], qubits=[[1], [0, 2]])`` places ``a`` on qubit 1 and"
+" ``b`` on qubits 0 and 2"
+msgstr ""
+"**Producto tensorial sobre qubits elegidos** pasando ``qubits``, p. ej. "
+"``tensor_prod([a, b], qubits=[[1], [0, 2]])`` coloca ``a`` en el qubit 1 "
+"y ``b`` en los qubits 0 y 2"
+
+#: ../../modules/core/core_qtensor.rst:210
 msgid "**Expectation value** with :func:`~qilisdk.core.qtensor.expect_val`"
 msgstr "**Valor esperado** con :func:`~qilisdk.core.qtensor.expect_val`"
 
-#: ../../modules/core/core_qtensor.rst:240
+#: ../../modules/core/core_qtensor.rst:242
 msgid "Visualization of Quantum States"
 msgstr "Visualización de estados cuánticos"
 
-#: ../../modules/core/core_qtensor.rst:242
+#: ../../modules/core/core_qtensor.rst:244
 msgid ""
 "You can also visualize single-qubit states on the Bloch sphere using "
 ":meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
@@ -399,7 +419,7 @@ msgstr ""
 "También puede visualizar estados de un solo qubit en la esfera de Bloch "
 "usando :meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
 
-#: ../../modules/core/core_qtensor.rst:251
+#: ../../modules/core/core_qtensor.rst:253
 msgid ""
 "Single-qubit density matrices can be drawn as well, so one qubit of a "
 "larger state can be visualized by first reducing it with "
@@ -409,7 +429,7 @@ msgstr ""
 "que un qubit de un estado mayor se puede visualizar reduciéndolo primero "
 "con :meth:`~qilisdk.core.qtensor.QTensor.partial_trace`:"
 
-#: ../../modules/core/core_qtensor.rst:262
+#: ../../modules/core/core_qtensor.rst:264
 msgid ""
 "The appearance of this plot can be customized using a "
 ":class:`~qilisdk.utils.visualization.style.QTensorStyle` object, which "

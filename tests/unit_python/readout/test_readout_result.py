@@ -151,6 +151,16 @@ class TestExpectationReadoutResult:
         with pytest.raises(ValueError, match="imaginary expectation"):
             ExpectationReadoutResult.from_state(expectation_readout=readout, state=ket(0))
 
+    def test_from_expectations_converts_real_valued_complex_to_float(self):
+        result = ExpectationReadoutResult.from_expectations(expectation_values=[complex(-3.5, 0.0)])
+        assert isinstance(result.expectation_values[0], float)
+        assert result.expectation_values == [-3.5]
+
+    def test_from_expectations_imag_raises(self):
+        expectation_values = [complex(-3.5, 1.0)]
+        with pytest.raises(ValueError, match="imaginary expectation"):
+            ExpectationReadoutResult.from_expectations(expectation_values=expectation_values)
+
     def test_init_from_expectation_values(self):
         result = ExpectationReadoutResult(expectation_values=[0.5])
         assert result.expectation_values == [0.5]

@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
+import operator
 import re
+from itertools import pairwise
 from typing import ClassVar
 
 import numpy as np
 import pytest
 
-from qilisdk.analog.exceptions import InvalidHamiltonianOperation
+from qilisdk.analog.exceptions import InvalidHamiltonianOperation, NotAHamiltonianError
 from qilisdk.analog.hamiltonian import (
     Hamiltonian,
     I,
@@ -33,6 +36,7 @@ from qilisdk.analog.hamiltonian import (
 )
 from qilisdk.core import Domain, Parameter, QTensor, Variable
 from qilisdk.core.variables import BinaryVariable
+from qilisdk.digital import X as digital_X
 from qilisdk.settings import Precision, get_settings
 
 COMPLEX_DTYPE = get_settings().complex_precision.dtype
@@ -278,6 +282,274 @@ def test_hamiltonian_hash_order_independent():
     assert hash(h1) == hash(h2)
 
 
+def test_dict_constructor_canonicalises_keys():
+    h1 = Hamiltonian({(PauliX(1), PauliZ(0)): 1.0})
+    h2 = Hamiltonian({(PauliZ(0), PauliX(1)): 1.0})
+
+    assert h1 == Z(0) * X(1)
+    assert hash(h1) == hash(h2)
+    assert h1 + h2 == 2 * Z(0) * X(1)
+
+
+@pytest.mark.parametrize(
+    ("elements", "expected_hamiltonian"),
+    [
+        ({(PauliZ(0), PauliZ(0)): 1.0}, I(0)),
+        ({(PauliX(0), PauliY(0)): 2.0}, 2j * Z(0)),
+        ({(PauliX(0), PauliX(0), PauliZ(1)): 1.0, (PauliZ(1),): 1.0}, 2 * Z(1)),
+        ({(PauliI(0), PauliZ(1)): 1.0}, Z(1)),
+        ({(PauliZ(1), PauliI(0)): 1.0}, Z(1)),
+        ({(PauliX(0), PauliY(0)): 1.0, (PauliY(0), PauliX(0)): 1.0}, Hamiltonian()),
+        ({(PauliX(0), PauliY(1)): 1.0, (PauliY(1), PauliX(0)): -1.0}, Hamiltonian()),
+        ({(): 2.0}, 2 * I(0)),
+        ({(PauliI(3),): 2.0}, 2 * I(0)),
+    ],
+)
+def test_dict_constructor_collapses_repeated_qubits(elements, expected_hamiltonian):
+    assert Hamiltonian(elements) == expected_hamiltonian
+
+
+@pytest.mark.parametrize("identity_key", [(), (PauliI(0),), (PauliI(3),), (PauliZ(1), PauliZ(1))])
+def test_dict_constructor_identity_keys_merge_with_scalars(identity_key):
+    hamiltonian = Hamiltonian({identity_key: 2.0}) + 1
+
+    assert hamiltonian == 3 * I(0)
+    assert str(hamiltonian) == "3"
+
+
+def test_dict_constructor_folds_phase_into_parameter_coefficient():
+    theta = Parameter("theta", 0.5)
+    hamiltonian = Hamiltonian({(PauliX(0), PauliY(0)): theta})
+
+    assert hamiltonian.get_parameters() == {"theta": 0.5}
+    assert hamiltonian.elements == {(PauliZ(0),): 0.5j}
+
+
+_RANDOM_NQUBITS = 4
+_PAULI_CLASSES = (PauliI, PauliX, PauliY, PauliZ)
+
+
+def _random_key(rng: np.random.Generator, max_length: int = 6) -> tuple[PauliOperator, ...]:
+    length = int(rng.integers(0, max_length + 1))
+    return tuple(
+        _PAULI_CLASSES[int(rng.integers(len(_PAULI_CLASSES)))](int(rng.integers(_RANDOM_NQUBITS)))
+        for _ in range(length)
+    )
+
+
+def _random_elements(rng: np.random.Generator) -> dict[tuple[PauliOperator, ...], complex]:
+    nterms = int(rng.integers(1, 6))
+    return {_random_key(rng): complex(rng.normal(), rng.normal()) for _ in range(nterms)}
+
+
+def _reference_matrix(elements: dict[tuple[PauliOperator, ...], complex], nqubits: int) -> np.ndarray:
+    """Build the dense matrix of a Hamiltonian by multiplying the key operators in order, without using Hamiltonian."""
+    dim = 2**nqubits
+    total = np.zeros((dim, dim), dtype=complex)
+    for key, coeff in elements.items():
+        term = np.eye(dim, dtype=complex)
+        for op in key:
+            factors = [op.matrix if qubit == op.qubit else np.eye(2) for qubit in range(nqubits)]
+            embedded = factors[0]
+            for factor in factors[1:]:
+                embedded = np.kron(embedded, factor)
+            term = term @ embedded
+        total += coeff * term
+    return total
+
+
+def _is_canonical_key(key: tuple[PauliOperator, ...]) -> bool:
+    if key == (PauliI(0),):
+        return True
+    return len(key) > 0 and all(op.name != "I" for op in key) and all(a.qubit < b.qubit for a, b in pairwise(key))
+
+
+@pytest.mark.parametrize("seed", range(50))
+def test_dict_constructor_matches_dense_reference(seed: int):
+    rng = np.random.default_rng(seed)
+    elements = _random_elements(rng)
+    hamiltonian = Hamiltonian(elements)
+
+    np.testing.assert_allclose(
+        hamiltonian.to_qtensor(total_nqubits=_RANDOM_NQUBITS).dense(),
+        _reference_matrix(elements, _RANDOM_NQUBITS),
+        atol=1e-10,
+    )
+
+
+@pytest.mark.parametrize("seed", range(50))
+def test_dict_constructor_matches_operator_multiplication(seed: int):
+    rng = np.random.default_rng(seed)
+    elements = _random_elements(rng)
+    expected = Hamiltonian()
+    for key, coeff in elements.items():
+        term = coeff * I(0)
+        for op in key:
+            term *= op
+        expected += term
+
+    assert Hamiltonian(elements) == expected
+
+
+@pytest.mark.parametrize("seed", range(50))
+def test_dict_constructor_produces_canonical_keys(seed: int):
+    rng = np.random.default_rng(seed)
+    hamiltonian = Hamiltonian(_random_elements(rng))
+
+    assert all(_is_canonical_key(key) for key in hamiltonian.elements)
+
+
+@pytest.mark.parametrize("seed", range(50))
+def test_dict_constructor_is_idempotent(seed: int):
+    rng = np.random.default_rng(seed)
+    hamiltonian = Hamiltonian(_random_elements(rng))
+    rebuilt = Hamiltonian(hamiltonian.elements)
+
+    assert rebuilt == hamiltonian
+    assert hash(rebuilt) == hash(hamiltonian)
+    assert list(rebuilt.elements) == list(hamiltonian.elements)
+
+
+@pytest.mark.parametrize("seed", range(50))
+def test_dict_constructor_ignores_order_of_operators_on_distinct_qubits(seed: int):
+    rng = np.random.default_rng(seed)
+    nops = int(rng.integers(1, _RANDOM_NQUBITS + 1))
+    qubits = rng.choice(_RANDOM_NQUBITS, size=nops, replace=False)
+    key = tuple(_PAULI_CLASSES[int(rng.integers(1, 4))](int(qubit)) for qubit in qubits)
+    shuffled = tuple(key[i] for i in rng.permutation(nops))
+    hamiltonian = Hamiltonian({key: 1.5})
+    shuffled_hamiltonian = Hamiltonian({shuffled: 1.5})
+
+    assert shuffled_hamiltonian == hamiltonian
+    assert hash(shuffled_hamiltonian) == hash(hamiltonian)
+    assert list(hamiltonian.elements) == [tuple(sorted(key, key=lambda op: op.qubit))]
+
+
+@pytest.mark.parametrize("seed", range(50))
+def test_str_parse_round_trip(seed: int):
+    rng = np.random.default_rng(seed)
+    hamiltonian = Hamiltonian({key: complex(rng.integers(-3, 4), rng.integers(-3, 4)) for key in _random_elements(rng)})
+
+    assert Hamiltonian.parse(str(hamiltonian)) == hamiltonian
+
+
+@pytest.mark.parametrize(
+    ("elements", "expected_hamiltonian"),
+    [
+        ({(PauliX(0),): 1.0}, X(0)),
+        ({(PauliX(5),): 1.0}, X(5)),
+        ({(PauliI(0),): 1.0}, I(0)),
+        ({(PauliX(0), PauliZ(5)): 1.0}, X(0) * Z(5)),
+        ({(PauliZ(5), PauliX(0)): 1.0}, X(0) * Z(5)),
+        ({(PauliX(0), PauliZ(1), PauliX(0)): 1.0}, Z(1)),
+        ({(PauliX(0), PauliZ(1), PauliY(0)): 1.0}, 1j * Z(0) * Z(1)),
+        ({(PauliY(0), PauliZ(1), PauliX(0)): 1.0}, -1j * Z(0) * Z(1)),
+        ({(PauliX(0), PauliY(0), PauliZ(0)): 1.0}, 1j * I(0)),
+        ({(PauliZ(0), PauliY(0), PauliX(0)): 1.0}, -1j * I(0)),
+        ({(PauliX(0), PauliI(1), PauliX(2)): 1.0}, X(0) * X(2)),
+        ({(PauliI(0), PauliI(1)): 2.0}, 2 * I(0)),
+        ({(PauliI(2), PauliX(0)): 1.0}, X(0)),
+        ({(PauliX(1), PauliX(1), PauliX(1)): 1.0}, X(1)),
+        ({(PauliX(1), PauliY(1), PauliX(1), PauliY(1)): 1.0}, -1 * I(0)),
+        ({(PauliX(0), PauliX(0)): 0.0}, Hamiltonian()),
+        ({(PauliX(0), PauliY(0)): 1e-15}, Hamiltonian()),
+        ({(PauliZ(0), PauliZ(0)): 1.0, (): -1.0}, Hamiltonian()),
+        ({(PauliX(1), PauliZ(0)): 1.0, (PauliZ(0), PauliX(1)): -1.0}, Hamiltonian()),
+        ({(PauliX(0), PauliY(0)): 1.0, (PauliZ(0),): -1j}, Hamiltonian()),
+        ({(PauliX(0), PauliY(0)): 1.0, (PauliZ(0),): 1j}, 2j * Z(0)),
+    ],
+)
+def test_dict_constructor_edge_cases(elements, expected_hamiltonian):
+    hamiltonian = Hamiltonian(elements)
+
+    assert hamiltonian == expected_hamiltonian
+    assert hash(hamiltonian) == hash(expected_hamiltonian)
+
+
+def test_dict_constructor_does_not_mutate_input():
+    key = (PauliY(1), PauliX(0), PauliX(0))
+    elements = {key: 2.0}
+    Hamiltonian(elements)
+
+    assert elements == {key: 2.0}
+    assert list(elements) == [key]
+
+
+def test_dict_constructor_folds_phase_into_parameter_expression():
+    theta = Parameter("theta", 0.5)
+    hamiltonian = Hamiltonian({(PauliY(0), PauliX(0)): 2 * theta + 1})
+
+    assert hamiltonian.get_parameters() == {"theta": 0.5}
+    assert hamiltonian.elements == {(PauliZ(0),): -2j}
+    hamiltonian.set_parameters({"theta": 1.0})
+    assert hamiltonian.elements == {(PauliZ(0),): -3j}
+
+
+def test_dict_constructor_merges_parameter_and_numeric_coefficients():
+    theta = Parameter("theta", 0.5)
+    hamiltonian = Hamiltonian({(PauliX(0), PauliY(0)): theta, (PauliZ(0),): 1.0, (PauliX(1), PauliZ(0)): theta})
+
+    assert hamiltonian.get_parameters() == {"theta": 0.5}
+    assert hamiltonian.elements == {(PauliZ(0),): 1 + 0.5j, (PauliZ(0), PauliX(1)): 0.5}
+
+
+@pytest.mark.parametrize("identity_key", [(), (PauliI(3),), (PauliZ(1), PauliZ(1)), (PauliX(2), PauliI(0), PauliX(2))])
+def test_dict_constructor_parameter_on_identity_key(identity_key):
+    theta = Parameter("theta", 0.5)
+    hamiltonian = Hamiltonian({identity_key: theta}) + 1
+
+    assert hamiltonian.get_parameters() == {"theta": 0.5}
+    assert hamiltonian.elements == {(PauliI(0),): 1.5}
+
+
+def test_dict_constructor_cancelling_parameter_coefficients_evaluate_to_zero():
+    theta = Parameter("theta", 0.5)
+    hamiltonian = Hamiltonian({(PauliX(0), PauliY(0)): theta, (PauliY(0), PauliX(0)): theta})
+
+    assert all(abs(value) < 1e-12 for value in hamiltonian.elements.values())
+
+
+def test_dict_constructor_matches_chained_parameterized_multiplication():
+    theta = Parameter("theta", 0.5)
+    phi = Parameter("phi", -2.0)
+    hamiltonian = Hamiltonian({(PauliZ(1), PauliY(0), PauliX(0)): theta, (PauliX(2), PauliY(2)): phi})
+    expected = theta * Z(1) * Y(0) * X(0) + phi * X(2) * Y(2)
+
+    assert hamiltonian.elements == expected.elements
+    hamiltonian.set_parameters({"theta": 3.0, "phi": 1.0})
+    expected.set_parameters({"theta": 3.0, "phi": 1.0})
+    assert hamiltonian.elements == expected.elements
+
+
+def test_copy_preserves_canonical_terms_and_parameters():
+    theta = Parameter("theta", 0.5)
+    hamiltonian = Hamiltonian({(PauliX(1), PauliZ(0)): theta, (): 2.0})
+    copied = copy.copy(hamiltonian)
+
+    assert copied == hamiltonian
+    assert copied.get_parameters() == hamiltonian.get_parameters()
+    copied += X(3)
+    assert hamiltonian.elements == {(PauliZ(0), PauliX(1)): 0.5, (PauliI(0),): 2}
+
+
+def test_arithmetic_on_constructed_hamiltonians_matches_dense_reference():
+    elements_a = {(PauliX(1), PauliZ(0)): 1.0, (PauliY(2), PauliY(2)): 2.0, (): 0.5j}
+    elements_b = {(PauliY(0), PauliX(0), PauliZ(3)): -1.0, (PauliZ(1),): 3.0}
+    a = Hamiltonian(elements_a)
+    b = Hamiltonian(elements_b)
+    dense_a = _reference_matrix(elements_a, _RANDOM_NQUBITS)
+    dense_b = _reference_matrix(elements_b, _RANDOM_NQUBITS)
+
+    for result, expected in [
+        (a + b, dense_a + dense_b),
+        (a - b, dense_a - dense_b),
+        (a * b, dense_a @ dense_b),
+        (b * a, dense_b @ dense_a),
+        (a.commutator(b), dense_a @ dense_b - dense_b @ dense_a),
+    ]:
+        np.testing.assert_allclose(result.to_qtensor(total_nqubits=_RANDOM_NQUBITS).dense(), expected, atol=1e-10)
+
+
 def test_hamiltonian_hash_changes_when_coefficients_change():
     h1 = Z(0) + X(1)
     h2 = Z(0) + 2 * X(1)
@@ -362,6 +634,12 @@ def test_str(hamiltonian: Hamiltonian, expected_str: str):
         ("  1  Z(0) + X(0)", Z(0) + X(0)),
         ("      ", 1),
         ("   +      Z(0)  ", Z(0)),
+        ("X(1) Z(0)", Z(0) * X(1)),
+        ("X(1) Z(0) + Z(0) X(1)", 2 * Z(0) * X(1)),
+        ("X(0) Y(0)", 1j * Z(0)),
+        ("Y(0) X(0)", -1j * Z(0)),
+        ("X(0) Y(0) + Y(0) X(0)", Hamiltonian()),
+        ("Z(2) X(0) Y(1)", X(0) * Y(1) * Z(2)),
     ],
 )
 def test_parse(hamiltonian_str: str, expected_hamiltonian: Hamiltonian):
@@ -1262,3 +1540,48 @@ def test_hamiltonian_draw(monkeypatch):
     calls.clear()
     H.draw(filepath="dummy_path.png")
     assert calls == ["init", "plot", "save"]
+
+
+def test_hamiltonian_plus_digital_gate_raises_helpful_error():
+    """Adding a digital gate to a Hamiltonian points at the analog/digital import mixup."""
+    hamiltonian = X(0)
+    gate = digital_X(0)
+    with pytest.raises(NotAHamiltonianError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        _ = hamiltonian + gate
+
+
+def test_hamiltonian_minus_digital_gate_raises_helpful_error():
+    """Subtracting a digital gate from a Hamiltonian gives the same guidance."""
+    hamiltonian = X(0)
+    gate = digital_X(0)
+    with pytest.raises(NotAHamiltonianError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        _ = hamiltonian - gate
+
+
+def test_pauli_operator_plus_digital_gate_raises_helpful_error():
+    """Adding a digital gate to a bare Pauli operator gives the same guidance."""
+    pauli = PauliX(0)
+    gate = digital_X(0)
+    with pytest.raises(NotAHamiltonianError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        _ = pauli + gate
+
+
+@pytest.mark.parametrize("make_analog", [lambda: X(0), lambda: PauliX(0)], ids=["hamiltonian", "pauli"])
+@pytest.mark.parametrize(
+    "operation",
+    [
+        operator.mul,
+        lambda a, b: operator.mul(b, a),
+        operator.truediv,
+        lambda a, b: operator.truediv(b, a),
+        operator.imul,
+        operator.itruediv,
+    ],
+    ids=["analog*gate", "gate*analog", "analog/gate", "gate/analog", "analog*=gate", "analog/=gate"],
+)
+def test_multiplying_or_dividing_analog_by_digital_gate_raises_helpful_error(make_analog, operation):
+    """Multiplication and division with a digital gate, in either order, give the same guidance as addition."""
+    analog = make_analog()
+    gate = digital_X(0)
+    with pytest.raises(NotAHamiltonianError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        operation(analog, gate)
