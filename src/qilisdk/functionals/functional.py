@@ -14,15 +14,12 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, ClassVar, TypeVar
+from typing import TYPE_CHECKING, ClassVar
 
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.functionals.functional_result import FunctionalResult
 
 if TYPE_CHECKING:
     from qilisdk.core.result import Result
-
-TResult_co = TypeVar("TResult_co", bound=FunctionalResult, covariant=True)
 
 
 class Functional(ABC):

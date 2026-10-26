@@ -163,7 +163,7 @@ def test_experiment_result_init():
     assert exp_result.dims == dims
 
 
-def test_experiment_result_is_not_a_functional_result():
+def test_experiment_result_is_plain_result_without_execution_time():
     exp_result = ExperimentResult(qubit=0, averages=1, data=np.zeros((2, 2)), dims=[])
 
     assert isinstance(exp_result, Result)
