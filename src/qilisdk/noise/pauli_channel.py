@@ -24,6 +24,8 @@ from .protocols import AttachmentScope, HasAllowedScopes, SupportsStaticKraus, S
 from .representations import KrausChannel, LindbladGenerator
 from .utils import _check_probability, _identity, _sigma_x, _sigma_y, _sigma_z
 
+_NEGATIVE_RATE_TOLERANCE = 1e-12
+
 
 class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasAllowedScopes):
     """General single-qubit Pauli channel.
@@ -92,21 +94,47 @@ class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasA
         return KrausChannel([QTensor(operator) for operator in operators])
 
     def as_lindblad_from_duration(self, *, duration: float) -> LindbladGenerator:
+        """Return the Lindblad generator whose evolution over ``duration`` reproduces this channel exactly.
+
+        The channel scales the Bloch vector components by lambda_x = 1 - 2 (pY + pZ), lambda_y = 1 - 2 (pX + pZ)
+        and lambda_z = 1 - 2 (pX + pY). Pauli jump operators with rates gamma_X, gamma_Y, gamma_Z scale them by
+        exp(-2 (gamma_Y + gamma_Z) t), exp(-2 (gamma_X + gamma_Z) t) and exp(-2 (gamma_X + gamma_Y) t). Matching
+        the two gives gamma_X = (a_y + a_z - a_x) / 2 (and cyclically), where a_i = -ln(lambda_i) / (2 t).
+
+        Some Pauli channels (e.g. pX = pY = 0.2) need a negative rate, so no Lindbladian reproduces them. Those
+        rates are clamped to zero with a warning, giving the closest Markovian approximation.
+
+        Args:
+            duration (float): Duration over which the noise acts.
+
+        Returns:
+            LindbladGenerator: Pauli jump operators with the matching rates.
+
+        Raises:
+            ValueError: If the duration is not positive, or if any of pX + pY, pX + pZ, pY + pZ is at least 0.5,
+                in which case the channel removes or inverts a Bloch component and has no finite-rate Lindblad form.
+        """
         if duration <= 0:
             raise ValueError("Duration must be positive.")
         logger.debug("[PauliChannel] Building Lindblad representation from duration {}", duration)
-        rates = []
-        operators = []
-        if self._pX > 0:
-            rates.append(self._pX / duration)
-            operators.append(QTensor(_sigma_x()))
-        if self._pY > 0:
-            rates.append(self._pY / duration)
-            operators.append(QTensor(_sigma_y()))
-        if self._pZ > 0:
-            rates.append(self._pZ / duration)
-            operators.append(QTensor(_sigma_z()))
-        return LindbladGenerator(operators, rates)
+        probabilities = np.array([self._pX, self._pY, self._pZ])
+        lambdas = 1.0 - 2.0 * (probabilities.sum() - probabilities)
+        if np.any(lambdas <= 0):
+            raise ValueError("PauliChannel has no Lindblad form: pX + pY, pX + pZ and pY + pZ must all be below 0.5.")
+        decays = -np.log(lambdas) / (2.0 * duration)
+        rates = decays.sum() / 2.0 - decays
+        if np.any(rates < -_NEGATIVE_RATE_TOLERANCE):
+            logger.warning(
+                "[PauliChannel] Channel with pX={}, pY={}, pZ={} is not reachable by a Lindbladian, clamping its "
+                "negative rates to zero.",
+                self._pX,
+                self._pY,
+                self._pZ,
+            )
+        rates = np.maximum(rates, 0.0)
+        paulis = (_sigma_x, _sigma_y, _sigma_z)
+        operators = [QTensor(pauli()) for pauli, rate in zip(paulis, rates) if rate > 0]
+        return LindbladGenerator(operators, [float(rate) for rate in rates if rate > 0])
 
     @classmethod
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:

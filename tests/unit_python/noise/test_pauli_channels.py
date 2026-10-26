@@ -14,6 +14,8 @@
 
 import numpy as np
 import pytest
+from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
+from scipy.linalg import expm
 
 from qilisdk.noise import BitFlip, Depolarizing, KrausChannel, PauliChannel, PhaseFlip
 from qilisdk.noise.protocols import AttachmentScope
@@ -128,3 +130,65 @@ def test_repr():
     assert "pX=0.2" in repr_str
     assert "pY=0.1" in repr_str
     assert "pZ=0.15" in repr_str
+
+
+def _kraus_apply(channel, rho):
+    return sum(K.dense() @ rho @ K.dense().conj().T for K in channel.operators)
+
+
+def _lindblad_evolve(generator, rho, duration):
+    identity = np.eye(rho.shape[0])
+    superoperator = np.zeros((rho.size, rho.size), dtype=complex)
+    for jump, rate in zip(generator.jump_operators, generator.rates):
+        L = jump.dense()
+        LdL = L.conj().T @ L
+        superoperator += rate * (np.kron(L, L.conj()) - 0.5 * (np.kron(LdL, identity) + np.kron(identity, LdL.T)))
+    return (expm(superoperator * duration) @ rho.reshape(-1)).reshape(rho.shape)
+
+
+@pytest.mark.parametrize(
+    "channel",
+    [
+        PauliChannel(pZ=0.4),
+        PauliChannel(pX=0.1),
+        PauliChannel(pX=0.25, pY=0.1, pZ=0.15),
+        BitFlip(probability=0.3),
+        PhaseFlip(probability=0.01),
+        Depolarizing(probability=0.6),
+    ],
+)
+@pytest.mark.parametrize("duration", [0.5, 2.0])
+def test_lindblad_from_duration_matches_kraus(channel, duration):
+    rng = np.random.default_rng(1234)
+    psi = rng.normal(size=2) + 1j * rng.normal(size=2)
+    psi /= np.linalg.norm(psi)
+    rho = np.outer(psi, psi.conj())
+
+    kraus_rho = _kraus_apply(channel.as_kraus(), rho)
+    lindblad_rho = _lindblad_evolve(channel.as_lindblad_from_duration(duration=duration), rho, duration)
+
+    np.testing.assert_allclose(lindblad_rho, kraus_rho, atol=1e-10)
+
+
+def test_lindblad_from_duration_single_axis_rate():
+    generator = PhaseFlip(probability=0.4).as_lindblad_from_duration(duration=2.0)
+
+    assert len(generator.jump_operators) == 1
+    np.testing.assert_allclose(generator.jump_operators[0].dense(), np.diag([1.0, -1.0]))
+    assert np.isclose(generator.rates[0], -np.log(1 - 2 * 0.4) / (2 * 2.0))
+
+
+@pytest.mark.parametrize(
+    "channel", [PhaseFlip(probability=0.5), BitFlip(probability=0.7), PauliChannel(pX=0.3, pY=0.3)]
+)
+def test_lindblad_from_duration_rejects_non_invertible_channels(channel):
+    with pytest.raises(ValueError, match="no Lindblad form"):
+        channel.as_lindblad_from_duration(duration=1.0)
+
+
+def test_lindblad_from_duration_clamps_negative_rates(caplog):  # ruff: ignore[redefined-while-unused]
+    generator = PauliChannel(pX=0.2, pY=0.2).as_lindblad_from_duration(duration=1.0)
+
+    assert "clamping its negative rates to zero" in caplog.text
+    assert len(generator.jump_operators) == 2
+    assert all(rate > 0 for rate in generator.rates)
