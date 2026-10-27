@@ -539,12 +539,12 @@ class QutipBackend(Backend):
         """
 
         def qutip_adjoined_gate() -> Qobj:
-            return Qobj(gate.matrix.dense())
+            return Qobj(gate.matrix.dense(), dims=[[2] * gate.nqubits, [2] * gate.nqubits])
 
         gate_name = "Adjoint_" + gate.name
         if gate_name not in circuit.user_gates:
             circuit.user_gates[gate_name] = qutip_adjoined_gate
-        circuit.add_gate(gate_name, targets=[*gate.target_qubits])
+        circuit.add_gate(gate_name, targets=[*gate.qubits])
 
     @staticmethod
     def _handle_M(qutip_circuit: QubitCircuit, gate: M) -> None:

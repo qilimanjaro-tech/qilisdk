@@ -464,6 +464,10 @@ class Modified(Gate, Generic[TBasicGate]):
         return self._generate_matrix()
 
     @property
+    def control_qubits(self) -> tuple[int, ...]:
+        return self._basic_gate.control_qubits
+
+    @property
     def target_qubits(self) -> tuple[int, ...]:
         return self._basic_gate.target_qubits
 

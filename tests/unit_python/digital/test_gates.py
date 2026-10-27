@@ -833,6 +833,20 @@ def test_exponential_gate_parameter_update():
     assert_matrix_equal(exp_gate.matrix, expected_matrix)
 
 
+@pytest.mark.parametrize("modifier", [Adjoint, Exponential])
+def test_modified_gate_keeps_control_qubits(modifier):
+    base_gate = CNOT(0, 1)
+    modified_gate = modifier(base_gate)
+
+    assert modified_gate.control_qubits == base_gate.control_qubits
+    assert modified_gate.qubits == (0, 1)
+    assert modified_gate.nqubits == 2
+
+    circuit = Circuit(2)
+    circuit.add(modified_gate)
+    assert_matrix_equal(modified_gate.matrix, circuit.to_matrix())
+
+
 def test_base_gate_class():
     class NewGate(Gate):
         def __init__(self):

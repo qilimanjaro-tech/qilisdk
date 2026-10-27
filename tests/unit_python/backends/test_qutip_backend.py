@@ -186,6 +186,15 @@ def test_adjoint_fully(gate_instance):
     assert result.get_samples().get("00", 0) == 100
 
 
+def test_adjoint_of_controlled_gate():
+    backend = QutipBackend()
+    circuit = Circuit(nqubits=2)
+    circuit.add(X(0))
+    circuit.add(Adjoint(CNOT(0, 1)))
+    result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=100))
+    assert result.get_samples().get("11", 0) == 100
+
+
 ###################
 # Parameterized Program
 ###################
