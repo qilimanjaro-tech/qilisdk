@@ -15,7 +15,25 @@
 import pytest
 from rustworkx import PyGraph
 
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U3, Adjoint, Circuit, Controlled, Gate, H, M, S, X
+from qilisdk.digital import (
+    CNOT,
+    CZ,
+    RX,
+    RY,
+    RZ,
+    SWAP,
+    U1,
+    U3,
+    Adjoint,
+    Circuit,
+    Controlled,
+    Exponential,
+    Gate,
+    H,
+    M,
+    S,
+    X,
+)
 from qilisdk.digital.circuit_transpiler_passes.custom_layout_pass import CustomLayoutPass
 from qilisdk.digital.circuit_transpiler_passes.transpilation_context import TranspilationContext
 
@@ -174,6 +192,44 @@ def test_custom_layout_raises_when_no_route_possible():
         layout_pass.run(circuit)
 
 
+def test_custom_layout_failed_run_clears_previous_diagnostics():
+    topology = _make_topology(3)
+    topology.add_edge(0, 1, None)
+
+    routable_circuit = Circuit(3)
+    routable_circuit.add(CZ(0, 1))
+    unroutable_circuit = Circuit(3)
+    unroutable_circuit.add(CZ(0, 2))
+
+    layout_pass = CustomLayoutPass(topology, {0: 0, 1: 1, 2: 2})
+    layout_pass.run(routable_circuit)
+
+    with pytest.raises(ValueError, match=r"no path between physical qubits 0 and 2"):
+        layout_pass.run(unroutable_circuit)
+
+    assert layout_pass.last_layout is None
+    assert layout_pass.last_swap_count is None
+
+
+def test_custom_layout_context_layouts_are_copies():
+    topology = _make_topology(2)
+    topology.add_edge(0, 1, None)
+
+    circuit = Circuit(2)
+    circuit.add(CZ(0, 1))
+
+    layout_pass = CustomLayoutPass(topology, {0: 1, 1: 0})
+    context = TranspilationContext()
+    layout_pass.attach_context(context)
+    layout_pass.run(circuit)
+
+    context.final_layout[0] = 0
+    context.initial_layout[0] = 0
+
+    assert layout_pass._user_layout == {0: 1, 1: 0}
+    assert layout_pass.last_layout == [1, 0]
+
+
 def test_custom_layout_accepts_edge_list_topology():
     circuit = Circuit(2)
     circuit.add(CZ(0, 1))
@@ -223,15 +279,27 @@ def test_custom_layout_raises_for_multi_qubit_gate():
         (U3(0, theta=0.4, phi=0.5, gamma=0.6), (2,), U3),
         (SWAP(0, 1), (2, 0), SWAP),
         (M(0), (1,), M),
+        (Controlled(0, basic_gate=RX(1, theta=0.4)), (2, 0), Controlled),
+        (Adjoint(S(0)), (1,), Adjoint),
+        (Exponential(X(0)), (2,), Exponential),
     ],
 )
-def test_custom_layout_retarget_gate_supports_all_specialized_branches(
-    gate: Gate, mapped_qubits, expected_type
-) -> None:
+def test_custom_layout_retarget_gate_supports_all_gate_kinds(gate: Gate, mapped_qubits, expected_type) -> None:
     retargeted = CustomLayoutPass._retarget_gate(gate, mapped_qubits)
 
     assert isinstance(retargeted, expected_type)
     assert retargeted.qubits == mapped_qubits
+
+
+def test_custom_layout_retarget_gate_shares_cached_matrix() -> None:
+    gate = Adjoint(RX(0, theta=0.4))
+    gate.matrix  # populate the cached matrix
+
+    retargeted = CustomLayoutPass._retarget_gate(gate, (1,))
+
+    assert retargeted.matrix is gate.matrix
+    assert retargeted.basic_gate.matrix is gate.basic_gate.matrix
+    assert retargeted.basic_gate is not gate.basic_gate
 
 
 def test_custom_layout_retarget_gate_rejects_unsupported_type() -> None:

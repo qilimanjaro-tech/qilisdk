@@ -20,10 +20,11 @@ from typing import TYPE_CHECKING
 
 from loguru import logger
 
-from qilisdk.digital import Adjoint, Circuit, Controlled, Exponential, Gate, M
-from qilisdk.digital.gates import BasicGate
+from qilisdk.digital import Adjoint, Circuit, Controlled, Exponential, M
+from qilisdk.digital.gates import BasicGate, Modified
 
 if TYPE_CHECKING:
+    from qilisdk.digital import Gate
     from qilisdk.digital.types import LayoutMap
 
     from .transpilation_context import TranspilationContext
@@ -66,7 +67,10 @@ class CircuitTranspilerPass(ABC):
         Returns:
             Gate: Retargeted gate equivalent to ``gate`` but acting on ``mapped_qubits``.
         """
-        retargeted = deepcopy(gate)
+        # A gate's matrix does not depend on which qubits it acts on, so share any cached matrix rather than copying it.
+        gates = (gate, gate.basic_gate) if isinstance(gate, Modified) else (gate,)
+        memo = {id(matrix): matrix for g in gates if (matrix := g.__dict__.get("matrix")) is not None}
+        retargeted = deepcopy(gate, memo)
         qubit_map: LayoutMap = dict(zip(gate.qubits, mapped_qubits, strict=True))
         CircuitTranspilerPass._remap_gate_qubits_inplace(retargeted, qubit_map)
         return retargeted

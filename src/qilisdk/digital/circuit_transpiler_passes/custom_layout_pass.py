@@ -61,14 +61,18 @@ class CustomLayoutPass(CircuitTranspilerPass):
       physical qubits.
     - Exposes `last_layout` (list[int]) and `last_swap_count` (int) for
       diagnostics, mirroring SabreLayoutPass and SabreSwapPass; the swap count
-      is also stored in ``context.metrics["swap_count"]``.
+      is also stored in ``context.metrics["swap_count"]``. Both are reset to
+      ``None`` at the start of each run, so a failed run leaves no stale values.
 
     Notes
     -----
     * SWAPs are emitted eagerly using shortest paths whenever a 2Q gate is not
       locally executable on the chosen mapping, and are undone immediately so the
       mapping remains stable for subsequent operations.
-    * ``last_layout`` matches the user-provided mapping; the same list is stored
+    * The swap count includes both the routing SWAPs and the un-swaps that
+      restore the mapping, so it is roughly double that of an equivalent
+      ``SabreSwapPass`` route, which has no restore step.
+    * ``last_layout`` matches the user-provided mapping; a copy of it is stored
       in ``context.initial_layout`` for diagnostics.
     """
 
@@ -101,6 +105,8 @@ class CustomLayoutPass(CircuitTranspilerPass):
             NotImplementedError: If a gate with arity greater than two is encountered.
             RuntimeError: If routing swaps fail to make a two-qubit gate adjacent.
         """
+        self.last_layout = None
+        self.last_swap_count = None
         num_logical_qubits = circuit.nqubits
         logger.debug(
             "[CustomLayoutPass] Running on circuit with {} logical qubits and {} gates",
@@ -246,9 +252,9 @@ class CustomLayoutPass(CircuitTranspilerPass):
         self.last_layout = initial_layout
         self.last_swap_count = swap_count
         if self.context is not None:
-            self.context.initial_layout = initial_layout
+            self.context.initial_layout = initial_layout.copy()
             self.context.layout_applied = True
-            self.context.final_layout = self._user_layout
+            self.context.final_layout = dict(self._user_layout)
             self.context.metrics["swap_count"] = swap_count
 
         logger.debug(
