@@ -20,6 +20,7 @@ import numpy as np
 import pytest
 
 import qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass as decompose_module
+from qilisdk.core import QTensor
 from qilisdk.digital import Circuit
 from qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass import (
     DecomposeToCanonicalBasisPass,
@@ -64,8 +65,8 @@ class DummyBasicGate(BasicGate):
     def name(self) -> str:
         return "Dummy"
 
-    def _generate_matrix(self) -> np.ndarray:
-        return self._custom_matrix
+    def _generate_matrix(self) -> QTensor:
+        return QTensor(self._custom_matrix)
 
 
 def _count_gate_names(seq: list[Gate]) -> Counter[str]:
@@ -129,7 +130,7 @@ def test_as_basis_1q_handles_standard_and_basic() -> None:
     for gate in [H(0), X(0), Y(0), Z(0), U1(0, phi=0.1), U2(0, phi=0.1, gamma=0.2), dummy_gate]:
         basis_gate = _as_basis_1q(gate)
         assert basis_gate.name in {"U3", "RX", "RY", "RZ"}
-        assert np.allclose(gate.matrix, basis_gate.matrix)
+        assert np.allclose(gate.matrix.dense(), basis_gate.matrix.dense())
 
     with pytest.raises(NotImplementedError):
         _as_basis_1q(Controlled(1, basic_gate=RX(0, theta=0.5)))

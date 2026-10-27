@@ -66,7 +66,24 @@ def test_no_seed():
 
 
 @pytest.mark.parametrize("method", digital_methods)
-def test_monte_carlo_circuit(method):
+@pytest.mark.parametrize(
+    ("initial_state", "expected"),
+    [
+        (InitialState.ZERO, {"100"}),
+        (InitialState.ONE, {"011"}),
+        (InitialState.UNIFORM, {f"{i:03b}" for i in range(8)}),
+    ],
+)
+def test_digital_symbolic_initial_state(method, initial_state, expected):
+    backend = QiliSim(digital_simulation_method=method, execution_config=ExecutionConfig(seed=42, num_threads=1))
+    circuit = Circuit(nqubits=3)
+    circuit.add(X(0))
+    readout = [SamplingReadout(nshots=1000)]
+    result = backend._execute_digital_propagation(
+        DigitalPropagation(circuit=circuit, initial_state=initial_state), readout=readout
+    )
+    samples = result.get_samples()
+    assert set(samples) == expected
     p = 0.2
     initial_state_1 = ket(0).unit()
     initial_state_2 = ket(1).unit()
@@ -79,7 +96,7 @@ def test_monte_carlo_circuit(method):
     circuit.add(H(0))
     readout = [SamplingReadout(nshots=100)]
     result = backend._execute_digital_propagation(
-        DigitalPropagation(circuit=circuit), readout=readout, initial_state=initial_state
+        DigitalPropagation(circuit=circuit, initial_state=initial_state), readout=readout
     )
     assert isinstance(result, FunctionalResult)
     samples = result.get_samples()
@@ -106,9 +123,8 @@ def test_monte_carlo_mid_circuit_readout(method):
 
     observables = [pauli_z(0), pauli_x(1), pauli_z(0) * pauli_z(1)]
     result = backend._execute_digital_propagation(
-        DigitalPropagation(circuit=circuit),
+        DigitalPropagation(circuit=circuit, initial_state=initial_state),
         readout=[ExpectationReadout(observables=observables), StateTomographyReadout()],
-        initial_state=initial_state,
     )
 
     assert len(result.intermediate_results) > 0
@@ -655,7 +671,8 @@ def test_variational_annealing_expectation_value_bounded():
     )
     assert isinstance(result, FunctionalResult)
     ev = result.get_expectation_values()[0]
-    assert -1.00001 <= ev.real <= 1.00001
+    assert isinstance(ev, float)
+    assert -1.00001 <= ev <= 1.00001
 
 
 def test_variational_annealing_wrong_initial_state_raises():
@@ -731,7 +748,7 @@ def test_variational_annealing_single_qubit_correct():
     )
     assert isinstance(result, FunctionalResult)
     ev = result.get_expectation_values()[0]
-    assert np.isclose(ev.real, -1.0, atol=0.2)
+    assert np.isclose(ev, -1.0, atol=0.2)
 
 
 def test_variational_annealing_many_qubit_correct():
@@ -747,7 +764,7 @@ def test_variational_annealing_many_qubit_correct():
     )
     assert isinstance(result, FunctionalResult)
     ev = result.get_expectation_values()[0]
-    assert np.isclose(ev.real, -nqubits, atol=0.2)
+    assert np.isclose(ev, -nqubits, atol=0.2)
 
 
 def test_matrix_free_complex_gate_on_mixed_state_stays_hermitian():
@@ -1004,6 +1021,18 @@ def test_stabilizer_deterministic_circuit():
     assert samples["101"] == 50
 
 
+def test_stabilizer_expectation_values_are_floats():
+    """Stabilizer expectation values come back as real floats with the correct values."""
+    backend = _stabilizer_backend()
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(1))
+    readout = Readout().with_expectation(observables=[pauli_z(0), pauli_x(1), pauli_z(1)])
+    result = backend.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    evs = result.get_expectation_values()
+    assert all(isinstance(ev, float) for ev in evs)
+    assert evs == pytest.approx([1.0, 1.0, 0.0], abs=1e-8)
+
+
 def test_stabilizer_t_gate_expands_sum():
     """T gate is non-Clifford: T|0⟩ is deterministic (no branching), T on |+⟩ branches the sum."""
     backend = _stabilizer_backend()
@@ -1130,3 +1159,16 @@ def test_qtensor_sample_is_unaffected_by_backend_thread_count():
     )
 
     assert qtensor.sample(nshots=1000, seed=42) == before
+
+
+def test_stabilizer_state_tomography_rejects_too_many_qubits():
+    """A stabilizer state of 32 qubits used to overflow ``1 << nqubits`` and hand back a 1x1
+    QTensor with nqubits == 0. Converting to a dense object must fail loudly instead."""
+    circuit = Circuit(nqubits=32)
+    circuit.add(H(0))
+    readout = Readout().with_state_tomography()
+    backend = _stabilizer_backend()
+    propagation = DigitalPropagation(circuit=circuit)
+
+    with pytest.raises(ValueError, match="too big to convert to a dense object"):
+        backend.execute(propagation, readout=readout)
