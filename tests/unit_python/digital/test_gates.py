@@ -833,6 +833,32 @@ def test_exponential_gate_parameter_update():
     assert_matrix_equal(exp_gate.matrix, expected_matrix)
 
 
+def test_adjoint_of_controlled_gate_keeps_control_qubits():
+    adjoint_gate = Adjoint(Controlled(2, basic_gate=S(0)))
+
+    assert adjoint_gate.control_qubits == (2,)
+    assert adjoint_gate.target_qubits == (0,)
+
+    adjoint_circuit = Circuit(3)
+    adjoint_circuit.add(adjoint_gate)
+    controlled_circuit = Circuit(3)
+    controlled_circuit.add(Controlled(2, basic_gate=S(0)))
+    assert_allclose(adjoint_circuit.to_matrix(), controlled_circuit.to_matrix().conj().T)
+
+
+def test_exponential_of_controlled_gate_targets_all_qubits():
+    exponential_gate = Exponential(CNOT(2, 0))
+
+    assert exponential_gate.control_qubits == ()
+    assert exponential_gate.target_qubits == (2, 0)
+
+    exponential_circuit = Circuit(3)
+    exponential_circuit.add(exponential_gate)
+    cnot_circuit = Circuit(3)
+    cnot_circuit.add(CNOT(2, 0))
+    assert_allclose(exponential_circuit.to_matrix(), expm(cnot_circuit.to_matrix()))
+
+
 def test_base_gate_class():
     class NewGate(Gate):
         def __init__(self):
