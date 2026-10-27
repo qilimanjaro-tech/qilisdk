@@ -358,7 +358,7 @@ class CudaqBackend(Backend):
             if isinstance(gate, Controlled):
                 self._handle_controlled(kernel, gate, qubits[gate.control_qubits[0]], qubits[gate.target_qubits[0]])
             elif isinstance(gate, Adjoint):
-                self._handle_adjoint(kernel, gate, qubits[gate.target_qubits[0]])
+                self._handle_adjoint(kernel, gate, qubits)
             elif isinstance(gate, M):
                 if any(not isinstance(g, M) for g in transpiled_circuit.gates[i:]):
                     raise NotImplementedError("Intermediate-measurement is not Supported with Cuda Backend")
@@ -1365,28 +1365,40 @@ class CudaqBackend(Backend):
         handler(target_kernel, gate.basic_gate, qubit)
         kernel.control(target_kernel, control_qubit, target_qubit)
 
-    def _handle_adjoint(self, kernel: cudaq.Kernel, gate: Adjoint, target_qubit: cudaq.QuakeValue) -> None:
+    def _handle_adjoint(self, kernel: cudaq.Kernel, gate: Adjoint, qubits: cudaq.QuakeValue) -> None:
         """
         Handle an adjoint (inverse) gate operation.
 
         This method creates a temporary kernel for the basic gate wrapped by the adjoint,
         applies the corresponding handler, and then integrates it into the main kernel as an adjoint operation.
+        The adjoint of a controlled gate is applied as the controlled adjoint of its basic gate.
 
         Args:
             kernel (cudaq.Kernel): The main CUDA kernel being constructed.
             gate (Adjoint): The adjoint gate to be handled.
-            target_qubit (cudaq.QuakeValue): The target qubit for the gate.
+            qubits (cudaq.QuakeValue): The qubit register of the main kernel.
 
         Raises:
-            UnsupportedGateError: If the basic gate inside the adjoint is unsupported.
+            UnsupportedGateError: If the basic gate inside the adjoint is unsupported, or if it is controlled
+                by more than one qubit.
         """
-        target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
-        handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
-        if handler is None:
-            logger.error("[CudaqBackend] Unsupported gate inside Adjoint: {}", type(gate.basic_gate).__name__)
+        if len(gate.control_qubits) > 1:
+            logger.error("[CudaqBackend] Adjoint gate with {} control qubits not supported", len(gate.control_qubits))
             raise UnsupportedGateError
-        handler(target_kernel, gate.basic_gate, qubit)
-        kernel.adjoint(target_kernel, target_qubit)
+        basic_gate = gate.basic_gate.basic_gate if isinstance(gate.basic_gate, Controlled) else gate.basic_gate
+        target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
+        handler = self._basic_gate_handlers.get(type(basic_gate), None)
+        if handler is None:
+            logger.error("[CudaqBackend] Unsupported gate inside Adjoint: {}", type(basic_gate).__name__)
+            raise UnsupportedGateError
+        handler(target_kernel, basic_gate, qubit)
+        target_qubit = qubits[gate.target_qubits[0]]
+        if gate.control_qubits:
+            adjoint_kernel, adjoint_qubit = cudaq.make_kernel(cudaq.qubit)
+            adjoint_kernel.adjoint(target_kernel, adjoint_qubit)
+            kernel.control(adjoint_kernel, qubits[gate.control_qubits[0]], target_qubit)
+        else:
+            kernel.adjoint(target_kernel, target_qubit)
 
     @staticmethod
     def _handle_M(kernel: cudaq.Kernel, gate: M, circuit: Circuit, qubits: cudaq.QuakeValue) -> None:

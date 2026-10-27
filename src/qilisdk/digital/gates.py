@@ -464,10 +464,6 @@ class Modified(Gate, Generic[TBasicGate]):
         return self._generate_matrix()
 
     @property
-    def control_qubits(self) -> tuple[int, ...]:
-        return self._basic_gate.control_qubits
-
-    @property
     def target_qubits(self) -> tuple[int, ...]:
         return self._basic_gate.target_qubits
 
@@ -592,6 +588,10 @@ class Adjoint(Modified[TBasicGate]):
         return self.basic_gate.matrix.dagger()
 
     @property
+    def control_qubits(self) -> tuple[int, ...]:
+        return self.basic_gate.control_qubits
+
+    @property
     def name(self) -> str:
         """
         Get the name of the adjoint gate.
@@ -620,6 +620,11 @@ class Exponential(Modified[TBasicGate]):
     def _generate_matrix(self) -> QTensor:
         logger.trace("[Gates] Generating Exponential matrix for {}", self.name)
         return QTensor(expm(self.basic_gate.matrix.dense()))
+
+    @property
+    def target_qubits(self) -> tuple[int, ...]:
+        # The exponential of a controlled gate is not itself controlled, so every qubit is a target
+        return self.basic_gate.qubits
 
     @property
     def name(self) -> str:

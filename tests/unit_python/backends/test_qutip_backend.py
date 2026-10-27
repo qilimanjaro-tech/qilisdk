@@ -121,7 +121,7 @@ def test_adjoint_handler(gate_instance):
     circuit._gates.append(adjoint_gate)
     qutip_circuit = backend._get_qutip_circuit(circuit)
 
-    assert any(g.name == "Adjoint_" + adjoint_gate.name for g in qutip_circuit.gates)
+    assert any(g.name.startswith(f"Adjoint_{adjoint_gate.name}_") for g in qutip_circuit.gates)
 
 
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases + swap_test_case])
@@ -193,6 +193,18 @@ def test_adjoint_of_controlled_gate():
     circuit.add(Adjoint(CNOT(0, 1)))
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=100))
     assert result.get_samples().get("11", 0) == 100
+
+
+def test_adjoints_with_same_name_use_their_own_matrices():
+    # Same theta so the matrices share their first element, which must not make them collide
+    circuit = Circuit(nqubits=1)
+    circuit.add(Adjoint(U3(0, theta=1.0, phi=0.0, gamma=0.5)))
+    circuit.add(Adjoint(U3(0, theta=1.0, phi=1.5, gamma=0.5)))
+    expected_state = circuit.to_matrix()[:, 0]
+
+    result = QutipBackend().execute(DigitalPropagation(circuit=circuit), Readout().with_state_tomography())
+
+    np.testing.assert_allclose(result.state_tomography.state.dense().flatten(), expected_state, atol=1e-6)
 
 
 ###################

@@ -32,6 +32,7 @@ from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.noise import SupportsStaticLindblad, SupportsTimeDerivedLindblad
 from qilisdk.settings import get_settings
+from qilisdk.utils.hashing import hash as qili_hash
 
 if TYPE_CHECKING:
     from qilisdk.functionals import AnalogEvolution, DigitalPropagation
@@ -521,8 +522,7 @@ class QutipBackend(Backend):
                 mat[dim_target:, dim_target:] = base_matrix
                 return Qobj(mat, dims=dims)
 
-            matrix_digest = base_matrix.tobytes().hex()[:16]
-            gate_name = f"{gate.name}_{matrix_digest}"
+            gate_name = f"{gate.name}_{qili_hash(base_matrix)}"
             if gate_name not in circuit.user_gates:
                 circuit.user_gates[gate_name] = qutip_controlled_gate
             circuit.add_gate(gate_name, targets=[*gate.control_qubits, *gate.target_qubits])
@@ -538,10 +538,12 @@ class QutipBackend(Backend):
             gate (Adjoint): The adjoint gate to handle.
         """
 
-        def qutip_adjoined_gate() -> Qobj:
-            return Qobj(gate.matrix.dense(), dims=[[2] * gate.nqubits, [2] * gate.nqubits])
+        adjoint_matrix = gate.matrix.dense()
 
-        gate_name = "Adjoint_" + gate.name
+        def qutip_adjoined_gate() -> Qobj:
+            return Qobj(adjoint_matrix, dims=[[2] * gate.nqubits, [2] * gate.nqubits])
+
+        gate_name = f"Adjoint_{gate.name}_{qili_hash(adjoint_matrix)}"
         if gate_name not in circuit.user_gates:
             circuit.user_gates[gate_name] = qutip_adjoined_gate
         circuit.add_gate(gate_name, targets=[*gate.qubits])
