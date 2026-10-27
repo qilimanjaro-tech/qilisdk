@@ -84,8 +84,8 @@ def test_unsupported_gate_raises(backend):
         @property
         def name(self) -> str: ...  # type: ignore
 
-        def _generate_matrix(self) -> np.ndarray:
-            return np.eye(2, dtype=complex)
+        def _generate_matrix(self) -> QTensor:
+            return QTensor(np.eye(2, dtype=complex))
 
     circuit = Circuit(nqubits=1)
     circuit.gates.append(DummyGate(0))
@@ -448,6 +448,27 @@ def test_get_qutip_observable_unsupported_type_raises():
     backend = QutipBackend()
     with pytest.raises(ValueError, match="unsupported observable type"):
         backend._to_qubip_observables(42, nqubits=1)
+
+
+def test_qutip_digital_propagation_initial_state():
+    c = Circuit(1)
+    digital = DigitalPropagation(circuit=c, initial_state=InitialState.ONE)
+    backend = QutipBackend()
+    readout = Readout().with_sampling(10)
+    results = backend.execute(digital, readout)
+    assert isinstance(results, FunctionalResult)
+    assert "1" in results.get_samples()
+
+
+def test_qutip_digital_propagation_initial_state_qtensor():
+    c = Circuit(1)
+    initial_state_qtensor = QTensor.one(1)
+    digital = DigitalPropagation(circuit=c, initial_state=initial_state_qtensor)
+    backend = QutipBackend()
+    readout = Readout().with_sampling(10)
+    results = backend.execute(digital, readout)
+    assert isinstance(results, FunctionalResult)
+    assert "1" in results.get_samples()
 
 
 def test_to_qutip_observable_pauli_operator():

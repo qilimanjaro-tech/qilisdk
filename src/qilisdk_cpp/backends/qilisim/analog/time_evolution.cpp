@@ -14,6 +14,7 @@
 
 #include "time_evolution.h"
 #include "../../../libs/logging.h"
+#include "../../../libs/pybind.h"
 #include "../noise/noise_model.h"
 #include "../utils/matrix_utils.h"
 #include "../utils/random.h"
@@ -143,6 +144,9 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
 
     // For each time step
     for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+        // Let Ctrl-C interrupt the evolution between time steps
+        check_signals();
+
         // Get the current Hamiltonian
         SparseMatrix currentH = combinedH;
         for (size_t h = 0; h < hamiltonians.size(); ++h) {
@@ -202,18 +206,17 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     }
 }
 
-void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos, bool* output_is_trajectories) {
+void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos, bool* output_is_trajectories) {
     /*
     Execute a time evolution functional.
 
     Args:
-        rho_0 (SparseMatrix): The initial state (density matrix or state vector).
         hamiltonians (std::vector<MatrixFreeHamiltonian>): The list of Hamiltonian terms.
         parameters_list (std::vector<std::vector<double>>): The list of parameter values for each Hamiltonian term at each time step.
         step_list (std::vector<double>): The list of time steps.
         noise_model_cpp (NoiseModelCpp&): The noise model to apply during evolution.
         config (QiliSimConfig&): Configuration parameters for the time evolution.
-        rho_t (DenseMatrix&): Output parameter to hold the final state after evolution.
+        rho_t (DenseMatrix&): On entry the initial state (density matrix or state vector), on exit the final state after evolution.
         intermediate_rhos (std::vector<DenseMatrix>&): Output parameter to hold intermediate states if requested.
         expectation_values (std::vector<std::vector<double>>&): Output parameter to hold the expectation values of observables at final time.
         output_is_trajectories (bool*): Optional output parameter. If given, a Monte Carlo ensemble is
@@ -257,29 +260,24 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
 
     // Determine if the input was a state vector
     bool input_was_vector = false;
-    if (rho_0.rows() == 1 || rho_0.cols() == 1) {
+    if (rho_t.rows() == 1 || rho_t.cols() == 1) {
         input_was_vector = true;
     }
-    if (rho_0.rows() == 1 && rho_0.cols() > 1) {
-        rho_0 = rho_0.adjoint();
+    if (rho_t.rows() == 1 && rho_t.cols() > 1) {
+        rho_t = rho_t.adjoint().eval();
     }
 
     // Check if the input is a bunch of monte carlo trajectories
-    bool input_is_trajectories = (rho_0.cols() > 1 && rho_0.rows() != rho_0.cols());
+    bool input_is_trajectories = (rho_t.cols() > 1 && rho_t.rows() != rho_t.cols());
 
     // Determine if should treat it as unitary evolution on a statevector
     bool is_unitary_on_statevector = input_is_trajectories || (is_unitary_dynamics && input_was_vector);
 
     // If we have unitary dynamics and the input was a pure state, convert to state vector
     if (is_unitary_dynamics && !input_was_vector && !input_is_trajectories) {
-        double trace_rho2 = 0.0;
-        for (int k = 0; k < rho_0.outerSize(); ++k) {
-            for (SparseMatrix::InnerIterator it1(rho_0, k); it1; ++it1) {
-                trace_rho2 += std::pow(std::abs(it1.value()), 2);
-            }
-        }
+        double trace_rho2 = rho_t.squaredNorm();
         if (std::abs(trace_rho2 - 1.0) < config.get_atol()) {
-            rho_0 = get_vector_from_density_matrix(rho_0);
+            rho_t = get_vector_from_density_matrix(rho_t);
             is_unitary_on_statevector = true;
         }
     }
@@ -292,18 +290,15 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
 
     // If we have non-unitary dynamics and the input was a state vector, convert to density matrix
     if (!is_unitary_dynamics && input_was_vector) {
-        rho_0 = rho_0 * rho_0.adjoint();
+        rho_t = rho_t * rho_t.adjoint();
     }
 
-    // If monte carlo, sample from rho_0 to get initial states (skipped when the
+    // If monte carlo, sample from rho_t to get initial states (skipped when the
     // input already is a batch of trajectories). Then rho is state vector columns.
     if (use_monte_carlo) {
-        rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.next_seed());
+        rho_t = sample_from_density_matrix(rho_t, config.get_num_monte_carlo_trajectories(), config.next_seed());
         is_unitary_on_statevector = true;
     }
-
-    // Init rho_0
-    rho_t = rho_0;
 
     // From here on the state is either a single density matrix or an ensemble of state vector columns
     bool state_is_ensemble = use_monte_carlo || input_is_trajectories || (!input_was_vector && rho_t.cols() == 1);
@@ -333,6 +328,9 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         const size_t max_iters = 1000000;  // Just in case to prevent infinite loops
         DenseMatrix k_saved;
         while (current_time < step_list.back()) {
+            // Let Ctrl-C interrupt the evolution between time steps
+            check_signals();
+
             // Make sure the next step doesn't go beyond the final time point
             dt = std::min(dt, step_list.back() - current_time);
 
@@ -362,6 +360,9 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
     } else if (config.get_time_evolution_method() == "integrate_rk4_matrix_free") {
         // For each time step
         for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+            // Let Ctrl-C interrupt the evolution between time steps
+            check_signals();
+
             // Determine the time step and starting time
             double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
             double dt = step_list[step_ind] - t_start;
@@ -396,6 +397,9 @@ void time_evolution_matrix_free(SparseMatrix rho_0, const std::vector<MatrixFree
         int nqubits = hamiltonians[0].get_nqubits();
         // For each time step
         for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+            // Let Ctrl-C interrupt the evolution between time steps
+            check_signals();
+
             // Build the Hamiltonian for this step
             MatrixFreeHamiltonian currentH(nqubits);
             for (size_t h = 0; h < hamiltonians.size(); ++h) {
@@ -463,6 +467,9 @@ void time_evolution_variational_exponential(ExponentialAnsatz& rho_t, const std:
 
     // Fixed-step RK4 loop
     for (size_t step_ind = 0; step_ind < step_list.size(); ++step_ind) {
+        // Let Ctrl-C interrupt the evolution between time steps
+        check_signals();
+
         // Run the step
         double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
         double dt = step_list[step_ind] - t_start;
