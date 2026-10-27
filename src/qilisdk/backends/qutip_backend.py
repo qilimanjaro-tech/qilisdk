@@ -98,7 +98,7 @@ class QutipBackend(Backend):
         self.noise_model = noise_model
         self.nsteps = nsteps
 
-        super().__init__(seed=seed)
+        super().__init__(noise_model=noise_model, seed=seed)
         self._basic_gate_handlers: BasicGateHandlersMapping = {
             I: QutipBackend._handle_I,
             X: QutipBackend._handle_X,

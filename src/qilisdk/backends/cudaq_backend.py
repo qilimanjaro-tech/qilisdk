@@ -375,6 +375,7 @@ class CudaqBackend(Backend):
 
         qubits_to_measure = list(measured_qubits) if len(measured_qubits) > 0 else None
 
+        cudaq.set_random_seed(int(self._rng.integers(2**32)))
         if self._noise_model:
             cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, transpiled_circuit)
             cudaq_result = cudaq.sample(
@@ -382,7 +383,7 @@ class CudaqBackend(Backend):
                 shots_count=readout[0].nshots,  # ty:ignore[unresolved-attribute]
                 noise_model=cuda_noise_model,
             )
-            cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, circuit.nqubits)
+            cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, circuit.nqubits, rng=self._rng)
             if og_param:
                 functional.set_parameters(og_param)
             logger.info("[CudaqBackend] Sampling finished, {} distinct bitstrings", len(cudaq_result))
@@ -639,7 +640,9 @@ class CudaqBackend(Backend):
             raise ValueError(f"Unsupported sampling method: {self.sampling_method.value}")
 
     @staticmethod
-    def _handle_readout_errors(cudaq_result: dict[str, int], noise_model: NoiseModel, nqubits: int) -> dict[str, int]:
+    def _handle_readout_errors(
+        cudaq_result: dict[str, int], noise_model: NoiseModel, nqubits: int, rng: np.random.Generator | None = None
+    ) -> dict[str, int]:
         """Apply readout-assignment errors to raw measurement counts.
 
         For each shot the method probabilistically flips measured bits
@@ -652,6 +655,9 @@ class CudaqBackend(Backend):
             noise_model (NoiseModel): The noise model containing readout
                 assignment errors.
             nqubits (int): Total number of qubits in the circuit.
+            rng (np.random.Generator | None): Random number generator used to
+                draw the bit flips. If ``None``, a fresh unseeded generator is
+                used. Defaults to ``None``.
 
         Returns:
             dict[str, int]: Adjusted bitstring counts with readout errors
@@ -676,7 +682,7 @@ class CudaqBackend(Backend):
             return cudaq_result
 
         # numpy generator
-        gen = np.random.default_rng(42)
+        gen = np.random.default_rng(rng)
 
         # First split into individual shots
         shots = []
