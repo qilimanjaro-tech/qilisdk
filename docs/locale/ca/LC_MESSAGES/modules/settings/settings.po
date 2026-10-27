@@ -1,0 +1,245 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-15 15:03+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/settings/settings.rst:2
+msgid "Settings"
+msgstr "Configuració"
+
+#: ../../modules/settings/settings.rst:4
+msgid ""
+"The :mod:`~qilisdk.settings` module can be used to configure some of the "
+"values that configure QiliSDK as a whole. They live in the "
+":class:`~qilisdk.settings.QiliSDKSettings` class, which can be set via "
+"code, read from environment variables or read from a local ``.env`` file."
+msgstr ""
+"El mòdul :mod:`~qilisdk.settings` permet configurar alguns dels valors "
+"que afecten QiliSDK en conjunt. Aquests resideixen a la classe "
+":class:`~qilisdk.settings.QiliSDKSettings`, que es pot establir "
+"mitjançant codi, llegir-se de variables d'entorn o llegir-se d'un fitxer "
+"``.env`` local."
+
+#: ../../modules/settings/settings.rst:10
+msgid "Reading the settings"
+msgstr "Lectura de la configuració"
+
+#: ../../modules/settings/settings.rst:12
+msgid ""
+":func:`~qilisdk.settings.get_settings` returns the settings object "
+"currently in use:"
+msgstr ""
+":func:`~qilisdk.settings.get_settings` retorna l'objecte de configuració "
+"que s'està utilitzant:"
+
+#: ../../modules/settings/settings.rst:24
+msgid "Changing the settings"
+msgstr "Modificació de la configuració"
+
+#: ../../modules/settings/settings.rst:26
+msgid ""
+"Every setting is read from an environment variable named after it, "
+"prefixed with ``QILISDK_``:"
+msgstr ""
+"Cada opció es llegeix d'una variable d'entorn amb el mateix nom, "
+"precedida del prefix ``QILISDK_``:"
+
+#: ../../modules/settings/settings.rst:34
+msgid ""
+"The same values can be kept in a ``.env`` file in the directory the "
+"script is run from, which is convenient for credentials that should not "
+"end up in the shell history:"
+msgstr ""
+"Els mateixos valors es poden desar en un fitxer ``.env`` situat al "
+"directori des del qual s'executa l'script, cosa que resulta còmoda per a "
+"credencials que no haurien d'acabar a l'historial del terminal:"
+
+#: ../../modules/settings/settings.rst:43
+msgid ""
+"Entries without the ``QILISDK_`` prefix are ignored, so the same file can"
+" be shared with other tools. If a variable is set both in the environment"
+" and in the ``.env`` file, the environment wins."
+msgstr ""
+"Les entrades sense el prefix ``QILISDK_`` s'ignoren, de manera que el "
+"mateix fitxer es pot compartir amb altres eines. Si una variable està "
+"definida tant a l'entorn com al fitxer ``.env``, preval la de l'entorn."
+
+#: ../../modules/settings/settings.rst:46
+msgid ""
+"Settings can also be changed by directly assigning to the fields of the "
+"settings object:"
+msgstr ""
+"La configuració també es pot modificar assignant valors directament als "
+"camps de l'objecte de configuració:"
+
+#: ../../modules/settings/settings.rst:56
+msgid "Full list of settings"
+msgstr "Llista completa d'opcions"
+
+#: ../../modules/settings/settings.rst:58
+msgid ""
+"The full list of settings, with the environment variable each one is read"
+" from:"
+msgstr ""
+"La llista completa d'opcions, juntament amb la variable d'entorn de la "
+"qual es llegeix cadascuna:"
+
+#: ../../modules/settings/settings.rst:64
+msgid "Setting"
+msgstr "Opció"
+
+#: ../../modules/settings/settings.rst:65
+msgid "Environment variable"
+msgstr "Variable d'entorn"
+
+#: ../../modules/settings/settings.rst:66
+msgid "Default"
+msgstr "Valor predeterminat"
+
+#: ../../modules/settings/settings.rst:67
+msgid "Meaning"
+msgstr "Significat"
+
+#: ../../modules/settings/settings.rst:68
+msgid "``complex_precision``"
+msgstr "``complex_precision``"
+
+#: ../../modules/settings/settings.rst:69
+msgid "``QILISDK_COMPLEX_PRECISION``"
+msgstr "``QILISDK_COMPLEX_PRECISION``"
+
+#: ../../modules/settings/settings.rst:70
+msgid "``COMPLEX_128``"
+msgstr "``COMPLEX_128``"
+
+#: ../../modules/settings/settings.rst:71
+msgid "Precision of the complex numbers used for gates, Hamiltonians and states."
+msgstr ""
+"Precisió dels nombres complexos utilitzats per a portes, hamiltonians i "
+"estats."
+
+#: ../../modules/settings/settings.rst:72
+msgid "``atol``"
+msgstr "``atol``"
+
+#: ../../modules/settings/settings.rst:73
+msgid "``QILISDK_ATOL``"
+msgstr "``QILISDK_ATOL``"
+
+#: ../../modules/settings/settings.rst:74
+msgid "``1e-10``"
+msgstr "``1e-10``"
+
+#: ../../modules/settings/settings.rst:75
+msgid "Absolute tolerance below which a value is treated as zero."
+msgstr "Tolerància absoluta per sota de la qual un valor es considera zero."
+
+#: ../../modules/settings/settings.rst:76
+msgid "``rtol``"
+msgstr "``rtol``"
+
+#: ../../modules/settings/settings.rst:77
+msgid "``QILISDK_RTOL``"
+msgstr "``QILISDK_RTOL``"
+
+#: ../../modules/settings/settings.rst:78
+msgid "``1e-5``"
+msgstr "``1e-5``"
+
+#: ../../modules/settings/settings.rst:79
+msgid "Relative counterpart of ``atol``."
+msgstr "Equivalent relatiu d'``atol``."
+
+#: ../../modules/settings/settings.rst:80
+msgid "``logging_config_path``"
+msgstr "``logging_config_path``"
+
+#: ../../modules/settings/settings.rst:81
+msgid "``QILISDK_LOGGING_CONFIG_PATH``"
+msgstr "``QILISDK_LOGGING_CONFIG_PATH``"
+
+#: ../../modules/settings/settings.rst:82
+msgid "the packaged ``logging_config.yaml``"
+msgstr "el fitxer ``logging_config.yaml`` inclòs al paquet"
+
+#: ../../modules/settings/settings.rst:83
+msgid "YAML file describing the logging sinks."
+msgstr "Fitxer YAML que descriu les destinacions de registre."
+
+#: ../../modules/settings/settings.rst:84
+msgid "``speqtrum_username``"
+msgstr "``speqtrum_username``"
+
+#: ../../modules/settings/settings.rst:85
+msgid "``QILISDK_SPEQTRUM_USERNAME``"
+msgstr "``QILISDK_SPEQTRUM_USERNAME``"
+
+#: ../../modules/settings/settings.rst:86
+#: ../../modules/settings/settings.rst:90
+msgid "``None``"
+msgstr "``None``"
+
+#: ../../modules/settings/settings.rst:87
+msgid "SpeQtrum username used for authentication."
+msgstr "Nom d'usuari de SpeQtrum utilitzat per a l'autenticació."
+
+#: ../../modules/settings/settings.rst:88
+msgid "``speqtrum_apikey``"
+msgstr "``speqtrum_apikey``"
+
+#: ../../modules/settings/settings.rst:89
+msgid "``QILISDK_SPEQTRUM_APIKEY``"
+msgstr "``QILISDK_SPEQTRUM_APIKEY``"
+
+#: ../../modules/settings/settings.rst:91
+msgid "SpeQtrum API key associated with the account."
+msgstr "Clau d'API de SpeQtrum associada al compte."
+
+#: ../../modules/settings/settings.rst:92
+msgid "``speqtrum_api_url``"
+msgstr "``speqtrum_api_url``"
+
+#: ../../modules/settings/settings.rst:93
+msgid "``QILISDK_SPEQTRUM_API_URL``"
+msgstr "``QILISDK_SPEQTRUM_API_URL``"
+
+#: ../../modules/settings/settings.rst:94
+msgid "``https://qilimanjaro.ddns.net/public-api/api/v1``"
+msgstr "``https://qilimanjaro.ddns.net/public-api/api/v1``"
+
+#: ../../modules/settings/settings.rst:95
+msgid "Base URL of the SpeQtrum API."
+msgstr "URL base de l'API de SpeQtrum."
+
+#: ../../modules/settings/settings.rst:96
+msgid "``speqtrum_audience``"
+msgstr "``speqtrum_audience``"
+
+#: ../../modules/settings/settings.rst:97
+msgid "``QILISDK_SPEQTRUM_AUDIENCE``"
+msgstr "``QILISDK_SPEQTRUM_AUDIENCE``"
+
+#: ../../modules/settings/settings.rst:98
+msgid "``urn:qilimanjaro.tech:public-api:beren``"
+msgstr "``urn:qilimanjaro.tech:public-api:beren``"
+
+#: ../../modules/settings/settings.rst:99
+msgid "Audience claim expected in the authentication token."
+msgstr "Valor d'«audience» esperat en el token d'autenticació."
+
