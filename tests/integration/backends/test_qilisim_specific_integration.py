@@ -351,6 +351,82 @@ def test_monte_carlo_expectation_values_match_ensemble_density_matrix(method):
         )
 
 
+@pytest.mark.parametrize("method", analog_methods)
+def test_monte_carlo_expectation_values_honor_nshots(method):
+    """A Monte Carlo expectation readout with nshots > 0 must carry shot noise: each Pauli term is
+    measured a finite number of times, so the estimate is quantised and only converges to the exact
+    ensemble average as the number of shots grows."""
+    dt = 0.1
+    T = 2.0
+
+    schedule = Schedule(
+        dt=dt,
+        hamiltonians={"h1": pauli_x(0), "h2": pauli_z(0)},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
+    )
+
+    noise_model = NoiseModel()
+    noise_model.add(AmplitudeDamping(t1=2.0))
+
+    def _run(nshots: int) -> float:
+        backend = QiliSim(
+            analog_simulation_method=method,
+            noise_model=noise_model,
+            execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=MonteCarloConfig(trajectories=64)),
+        )
+        result = backend.execute(
+            AnalogEvolution(schedule=schedule, initial_state=InitialState.UNIFORM),
+            readout=Readout().with_expectation(observables=[pauli_z(0)], nshots=nshots),
+        )
+        return result.get_expectation_values()[0]
+
+    exact = _run(0)
+    few_shots = _run(7)
+    many_shots = _run(20000)
+
+    # A seven shot average of +-1 outcomes can only take the values (2 k - 7) / 7
+    assert few_shots != pytest.approx(exact, abs=1e-9)
+    assert 7 * (few_shots + 1) / 2 == pytest.approx(round(7 * (few_shots + 1) / 2), abs=1e-9)
+    assert many_shots == pytest.approx(exact, abs=5e-2)
+
+
+@pytest.mark.parametrize("method", analog_methods)
+def test_monte_carlo_expectation_values_honor_nshots_for_qtensor_observables(method):
+    """QTensor observables cannot be measured term by term, so the Monte Carlo path falls back to the
+    ensemble density matrix, which must still apply shot noise when nshots > 0."""
+    T = 2.0
+
+    schedule = Schedule(
+        dt=0.1,
+        hamiltonians={"h1": pauli_x(0), "h2": pauli_z(0)},
+        coefficients={"h1": {(0, T): lambda t: 1 - t / T}, "h2": {(0, T): lambda t: t / T}},
+    )
+
+    noise_model = NoiseModel()
+    noise_model.add(AmplitudeDamping(t1=2.0))
+
+    observable = QTensor(np.array([[1.0, 0.0], [0.0, -1.0]], dtype=complex))
+
+    def _run(nshots: int) -> float:
+        backend = QiliSim(
+            analog_simulation_method=method,
+            noise_model=noise_model,
+            execution_config=ExecutionConfig(seed=42, num_threads=1, monte_carlo=MonteCarloConfig(trajectories=64)),
+        )
+        result = backend.execute(
+            AnalogEvolution(schedule=schedule, initial_state=InitialState.UNIFORM),
+            readout=Readout().with_expectation(observables=[observable], nshots=nshots),
+        )
+        return result.get_expectation_values()[0]
+
+    exact = _run(0)
+    few_shots = _run(7)
+
+    assert few_shots != pytest.approx(exact, abs=1e-9)
+    assert 7 * (few_shots + 1) / 2 == pytest.approx(round(7 * (few_shots + 1) / 2), abs=1e-9)
+    assert _run(20000) == pytest.approx(exact, abs=5e-2)
+
+
 @pytest.mark.parametrize(
     ("initial_state", "noise"),
     [
@@ -696,6 +772,30 @@ def test_variational_annealing_expectation_value_bounded():
     ev = result.get_expectation_values()[0]
     assert isinstance(ev, float)
     assert -1.00001 <= ev <= 1.00001
+
+
+def test_variational_annealing_intermediate_results():
+    backend = QiliSim(
+        analog_simulation_method=AnalogMethod.variational_annealing(order=1, shots=100, warmups=5),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    schedule = _make_annealing_schedule()
+    result = backend.execute(
+        AnalogEvolution(schedule=schedule, initial_state=InitialState.UNIFORM, store_intermediate_results=True),
+        readout=Readout().with_expectation(observables=[pauli_z(0)]).with_sampling(nshots=50),
+    )
+    assert isinstance(result, FunctionalResult)
+    evs = result.get_intermediate_expectation_values()
+    assert len(evs) == len(schedule.tlist)
+    assert all(-1.00001 <= step[0].real <= 1.00001 for step in evs)
+    # The uniform initial state has <Z> = 0, while the final state is the ground state of Z
+    assert abs(evs[0][0].real) < 0.3
+    assert evs[-1][0].real < -0.8
+    samples = result.get_intermediate_samples()
+    assert len(samples) == len(schedule.tlist)
+    # The variational method samples its ansatz, so each step uses the configured variational shots
+    nshots_per_step = sum(result.get_samples().values())
+    assert all(sum(counts.values()) == nshots_per_step for counts in samples)
 
 
 def test_variational_annealing_wrong_initial_state_raises():
@@ -1597,6 +1697,49 @@ def test_stabilizer_max_states_truncation_runs():
     samples = result.get_samples()
     total = sum(samples.values())
     assert total == 100
+
+
+def test_stabilizer_expectation_values_honor_nshots():
+    """A stabilizer expectation readout with nshots > 0 must carry shot noise, while a deterministic
+    observable stays exact because its outcome distribution has no spread to sample from."""
+    circuit = Circuit(nqubits=1)
+    circuit.add(H(0))
+
+    def _run(nshots: int) -> float:
+        readout = Readout().with_expectation(observables=[pauli_z(0)], nshots=nshots)
+        result = _stabilizer_backend().execute(DigitalPropagation(circuit=circuit), readout=readout)
+        return complex(result.get_expectation_values()[0]).real
+
+    # <Z> is exactly zero on |+>, so any finite odd number of shots has to disagree with it
+    assert _run(0) == pytest.approx(0.0, abs=1e-12)
+    few_shots = _run(7)
+    assert few_shots != pytest.approx(0.0, abs=1e-9)
+    assert 7 * (few_shots + 1) / 2 == pytest.approx(round(7 * (few_shots + 1) / 2), abs=1e-9)
+    assert _run(20000) == pytest.approx(0.0, abs=5e-2)
+
+    # An eigenstate of the observable gives the same value however few shots are used
+    deterministic = Circuit(nqubits=1)
+    deterministic.add(X(0))
+    readout = Readout().with_expectation(observables=[pauli_z(0)], nshots=3)
+    result = _stabilizer_backend().execute(DigitalPropagation(circuit=deterministic), readout=readout)
+    assert complex(result.get_expectation_values()[0]).real == pytest.approx(-1.0, abs=1e-12)
+
+
+def test_stabilizer_expectation_values_are_reproducible_with_shots():
+    """Sampled stabilizer expectation values are drawn from the configured seed, so the same seed
+    reproduces them and a different seed generally does not."""
+    circuit = Circuit(nqubits=1)
+    circuit.add(H(0))
+    readout = Readout().with_expectation(observables=[pauli_z(0)], nshots=11)
+
+    def _run(seed: int) -> float:
+        result = _stabilizer_backend(seed=seed).execute(DigitalPropagation(circuit=circuit), readout=readout)
+        return complex(result.get_expectation_values()[0]).real
+
+    sampled = _run(7)
+    repeated = _run(7)
+    assert repeated == sampled
+    assert any(_run(seed) != sampled for seed in range(8, 20))
 
 
 def test_stabilizer_seed_reproducibility():
