@@ -342,7 +342,7 @@ inline py::list trajectory_expectation_values(const DenseMatrix& trajectories, c
                 }
                 Complex sampled = sample_expectation_value(terms, nshots, config.next_seed());
                 if (std::abs(sampled.imag()) > atol) {
-                    throw py::value_error("Encountered an imaginary expectation value while computing the expectation values, try reducing the total tolerance or improving simulation precision.");
+                    throw py::value_error("Encountered an imaginary expectation value while computing the expectation values, try increasing the absolute tolerance or improving simulation precision.");
                 }
                 expectations_py.append(py::cast(sampled.real()));
                 continue;
