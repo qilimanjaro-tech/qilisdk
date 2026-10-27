@@ -13,8 +13,10 @@
 // limitations under the License.
 
 #include "time_evolution.h"
+
 #include "../../../libs/logging.h"
 #include "../../../libs/pybind.h"
+#include "../noise/monte_carlo.h"
 #include "../noise/noise_model.h"
 #include "../utils/matrix_utils.h"
 #include "../utils/random.h"
@@ -53,6 +55,9 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
 
     // Set the number of threads
     Eigen::setNbThreads(config.get_num_threads());
+#if defined(_OPENMP)
+    omp_set_num_threads(config.get_num_threads());
+#endif
 
     // Get the jump operators from the noise model
     const std::vector<SparseMatrix>& jump_operators = noise_model_cpp.get_jump_operators();
@@ -105,20 +110,43 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         config.set_monte_carlo(false);
     }
 
+    // Whether the evolution runs over an ensemble of state-vector trajectories
+    bool use_monte_carlo = config.get_monte_carlo() && !input_is_trajectories;
+
     // If we have non-unitary dynamics and the input was a state vector, convert to density matrix
-    if (!is_unitary_dynamics && input_was_vector) {
+    if (!is_unitary_dynamics && input_was_vector && !use_monte_carlo) {
         rho_0 = rho_0 * rho_0.adjoint();
     }
 
-    // If monte carlo, sample from rho_0 to get initial states
-    bool use_monte_carlo = config.get_monte_carlo() && !input_is_trajectories;
+    // If monte carlo, build the ensemble of initial state vectors
     if (use_monte_carlo) {
-        rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.next_seed());
+        if (input_was_vector) {
+            rho_0 = replicate_state_vector(rho_0, config.get_num_monte_carlo_trajectories());
+        } else {
+            rho_0 = sample_from_density_matrix(rho_0, config.get_num_monte_carlo_trajectories(), config.next_seed());
+        }
         is_unitary_on_statevector = true;
+    }
+
+    // With trajectories and jump operators the noise is unravelled into quantum jumps
+    bool use_jump_unraveling = !is_unitary_dynamics && (use_monte_carlo || input_is_trajectories);
+    TrajectoryUnraveling unraveling(use_jump_unraveling ? config.next_seed() : 0);
+    SparseMatrix jump_drift;
+    const std::vector<SparseMatrix> no_jumps;
+    if (use_jump_unraveling) {
+        jump_drift = jump_drift_operator(jump_operators);
+        qilisdk::log_debug("[QiliSim, C++] Unravelling " + std::to_string(jump_operators.size()) + " jump operators over " + std::to_string(rho_0.cols()) + " Monte Carlo trajectories");
+        warn_if_jumps_underresolved(jump_drift_operator(peak_rate_jumps(jump_operators, jump_rate_series)), step_list, config.get_max_expected_jumps_per_step());
     }
 
     // Init rho_0
     rho_t = rho_0;
+
+    // The jump test reads the norm lost over a step as a probability, so every trajectory must start at unit norm
+    DenseMatrix pre_step;
+    if (use_jump_unraveling) {
+        normalize_state(rho_t, true, true);
+    }
 
     // From here on the state is either a single density matrix or an ensemble of state vector columns
     bool state_is_ensemble = use_monte_carlo || input_is_trajectories || (!input_was_vector && rho_t.cols() == 1);
@@ -164,9 +192,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
             dt = (step_list[step_ind] - step_list[step_ind - 1]);
         }
 
-        // For time-dependent rates, re-scale each base jump operator by sqrt(rate(t)) at this step
-        // (piecewise-constant within the step, consistent with how currentH is treated). The rate is
-        // sampled at t = step_list[step_ind], matching the schedule coefficient sampling above.
+        // For time-dependent rates, re-scale each base jump operator by sqrt(rate(t))
         if (has_time_dependent_jumps) {
             for (size_t j = 0; j < jump_operators.size(); ++j) {
                 if (jump_rate_series[j].empty()) {
@@ -178,19 +204,38 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         }
         const std::vector<SparseMatrix>& current_jumps = has_time_dependent_jumps ? step_jumps : jump_operators;
 
+        // If we are doing jump unraveling, calculate the effective Hamiltonian for this step
+        SparseMatrix stepH = currentH;
+        if (use_jump_unraveling) {
+            if (has_time_dependent_jumps) {
+                jump_drift = jump_drift_operator(current_jumps);
+            }
+            stepH = effective_hamiltonian(currentH, jump_drift);
+        }
+        const std::vector<SparseMatrix>& step_jump_ops = use_jump_unraveling ? no_jumps : current_jumps;
+        const bool normalize_in_step = config.get_normalize_state() && !use_jump_unraveling;
+        if (use_jump_unraveling) {
+            pre_step = rho_t;
+        }
+
         // Perform the iteration depending on the method
         if (config.get_time_evolution_method() == "integrate_rk4") {
-            rho_t = iter_rk4_matrix(rho_t, dt, currentH, current_jumps, is_unitary_on_statevector, config.get_normalize_state());
+            rho_t = iter_rk4_matrix(rho_t, dt, stepH, step_jump_ops, is_unitary_on_statevector, normalize_in_step);
         } else if (config.get_time_evolution_method() == "direct") {
-            rho_t = iter_direct(rho_t, dt, currentH, current_jumps, is_unitary_on_statevector);
+            rho_t = iter_direct(rho_t, dt, stepH, step_jump_ops, is_unitary_on_statevector);
         } else if (config.get_time_evolution_method() == "arnoldi") {
-            rho_t = iter_arnoldi(rho_t, dt, currentH, current_jumps, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol(), config.get_normalize_state());
+            rho_t = iter_arnoldi(rho_t, dt, stepH, step_jump_ops, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol(), normalize_in_step);
         } else {
             throw std::invalid_argument("Invalid time evolution method: " + config.get_time_evolution_method());
         }
 
         // Stop early if the integrator has diverged to a non-finite state
         check_state_diverged(rho_t);
+
+        // Renormalize each trajectory and let the norm it lost decide whether it jumps
+        if (use_jump_unraveling) {
+            unraveling.apply_jumps(rho_t, pre_step, current_jumps);
+        }
 
         // If we should store intermediates, do it here
         if (config.get_store_intermediate_results()) {
@@ -242,9 +287,7 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
     // Get the jump operators from the noise model
     const std::vector<SparseMatrix>& jump_operators = noise_model_cpp.get_jump_operators();
 
-    // For time-dependent rates, each base jump operator is re-scaled per step by sqrt(rate(t)).
-    // The adaptive RK45 method steps at arbitrary times not aligned to the schedule points, so it
-    // cannot apply a per-step rate series; reject it. The fixed-step RK4 method is handled below.
+    // For time-dependent rates, each base jump operator is re-scaled per step by sqrt(rate(t))
     bool has_time_dependent_jumps = noise_model_cpp.has_time_dependent_rates();
     const std::vector<std::vector<double>>& jump_rate_series = noise_model_cpp.get_jump_rate_series();
     if (has_time_dependent_jumps && config.get_time_evolution_method() == "integrate_rk45_matrix_free") {
@@ -289,16 +332,40 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
     }
 
     // If we have non-unitary dynamics and the input was a state vector, convert to density matrix
-    if (!is_unitary_dynamics && input_was_vector) {
+    if (!is_unitary_dynamics && input_was_vector && !use_monte_carlo) {
         rho_t = rho_t * rho_t.adjoint();
     }
 
-    // If monte carlo, sample from rho_t to get initial states (skipped when the
-    // input already is a batch of trajectories). Then rho is state vector columns.
+    // If monte carlo, build the ensemble of initial state vectors
     if (use_monte_carlo) {
-        rho_t = sample_from_density_matrix(rho_t, config.get_num_monte_carlo_trajectories(), config.next_seed());
+        if (input_was_vector) {
+            rho_t = rho_t.replicate(1, config.get_num_monte_carlo_trajectories()).eval();
+        } else {
+            rho_t = sample_from_density_matrix(rho_t, config.get_num_monte_carlo_trajectories(), config.next_seed());
+        }
         is_unitary_on_statevector = true;
     }
+
+    // With trajectories and jump operators the noise is unravelled into quantum jumps
+    bool use_jump_unraveling = !is_unitary_dynamics && (use_monte_carlo || input_is_trajectories);
+    TrajectoryUnraveling unraveling(use_jump_unraveling ? config.next_seed() : 0);
+    SparseMatrix jump_drift;
+    const std::vector<SparseMatrix> no_jumps;
+    const bool normalize_in_step = config.get_normalize_state() && !use_jump_unraveling;
+    const bool is_adaptive = config.get_time_evolution_method() == "integrate_rk45_matrix_free";
+    DenseMatrix pre_step;
+    if (use_jump_unraveling) {
+        jump_drift = jump_drift_operator(jump_operators);
+        qilisdk::log_debug("[QiliSim, C++] Unravelling " + std::to_string(jump_operators.size()) + " jump operators over " + std::to_string(rho_t.cols()) + " Monte Carlo trajectories");
+        if (!is_adaptive) {
+            warn_if_jumps_underresolved(jump_drift_operator(peak_rate_jumps(jump_operators, jump_rate_series)), step_list, config.get_max_expected_jumps_per_step());
+        }
+
+        // The jump test reads the norm lost over a step as a probability, so every trajectory must start at unit norm
+        normalize_state(rho_t, true, true);
+    }
+    const SparseMatrix* jump_drift_ptr = use_jump_unraveling ? &jump_drift : nullptr;
+    const std::vector<SparseMatrix>& integrator_jumps = use_jump_unraveling ? no_jumps : jump_operators;
 
     // From here on the state is either a single density matrix or an ensemble of state vector columns
     bool state_is_ensemble = use_monte_carlo || input_is_trajectories || (!input_was_vector && rho_t.cols() == 1);
@@ -314,12 +381,47 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
         }
     };
 
+    // Re-scale each time-dependent jump operator by sqrt(rate(t)) at a step, keeping the jump drift in sync
+    auto jumps_at_step = [&](size_t step_ind) -> const std::vector<SparseMatrix>& {
+        if (!has_time_dependent_jumps) {
+            return jump_operators;
+        }
+        for (size_t j = 0; j < jump_operators.size(); ++j) {
+            if (jump_rate_series[j].empty()) {
+                step_jumps[j] = jump_operators[j];
+            } else {
+                step_jumps[j] = jump_operators[j] * jump_rate_series[j][step_ind];
+            }
+        }
+        if (use_jump_unraveling) {
+            jump_drift = jump_drift_operator(step_jumps);
+        }
+        return step_jumps;
+    };
+
     // If doing adaptive step size with rk45
-    if (config.get_time_evolution_method() == "integrate_rk45_matrix_free") {
+    if (is_adaptive) {
         // Initial step size
         double dt = 1.0;
         if (step_list.size() > 1) {
             dt = step_list[1];
+        }
+
+        // If we are doing jump unraveling, cap the adaptive step at the schedule resolution and so that few jumps are expected per step
+        double max_jump_dt = std::numeric_limits<double>::infinity();
+        if (use_jump_unraveling) {
+            double previous = 0.0;
+            for (double time_point : step_list) {
+                if (time_point > previous) {
+                    max_jump_dt = std::min(max_jump_dt, time_point - previous);
+                }
+                previous = time_point;
+            }
+            const double jump_rate = max_jump_rate_bound(jump_drift);
+            if (jump_rate > 0.0) {
+                max_jump_dt = std::min(max_jump_dt, config.get_max_expected_jumps_per_step() / jump_rate);
+            }
+            qilisdk::log_debug("[QiliSim, C++] Capping the adaptive step at " + std::to_string(max_jump_dt) + " to resolve the quantum jumps");
         }
 
         // Loop until we reach the max time
@@ -327,18 +429,31 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
         size_t iters = 0;
         const size_t max_iters = 1000000;  // Just in case to prevent infinite loops
         DenseMatrix k_saved;
-        while (current_time < step_list.back()) {
+
+        // Stop once the remaining time is negligible compared to the total, allowing for rounding in the summed steps
+        const double time_tol = 1e-12 * std::max(1.0, std::abs(step_list.back()));
+        while (step_list.back() - current_time > time_tol) {
             // Let Ctrl-C interrupt the evolution between time steps
             check_signals();
 
             // Make sure the next step doesn't go beyond the final time point
             dt = std::min(dt, step_list.back() - current_time);
+            dt = std::min(dt, max_jump_dt);
+            if (use_jump_unraveling) {
+                pre_step = rho_t;
+            }
 
-            // dt is updated to the suggested next step; dt_taken is what was actually stepped0
-            double dt_taken = iter_rk45(rho_t, current_time, dt, step_list, hamiltonians, parameters_list, jump_operators, is_unitary_on_statevector, config.get_adaptive_tol(), k_saved, config.get_normalize_state());
+            // dt is updated to the suggested next step, whilst dt_taken is what was actually stepped
+            double dt_taken = iter_rk45(rho_t, current_time, dt, step_list, hamiltonians, parameters_list, integrator_jumps, is_unitary_on_statevector, config.get_adaptive_tol(), k_saved, normalize_in_step, jump_drift_ptr);
 
             // Stop early if the integrator has diverged to a non-finite state
             check_state_diverged(rho_t);
+
+            // Renormalize each trajectory and let the norm it lost decide whether it jumps
+            if (use_jump_unraveling && dt_taken > 0) {
+                unraveling.apply_jumps(rho_t, pre_step, jump_operators);
+                k_saved.resize(0, 0);  // the jumps invalidate the cached first Runge-Kutta stage
+            }
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results() && dt_taken > 0) {
@@ -351,7 +466,7 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
             if (iters >= max_iters) {
                 throw std::runtime_error("Maximum number of iterations reached in adaptive RK45 integration.");
             }
-            if (dt < config.get_atol()) {
+            if (dt_taken == 0 && dt < time_tol) {
                 throw std::runtime_error("Minimum step size reached in adaptive RK45 integration.");
             }
         }
@@ -367,24 +482,22 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
             double t_start = (step_ind > 0) ? step_list[step_ind - 1] : 0.0;
             double dt = step_list[step_ind] - t_start;
 
-            // For time-dependent rates, re-scale each base jump operator by sqrt(rate(t)) at this
-            // step (piecewise-constant within the step, sampled at t = step_list[step_ind]).
-            if (has_time_dependent_jumps) {
-                for (size_t j = 0; j < jump_operators.size(); ++j) {
-                    if (jump_rate_series[j].empty()) {
-                        step_jumps[j] = jump_operators[j];
-                    } else {
-                        step_jumps[j] = jump_operators[j] * jump_rate_series[j][step_ind];
-                    }
-                }
+            // Rates are piecewise-constant within the step, sampled at t = step_list[step_ind]
+            const std::vector<SparseMatrix>& current_jumps = jumps_at_step(step_ind);
+            if (use_jump_unraveling) {
+                pre_step = rho_t;
             }
-            const std::vector<SparseMatrix>& current_jumps = has_time_dependent_jumps ? step_jumps : jump_operators;
 
             // Perform the iteration
-            iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, current_jumps, is_unitary_on_statevector, config.get_normalize_state());
+            iter_rk4(rho_t, t_start, dt, step_list, hamiltonians, parameters_list, use_jump_unraveling ? no_jumps : current_jumps, is_unitary_on_statevector, normalize_in_step, jump_drift_ptr);
 
             // Stop early if the integrator has diverged to a non-finite state
             check_state_diverged(rho_t);
+
+            // Renormalize each trajectory and let the norm it lost decide whether it jumps
+            if (use_jump_unraveling) {
+                unraveling.apply_jumps(rho_t, pre_step, current_jumps);
+            }
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results()) {
@@ -412,11 +525,22 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
                 dt = step_list[step_ind] - step_list[step_ind - 1];
             }
 
+            // Rates are piecewise-constant within the step, sampled at t = step_list[step_ind]
+            const std::vector<SparseMatrix>& current_jumps = jumps_at_step(step_ind);
+            if (use_jump_unraveling) {
+                pre_step = rho_t;
+            }
+
             // Perform the iteration
-            rho_t = iter_arnoldi_matrix_free(rho_t, dt, currentH, jump_operators, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol());
+            rho_t = iter_arnoldi_matrix_free(rho_t, dt, currentH, use_jump_unraveling ? no_jumps : current_jumps, config.get_arnoldi_dim(), config.get_num_arnoldi_substeps(), is_unitary_on_statevector, config.get_atol(), normalize_in_step, jump_drift_ptr);
 
             // Stop early if the integrator has diverged to a non-finite state
             check_state_diverged(rho_t);
+
+            // Renormalize each trajectory and let the norm it lost decide whether it jumps
+            if (use_jump_unraveling) {
+                unraveling.apply_jumps(rho_t, pre_step, current_jumps);
+            }
 
             // If we should store intermediates, do it here
             if (config.get_store_intermediate_results()) {
