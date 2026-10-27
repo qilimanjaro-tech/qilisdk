@@ -8,7 +8,7 @@ of backends (CPU, GPU, and QPU).
 QiliSDK is split into several modules, which is easiest to 
 visualize via the following diagram:
 
-.. image:: ../../_static/the_diagram.png
+.. image:: ../_static/the_diagram.png
    :align: center
 
 First, users define the things from the top row: their Circuit and Gates (for digital jobs)
