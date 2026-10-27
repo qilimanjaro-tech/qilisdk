@@ -19,7 +19,7 @@ from unittest.mock import MagicMock
 import pytest
 from rustworkx import PyGraph
 
-from qilisdk.digital import CZ, RX, RY, RZ, Circuit, M
+from qilisdk.digital import CZ, RX, RY, RZ, Adjoint, Circuit, Exponential, M
 from qilisdk.digital.circuit_transpiler_passes.sabre_swap_pass import SabreSwapPass
 from qilisdk.digital.circuit_transpiler_passes.transpilation_context import TranspilationContext
 
@@ -422,3 +422,14 @@ def test_init_layout_returns_empty_layout_for_empty_identity_case() -> None:
 def test_init_layout_rejects_too_few_physical_nodes_without_hint() -> None:
     with pytest.raises(ValueError, match="Coupling graph has 2 qubits but circuit needs 3"):
         SabreSwapPass._init_layout(3, [0, 1], {2}, None)
+
+
+def test_remap_gate_qubits_inplace_handles_wrapped_gates() -> None:
+    adjoint_gate = Adjoint(RY(0, theta=0.3))
+    exponential_gate = Exponential(RZ(0, phi=0.2))
+
+    SabreSwapPass._remap_gate_qubits_inplace(adjoint_gate, {0: 2})
+    SabreSwapPass._remap_gate_qubits_inplace(exponential_gate, {0: 1})
+
+    assert adjoint_gate.qubits == (2,)
+    assert exponential_gate.qubits == (1,)

@@ -25,7 +25,6 @@ from qilisdk.digital import Circuit
 from qilisdk.digital.topology import build_topology_graph
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
-from .retargeting_helpers import _retarget_gate
 
 if TYPE_CHECKING:
     from rustworkx import PyGraph
@@ -681,8 +680,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
 
     # --------- retargeting to the chosen layout ---------
 
-    @staticmethod
-    def _retarget_circuit(circuit: Circuit, layout: list[int], max_physical_label_plus_one: int) -> Circuit:
+    def _retarget_circuit(self, circuit: Circuit, layout: list[int], max_physical_label_plus_one: int) -> Circuit:
         """Retarget all gates in ``circuit`` using a chosen layout.
 
         Args:
@@ -702,5 +700,5 @@ class SabreLayoutPass(CircuitTranspilerPass):
         retargeted_circuit = Circuit(output_num_qubits)
         for gate in circuit.gates:
             mapped_qubits = tuple(layout[logical_qubit] for logical_qubit in gate.qubits)
-            retargeted_circuit.add(_retarget_gate(gate, mapped_qubits))
+            retargeted_circuit.add(self._retarget_gate(gate, mapped_qubits))
         return retargeted_circuit
