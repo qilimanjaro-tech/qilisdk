@@ -235,6 +235,7 @@ class CudaqBackend(Backend):
         self,
         sampling_method: CudaqSamplingMethod = CudaqSamplingMethod.STATE_VECTOR,
         noise_model: NoiseModel | None = None,
+        seed: int | None = None,
     ) -> None:
         """Initialize the :class:`CudaqBackend`.
 
@@ -245,8 +246,10 @@ class CudaqBackend(Backend):
                 ``CPU``. Defaults to ``CudaqSamplingMethod.STATE_VECTOR``.
             noise_model (NoiseModel | None): Optional noise model applied
                 during execution. Defaults to ``None``.
+            seed (int | None): Seed for the random number generator used to draw
+                samples from a simulated state. Defaults to ``None``.
         """
-        super().__init__(noise_model=noise_model)
+        super().__init__(noise_model=noise_model, seed=seed)
         cudaq.register_operation("i", np.array([1, 0, 0, 1], dtype=_complex_dtype()))
         cudaq.register_operation(_SWAP_OP_NAME, np.array(_SWAP_MATRIX, dtype=_complex_dtype()))
         self._basic_gate_handlers: BasicGateHandlersMapping = {
@@ -432,6 +435,7 @@ class CudaqBackend(Backend):
             readout_results=CudaqBackend._construct_results_list(
                 final_state=final_state,
                 readout=readout,
+                seed=self._rng,
                 qubits_to_measure=qubits_to_measure,
             )
         )
@@ -529,9 +533,14 @@ class CudaqBackend(Backend):
                 intermediate_states.append(QTensor(_state))
 
         return FunctionalResult(
-            readout_results=CudaqBackend._construct_results_list(final_state=final_state, readout=readout),
+            readout_results=CudaqBackend._construct_results_list(
+                final_state=final_state, readout=readout, seed=self._rng
+            ),
             intermediate_results=(
-                [CudaqBackend._construct_results_list(state, readout=readout) for state in intermediate_states]
+                [
+                    CudaqBackend._construct_results_list(state, readout=readout, seed=self._rng)
+                    for state in intermediate_states
+                ]
                 if functional.store_intermediate_results
                 else None
             ),

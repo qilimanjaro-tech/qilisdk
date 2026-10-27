@@ -250,10 +250,11 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
         state: QTensor,
         qubits_to_measure: list[int] | None = None,
         expand_samples: bool = True,
+        seed: int | np.random.Generator | None = None,
     ) -> Self:
         f_string = "{:0" + str(state.nqubits) + "b}"
         probabilities: dict[str, float] = {(f_string).format(i): p for i, p in enumerate(state.probabilities())}
-        samples: dict[str, int] = _samples_from_probabilities(probabilities, nshots=sampling_readout.nshots)
+        samples: dict[str, int] = _samples_from_probabilities(probabilities, nshots=sampling_readout.nshots, seed=seed)
         if qubits_to_measure is not None:
             samples = cls._adjust_samples(samples, qubits_to_measure, state.nqubits, expand_samples=expand_samples)
         return cls(samples=samples, probabilities=probabilities)
@@ -673,7 +674,7 @@ def _samples_from_state(state: QTensor, nshots: int = 100, seed: int | None = No
 
 
 def _samples_from_probabilities(
-    probabilities: dict[str, float], nshots: int = 100, seed: int | None = None
+    probabilities: dict[str, float], nshots: int = 100, seed: int | np.random.Generator | None = None
 ) -> dict[str, int]:
     states = np.array(list(probabilities.keys()))
     probs = np.array(list(probabilities.values()), dtype=np.float64)
