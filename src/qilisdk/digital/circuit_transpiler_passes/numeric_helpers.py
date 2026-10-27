@@ -59,10 +59,10 @@ def _zyz_from_unitary(unitary: np.ndarray) -> tuple[float, float, float]:
         raise ValueError("Matrix is singular.")
     # remove phase to a U3 rotation
     phase = np.angle(unitary[0, 0])
-    unitary /= np.exp(1j * phase, dtype=complex)
+    normalized = np.asarray(unitary, dtype=complex) / np.exp(1j * phase)
 
-    a00, a01 = unitary[0, 0], unitary[0, 1]
-    a10, a11 = unitary[1, 0], unitary[1, 1]
+    a00, a01 = normalized[0, 0], normalized[0, 1]
+    a10, a11 = normalized[1, 0], normalized[1, 1]
     theta = 2.0 * math.atan2(np.abs(a01), np.abs(a00))
     s = math.sin(theta / 2.0)
 
