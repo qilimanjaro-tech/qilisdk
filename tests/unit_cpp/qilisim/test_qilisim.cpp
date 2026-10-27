@@ -85,6 +85,29 @@ _samp_x = DigitalPropagation(circuit=_c_x)
     EXPECT_NO_THROW(sim.execute_digital_propagation(py::globals()["_samp_x"], py::list(), py::none(), py::none(), empty_solver_params()));
 }
 
+TEST_F(ExecuteSamplingTest, MPSMethod_ReportsMidCircuitAndFinalResults) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.digital_propagation import DigitalPropagation
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.gates import M, X
+from qilisdk.readout import SamplingReadout
+
+_c_mps = Circuit(nqubits=2)
+_c_mps.add(X(0))
+_c_mps.add(M(0))
+_c_mps.add(X(1))
+_samp_mps = DigitalPropagation(circuit=_c_mps)
+_ro_mps = [SamplingReadout(nshots=10)]
+    )");
+    py::dict params;
+    params["digital_method"] = py::str("mps");
+    py::object result = sim.execute_digital_propagation(py::globals()["_samp_mps"], py::globals()["_ro_mps"], py::none(), py::none(), params);
+    EXPECT_EQ(py::len(result.attr("intermediate_results")), 1u);
+    py::dict samples = result.attr("get_samples")();
+    EXPECT_EQ(samples["11"].cast<int>(), 10);
+}
+
 TEST_F(ExecuteSamplingTest, StandardMethod_XGate_NoNoise_WithInitialState_Succeeds) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
@@ -657,6 +680,25 @@ _reservoir_exp = QuantumReservoir(
     py::object result;
     ASSERT_NO_THROW(result = sim.execute_quantum_reservoir(py::globals()["_reservoir_exp"], py::list(), py::none(), empty_solver_params()));
     EXPECT_TRUE(py::hasattr(result, "readout_results"));
+}
+
+TEST_F(ExecuteReservoirTest, ReservoirDigitalLayerMPSIsRejectedUpFront) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.analog.schedule import Schedule
+from qilisdk.analog.hamiltonian import Z
+from qilisdk.core.qtensor import ket
+from qilisdk.digital import Circuit, X
+
+_pre_mps = Circuit(1)
+_pre_mps.add(X(0))
+_layer_mps = ReservoirLayer(evolution_dynamics=Schedule(hamiltonians={"h0": Z(0)}, dt=0.1, total_time=0.3), input_encoding=_pre_mps)
+_reservoir_mps = QuantumReservoir(initial_state=ket(0), reservoir_layer=_layer_mps, input_per_layer=[{}])
+    )");
+    py::dict params;
+    params["digital_method"] = py::str("mps");
+    EXPECT_THROW(sim.execute_quantum_reservoir(py::globals()["_reservoir_mps"], py::list(), py::none(), params), py::value_error);
 }
 
 TEST_F(ExecuteReservoirTest, ReservoirRunsWithQubitReset) {

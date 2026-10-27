@@ -15,8 +15,10 @@
 // GCOV_EXCL_BR_START
 
 #include <gtest/gtest.h>
+#include <cmath>
 #include <set>
 #include "../../../src/qilisdk_cpp/backends/qilisim/config/qilisim_config.h"
+#include "../../../src/qilisdk_cpp/libs/pybind.h"
 
 TEST(QilisimConfig, BadValidateThrows) {
     QiliSimConfig default_config;
@@ -88,7 +90,7 @@ TEST(QilisimConfig, MethodNamesMustMatchExactly) {
         config.set_time_evolution_method(name);
         EXPECT_ANY_THROW(config.validate()) << "time evolution method '" << name << "'";
     }
-    for (const std::string name : {"statevector", "statevector_matrix_free", "stabilizer"}) {
+    for (const std::string name : {"statevector", "statevector_matrix_free", "stabilizer", "mps"}) {
         QiliSimConfig config;
         config.set_digital_method(name);
         EXPECT_NO_THROW(config.validate()) << "digital method '" << name << "'";
@@ -129,6 +131,32 @@ TEST(QilisimConfig, StabilizerMaxStates_GetterSetter) {
     QiliSimConfig config;
     config.set_stabilizer_max_states(200);
     EXPECT_EQ(config.get_stabilizer_max_states(), 200);
+}
+
+TEST(QilisimConfig, MPSSettings_GetterSetter) {
+    QiliSimConfig config;
+    config.set_mps_max_bond_dimension(128);
+    config.set_mps_truncation_cutoff(1e-8);
+    EXPECT_EQ(config.get_mps_max_bond_dimension(), 128);
+    EXPECT_DOUBLE_EQ(config.get_mps_truncation_cutoff(), 1e-8);
+    EXPECT_NO_THROW(config.validate());
+}
+
+TEST(QilisimConfig, MPSMethod_ValidatesAndRejectsBadTruncation) {
+    QiliSimConfig config;
+    config.set_digital_method("mps");
+    EXPECT_NO_THROW(config.validate());
+
+    QiliSimConfig zero_bond;
+    zero_bond.set_mps_max_bond_dimension(0);
+    EXPECT_THROW(zero_bond.validate(), py::value_error);
+
+    // A cutoff that is negative, NaN, or 1 or more would collapse every bond, so all are rejected
+    for (double cutoff : {-1e-3, 1.0, 2.0, std::nan("")}) {
+        QiliSimConfig bad_cutoff;
+        bad_cutoff.set_mps_truncation_cutoff(cutoff);
+        EXPECT_THROW(bad_cutoff.validate(), py::value_error) << "cutoff " << cutoff;
+    }
 }
 
 TEST(QilisimConfig, NextSeedGivesDistinctStreams) {

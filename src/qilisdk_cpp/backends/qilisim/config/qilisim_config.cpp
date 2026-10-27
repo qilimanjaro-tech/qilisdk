@@ -60,7 +60,7 @@ void QiliSimConfig::validate() const {
     }
     static const std::set<std::string> valid_evolution_methods = {"direct", "arnoldi", "arnoldi_matrix_free", "variational_exponential", "integrate_rk4", "integrate_rk45_matrix_free", "integrate_rk4_matrix_free"};
     validate_choice(time_evolution_method, valid_evolution_methods, "Time evolution method");
-    static const std::set<std::string> valid_digital_methods = {"statevector", "statevector_matrix_free", "stabilizer"};
+    static const std::set<std::string> valid_digital_methods = {"statevector", "statevector_matrix_free", "stabilizer", "mps"};
     validate_choice(digital_method, valid_digital_methods, "Digital method");
     if (monte_carlo && num_monte_carlo_trajectories <= 0) {
         throw py::value_error("Number of Monte Carlo trajectories must be positive.");
@@ -88,6 +88,12 @@ void QiliSimConfig::validate() const {
     }
     if (warmups < 0) {
         throw py::value_error("Warmups cannot be negative.");
+    }
+    if (mps_max_bond_dimension <= 0) {
+        throw py::value_error("Maximum MPS bond dimension must be positive.");
+    }
+    if (!(mps_truncation_cutoff >= 0 && mps_truncation_cutoff < 1)) {
+        throw py::value_error("MPS truncation cutoff must be in [0, 1).");
     }
     if (order > 4) {
         throw py::value_error("Order greater than 4 not supported yet.");
