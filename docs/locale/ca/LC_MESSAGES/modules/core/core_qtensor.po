@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-05 20:45+0200\n"
+"POT-Creation-Date: 2026-10-16 17:49+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -72,8 +72,8 @@ msgstr "Exemples de creació de diversos objectes quàntics:"
 
 #: ../../modules/core/core_qtensor.rst:42
 #: ../../modules/core/core_qtensor.rst:88
-#: ../../modules/core/core_qtensor.rst:178
-#: ../../modules/core/core_qtensor.rst:228
+#: ../../modules/core/core_qtensor.rst:179
+#: ../../modules/core/core_qtensor.rst:230
 msgid "**Output**"
 msgstr "**Sortida**"
 
@@ -340,9 +340,9 @@ msgid ""
 "measurement samples in the computational basis from a state or a density "
 "matrix"
 msgstr ""
-":meth:`.sample(nshots)<qilisdk.core.qtensor.QTensor.sample>`: obté mostres "
-"de mesura en la base computacional a partir d'un estat o d'una matriu de "
-"densitat"
+":meth:`.sample(nshots)<qilisdk.core.qtensor.QTensor.sample>`: obté "
+"mostres de mesura en la base computacional a partir d'un estat o d'una "
+"matriu de densitat"
 
 #: ../../modules/core/core_qtensor.rst:141
 msgid ""
@@ -369,30 +369,50 @@ msgstr ""
 " restableix els qubits especificats a 0"
 
 #: ../../modules/core/core_qtensor.rst:144
+msgid ""
+":meth:`.permute(order)<qilisdk.core.qtensor.QTensor.permute>`: reorder "
+"the qubits, so that qubit ``i`` of the result is qubit ``order[i]`` of "
+"the original"
+msgstr ""
+":meth:`.permute(order)<qilisdk.core.qtensor.QTensor.permute>`: reordena "
+"els qubits, de manera que el qubit ``i`` del resultat és el qubit "
+"``order[i]`` de l'original"
+
+#: ../../modules/core/core_qtensor.rst:145
 msgid ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: alias for adjoint"
 msgstr ":meth:`.dagger()<qilisdk.core.qtensor.QTensor.dagger>`: àlies d'adjoint"
 
-#: ../../modules/core/core_qtensor.rst:146
+#: ../../modules/core/core_qtensor.rst:147
 msgid "Examples:"
 msgstr "Exemples:"
 
-#: ../../modules/core/core_qtensor.rst:205
+#: ../../modules/core/core_qtensor.rst:206
 msgid "Extra Utilities"
 msgstr "Utilitats addicionals"
 
-#: ../../modules/core/core_qtensor.rst:207
+#: ../../modules/core/core_qtensor.rst:208
 msgid "**Tensor product** with :func:`~qilisdk.core.qtensor.tensor_prod`"
 msgstr "**Producte tensorial** amb :func:`~qilisdk.core.qtensor.tensor_prod`"
 
-#: ../../modules/core/core_qtensor.rst:208
+#: ../../modules/core/core_qtensor.rst:209
+msgid ""
+"**Tensor product on chosen qubits** by passing ``qubits``, e.g. "
+"``tensor_prod([a, b], qubits=[[1], [0, 2]])`` places ``a`` on qubit 1 and"
+" ``b`` on qubits 0 and 2"
+msgstr ""
+"**Producte tensorial sobre qubits escollits** passant ``qubits``, p. ex. "
+"``tensor_prod([a, b], qubits=[[1], [0, 2]])`` col·loca ``a`` al qubit 1 "
+"i ``b`` als qubits 0 i 2"
+
+#: ../../modules/core/core_qtensor.rst:210
 msgid "**Expectation value** with :func:`~qilisdk.core.qtensor.expect_val`"
 msgstr "**Valor esperat** amb :func:`~qilisdk.core.qtensor.expect_val`"
 
-#: ../../modules/core/core_qtensor.rst:240
+#: ../../modules/core/core_qtensor.rst:242
 msgid "Visualization of Quantum States"
 msgstr "Visualització d'estats quàntics"
 
-#: ../../modules/core/core_qtensor.rst:242
+#: ../../modules/core/core_qtensor.rst:244
 msgid ""
 "You can also visualize single-qubit states on the Bloch sphere using "
 ":meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
@@ -400,7 +420,17 @@ msgstr ""
 "També podeu visualitzar estats d'un sol qubit a l'esfera de Bloch "
 "mitjançant :meth:`.draw()<qilisdk.core.qtensor.QTensor.draw>`:"
 
-#: ../../modules/core/core_qtensor.rst:251
+#: ../../modules/core/core_qtensor.rst:253
+msgid ""
+"Single-qubit density matrices can be drawn as well, so one qubit of a "
+"larger state can be visualized by first reducing it with "
+":meth:`~qilisdk.core.qtensor.QTensor.partial_trace`:"
+msgstr ""
+"També es poden dibuixar matrius de densitat d'un sol qubit, de manera que"
+" un qubit d'un estat més gran es pot visualitzar reduint-lo primer amb "
+":meth:`~qilisdk.core.qtensor.QTensor.partial_trace`:"
+
+#: ../../modules/core/core_qtensor.rst:264
 msgid ""
 "The appearance of this plot can be customized using a "
 ":class:`~qilisdk.utils.visualization.style.QTensorStyle` object, which "

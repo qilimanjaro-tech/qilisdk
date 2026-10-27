@@ -443,7 +443,7 @@ class MatplotlibDatasetRenderer:
             )
             if leg:
                 for text in leg.get_texts():
-                    text.set_color(text_color)
+                    text.set_color(theme.on_surface)
 
         if style.tight_layout:
             plt.tight_layout()
