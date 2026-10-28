@@ -172,6 +172,48 @@ py::object construct_result_object(const MPSState& state, const py::object& read
     return ReadoutCompositeResults.attr("from_list")(results);
 }
 
+py::object construct_result_object(const BPState& state, const py::object& readout, int n_qubits) {
+    /*
+    Construct a result object for a given BPState and readout. Expectation values are the belief propagation
+    estimates, and exact state tomography contracts the whole network. Sampling is not supported.
+
+    Args:
+        state (BPState&): The BPState for which to construct the result.
+        readout (py::object): A list with readout information.
+        n_qubits (int): The number of qubits in the circuit.
+
+    Returns:
+        py::object: The result object for the given state and readout.
+
+    Raises:
+        py::value_error: If an unsupported readout method is provided.
+    */
+    py::list results;
+    for (py::handle ro_handle : readout) {
+        py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
+        if (py::isinstance(ro, ExpectationReadout)) {
+            std::vector<MatrixFreeHamiltonian> observables = parse_observables_matrix_free(n_qubits, ro.attr("observables"));
+            py::list expectations_py;
+            for (const auto& obs : observables) {
+                expectations_py.append(py::cast(std::complex<double>(state.expectation_value(obs), 0.0)));
+            }
+            results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py));
+        } else if (py::isinstance(ro, StateTomographyReadout)) {
+            std::string method = ro.attr("method").cast<std::string>();
+            if (method != "exact") {
+                throw py::value_error("State Tomography methods that are not exact are not supported yet.");
+            }
+            DenseMatrix final_state_dense = state.as_dense();
+            py::array final_state_numpy = to_numpy(final_state_dense);
+            results.append(StateTomographyReadoutResult("state"_a = QTensor(final_state_numpy)));
+        } else {
+            std::string ro_repr = py::repr(ro).cast<std::string>();
+            throw py::value_error("Unsupported Readout Method for BP backend: " + ro_repr);
+        }
+    }
+    return ReadoutCompositeResults.attr("from_list")(results);
+}
+
 namespace {
 
 inline void validate_qubit_index(int qubit, int nqubits, const char* context) {
@@ -1234,6 +1276,47 @@ MPSState parse_initial_state_mps(const py::object& initial_state, int nqubits) {
     throw py::value_error("InitialState." + name + " is not supported by the MPS backend.");  // GCOV_EXCL_LINE (ZERO, ONE and UNIFORM are every InitialState)
 }
 
+BPState parse_initial_state_bp(const py::object& initial_state, int nqubits) {
+    /*
+    Extract the initial state as a BPState from an InitialState object. Only product states are supported, since
+    the network starts with no bonds and the circuit adds them.
+
+    Args:
+        initial_state (py::object): The initial state as an InitialState object or None.
+        nqubits (int): The number of qubits.
+
+    Returns:
+        BPState: The initial state as a BPState.
+
+    Raises:
+        py::value_error: If the initial state is not an InitialState or None, or is an InitialState the BP backend does not know.
+    */
+    if (initial_state.is_none()) {
+        return BPState(nqubits);
+    }
+    if (!py::isinstance(initial_state, InitialState)) {
+        throw py::value_error("Initial state type not recognized for the BP backend. Only InitialState or None are supported.");
+    }
+    std::string name = initial_state.attr("name").cast<std::string>();
+    if (name == "ONE") {
+        return BPState(nqubits, std::string(static_cast<size_t>(nqubits), '1'));
+    }
+    if (name == "UNIFORM") {
+        BPState state(nqubits);
+        DenseMatrix hadamard(2, 2);
+        hadamard << 1.0, 1.0, 1.0, -1.0;
+        hadamard /= std::sqrt(2.0);
+        for (int q = 0; q < nqubits; ++q) {
+            state.apply_one_site(hadamard, q);
+        }
+        return state;
+    }
+    if (name == "ZERO") {
+        return BPState(nqubits);
+    }
+    throw py::value_error("InitialState." + name + " is not supported by the BP backend.");  // GCOV_EXCL_LINE (ZERO, ONE and UNIFORM are every InitialState)
+}
+
 std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::object& noise_model) {
     /*
     Extract gates from a circuit object.
@@ -1497,6 +1580,18 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     }
     if (solver_params.contains("mps_truncation_cutoff")) {
         config.set_mps_truncation_cutoff(solver_params["mps_truncation_cutoff"].cast<double>());
+    }
+    if (solver_params.contains("bp_max_bond_dimension")) {
+        config.set_bp_max_bond_dimension(solver_params["bp_max_bond_dimension"].cast<int>());
+    }
+    if (solver_params.contains("bp_truncation_cutoff")) {
+        config.set_bp_truncation_cutoff(solver_params["bp_truncation_cutoff"].cast<double>());
+    }
+    if (solver_params.contains("bp_max_iterations")) {
+        config.set_bp_max_iterations(solver_params["bp_max_iterations"].cast<int>());
+    }
+    if (solver_params.contains("bp_tolerance")) {
+        config.set_bp_tolerance(solver_params["bp_tolerance"].cast<double>());
     }
     if (config.get_num_threads() <= 0) {
         config.set_num_threads(1);

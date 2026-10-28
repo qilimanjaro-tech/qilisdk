@@ -18,6 +18,7 @@
 #include "../config/qilisim_config.h"
 #include "../digital/gate.h"
 #include "../noise/noise_model.h"
+#include "../representations/bp.h"
 #include "../representations/exponential_ansatz.h"
 #include "../representations/matrix_free_hamiltonian.h"
 #include "../representations/mps.h"
@@ -29,6 +30,7 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
 py::object construct_result_object(const ExponentialAnsatz& state, const py::object& readout, int n_qubits);
 py::object construct_result_object(const StabilizerStateSum& state, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure);
 py::object construct_result_object(const MPSState& state, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure);
+py::object construct_result_object(const BPState& state, const py::object& readout, int n_qubits);
 QILISIM_EXPORT std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(int nqubits, const py::object& Hs);
 std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol, int nqubits);
 NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, double atol, const py::object& circuit = py::none(), const std::vector<double>* step_list = nullptr);
@@ -40,6 +42,7 @@ SparseMatrix parse_initial_state(const py::object& initial_state, double atol, i
 DenseMatrix parse_initial_state_as_dense(const py::object& initial_state, int n_qubits, const QiliSimConfig& config);
 StabilizerStateSum parse_initial_state_stabilizer(const py::object& initial_state, int nqubits);
 MPSState parse_initial_state_mps(const py::object& initial_state, int nqubits);
+BPState parse_initial_state_bp(const py::object& initial_state, int nqubits);
 std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::object& noise_model);
 int gate_num_controls(const std::string& name);
 std::string normalize_gate_name(const std::string& name);

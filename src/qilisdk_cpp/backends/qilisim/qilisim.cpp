@@ -27,6 +27,7 @@
 #include "qilisim.h"
 #include "representations/exponential_ansatz.h"
 #include "representations/matrix_free_hamiltonian.h"
+#include "representations/bp.h"
 #include "representations/mps.h"
 #include "utils/matrix_utils.h"
 #include "utils/parsers.h"
@@ -141,6 +142,17 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
 
         // Construct the final result object
         result = construct_result_object(state_mps, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
+
+    } else if (config.get_digital_method() == "bp") {
+        // Parse the initial state as a tensor network with no bonds yet
+        BPState initial_state_bp = parse_initial_state_bp(initial_state, n_qubits);
+        BPState state_bp = initial_state_bp;
+
+        // Run the simulation
+        sampling_bp(gates, n_qubits, initial_state_bp, noise_model_cpp, state_bp, intermediate_results, config, readout);
+
+        // Construct the final result object
+        result = construct_result_object(state_bp, readout, n_qubits);
 
     } else {
         DenseMatrix state_dense = parse_initial_state_as_dense(initial_state, n_qubits, config);

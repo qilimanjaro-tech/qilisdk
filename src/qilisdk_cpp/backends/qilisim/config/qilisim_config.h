@@ -46,6 +46,10 @@ class QiliSimConfig {
     int stabilizer_max_states = 100;
     int mps_max_bond_dimension = 64;
     double mps_truncation_cutoff = 1e-7;
+    int bp_max_bond_dimension = 16;
+    double bp_truncation_cutoff = 1e-10;
+    int bp_max_iterations = 50;
+    double bp_tolerance = 1e-8;
 
     // Counter of many times we've advanced the seed
     mutable uint64_t seed_stream = 0;
@@ -55,6 +59,10 @@ class QiliSimConfig {
     int get_stabilizer_max_states() const { return stabilizer_max_states; }
     int get_mps_max_bond_dimension() const { return mps_max_bond_dimension; }
     double get_mps_truncation_cutoff() const { return mps_truncation_cutoff; }
+    int get_bp_max_bond_dimension() const { return bp_max_bond_dimension; }
+    double get_bp_truncation_cutoff() const { return bp_truncation_cutoff; }
+    int get_bp_max_iterations() const { return bp_max_iterations; }
+    double get_bp_tolerance() const { return bp_tolerance; }
     bool get_monte_carlo() const { return monte_carlo; }
     int get_num_monte_carlo_trajectories() const { return num_monte_carlo_trajectories; }
     int get_arnoldi_dim() const { return arnoldi_dim; }
@@ -108,6 +116,10 @@ class QiliSimConfig {
     void set_stabilizer_max_states(int value) { stabilizer_max_states = value; }
     void set_mps_max_bond_dimension(int value) { mps_max_bond_dimension = value; }
     void set_mps_truncation_cutoff(double value) { mps_truncation_cutoff = value; }
+    void set_bp_max_bond_dimension(int value) { bp_max_bond_dimension = value; }
+    void set_bp_truncation_cutoff(double value) { bp_truncation_cutoff = value; }
+    void set_bp_max_iterations(int value) { bp_max_iterations = value; }
+    void set_bp_tolerance(double value) { bp_tolerance = value; }
 
     // Initialize with default values
     QiliSimConfig() = default;

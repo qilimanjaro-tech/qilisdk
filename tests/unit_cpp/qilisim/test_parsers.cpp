@@ -2522,6 +2522,126 @@ TEST(ConstructResultsMPS, UnsupportedReadoutThrows) {
     EXPECT_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); }, py::value_error);
 }
 
+TEST(ParseSolverParams, BPSettingsApplied) {
+    py::gil_scoped_acquire gil;
+    py::dict params;
+    params["bp_max_bond_dimension"] = py::int_(6);
+    params["bp_truncation_cutoff"] = py::float_(1e-5);
+    params["bp_max_iterations"] = py::int_(9);
+    params["bp_tolerance"] = py::float_(1e-4);
+    QiliSimConfig config;
+    EXPECT_NO_THROW(config = parse_solver_params(params));
+    EXPECT_EQ(config.get_bp_max_bond_dimension(), 6);
+    EXPECT_DOUBLE_EQ(config.get_bp_truncation_cutoff(), 1e-5);
+    EXPECT_EQ(config.get_bp_max_iterations(), 9);
+    EXPECT_DOUBLE_EQ(config.get_bp_tolerance(), 1e-4);
+}
+
+TEST(ParseInitialStateBP, NoneAndZeroReturnTheZeroState) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.core.qtensor import InitialState
+        _bp_is_zero = InitialState.ZERO
+    )");
+    for (const py::object& initial : {py::object(py::none()), py::object(py::globals()["_bp_is_zero"])}) {
+        BPState state = parse_initial_state_bp(initial, 2);
+        EXPECT_EQ(state.get_nqubits(), 2);
+        EXPECT_NEAR(std::abs(state.as_dense()(0, 0) - Complex(1.0, 0.0)), 0.0, 1e-12);
+    }
+}
+
+TEST(ParseInitialStateBP, UniformAppliesHadamards) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.core.qtensor import InitialState
+        _bp_is_uniform = InitialState.UNIFORM
+    )");
+    BPState state = parse_initial_state_bp(py::globals()["_bp_is_uniform"], 2);
+    DenseMatrix dense = state.as_dense();
+    for (int index = 0; index < 4; ++index) {
+        EXPECT_NEAR(std::abs(dense(index, 0) - Complex(0.5, 0.0)), 0.0, 1e-12);
+    }
+    EXPECT_EQ(state.get_num_edges(), 0);
+}
+
+TEST(ParseInitialStateBP, OneReturnsAllOnes) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.core.qtensor import InitialState
+        _bp_is_one = InitialState.ONE
+    )");
+    BPState state = parse_initial_state_bp(py::globals()["_bp_is_one"], 2);
+    EXPECT_NEAR(std::abs(state.as_dense()(3, 0) - Complex(1.0, 0.0)), 0.0, 1e-12);
+}
+
+TEST(ParseInitialStateBP, UnrecognizedTypeThrows) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        _bp_is_bad = 123
+    )");
+    py::object obj = py::globals()["_bp_is_bad"];
+    EXPECT_THROW(parse_initial_state_bp(obj, 1), py::value_error);
+}
+
+TEST(ConstructResultsBP, ExpectationReadout_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ExpectationReadout
+        from qilisdk.analog.hamiltonian import X, Z
+        _bp_ro_exp = [ExpectationReadout(observables=[X(0), Z(1), X(0) * Z(1)])]
+    )");
+    // |+1> has <X(0)> = 1 and <Z(1)> = -1
+    BPState state(2, "01");
+    DenseMatrix hadamard(2, 2);
+    hadamard << 1.0, 1.0, 1.0, -1.0;
+    state.apply_one_site(hadamard / std::sqrt(2.0), 0);
+    py::list readout = py::globals()["_bp_ro_exp"].cast<py::list>();
+    py::list values = construct_result_object(state, readout, 2).attr("expectation_values").attr("expectation_values");
+    ASSERT_EQ(py::len(values), 3u);
+    EXPECT_NEAR(std::abs(values[0].cast<Complex>() - Complex(1.0, 0.0)), 0.0, 1e-12);
+    EXPECT_NEAR(std::abs(values[1].cast<Complex>() - Complex(-1.0, 0.0)), 0.0, 1e-12);
+    EXPECT_NEAR(std::abs(values[2].cast<Complex>() - Complex(-1.0, 0.0)), 0.0, 1e-12);
+}
+
+TEST(ConstructResultsBP, StateTomographyReadoutExact_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import StateTomographyReadout
+        _bp_ro_tomo = [StateTomographyReadout()]
+    )");
+    BPState state(1, "1");
+    py::list readout = py::globals()["_bp_ro_tomo"].cast<py::list>();
+    py::object tomography = construct_result_object(state, readout, 1).attr("state_tomography").attr("state");
+    EXPECT_EQ(tomography.attr("nqubits").cast<int>(), 1);
+    EXPECT_NEAR(std::abs(tomography.attr("__getitem__")(py::make_tuple(0, 0)).cast<Complex>()), 0.0, 1e-12);
+    EXPECT_NEAR(std::abs(tomography.attr("__getitem__")(py::make_tuple(1, 0)).cast<Complex>() - Complex(1.0, 0.0)), 0.0, 1e-12);
+}
+
+TEST(ConstructResultsBP, StateTomographyReadoutNonExact_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import StateTomographyReadout
+        _bp_ro_tomo_bad = [StateTomographyReadout(method="mle")]
+    )");
+    BPState state(1);
+    py::list readout = py::globals()["_bp_ro_tomo_bad"].cast<py::list>();
+    EXPECT_THROW({ auto result = construct_result_object(state, readout, 1); }, py::value_error);
+}
+
+TEST(ConstructResultsBP, SamplingAndUnknownReadoutsThrow) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ReadoutMethod, SamplingReadout
+        _bp_ro_samp = [SamplingReadout(nshots=10)]
+        _bp_ro_bad = [ReadoutMethod()]
+    )");
+    BPState state(1);
+    for (const char* name : {"_bp_ro_samp", "_bp_ro_bad"}) {
+        py::list readout = py::globals()[name].cast<py::list>();
+        EXPECT_THROW({ auto result = construct_result_object(state, readout, 1); }, py::value_error) << name;
+    }
+}
+
 TEST(GateNameParser, GatesControlCounts) {
     EXPECT_EQ(gate_num_controls("H"), 0);
     EXPECT_EQ(gate_num_controls("X"), 0);

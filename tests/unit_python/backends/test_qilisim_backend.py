@@ -221,6 +221,71 @@ def test_mps_method_executes_a_circuit():
     assert sum(samples.values()) == 200
 
 
+def test_bp_method_creates_okay():
+    method = DigitalMethod.bp(max_bond_dimension=8, truncation_cutoff=1e-9, max_iterations=7, tolerance=1e-6)
+    assert method.digital_method == "bp"
+    assert method.bp_max_bond_dimension == 8
+    assert np.isclose(method.bp_truncation_cutoff, 1e-9)
+    assert method.bp_max_iterations == 7
+    assert np.isclose(method.bp_tolerance, 1e-6)
+
+    # The settings reach the backend configuration the C++ layer reads
+    config = QiliSim(digital_simulation_method=method).get_config()
+    assert config["digital_method"] == "bp"
+    assert config["bp_max_bond_dimension"] == 8
+    assert np.isclose(config["bp_truncation_cutoff"], 1e-9)
+    assert config["bp_max_iterations"] == 7
+    assert np.isclose(config["bp_tolerance"], 1e-6)
+
+
+@pytest.mark.parametrize(
+    "settings",
+    [
+        {"bp_max_bond_dimension": 0},
+        {"bp_truncation_cutoff": -1e-3},
+        {"bp_truncation_cutoff": 1.0},
+        {"bp_truncation_cutoff": math.nan},
+        {"bp_max_iterations": 0},
+        {"bp_tolerance": 0.0},
+        {"bp_tolerance": -1e-3},
+        {"bp_tolerance": math.nan},
+    ],
+)
+def test_bp_method_rejects_invalid_settings(settings):
+    with pytest.raises(ValidationError):
+        DigitalMethod(**settings)
+
+
+def test_bp_method_circuit_optimization_flags():
+    default = DigitalMethod.bp()
+    assert default.combine_single_qubit_gates is True
+    assert default.fuse_gates is True
+
+    method = DigitalMethod.bp(combine_single_qubit_gates=False, fuse_gates=False)
+    config = QiliSim(digital_simulation_method=method).get_config()
+    assert config["combine_single_qubit_gates"] is False
+    assert config["fuse_gates"] is False
+
+
+def test_bp_method_executes_a_circuit():
+    """The "bp" digital method has its own dispatch arm in the C++ layer, so drive a circuit through it."""
+    circuit = Circuit(2)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    backend = QiliSim(
+        digital_simulation_method=DigitalMethod.bp(),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    result = backend.execute(
+        DigitalPropagation(circuit),
+        Readout().with_state_tomography().with_expectation(observables=[pauli_z(0) * pauli_z(1), pauli_x(0)]),
+    )
+    data = result.get_state().data
+    state = np.asarray(data.todense() if hasattr(data, "todense") else data).reshape(-1)
+    assert np.allclose(state, [1 / np.sqrt(2), 0, 0, 1 / np.sqrt(2)], atol=1e-12)
+    np.testing.assert_allclose(np.real(result.get_expectation_values()), [1.0, 0.0], atol=1e-12)
+
+
 def test_adaptive_creates_okay():
     method = AnalogMethod.adaptive_integrator(tol=1e-2)
     assert method.evolution_method == "integrate_rk45_matrix_free"
