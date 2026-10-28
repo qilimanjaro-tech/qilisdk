@@ -17,20 +17,11 @@ from __future__ import annotations
 import math
 import random
 from collections import deque
-from copy import deepcopy
-from typing import TYPE_CHECKING, Iterable, TypeGuard
+from typing import TYPE_CHECKING, Iterable
 
 from loguru import logger
 
-from qilisdk.digital import (
-    Adjoint,
-    Circuit,
-    Controlled,
-    Exponential,
-    Gate,
-    M,
-)
-from qilisdk.digital.gates import BasicGate
+from qilisdk.digital import Circuit
 from qilisdk.digital.topology import build_topology_graph
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
@@ -38,33 +29,7 @@ from .circuit_transpiler_pass import CircuitTranspilerPass
 if TYPE_CHECKING:
     from rustworkx import PyGraph
 
-    from qilisdk.digital.types import LayoutMap, Topology
-
-
-def _is_controlled_gate(gate: Gate) -> TypeGuard[Controlled[BasicGate]]:
-    """Return whether a gate is a controlled gate with a basic-gate payload.
-
-    Args:
-        gate (Gate): Candidate gate.
-
-    Returns:
-        TypeGuard[Controlled[BasicGate]]: ``True`` when ``gate`` is a ``Controlled`` gate whose payload type is ``BasicGate``.
-    """
-    return isinstance(gate, Controlled)
-
-
-def _is_adjoint_or_exponential(
-    gate: Gate,
-) -> TypeGuard[Adjoint[BasicGate] | Exponential[BasicGate]]:
-    """Return whether a gate is an adjoint or exponential wrapper.
-
-    Args:
-        gate (Gate): Candidate gate.
-
-    Returns:
-        TypeGuard[Adjoint[BasicGate] | Exponential[BasicGate]]: ``True`` when ``gate`` is either ``Adjoint`` or ``Exponential``.
-    """
-    return isinstance(gate, (Adjoint, Exponential))
+    from qilisdk.digital.types import Topology
 
 
 class SabreLayoutPass(CircuitTranspilerPass):
@@ -737,49 +702,3 @@ class SabreLayoutPass(CircuitTranspilerPass):
             mapped_qubits = tuple(layout[logical_qubit] for logical_qubit in gate.qubits)
             retargeted_circuit.add(self._retarget_gate(gate, mapped_qubits))
         return retargeted_circuit
-
-    def _retarget_gate(self, gate: Gate, mapped_qubits: tuple[int, ...]) -> Gate:
-        """
-        Recreate ``gate`` on ``mapped_qubits`` by deep-copying and remapping indices.
-
-        The method deep-copies the gate object to preserve concrete gate type and all parameters, then updates control and target qubit tuples recursively through wrapped gates.
-
-        Args:
-            gate (Gate): Original gate to retarget.
-            mapped_qubits (tuple[int, ...]): Physical qubits where the gate should act.
-
-        Returns:
-            Gate: Retargeted gate equivalent to ``gate`` but acting on ``mapped_qubits``.
-        """
-        retargeted = deepcopy(gate)
-        qubit_map: LayoutMap = dict(zip(gate.qubits, mapped_qubits, strict=True))
-        self._remap_gate_qubits_inplace(retargeted, qubit_map)
-        return retargeted
-
-    @staticmethod
-    def _remap_gate_qubits_inplace(gate: Gate, qubit_map: LayoutMap) -> None:
-        """Recursively remap control/target qubits of a copied gate.
-
-        Args:
-            gate (Gate): Gate object to modify in place.
-            qubit_map (LayoutMap): Logical-to-physical mapping for qubits touched by ``gate``.
-
-        Raises:
-            NotImplementedError: If the gate type does not provide known internal storage for control or target qubits.
-        """
-        if isinstance(gate, (BasicGate, M)):
-            gate._target_qubits = tuple(qubit_map[logical_qubit] for logical_qubit in gate.target_qubits)  # ruff: ignore[private-member-access]
-            return
-
-        if _is_controlled_gate(gate):
-            gate._control_qubits = tuple(qubit_map[control_qubit] for control_qubit in gate.control_qubits)  # ruff: ignore[private-member-access]
-            SabreLayoutPass._remap_gate_qubits_inplace(gate.basic_gate, qubit_map)
-            return
-
-        if _is_adjoint_or_exponential(gate):
-            SabreLayoutPass._remap_gate_qubits_inplace(gate.basic_gate, qubit_map)
-            return
-
-        raise NotImplementedError(
-            f"Retargeting not implemented for gate type {type(gate).__name__} with arity {gate.nqubits}"
-        )
