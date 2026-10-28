@@ -81,7 +81,7 @@ class QutipBackend(Backend):
     notebooks.
     """
 
-    def __init__(self, nsteps: int = 10_000, noise_model: NoiseModel | None = None) -> None:
+    def __init__(self, nsteps: int = 10_000, noise_model: NoiseModel | None = None, seed: int | None = None) -> None:
         """Instantiate a new :class:`QutipBackend`.
 
         Args:
@@ -92,11 +92,13 @@ class QutipBackend(Backend):
                 converted into QuTiP collapse operators (including
                 time-dependent rates ``rate(t)``). Digital-circuit noise is not
                 supported and is ignored with a warning.
+            seed (int | None): Seed for the random number generator used to draw
+                samples from the simulated state. Defaults to ``None``.
         """
         self.noise_model = noise_model
         self.nsteps = nsteps
 
-        super().__init__()
+        super().__init__(noise_model=noise_model, seed=seed)
         self._basic_gate_handlers: BasicGateHandlersMapping = {
             I: QutipBackend._handle_I,
             X: QutipBackend._handle_X,
@@ -183,11 +185,13 @@ class QutipBackend(Backend):
         if len(measurements) > 0 and len(measurements) != functional.circuit.nqubits:
             return FunctionalResult(
                 readout_results=QutipBackend._construct_results_list(
-                    final_state=final_state, readout=readout, qubits_to_measure=measurements
+                    final_state=final_state, readout=readout, seed=self._rng, qubits_to_measure=measurements
                 )
             )
         return FunctionalResult(
-            readout_results=QutipBackend._construct_results_list(final_state=final_state, readout=readout)
+            readout_results=QutipBackend._construct_results_list(
+                final_state=final_state, readout=readout, seed=self._rng
+            )
         )
 
     def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
@@ -279,11 +283,13 @@ class QutipBackend(Backend):
         logger.info("[QutipBackend] TimeEvolution finished")
         return FunctionalResult(
             readout_results=QutipBackend._construct_results_list(
-                final_state=QTensor(results.final_state.full()), readout=readout
+                final_state=QTensor(results.final_state.full()), readout=readout, seed=self._rng
             ),
             intermediate_results=(
                 [
-                    QutipBackend._construct_results_list(final_state=QTensor(state.full()), readout=readout)
+                    QutipBackend._construct_results_list(
+                        final_state=QTensor(state.full()), readout=readout, seed=self._rng
+                    )
                     for state in results.states
                 ]
                 if functional.store_intermediate_results

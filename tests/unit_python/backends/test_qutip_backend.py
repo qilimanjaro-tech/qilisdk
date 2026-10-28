@@ -274,6 +274,19 @@ def test_measurement_gates():
     assert all(len(key) == 2 for key in result.get_samples())
 
 
+def test_seed_makes_sampling_reproducible():
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    circuit.add(H(1))
+    readout = Readout().with_sampling(nshots=200)
+    first = [QutipBackend(seed=7).execute(DigitalPropagation(circuit), readout).get_samples() for _ in range(2)]
+    backend = QutipBackend(seed=7)
+    second = [backend.execute(DigitalPropagation(circuit), readout).get_samples() for _ in range(2)]
+    assert first[0] == first[1]
+    assert second[0] == first[0]
+    assert second[1] != second[0]
+
+
 def test_measurement_gates_mid_circuit():
     backend = QutipBackend()
     circuit = Circuit(nqubits=2)
