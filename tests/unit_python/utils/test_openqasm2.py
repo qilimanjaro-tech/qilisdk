@@ -713,11 +713,13 @@ def test_qasm2_round_trip_preserves_an_adjoint_matrix(gate):
     [
         Adjoint(Controlled(0, basic_gate=H(1))),
         Controlled(0, basic_gate=Adjoint(S(1))),
+        Controlled(0, 1, basic_gate=Z(2)),
+        Controlled(0, basic_gate=RX(1, theta=0.5)),
         Exponential(X(0)),
     ],
 )
 def test_to_qasm2_raises_on_gates_it_cannot_name(gate):
-    circuit = Circuit(2)
+    circuit = Circuit(3)
     circuit.add(gate)
     with pytest.raises(UnsupportedGateError, match="Cannot express"):
         to_qasm2(circuit)

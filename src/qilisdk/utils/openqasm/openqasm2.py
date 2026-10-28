@@ -82,8 +82,8 @@ _REVERSE_QASM2_ADJOINT_MAP: dict[str, type[BasicGate]] = {name: gate for gate, n
 # The Toffoli gate is the only gate acting on more than two qubits that is supported.
 _QASM2_TOFFOLI_NQUBITS = 3
 
-# A valid OpenQASM 2.0 gate name, which every gate name is checked against before being written out.
-_QASM2_GATE_NAME = re.compile(r"[a-z]\w*", re.ASCII)
+# The controlled gates that qelib1.inc names, keyed by the gate they control and their number of control qubits.
+_QASM2_CONTROLLED_MAP: dict[tuple[type[BasicGate], int], str] = {(X, 1): "cx", (Z, 1): "cz", (X, 2): "ccx"}
 
 _ALLOWED_QASM2_FUNCTIONS = {
     "sin": math.sin,
@@ -251,8 +251,10 @@ def _qasm2_name_and_parameters(gate: Gate) -> tuple[str, list[float]]:
             return "u3", [-math.pi / 2, -gamma, -phi]
         raise UnsupportedGateError(f"Cannot express the adjoint of the {inner.name} gate in OpenQASM 2.0.")
 
-    name = OPENQASM2_MAP.get(type(gate), gate.name.lower())
-    if _QASM2_GATE_NAME.fullmatch(name) is None:
+    name = OPENQASM2_MAP.get(type(gate))
+    if name is None and isinstance(gate, Controlled):
+        name = _QASM2_CONTROLLED_MAP.get((type(gate.basic_gate), len(gate.control_qubits)))
+    if name is None:
         raise UnsupportedGateError(f"Cannot express the {gate.name} gate in OpenQASM 2.0.")
     return name, gate.get_parameter_values() if gate.is_parameterized else []
 
