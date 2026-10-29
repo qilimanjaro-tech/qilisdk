@@ -19,6 +19,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "../../../libs/pybind.h"
 #include "bp.h"
 
 // GCOV_EXCL_BR_START
@@ -293,7 +294,7 @@ int BPState::leg_of(int v, int e) const {
 int BPState::run_belief_propagation() {
     /*
     Iterate the message updates in parallel until the largest change falls below the tolerance, or the
-    iteration cap is reached. The current messages are the starting point, and each sweep only updates the
+    iteration cap is reached, then refresh the square roots of the messages that changed. The current messages are the starting point, and each sweep only updates the
     messages sent by qubits that changed: those touched by a gate since the last run, and then those whose
     incoming messages moved by more than the tolerance in the previous sweep. A run after a layer of gates
     therefore costs about as much as the qubits in the layer, and usually converges in a handful of sweeps.
@@ -305,17 +306,25 @@ int BPState::run_belief_propagation() {
 
     Returns:
         int: The number of sweeps taken.
+
+    Raises:
+        py::error_already_set: If a Python signal handler raised between sweeps, e.g. KeyboardInterrupt.
     */
     int num_messages = 2 * get_num_edges();
     if (num_messages == 0) {
+        touched.assign(nqubits, false);
         return 0;
     }
     std::vector<DenseMatrix> next(num_messages);
     std::vector<bool> changed = touched;
+    std::vector<bool> updated(num_messages, false);
     int iteration = 0;
     bool converged = false;
     while (iteration < max_iterations && !converged) {
         ++iteration;
+
+        // Let Ctrl-C interrupt a long run between sweeps
+        check_signals();
 
         // Only the messages sent by qubits that changed can change
         std::vector<int> pending;
@@ -375,6 +384,13 @@ int BPState::run_belief_propagation() {
                 changed[index % 2 == 0 ? edge.second : edge.first] = true;
             }
             messages[index / 2][index % 2] = next[index];
+            updated[index] = true;
+        }
+    }
+#pragma omp parallel for schedule(dynamic)
+    for (int index = 0; index < num_messages; ++index) {
+        if (updated[index]) {
+            hermitian_roots(messages[index / 2][index % 2], message_roots[index / 2][index % 2], message_inverse_roots[index / 2][index % 2]);
         }
     }
     touched.assign(nqubits, false);
@@ -384,7 +400,7 @@ int BPState::run_belief_propagation() {
     return iteration;
 }
 
-Tensor BPState::gauge_and_reduce(int v, int e, Tensor& isometry, std::vector<DenseMatrix>& inverse_roots) const {
+Tensor BPState::gauge_and_reduce(int v, int e, Tensor& isometry) const {
     /*
     Prepare one side of a two-qubit gate on edge e. Every other bond of qubit v is gauged with the square root
     of its incoming message, so that under belief propagation the rest of the network acts as the identity there,
@@ -395,7 +411,6 @@ Tensor BPState::gauge_and_reduce(int v, int e, Tensor& isometry, std::vector<Den
         v (int): The qubit.
         e (int): The edge the gate acts across.
         isometry (Tensor&): Output, Q with legs (other bonds..., new bond).
-        inverse_roots (std::vector<DenseMatrix>&): Output, the inverse message roots for each other bond, to undo the gauge.
 
     Returns:
         Tensor: R, with legs (new bond, physical, bond e).
@@ -403,17 +418,12 @@ Tensor BPState::gauge_and_reduce(int v, int e, Tensor& isometry, std::vector<Den
     Tensor ket = sites[v];
     std::vector<int> perm;
     std::vector<int> other_shape;
-    inverse_roots.clear();
     for (int f : incident_edges[v]) {
         if (f == e) {
             continue;
         }
-        DenseMatrix root;
-        DenseMatrix inverse_root;
-        hermitian_roots(message_into(v, f), root, inverse_root);
         int leg = leg_of(v, f);
-        ket = apply_on_leg(ket, leg, root);
-        inverse_roots.push_back(inverse_root);
+        ket = apply_on_leg(ket, leg, root_into(v, f));
         perm.push_back(leg);
         other_shape.push_back(ket.extent(leg));
     }
@@ -441,7 +451,7 @@ Tensor BPState::gauge_and_reduce(int v, int e, Tensor& isometry, std::vector<Den
     return Tensor::from_matrix(r_factor, {static_cast<int>(cols), 2, bond});
 }
 
-Tensor BPState::restore_site(int v, int e, const Tensor& isometry, const Tensor& reduced, const std::vector<DenseMatrix>& inverse_roots) const {
+Tensor BPState::restore_site(int v, int e, const Tensor& isometry, const Tensor& reduced) const {
     /*
     Undo gauge_and_reduce once the gate has been applied to R: multiply Q back in, remove the gauge from every
     other bond, and return the legs to their usual order.
@@ -451,20 +461,21 @@ Tensor BPState::restore_site(int v, int e, const Tensor& isometry, const Tensor&
         e (int): The edge the gate acted across.
         isometry (Tensor&): Q from gauge_and_reduce.
         reduced (Tensor&): The updated R, with legs (Q bond, physical, bond e).
-        inverse_roots (std::vector<DenseMatrix>&): The inverse message roots from gauge_and_reduce.
 
     Returns:
         Tensor: The new site tensor, with legs (physical, incident bonds...).
     */
     int num_other = isometry.rank() - 1;
     Tensor site = isometry.contract(reduced, {num_other}, {0});
-    for (int j = 0; j < num_other; ++j) {
-        site = apply_on_leg(site, j, inverse_roots[j]);
-    }
     std::vector<int> perm = {num_other};
     int other = 0;
     for (int f : incident_edges[v]) {
-        perm.push_back(f == e ? num_other + 1 : other++);
+        if (f == e) {
+            perm.push_back(num_other + 1);
+        } else {
+            site = apply_on_leg(site, other, inverse_root_into(v, f));
+            perm.push_back(other++);
+        }
     }
     return site.permute(perm);
 }
@@ -546,6 +557,8 @@ Real BPState::apply_two_site(const DenseMatrix& u, int q0, int q1) {
             incident_edges[q].push_back(e);
         }
         messages.push_back({DenseMatrix::Ones(1, 1), DenseMatrix::Ones(1, 1)});
+        message_roots.push_back(messages.back());
+        message_inverse_roots.push_back(messages.back());
     }
 
     // A gate on a qubit already changed in this layer starts a new layer, which needs fresh messages
@@ -558,10 +571,8 @@ Real BPState::apply_two_site(const DenseMatrix& u, int q0, int q1) {
     // Reduce both sides to small blocks and join them across the edge, giving legs (r0, p0, r1, p1)
     Tensor isometry0;
     Tensor isometry1;
-    std::vector<DenseMatrix> inverse_roots0;
-    std::vector<DenseMatrix> inverse_roots1;
-    Tensor reduced0 = gauge_and_reduce(q0, e, isometry0, inverse_roots0);
-    Tensor reduced1 = gauge_and_reduce(q1, e, isometry1, inverse_roots1);
+    Tensor reduced0 = gauge_and_reduce(q0, e, isometry0);
+    Tensor reduced1 = gauge_and_reduce(q1, e, isometry1);
     Tensor theta = reduced0.contract(reduced1, {2}, {2});
 
     // Put (p1, p0) first so the fused row index is 2 p0 + p1, matching the gate, then put the legs back as (r0, p0, p1, r1)
@@ -590,15 +601,18 @@ Real BPState::apply_two_site(const DenseMatrix& u, int q0, int q1) {
         right_matrix.row(b) *= root;
     }
 
-    sites[q0] = restore_site(q0, e, isometry0, left, inverse_roots0);
-    sites[q1] = restore_site(q1, e, isometry1, right.permute({2, 1, 0}), inverse_roots1);
+    sites[q0] = restore_site(q0, e, isometry0, left);
+    sites[q1] = restore_site(q1, e, isometry1, right.permute({2, 1, 0}));
 
-    // In the gauged frame each side is an isometry times the root of the singular values, so both messages across e are diag(S)
-    DenseMatrix diagonal = (singular_values / singular_values.sum()).cast<Complex>().asDiagonal();
+    // In the gauged frame each side is an isometry times the root of the singular values, so both messages across e are diag(S), or uniform if the state vanished
+    Real total = singular_values.sum();
+    DenseMatrix diagonal = total > Real(0) ? DenseMatrix((singular_values / total).cast<Complex>().asDiagonal()) : DenseMatrix(DenseMatrix::Identity(bond, bond) / static_cast<Real>(bond));
     messages[e] = {diagonal, diagonal};
+    hermitian_roots(diagonal, message_roots[e][0], message_inverse_roots[e][0]);
+    message_roots[e][1] = message_roots[e][0];
+    message_inverse_roots[e][1] = message_inverse_roots[e][0];
 
     total_truncation_error += error;
-    fidelity *= (Real(1) - error);
     return error;
 }
 
@@ -626,49 +640,47 @@ Real BPState::apply_gate(const Gate& gate) {
     return apply_two_site(gate.get_local_matrix(), std::min(qubits[0], qubits[1]), std::max(qubits[0], qubits[1]));
 }
 
-Tensor BPState::double_layer(int v, const DenseMatrix& op, const std::vector<bool>& in_cluster, std::vector<int>& labels) const {
+void BPState::double_layer(int v, const DenseMatrix* op, const std::vector<bool>& in_cluster, Tensor& with_operator, Tensor& without_operator, std::vector<int>& labels) const {
     /*
-    The tensor of <psi|op|psi> at qubit v, with every bond leaving the cluster closed by its incoming message,
-    and the bra and ket copies of every bond inside the cluster fused into one leg labeled by the edge.
+    The tensors of <psi|op|psi> and <psi|psi> at qubit v, with every bond leaving the cluster closed by its incoming
+    message, and the bra and ket copies of every bond inside the cluster fused into one leg labeled by the edge.
 
     Args:
         v (int): The qubit.
-        op (DenseMatrix&): The 2 x 2 operator to insert on the ket layer.
+        op (DenseMatrix*): The 2 x 2 operator to insert on the ket layer, or nullptr for the identity.
         in_cluster (std::vector<bool>&): Which qubits belong to the cluster.
-        labels (std::vector<int>&): Output, the edge carried by each leg of the result.
-
-    Returns:
-        Tensor: The double-layer tensor.
+        with_operator (Tensor&): Output, the double-layer tensor with the operator inserted.
+        without_operator (Tensor&): Output, the double-layer tensor without it.
+        labels (std::vector<int>&): Output, the edge carried by each leg of the results.
     */
     Tensor ket = sites[v];
     std::vector<int> closed = {0};
-    std::vector<int> open;
     labels.clear();
     for (int f : incident_edges[v]) {
         int neighbour = edges[f].first == v ? edges[f].second : edges[f].first;
         int leg = leg_of(v, f);
         if (in_cluster[neighbour]) {
-            open.push_back(leg);
             labels.push_back(f);
         } else {
-            DenseMatrix root;
-            DenseMatrix inverse_root;
-            hermitian_roots(message_into(v, f), root, inverse_root);
-            ket = apply_on_leg(ket, leg, root);
+            ket = apply_on_leg(ket, leg, root_into(v, f));
             closed.push_back(leg);
         }
     }
-    Tensor operated = ket;
-    Eigen::Map<DenseMatrix> physical = operated.matrix_view(1);
-    DenseMatrix updated = op * physical;
-    physical = updated;
-    Tensor layered = ket.conjugate().contract(operated, closed, closed);
-    int num_open = static_cast<int>(open.size());
+    int num_open = static_cast<int>(labels.size());
     std::vector<std::vector<int>> groups;
     for (int i = 0; i < num_open; ++i) {
         groups.push_back({i, num_open + i});
     }
-    return layered.fuse(groups);
+    Tensor bra = ket.conjugate();
+    without_operator = bra.contract(ket, closed, closed).fuse(groups);
+    if (op == nullptr) {
+        with_operator = without_operator;
+        return;
+    }
+    Eigen::Map<DenseMatrix> physical = ket.matrix_view(1);
+    DenseMatrix updated = *op * physical;
+    physical = updated;
+    with_operator = bra.contract(ket, closed, closed).fuse(groups);
 }
 
 Complex BPState::expectation_value(const PauliString& pauli) const {
@@ -684,8 +696,12 @@ Complex BPState::expectation_value(const PauliString& pauli) const {
         Complex: The estimate.
 
     Raises:
+        std::logic_error: If a gate changed the state since belief propagation last ran, so the messages are stale.
         std::runtime_error: If the cluster has zero norm.
     */
+    if (std::find(touched.begin(), touched.end(), true) != touched.end()) {
+        throw std::logic_error("The belief propagation messages are out of date, call run_belief_propagation before taking an expectation value");
+    }
     std::vector<int> support;
     for (int q = 0; q < nqubits; ++q) {
         if (pauli.x_mask[q] || pauli.z_mask[q]) {
@@ -732,15 +748,13 @@ Complex BPState::expectation_value(const PauliString& pauli) const {
     }
 
     // Contract the cluster once with the operators and once without
-    const DenseMatrix& identity = pauli_matrix(false, false);
-    std::vector<Tensor> with_operator;
-    std::vector<Tensor> without_operator;
-    std::vector<std::vector<int>> labels;
-    for (int q : cluster) {
-        std::vector<int> site_labels;
-        with_operator.push_back(double_layer(q, pauli_matrix(pauli.x_mask[q], pauli.z_mask[q]), in_cluster, site_labels));
-        without_operator.push_back(double_layer(q, identity, in_cluster, site_labels));
-        labels.push_back(site_labels);
+    std::vector<Tensor> with_operator(cluster.size());
+    std::vector<Tensor> without_operator(cluster.size());
+    std::vector<std::vector<int>> labels(cluster.size());
+    for (size_t i = 0; i < cluster.size(); ++i) {
+        int q = cluster[i];
+        bool acts = pauli.x_mask[q] || pauli.z_mask[q];
+        double_layer(q, acts ? &pauli_matrix(pauli.x_mask[q], pauli.z_mask[q]) : nullptr, in_cluster, with_operator[i], without_operator[i], labels[i]);
     }
     std::vector<int> result_labels;
     Complex numerator = contract_network(with_operator, labels, result_labels).raw()[0];

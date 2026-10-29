@@ -1384,6 +1384,24 @@ TEST_F(SamplingTest, BP_NonConvergenceWarns) {
     EXPECT_FALSE(final_state.get_bp_converged());
 }
 
+// An unsupported readout is rejected before any gate is applied, here before the three-qubit gate BP cannot take.
+TEST_F(SamplingTest, BP_UnsupportedReadoutThrowsBeforeSimulating) {
+    int n = 3;
+    std::vector<Gate> gates = {Gate("X", pauliX2(), {0, 1}, {2}, {})};
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout, StateTomographyReadout
+        _bp_early_samp = [SamplingReadout(nshots=10)]
+        _bp_early_tomo = [StateTomographyReadout(method="mle")]
+    )");
+    for (const char* name : {"_bp_early_samp", "_bp_early_tomo"}) {
+        BPState initial(n);
+        BPState final_state(n);
+        std::vector<py::object> intermediate_results;
+        py::list early_readout = py::globals()[name].cast<py::list>();
+        EXPECT_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, early_readout), py::value_error) << name;
+    }
+}
+
 // The circuit and the state must agree on how many qubits there are.
 TEST_F(SamplingTest, BP_QubitCountMismatchThrows) {
     std::vector<Gate> gates = {makeX(0)};

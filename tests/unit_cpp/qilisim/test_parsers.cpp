@@ -2391,7 +2391,7 @@ TEST(ParseSolverParams, MPSSettingsApplied) {
 
 TEST(ParseInitialStateMPS, NoneReturnsZeroState) {
     py::gil_scoped_acquire gil;
-    auto state = parse_initial_state_mps(py::none(), 2);
+    auto state = parse_initial_state_product<MPSState>(py::none(), 2, "MPS");
     EXPECT_EQ(state.get_nqubits(), 2);
     EXPECT_NEAR(std::abs(state.amplitude("00") - Complex(1.0, 0.0)), 0.0, 1e-12);
 }
@@ -2403,7 +2403,7 @@ TEST(ParseInitialStateMPS, UniformAppliesHadamards) {
         _mps_is_uniform = InitialState.UNIFORM
     )");
     py::object is_obj = py::globals()["_mps_is_uniform"];
-    auto state = parse_initial_state_mps(is_obj, 2);
+    auto state = parse_initial_state_product<MPSState>(is_obj, 2, "MPS");
     // Every amplitude of |++> is 1/2, and the state stays at bond dimension one
     EXPECT_NEAR(std::abs(state.amplitude("01") - Complex(0.5, 0.0)), 0.0, 1e-12);
     EXPECT_EQ(state.get_max_bond_dimension_used(), 1);
@@ -2416,7 +2416,7 @@ TEST(ParseInitialStateMPS, OneReturnsAllOnes) {
         _mps_is_one = InitialState.ONE
     )");
     py::object is_obj = py::globals()["_mps_is_one"];
-    auto state = parse_initial_state_mps(is_obj, 2);
+    auto state = parse_initial_state_product<MPSState>(is_obj, 2, "MPS");
     EXPECT_NEAR(std::abs(state.amplitude("11") - Complex(1.0, 0.0)), 0.0, 1e-12);
 }
 
@@ -2427,7 +2427,7 @@ TEST(ParseInitialStateMPS, ZeroReturnsAllZeros) {
         _mps_is_zero = InitialState.ZERO
     )");
     py::object is_obj = py::globals()["_mps_is_zero"];
-    auto state = parse_initial_state_mps(is_obj, 3);
+    auto state = parse_initial_state_product<MPSState>(is_obj, 3, "MPS");
     EXPECT_NEAR(std::abs(state.amplitude("000") - Complex(1.0, 0.0)), 0.0, 1e-12);
 }
 
@@ -2437,7 +2437,7 @@ TEST(ParseInitialStateMPS, UnrecognizedTypeThrows) {
         _mps_is_bad = 123
     )");
     py::object obj = py::globals()["_mps_is_bad"];
-    EXPECT_THROW(parse_initial_state_mps(obj, 1), py::value_error);
+    EXPECT_THROW(parse_initial_state_product<MPSState>(obj, 1, "MPS"), py::value_error);
 }
 
 TEST(ConstructResultsMPS, SamplingReadout_Succeeds) {
@@ -2544,7 +2544,7 @@ TEST(ParseInitialStateBP, NoneAndZeroReturnTheZeroState) {
         _bp_is_zero = InitialState.ZERO
     )");
     for (const py::object& initial : {py::object(py::none()), py::object(py::globals()["_bp_is_zero"])}) {
-        BPState state = parse_initial_state_bp(initial, 2);
+        BPState state = parse_initial_state_product<BPState>(initial, 2, "BP");
         EXPECT_EQ(state.get_nqubits(), 2);
         EXPECT_NEAR(std::abs(state.as_dense()(0, 0) - Complex(1.0, 0.0)), 0.0, 1e-12);
     }
@@ -2556,7 +2556,7 @@ TEST(ParseInitialStateBP, UniformAppliesHadamards) {
         from qilisdk.core.qtensor import InitialState
         _bp_is_uniform = InitialState.UNIFORM
     )");
-    BPState state = parse_initial_state_bp(py::globals()["_bp_is_uniform"], 2);
+    BPState state = parse_initial_state_product<BPState>(py::globals()["_bp_is_uniform"], 2, "BP");
     DenseMatrix dense = state.as_dense();
     for (int index = 0; index < 4; ++index) {
         EXPECT_NEAR(std::abs(dense(index, 0) - Complex(0.5, 0.0)), 0.0, 1e-12);
@@ -2570,7 +2570,7 @@ TEST(ParseInitialStateBP, OneReturnsAllOnes) {
         from qilisdk.core.qtensor import InitialState
         _bp_is_one = InitialState.ONE
     )");
-    BPState state = parse_initial_state_bp(py::globals()["_bp_is_one"], 2);
+    BPState state = parse_initial_state_product<BPState>(py::globals()["_bp_is_one"], 2, "BP");
     EXPECT_NEAR(std::abs(state.as_dense()(3, 0) - Complex(1.0, 0.0)), 0.0, 1e-12);
 }
 
@@ -2580,7 +2580,7 @@ TEST(ParseInitialStateBP, UnrecognizedTypeThrows) {
         _bp_is_bad = 123
     )");
     py::object obj = py::globals()["_bp_is_bad"];
-    EXPECT_THROW(parse_initial_state_bp(obj, 1), py::value_error);
+    EXPECT_THROW(parse_initial_state_product<BPState>(obj, 1, "BP"), py::value_error);
 }
 
 TEST(ConstructResultsBP, ExpectationReadout_Succeeds) {
@@ -2596,7 +2596,7 @@ TEST(ConstructResultsBP, ExpectationReadout_Succeeds) {
     hadamard << 1.0, 1.0, 1.0, -1.0;
     state.apply_one_site(hadamard / std::sqrt(2.0), 0);
     py::list readout = py::globals()["_bp_ro_exp"].cast<py::list>();
-    py::list values = construct_result_object(state, readout, 2).attr("expectation_values").attr("expectation_values");
+    py::list values = construct_result_object(state, readout, 2, QiliSimConfig()).attr("expectation_values").attr("expectation_values");
     ASSERT_EQ(py::len(values), 3u);
     EXPECT_NEAR(std::abs(values[0].cast<Complex>() - Complex(1.0, 0.0)), 0.0, 1e-12);
     EXPECT_NEAR(std::abs(values[1].cast<Complex>() - Complex(-1.0, 0.0)), 0.0, 1e-12);
@@ -2611,7 +2611,7 @@ TEST(ConstructResultsBP, StateTomographyReadoutExact_Succeeds) {
     )");
     BPState state(1, "1");
     py::list readout = py::globals()["_bp_ro_tomo"].cast<py::list>();
-    py::object tomography = construct_result_object(state, readout, 1).attr("state_tomography").attr("state");
+    py::object tomography = construct_result_object(state, readout, 1, QiliSimConfig()).attr("state_tomography").attr("state");
     EXPECT_EQ(tomography.attr("nqubits").cast<int>(), 1);
     EXPECT_NEAR(std::abs(tomography.attr("__getitem__")(py::make_tuple(0, 0)).cast<Complex>()), 0.0, 1e-12);
     EXPECT_NEAR(std::abs(tomography.attr("__getitem__")(py::make_tuple(1, 0)).cast<Complex>() - Complex(1.0, 0.0)), 0.0, 1e-12);
@@ -2625,7 +2625,7 @@ TEST(ConstructResultsBP, StateTomographyReadoutNonExact_Throws) {
     )");
     BPState state(1);
     py::list readout = py::globals()["_bp_ro_tomo_bad"].cast<py::list>();
-    EXPECT_THROW({ auto result = construct_result_object(state, readout, 1); }, py::value_error);
+    EXPECT_THROW({ auto result = construct_result_object(state, readout, 1, QiliSimConfig()); }, py::value_error);
 }
 
 TEST(ConstructResultsBP, SamplingAndUnknownReadoutsThrow) {
@@ -2638,8 +2638,57 @@ TEST(ConstructResultsBP, SamplingAndUnknownReadoutsThrow) {
     BPState state(1);
     for (const char* name : {"_bp_ro_samp", "_bp_ro_bad"}) {
         py::list readout = py::globals()[name].cast<py::list>();
-        EXPECT_THROW({ auto result = construct_result_object(state, readout, 1); }, py::value_error) << name;
+        EXPECT_THROW({ auto result = construct_result_object(state, readout, 1, QiliSimConfig()); }, py::value_error) << name;
     }
+}
+
+TEST(ConstructResultsBP, ExpectationReadoutWithShotsIsSampled) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ExpectationReadout
+        from qilisdk.analog.hamiltonian import X, Z
+        _bp_ro_exp_shots = [ExpectationReadout(observables=[X(0), Z(0)], nshots=7)]
+    )");
+    // |0> has <X(0)> = 0, so seven shots give a quantised estimate rather than the exact zero, while <Z(0)> = 1 stays exact
+    BPState state(1);
+    py::list readout = py::globals()["_bp_ro_exp_shots"].cast<py::list>();
+    QiliSimConfig config;
+    py::object result = construct_result_object(state, readout, 1, config);
+    EXPECT_EQ(result.attr("expectation_values").attr("_nshots").cast<int>(), 7);
+    py::list values = result.attr("expectation_values").attr("expectation_values");
+    ASSERT_EQ(py::len(values), 2u);
+    double x_value = values[0].cast<Complex>().real();
+    EXPECT_NE(x_value, 0.0);
+    EXPECT_NEAR(7.0 * (x_value + 1.0) / 2.0, std::round(7.0 * (x_value + 1.0) / 2.0), 1e-9);
+    EXPECT_NEAR(values[1].cast<Complex>().real(), 1.0, 1e-12);
+
+    // The same seed gives the same shots
+    QiliSimConfig seeded;
+    seeded.set_seed(11);
+    QiliSimConfig reseeded;
+    reseeded.set_seed(11);
+    py::list first = construct_result_object(state, readout, 1, seeded).attr("expectation_values").attr("expectation_values");
+    py::list second = construct_result_object(state, readout, 1, reseeded).attr("expectation_values").attr("expectation_values");
+    EXPECT_EQ(first[0].cast<Complex>(), second[0].cast<Complex>());
+}
+
+TEST(ConstructResultsMPS, ExpectationReadoutWithShotsIsSampled) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ExpectationReadout
+        from qilisdk.analog.hamiltonian import X
+        _mps_ro_exp_shots = [ExpectationReadout(observables=[X(0)], nshots=7)]
+    )");
+    MPSState state(1);
+    py::list readout = py::globals()["_mps_ro_exp_shots"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    py::object result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure);
+    EXPECT_EQ(result.attr("expectation_values").attr("_nshots").cast<int>(), 7);
+    double x_value = result.attr("expectation_values").attr("expectation_values").cast<py::list>()[0].cast<Complex>().real();
+    EXPECT_NE(x_value, 0.0);
+    EXPECT_NEAR(7.0 * (x_value + 1.0) / 2.0, std::round(7.0 * (x_value + 1.0) / 2.0), 1e-9);
 }
 
 TEST(GateNameParser, GatesControlCounts) {

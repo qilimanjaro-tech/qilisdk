@@ -436,6 +436,7 @@ class DigitalMethod(BaseSimulatorConfig):
     mps_max_bond_dimension: int = Field(
         default=64,
         gt=0,
+        le=INT32_MAX,
         description="Largest bond dimension kept when using the MPS digital simulation method. Larger values are more accurate but cost memory and runtime.",
     )
     mps_truncation_cutoff: float = Field(
@@ -447,6 +448,7 @@ class DigitalMethod(BaseSimulatorConfig):
     bp_max_bond_dimension: int = Field(
         default=16,
         gt=0,
+        le=INT32_MAX,
         description="Largest bond dimension kept on each edge when using the BP digital simulation method.",
     )
     bp_truncation_cutoff: float = Field(

@@ -30,7 +30,8 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
 py::object construct_result_object(const ExponentialAnsatz& state, const py::object& readout, int n_qubits);
 py::object construct_result_object(const StabilizerStateSum& state, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure);
 py::object construct_result_object(const MPSState& state, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure);
-py::object construct_result_object(const BPState& state, const py::object& readout, int n_qubits);
+py::object construct_result_object(const BPState& state, const py::object& readout, int n_qubits, const QiliSimConfig& config);
+void validate_readout(const py::object& readout, bool supports_sampling, const std::string& backend);
 QILISIM_EXPORT std::vector<MatrixFreeHamiltonian> parse_hamiltonians_matrix_free(int nqubits, const py::object& Hs);
 std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol, int nqubits);
 NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, double atol, const py::object& circuit = py::none(), const std::vector<double>* step_list = nullptr);
@@ -41,8 +42,8 @@ std::vector<double> parse_time_steps(const py::object& steps);
 SparseMatrix parse_initial_state(const py::object& initial_state, double atol, int nqubits);
 DenseMatrix parse_initial_state_as_dense(const py::object& initial_state, int n_qubits, const QiliSimConfig& config);
 StabilizerStateSum parse_initial_state_stabilizer(const py::object& initial_state, int nqubits);
-MPSState parse_initial_state_mps(const py::object& initial_state, int nqubits);
-BPState parse_initial_state_bp(const py::object& initial_state, int nqubits);
+template <typename State>
+State parse_initial_state_product(const py::object& initial_state, int nqubits, const std::string& backend);
 std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::object& noise_model);
 int gate_num_controls(const std::string& name);
 std::string normalize_gate_name(const std::string& name);

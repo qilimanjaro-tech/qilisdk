@@ -40,6 +40,10 @@ class BPState {
     // Messages of the norm network <psi|psi>, indexed (edge, direction) with direction 0 running from edges[e].first to edges[e].second
     std::vector<std::array<DenseMatrix, 2>> messages;
 
+    // The square root of each message and its pseudo-inverse, kept in step with the messages so gauging never redoes the eigendecomposition
+    std::vector<std::array<DenseMatrix, 2>> message_roots;
+    std::vector<std::array<DenseMatrix, 2>> message_inverse_roots;
+
     // Qubits changed since the last belief propagation run, so a gate on one of them starts a new layer
     std::vector<bool> touched;
 
@@ -48,7 +52,6 @@ class BPState {
     int max_iterations = 50;
     Real tolerance = 1e-8;
     Real total_truncation_error = 0.0;
-    Real fidelity = 1.0;
     int bp_runs = 0;
     int bp_iterations = 0;
     bool bp_converged = true;
@@ -56,9 +59,11 @@ class BPState {
     int leg_of(int v, int e) const;
     int message_index_from(int v, int e) const { return edges[e].first == v ? 0 : 1; }
     const DenseMatrix& message_into(int v, int e) const { return messages[e][1 - message_index_from(v, e)]; }
-    Tensor gauge_and_reduce(int v, int e, Tensor& isometry, std::vector<DenseMatrix>& inverse_roots) const;
-    Tensor restore_site(int v, int e, const Tensor& isometry, const Tensor& reduced, const std::vector<DenseMatrix>& inverse_roots) const;
-    Tensor double_layer(int v, const DenseMatrix& op, const std::vector<bool>& in_cluster, std::vector<int>& labels) const;
+    const DenseMatrix& root_into(int v, int e) const { return message_roots[e][1 - message_index_from(v, e)]; }
+    const DenseMatrix& inverse_root_into(int v, int e) const { return message_inverse_roots[e][1 - message_index_from(v, e)]; }
+    Tensor gauge_and_reduce(int v, int e, Tensor& isometry) const;
+    Tensor restore_site(int v, int e, const Tensor& isometry, const Tensor& reduced) const;
+    void double_layer(int v, const DenseMatrix* op, const std::vector<bool>& in_cluster, Tensor& with_operator, Tensor& without_operator, std::vector<int>& labels) const;
 
    public:
     // Safeguard to make sure we don't accidentally try to materialize a huge network
@@ -81,7 +86,6 @@ class BPState {
     const Tensor& get_site_tensor(int q) const { return sites[q]; }
     int get_max_bond_dimension_used() const;
     Real get_truncation_error() const { return total_truncation_error; }
-    Real get_fidelity() const { return fidelity; }
     int get_bp_runs() const { return bp_runs; }
     int get_bp_iterations() const { return bp_iterations; }
     bool get_bp_converged() const { return bp_converged; }

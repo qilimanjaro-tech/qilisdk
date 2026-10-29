@@ -1913,6 +1913,38 @@ def test_bp_rejects_sampling_readout():
         backend.execute(propagation, readout)
 
 
+def test_bp_rejects_an_unsupported_readout_before_simulating():
+    """The readout is checked up front, so the gate BP cannot apply is never reached."""
+    circuit = Circuit(nqubits=3)
+    circuit.add(Controlled(0, 1, basic_gate=X(2)))
+    backend = _bp_backend()
+    propagation = DigitalPropagation(circuit=circuit)
+    readout = Readout().with_sampling(nshots=10)
+    with pytest.raises(ValueError, match="BP backend"):
+        backend.execute(propagation, readout)
+
+
+@pytest.mark.parametrize("method", [DigitalMethod.mps(), DigitalMethod.bp()])
+def test_tensor_network_expectation_with_shots_is_sampled_and_seeded(method):
+    """A finite nshots draws shot noise around the exact value, reproducibly for a given seed. An odd nshots can never average <X> to its exact zero."""
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    readout = Readout().with_expectation(observables=[pauli_x(0), pauli_z(0) * pauli_z(1)], nshots=51)
+    propagation = DigitalPropagation(circuit=circuit)
+    results = [
+        QiliSim(digital_simulation_method=method, execution_config=ExecutionConfig(seed=seed, num_threads=1))
+        .execute(propagation, readout)
+        .get_expectation_values()
+        for seed in (3, 3, 4)
+    ]
+    assert results[0] == results[1]
+    assert results[0] != results[2]
+    assert results[0][0] != 0.0
+    assert round(51 * (results[0][0] + 1) / 2) == pytest.approx(51 * (results[0][0] + 1) / 2)
+    assert results[0][1] == pytest.approx(1.0)
+
+
 def test_bp_rejects_gates_on_more_than_two_qubits():
     circuit = Circuit(nqubits=3)
     circuit.add(Controlled(0, 1, basic_gate=X(2)))

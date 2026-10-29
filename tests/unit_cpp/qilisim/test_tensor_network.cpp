@@ -1110,7 +1110,6 @@ TEST(BPStateTest, ReproducesTheStatevectorOnATree) {
     BPState state = bp_state(gates, nqubits);
     EXPECT_EQ(state.get_num_edges(), 5);
     EXPECT_NEAR(state.get_truncation_error(), 0.0, 1e-12);
-    EXPECT_NEAR(state.get_fidelity(), 1.0, 1e-12);
     EXPECT_GT(state.get_max_bond_dimension_used(), 1);
     DenseMatrix exact = statevector(gates, nqubits);
     EXPECT_NEAR(std::abs((state.as_dense().adjoint() * exact)(0, 0)), 1.0, 1e-10);
@@ -1268,7 +1267,6 @@ TEST(BPStateTest, TruncationIsReportedAndBounded) {
     Real error = state.apply_two_site(cnot_matrix(), 0, 1);
     EXPECT_NEAR(error, 0.5, 1e-12);
     EXPECT_NEAR(state.get_truncation_error(), 0.5, 1e-12);
-    EXPECT_NEAR(state.get_fidelity(), 0.5, 1e-12);
     EXPECT_EQ(state.get_max_bond_dimension_used(), 1);
     EXPECT_NEAR(state.as_dense().norm(), 1.0, 1e-12);
 
@@ -1324,7 +1322,30 @@ TEST(BPStateTest, NonUnitaryGatesMatchTheNormalizedStatevector) {
 TEST(BPStateTest, ZeroStateHasNoExpectationValue) {
     BPState state(2);
     state.apply_one_site(DenseMatrix::Zero(2, 2), 1);
+    state.run_belief_propagation();
     EXPECT_THROW(state.expectation_value(pauli_string(2, {{1, 'Z'}})), std::runtime_error);
+
+    // A gate that zeroes the whole bond leaves uniform messages rather than NaN ones
+    BPState bond(2);
+    bond.apply_two_site(DenseMatrix::Zero(4, 4), 0, 1);
+    bond.run_belief_propagation();
+    EXPECT_FALSE(bond.get_site_tensor(0).has_nan());
+    EXPECT_THROW(bond.expectation_value(pauli_string(2, {{0, 'Z'}})), std::runtime_error);
+}
+
+TEST(BPStateTest, ExpectationValuesNeedFreshMessages) {
+    // After a two-qubit gate the messages around it are stale until belief propagation runs again
+    BPState state(3);
+    state.apply_two_site(cnot_matrix(), 0, 1);
+    EXPECT_THROW(state.expectation_value(pauli_string(3, {{0, 'Z'}})), std::logic_error);
+    state.run_belief_propagation();
+    EXPECT_NEAR(state.expectation_value(pauli_string(3, {{0, 'Z'}})).real(), 1.0, 1e-12);
+
+    // A unitary one-qubit gate leaves the messages valid, a non-unitary one does not
+    state.apply_one_site(hadamard(), 2);
+    EXPECT_NO_THROW(state.expectation_value(pauli_string(3, {{2, 'X'}})));
+    state.apply_one_site(DenseMatrix::Identity(2, 2) * 2.0, 2);
+    EXPECT_THROW(state.expectation_value(pauli_string(3, {{2, 'X'}})), std::logic_error);
 }
 
 TEST(BPStateTest, AsDenseRefusesHugeRegisters) {
