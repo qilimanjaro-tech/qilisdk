@@ -34,12 +34,13 @@ from qilisdk.analog.hamiltonian import Y as pauli_y
 from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends import QutipBackend
-from qilisdk.backends.backend_config import ExecutionConfig
+from qilisdk.backends.backend_config import DigitalMethod, ExecutionConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core.model import Constraint, Model, Objective
-from qilisdk.core.qtensor import InitialState, QTensor, ket, tensor_prod
+from qilisdk.core.qtensor import InitialState, QTensor, expect_val, ket, tensor_prod
 from qilisdk.core.variables import BinaryVariable
 from qilisdk.cost_functions.model_cost_function import ModelCostFunction
+from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz, TrotterizedSchedule
 from qilisdk.digital.gates import CNOT, Controlled
@@ -58,7 +59,11 @@ pytest.importorskip(
 
 from qilisdk.backends.cudaq_backend import CudaqBackend
 
-backends = [QutipBackend(), QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))]
+backends = [
+    QutipBackend(),
+    QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1)),
+    QiliSim(digital_simulation_method=DigitalMethod.mps(), execution_config=ExecutionConfig(seed=42, num_threads=1)),
+]
 if pytest.importorskip(
     "cudaq",
     reason="CUDA backend tests require the 'cuda' optional dependency",
@@ -66,6 +71,12 @@ if pytest.importorskip(
 ):
     backends.append(CudaqBackend())
 backends_no_cuda = [QutipBackend(), QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))]
+
+# The BP simulator cannot sample, so it only joins the tests that read out expectation values or the state
+expectation_backends = [
+    *backends,
+    QiliSim(digital_simulation_method=DigitalMethod.bp(), execution_config=ExecutionConfig(seed=42, num_threads=1)),
+]
 
 # Backends that support time-dependent (callable) Lindblad rates ``rate(t)`` for analog evolution.
 # The CUDA backend deliberately rejects callable rates, so it is excluded here.
@@ -149,6 +160,8 @@ def test_multi_controlled_execution(backend):
         pytest.skip(
             "Multi-controlled gates are not currently supported in statevector_matrix_free digital method of QiliSim."
         )
+    if type(backend) is QiliSim and backend.get_config()["digital_method"] == "mps":
+        pytest.skip("The MPS simulator only supports one- and two-qubit gates.")
     circuit = Circuit(nqubits=3)
     circuit.add(X(0))
     circuit.add(X(1))
@@ -543,6 +556,8 @@ def test_swap(backend):
 
 @pytest.mark.parametrize("backend", backends)
 def test_toffoli(backend):
+    if type(backend) is QiliSim and backend.get_config()["digital_method"] == "mps":
+        pytest.skip("The MPS simulator only supports one- and two-qubit gates.")
     circuit = Circuit(nqubits=3)
     circuit.add(X(0))
     circuit.add(X(1))
@@ -576,6 +591,55 @@ def test_circuit_initial_state(backend):
     samples = result.get_samples()
     assert "0" in samples
     assert samples["0"] == 100
+
+
+def _tree_circuit() -> Circuit:
+    # Entangles the qubits along the tree 0-1, 1-2, 1-3, on which every digital method is exact
+    circuit = Circuit(nqubits=4)
+    circuit.add(H(0))
+    circuit.add(RY(1, theta=0.7))
+    circuit.add(CNOT(control=0, target=1))
+    circuit.add(RZ(1, phi=0.4))
+    circuit.add(CNOT(control=1, target=2))
+    circuit.add(U3(3, theta=1.1, phi=0.2, gamma=0.5))
+    circuit.add(U3(3, theta=0.9, phi=0.3, gamma=0.1).controlled(1))
+    circuit.add(SWAP(1, 2))
+    circuit.add(RX(2, theta=0.3))
+    return circuit
+
+
+@pytest.mark.parametrize("backend", expectation_backends)
+def test_expectation_values_match_the_state(backend):
+    observables = [
+        pauli_z(0),
+        pauli_x(1) * pauli_x(2),
+        pauli_z(1) * pauli_y(3),
+        0.5 * pauli_z(0) * pauli_z(2) + pauli_x(3),
+    ]
+    reference = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1)).execute(
+        DigitalPropagation(_tree_circuit()), Readout().with_state_tomography()
+    )
+    expected = [expect_val(observable, reference.get_state()).real for observable in observables]
+
+    result = backend.execute(
+        DigitalPropagation(_tree_circuit()), Readout().with_expectation(observables).with_state_tomography()
+    )
+
+    np.testing.assert_allclose(np.real(result.get_expectation_values()), expected, atol=1e-6)
+    overlap = (reference.get_state().adjoint() @ result.get_state()).dense()[0, 0]
+    assert np.isclose(abs(overlap), 1.0, atol=1e-6)
+
+
+@pytest.mark.parametrize("backend", expectation_backends)
+def test_variational_program_minimizes_an_observable(backend):
+    circuit = Circuit(nqubits=2)
+    circuit.add(RY(0, theta=0.1))
+    circuit.add(CNOT(control=0, target=1))
+    output = backend.execute(
+        VariationalProgram(DigitalPropagation(circuit), SciPyOptimizer(), ObservableCostFunction(pauli_z(1))),
+        Readout().with_state_tomography(),
+    )
+    assert np.isclose(output.optimal_cost, -1.0, atol=1e-6)
 
 
 # ---------------------------------------------------------------------------
