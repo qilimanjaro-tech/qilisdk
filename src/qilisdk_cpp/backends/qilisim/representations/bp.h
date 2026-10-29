@@ -103,6 +103,7 @@ class BPState {
 
     // Outputs
     Complex expectation_value(const PauliString& pauli) const;
+    std::vector<Complex> expectation_values(const MatrixFreeHamiltonian& H) const;
     Real expectation_value(const MatrixFreeHamiltonian& H) const;
     DenseMatrix as_dense() const;
 };

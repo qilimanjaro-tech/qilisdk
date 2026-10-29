@@ -384,7 +384,7 @@ class DigitalMethod(BaseSimulatorConfig):
             arithmetic per fused block. Supersedes ``combine_single_qubit_gates``
             when enabled, and applies to the matrix-free statevector path
             (disabled automatically when a noise model is present) and to the
-            MPS path, where blocks span at most two qubits. Defaults to ``True``.
+            MPS and BP paths, where blocks span at most two qubits. Defaults to ``True``.
         max_fused_qubits (int): Maximum number of qubits a single fused block may
             span. Larger values fuse more aggressively but build larger dense
             matrices (``2**max_fused_qubits`` square). Defaults to ``4``.
@@ -415,7 +415,7 @@ class DigitalMethod(BaseSimulatorConfig):
     )
     fuse_gates: bool = Field(
         default=True,
-        description="Whether to fuse runs of adjacent gates on a small set of qubits into a single dense multi-qubit operation to reduce passes over the statevector. Applies to the matrix-free statevector and MPS paths.",
+        description="Whether to fuse runs of adjacent gates on a small set of qubits into a single dense multi-qubit operation to reduce passes over the statevector. Applies to the matrix-free statevector, MPS and BP paths.",
     )
     max_fused_qubits: int = Field(
         default=0,

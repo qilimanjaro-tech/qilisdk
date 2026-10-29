@@ -52,10 +52,15 @@ py::object expectation_readout_result(const State& state, const py::object& ro, 
         if (nshots > 0) {
             std::vector<std::pair<Complex, double>> terms;
             terms.reserve(obs.size());
-            for (const auto& [pauli, coefficient] : obs.get_operators()) {
-                if constexpr (std::is_same_v<State, BPState>) {
-                    terms.push_back({coefficient, state.expectation_value(pauli).real()});
-                } else {
+            if constexpr (std::is_same_v<State, BPState>) {
+                // Estimate every term at once, so terms on the same cluster share its norm
+                std::vector<Complex> values = state.expectation_values(obs);
+                size_t index = 0;
+                for (const auto& [pauli, coefficient] : obs.get_operators()) {
+                    terms.push_back({coefficient, values[index++].real()});
+                }
+            } else {
+                for (const auto& [pauli, coefficient] : obs.get_operators()) {
                     terms.push_back({coefficient, state.expectation_value(MatrixFreeHamiltonian(n_qubits, pauli))});
                 }
             }

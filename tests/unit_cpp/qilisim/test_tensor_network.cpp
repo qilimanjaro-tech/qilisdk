@@ -1168,6 +1168,14 @@ TEST(BPStateTest, ExpectationValuesAreExactOnATree) {
     }
     EXPECT_NEAR(std::abs(state.expectation_value(PauliString(nqubits)) - Complex(1.0, 0.0)), 0.0, 1e-14);
     EXPECT_THROW(state.expectation_value(MatrixFreeHamiltonian(nqubits + 1)), std::invalid_argument);
+
+    // The per-term estimates line up with the terms of the Hamiltonian
+    std::vector<Complex> values = state.expectation_values(h);
+    ASSERT_EQ(values.size(), h.get_operators().size());
+    size_t index = 0;
+    for (const auto& term : h.get_operators()) {
+        EXPECT_NEAR(std::abs(values[index++] - state.expectation_value(term.first)), 0.0, 1e-12) << term.first;
+    }
 }
 
 TEST(BPStateTest, ClusterPathsCanRunThroughLaterSupportQubits) {
@@ -1377,6 +1385,45 @@ TEST(BPStateTest, ContractionsRefuseHugeIntermediates) {
     MatrixFreeHamiltonian h(nqubits);
     h.add(1.0, pauli_string(nqubits, factors));
     EXPECT_THROW(state.expectation_value(h), std::runtime_error);
+}
+
+TEST(BPStateTest, ClusterDoubleLayersRefuseHugeHubs) {
+    // A hub with fourteen leaves inside the cluster has a double layer of 4^14 entries, refused before it is built
+    const int nqubits = 15;
+    BPState state(nqubits);
+    state.apply_one_site(random_unitary(2, 949), 0);
+    for (int leaf = 1; leaf < nqubits; ++leaf) {
+        state.apply_two_site(cnot_matrix(), 0, leaf);
+        state.apply_one_site(random_unitary(2, 950 + leaf), leaf);
+    }
+    state.run_belief_propagation();
+    std::map<int, char> factors;
+    for (int q = 0; q < nqubits; ++q) {
+        factors[q] = 'Z';
+    }
+    EXPECT_THROW(state.expectation_value(pauli_string(nqubits, factors)), std::runtime_error);
+}
+
+TEST(BPStateTest, ClustersMayPassThroughQubitsBeyondThePauliLimit) {
+    // The chain 0 - q - 1 joins the support of Z0 Z1 through a qubit no Pauli string can act on
+    const int far = MAX_QUBITS_PAULI + 10;
+    BPState state(far + 1);
+    state.apply_one_site(random_unitary(2, 960), 0);
+    state.apply_two_site(cnot_matrix(), 0, far);
+    state.apply_two_site(cnot_matrix(), 1, far);
+    state.run_belief_propagation();
+    PauliString pauli(MAX_QUBITS_PAULI);
+    pauli.z_mask[0] = true;
+    pauli.z_mask[1] = true;
+    BPState small(3);
+    small.apply_one_site(random_unitary(2, 960), 0);
+    small.apply_two_site(cnot_matrix(), 0, 2);
+    small.apply_two_site(cnot_matrix(), 1, 2);
+    small.run_belief_propagation();
+    PauliString small_pauli(3);
+    small_pauli.z_mask[0] = true;
+    small_pauli.z_mask[1] = true;
+    EXPECT_NEAR(std::abs(state.expectation_value(pauli) - small.expectation_value(small_pauli)), 0.0, 1e-12);
 }
 
 TEST(BPStateTest, AsDenseRefusesHugeRegisters) {

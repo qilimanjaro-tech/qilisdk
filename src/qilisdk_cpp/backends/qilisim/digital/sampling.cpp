@@ -611,7 +611,7 @@ static std::vector<Gate> prepare_tensor_network_gates(const std::vector<Gate>& g
 
     Raises:
         py::value_error: If the qubit counts differ, the noise model has Kraus or Lindblad terms, a readout is not
-            supported or too large to materialize, or a gate acts on more than two qubits.
+            supported or exceeds its qubit limit, or a gate acts on more than two qubits.
     */
 
     // Set the number of threads
@@ -628,6 +628,9 @@ static std::vector<Gate> prepare_tensor_network_gates(const std::vector<Gate>& g
     for (py::handle ro : readout) {
         if (py::isinstance(ro, StateTomographyReadout) && n_qubits > max_dense_qubits) {
             throw py::value_error("State tomography would materialize the statevector of " + std::to_string(n_qubits) + " qubits, but the " + backend + " simulator allows at most " + std::to_string(max_dense_qubits) + ".");
+        }
+        if (py::isinstance(ro, ExpectationReadout) && n_qubits > MAX_QUBITS_PAULI) {
+            throw py::value_error("Expectation values are limited to observables on at most " + std::to_string(MAX_QUBITS_PAULI) + " qubits, but the circuit has " + std::to_string(n_qubits) + ".");
         }
     }
 

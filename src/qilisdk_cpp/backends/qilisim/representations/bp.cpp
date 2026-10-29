@@ -100,13 +100,13 @@ void hermitian_roots(const DenseMatrix& m, DenseMatrix& root, DenseMatrix& inver
     inverse_root = vectors * inverse_roots.asDiagonal() * vectors.adjoint();
 }
 
-Tensor contract_network(std::vector<Tensor> tensors, std::vector<std::vector<int>> labels, std::vector<int>& result_labels) {
+Tensor contract_network(const std::vector<Tensor>& tensors, const std::vector<std::vector<int>>& labels, std::vector<int>& result_labels) {
     /*
     Contract a small labeled network, greedily absorbing whichever tensor shares the most labels with the result so far.
 
     Args:
-        tensors (std::vector<Tensor>): The tensors.
-        labels (std::vector<std::vector<int>>): The label of each leg of each tensor. A label shared by two legs is contracted.
+        tensors (std::vector<Tensor>&): The tensors.
+        labels (std::vector<std::vector<int>>&): The label of each leg of each tensor. A label shared by two legs is contracted.
         result_labels (std::vector<int>&): Output, the labels of the open legs of the result.
 
     Returns:
@@ -676,7 +676,7 @@ std::vector<int> BPState::cluster_of(const PauliString& pauli) const {
     */
     std::vector<int> cluster;
     std::vector<bool> in_cluster(nqubits, false);
-    for (int start = 0; start < nqubits; ++start) {
+    for (int start = 0; start < std::min(nqubits, MAX_QUBITS_PAULI); ++start) {
         if (!(pauli.x_mask[start] || pauli.z_mask[start]) || in_cluster[start]) {
             continue;
         }
@@ -725,7 +725,7 @@ std::vector<Complex> BPState::cluster_expectations(const std::vector<int>& clust
         std::vector<Complex>: The estimate for each Pauli string.
 
     Raises:
-        std::runtime_error: If the cluster has zero norm.
+        std::runtime_error: If the cluster has zero norm, or a tensor of it would have more than MAX_CONTRACTION_ENTRIES entries.
     */
     std::vector<bool> in_cluster(nqubits, false);
     for (int q : cluster) {
@@ -741,15 +741,20 @@ std::vector<Complex> BPState::cluster_expectations(const std::vector<int>& clust
     for (size_t i = 0; i < cluster.size(); ++i) {
         int v = cluster[i];
         kets[i] = sites[v];
+        int64_t double_layer_size = 1;
         for (int f : incident_edges[v]) {
             int neighbour = edges[f].first == v ? edges[f].second : edges[f].first;
             int leg = leg_of(v, f);
             if (in_cluster[neighbour]) {
                 labels[i].push_back(f);
+                double_layer_size *= int64_t(kets[i].extent(leg)) * kets[i].extent(leg);
             } else {
                 kets[i] = apply_on_leg(kets[i], leg, root_into(v, f));
                 closed[i].push_back(leg);
             }
+        }
+        if (double_layer_size > MAX_CONTRACTION_ENTRIES) {
+            throw std::runtime_error("The double layer of qubit " + std::to_string(v) + " in an expectation value cluster would have " + std::to_string(double_layer_size) + " entries, more than the limit of " + std::to_string(MAX_CONTRACTION_ENTRIES));
         }
         int num_open = static_cast<int>(labels[i].size());
         for (int leg = 0; leg < num_open; ++leg) {
@@ -770,7 +775,7 @@ std::vector<Complex> BPState::cluster_expectations(const std::vector<int>& clust
         std::vector<Tensor> operator_tensors = norm_tensors;
         for (size_t i = 0; i < cluster.size(); ++i) {
             int v = cluster[i];
-            if (!(pauli->x_mask[v] || pauli->z_mask[v])) {
+            if (v >= MAX_QUBITS_PAULI || !(pauli->x_mask[v] || pauli->z_mask[v])) {
                 continue;
             }
             Tensor ket = kets[i];
@@ -807,10 +812,69 @@ Complex BPState::expectation_value(const PauliString& pauli) const {
     return cluster_expectations(cluster_of(pauli), {&pauli})[0];
 }
 
+std::vector<Complex> BPState::expectation_values(const MatrixFreeHamiltonian& H) const {
+    /*
+    The belief propagation estimate of <psi|P|psi> / <psi|psi> for each Pauli string of H, without its coefficient.
+    The Pauli strings are grouped by the cluster they are estimated on, so each cluster's norm is contracted once,
+    and the clusters are handled in parallel.
+
+    Args:
+        H (MatrixFreeHamiltonian&): The Hamiltonian.
+
+    Returns:
+        std::vector<Complex>: The estimate for each Pauli string, in the order of H.get_operators().
+
+    Raises:
+        std::invalid_argument: If the Hamiltonian is on a different number of qubits.
+        std::logic_error: If a gate changed the state since belief propagation last ran, so the messages are stale.
+        std::runtime_error: If a cluster has zero norm.
+    */
+    if (H.get_nqubits() != nqubits) {
+        throw std::invalid_argument("Cannot take the expectation value of a " + std::to_string(H.get_nqubits()) + " qubit Hamiltonian on a " + std::to_string(nqubits) + " qubit tensor network");
+    }
+    check_messages_current();
+    std::vector<Complex> values(H.get_operators().size(), Complex(1.0, 0.0));
+    std::map<std::vector<int>, std::pair<std::vector<const PauliString*>, std::vector<size_t>>> by_cluster;
+    size_t index = 0;
+    for (const auto& [pauli, coefficient] : H.get_operators()) {
+        if (pauli.x_mask.any() || pauli.z_mask.any()) {
+            auto& group = by_cluster[cluster_of(pauli)];
+            group.first.push_back(&pauli);
+            group.second.push_back(index);
+        }
+        ++index;
+    }
+    std::vector<const decltype(by_cluster)::value_type*> groups;
+    for (const auto& entry : by_cluster) {
+        groups.push_back(&entry);
+    }
+
+    // An exception must not escape the parallel region, so the first one is kept and rethrown after it
+    std::exception_ptr error = nullptr;
+#pragma omp parallel for schedule(dynamic)
+    for (int g = 0; g < static_cast<int>(groups.size()); ++g) {
+        try {
+            const auto& [cluster, terms] = *groups[g];
+            std::vector<Complex> cluster_values = cluster_expectations(cluster, terms.first);
+            for (size_t t = 0; t < cluster_values.size(); ++t) {
+                values[terms.second[t]] = cluster_values[t];
+            }
+        } catch (...) {
+#pragma omp critical(bp_expectation_error)
+            if (!error) {
+                error = std::current_exception();
+            }
+        }
+    }
+    if (error) {
+        std::rethrow_exception(error);
+    }
+    return values;
+}
+
 Real BPState::expectation_value(const MatrixFreeHamiltonian& H) const {
     /*
-    The belief propagation estimate of <psi|H|psi> / <psi|psi>. The Pauli strings of H are grouped by the cluster
-    they are estimated on, so each cluster's norm is contracted once, and the clusters are handled in parallel.
+    The belief propagation estimate of <psi|H|psi> / <psi|psi>.
 
     Args:
         H (MatrixFreeHamiltonian&): The Hamiltonian.
@@ -823,45 +887,11 @@ Real BPState::expectation_value(const MatrixFreeHamiltonian& H) const {
         std::logic_error: If a gate changed the state since belief propagation last ran, so the messages are stale.
         std::runtime_error: If a cluster has zero norm.
     */
-    if (H.get_nqubits() != nqubits) {
-        throw std::invalid_argument("Cannot take the expectation value of a " + std::to_string(H.get_nqubits()) + " qubit Hamiltonian on a " + std::to_string(nqubits) + " qubit tensor network");
-    }
-    check_messages_current();
+    std::vector<Complex> values = expectation_values(H);
     Real total = 0.0;
-    std::map<std::vector<int>, std::pair<std::vector<const PauliString*>, std::vector<Complex>>> by_cluster;
+    size_t index = 0;
     for (const auto& [pauli, coefficient] : H.get_operators()) {
-        if (pauli.x_mask.none() && pauli.z_mask.none()) {
-            total += coefficient.real();
-        } else {
-            auto& group = by_cluster[cluster_of(pauli)];
-            group.first.push_back(&pauli);
-            group.second.push_back(coefficient);
-        }
-    }
-    std::vector<const decltype(by_cluster)::value_type*> groups;
-    for (const auto& entry : by_cluster) {
-        groups.push_back(&entry);
-    }
-
-    // An exception must not escape the parallel region, so the first one is kept and rethrown after it
-    std::exception_ptr error = nullptr;
-#pragma omp parallel for schedule(dynamic) reduction(+ : total)
-    for (int g = 0; g < static_cast<int>(groups.size()); ++g) {
-        try {
-            const auto& [cluster, terms] = *groups[g];
-            std::vector<Complex> values = cluster_expectations(cluster, terms.first);
-            for (size_t t = 0; t < values.size(); ++t) {
-                total += std::real(terms.second[t] * values[t]);
-            }
-        } catch (...) {
-#pragma omp critical(bp_expectation_error)
-            if (!error) {
-                error = std::current_exception();
-            }
-        }
-    }
-    if (error) {
-        std::rethrow_exception(error);
+        total += std::real(coefficient * values[index++]);
     }
     return total;
 }

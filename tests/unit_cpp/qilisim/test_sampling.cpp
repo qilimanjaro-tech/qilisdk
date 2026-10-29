@@ -1428,6 +1428,22 @@ TEST_F(SamplingTest, BP_LargeStateTomographyThrowsBeforeSimulating) {
     EXPECT_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, tomography_readout), py::value_error);
 }
 
+// Expectation values on more qubits than a Pauli string can hold are rejected before the simulation starts.
+TEST_F(SamplingTest, BP_LargeExpectationReadoutThrowsBeforeSimulating) {
+    int n = MAX_QUBITS_PAULI + 1;
+    py::exec(R"(
+        from qilisdk.analog import Z
+        from qilisdk.readout import ExpectationReadout
+        _bp_large_expectation = [ExpectationReadout(observables=[Z(0)])]
+    )");
+    std::vector<Gate> gates = {makeX(0)};
+    BPState initial(n);
+    BPState final_state(n);
+    std::vector<py::object> intermediate_results;
+    py::list expectation_readout = py::globals()["_bp_large_expectation"].cast<py::list>();
+    EXPECT_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, expectation_readout), py::value_error);
+}
+
 // Without sampling there is nothing for readout error to act on, so it is ignored with a warning.
 TEST_F(SamplingTest, BP_ReadoutErrorIgnoredWithWarning) {
     int n = 2;
