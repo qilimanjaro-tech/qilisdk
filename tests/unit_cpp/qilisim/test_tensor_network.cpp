@@ -1154,6 +1154,7 @@ TEST(BPStateTest, ExpectationValuesAreExactOnATree) {
     h.add(-1.25, pauli_string(nqubits, {{2, 'Y'}}));
     h.add(2.0, pauli_string(nqubits, {{5, 'Z'}}));
     h.add(0.75, pauli_string(nqubits, {{3, 'Z'}, {4, 'Z'}}));
+    h.add(0.6, pauli_string(nqubits, {{3, 'X'}, {4, 'Y'}}));
     h.add(-0.4, pauli_string(nqubits, {{0, 'X'}, {5, 'Y'}}));
     h.add(0.3, pauli_string(nqubits, {{2, 'Z'}, {4, 'X'}, {5, 'Z'}}));
     h.add(1.5, PauliString(nqubits));
@@ -1331,6 +1332,12 @@ TEST(BPStateTest, ZeroStateHasNoExpectationValue) {
     bond.run_belief_propagation();
     EXPECT_FALSE(bond.get_site_tensor(0).has_nan());
     EXPECT_THROW(bond.expectation_value(pauli_string(2, {{0, 'Z'}})), std::runtime_error);
+
+    // Through a Hamiltonian the error comes out of the parallel loop over clusters
+    MatrixFreeHamiltonian h(2);
+    h.add(1.0, pauli_string(2, {{0, 'Z'}}));
+    h.add(1.0, pauli_string(2, {{1, 'Z'}}));
+    EXPECT_THROW(state.expectation_value(h), std::runtime_error);
 }
 
 TEST(BPStateTest, ExpectationValuesNeedFreshMessages) {
@@ -1346,6 +1353,30 @@ TEST(BPStateTest, ExpectationValuesNeedFreshMessages) {
     EXPECT_NO_THROW(state.expectation_value(pauli_string(3, {{2, 'X'}})));
     state.apply_one_site(DenseMatrix::Identity(2, 2) * 2.0, 2);
     EXPECT_THROW(state.expectation_value(pauli_string(3, {{2, 'X'}})), std::logic_error);
+    MatrixFreeHamiltonian h(3);
+    h.add(1.0, pauli_string(3, {{2, 'X'}}));
+    EXPECT_THROW(state.expectation_value(h), std::logic_error);
+}
+
+TEST(BPStateTest, ContractionsRefuseHugeIntermediates) {
+    // Two hubs with seven leaves each: joining the hubs first leaves fourteen open double-layer bonds of dimension 4
+    const int nqubits = 16;
+    BPState state(nqubits);
+    state.apply_two_site(random_unitary(4, 900), 0, 1);
+    for (int leaf = 0; leaf < 7; ++leaf) {
+        state.apply_two_site(cnot_matrix(), 0, 2 + leaf);
+        state.apply_two_site(cnot_matrix(), 1, 9 + leaf);
+    }
+    state.run_belief_propagation();
+    ASSERT_EQ(state.get_max_bond_dimension_used(), 2);
+    std::map<int, char> factors;
+    for (int q = 0; q < nqubits; ++q) {
+        factors[q] = 'Z';
+    }
+    EXPECT_THROW(state.expectation_value(pauli_string(nqubits, factors)), std::runtime_error);
+    MatrixFreeHamiltonian h(nqubits);
+    h.add(1.0, pauli_string(nqubits, factors));
+    EXPECT_THROW(state.expectation_value(h), std::runtime_error);
 }
 
 TEST(BPStateTest, AsDenseRefusesHugeRegisters) {

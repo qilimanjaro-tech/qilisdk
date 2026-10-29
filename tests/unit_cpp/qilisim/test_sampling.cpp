@@ -1384,7 +1384,7 @@ TEST_F(SamplingTest, BP_NonConvergenceWarns) {
     EXPECT_FALSE(final_state.get_bp_converged());
 }
 
-// An unsupported readout is rejected before any gate is applied, here before the three-qubit gate BP cannot take.
+// An unsupported readout is rejected before any gate is applied.
 TEST_F(SamplingTest, BP_UnsupportedReadoutThrowsBeforeSimulating) {
     int n = 3;
     std::vector<Gate> gates = {Gate("X", pauliX2(), {0, 1}, {2}, {})};
@@ -1400,6 +1400,45 @@ TEST_F(SamplingTest, BP_UnsupportedReadoutThrowsBeforeSimulating) {
         py::list early_readout = py::globals()[name].cast<py::list>();
         EXPECT_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, early_readout), py::value_error) << name;
     }
+}
+
+// A gate on three qubits cannot be applied, so it is rejected before the simulation starts.
+TEST_F(SamplingTest, BP_ThreeQubitGateThrowsBeforeSimulating) {
+    int n = 3;
+    std::vector<Gate> gates = {makeH(0), Gate("X", pauliX2(), {0, 1}, {2}, {})};
+    BPState initial(n);
+    BPState final_state(n);
+    std::vector<py::object> intermediate_results;
+    EXPECT_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, readout), py::value_error);
+    EXPECT_EQ(final_state.get_num_edges(), 0);
+}
+
+// State tomography on more qubits than can be materialized is rejected before the simulation starts.
+TEST_F(SamplingTest, BP_LargeStateTomographyThrowsBeforeSimulating) {
+    int n = BPState::MAX_DENSE_QUBITS + 1;
+    py::exec(R"(
+        from qilisdk.readout import StateTomographyReadout
+        _bp_large_tomo = [StateTomographyReadout()]
+    )");
+    std::vector<Gate> gates = {makeX(0)};
+    BPState initial(n);
+    BPState final_state(n);
+    std::vector<py::object> intermediate_results;
+    py::list tomography_readout = py::globals()["_bp_large_tomo"].cast<py::list>();
+    EXPECT_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, tomography_readout), py::value_error);
+}
+
+// Without sampling there is nothing for readout error to act on, so it is ignored with a warning.
+TEST_F(SamplingTest, BP_ReadoutErrorIgnoredWithWarning) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0)};
+    NoiseModelCpp readout_noise;
+    readout_noise.add_readout_error_per_qubit(1, 0.1, 0.2);
+    BPState initial(n);
+    BPState final_state(n);
+    std::vector<py::object> intermediate_results;
+    EXPECT_NO_THROW(sampling_bp(gates, n, initial, readout_noise, final_state, intermediate_results, cfg, readout));
+    EXPECT_NEAR(std::abs(final_state.as_dense()(2, 0)), 1.0, 1e-12);
 }
 
 // The circuit and the state must agree on how many qubits there are.

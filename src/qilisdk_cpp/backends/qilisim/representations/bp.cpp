@@ -15,6 +15,8 @@
 #include <algorithm>
 #include <cmath>
 #include <deque>
+#include <exception>
+#include <map>
 #include <ostream>
 #include <stdexcept>
 #include <string>
@@ -109,6 +111,9 @@ Tensor contract_network(std::vector<Tensor> tensors, std::vector<std::vector<int
 
     Returns:
         Tensor: The contracted network.
+
+    Raises:
+        std::runtime_error: If a step would build a tensor with more than BPState::MAX_CONTRACTION_ENTRIES entries.
     */
     Tensor result = tensors[0];
     result_labels = labels[0];
@@ -136,6 +141,7 @@ Tensor contract_network(std::vector<Tensor> tensors, std::vector<std::vector<int
         std::vector<int> legs_result;
         std::vector<int> legs_best;
         std::vector<int> next_labels;
+        int64_t next_size = 1;
         for (int i = 0; i < static_cast<int>(result_labels.size()); ++i) {
             auto found = std::find(labels[best].begin(), labels[best].end(), result_labels[i]);
             if (found != labels[best].end()) {
@@ -143,12 +149,17 @@ Tensor contract_network(std::vector<Tensor> tensors, std::vector<std::vector<int
                 legs_best.push_back(static_cast<int>(found - labels[best].begin()));
             } else {
                 next_labels.push_back(result_labels[i]);
+                next_size *= result.extent(i);
             }
         }
         for (int i = 0; i < static_cast<int>(labels[best].size()); ++i) {
             if (std::find(legs_best.begin(), legs_best.end(), i) == legs_best.end()) {
                 next_labels.push_back(labels[best][i]);
+                next_size *= tensors[best].extent(i);
             }
+        }
+        if (next_size > BPState::MAX_CONTRACTION_ENTRIES) {
+            throw std::runtime_error("Contracting the tensor network would build a tensor with " + std::to_string(next_size) + " entries, more than the limit of " + std::to_string(BPState::MAX_CONTRACTION_ENTRIES));
         }
         result = result.contract(tensors[best], legs_result, legs_best);
         result_labels = next_labels;
@@ -640,83 +651,33 @@ Real BPState::apply_gate(const Gate& gate) {
     return apply_two_site(gate.get_local_matrix(), std::min(qubits[0], qubits[1]), std::max(qubits[0], qubits[1]));
 }
 
-void BPState::double_layer(int v, const DenseMatrix* op, const std::vector<bool>& in_cluster, Tensor& with_operator, Tensor& without_operator, std::vector<int>& labels) const {
+void BPState::check_messages_current() const {
     /*
-    The tensors of <psi|op|psi> and <psi|psi> at qubit v, with every bond leaving the cluster closed by its incoming
-    message, and the bra and ket copies of every bond inside the cluster fused into one leg labeled by the edge.
-
-    Args:
-        v (int): The qubit.
-        op (DenseMatrix*): The 2 x 2 operator to insert on the ket layer, or nullptr for the identity.
-        in_cluster (std::vector<bool>&): Which qubits belong to the cluster.
-        with_operator (Tensor&): Output, the double-layer tensor with the operator inserted.
-        without_operator (Tensor&): Output, the double-layer tensor without it.
-        labels (std::vector<int>&): Output, the edge carried by each leg of the results.
-    */
-    Tensor ket = sites[v];
-    std::vector<int> closed = {0};
-    labels.clear();
-    for (int f : incident_edges[v]) {
-        int neighbour = edges[f].first == v ? edges[f].second : edges[f].first;
-        int leg = leg_of(v, f);
-        if (in_cluster[neighbour]) {
-            labels.push_back(f);
-        } else {
-            ket = apply_on_leg(ket, leg, root_into(v, f));
-            closed.push_back(leg);
-        }
-    }
-    int num_open = static_cast<int>(labels.size());
-    std::vector<std::vector<int>> groups;
-    for (int i = 0; i < num_open; ++i) {
-        groups.push_back({i, num_open + i});
-    }
-    Tensor bra = ket.conjugate();
-    without_operator = bra.contract(ket, closed, closed).fuse(groups);
-    if (op == nullptr) {
-        with_operator = without_operator;
-        return;
-    }
-    Eigen::Map<DenseMatrix> physical = ket.matrix_view(1);
-    DenseMatrix updated = *op * physical;
-    physical = updated;
-    with_operator = bra.contract(ket, closed, closed).fuse(groups);
-}
-
-Complex BPState::expectation_value(const PauliString& pauli) const {
-    /*
-    The belief propagation estimate of <psi|P|psi> / <psi|psi> for a Pauli string. The qubits it acts on are joined
-    into a connected cluster, which is contracted exactly with the rest of the network replaced by the messages
-    entering the cluster. On a tree this is exact, and on a loopy graph it misses only the loops leaving the cluster.
-
-    Args:
-        pauli (PauliString&): The Pauli string.
-
-    Returns:
-        Complex: The estimate.
+    Check that no gate has changed the state since belief propagation last ran.
 
     Raises:
-        std::logic_error: If a gate changed the state since belief propagation last ran, so the messages are stale.
-        std::runtime_error: If the cluster has zero norm.
+        std::logic_error: If the messages are stale.
     */
     if (std::find(touched.begin(), touched.end(), true) != touched.end()) {
         throw std::logic_error("The belief propagation messages are out of date, call run_belief_propagation before taking an expectation value");
     }
-    std::vector<int> support;
-    for (int q = 0; q < nqubits; ++q) {
-        if (pauli.x_mask[q] || pauli.z_mask[q]) {
-            support.push_back(q);
-        }
-    }
-    if (support.empty()) {
-        return Complex(1.0, 0.0);
-    }
+}
 
-    // Grow the support into a cluster by joining each qubit to the cluster so far along a shortest path
+std::vector<int> BPState::cluster_of(const PauliString& pauli) const {
+    /*
+    Join the qubits a Pauli string acts on into a connected cluster, adding each to the cluster so far along a
+    shortest path. Qubits not connected to the rest are added on their own.
+
+    Args:
+        pauli (PauliString&): The Pauli string, acting on at least one qubit.
+
+    Returns:
+        std::vector<int>: The qubits of the cluster, in ascending order.
+    */
     std::vector<int> cluster;
     std::vector<bool> in_cluster(nqubits, false);
-    for (int start : support) {
-        if (in_cluster[start]) {
+    for (int start = 0; start < nqubits; ++start) {
+        if (!(pauli.x_mask[start] || pauli.z_mask[start]) || in_cluster[start]) {
             continue;
         }
 
@@ -746,28 +707,110 @@ Complex BPState::expectation_value(const PauliString& pauli) const {
             cluster.push_back(q);
         }
     }
+    std::sort(cluster.begin(), cluster.end());
+    return cluster;
+}
 
-    // Contract the cluster once with the operators and once without
-    std::vector<Tensor> with_operator(cluster.size());
-    std::vector<Tensor> without_operator(cluster.size());
+std::vector<Complex> BPState::cluster_expectations(const std::vector<int>& cluster, const std::vector<const PauliString*>& paulis) const {
+    /*
+    The belief propagation estimates of <psi|P|psi> / <psi|psi> for Pauli strings supported on the same cluster.
+    Every bond leaving the cluster is closed by its incoming message and the cluster is contracted exactly, the
+    norm once and the numerator once per Pauli string, rebuilding only the tensors of the qubits it acts on.
+
+    Args:
+        cluster (std::vector<int>&): The qubits of the cluster.
+        paulis (std::vector<const PauliString*>&): The Pauli strings, each supported inside the cluster.
+
+    Returns:
+        std::vector<Complex>: The estimate for each Pauli string.
+
+    Raises:
+        std::runtime_error: If the cluster has zero norm.
+    */
+    std::vector<bool> in_cluster(nqubits, false);
+    for (int q : cluster) {
+        in_cluster[q] = true;
+    }
+
+    // At each qubit, the ket with its outside bonds gauged, and the double layer with the bra and ket copies of each inside bond fused into one leg labeled by the edge
+    std::vector<Tensor> kets(cluster.size());
+    std::vector<std::vector<int>> closed(cluster.size(), {0});
+    std::vector<std::vector<std::vector<int>>> groups(cluster.size());
+    std::vector<Tensor> norm_tensors(cluster.size());
     std::vector<std::vector<int>> labels(cluster.size());
     for (size_t i = 0; i < cluster.size(); ++i) {
-        int q = cluster[i];
-        bool acts = pauli.x_mask[q] || pauli.z_mask[q];
-        double_layer(q, acts ? &pauli_matrix(pauli.x_mask[q], pauli.z_mask[q]) : nullptr, in_cluster, with_operator[i], without_operator[i], labels[i]);
+        int v = cluster[i];
+        kets[i] = sites[v];
+        for (int f : incident_edges[v]) {
+            int neighbour = edges[f].first == v ? edges[f].second : edges[f].first;
+            int leg = leg_of(v, f);
+            if (in_cluster[neighbour]) {
+                labels[i].push_back(f);
+            } else {
+                kets[i] = apply_on_leg(kets[i], leg, root_into(v, f));
+                closed[i].push_back(leg);
+            }
+        }
+        int num_open = static_cast<int>(labels[i].size());
+        for (int leg = 0; leg < num_open; ++leg) {
+            groups[i].push_back({leg, num_open + leg});
+        }
+        norm_tensors[i] = kets[i].conjugate().contract(kets[i], closed[i], closed[i]).fuse(groups[i]);
     }
     std::vector<int> result_labels;
-    Complex numerator = contract_network(with_operator, labels, result_labels).raw()[0];
-    Complex denominator = contract_network(without_operator, labels, result_labels).raw()[0];
+    Complex denominator = contract_network(norm_tensors, labels, result_labels).raw()[0];
     if (denominator == Complex(0.0, 0.0)) {
         throw std::runtime_error("Cannot take an expectation value of a tensor network whose norm is zero");
     }
-    return numerator / denominator;
+
+    // Insert each Pauli string on the ket layer of the qubits it acts on
+    std::vector<Complex> values;
+    values.reserve(paulis.size());
+    for (const PauliString* pauli : paulis) {
+        std::vector<Tensor> operator_tensors = norm_tensors;
+        for (size_t i = 0; i < cluster.size(); ++i) {
+            int v = cluster[i];
+            if (!(pauli->x_mask[v] || pauli->z_mask[v])) {
+                continue;
+            }
+            Tensor ket = kets[i];
+            Eigen::Map<DenseMatrix> physical = ket.matrix_view(1);
+            DenseMatrix updated = pauli_matrix(pauli->x_mask[v], pauli->z_mask[v]) * physical;
+            physical = updated;
+            operator_tensors[i] = kets[i].conjugate().contract(ket, closed[i], closed[i]).fuse(groups[i]);
+        }
+        values.push_back(contract_network(operator_tensors, labels, result_labels).raw()[0] / denominator);
+    }
+    return values;
+}
+
+Complex BPState::expectation_value(const PauliString& pauli) const {
+    /*
+    The belief propagation estimate of <psi|P|psi> / <psi|psi> for a Pauli string. The qubits it acts on are joined
+    into a connected cluster, which is contracted exactly with the rest of the network replaced by the messages
+    entering the cluster. On a tree this is exact, and on a loopy graph it misses only the loops leaving the cluster.
+
+    Args:
+        pauli (PauliString&): The Pauli string.
+
+    Returns:
+        Complex: The estimate.
+
+    Raises:
+        std::logic_error: If a gate changed the state since belief propagation last ran, so the messages are stale.
+        std::runtime_error: If the cluster has zero norm.
+    */
+    check_messages_current();
+    if (pauli.x_mask.none() && pauli.z_mask.none()) {
+        return Complex(1.0, 0.0);
+    }
+    return cluster_expectations(cluster_of(pauli), {&pauli})[0];
 }
 
 Real BPState::expectation_value(const MatrixFreeHamiltonian& H) const {
     /*
-    The belief propagation estimate of <psi|H|psi> / <psi|psi>, summed over the Pauli strings of H in parallel.
+    The belief propagation estimate of <psi|H|psi> / <psi|psi>. The Pauli strings of H are grouped by the cluster
+    they are estimated on, so each cluster's norm is contracted once, and the clusters are handled in parallel.
 
     Args:
         H (MatrixFreeHamiltonian&): The Hamiltonian.
@@ -777,15 +820,48 @@ Real BPState::expectation_value(const MatrixFreeHamiltonian& H) const {
 
     Raises:
         std::invalid_argument: If the Hamiltonian is on a different number of qubits.
+        std::logic_error: If a gate changed the state since belief propagation last ran, so the messages are stale.
+        std::runtime_error: If a cluster has zero norm.
     */
     if (H.get_nqubits() != nqubits) {
         throw std::invalid_argument("Cannot take the expectation value of a " + std::to_string(H.get_nqubits()) + " qubit Hamiltonian on a " + std::to_string(nqubits) + " qubit tensor network");
     }
-    std::vector<std::pair<PauliString, Complex>> terms(H.get_operators().begin(), H.get_operators().end());
+    check_messages_current();
     Real total = 0.0;
+    std::map<std::vector<int>, std::pair<std::vector<const PauliString*>, std::vector<Complex>>> by_cluster;
+    for (const auto& [pauli, coefficient] : H.get_operators()) {
+        if (pauli.x_mask.none() && pauli.z_mask.none()) {
+            total += coefficient.real();
+        } else {
+            auto& group = by_cluster[cluster_of(pauli)];
+            group.first.push_back(&pauli);
+            group.second.push_back(coefficient);
+        }
+    }
+    std::vector<const decltype(by_cluster)::value_type*> groups;
+    for (const auto& entry : by_cluster) {
+        groups.push_back(&entry);
+    }
+
+    // An exception must not escape the parallel region, so the first one is kept and rethrown after it
+    std::exception_ptr error = nullptr;
 #pragma omp parallel for schedule(dynamic) reduction(+ : total)
-    for (int i = 0; i < static_cast<int>(terms.size()); ++i) {
-        total += std::real(terms[i].second * expectation_value(terms[i].first));
+    for (int g = 0; g < static_cast<int>(groups.size()); ++g) {
+        try {
+            const auto& [cluster, terms] = *groups[g];
+            std::vector<Complex> values = cluster_expectations(cluster, terms.first);
+            for (size_t t = 0; t < values.size(); ++t) {
+                total += std::real(terms.second[t] * values[t]);
+            }
+        } catch (...) {
+#pragma omp critical(bp_expectation_error)
+            if (!error) {
+                error = std::current_exception();
+            }
+        }
+    }
+    if (error) {
+        std::rethrow_exception(error);
     }
     return total;
 }

@@ -590,7 +590,7 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
     }
 }
 
-static std::vector<Gate> prepare_tensor_network_gates(const std::vector<Gate>& gates, int n_qubits, int initial_nqubits, NoiseModelCpp& noise_model_cpp, const QiliSimConfig& config, const py::object& readout, const std::string& backend, bool supports_sampling) {
+static std::vector<Gate> prepare_tensor_network_gates(const std::vector<Gate>& gates, int n_qubits, int initial_nqubits, NoiseModelCpp& noise_model_cpp, const QiliSimConfig& config, const py::object& readout, const std::string& backend, bool supports_sampling, int max_dense_qubits) {
     /*
     The setup shared by the tensor network simulators: set the thread count, reject what a pure state cannot hold or the
     readout cannot produce before any work is done, warn about ignored settings, and simplify the circuit.
@@ -604,12 +604,14 @@ static std::vector<Gate> prepare_tensor_network_gates(const std::vector<Gate>& g
         readout (py::object): A list with readout information.
         backend (std::string&): The name of the simulator, for the messages.
         supports_sampling (bool): Whether the simulator can draw samples, and so apply readout error.
+        max_dense_qubits (int): The most qubits whose statevector a state tomography may materialize.
 
     Returns:
         std::vector<Gate>: The gates to apply, with fused blocks of at most two qubits.
 
     Raises:
-        py::value_error: If the qubit counts differ, the noise model has Kraus or Lindblad terms, or a readout is not supported.
+        py::value_error: If the qubit counts differ, the noise model has Kraus or Lindblad terms, a readout is not
+            supported or too large to materialize, or a gate acts on more than two qubits.
     */
 
     // Set the number of threads
@@ -623,12 +625,28 @@ static std::vector<Gate> prepare_tensor_network_gates(const std::vector<Gate>& g
         throw py::value_error("The initial " + backend + " state has " + std::to_string(initial_nqubits) + " qubits but the circuit has " + std::to_string(n_qubits) + ".");
     }
     validate_readout(readout, supports_sampling, backend);
+    for (py::handle ro : readout) {
+        if (py::isinstance(ro, StateTomographyReadout) && n_qubits > max_dense_qubits) {
+            throw py::value_error("State tomography would materialize the statevector of " + std::to_string(n_qubits) + " qubits, but the " + backend + " simulator allows at most " + std::to_string(max_dense_qubits) + ".");
+        }
+    }
 
     // Kraus and Lindblad noise would make the state mixed, which a pure tensor network cannot hold
     bool has_kraus = !noise_model_cpp.get_kraus_operators_global().empty() || !noise_model_cpp.get_kraus_operators_per_qubit().empty() || !noise_model_cpp.get_kraus_operators_per_gate().empty() || !noise_model_cpp.get_kraus_operators_per_gate_qubit().empty();
     if (has_kraus || !noise_model_cpp.get_jump_operators().empty()) {
         std::string supported = supports_sampling ? "readout error and parameter perturbation noise" : "parameter perturbation noise";
         throw py::value_error("The " + backend + " simulator only supports " + supported + ", not Kraus or Lindblad noise. Use a statevector method instead.");
+    }
+
+    // Without sampling there is nothing for readout error to act on
+    if (!supports_sampling) {
+        for (int q = 0; q < n_qubits; ++q) {
+            std::pair<double, double> readout_error = noise_model_cpp.get_relevant_readout_error(q);
+            if (readout_error.first > 0.0 || readout_error.second > 0.0) {
+                warning("Readout error is not supported in the " + backend + " simulator. Readout error will be ignored.");
+                break;
+            }
+        }
     }
 
     // Monte Carlo is not supported
@@ -655,6 +673,11 @@ static std::vector<Gate> prepare_tensor_network_gates(const std::vector<Gate>& g
         optimized_gates = fuse_gates(optimized_gates, max_fused_qubits);
         qilisdk::log_debug("[Sampling, C++] Fused gates: " + std::to_string(before_fusion) + " -> " + std::to_string(optimized_gates.size()) + " gates");
     }
+    for (const Gate& gate : optimized_gates) {
+        if (gate.get_name() != "M" && static_cast<int>(gate.get_qubits().size()) > max_fused_qubits) {
+            throw py::value_error("The " + backend + " simulator supports one- and two-qubit gates only, but " + gate.get_id() + " acts on " + std::to_string(gate.get_qubits().size()) + " qubits. Decompose it into smaller gates first.");
+        }
+    }
     return optimized_gates;
 }
 
@@ -675,7 +698,7 @@ void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& 
     Raises:
         py::value_error: If the noise model has Kraus or Lindblad terms, a readout is not supported, or the state diverges to NaN during the simulation.
     */
-    std::vector<Gate> optimized_gates = prepare_tensor_network_gates(gates, n_qubits, initial_state.get_nqubits(), noise_model_cpp, config, readout, "MPS", true);
+    std::vector<Gate> optimized_gates = prepare_tensor_network_gates(gates, n_qubits, initial_state.get_nqubits(), noise_model_cpp, config, readout, "MPS", true, MPSState::MAX_DENSE_QUBITS);
 
     // We start with the initial state, with the settings from the config
     state = initial_state;
@@ -758,7 +781,7 @@ void sampling_bp(const std::vector<Gate>& gates, int n_qubits, const BPState& in
     Raises:
         py::value_error: If the noise model has Kraus or Lindblad terms, a readout is not supported, or the state diverges to NaN during the simulation.
     */
-    std::vector<Gate> optimized_gates = prepare_tensor_network_gates(gates, n_qubits, initial_state.get_nqubits(), noise_model_cpp, config, readout, "BP", false);
+    std::vector<Gate> optimized_gates = prepare_tensor_network_gates(gates, n_qubits, initial_state.get_nqubits(), noise_model_cpp, config, readout, "BP", false, BPState::MAX_DENSE_QUBITS);
 
     // We start with the initial state, with the settings from the config
     state = initial_state;

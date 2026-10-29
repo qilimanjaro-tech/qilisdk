@@ -2494,32 +2494,24 @@ TEST(ConstructResultsMPS, StateTomographyReadoutExact_Succeeds) {
     EXPECT_NEAR(std::abs(tomography.attr("__getitem__")(py::make_tuple(1, 0)).cast<Complex>() - Complex(1.0, 0.0)), 0.0, 1e-12);
 }
 
-TEST(ConstructResultsMPS, StateTomographyReadoutNonExact_Throws) {
+TEST(ValidateReadout, MPSStateTomographyNonExact_Throws) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         from qilisdk.readout import StateTomographyReadout
         _mps_ro_tomo_bad = [StateTomographyReadout(method="mle")]
     )");
-    MPSState state(1);
     py::list readout = py::globals()["_mps_ro_tomo_bad"].cast<py::list>();
-    NoiseModelCpp noise_model_cpp;
-    QiliSimConfig config;
-    std::vector<bool> qubits_to_measure = {true};
-    EXPECT_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); }, py::value_error);
+    EXPECT_THROW(validate_readout(readout, true, "MPS"), py::value_error);
 }
 
-TEST(ConstructResultsMPS, UnsupportedReadoutThrows) {
+TEST(ValidateReadout, MPSUnsupportedReadoutThrows) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         from qilisdk.readout import ReadoutMethod
         _mps_ro_bad = [ReadoutMethod()]
     )");
-    MPSState state(1);
     py::list readout = py::globals()["_mps_ro_bad"].cast<py::list>();
-    NoiseModelCpp noise_model_cpp;
-    QiliSimConfig config;
-    std::vector<bool> qubits_to_measure = {true};
-    EXPECT_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); }, py::value_error);
+    EXPECT_THROW(validate_readout(readout, true, "MPS"), py::value_error);
 }
 
 TEST(ParseSolverParams, BPSettingsApplied) {
@@ -2617,29 +2609,40 @@ TEST(ConstructResultsBP, StateTomographyReadoutExact_Succeeds) {
     EXPECT_NEAR(std::abs(tomography.attr("__getitem__")(py::make_tuple(1, 0)).cast<Complex>() - Complex(1.0, 0.0)), 0.0, 1e-12);
 }
 
-TEST(ConstructResultsBP, StateTomographyReadoutNonExact_Throws) {
+TEST(ValidateReadout, BPStateTomographyNonExact_Throws) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         from qilisdk.readout import StateTomographyReadout
         _bp_ro_tomo_bad = [StateTomographyReadout(method="mle")]
     )");
-    BPState state(1);
     py::list readout = py::globals()["_bp_ro_tomo_bad"].cast<py::list>();
-    EXPECT_THROW({ auto result = construct_result_object(state, readout, 1, QiliSimConfig()); }, py::value_error);
+    EXPECT_THROW(validate_readout(readout, false, "BP"), py::value_error);
 }
 
-TEST(ConstructResultsBP, SamplingAndUnknownReadoutsThrow) {
+TEST(ValidateReadout, BPSamplingAndUnknownReadoutsThrow) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         from qilisdk.readout import ReadoutMethod, SamplingReadout
         _bp_ro_samp = [SamplingReadout(nshots=10)]
         _bp_ro_bad = [ReadoutMethod()]
     )");
-    BPState state(1);
     for (const char* name : {"_bp_ro_samp", "_bp_ro_bad"}) {
         py::list readout = py::globals()[name].cast<py::list>();
-        EXPECT_THROW({ auto result = construct_result_object(state, readout, 1, QiliSimConfig()); }, py::value_error) << name;
+        EXPECT_THROW(validate_readout(readout, false, "BP"), py::value_error) << name;
     }
+}
+
+TEST(ConstructResultsBP, ImaginarySampledExpectationThrows) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ExpectationReadout
+        from qilisdk.analog.hamiltonian import Z
+        _bp_ro_exp_imag = [ExpectationReadout(observables=[1j * Z(0)], nshots=7)]
+    )");
+    // <iZ> = i on |0>, which the dense backends refuse too
+    BPState state(1);
+    py::list readout = py::globals()["_bp_ro_exp_imag"].cast<py::list>();
+    EXPECT_THROW({ auto result = construct_result_object(state, readout, 1, QiliSimConfig()); }, py::value_error);
 }
 
 TEST(ConstructResultsBP, ExpectationReadoutWithShotsIsSampled) {

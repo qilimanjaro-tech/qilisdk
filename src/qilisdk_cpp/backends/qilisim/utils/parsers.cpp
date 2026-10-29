@@ -15,6 +15,7 @@
 #include "parsers.h"
 #include <algorithm>
 #include <cmath>
+#include <type_traits>
 #include "../../../libs/numpy.h"
 #include "../digital/gate.h"
 #include "../representations/matrix_free_hamiltonian.h"
@@ -29,34 +30,43 @@ namespace {
 template <typename State>
 py::object expectation_readout_result(const State& state, const py::object& ro, int n_qubits, const QiliSimConfig& config) {
     /*
-    Construct the result of an ExpectationReadout on a tensor network state. With nshots > 0, each observable is
-    estimated from nshots measurements per Pauli term, drawn around that term's value on the state.
+    Construct the result of an ExpectationReadout on a state that is not a dense matrix. With nshots > 0, each
+    observable is estimated from nshots measurements per Pauli term, drawn around that term's value on the state.
 
     Args:
-        state (State&): The MPSState or BPState to read out.
+        state (State&): The StabilizerStateSum, MPSState or BPState to read out.
         ro (py::object): The ExpectationReadout.
         n_qubits (int): The number of qubits in the circuit.
         config (QiliSimConfig): The simulation configuration, which provides the sampling seeds.
 
     Returns:
         py::object: The ExpectationReadoutResult.
+
+    Raises:
+        py::value_error: If a sampled expectation value has an imaginary part above the tolerance.
     */
     int nshots = ro.attr("nshots").cast<int>();
     std::vector<MatrixFreeHamiltonian> observables = parse_observables_matrix_free(n_qubits, ro.attr("observables"));
     py::list expectations_py;
     for (const auto& obs : observables) {
-        Real expectation = 0.0;
         if (nshots > 0) {
             std::vector<std::pair<Complex, double>> terms;
             terms.reserve(obs.size());
             for (const auto& [pauli, coefficient] : obs.get_operators()) {
-                terms.push_back({coefficient, state.expectation_value(MatrixFreeHamiltonian(n_qubits, pauli))});
+                if constexpr (std::is_same_v<State, BPState>) {
+                    terms.push_back({coefficient, state.expectation_value(pauli).real()});
+                } else {
+                    terms.push_back({coefficient, state.expectation_value(MatrixFreeHamiltonian(n_qubits, pauli))});
+                }
             }
-            expectation = sample_expectation_value(terms, nshots, config.next_seed()).real();
+            Complex sampled = sample_expectation_value(terms, nshots, config.next_seed());
+            if (std::abs(sampled.imag()) > config.get_atol()) {
+                throw py::value_error("Encountered an imaginary expectation value while computing the expectation values, try increasing the absolute tolerance or improving simulation precision.");
+            }
+            expectations_py.append(py::cast(sampled.real()));
         } else {
-            expectation = state.expectation_value(obs);
+            expectations_py.append(py::cast(static_cast<double>(state.expectation_value(obs))));
         }
-        expectations_py.append(py::cast(std::complex<double>(expectation, 0.0)));
     }
     return ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py, "nshots"_a = nshots);
 }
@@ -133,27 +143,7 @@ py::object construct_result_object(const StabilizerStateSum& state, const py::ob
         } else if (py::isinstance(ro, ExpectationReadoutResult)) {
             throw py::value_error("ExpectationReadoutResult is not a valid readout type. Please use ExpectationReadout instead.");
         } else if (py::isinstance(ro, ExpectationReadout)) {
-            int nshots = ro.attr("nshots").cast<int>();
-            std::vector<double> expectations;
-            // parse the observables for which we need to compute the expectation values
-            std::vector<MatrixFreeHamiltonian> observables = parse_observables_matrix_free(n_qubits, ro.attr("observables"));
-            for (const auto& obs : observables) {
-                if (nshots > 0) {
-                    std::vector<std::pair<Complex, double>> terms;
-                    terms.reserve(obs.size());
-                    for (const auto& [pauli, coefficient] : obs.get_operators()) {
-                        terms.push_back({coefficient, state.expectation_value(MatrixFreeHamiltonian(n_qubits, pauli))});
-                    }
-                    expectations.push_back(sample_expectation_value(terms, nshots, config.next_seed()).real());
-                } else {
-                    expectations.push_back(state.expectation_value(obs));
-                }
-            }
-            py::list expectations_py;
-            for (const auto& exp_val : expectations) {
-                expectations_py.append(py::cast(exp_val));
-            }
-            results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py, "nshots"_a = nshots));
+            results.append(expectation_readout_result(state, ro, n_qubits, config));
 
             // For the state tomography readout we use the state's .as_dense() method to get the final state vector
         } else if (py::isinstance(ro, StateTomographyReadout)) {
@@ -176,7 +166,8 @@ py::object construct_result_object(const StabilizerStateSum& state, const py::ob
 
 py::object construct_result_object(const MPSState& state, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
     /*
-    Construct a result object for a given MPSState and readout.
+    Construct a result object for a given MPSState and readout. The readout must already have passed
+    validate_readout, as sampling_mps does before simulating.
 
     Args:
         state (MPSState&): The MPSState for which to construct the result.
@@ -190,9 +181,8 @@ py::object construct_result_object(const MPSState& state, const py::object& read
         py::object: The result object for the given state and readout.
 
     Raises:
-        py::value_error: If an unsupported readout method is provided.
+        py::value_error: If a sampled expectation value is imaginary.
     */
-    validate_readout(readout, true, "MPS");
     state.set_seed(static_cast<uint64_t>(config.next_seed()));
     py::list results;
     for (py::handle ro_handle : readout) {
@@ -224,7 +214,8 @@ py::object construct_result_object(const MPSState& state, const py::object& read
 py::object construct_result_object(const BPState& state, const py::object& readout, int n_qubits, const QiliSimConfig& config) {
     /*
     Construct a result object for a given BPState and readout. Expectation values are the belief propagation
-    estimates, and exact state tomography contracts the whole network. Sampling is not supported.
+    estimates, and exact state tomography contracts the whole network. Sampling is not supported, and the readout
+    must already have passed validate_readout, as sampling_bp does before simulating.
 
     Args:
         state (BPState&): The BPState for which to construct the result.
@@ -236,9 +227,8 @@ py::object construct_result_object(const BPState& state, const py::object& reado
         py::object: The result object for the given state and readout.
 
     Raises:
-        py::value_error: If an unsupported readout method is provided.
+        py::value_error: If a sampled expectation value is imaginary.
     */
-    validate_readout(readout, false, "BP");
     py::list results;
     for (py::handle ro_handle : readout) {
         py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
@@ -378,7 +368,7 @@ py::object construct_result_object(const ExponentialAnsatz& state, const py::obj
         py::object: The result object for the given state and readout.
 
     Raises:
-        py::value_error: If an unsupported readout method is provided.
+        py::value_error: If a sampled expectation value is imaginary.
     */
     py::list results;
     for (py::handle ro_handle : readout) {

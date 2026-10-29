@@ -63,11 +63,16 @@ class BPState {
     const DenseMatrix& inverse_root_into(int v, int e) const { return message_inverse_roots[e][1 - message_index_from(v, e)]; }
     Tensor gauge_and_reduce(int v, int e, Tensor& isometry) const;
     Tensor restore_site(int v, int e, const Tensor& isometry, const Tensor& reduced) const;
-    void double_layer(int v, const DenseMatrix* op, const std::vector<bool>& in_cluster, Tensor& with_operator, Tensor& without_operator, std::vector<int>& labels) const;
+    void check_messages_current() const;
+    std::vector<int> cluster_of(const PauliString& pauli) const;
+    std::vector<Complex> cluster_expectations(const std::vector<int>& cluster, const std::vector<const PauliString*>& paulis) const;
 
    public:
     // Safeguard to make sure we don't accidentally try to materialize a huge network
     static constexpr int MAX_DENSE_QUBITS = 24;
+
+    // Largest tensor, in entries, an exact contraction may build along the way, since open bonds can make it far larger than the result
+    static constexpr int64_t MAX_CONTRACTION_ENTRIES = int64_t(1) << 27;
 
     // Total discarded weight above which a simulation warns that the bond dimension is too small
     static constexpr Real TRUNCATION_WARNING_THRESHOLD = 1e-2;
