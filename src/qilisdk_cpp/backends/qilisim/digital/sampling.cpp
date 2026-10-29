@@ -590,6 +590,100 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
     }
 }
 
+static std::vector<Gate> prepare_tensor_network_gates(const std::vector<Gate>& gates, int n_qubits, int initial_nqubits, NoiseModelCpp& noise_model_cpp, const QiliSimConfig& config, const py::object& readout, const std::string& backend, bool supports_sampling, int max_dense_qubits) {
+    /*
+    The setup shared by the tensor network simulators: set the thread count, reject what a pure state cannot hold or the
+    readout cannot produce before any work is done, warn about ignored settings, and simplify the circuit.
+
+    Args:
+        gates (std::vector<Gate>&): The list of gates in the circuit.
+        n_qubits (int): The number of qubits in the circuit.
+        initial_nqubits (int): The number of qubits in the initial state.
+        noise_model_cpp (NoiseModelCpp&): The noise model.
+        config (QiliSimConfig): The simulation configuration.
+        readout (py::object): A list with readout information.
+        backend (std::string&): The name of the simulator, for the messages.
+        supports_sampling (bool): Whether the simulator can draw samples, and so apply readout error.
+        max_dense_qubits (int): The most qubits whose statevector a state tomography may materialize.
+
+    Returns:
+        std::vector<Gate>: The gates to apply, with fused blocks of at most two qubits.
+
+    Raises:
+        py::value_error: If the qubit counts differ, the noise model has Kraus or Lindblad terms, a readout is not
+            supported or exceeds its qubit limit, or a gate acts on more than two qubits.
+    */
+
+    // Set the number of threads
+#if defined(_OPENMP)
+    omp_set_num_threads(config.get_num_threads());
+    Eigen::setNbThreads(config.get_num_threads());
+#endif
+
+    // Sanity checks
+    if (initial_nqubits != n_qubits) {
+        throw py::value_error("The initial " + backend + " state has " + std::to_string(initial_nqubits) + " qubits but the circuit has " + std::to_string(n_qubits) + ".");
+    }
+    validate_readout(readout, supports_sampling, backend);
+    for (py::handle ro : readout) {
+        if (py::isinstance(ro, StateTomographyReadout) && n_qubits > max_dense_qubits) {
+            throw py::value_error("State tomography would materialize the statevector of " + std::to_string(n_qubits) + " qubits, but the " + backend + " simulator allows at most " + std::to_string(max_dense_qubits) + ".");
+        }
+        if (py::isinstance(ro, ExpectationReadout) && n_qubits > MAX_QUBITS_PAULI) {
+            throw py::value_error("Expectation values are limited to observables on at most " + std::to_string(MAX_QUBITS_PAULI) + " qubits, but the circuit has " + std::to_string(n_qubits) + ".");
+        }
+    }
+
+    // Kraus and Lindblad noise would make the state mixed, which a pure tensor network cannot hold
+    bool has_kraus = !noise_model_cpp.get_kraus_operators_global().empty() || !noise_model_cpp.get_kraus_operators_per_qubit().empty() || !noise_model_cpp.get_kraus_operators_per_gate().empty() || !noise_model_cpp.get_kraus_operators_per_gate_qubit().empty();
+    if (has_kraus || !noise_model_cpp.get_jump_operators().empty()) {
+        std::string supported = supports_sampling ? "readout error and parameter perturbation noise" : "parameter perturbation noise";
+        throw py::value_error("The " + backend + " simulator only supports " + supported + ", not Kraus or Lindblad noise. Use a statevector method instead.");
+    }
+
+    // Without sampling there is nothing for readout error to act on
+    if (!supports_sampling) {
+        for (int q = 0; q < n_qubits; ++q) {
+            std::pair<double, double> readout_error = noise_model_cpp.get_relevant_readout_error(q);
+            if (readout_error.first > 0.0 || readout_error.second > 0.0) {
+                warning("Readout error is not supported in the " + backend + " simulator. Readout error will be ignored.");
+                break;
+            }
+        }
+    }
+
+    // Monte Carlo is not supported
+    if (config.get_monte_carlo()) {
+        warning("Monte Carlo sampling is not supported in the " + backend + " simulator. Monte Carlo will be ignored.");
+    }
+
+    // Measurement collapse is not supported either, since a pure tensor network cannot represent the resulting mixed state
+    if (config.get_measurement_collapse()) {
+        warning("Measurement collapse is not supported in the " + backend + " simulator. Measurement collapse will be ignored.");
+    }
+
+    // Some small circuit optimizations, since we don't have noise
+    std::vector<Gate> optimized_gates = gates;
+    if (config.get_combine_single_qubit_gates()) {
+        optimized_gates = combine_single_qubit_gates(optimized_gates);
+        qilisdk::log_debug("[Sampling, C++] Combined single-qubit gates: " + std::to_string(gates.size()) + " -> " + std::to_string(optimized_gates.size()) + " gates");
+    }
+
+    // Fused blocks are capped at two qubits, since apply_gate only takes one- and two-qubit gates
+    const int max_fused_qubits = 2;
+    if (config.get_fuse_gates()) {
+        size_t before_fusion = optimized_gates.size();
+        optimized_gates = fuse_gates(optimized_gates, max_fused_qubits);
+        qilisdk::log_debug("[Sampling, C++] Fused gates: " + std::to_string(before_fusion) + " -> " + std::to_string(optimized_gates.size()) + " gates");
+    }
+    for (const Gate& gate : optimized_gates) {
+        if (gate.get_name() != "M" && static_cast<int>(gate.get_qubits().size()) > max_fused_qubits) {
+            throw py::value_error("The " + backend + " simulator supports one- and two-qubit gates only, but " + gate.get_id() + " acts on " + std::to_string(gate.get_qubits().size()) + " qubits. Decompose it into smaller gates first.");
+        }
+    }
+    return optimized_gates;
+}
+
 void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& initial_state, NoiseModelCpp& noise_model_cpp, MPSState& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
     /*
     Execute a sampling functional using a matrix product state simulator.
@@ -605,55 +699,14 @@ void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& 
         readout (py::object): A list with readout information to determine when and what to measure.
 
     Raises:
-        py::value_error: If the noise model has Kraus or Lindblad terms, or if the state diverges to NaN during the simulation.
+        py::value_error: If the noise model has Kraus or Lindblad terms, a readout is not supported, or the state diverges to NaN during the simulation.
     */
-
-    // Set the number of threads
-#if defined(_OPENMP)
-    omp_set_num_threads(config.get_num_threads());
-    Eigen::setNbThreads(config.get_num_threads());
-#endif
-
-    // Sanity checks
-    if (initial_state.get_nqubits() != n_qubits) {
-        throw py::value_error("The initial MPS has " + std::to_string(initial_state.get_nqubits()) + " qubits but the circuit has " + std::to_string(n_qubits) + ".");
-    }
-
-    // Kraus and Lindblad noise would make the state mixed, which an MPS cannot hold
-    bool has_kraus = !noise_model_cpp.get_kraus_operators_global().empty() || !noise_model_cpp.get_kraus_operators_per_qubit().empty() || !noise_model_cpp.get_kraus_operators_per_gate().empty() || !noise_model_cpp.get_kraus_operators_per_gate_qubit().empty();
-    if (has_kraus || !noise_model_cpp.get_jump_operators().empty()) {
-        throw py::value_error("The MPS simulator only supports readout error and parameter perturbation noise, not Kraus or Lindblad noise. Use a statevector method instead.");
-    }
-
-    // Monte Carlo is not supported
-    if (config.get_monte_carlo()) {
-        warning("Monte Carlo sampling is not supported in the MPS simulator. Monte Carlo will be ignored.");
-    }
-
-    // Throw a warning if we are using measurement collapse, since an MPS cannot represent the resulting mixed state
-    if (config.get_measurement_collapse()) {
-        warning("Measurement collapse is not supported in the MPS simulator. Measurement collapse will be ignored.");
-    }
+    std::vector<Gate> optimized_gates = prepare_tensor_network_gates(gates, n_qubits, initial_state.get_nqubits(), noise_model_cpp, config, readout, "MPS", true, MPSState::MAX_DENSE_QUBITS);
 
     // We start with the initial state, with the settings from the config
     state = initial_state;
     state.set_max_bond_dimension(config.get_mps_max_bond_dimension());
     state.set_truncation_cutoff(config.get_mps_truncation_cutoff());
-
-    // Some small circuit optimizations, since we don't have noise
-    std::vector<Gate> optimized_gates = gates;
-    if (config.get_combine_single_qubit_gates()) {
-        optimized_gates = combine_single_qubit_gates(optimized_gates);
-        qilisdk::log_debug("[Sampling, C++] Combined single-qubit gates: " + std::to_string(gates.size()) + " -> " + std::to_string(optimized_gates.size()) + " gates");
-    }
-
-    // Fused blocks are capped at two qubits, since apply_gate only takes one- and two-qubit gates
-    const int mps_max_fused_qubits = 2;
-    if (config.get_fuse_gates()) {
-        size_t before_fusion = optimized_gates.size();
-        optimized_gates = fuse_gates(optimized_gates, mps_max_fused_qubits);
-        qilisdk::log_debug("[Sampling, C++] Fused gates: " + std::to_string(before_fusion) + " -> " + std::to_string(optimized_gates.size()) + " gates");
-    }
 
     // Then we apply each gate
     for (int i = 0; i < int(optimized_gates.size()); ++i) {
@@ -710,6 +763,81 @@ void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& 
     qilisdk::log_debug("[QiliSim, C++] MPS simulation complete: max bond dimension " + std::to_string(state.get_max_bond_dimension_used()) + " of " + std::to_string(config.get_mps_max_bond_dimension()) + ", accumulated truncation error " + std::to_string(state.get_truncation_error()));
     if (state.get_truncation_error() > MPSState::TRUNCATION_WARNING_THRESHOLD) {
         warning("The MPS simulation discarded a total weight of " + std::to_string(state.get_truncation_error()) + " when truncating, increase mps_max_bond_dimension for a more accurate result.");
+    }
+}
+
+void sampling_bp(const std::vector<Gate>& gates, int n_qubits, const BPState& initial_state, NoiseModelCpp& noise_model_cpp, BPState& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
+    /*
+    Execute a digital functional using a tensor network shaped like the circuit's interaction graph,
+    gauged and contracted with belief propagation.
+
+    Args:
+        gates (std::vector<Gate>&): The list of gates in the circuit.
+        n_qubits (int): The number of qubits in the circuit.
+        initial_state (BPState&): The initial state of the system as a tensor network.
+        noise_model_cpp (NoiseModelCpp&): The noise model, of which only parameter perturbations are supported.
+        state (BPState&): The final state after applying all gates.
+        intermediate_results (std::vector<py::object>&): A vector to store intermediate results after each set of measurements.
+        config (QiliSimConfig): The simulation configuration.
+        readout (py::object): A list with readout information to determine when and what to measure.
+
+    Raises:
+        py::value_error: If the noise model has Kraus or Lindblad terms, a readout is not supported, or the state diverges to NaN during the simulation.
+    */
+    std::vector<Gate> optimized_gates = prepare_tensor_network_gates(gates, n_qubits, initial_state.get_nqubits(), noise_model_cpp, config, readout, "BP", false, BPState::MAX_DENSE_QUBITS);
+
+    // We start with the initial state, with the settings from the config
+    state = initial_state;
+    state.set_max_bond_dimension(config.get_bp_max_bond_dimension());
+    state.set_truncation_cutoff(config.get_bp_truncation_cutoff());
+    state.set_max_iterations(config.get_bp_max_iterations());
+    state.set_tolerance(config.get_bp_tolerance());
+
+    // Then we apply each gate
+    for (int i = 0; i < int(optimized_gates.size()); ++i) {
+        const auto& gate = optimized_gates[i];
+
+        // Let Ctrl-C interrupt the circuit between gates
+        check_signals();
+
+        // If it's a measurement
+        if (gate.get_name() == "M") {
+            // Check for adjacent measurements and if we have any, do them all at once
+            std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
+            int num_measurements = group_measurements(optimized_gates, i, qubits_to_measure_after_gate);
+            bool are_final_measurements = (i + num_measurements == int(optimized_gates.size()));
+
+            // Construct the result
+            if (!are_final_measurements) {
+                state.run_belief_propagation();
+                py::object result = construct_result_object(state, readout, n_qubits, config);
+                intermediate_results.push_back(result);
+            }
+
+            // Skip the next measurements since we did them all at once
+            i += (num_measurements - 1);
+            continue;
+        }
+
+        // Apply the gate and check for nan on the qubits it touched
+        state.apply_gate(gate);
+        for (int q : gate.get_qubits()) {
+            if (state.get_site_tensor(q).has_nan()) {
+                throw py::value_error("State has become NaN while applying gate " + gate.get_id() + ".");
+            }
+        }
+    }
+
+    // The readout estimates rely on converged messages
+    state.run_belief_propagation();
+
+    // Log some debug info
+    qilisdk::log_debug("[QiliSim, C++] BP simulation complete: " + std::to_string(state.get_num_edges()) + " edges, max bond dimension " + std::to_string(state.get_max_bond_dimension_used()) + " of " + std::to_string(config.get_bp_max_bond_dimension()) + ", accumulated truncation error " + std::to_string(state.get_truncation_error()) + ", " + std::to_string(state.get_bp_runs()) + " BP runs taking " + std::to_string(state.get_bp_iterations()) + " sweeps");
+    if (state.get_truncation_error() > BPState::TRUNCATION_WARNING_THRESHOLD) {
+        warning("The BP simulation discarded a total weight of " + std::to_string(state.get_truncation_error()) + " when truncating, increase bp_max_bond_dimension for a more accurate result.");
+    }
+    if (!state.get_bp_converged()) {
+        warning("Belief propagation did not always converge within bp_max_iterations, so the results may be inaccurate.");
     }
 }
 

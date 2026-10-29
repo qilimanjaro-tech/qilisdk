@@ -1583,6 +1583,415 @@ def test_mps_reservoir_is_rejected_before_any_layer_runs():
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Belief propagation backend integration tests
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+def _bp_backend(max_bond_dimension: int = 64, seed: int = 42, **method_kwargs) -> QiliSim:
+    return QiliSim(
+        digital_simulation_method=DigitalMethod.bp(max_bond_dimension=max_bond_dimension, **method_kwargs),
+        execution_config=ExecutionConfig(seed=seed, num_threads=1),
+    )
+
+
+def _graph_circuit(nqubits, edges, layers, seed):
+    """Random rotations on every qubit, then a CNOT and a ZZ-type rotation across every edge, repeated."""
+    rng = random.Random(seed)
+    circuit = Circuit(nqubits=nqubits)
+    for _ in range(layers):
+        for qubit in range(nqubits):
+            circuit.add(RY(qubit, theta=rng.uniform(0.2, 2.8)))
+            circuit.add(RZ(qubit, phi=rng.uniform(0.2, 2.8)))
+        for a, b in edges:
+            circuit.add(CNOT(a, b))
+            circuit.add(RZ(b, phi=rng.uniform(0.2, 2.8)))
+    return circuit
+
+
+def _expectations(backend, circuit, observables):
+    readout = Readout().with_expectation(observables)
+    return np.real(backend.execute(DigitalPropagation(circuit=circuit), readout).get_expectation_values())
+
+
+_TREES = {
+    "chain": (5, [(0, 1), (1, 2), (2, 3), (3, 4)]),
+    "star": (5, [(0, 1), (0, 2), (0, 3), (0, 4)]),
+    "branched": (7, [(0, 1), (1, 2), (1, 3), (3, 4), (3, 5), (5, 6)]),
+    "reversed_pairs": (5, [(1, 0), (2, 1), (4, 2), (3, 4)]),
+}
+
+_LOOPY_GRAPHS = {
+    "triangle": (3, [(0, 1), (1, 2), (2, 0)]),
+    "ring": (6, [(i, (i + 1) % 6) for i in range(6)]),
+    "complete": (4, [(a, b) for a in range(4) for b in range(a + 1, 4)]),
+    "lattice": (6, [(0, 1), (1, 2), (3, 4), (4, 5), (0, 3), (1, 4), (2, 5)]),
+}
+
+
+@pytest.mark.parametrize("name", sorted(_TREES))
+def test_bp_matches_statevector_state_on_trees(name):
+    nqubits, edges = _TREES[name]
+    circuit = _graph_circuit(nqubits, edges, layers=2, seed=len(name))
+    np.testing.assert_allclose(
+        _fidelity(_final_state(_bp_backend(), circuit), _final_state(_statevector_backend(), circuit)), 1.0, atol=1e-10
+    )
+
+
+@pytest.mark.parametrize("name", sorted(_LOOPY_GRAPHS))
+def test_bp_state_is_exact_on_loopy_graphs_without_truncation(name):
+    """Gauging only changes the basis of each bond, so without truncation the state is exact even on loops."""
+    nqubits, edges = _LOOPY_GRAPHS[name]
+    circuit = _graph_circuit(nqubits, edges, layers=2, seed=len(name))
+    np.testing.assert_allclose(
+        _fidelity(_final_state(_bp_backend(), circuit), _final_state(_statevector_backend(), circuit)), 1.0, atol=1e-9
+    )
+
+
+@pytest.mark.parametrize("seed", [1, 2, 3])
+@pytest.mark.parametrize("name", sorted(_TREES))
+def test_bp_expectation_values_are_exact_on_trees(name, seed):
+    """Belief propagation is exact on a tree, for terms on one qubit, on an edge, and on qubits only joined by a path."""
+    nqubits, edges = _TREES[name]
+    circuit = _graph_circuit(nqubits, edges, layers=2, seed=seed)
+    observables = [
+        pauli_z(0),
+        pauli_x(nqubits - 1),
+        pauli_y(1),
+        pauli_z(edges[0][0]) * pauli_z(edges[0][1]),
+        pauli_x(0) * pauli_y(nqubits - 1),
+        pauli_z(1) * pauli_x(2) * pauli_z(nqubits - 1),
+        sum(pauli_z(a) * pauli_z(b) for a, b in edges) + 0.5 * sum(pauli_x(q) for q in range(nqubits)),
+    ]
+    np.testing.assert_allclose(
+        _expectations(_bp_backend(), circuit, observables),
+        _expectations(_statevector_backend(), circuit, observables),
+        atol=1e-10,
+    )
+
+
+@pytest.mark.parametrize(("nqubits", "layers"), [(6, 1), (8, 1), (8, 2), (10, 2)])
+def test_bp_qaoa_on_a_ring_is_exact_when_the_ring_is_longer_than_the_light_cone(nqubits, layers):
+    """Each term of a depth-p QAOA only sees the qubits within distance p, so on a ring longer than that the
+    correlations around the loop vanish and belief propagation is exact despite the loop."""
+    edges = [(q, (q + 1) % nqubits) for q in range(nqubits)]
+    rng = random.Random(nqubits * layers)
+    circuit = Circuit(nqubits=nqubits)
+    for qubit in range(nqubits):
+        circuit.add(H(qubit))
+    for _ in range(layers):
+        gamma, beta = rng.uniform(0.2, 0.6), rng.uniform(0.2, 0.6)
+        for a, b in edges:
+            circuit.add(CNOT(a, b))
+            circuit.add(RZ(b, phi=2 * gamma))
+            circuit.add(CNOT(a, b))
+        for qubit in range(nqubits):
+            circuit.add(RX(qubit, theta=2 * beta))
+    observables = [pauli_z(a) * pauli_z(b) for a, b in edges] + [pauli_x(0), pauli_y(1)]
+    np.testing.assert_allclose(
+        _expectations(_bp_backend(max_bond_dimension=16), circuit, observables),
+        _expectations(_statevector_backend(), circuit, observables),
+        atol=1e-10,
+    )
+
+
+def test_bp_is_close_on_a_weakly_entangled_lattice():
+    """On a lattice with short loops belief propagation is an approximation, but a short quench stays close."""
+    nqubits, edges = _LOOPY_GRAPHS["lattice"]
+    circuit = Circuit(nqubits=nqubits)
+    for _ in range(5):
+        for a, b in edges:
+            circuit.add(CNOT(a, b))
+            circuit.add(RZ(b, phi=0.2))
+            circuit.add(CNOT(a, b))
+        for qubit in range(nqubits):
+            circuit.add(RX(qubit, theta=0.2))
+    observables = [pauli_z(q) for q in range(nqubits)] + [pauli_z(a) * pauli_z(b) for a, b in edges]
+    np.testing.assert_allclose(
+        _expectations(_bp_backend(max_bond_dimension=8), circuit, observables),
+        _expectations(_statevector_backend(), circuit, observables),
+        atol=1e-4,
+    )
+
+
+@pytest.mark.parametrize(
+    "gate",
+    [
+        X(1),
+        Y(1),
+        Z(1),
+        H(1),
+        S(1),
+        T(1),
+        RX(1, theta=0.7),
+        RY(1, theta=1.3),
+        RZ(1, phi=2.1),
+        U1(1, phi=0.5),
+        U2(1, phi=0.4, gamma=1.1),
+        U3(1, theta=0.9, phi=0.3, gamma=1.7),
+    ],
+)
+def test_bp_single_qubit_gates_match_statevector(gate):
+    circuit = _graph_circuit(3, [(0, 1), (1, 2)], layers=1, seed=3)
+    circuit.add(gate)
+    np.testing.assert_allclose(
+        _fidelity(_final_state(_bp_backend(), circuit), _final_state(_statevector_backend(), circuit)), 1.0, atol=1e-10
+    )
+
+
+@pytest.mark.parametrize(("qubit_a", "qubit_b"), [(0, 1), (1, 0), (0, 4), (4, 0), (2, 4), (4, 2)])
+@pytest.mark.parametrize("kind", ["cnot", "swap", "controlled_ry"])
+def test_bp_two_qubit_gates_on_any_pair_and_order(qubit_a, qubit_b, kind):
+    """Any pair gets its own bond, and the gate matrix has to be oriented whichever qubit comes first."""
+    circuit = Circuit(nqubits=5)
+    for qubit in range(5):
+        circuit.add(H(qubit))
+        circuit.add(RZ(qubit, phi=0.3 * (qubit + 1)))
+    gate = {
+        "cnot": CNOT(qubit_a, qubit_b),
+        "swap": SWAP(qubit_a, qubit_b),
+        "controlled_ry": Controlled(qubit_a, basic_gate=RY(qubit_b, theta=0.9)),
+    }[kind]
+    circuit.add(gate)
+    circuit.add(RY(qubit_a, theta=1.1))
+    circuit.add(gate)
+    np.testing.assert_allclose(
+        _fidelity(_final_state(_bp_backend(), circuit), _final_state(_statevector_backend(), circuit)), 1.0, atol=1e-10
+    )
+
+
+@pytest.mark.parametrize("nqubits", [2, 4, 7])
+def test_bp_ghz_state_from_a_star_is_exact_at_bond_dimension_two(nqubits):
+    circuit = Circuit(nqubits=nqubits)
+    circuit.add(H(0))
+    for qubit in range(1, nqubits):
+        circuit.add(CNOT(0, qubit))
+    state = _final_state(_bp_backend(max_bond_dimension=2), circuit)
+    expected = np.zeros(2**nqubits, dtype=complex)
+    expected[0] = expected[-1] = 1 / np.sqrt(2)
+    np.testing.assert_allclose(state, expected, atol=1e-12)
+
+
+def test_bp_ghz_beyond_statevector_size():
+    """A 60 qubit GHZ state is a tree of bond dimension two, far beyond what a statevector could hold."""
+    nqubits = 60
+    circuit = Circuit(nqubits=nqubits)
+    circuit.add(H(0))
+    for qubit in range(nqubits - 1):
+        circuit.add(CNOT(qubit, qubit + 1))
+    observables = [pauli_z(0) * pauli_z(nqubits - 1), pauli_z(0), pauli_x(0)]
+    np.testing.assert_allclose(
+        _expectations(_bp_backend(max_bond_dimension=2), circuit, observables), [1.0, 0.0, 0.0], atol=1e-10
+    )
+
+
+def test_bp_product_circuit_is_exact_at_bond_dimension_one():
+    circuit = Circuit(nqubits=5)
+    for qubit in range(5):
+        circuit.add(H(qubit))
+        circuit.add(RZ(qubit, phi=0.3 * (qubit + 1)))
+        circuit.add(RX(qubit, theta=0.2 * (qubit + 1)))
+    np.testing.assert_allclose(
+        _final_state(_bp_backend(max_bond_dimension=1), circuit),
+        _final_state(_statevector_backend(), circuit),
+        atol=1e-10,
+    )
+
+
+def test_bp_fidelity_improves_with_bond_dimension_on_a_tree():
+    """On a tree truncation is the only approximation, so raising the cap never hurts and eventually is exact."""
+    nqubits, edges = _TREES["branched"]
+    circuit = _graph_circuit(nqubits, edges, layers=3, seed=7)
+    exact = _final_state(_statevector_backend(), circuit)
+    fidelities = [
+        _fidelity(exact, _final_state(_bp_backend(max_bond_dimension=chi), circuit)) for chi in [1, 2, 4, 8, 16]
+    ]
+    for lower, higher in itertools.pairwise(fidelities):
+        assert higher >= lower - 1e-10
+    assert fidelities[0] < 0.9
+    np.testing.assert_allclose(fidelities[-1], 1.0, atol=1e-10)
+
+
+@pytest.mark.parametrize("max_bond_dimension", [1, 2, 3])
+def test_bp_state_stays_normalized_under_truncation(max_bond_dimension):
+    nqubits, edges = _LOOPY_GRAPHS["ring"]
+    circuit = _graph_circuit(nqubits, edges, layers=3, seed=13)
+    state = _final_state(_bp_backend(max_bond_dimension=max_bond_dimension), circuit)
+    np.testing.assert_allclose(np.linalg.norm(state), 1.0, atol=1e-10)
+
+
+@pytest.mark.parametrize("fuse_gates", [True, False])
+@pytest.mark.parametrize("combine_single_qubit_gates", [True, False])
+def test_bp_circuit_optimizations_do_not_change_the_result(fuse_gates, combine_single_qubit_gates):
+    nqubits, edges = _TREES["branched"]
+    circuit = _graph_circuit(nqubits, edges, layers=2, seed=17)
+    backend = _bp_backend(fuse_gates=fuse_gates, combine_single_qubit_gates=combine_single_qubit_gates)
+    np.testing.assert_allclose(
+        _fidelity(_final_state(backend, circuit), _final_state(_statevector_backend(), circuit)), 1.0, atol=1e-10
+    )
+
+
+@pytest.mark.parametrize("tolerance", [1e-4, 1e-12])
+@pytest.mark.parametrize("max_iterations", [1, 100])
+def test_bp_message_settings_leave_tree_results_exact(tolerance, max_iterations):
+    """The messages on a tree are refreshed after every layer, so even a loose or short run stays exact."""
+    nqubits, edges = _TREES["chain"]
+    circuit = _graph_circuit(nqubits, edges, layers=2, seed=19)
+    observables = [pauli_z(0) * pauli_z(4), pauli_x(2)]
+    backend = _bp_backend(tolerance=tolerance, max_iterations=max_iterations)
+    np.testing.assert_allclose(
+        _expectations(backend, circuit, observables),
+        _expectations(_statevector_backend(), circuit, observables),
+        atol=1e-10,
+    )
+
+
+def test_bp_trotterized_schedule_matches_statevector_on_a_chain():
+    nqubits, total_time, steps = 6, 2.0, 10
+    h_x = -sum(pauli_x(i) for i in range(nqubits))
+    h_z = sum(pauli_z(i) * pauli_z(i + 1) for i in range(nqubits - 1))
+    circuit = TrotterizedSchedule(Schedule.linear(h_x, h_z, total_time, total_time / steps))
+    initial = Circuit(circuit.nqubits)
+    for qubit in range(circuit.nqubits):
+        initial.add(H(qubit))
+    circuit.prepend(initial)
+    np.testing.assert_allclose(
+        _expectations(_bp_backend(), circuit, [h_z, h_x]),
+        _expectations(_statevector_backend(), circuit, [h_z, h_x]),
+        atol=1e-8,
+    )
+
+
+@pytest.mark.parametrize(
+    ("initial_state", "expected"),
+    [(InitialState.ZERO, [1.0, 0.0]), (InitialState.ONE, [-1.0, 0.0]), (InitialState.UNIFORM, [0.0, 1.0])],
+)
+def test_bp_initial_states(initial_state, expected):
+    circuit = Circuit(nqubits=3)
+    circuit.add(CNOT(0, 1))
+    circuit.add(CNOT(0, 1))
+    readout = Readout().with_expectation([pauli_z(2), pauli_x(2)])
+    result = _bp_backend().execute(DigitalPropagation(circuit=circuit, initial_state=initial_state), readout)
+    np.testing.assert_allclose(np.real(result.get_expectation_values()), expected, atol=1e-12)
+
+
+def test_bp_reports_mid_circuit_measurements():
+    circuit = Circuit(nqubits=2)
+    circuit.add(X(0))
+    circuit.add(M(0))
+    circuit.add(CNOT(0, 1))
+    circuit.add(M(1))
+    readout = Readout().with_expectation([pauli_z(0), pauli_z(1)])
+    result = _bp_backend().execute(DigitalPropagation(circuit=circuit), readout)
+    assert len(result.intermediate_results) == 1
+    np.testing.assert_allclose(
+        np.real(result.intermediate_results[0].get_expectation_values()), [-1.0, 1.0], atol=1e-12
+    )
+    np.testing.assert_allclose(np.real(result.get_expectation_values()), [-1.0, -1.0], atol=1e-12)
+
+
+def test_bp_state_tomography_matches_statevector():
+    nqubits, edges = _LOOPY_GRAPHS["complete"]
+    circuit = _graph_circuit(nqubits, edges, layers=1, seed=21)
+    bp = _bp_backend().execute(DigitalPropagation(circuit=circuit), Readout().with_state_tomography()).get_state()
+    exact = (
+        _statevector_backend()
+        .execute(DigitalPropagation(circuit=circuit), Readout().with_state_tomography())
+        .get_state()
+    )
+    assert bp.shape == exact.shape
+    np.testing.assert_allclose(_fidelity(bp.dense().flatten(), exact.dense().flatten()), 1.0, atol=1e-10)
+
+
+def test_bp_rejects_sampling_readout():
+    """The method estimates expectation values, so it refuses to sample rather than return something wrong."""
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    backend = _bp_backend()
+    propagation = DigitalPropagation(circuit=circuit)
+    readout = Readout().with_sampling(nshots=10)
+    with pytest.raises(ValueError, match="BP backend"):
+        backend.execute(propagation, readout)
+
+
+def test_bp_rejects_an_unsupported_readout_before_simulating():
+    """The readout is checked up front, so the gate BP cannot apply is never reached."""
+    circuit = Circuit(nqubits=3)
+    circuit.add(Controlled(0, 1, basic_gate=X(2)))
+    backend = _bp_backend()
+    propagation = DigitalPropagation(circuit=circuit)
+    readout = Readout().with_sampling(nshots=10)
+    with pytest.raises(ValueError, match="BP backend"):
+        backend.execute(propagation, readout)
+
+
+@pytest.mark.parametrize("method", [DigitalMethod.mps(), DigitalMethod.bp()])
+def test_tensor_network_expectation_with_shots_is_sampled_and_seeded(method):
+    """A finite nshots draws shot noise around the exact value, reproducibly for a given seed. An odd nshots can never average <X> to its exact zero."""
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    readout = Readout().with_expectation(observables=[pauli_x(0), pauli_z(0) * pauli_z(1)], nshots=51)
+    propagation = DigitalPropagation(circuit=circuit)
+    results = [
+        QiliSim(digital_simulation_method=method, execution_config=ExecutionConfig(seed=seed, num_threads=1))
+        .execute(propagation, readout)
+        .get_expectation_values()
+        for seed in (3, 3, 4)
+    ]
+    assert results[0] == results[1]
+    assert results[0] != results[2]
+    assert results[0][0] != 0.0
+    assert round(51 * (results[0][0] + 1) / 2) == pytest.approx(51 * (results[0][0] + 1) / 2)
+    assert results[0][1] == pytest.approx(1.0)
+
+
+def test_bp_rejects_gates_on_more_than_two_qubits():
+    circuit = Circuit(nqubits=3)
+    circuit.add(Controlled(0, 1, basic_gate=X(2)))
+    backend = _bp_backend()
+    propagation = DigitalPropagation(circuit=circuit)
+    readout = Readout().with_expectation([pauli_z(2)])
+    with pytest.raises(ValueError, match="one- and two-qubit"):
+        backend.execute(propagation, readout)
+
+
+def test_bp_rejects_a_density_matrix_initial_state():
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    backend = _bp_backend()
+    propagation = DigitalPropagation(circuit=circuit, initial_state=ket(0, 0).to_density_matrix())
+    readout = Readout().with_expectation([pauli_z(0)])
+    with pytest.raises(ValueError, match="BP backend"):
+        backend.execute(propagation, readout)
+
+
+def test_bp_rejects_kraus_noise():
+    circuit = Circuit(nqubits=1)
+    circuit.add(X(0))
+    bit_flip = NoiseModel()
+    bit_flip.add(BitFlip(probability=0.1), qubits=[0])
+    backend = QiliSim(digital_simulation_method=DigitalMethod.bp(), noise_model=bit_flip)
+    propagation = DigitalPropagation(circuit=circuit)
+    readout = Readout().with_expectation([pauli_z(0)])
+    with pytest.raises(ValueError, match="Kraus or Lindblad"):
+        backend.execute(propagation, readout)
+
+
+def test_bp_reservoir_is_rejected():
+    encoding = Circuit(1)
+    encoding.add(RX(0, theta=ReservoirInput("u", 0.1)))
+    layer = ReservoirLayer(
+        evolution_dynamics=Schedule(hamiltonians={"h": pauli_z(0)}, total_time=1.0, dt=0.1),
+        input_encoding=encoding,
+    )
+    reservoir = QuantumReservoir(initial_state=ket(0), reservoir_layer=layer, input_per_layer=[{"u": 0.2}])
+    backend = QiliSim(digital_simulation_method=DigitalMethod.bp())
+    readout = Readout().with_state_tomography()
+    with pytest.raises(ValueError, match="reservoirs"):
+        backend.execute(reservoir, readout)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Stabilizer backend integration tests
 # ──────────────────────────────────────────────────────────────────────────────
 

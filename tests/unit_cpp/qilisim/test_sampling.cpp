@@ -26,6 +26,7 @@
 #include <complex>
 #include <map>
 #include <numeric>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -1237,6 +1238,232 @@ TEST_F(SamplingTest, MPS_QubitCountMismatchThrows) {
     MPSState final_state(2);
     std::vector<py::object> intermediate_results;
     EXPECT_THROW(sampling_mps(gates, 3, initial, noNoise, final_state, intermediate_results, cfg, readout), py::value_error);
+}
+
+// The BP simulator applies the circuit, with single-qubit merging and fusion, and ends with converged messages.
+TEST_F(SamplingTest, BP_RunsTheCircuitWithMergingAndFusion) {
+    int n = 3;
+    std::vector<Gate> gates = {makeH(0), makeX(1), makeX(1), Gate("X", pauliX2(), {0}, {2}, {}), makeH(2), Gate("X", pauliX2(), {2}, {0}, {})};
+    QiliSimConfig cfgMerge = cfg;
+    cfgMerge.set_combine_single_qubit_gates(true);
+    cfgMerge.set_fuse_gates(true);
+    for (const QiliSimConfig& config : {cfg, cfgMerge}) {
+        BPState initial(n);
+        BPState final_state(n);
+        std::vector<py::object> intermediate_results;
+        EXPECT_NO_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, config, readout));
+        EXPECT_TRUE(intermediate_results.empty());
+        EXPECT_TRUE(final_state.get_bp_converged());
+        EXPECT_EQ(final_state.get_num_edges(), 1);
+        DenseMatrix dense = final_state.as_dense();
+        EXPECT_NEAR(dense.norm(), 1.0, 1e-12);
+        EXPECT_NEAR(std::abs(dense(0, 0)), 0.5, 1e-12);  // qubits 0 and 2 end in an equal superposition
+        EXPECT_NEAR(std::abs(dense(2, 0)), 0.0, 1e-12);  // qubit 1 is flipped twice, so it stays |0>
+    }
+}
+
+// Kraus and Lindblad noise would make the state mixed, so both are rejected rather than dropped.
+TEST_F(SamplingTest, BP_KrausAndLindbladNoise_Throw) {
+    int n = 1;
+    std::vector<Gate> gates = {makeX(0)};
+    BPState initial(n);
+    BPState final_state(n);
+    std::vector<py::object> intermediate_results;
+    SparseMatrix identity = pauliX2() * pauliX2();
+    NoiseModelCpp kraus_global;
+    kraus_global.add_kraus_operators_global({identity});
+    NoiseModelCpp kraus_per_qubit;
+    kraus_per_qubit.add_kraus_operators_per_qubit(0, {identity});
+    NoiseModelCpp kraus_per_gate;
+    kraus_per_gate.add_kraus_operators_per_gate("X", {identity});
+    NoiseModelCpp kraus_per_gate_qubit;
+    kraus_per_gate_qubit.add_kraus_operators_per_gate_qubit("X", 0, {identity});
+    NoiseModelCpp lindblad;
+    lindblad.add_jump_operator(identity);
+    for (NoiseModelCpp* nm : {&kraus_global, &kraus_per_qubit, &kraus_per_gate, &kraus_per_gate_qubit, &lindblad}) {
+        EXPECT_THROW(sampling_bp(gates, n, initial, *nm, final_state, intermediate_results, cfg, readout), py::value_error);
+    }
+}
+
+// Monte Carlo and measurement collapse are ignored with a warning, and the circuit still runs.
+TEST_F(SamplingTest, BP_MonteCarloAndCollapse_IgnoredWithWarning) {
+    int n = 1;
+    std::vector<Gate> gates = {makeX(0)};
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    QiliSimConfig cfgCollapse = cfg;
+    cfgCollapse.set_measurement_collapse(true);
+    for (const QiliSimConfig& config : {cfgMC, cfgCollapse}) {
+        BPState initial(n);
+        BPState final_state(n);
+        std::vector<py::object> intermediate_results;
+        EXPECT_NO_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, config, readout));
+        EXPECT_NEAR(std::abs(final_state.as_dense()(1, 0)), 1.0, 1e-12);
+    }
+}
+
+// A mid-circuit measurement reports an intermediate result, while the final one is left to the caller.
+TEST_F(SamplingTest, MidCircuitMeasurementsBP) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeM(0), makeM(1), Gate("X", pauliX2(), {0}, {1}, {}), makeM(1)};
+    BPState initial(n);
+    BPState final_state(n);
+    py::exec(R"(
+        from qilisdk.readout import ExpectationReadout
+        from qilisdk.analog.hamiltonian import Z
+        _bp_mid_ro = [ExpectationReadout(observables=[Z(0), Z(1)])]
+    )");
+    py::list expectation_readout = py::globals()["_bp_mid_ro"].cast<py::list>();
+    std::vector<py::object> intermediate_results;
+    sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, expectation_readout);
+    ASSERT_EQ(intermediate_results.size(), 1u);
+    py::list values = intermediate_results[0].attr("expectation_values").attr("expectation_values");
+    EXPECT_NEAR(values[0].cast<cx>().real(), -1.0, 1e-12);
+    EXPECT_NEAR(values[1].cast<cx>().real(), 1.0, 1e-12);
+    EXPECT_NEAR(std::abs(final_state.as_dense()(3, 0)), 1.0, 1e-12);  // CNOT then flips qubit 1
+}
+
+// A gate that turns the state into NaN is reported as such.
+TEST_F(SamplingTest, BP_NaNGateThrows) {
+    int n = 2;
+    SparseMatrix nan_matrix = pauliX2();
+    nan_matrix.coeffRef(0, 1) = Complex(std::nan(""), 0.0);
+    std::vector<Gate> gates = {Gate("U1", nan_matrix, {}, {1}, {})};
+    BPState initial(n);
+    BPState final_state(n);
+    std::vector<py::object> intermediate_results;
+    std::string message;
+    try {
+        sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, readout);
+    } catch (const py::value_error& e) {
+        message = e.what();
+    }
+    EXPECT_NE(message.find("NaN"), std::string::npos);
+}
+
+// A bond dimension of one cannot hold a Bell state, so the discarded weight is warned about.
+TEST_F(SamplingTest, BP_TruncationWarnsWhenSignificant) {
+    int n = 2;
+    std::vector<Gate> gates = {makeH(0), Gate("X", pauliX2(), {0}, {1}, {})};
+    BPState initial(n);
+    BPState final_state(n);
+    std::vector<py::object> intermediate_results;
+    QiliSimConfig cfgTight = cfg;
+    cfgTight.set_bp_max_bond_dimension(1);
+    EXPECT_NO_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfgTight, readout));
+    EXPECT_NEAR(final_state.get_truncation_error(), 0.5, 1e-12);
+    EXPECT_GT(final_state.get_truncation_error(), BPState::TRUNCATION_WARNING_THRESHOLD);
+    EXPECT_EQ(final_state.get_max_bond_dimension_used(), 1);
+}
+
+// One sweep cannot converge the messages around a loop of generic gates, so that is warned about.
+TEST_F(SamplingTest, BP_NonConvergenceWarns) {
+    int n = 3;
+    std::mt19937_64 engine(5);
+    std::uniform_real_distribution<double> uniform(-1.0, 1.0);
+    std::vector<Gate> gates;
+    for (int layer = 0; layer < 2; ++layer) {
+        for (const std::vector<int>& qubits : std::vector<std::vector<int>>{{0}, {1}, {2}, {0, 1}, {1, 2}, {2, 0}}) {
+            int dim = 1 << qubits.size();
+            DenseMatrix random(dim, dim);
+            for (int index = 0; index < dim * dim; ++index) {
+                random(index % dim, index / dim) = cx(uniform(engine), uniform(engine));
+            }
+            Eigen::HouseholderQR<DenseMatrix> qr(random);
+            DenseMatrix unitary = qr.householderQ() * DenseMatrix::Identity(dim, dim);
+            gates.push_back(Gate(qubits.size() == 1 ? "U1" : "U2", unitary.sparseView(), {}, qubits, {}));
+        }
+    }
+    BPState initial(n);
+    BPState final_state(n);
+    std::vector<py::object> intermediate_results;
+    QiliSimConfig cfgOneSweep = cfg;
+    cfgOneSweep.set_bp_max_iterations(1);
+    cfgOneSweep.set_bp_tolerance(1e-15);
+    EXPECT_NO_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfgOneSweep, readout));
+    EXPECT_FALSE(final_state.get_bp_converged());
+}
+
+// An unsupported readout is rejected before any gate is applied.
+TEST_F(SamplingTest, BP_UnsupportedReadoutThrowsBeforeSimulating) {
+    int n = 3;
+    std::vector<Gate> gates = {Gate("X", pauliX2(), {0, 1}, {2}, {})};
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout, StateTomographyReadout
+        _bp_early_samp = [SamplingReadout(nshots=10)]
+        _bp_early_tomo = [StateTomographyReadout(method="mle")]
+    )");
+    for (const char* name : {"_bp_early_samp", "_bp_early_tomo"}) {
+        BPState initial(n);
+        BPState final_state(n);
+        std::vector<py::object> intermediate_results;
+        py::list early_readout = py::globals()[name].cast<py::list>();
+        EXPECT_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, early_readout), py::value_error) << name;
+    }
+}
+
+// A gate on three qubits cannot be applied, so it is rejected before the simulation starts.
+TEST_F(SamplingTest, BP_ThreeQubitGateThrowsBeforeSimulating) {
+    int n = 3;
+    std::vector<Gate> gates = {makeH(0), Gate("X", pauliX2(), {0, 1}, {2}, {})};
+    BPState initial(n);
+    BPState final_state(n);
+    std::vector<py::object> intermediate_results;
+    EXPECT_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, readout), py::value_error);
+    EXPECT_EQ(final_state.get_num_edges(), 0);
+}
+
+// State tomography on more qubits than can be materialized is rejected before the simulation starts.
+TEST_F(SamplingTest, BP_LargeStateTomographyThrowsBeforeSimulating) {
+    int n = BPState::MAX_DENSE_QUBITS + 1;
+    py::exec(R"(
+        from qilisdk.readout import StateTomographyReadout
+        _bp_large_tomo = [StateTomographyReadout()]
+    )");
+    std::vector<Gate> gates = {makeX(0)};
+    BPState initial(n);
+    BPState final_state(n);
+    std::vector<py::object> intermediate_results;
+    py::list tomography_readout = py::globals()["_bp_large_tomo"].cast<py::list>();
+    EXPECT_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, tomography_readout), py::value_error);
+}
+
+// Expectation values on more qubits than a Pauli string can hold are rejected before the simulation starts.
+TEST_F(SamplingTest, BP_LargeExpectationReadoutThrowsBeforeSimulating) {
+    int n = MAX_QUBITS_PAULI + 1;
+    py::exec(R"(
+        from qilisdk.analog import Z
+        from qilisdk.readout import ExpectationReadout
+        _bp_large_expectation = [ExpectationReadout(observables=[Z(0)])]
+    )");
+    std::vector<Gate> gates = {makeX(0)};
+    BPState initial(n);
+    BPState final_state(n);
+    std::vector<py::object> intermediate_results;
+    py::list expectation_readout = py::globals()["_bp_large_expectation"].cast<py::list>();
+    EXPECT_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, expectation_readout), py::value_error);
+}
+
+// Without sampling there is nothing for readout error to act on, so it is ignored with a warning.
+TEST_F(SamplingTest, BP_ReadoutErrorIgnoredWithWarning) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0)};
+    NoiseModelCpp readout_noise;
+    readout_noise.add_readout_error_per_qubit(1, 0.1, 0.2);
+    BPState initial(n);
+    BPState final_state(n);
+    std::vector<py::object> intermediate_results;
+    EXPECT_NO_THROW(sampling_bp(gates, n, initial, readout_noise, final_state, intermediate_results, cfg, readout));
+    EXPECT_NEAR(std::abs(final_state.as_dense()(2, 0)), 1.0, 1e-12);
+}
+
+// The circuit and the state must agree on how many qubits there are.
+TEST_F(SamplingTest, BP_QubitCountMismatchThrows) {
+    std::vector<Gate> gates = {makeX(0)};
+    BPState initial(2);
+    BPState final_state(2);
+    std::vector<py::object> intermediate_results;
+    EXPECT_THROW(sampling_bp(gates, 3, initial, noNoise, final_state, intermediate_results, cfg, readout), py::value_error);
 }
 
 // GCOV_EXCL_BR_STOP

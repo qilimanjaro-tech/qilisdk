@@ -216,24 +216,47 @@ Tensor Tensor::permute(const std::vector<int>& perm) const {
     }
     Tensor out(new_shape);
 
-    // Walk the destination buffer in memory order
+    // Get the stride of each source leg
     std::vector<int64_t> source_stride(shape.size());
     int64_t stride = 1;
     for (size_t leg = 0; leg < shape.size(); ++leg) {
         source_stride[leg] = stride;
         stride *= shape[leg];
     }
-    std::vector<int> odometer(perm.size(), 0);
+
+    // Merge runs of destination legs that are also adjacent in the source, since they move as one
+    std::vector<int64_t> extents;
+    std::vector<int64_t> strides;
+    for (size_t leg = 0; leg < perm.size(); ++leg) {
+        if (leg > 0 && perm[leg] == perm[leg - 1] + 1) {
+            extents.back() *= new_shape[leg];
+        } else {
+            extents.push_back(new_shape[leg]);
+            strides.push_back(source_stride[perm[leg]]);
+        }
+    }
+
+    // Walk the destination buffer in memory order, copying a whole run of the fastest leg at a time
+    const int64_t inner = extents[0];
+    const int64_t inner_stride = strides[0];
+    std::vector<int64_t> odometer(extents.size(), 0);
     int64_t source = 0;
-    for (int64_t flat = 0; flat < size(); ++flat) {
-        out.data[static_cast<size_t>(flat)] = data[static_cast<size_t>(source)];
-        for (size_t leg = 0; leg < perm.size(); ++leg) {
-            int64_t leg_stride = source_stride[perm[leg]];
-            if (++odometer[leg] < new_shape[leg]) {
-                source += leg_stride;
+    for (int64_t flat = 0; flat < size(); flat += inner) {
+        const Complex* from = data.data() + source;
+        Complex* to = out.data.data() + flat;
+        if (inner_stride == 1) {
+            std::copy(from, from + inner, to);
+        } else {
+            for (int64_t i = 0; i < inner; ++i) {
+                to[i] = from[i * inner_stride];
+            }
+        }
+        for (size_t leg = 1; leg < extents.size(); ++leg) {
+            if (++odometer[leg] < extents[leg]) {
+                source += strides[leg];
                 break;
             }
-            source -= leg_stride * (new_shape[leg] - 1);
+            source -= strides[leg] * (extents[leg] - 1);
             odometer[leg] = 0;
         }
     }

@@ -384,7 +384,7 @@ class DigitalMethod(BaseSimulatorConfig):
             arithmetic per fused block. Supersedes ``combine_single_qubit_gates``
             when enabled, and applies to the matrix-free statevector path
             (disabled automatically when a noise model is present) and to the
-            MPS path, where blocks span at most two qubits. Defaults to ``True``.
+            MPS and BP paths, where blocks span at most two qubits. Defaults to ``True``.
         max_fused_qubits (int): Maximum number of qubits a single fused block may
             span. Larger values fuse more aggressively but build larger dense
             matrices (``2**max_fused_qubits`` square). Defaults to ``4``.
@@ -392,10 +392,10 @@ class DigitalMethod(BaseSimulatorConfig):
             for statevector simulation. Defaults to ``True``.
     """
 
-    digital_method: Literal["statevector", "statevector_matrix_free", "stabilizer", "mps"] = Field(
+    digital_method: Literal["statevector", "statevector_matrix_free", "stabilizer", "mps", "bp"] = Field(
         default="statevector_matrix_free",
         description=(
-            "Digital simulation method to use: 'statevector', 'statevector_matrix_free', 'stabilizer', or 'mps'. "
+            "Digital simulation method to use: 'statevector', 'statevector_matrix_free', 'stabilizer', 'mps', or 'bp'. "
             "This is set automatically by the preferred constructors like `statevector`."
         ),
     )
@@ -415,7 +415,7 @@ class DigitalMethod(BaseSimulatorConfig):
     )
     fuse_gates: bool = Field(
         default=True,
-        description="Whether to fuse runs of adjacent gates on a small set of qubits into a single dense multi-qubit operation to reduce passes over the statevector. Applies to the matrix-free statevector and MPS paths.",
+        description="Whether to fuse runs of adjacent gates on a small set of qubits into a single dense multi-qubit operation to reduce passes over the statevector. Applies to the matrix-free statevector, MPS and BP paths.",
     )
     max_fused_qubits: int = Field(
         default=0,
@@ -436,6 +436,7 @@ class DigitalMethod(BaseSimulatorConfig):
     mps_max_bond_dimension: int = Field(
         default=64,
         gt=0,
+        le=INT32_MAX,
         description="Largest bond dimension kept when using the MPS digital simulation method. Larger values are more accurate but cost memory and runtime.",
     )
     mps_truncation_cutoff: float = Field(
@@ -443,6 +444,29 @@ class DigitalMethod(BaseSimulatorConfig):
         ge=0.0,
         lt=1.0,
         description="Singular values smaller than this fraction of the largest are discarded when using the MPS digital simulation method.",
+    )
+    bp_max_bond_dimension: int = Field(
+        default=16,
+        gt=0,
+        le=INT32_MAX,
+        description="Largest bond dimension kept on each edge when using the BP digital simulation method.",
+    )
+    bp_truncation_cutoff: float = Field(
+        default=1e-10,
+        ge=0.0,
+        lt=1.0,
+        description="Singular values smaller than this fraction of the largest are discarded when using the BP digital simulation method.",
+    )
+    bp_max_iterations: int = Field(
+        default=50,
+        gt=0,
+        le=INT32_MAX,
+        description="Most message-passing sweeps a single belief propagation run may take when using the BP digital simulation method.",
+    )
+    bp_tolerance: float = Field(
+        default=1e-8,
+        gt=0.0,
+        description="Largest change in any message at which belief propagation counts as converged when using the BP digital simulation method.",
     )
 
     def get_config(self) -> SolverConfigDict:
@@ -457,6 +481,10 @@ class DigitalMethod(BaseSimulatorConfig):
             "stabilizer_max_states": self.stabilizer_max_states,
             "mps_max_bond_dimension": self.mps_max_bond_dimension,
             "mps_truncation_cutoff": self.mps_truncation_cutoff,
+            "bp_max_bond_dimension": self.bp_max_bond_dimension,
+            "bp_truncation_cutoff": self.bp_truncation_cutoff,
+            "bp_max_iterations": self.bp_max_iterations,
+            "bp_tolerance": self.bp_tolerance,
         }
         return d
 
@@ -554,6 +582,64 @@ class DigitalMethod(BaseSimulatorConfig):
             digital_method="mps",
             mps_max_bond_dimension=max_bond_dimension,
             mps_truncation_cutoff=truncation_cutoff,
+            combine_single_qubit_gates=combine_single_qubit_gates,
+            fuse_gates=fuse_gates,
+        )
+
+    @classmethod
+    def bp(
+        cls,
+        max_bond_dimension: int = 16,
+        truncation_cutoff: float = 1e-10,
+        max_iterations: int = 50,
+        tolerance: float = 1e-8,
+        combine_single_qubit_gates: bool = True,
+        fuse_gates: bool = True,
+    ) -> DigitalMethod:
+        """Return a belief-propagation tensor network simulation configuration.
+
+        The state is a tensor network with one tensor per qubit and a bond for every pair of qubits a two-qubit
+        gate acts on, so its shape follows the circuit's interaction graph and no swaps are needed. Gates are applied
+        in the gauge given by the belief propagation messages of the norm network and truncated by SVD, and
+        expectation values are estimated by contracting the cluster each observable acts on with the messages entering
+        it. Both steps are exact on a tree, and on a loopy graph they neglect the correlations around loops, which is
+        accurate for sparse, low-degree graphs with decaying correlations.
+
+        Only expectation values and exact state tomography are supported as readouts, and noise models are limited to
+        parameter perturbations.
+
+        Args:
+            max_bond_dimension (int): Largest bond dimension to keep on each edge. Defaults to ``16``.
+            truncation_cutoff (float): Singular values below this fraction of the largest are discarded regardless of
+                the bond dimension. Must be in ``[0, 1)``. Defaults to ``1e-10``.
+            max_iterations (int): Most message-passing sweeps a single belief propagation run may take. Defaults to
+                ``50``.
+            tolerance (float): Largest change in any message at which belief propagation counts as converged. Defaults
+                to ``1e-8``.
+            combine_single_qubit_gates (bool): Whether to combine consecutive single-qubit gates into a single
+                operation. Defaults to ``True``.
+            fuse_gates (bool): Whether to fuse runs of adjacent gates on the same pair into a single two-qubit
+                operation. Defaults to ``True``.
+
+        Returns:
+            DigitalMethod: Configured BP digital configuration.
+        """
+        logger.debug(
+            "[BackendConfig] Configuring BP digital method (max_bond_dimension={}, truncation_cutoff={}, "
+            "max_iterations={}, tolerance={}, combine_single_qubit_gates={}, fuse_gates={})",
+            max_bond_dimension,
+            truncation_cutoff,
+            max_iterations,
+            tolerance,
+            combine_single_qubit_gates,
+            fuse_gates,
+        )
+        return DigitalMethod(
+            digital_method="bp",
+            bp_max_bond_dimension=max_bond_dimension,
+            bp_truncation_cutoff=truncation_cutoff,
+            bp_max_iterations=max_iterations,
+            bp_tolerance=tolerance,
             combine_single_qubit_gates=combine_single_qubit_gates,
             fuse_gates=fuse_gates,
         )

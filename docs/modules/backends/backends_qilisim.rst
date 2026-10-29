@@ -160,7 +160,7 @@ Example, using the adaptive integrator:
 Digital simulation methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There are currently three digital simulation methods available. The first is a statevector simulator, which can be configured through the options:
+There are currently four digital simulation methods available. The first is a statevector simulator, which can be configured through the options:
 
 .. list-table::
    :header-rows: 1
@@ -233,6 +233,57 @@ many qubits are cheap. It supports one- and two-qubit gates, and has the followi
 
     backend = QiliSim(
         digital_simulation_method=DigitalMethod.mps(max_bond_dimension=64),
+    )
+
+The fourth is a belief propagation tensor network simulator. Like the matrix product state simulator it keeps one tensor per qubit,
+but rather than a chain it adds a bond between every pair of qubits a two-qubit gate acts on, so the network takes the shape of the
+circuit's interaction graph and no swaps are needed. Each bond is truncated in the gauge given by belief propagation, a message-passing
+scheme that approximates the rest of the network around the gate, and expectation values are estimated in the same way.
+
+On a tree, such as a chain, this is exact up to truncation and agrees with the matrix product state simulator. On a graph with loops it
+neglects the correlations around the loops, which is accurate for sparse, low-degree graphs such as heavy-hex or square lattices and
+bounded-degree QAOA graphs, as long as correlations decay quickly. Its cost grows only linearly with the number of qubits, so these circuits
+can be simulated on far more qubits than a statevector or a matrix product state can hold. It is not suited to densely connected circuits, or
+to deep circuits that build up long-range entanglement.
+
+Only expectation values and exact state tomography can be read out, since sampling is not supported. It has the following options:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 35 65
+
+   * - Option
+     - Meaning
+   * - ``max_bond_dimension``
+     - Largest bond dimension kept on each edge. Larger values are more accurate but cost memory and runtime.
+   * - ``truncation_cutoff``
+     - Singular values below this fraction of the largest are discarded.
+   * - ``max_iterations``
+     - Most message-passing sweeps a single belief propagation run may take. A warning is logged if a run does not converge.
+   * - ``tolerance``
+     - Largest change in any message at which belief propagation counts as converged.
+   * - ``combine_single_qubit_gates``
+     - Whether to combine consecutive single-qubit gates on the same qubit into one operation.
+   * - ``fuse_gates``
+     - Whether to fuse runs of adjacent gates on the same pair of qubits into one operation.
+
+.. code-block:: python
+
+    from qilisdk.analog import Z
+    from qilisdk.backends import DigitalMethod, QiliSim
+    from qilisdk.digital import QAOA
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.readout import Readout
+
+    # Two layers of QAOA on a ring of 100 qubits, far too many for a statevector
+    nqubits = 100
+    cost = sum(Z(i) * Z((i + 1) % nqubits) for i in range(nqubits))
+    circuit = QAOA(problem_hamiltonian=cost, layers=2, problem_params=[0.4, 0.3], mixer_params=[0.3, 0.2])
+
+    backend = QiliSim(digital_simulation_method=DigitalMethod.bp(max_bond_dimension=16))
+    result = backend.execute(
+        DigitalPropagation(circuit),
+        Readout().with_expectation([cost]),
     )
 
 Execution and Monte Carlo
@@ -327,4 +378,6 @@ These require the ``cuda`` extra to be installed:
     * - :meth:`DigitalMethod.stabilizer() <qilisdk.backends.backend_config.DigitalMethod.stabilizer>`
       - |n|
     * - :meth:`DigitalMethod.mps() <qilisdk.backends.backend_config.DigitalMethod.mps>`
+      - |n|
+    * - :meth:`DigitalMethod.bp() <qilisdk.backends.backend_config.DigitalMethod.bp>`
       - |n|
