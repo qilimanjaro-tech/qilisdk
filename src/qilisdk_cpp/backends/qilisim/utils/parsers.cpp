@@ -373,7 +373,7 @@ py::object construct_result_object(const ExponentialAnsatz& state, const py::obj
         py::object: The result object for the given state and readout.
 
     Raises:
-        py::value_error: If a sampled expectation value is imaginary.
+        py::value_error: If an unsupported readout method is provided.
     */
     py::list results;
     for (py::handle ro_handle : readout) {

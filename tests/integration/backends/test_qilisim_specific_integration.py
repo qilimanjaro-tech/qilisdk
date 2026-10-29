@@ -49,7 +49,7 @@ from qilisdk.digital import (
 )
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
-from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, NoiseModel, ReadoutAssignment
+from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, NoiseModel, OffsetPerturbation, ReadoutAssignment
 from qilisdk.readout import ExpectationReadout, Readout, SamplingReadout, StateTomographyReadout
 
 random.seed(42)
@@ -1975,6 +1975,18 @@ def test_bp_rejects_kraus_noise():
     readout = Readout().with_expectation([pauli_z(0)])
     with pytest.raises(ValueError, match="Kraus or Lindblad"):
         backend.execute(propagation, readout)
+
+
+def test_bp_applies_parameter_perturbations():
+    circuit = Circuit(nqubits=1)
+    circuit.add(RX(0, theta=0.0))
+    offset = NoiseModel()
+    offset.add(OffsetPerturbation(offset=np.pi), gate=RX, parameter="theta")
+    backend = QiliSim(digital_simulation_method=DigitalMethod.bp(), noise_model=offset)
+    propagation = DigitalPropagation(circuit=circuit)
+    readout = Readout().with_expectation([pauli_z(0)])
+    result = backend.execute(propagation, readout)
+    assert np.isclose(result.get_expectation_values()[0], -1.0)
 
 
 def test_bp_reservoir_is_rejected():
