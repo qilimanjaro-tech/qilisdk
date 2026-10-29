@@ -16,7 +16,7 @@ from solvers_module import solve_with_simulated_annealing  # ty:ignore[unresolve
 
 from qilisdk.core import Model
 
-from .base_solver import ClassicalSolver, ClassicalSolverResult
+from .base_solver import ClassicalSolver, SolverResult
 
 
 class SimulatedAnnealingSolver(ClassicalSolver):
@@ -63,7 +63,7 @@ class SimulatedAnnealingSolver(ClassicalSolver):
         self.seed = seed
         self.num_threads = num_threads
 
-    def solve(self, model: Model) -> ClassicalSolverResult:
+    def solve(self, model: Model) -> SolverResult:
         """Solve the given QUBO by annealing it in C++.
 
         Args:
@@ -72,7 +72,7 @@ class SimulatedAnnealingSolver(ClassicalSolver):
                 a general ``Model`` must be converted with ``to_qubo()`` first.
 
         Returns:
-            ClassicalSolverResult: the results of the optimization, including the objective value and best solution.
+            SolverResult: the results of the optimization, including the objective value and best solution.
 
         Raises:
             ValueError: if the given model is not a QUBO, or if the annealing settings are invalid.
@@ -87,4 +87,4 @@ class SimulatedAnnealingSolver(ClassicalSolver):
             seed=self.seed,
             num_threads=self.num_threads,
         )
-        return ClassicalSolverResult(results, sample, model.objective.label)
+        return SolverResult(results, sample, model.objective.label)

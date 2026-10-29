@@ -23,17 +23,20 @@ from qilisdk._optionals import (
     import_optional_dependencies,
 )
 
-from .base_solver import ClassicalSolver, ClassicalSolverResult
+from .base_solver import ClassicalSolver, SolverResult
 from .brute_force_solver import BruteForceSolver
 from .scipy_solver import ScipySolver
 from .simulated_annealing_solver import SimulatedAnnealingSolver
 
+# Old name from 0.3.x, kept so existing imports keep working
+ClassicalSolverResult = SolverResult
+
 __all__ = [
     "BruteForceSolver",
     "ClassicalSolver",
-    "ClassicalSolverResult",
     "ScipySolver",
     "SimulatedAnnealingSolver",
+    "SolverResult",
 ]
 
 # ScipSolver relies on the optional ``pyscipopt`` dependency
