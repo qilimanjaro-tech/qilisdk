@@ -83,7 +83,15 @@ _REVERSE_QASM2_ADJOINT_MAP: dict[str, type[BasicGate]] = {name: gate for gate, n
 _QASM2_TOFFOLI_NQUBITS = 3
 
 # The controlled gates that qelib1.inc names, keyed by the gate they control and their number of control qubits.
-_QASM2_CONTROLLED_MAP: dict[tuple[type[BasicGate], int], str] = {(X, 1): "cx", (Z, 1): "cz", (X, 2): "ccx"}
+_QASM2_CONTROLLED_MAP: dict[tuple[type[BasicGate], int], str] = {
+    (X, 1): "cx",
+    (Y, 1): "cy",
+    (Z, 1): "cz",
+    (RZ, 1): "crz",
+    (U1, 1): "cu1",
+    (U3, 1): "cu3",
+    (X, 2): "ccx",
+}
 
 _ALLOWED_QASM2_FUNCTIONS = {
     "sin": math.sin,
