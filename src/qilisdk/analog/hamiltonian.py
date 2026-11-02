@@ -17,7 +17,7 @@ import copy
 import re
 from abc import ABC
 from collections import defaultdict
-from itertools import combinations, product
+from itertools import combinations, pairwise, product
 from typing import TYPE_CHECKING, Callable, ClassVar, TypeAlias
 
 import numpy as np
@@ -357,6 +357,11 @@ class Hamiltonian(Parameterizable):
         """
         Build a Hamiltonian from a mapping of Pauli operator products to coefficients.
 
+        Each key is put into canonical form: operators are sorted by qubit, operators acting on the same
+        qubit are multiplied together (with any resulting phase folded into the coefficient), identities
+        are dropped, and keys that reduce to the identity (including the empty tuple) are stored as
+        ``(PauliI(0),)``. Keys that become equal are summed.
+
         Args:
             elements (dict[tuple[PauliOperator, ...], complex | Expression | Parameter], optional):
                 Mapping from operator tuples to numerical coefficients or symbolic parameters. For example:
@@ -364,8 +369,8 @@ class Hamiltonian(Parameterizable):
                 .. code-block:: python
 
                     {
-                        (Z(0), Y(1)): 1.0,
-                        (X(1),): 1j,
+                        (PauliZ(0), PauliY(1)): 1.0,
+                        (PauliX(1),): 1j,
                     }
 
                 Defaults to None, which creates an empty Hamiltonian.
@@ -382,7 +387,13 @@ class Hamiltonian(Parameterizable):
                         raise ValueError(_GENERIC_VARIABLE_IN_HAMILTONIAN_MESSAGE)
                     for parameter in val.free_parameters():
                         self._add_parameter(parameter.label, parameter)
-                self._elements[key] += val
+                # For simple keys we can stop early
+                if key and key[0].name != "I" and all(a.qubit < b.qubit and b.name != "I" for a, b in pairwise(key)):
+                    self._elements[key] += val
+                    continue
+                # Otherwise canonicalise via _multiply_sets and fold the resulting phase into the coefficient
+                phase, canonical_key = Hamiltonian._multiply_sets(key, ())
+                self._elements[canonical_key] += val if phase == 1 else val * phase
             self.simplify()
 
     @property
@@ -589,7 +600,16 @@ class Hamiltonian(Parameterizable):
         return qili_hash(self._elements)
 
     def __copy__(self) -> Hamiltonian:
-        return Hamiltonian(elements=self._elements.copy())
+        # Assume the keys are already fine (i.e. canonical), so copy directly
+        out = Hamiltonian()
+        out._elements = self._elements.copy()
+
+        # Re-register the parameters
+        for val in out._elements.values():
+            if isinstance(val, Expression):
+                for parameter in val.free_parameters():
+                    out._add_parameter(parameter.label, parameter)
+        return out.simplify()
 
     # ------- String representation --------
 
@@ -1244,8 +1264,6 @@ class Hamiltonian(Parameterizable):
                 # purely scalar => store as (I(0),)
                 elements[PauliI(0),] += coeff
             else:
-                # Sort operators by qubit for canonical ordering
-                op_list.sort(key=lambda op: op.qubit)
                 elements[tuple(op_list)] += coeff
 
         hamiltonian = cls(elements)
@@ -1436,10 +1454,7 @@ class Hamiltonian(Parameterizable):
             raise InvalidHamiltonianOperation(f"Multiplying {op1} and {op2} not supported.")
         phase, op_cls = result
 
-        # By convention, an I operator is always I(0) in this code
-        if op_cls is PauliI:
-            return phase, PauliI(0)
-        # Otherwise, keep the same qubit
+        # Keep the qubit even for I
         return phase, op_cls(op1.qubit)
 
     # ------- Public arithmetic operators --------
