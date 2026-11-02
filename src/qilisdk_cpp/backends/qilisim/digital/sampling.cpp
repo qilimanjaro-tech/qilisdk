@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <algorithm>
 #include <iomanip>
 #include <random>
 #include <sstream>
@@ -76,6 +77,28 @@ DenseMatrix collapse_state(const DenseMatrix& state, const std::vector<bool>& qu
     }
 
     return density_matrix;
+}
+
+static int group_measurements(const std::vector<Gate>& gates, int start, std::vector<bool>& qubits_to_measure) {
+    /*
+    Group the run of adjacent measurement gates starting at a given index, so they can be done all at once.
+
+    Args:
+        gates (std::vector<Gate>&): The gates of the circuit.
+        start (int): The index of the first measurement gate in the run.
+        qubits_to_measure (std::vector<bool>&): Set to true for every qubit measured in the run.
+
+    Returns:
+        int: The number of adjacent measurement gates in the run.
+    */
+    int num_measurements = 0;
+    for (int j = start; j < int(gates.size()) && gates[j].get_name() == "M"; ++j) {
+        for (int target : gates[j].get_target_qubits()) {
+            qubits_to_measure[target] = true;
+        }
+        num_measurements++;
+    }
+    return num_measurements;
 }
 
 void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories) {
@@ -564,6 +587,129 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
         check_signals();
 
         state.apply_gate(gate);
+    }
+}
+
+void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& initial_state, NoiseModelCpp& noise_model_cpp, MPSState& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
+    /*
+    Execute a sampling functional using a matrix product state simulator.
+
+    Args:
+        gates (std::vector<Gate>&): The list of gates in the circuit.
+        n_qubits (int): The number of qubits in the circuit.
+        initial_state (MPSState&): The initial state of the system as an MPS.
+        noise_model_cpp (NoiseModelCpp&): The noise model, of which only readout error is supported.
+        state (MPSState&): The final state after applying all gates.
+        intermediate_results (std::vector<py::object>&): A vector to store intermediate results after each set of measurements.
+        config (QiliSimConfig): The simulation configuration.
+        readout (py::object): A list with readout information to determine when and what to measure.
+
+    Raises:
+        py::value_error: If the noise model has Kraus or Lindblad terms, or if the state diverges to NaN during the simulation.
+    */
+
+    // Set the number of threads
+#if defined(_OPENMP)
+    omp_set_num_threads(config.get_num_threads());
+    Eigen::setNbThreads(config.get_num_threads());
+#endif
+
+    // Sanity checks
+    if (initial_state.get_nqubits() != n_qubits) {
+        throw py::value_error("The initial MPS has " + std::to_string(initial_state.get_nqubits()) + " qubits but the circuit has " + std::to_string(n_qubits) + ".");
+    }
+
+    // Kraus and Lindblad noise would make the state mixed, which an MPS cannot hold
+    bool has_kraus = !noise_model_cpp.get_kraus_operators_global().empty() || !noise_model_cpp.get_kraus_operators_per_qubit().empty() || !noise_model_cpp.get_kraus_operators_per_gate().empty() || !noise_model_cpp.get_kraus_operators_per_gate_qubit().empty();
+    if (has_kraus || !noise_model_cpp.get_jump_operators().empty()) {
+        throw py::value_error("The MPS simulator only supports readout error and parameter perturbation noise, not Kraus or Lindblad noise. Use a statevector method instead.");
+    }
+
+    // Monte Carlo is not supported
+    if (config.get_monte_carlo()) {
+        warning("Monte Carlo sampling is not supported in the MPS simulator. Monte Carlo will be ignored.");
+    }
+
+    // Throw a warning if we are using measurement collapse, since an MPS cannot represent the resulting mixed state
+    if (config.get_measurement_collapse()) {
+        warning("Measurement collapse is not supported in the MPS simulator. Measurement collapse will be ignored.");
+    }
+
+    // We start with the initial state, with the settings from the config
+    state = initial_state;
+    state.set_max_bond_dimension(config.get_mps_max_bond_dimension());
+    state.set_truncation_cutoff(config.get_mps_truncation_cutoff());
+
+    // Some small circuit optimizations, since we don't have noise
+    std::vector<Gate> optimized_gates = gates;
+    if (config.get_combine_single_qubit_gates()) {
+        optimized_gates = combine_single_qubit_gates(optimized_gates);
+        qilisdk::log_debug("[Sampling, C++] Combined single-qubit gates: " + std::to_string(gates.size()) + " -> " + std::to_string(optimized_gates.size()) + " gates");
+    }
+
+    // Fused blocks are capped at two qubits, since apply_gate only takes one- and two-qubit gates
+    const int mps_max_fused_qubits = 2;
+    if (config.get_fuse_gates()) {
+        size_t before_fusion = optimized_gates.size();
+        optimized_gates = fuse_gates(optimized_gates, mps_max_fused_qubits);
+        qilisdk::log_debug("[Sampling, C++] Fused gates: " + std::to_string(before_fusion) + " -> " + std::to_string(optimized_gates.size()) + " gates");
+    }
+
+    // Then we apply each gate
+    for (int i = 0; i < int(optimized_gates.size()); ++i) {
+        const auto& gate = optimized_gates[i];
+
+        // Let Ctrl-C interrupt the circuit between gates
+        check_signals();
+
+        // If it's a measurement
+        if (gate.get_name() == "M") {
+            // Check for adjacent measurements and if we have any, do them all at once
+            std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
+            int num_measurements = group_measurements(optimized_gates, i, qubits_to_measure_after_gate);
+            bool are_final_measurements = (i + num_measurements == int(optimized_gates.size()));
+
+            // Construct the result
+            if (!are_final_measurements) {
+                py::object result = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure_after_gate);
+                intermediate_results.push_back(result);
+            }
+
+            qilisdk::log_trace("[Sampling, C++] Measuring " + std::to_string(num_measurements) + " qubits at gate index " + std::to_string(i));
+
+            // Skip the next measurements since we did them all at once
+            i += (num_measurements - 1);
+            continue;
+        }
+
+        // Apply the gate
+        state.apply_gate(gate);
+
+        // Check for nan anywhere the gate touched, before normalizing would hide it
+        std::vector<int> qubits = gate.get_qubits();
+        int first = *std::min_element(qubits.begin(), qubits.end());
+        int last = *std::max_element(qubits.begin(), qubits.end());
+        for (int q = first; q <= last; ++q) {
+            if (state.get_site_tensor(q).has_nan()) {
+                throw py::value_error("State has become NaN while applying gate " + gate.get_id() + ".");
+            }
+        }
+
+        // Normalize
+        if (config.get_normalize_state() && config.get_normalize_after_gate()) {
+            state.normalize();
+        }
+    }
+
+    // Make sure we're normalized at the end
+    if (config.get_normalize_state()) {
+        state.normalize();
+    }
+
+    // Log some debug info
+    qilisdk::log_debug("[QiliSim, C++] MPS simulation complete: max bond dimension " + std::to_string(state.get_max_bond_dimension_used()) + " of " + std::to_string(config.get_mps_max_bond_dimension()) + ", accumulated truncation error " + std::to_string(state.get_truncation_error()));
+    if (state.get_truncation_error() > MPSState::TRUNCATION_WARNING_THRESHOLD) {
+        warning("The MPS simulation discarded a total weight of " + std::to_string(state.get_truncation_error()) + " when truncating, increase mps_max_bond_dimension for a more accurate result.");
     }
 }
 
