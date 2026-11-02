@@ -201,7 +201,8 @@ For powers, use the ``**`` operator, which builds a
 
 To write your own function, subclass :class:`~qilisdk.core.expression.Function` with a ``NAME``, a
 numeric kernel and a derivative. Everything else (canonicalization, equality, ``derivative``, ``expand``,
-``substitute``, serialization) comes from the base class.
+``substitute``) comes from the base class. To make the function serializable, also decorate it with
+``@yaml.register_class`` (``from qilisdk.yaml import yaml``).
 
 Comparisons
 ===========

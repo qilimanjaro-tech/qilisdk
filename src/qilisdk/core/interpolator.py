@@ -44,6 +44,7 @@ ParameterizedNumber: TypeAlias = float | Expression
 TimeDict = dict[ParameterizedNumber | tuple[float, float], ParameterizedNumber | Callable[..., ParameterizedNumber]]
 
 
+@yaml.register_class
 class Interpolation(str, Enum):
     STEP = "Step function interpolation between schedule points"
     LINEAR = "linear interpolation between schedule points"

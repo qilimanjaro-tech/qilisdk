@@ -871,6 +871,9 @@ class Function(Expression, ABC):
     A concrete function declares -- all at the *class* level so serialization carries only the
     operand -- a stable ``NAME``, a numpy numeric kernel :meth:`_numeric`, and the local outer
     derivative :meth:`_outer_derivative` (the chain rule is applied by :meth:`derivative`).
+
+    To be serializable, a concrete function must also be decorated with ``@yaml.register_class``
+    (``from qilisdk.yaml import yaml``), like the built-in functions below.
     """
 
     NAME: ClassVar[str] = ""

@@ -38,6 +38,7 @@ QTensorType = Literal["ket", "bra", "operator"]
 
 
 # Enum containing state presets like +, 0 etc.
+@yaml.register_class
 class InitialState(Enum):
     """
     Enumeration of symbolic initial states that can be used to specify the initial state of an evolution without needing to construct the corresponding QTensor manually.

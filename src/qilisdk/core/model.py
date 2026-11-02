@@ -1152,6 +1152,7 @@ class Model:
         )
 
 
+@yaml.register_class
 class _Linearizer:
     """Degree-reduction helper that rewrites binary polynomials as quadratic expressions.
 

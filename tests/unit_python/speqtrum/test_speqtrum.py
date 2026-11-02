@@ -57,6 +57,7 @@ from qilisdk.functionals.variational_program_result import VariationalProgramRes
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult
 from qilisdk.speqtrum.speqtrum_models import ExecuteResult
+from qilisdk.yaml import yaml
 
 
 # ────────────────────────────────────────────────────────────────────────────────
@@ -126,30 +127,36 @@ def test_init_succeeds_with_stub_credentials(monkeypatch):
     assert q.token is tok
 
 
+@yaml.register_class
 class FakeDigitalPropagation(DigitalPropagation):
     initial_state = InitialState.ZERO
 
     def __init__(self): ...
 
 
+@yaml.register_class
 class FakeAnalogEvolution(AnalogEvolution):
     def __init__(self): ...
 
 
+@yaml.register_class
 class FakeQuantumReservoir(QuantumReservoir):
     def __init__(self): ...
 
 
+@yaml.register_class
 class FakeExperimentResult(ExperimentResult):
     """Concrete result type so ``FakeExperiment.result_type`` resolves."""
 
 
+@yaml.register_class
 class FakeExperiment(ExperimentFunctional):
     result_type = FakeExperimentResult
 
     def __init__(self): ...
 
 
+@yaml.register_class
 class FakeVariationalProgram(VariationalProgram):
     def __init__(self, functional):
         self._functional = functional

@@ -22,12 +22,14 @@ from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.core.qtensor import QTensor, expect_val, ket
 from qilisdk.cost_functions.cost_function import CostFunction
 from qilisdk.settings import get_settings
+from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
     from qilisdk.functionals.functional_result import FunctionalResult  # type: ignore[type-arg]
 
 
+@yaml.register_class
 class ObservableCostFunction(CostFunction):
     """Compute costs by taking the expectation value of a quantum observable.
 

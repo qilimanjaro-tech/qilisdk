@@ -42,6 +42,7 @@ from qilisdk.speqtrum.speqtrum_models import (
     _require_functional_result,
     _require_variational_program_result,
 )
+from qilisdk.yaml import yaml
 
 pytest.importorskip("httpx", reason="SpeQtrum tests require the 'speqtrum' optional dependency", exc_type=ImportError)
 pytest.importorskip(
@@ -72,14 +73,16 @@ from qilisdk.speqtrum.speqtrum_models import (
 )
 
 
-class SweepExperimentResult(ExperimentResult):
+@yaml.register_class
+class PayloadSweepExperimentResult(ExperimentResult):
     plot_title = "Sweep Experiment"
 
 
-class SweepExperiment(ExperimentFunctional[SweepExperimentResult]):
+@yaml.register_class
+class PayloadSweepExperiment(ExperimentFunctional[PayloadSweepExperimentResult]):
     """Minimal backend-defined experiment, standing in for the concrete experiments a backend provides."""
 
-    result_type = SweepExperimentResult
+    result_type = PayloadSweepExperimentResult
 
     def __init__(self, qubit, averages, sweep_values):
         super().__init__(qubit=qubit, averages=averages)
@@ -128,7 +131,7 @@ def test_variational_program_payload():
 
 
 def test_experiment_payload():
-    experiment = SweepExperiment(qubit=0, averages=1000, sweep_values=[10, 20, 30])
+    experiment = PayloadSweepExperiment(qubit=0, averages=1000, sweep_values=[10, 20, 30])
     payload = ExperimentPayload(experiment=experiment)
     serialized_experiment = payload._serialize_experiment(experiment=experiment, _info={})
     deserialized_experiment = payload._load_experiment(serialized_experiment)
@@ -138,7 +141,7 @@ def test_experiment_payload():
 
 
 def test_experiment_payload_keeps_already_deserialized_experiments():
-    experiment = SweepExperiment(qubit=0, averages=1000, sweep_values=[10, 20, 30])
+    experiment = PayloadSweepExperiment(qubit=0, averages=1000, sweep_values=[10, 20, 30])
     payload = ExperimentPayload(experiment=experiment)
     assert payload._load_experiment(experiment) is experiment
 
@@ -204,10 +207,10 @@ def test_payloads_load_serialized_readout():
 
 
 def test_require_experiment_result_typed_accepts_matching_and_rejects_mismatching():
-    extractor = _require_experiment_result_typed(SweepExperimentResult)
+    extractor = _require_experiment_result_typed(PayloadSweepExperimentResult)
 
     matching = MagicMock()
-    matching.experiment_result = SweepExperimentResult(qubit=0, averages=1, data=[[0.0]], dims=[])
+    matching.experiment_result = PayloadSweepExperimentResult(qubit=0, averages=1, data=[[0.0]], dims=[])
     assert extractor(matching) is matching.experiment_result
 
     class OtherExperimentResult(ExperimentResult):
@@ -227,7 +230,7 @@ def test_job_handle_experiment_without_result_type():
     assert handle.execute_type is ExecuteType.EXPERIMENT
 
     result = MagicMock()
-    result.experiment_result = SweepExperimentResult(qubit=0, averages=1, data=[[0.0]], dims=[])
+    result.experiment_result = PayloadSweepExperimentResult(qubit=0, averages=1, data=[[0.0]], dims=[])
     assert handle.extractor(result) is result.experiment_result
 
 
@@ -278,7 +281,7 @@ def test_execute_result_variational_program():
 
 def test_execute_result_experiment():
     execute_type = ExecuteType.EXPERIMENT
-    experiment_result = SweepExperimentResult(
+    experiment_result = PayloadSweepExperimentResult(
         qubit=0,
         averages=1000,
         data=[[0.1, 0.2], [0.3, 0.4]],
@@ -297,14 +300,14 @@ def test_execute_result_experiment():
 
 
 def test_execute_result_experiment_round_trips_through_validation():
-    experiment_result = SweepExperimentResult(qubit=1, averages=10, data=[[0.1, 0.2]], dims=[])
+    experiment_result = PayloadSweepExperimentResult(qubit=1, averages=10, data=[[0.1, 0.2]], dims=[])
     serialized_result = ExecuteResult(
         type=ExecuteType.EXPERIMENT, experiment_result=experiment_result
     ).model_dump_json()
 
     result = ExecuteResult.model_validate_json(serialized_result)
 
-    assert isinstance(result.experiment_result, SweepExperimentResult)
+    assert isinstance(result.experiment_result, PayloadSweepExperimentResult)
     assert result.experiment_result.qubit == experiment_result.qubit
     assert result.experiment_result.data == experiment_result.data
 

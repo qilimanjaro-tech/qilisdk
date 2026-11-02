@@ -59,6 +59,7 @@ class ReservoirInput(Parameter):
         )
 
 
+@yaml.register_class
 class ReservoirLayer(Parameterizable):
     """Single reservoir layer template.
 
@@ -286,6 +287,7 @@ class ReservoirLayer(Parameterizable):
         )
 
 
+@yaml.register_class
 class QuantumReservoir(PrimitiveFunctional):
     """Reservoir functional executed over a sequence of input layers.
 

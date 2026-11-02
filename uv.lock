@@ -963,15 +963,6 @@ wheels = [
 ]
 
 [[package]]
-name = "dill"
-version = "0.4.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/81/e1/56027a71e31b02ddc53c7d65b01e68edf64dea2932122fe7746a516f75d5/dill-0.4.1.tar.gz", hash = "sha256:423092df4182177d4d8ba8290c8a5b640c66ab35ec7da59ccfa00f6fa3eea5fa", size = 187315, upload-time = "2026-01-19T02:36:56.85Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/1e/77/dc8c558f7593132cf8fefec57c4f60c83b16941c574ac5f619abb3ae7933/dill-0.4.1-py3-none-any.whl", hash = "sha256:1e1ce33e978ae97fcfcff5638477032b801c46c7c65cf717f95fbc2248f79a9d", size = 120019, upload-time = "2026-01-19T02:36:55.663Z" },
-]
-
-[[package]]
 name = "docutils"
 version = "0.21.2"
 source = { registry = "https://pypi.org/simple" }
@@ -2308,7 +2299,7 @@ name = "nvidia-cublas-cu12"
 version = "12.9.2.10"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cuda-nvrtc-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-cuda-nvrtc-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f7/a2/c96163a0fff1839c0c9548bbdeae7b853b867009e33b9b9264adc238b1cf/nvidia_cublas_cu12-12.9.2.10-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:5572131a59c3eebeeb1c4c8144f772d49372c20124916e072a0e3fc30df421d5", size = 575012079, upload-time = "2026-04-08T18:51:47.303Z" },
@@ -2388,9 +2379,9 @@ name = "nvidia-cusolver-cu12"
 version = "11.7.5.82"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-cusparse-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
-    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-cublas-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-cusparse-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
+    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/03/99/686ff9bf3a82a531c62b1a5c614476e8dfa24a9d89067aeedf3592ee4538/nvidia_cusolver_cu12-11.7.5.82-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:62efa83e4ace59a4c734d052bb72158e888aa7b770e1a5f601682f16fe5b4fd2", size = 337869834, upload-time = "2025-06-05T20:06:53.125Z" },
@@ -2417,7 +2408,7 @@ name = "nvidia-cusparse-cu12"
 version = "12.5.10.65"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12') or (extra == 'extra-7-qilisdk-all-cu13' and extra != 'extra-7-qilisdk-cuda13')" },
+    { name = "nvidia-nvjitlink-cu12", marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5e/6f/8710fbd17cdd1d0fc3fea7d36d5b65ce1933611c31e1861da330206b253a/nvidia_cusparse_cu12-12.5.10.65-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:221c73e7482dd93eda44e65ce567c031c07e2f93f6fa0ecd3ba876a195023e83", size = 366359408, upload-time = "2025-06-05T20:07:42.501Z" },
@@ -3217,7 +3208,6 @@ name = "qilisdk"
 version = "0.3.1"
 source = { editable = "." }
 dependencies = [
-    { name = "dill" },
     { name = "loguru" },
     { name = "matplotlib" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
@@ -3244,7 +3234,7 @@ all = [
     { name = "nvidia-cusparse-cu12" },
     { name = "nvidia-nvjitlink-cu12" },
     { name = "openfermion" },
-    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-all-cu13' and extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all' or (extra == 'extra-7-qilisdk-all-cu12' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
     { name = "pyqir" },
     { name = "pyscipopt" },
 ]
@@ -3352,7 +3342,6 @@ docs = [
 
 [package.metadata]
 requires-dist = [
-    { name = "dill", specifier = ">=0.3.9" },
     { name = "httpx", marker = "extra == 'speqtrum'", specifier = "==0.28.1" },
     { name = "keyring", marker = "extra == 'speqtrum'", specifier = ">=25.6.0" },
     { name = "keyrings-alt", marker = "extra == 'speqtrum'", specifier = ">=5.0.2" },
