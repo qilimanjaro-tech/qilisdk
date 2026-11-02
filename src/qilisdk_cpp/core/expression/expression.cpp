@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <limits>
 #include <unordered_set>
 
 // GCOV_EXCL_BR_START
@@ -57,13 +58,32 @@ uint64_t mix(uint64_t h, uint64_t v) {
 }
 
 uint64_t hash_double(double value) {
-    // Both zeros compare equal, so they must hash equal
+    // Both zeros compare equal, and so does every NaN structurally, so each must hash alike
     if (value == 0.0) {
         value = 0.0;
+    }
+    if (std::isnan(value)) {
+        value = std::numeric_limits<double>::quiet_NaN();
     }
     uint64_t bits = 0;
     std::memcpy(&bits, &value, sizeof(bits));
     return bits;
+}
+
+// Structural sameness of two components, under which a NaN is the same as any other NaN
+bool same_double(double x, double y) {
+    return x == y || (std::isnan(x) && std::isnan(y));
+}
+
+// A total order for sorting, which puts NaN after every number
+int compare_doubles(double x, double y) {
+    if (same_double(x, y)) {
+        return 0;
+    }
+    if (std::isnan(x) || (!std::isnan(y) && x > y)) {
+        return 1;
+    }
+    return -1;
 }
 
 bool int_equals_double(int64_t i, double d) {
@@ -830,7 +850,7 @@ bool equal(const NodePtr& a, const NodePtr& b) {
     }
     switch (a->kind) {
         case Kind::Constant:
-            return num_eq(a->value, b->value);
+            return num_eq(a->value, b->value) || (same_double(a->value.re, b->value.re) && same_double(a->value.im, b->value.im));
         case Kind::Variable:
             return a->label == b->label;
         case Kind::Function:
@@ -857,15 +877,8 @@ int compare(const NodePtr& a, const NodePtr& b) {
     }
     switch (a->kind) {
         case Kind::Constant: {
-            const Num& x = a->value;
-            const Num& y = b->value;
-            if (x.re != y.re) {
-                return x.re < y.re ? -1 : 1;
-            }
-            if (x.im != y.im) {
-                return x.im < y.im ? -1 : 1;
-            }
-            return 0;
+            const int by_real = compare_doubles(a->value.re, b->value.re);
+            return by_real != 0 ? by_real : compare_doubles(a->value.im, b->value.im);
         }
         case Kind::Variable:
             return a->label.compare(b->label) < 0 ? -1 : (a->label == b->label ? 0 : 1);

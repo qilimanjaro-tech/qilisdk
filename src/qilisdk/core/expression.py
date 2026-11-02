@@ -491,7 +491,8 @@ class Function(_Node, ABC):
         return (self.arg,)
 
     def __getstate__(self) -> dict:
-        return {"_arg": self.arg}
+        # The operand travels in __getnewargs__ alone: sending it twice would make deepcopy exponential in the depth
+        return {}
 
     def __setstate__(self, state: dict) -> None:
         """The node is already rebuilt by ``__new__`` from :meth:`__getnewargs__`."""

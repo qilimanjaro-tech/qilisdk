@@ -391,3 +391,22 @@ TEST_F(ExpressionTest, WrappingRejectsANodeThatIsNotACapsule) {
     )");
     EXPECT_THROW(node_of(ev("NoCapsule()")), py::error_already_set);
 }
+
+TEST_F(ExpressionTest, NanAndSignedZeroConstantsAreStructurallyEqual) {
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    const NodePtr first = make_constant(Num::real(nan));
+    const NodePtr second = make_constant(Num::real(-nan));
+    EXPECT_TRUE(equal(first, second));
+    EXPECT_EQ(first->hash, second->hash);
+    EXPECT_TRUE(equal(make_constant(Num::real(-0.0)), make_constant(Num::integer(0))));
+    EXPECT_EQ(make_constant(Num::real(-0.0))->hash, make_constant(Num::real(0.0))->hash);
+    // NaN sorts after every number, consistently in both directions
+    const NodePtr one = make_constant(Num::real(1.0));
+    EXPECT_EQ(compare(first, second), 0);
+    EXPECT_EQ(compare(first, one), 1);
+    EXPECT_EQ(compare(one, first), -1);
+    EXPECT_EQ(compare(make_constant(Num::real(2.0)), one), 1);
+    EXPECT_EQ(compare(one, make_constant(Num::real(2.0))), -1);
+    EXPECT_EQ(compare(make_constant(Num::complex(1.0, 2.0)), make_constant(Num::complex(1.0, 1.0))), 1);
+    EXPECT_EQ(r("float('nan') * x + 2 * y"), "2 * y + nan * x");
+}
