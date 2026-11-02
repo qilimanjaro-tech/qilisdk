@@ -13,6 +13,9 @@
 // limitations under the License.
 #pragma once
 
+#include <cstdint>
+#include <memory>
+#include <random>
 #include <vector>
 #include "matrix_free_hamiltonian.h"
 
@@ -30,15 +33,17 @@ class ExponentialAnsatz {
     int order;
     MatrixFreeHamiltonian terms = MatrixFreeHamiltonian(0);
     int num_qubits;
+    std::shared_ptr<std::mt19937_64> rng;
 
     std::vector<Bitset> build_z_bits() const;
 
    public:
-    ExponentialAnsatz(int num_qubits, int order, int shots, int warmups);
+    ExponentialAnsatz(int num_qubits, int order, int shots, int warmups, uint64_t seed = 42);
     friend std::ostream& operator<<(std::ostream& os, const ExponentialAnsatz& ansatz);
     void set_shots(int new_shots) { shots = new_shots; }
     void set_warmups(int new_warmups) { warmups = new_warmups; }
     void set_order(int new_order) { order = new_order; }
+    void set_seed(uint64_t seed) { rng->seed(seed); }
     int get_order() const { return order; }
     int get_shots() const { return shots; }
     int get_warmups() const { return warmups; }
