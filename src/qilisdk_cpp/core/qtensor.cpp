@@ -166,26 +166,6 @@ void QTensorCpp::_set_from_row_sparse(const SparseMatrix& data, StorageFormat re
     }
 }
 
-Eigen::Index QTensorCpp::rows() const {
-    /*
-    Return the number of rows, regardless of the active storage backend.
-
-    Returns:
-        Eigen::Index: The number of rows in the tensor.
-    */
-    return std::visit([](const auto& mat) { return Eigen::Index(mat.rows()); }, _data);
-}
-
-Eigen::Index QTensorCpp::cols() const {
-    /*
-    Return the number of columns, regardless of the active storage backend.
-
-    Returns:
-        Eigen::Index: The number of columns in the tensor.
-    */
-    return std::visit([](const auto& mat) { return Eigen::Index(mat.cols()); }, _data);
-}
-
 Eigen::Index QTensorCpp::nnz() const {
     /*
     Return the number of stored non-zero entries, regardless of the active storage backend.
@@ -1703,35 +1683,25 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int ns
         Complex: The expectation value of the matrix-free Hamiltonian with respect to this QTensor.
     */
 
+    // The special path if we're simulating sampling
     if (nshots > 0) {
-        // Create the random generator from the given seed, or from the random device if none is given
-        std::mt19937 gen(seed ? *seed : std::random_device{}());
-
         // The expectation value of the identity gives the normalization of this QTensor
         double normalization = expectation_value(MatrixFreeHamiltonian(other.get_nqubits(), 1.0)).real();
         if (normalization <= 0) {
             throw py::value_error("Invalid state: non-positive measurement probability normalization");
         }
 
-        // For each Pauli in the Hamiltonian
-        Complex expectation = 0.0;
+        // The exact expectation value of each Pauli term is what the measurements of it are drawn from
+        std::vector<std::pair<Complex, double>> terms;
+        terms.reserve(other.size());
         for (const auto& [pauli, coefficient] : other.get_operators()) {
-            // The identity term is not measured since it has no shot noise
-            if (pauli.size() == 0) {
-                expectation += coefficient * normalization;
-                continue;
-            }
-
-            // The exact expectation value of the single Pauli term gives the probability of a +1 outcome
             double term_expectation = expectation_value(MatrixFreeHamiltonian(other.get_nqubits(), pauli)).real() / normalization;
-            double prob_plus = std::min(std::max(0.5 * (1.0 + term_expectation), 0.0), 1.0);
-
-            // Sample the number of +1 outcomes and turn the counts back into an estimate of the term
-            std::binomial_distribution<int> dist(nshots, prob_plus);
-            int plus_counts = dist(gen);
-            expectation += coefficient * normalization * (2.0 * double(plus_counts) / double(nshots) - 1.0);
+            terms.push_back({coefficient, term_expectation});
         }
-        return expectation;
+
+        // Sample each Pauli term with nshots shots, seeded from the given seed or the random device
+        std::uint32_t seed_value = seed ? *seed : std::random_device{}();
+        return normalization * sample_expectation_value(terms, nshots, static_cast<int>(seed_value));
     }
 
     Complex expectation = 0.0;
@@ -1761,7 +1731,7 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int ns
 #endif
 #endif
         for (int i = 0; i < H_rho_dense.rows(); ++i) {
-            expectation += std::real(H_rho_dense(i, i));
+            expectation += H_rho_dense(i, i);
         }
     }
 
