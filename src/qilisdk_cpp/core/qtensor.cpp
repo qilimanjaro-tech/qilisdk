@@ -20,6 +20,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <limits>
+#include <optional>
 #include <random>
 #include <sstream>
 
@@ -161,26 +164,6 @@ void QTensorCpp::_set_from_row_sparse(const SparseMatrix& data, StorageFormat re
             break;
         }
     }
-}
-
-Eigen::Index QTensorCpp::rows() const {
-    /*
-    Return the number of rows, regardless of the active storage backend.
-
-    Returns:
-        Eigen::Index: The number of rows in the tensor.
-    */
-    return std::visit([](const auto& mat) { return Eigen::Index(mat.rows()); }, _data);
-}
-
-Eigen::Index QTensorCpp::cols() const {
-    /*
-    Return the number of columns, regardless of the active storage backend.
-
-    Returns:
-        Eigen::Index: The number of columns in the tensor.
-    */
-    return std::visit([](const auto& mat) { return Eigen::Index(mat.cols()); }, _data);
 }
 
 Eigen::Index QTensorCpp::nnz() const {
@@ -1647,7 +1630,7 @@ void QTensorCpp::clear_cache() {
     _eigenvectors.clear();
 }
 
-Complex QTensorCpp::expectation_value_python(const py::object& other, int nshots) const {
+Complex QTensorCpp::expectation_value_python(const py::object& other, int nshots, const py::object& seed) const {
     /*
     Compute the expectation value of another QTensor with respect to this QTensor.
     If nshots <= 0, compute the exact expectation value using the trace formula.
@@ -1658,27 +1641,32 @@ Complex QTensorCpp::expectation_value_python(const py::object& other, int nshots
     Args:
         other (py::object): The other QTensor for which to compute the expectation value with respect to this QTensor.
         nshots (int): The number of samples to use when estimating the expectation value. If nshots <= 0, the exact expectation value is computed using the trace formula.
+        seed (py::object): The random seed used for the sampling when nshots > 0, as a Python int in [0, 2**32) or None to use a random seed.
 
     Returns:
         Complex: The expectation value of the other QTensor with respect to this QTensor.
     */
+    std::optional<std::uint32_t> seed_cpp;
+    if (!seed.is_none()) {
+        seed_cpp = seed.cast<std::uint32_t>();
+    }
     if (py::isinstance<QTensorCpp>(other)) {
-        return expectation_value(other.cast<QTensorCpp&>(), nshots);
+        return expectation_value(other.cast<QTensorCpp&>(), nshots, seed_cpp);
     } else if (py::hasattr(other, "_elements")) {
         int nqubits = int(std::log2(std::max(rows(), cols())));
         py::list hamiltonians_py;
         hamiltonians_py.append(other);
         std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(nqubits, hamiltonians_py);
-        return expectation_value(hamiltonians[0], nshots);
+        return expectation_value(hamiltonians[0], nshots, seed_cpp);
     } else if (py::hasattr(other, "_qtensor_cpp")) {
         py::object other_cpp = other.attr("_qtensor_cpp");
-        return expectation_value(other_cpp.cast<QTensorCpp&>(), nshots);
+        return expectation_value(other_cpp.cast<QTensorCpp&>(), nshots, seed_cpp);
     } else {
         throw py::value_error("Other object must be a QTensor");
     }
 }
 
-Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int nshots) const {
+Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int nshots, std::optional<std::uint32_t> seed) const {
     /*
     Compute the expectation value of a matrix-free Hamiltonian with respect to this QTensor.
     If nshots <= 0, compute the exact expectation value by applying the Hamiltonian to this QTensor.
@@ -1689,41 +1677,31 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int ns
     Args:
         other (MatrixFreeHamiltonian): The matrix-free Hamiltonian for which to compute the expectation value with respect to this QTensor.
         nshots (int): The number of samples to use per Pauli term when estimating the expectation value. If nshots <= 0, the exact expectation value is computed instead.
+        seed (std::optional<std::uint32_t>): The random seed used for the sampling when nshots > 0. If empty, a random seed is used.
 
     Returns:
         Complex: The expectation value of the matrix-free Hamiltonian with respect to this QTensor.
     */
 
+    // The special path if we're simulating sampling
     if (nshots > 0) {
-        // Create the random device
-        std::random_device rd;
-        std::mt19937 gen(rd());
-
         // The expectation value of the identity gives the normalization of this QTensor
         double normalization = expectation_value(MatrixFreeHamiltonian(other.get_nqubits(), 1.0)).real();
         if (normalization <= 0) {
             throw py::value_error("Invalid state: non-positive measurement probability normalization");
         }
 
-        // For each Pauli in the Hamiltonian
-        Complex expectation = 0.0;
+        // The exact expectation value of each Pauli term is what the measurements of it are drawn from
+        std::vector<std::pair<Complex, double>> terms;
+        terms.reserve(other.size());
         for (const auto& [pauli, coefficient] : other.get_operators()) {
-            // The identity term is not measured since it has no shot noise
-            if (pauli.size() == 0) {
-                expectation += coefficient * normalization;
-                continue;
-            }
-
-            // The exact expectation value of the single Pauli term gives the probability of a +1 outcome
             double term_expectation = expectation_value(MatrixFreeHamiltonian(other.get_nqubits(), pauli)).real() / normalization;
-            double prob_plus = std::min(std::max(0.5 * (1.0 + term_expectation), 0.0), 1.0);
-
-            // Sample the number of +1 outcomes and turn the counts back into an estimate of the term
-            std::binomial_distribution<int> dist(nshots, prob_plus);
-            int plus_counts = dist(gen);
-            expectation += coefficient * normalization * (2.0 * double(plus_counts) / double(nshots) - 1.0);
+            terms.push_back({coefficient, term_expectation});
         }
-        return expectation;
+
+        // Sample each Pauli term with nshots shots, seeded from the given seed or the random device
+        std::uint32_t seed_value = seed ? *seed : std::random_device{}();
+        return normalization * sample_expectation_value(terms, nshots, static_cast<int>(seed_value));
     }
 
     Complex expectation = 0.0;
@@ -1753,14 +1731,14 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int ns
 #endif
 #endif
         for (int i = 0; i < H_rho_dense.rows(); ++i) {
-            expectation += std::real(H_rho_dense(i, i));
+            expectation += H_rho_dense(i, i);
         }
     }
 
     return expectation;
 }
 
-Complex QTensorCpp::expectation_value(const QTensorCpp& other, int nshots) const {
+Complex QTensorCpp::expectation_value(const QTensorCpp& other, int nshots, std::optional<std::uint32_t> seed) const {
     /*
     Compute the expectation value of another QTensor with respect to this QTensor.
     If nshots <= 0, compute the exact expectation value using the trace formula.
@@ -1771,6 +1749,7 @@ Complex QTensorCpp::expectation_value(const QTensorCpp& other, int nshots) const
     Args:
         other (QTensorCpp): The other QTensor for which to compute the expectation value with respect to this QTensor.
         nshots (int): The number of samples to use when estimating the expectation value. If nshots <= 0, the exact expectation value is computed using the trace formula.
+        seed (std::optional<std::uint32_t>): The random seed used for the sampling when nshots > 0. If empty, a random seed is used.
 
     Returns:
         Complex: The expectation value of the other QTensor with respect to this QTensor.
@@ -1795,9 +1774,8 @@ Complex QTensorCpp::expectation_value(const QTensorCpp& other, int nshots) const
             return expectation;
         }
     } else {
-        // Create the random device
-        std::random_device rd;
-        std::mt19937 gen(rd());
+        // Create the random generator from the given seed, or from the random device if none is given
+        std::mt19937 gen(seed ? *seed : std::random_device{}());
 
         // Get the eigenvalues and eigenvectors of the operator
         QTensorCpp& observable = const_cast<QTensorCpp&>(other);
@@ -2657,6 +2635,83 @@ QTensorCpp QTensorCpp::div(Complex scalar) const {
         throw py::value_error("Cannot divide by zero");
     }
     return QTensorCpp(SparseMatrix(to_row_sparse() / scalar));
+}
+
+QTensorCpp QTensorCpp::permute_python(const py::object& order) const {
+    /*
+    Reorder the qubits of this QTensor, returning a new QTensor as the result.
+
+    Args:
+        order (py::object): A Python iterable of integers, where qubit i of the result is qubit order[i] of this QTensor.
+
+    Returns:
+        QTensorCpp: A new QTensor with its qubits reordered.
+    */
+    std::vector<int> order_vec;
+    for (const auto& item : order) {
+        // Accept anything with __index__ (e.g. numpy integers) but not bools
+        if (PyBool_Check(item.ptr()) || !PyIndex_Check(item.ptr())) {
+            throw py::value_error("Order must be an iterable of integers");
+        }
+        int overflow = 0;
+        long long value = PyLong_AsLongLongAndOverflow(item.ptr(), &overflow);
+        if (overflow != 0 || value < std::numeric_limits<int>::min() || value > std::numeric_limits<int>::max()) {
+            throw py::value_error("Permutation must contain each qubit index exactly once");
+        }
+        order_vec.push_back(int(value));
+    }
+    return permute(order_vec);
+}
+
+QTensorCpp QTensorCpp::permute(const std::vector<int>& order) const {
+    /*
+    Reorder the qubits of this QTensor, returning a new QTensor as the result.
+    Qubit 0 is the leftmost factor of the tensor product (the most significant bit of the index).
+    Works for kets, bras and operators, remapping the bits of the row and/or column index of each non-zero.
+
+    Args:
+        order (std::vector<int>): A permutation of 0..n-1, where qubit i of the result is qubit order[i] of this QTensor.
+
+    Returns:
+        QTensorCpp: A new QTensor with its qubits reordered.
+    */
+
+    // Validate that the order is a permutation of all qubits
+    int nqubits = get_nqubits();
+    if (int(order.size()) != nqubits) {
+        throw py::value_error("Permutation must contain exactly one entry per qubit");
+    }
+    std::vector<bool> seen(nqubits, false);
+    for (int q : order) {
+        if (q < 0 || q >= nqubits || seen[q]) {
+            throw py::value_error("Permutation must contain each qubit index exactly once");
+        }
+        seen[q] = true;
+    }
+
+    // Map an index of this QTensor to the corresponding index of the result
+    auto permute_index = [&](int index) {
+        int out = 0;
+        for (int new_q = 0; new_q < nqubits; ++new_q) {
+            int bit = (index >> (nqubits - 1 - order[new_q])) & 1;
+            out |= (bit << (nqubits - 1 - new_q));
+        }
+        return out;
+    };
+
+    // Rows of a bra and columns of a ket have dimension 1 and so are left untouched
+    bool permute_rows = rows() > 1;
+    bool permute_cols = cols() > 1;
+    Triplets triplets;
+    triplets.reserve(size_t(nnz()));
+    for_each_nonzero([&](int row, int col, Complex val) {
+        int new_row = permute_rows ? permute_index(row) : row;
+        int new_col = permute_cols ? permute_index(col) : col;
+        triplets.emplace_back(new_row, new_col, val);
+    });
+    SparseMatrix result(rows(), cols());
+    result.setFromTriplets(triplets.begin(), triplets.end());
+    return QTensorCpp(result, _format);
 }
 
 // GCOV_EXCL_BR_STOP

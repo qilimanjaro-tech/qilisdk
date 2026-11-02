@@ -20,6 +20,7 @@
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
+#include <set>
 
 namespace py = pybind11;
 
@@ -1253,6 +1254,15 @@ TEST(ExpectationValueTest, SampledSuperposition_ConvergesToExactValue) {
     QTensorCpp op_z(Z);
     EXPECT_NEAR(std::abs(ket.expectation_value(op_z, 1).real()), 1.0, 1e-10);
     EXPECT_NEAR(ket.expectation_value(op_z, 100000).real(), 0.0, 0.05);
+
+    // A fixed seed is reproducible, while no seed draws fresh randomness each call
+    Complex seeded = ket.expectation_value(op_z, 100, 7);
+    EXPECT_EQ(seeded, ket.expectation_value(op_z, 100, 7));
+    std::set<double> unseeded;
+    for (int i = 0; i < 10; ++i) {
+        unseeded.insert(ket.expectation_value(op_z, 100).real());
+    }
+    EXPECT_GT(unseeded.size(), 1u);
 }
 
 TEST(ExpectationValueTest, SampledNonNormalizedState_KeepsNormalization) {
@@ -2208,6 +2218,103 @@ TEST(StorageFormatTest, ConversionsAgreeAcrossFormats) {
     EXPECT_TRUE(row.equals(dense));
     EXPECT_EQ(row.nnz(), col.nnz());
     EXPECT_EQ(row.nnz(), dense.nnz());
+}
+
+TEST(PermuteTest, SwapsKetQubits) {
+    SparseMatrix ket01(4, 1);
+    ket01.insert(1, 0) = 1.0;
+    ket01.makeCompressed();
+    QTensorCpp q(ket01);
+    QTensorCpp p = q.permute({1, 0});
+    EXPECT_EQ(p.coeff(2, 0), Complex(1.0, 0.0));
+    EXPECT_EQ(p.nnz(), 1);
+}
+
+TEST(PermuteTest, PreservesDenseFormat) {
+    SparseMatrix m(4, 4);
+    m.insert(1, 2) = Complex(0.0, 1.0);
+    m.makeCompressed();
+    QTensorCpp q(m, StorageFormat::Dense);
+    QTensorCpp p = q.permute({1, 0});
+    EXPECT_EQ(p.get_format(), StorageFormat::Dense);
+    EXPECT_EQ(p.coeff(2, 1), Complex(0.0, 1.0));
+    EXPECT_EQ(p.nnz(), 1);
+}
+
+TEST(PermuteTest, ThreeQubitCycle) {
+    // |011> with order {2, 0, 1} becomes |101>
+    SparseMatrix ket011(8, 1);
+    ket011.insert(3, 0) = 1.0;
+    ket011.makeCompressed();
+    QTensorCpp p = QTensorCpp(ket011).permute({2, 0, 1});
+    EXPECT_EQ(p.coeff(5, 0), Complex(1.0, 0.0));
+    EXPECT_EQ(p.nnz(), 1);
+}
+
+TEST(PermuteTest, ZeroAndOneQubit) {
+    SparseMatrix scalar(1, 1);
+    scalar.insert(0, 0) = Complex(2.0, 0.0);
+    scalar.makeCompressed();
+    QTensorCpp p0 = QTensorCpp(scalar).permute({});
+    EXPECT_EQ(p0.coeff(0, 0), Complex(2.0, 0.0));
+    QTensorCpp q1(make_dm_pure0());
+    EXPECT_TRUE(q1.permute({0}).equals(q1));
+}
+
+TEST(PermuteTest, InvalidOrder_Throws) {
+    QTensorCpp q(make_dm_pure0());
+    EXPECT_THROW(q.permute({}), py::value_error);
+    EXPECT_THROW(q.permute({1}), py::value_error);
+    EXPECT_THROW(q.permute({-1}), py::value_error);
+}
+
+TEST(PermuteTest, PythonVersion_ValidList) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(_order = [1, 0])");
+    SparseMatrix ket01(4, 1);
+    ket01.insert(1, 0) = 1.0;
+    ket01.makeCompressed();
+    QTensorCpp q(ket01);
+    QTensorCpp p = q.permute_python(py::globals()["_order"]);
+    EXPECT_EQ(p.coeff(2, 0), Complex(1.0, 0.0));
+}
+
+TEST(PermuteTest, PythonVersion_NonIntItem_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(_bad_order = ["a"])");
+    QTensorCpp q(make_dm_pure0());
+    EXPECT_THROW(q.permute_python(py::globals()["_bad_order"]), py::value_error);
+}
+
+TEST(PermuteTest, PythonVersion_NumpyInts) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+import numpy as np
+_np_order = np.array([1, 0])
+)");
+    SparseMatrix ket01(4, 1);
+    ket01.insert(1, 0) = 1.0;
+    ket01.makeCompressed();
+    QTensorCpp p = QTensorCpp(ket01).permute_python(py::globals()["_np_order"]);
+    EXPECT_EQ(p.coeff(2, 0), Complex(1.0, 0.0));
+}
+
+TEST(PermuteTest, PythonVersion_BoolItem_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(_bool_order = [False])");
+    QTensorCpp q(make_dm_pure0());
+    EXPECT_THROW(q.permute_python(py::globals()["_bool_order"]), py::value_error);
+}
+
+TEST(PermuteTest, PythonVersion_OutOfRange_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+_huge_order = [2**40]
+_overflow_order = [2**100]
+)");
+    QTensorCpp q(make_dm_pure0());
+    EXPECT_THROW(q.permute_python(py::globals()["_huge_order"]), py::value_error);
+    EXPECT_THROW(q.permute_python(py::globals()["_overflow_order"]), py::value_error);
 }
 
 // GCOV_EXCL_BR_STOP
