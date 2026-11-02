@@ -386,3 +386,15 @@ def test_sabre_layout_remap_gate_qubits_rejects_unsupported_type() -> None:
 
     with pytest.raises(NotImplementedError, match="UnsupportedGate"):
         SabreLayoutPass._remap_gate_qubits_inplace(UnsupportedGate(), {0: 1})
+
+
+def test_sabre_layout_multi_qubit_measurement_needs_no_connectivity() -> None:
+    circuit = Circuit(4)
+    circuit.add(RX(0, theta=0.3))
+    circuit.add(M(0, 3))
+    layout_pass = SabreLayoutPass(make_graph([(0, 1), (1, 2), (2, 3)]), seed=0)
+
+    layout_pass.run(circuit)
+
+    assert layout_pass.last_layout == [0, 1, 2, 3]
+    assert math.isclose(layout_pass.last_score, 0.0)
