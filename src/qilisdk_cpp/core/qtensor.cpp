@@ -20,6 +20,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <random>
 #include <sstream>
 
@@ -1694,36 +1695,25 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int ns
         Complex: The expectation value of the matrix-free Hamiltonian with respect to this QTensor.
     */
 
+    // The special path if we're simulating sampling
     if (nshots > 0) {
-        // Create the random device
-        std::random_device rd;
-        std::mt19937 gen(rd());
-
         // The expectation value of the identity gives the normalization of this QTensor
         double normalization = expectation_value(MatrixFreeHamiltonian(other.get_nqubits(), 1.0)).real();
         if (normalization <= 0) {
             throw py::value_error("Invalid state: non-positive measurement probability normalization");
         }
 
-        // For each Pauli in the Hamiltonian
-        Complex expectation = 0.0;
+        // The exact expectation value of each Pauli term is what the measurements of it are drawn from
+        std::vector<std::pair<Complex, double>> terms;
+        terms.reserve(other.size());
         for (const auto& [pauli, coefficient] : other.get_operators()) {
-            // The identity term is not measured since it has no shot noise
-            if (pauli.size() == 0) {
-                expectation += coefficient * normalization;
-                continue;
-            }
-
-            // The exact expectation value of the single Pauli term gives the probability of a +1 outcome
             double term_expectation = expectation_value(MatrixFreeHamiltonian(other.get_nqubits(), pauli)).real() / normalization;
-            double prob_plus = std::min(std::max(0.5 * (1.0 + term_expectation), 0.0), 1.0);
-
-            // Sample the number of +1 outcomes and turn the counts back into an estimate of the term
-            std::binomial_distribution<int> dist(nshots, prob_plus);
-            int plus_counts = dist(gen);
-            expectation += coefficient * normalization * (2.0 * double(plus_counts) / double(nshots) - 1.0);
+            terms.push_back({coefficient, term_expectation});
         }
-        return expectation;
+
+        // Sample the expectation value of the Hamiltonian by sampling each Pauli term with nshots shots
+        std::random_device rd;
+        return normalization * sample_expectation_value(terms, nshots, static_cast<int>(rd() & 0x7fffffffU));
     }
 
     Complex expectation = 0.0;
@@ -2657,6 +2647,83 @@ QTensorCpp QTensorCpp::div(Complex scalar) const {
         throw py::value_error("Cannot divide by zero");
     }
     return QTensorCpp(SparseMatrix(to_row_sparse() / scalar));
+}
+
+QTensorCpp QTensorCpp::permute_python(const py::object& order) const {
+    /*
+    Reorder the qubits of this QTensor, returning a new QTensor as the result.
+
+    Args:
+        order (py::object): A Python iterable of integers, where qubit i of the result is qubit order[i] of this QTensor.
+
+    Returns:
+        QTensorCpp: A new QTensor with its qubits reordered.
+    */
+    std::vector<int> order_vec;
+    for (const auto& item : order) {
+        // Accept anything with __index__ (e.g. numpy integers) but not bools
+        if (PyBool_Check(item.ptr()) || !PyIndex_Check(item.ptr())) {
+            throw py::value_error("Order must be an iterable of integers");
+        }
+        int overflow = 0;
+        long long value = PyLong_AsLongLongAndOverflow(item.ptr(), &overflow);
+        if (overflow != 0 || value < std::numeric_limits<int>::min() || value > std::numeric_limits<int>::max()) {
+            throw py::value_error("Permutation must contain each qubit index exactly once");
+        }
+        order_vec.push_back(int(value));
+    }
+    return permute(order_vec);
+}
+
+QTensorCpp QTensorCpp::permute(const std::vector<int>& order) const {
+    /*
+    Reorder the qubits of this QTensor, returning a new QTensor as the result.
+    Qubit 0 is the leftmost factor of the tensor product (the most significant bit of the index).
+    Works for kets, bras and operators, remapping the bits of the row and/or column index of each non-zero.
+
+    Args:
+        order (std::vector<int>): A permutation of 0..n-1, where qubit i of the result is qubit order[i] of this QTensor.
+
+    Returns:
+        QTensorCpp: A new QTensor with its qubits reordered.
+    */
+
+    // Validate that the order is a permutation of all qubits
+    int nqubits = get_nqubits();
+    if (int(order.size()) != nqubits) {
+        throw py::value_error("Permutation must contain exactly one entry per qubit");
+    }
+    std::vector<bool> seen(nqubits, false);
+    for (int q : order) {
+        if (q < 0 || q >= nqubits || seen[q]) {
+            throw py::value_error("Permutation must contain each qubit index exactly once");
+        }
+        seen[q] = true;
+    }
+
+    // Map an index of this QTensor to the corresponding index of the result
+    auto permute_index = [&](int index) {
+        int out = 0;
+        for (int new_q = 0; new_q < nqubits; ++new_q) {
+            int bit = (index >> (nqubits - 1 - order[new_q])) & 1;
+            out |= (bit << (nqubits - 1 - new_q));
+        }
+        return out;
+    };
+
+    // Rows of a bra and columns of a ket have dimension 1 and so are left untouched
+    bool permute_rows = rows() > 1;
+    bool permute_cols = cols() > 1;
+    Triplets triplets;
+    triplets.reserve(size_t(nnz()));
+    for_each_nonzero([&](int row, int col, Complex val) {
+        int new_row = permute_rows ? permute_index(row) : row;
+        int new_col = permute_cols ? permute_index(col) : col;
+        triplets.emplace_back(new_row, new_col, val);
+    });
+    SparseMatrix result(rows(), cols());
+    result.setFromTriplets(triplets.begin(), triplets.end());
+    return QTensorCpp(result, _format);
 }
 
 // GCOV_EXCL_BR_STOP

@@ -14,7 +14,7 @@
 
 import numpy as np
 
-from qilisdk.core import Parameter
+from qilisdk.core import InitialState, Parameter, QTensor
 from qilisdk.digital import RX, RZ, Circuit
 from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.settings import get_settings
@@ -102,11 +102,11 @@ def test_digital_propagation_set_parameters_clears_gate_matrix_cache():
     functional = DigitalPropagation(circuit=circuit)
 
     # Populate the cached_property.
-    matrix_before = gate.matrix.copy()
+    matrix_before = gate.matrix.dense()
 
     functional.set_parameters({"angle": np.pi / 2})
 
-    assert not np.allclose(matrix_before, gate.matrix)
+    assert not np.allclose(matrix_before, gate.matrix.dense())
 
 
 def test_digital_propagation_set_parameter_values_clears_gate_matrix_cache():
@@ -116,8 +116,22 @@ def test_digital_propagation_set_parameter_values_clears_gate_matrix_cache():
     circuit.add(gate)
     functional = DigitalPropagation(circuit=circuit)
 
-    matrix_before = gate.matrix.copy()
+    matrix_before = gate.matrix.dense()
 
     functional.set_parameter_values([np.pi / 2])
 
-    assert not np.allclose(matrix_before, gate.matrix)
+    assert not np.allclose(matrix_before, gate.matrix.dense())
+
+
+def test_digital_propagation_qtensor_initial_state():
+    circuit = Circuit(1)
+    initial_state = QTensor.ket(0)
+    functional = DigitalPropagation(circuit=circuit, initial_state=initial_state)
+    assert functional.initial_state == initial_state
+
+
+def test_digital_propagation_initial_state_initial_state():
+    circuit = Circuit(1)
+    initial_state = InitialState.ONE
+    functional = DigitalPropagation(circuit=circuit, initial_state=initial_state)
+    assert functional.initial_state == initial_state

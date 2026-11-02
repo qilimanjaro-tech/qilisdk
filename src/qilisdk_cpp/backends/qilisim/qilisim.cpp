@@ -27,6 +27,7 @@
 #include "qilisim.h"
 #include "representations/exponential_ansatz.h"
 #include "representations/matrix_free_hamiltonian.h"
+#include "representations/mps.h"
 #include "utils/matrix_utils.h"
 #include "utils/parsers.h"
 #include "utils/random.h"
@@ -130,30 +131,26 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
         // Construct the final result object
         result = construct_result_object(state_stabilizer, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
 
-    } else {
-        // Parse the initial state
-        SparseMatrixCol initial_state_cpp;
-        if (initial_state.is_none()) {
-            long dim = 1L << n_qubits;
-            initial_state_cpp = SparseMatrixCol(dim, 1);
-            initial_state_cpp.insert(0, 0) = 1.0;
-            initial_state_cpp.makeCompressed();
-        } else {
-            initial_state_cpp = parse_initial_state(initial_state, config.get_atol(), n_qubits);
-
-            // Start the evolution from a normalized state, unless the user opts out
-            if (config.get_normalize_state()) {
-                normalize_state(initial_state_cpp);
-            }
-        }
+    } else if (config.get_digital_method() == "mps") {
+        // Parse the initial state as a matrix product state
+        MPSState initial_state_mps = parse_initial_state_mps(initial_state, n_qubits);
+        MPSState state_mps = initial_state_mps;
 
         // Run the simulation
-        DenseMatrix state_dense;
+        sampling_mps(gates, n_qubits, initial_state_mps, noise_model_cpp, state_mps, intermediate_results, config, readout);
+
+        // Construct the final result object
+        result = construct_result_object(state_mps, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
+
+    } else {
+        DenseMatrix state_dense = parse_initial_state_as_dense(initial_state, n_qubits, config);
+
+        // Run the simulation
         bool state_is_trajectories = false;
         if (config.get_digital_method() == "statevector_matrix_free") {
-            sampling_matrix_free(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout, &state_is_trajectories);
+            sampling_matrix_free(gates, n_qubits, noise_model_cpp, state_dense, intermediate_results, config, readout, &state_is_trajectories);
         } else {
-            sampling(gates, n_qubits, initial_state_cpp, noise_model_cpp, state_dense, intermediate_results, config, readout, &state_is_trajectories);
+            sampling(gates, n_qubits, noise_model_cpp, state_dense, intermediate_results, config, readout, &state_is_trajectories);
         }
         qilisdk::log_debug("[QiliSim, C++] Statevector simulation complete, constructing result");
 
@@ -266,23 +263,40 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
         }
 
         // Run the evolution
-        time_evolution_variational_exponential(rho_t, hamiltonians, parameters_list, step_list, config);
+        std::vector<ExponentialAnsatz> intermediate_states;
+        time_evolution_variational_exponential(rho_t, hamiltonians, parameters_list, step_list, config, intermediate_states);
 
         // Construct the result object
         py::object result = construct_result_object(rho_t, readout, n_qubits);
+
+        // If we have intermediates, process them too
+        if (config.get_store_intermediate_results()) {
+            py::list inter_results;
+            for (const auto& state_intermediate : intermediate_states) {
+                inter_results.append(construct_result_object(state_intermediate, readout, n_qubits));
+            }
+            return FunctionalResult("readout_results"_a = result, "intermediate_results"_a = inter_results);
+        }
         return FunctionalResult("readout_results"_a = result);
 
         // In all of these methods the state is fully stored
     } else {
         qilisdk::log_trace("[QiliSim, C++] Using full-state evolution (method=" + config.get_time_evolution_method() + ")");
-        // Common between methods
-        SparseMatrix rho_0 = parse_initial_state(initial_state, config.get_atol(), n_qubits);
+        // Matrix-free methods keep the state dense throughout, the others need it as a sparse matrix
+        bool matrix_free = config.get_time_evolution_method() == "integrate_rk4_matrix_free" || config.get_time_evolution_method() == "integrate_rk45_matrix_free" || config.get_time_evolution_method() == "arnoldi_matrix_free";
+        SparseMatrix rho_0;
+        DenseMatrix rho_t;
+        if (matrix_free) {
+            rho_t = parse_initial_state_as_dense(initial_state, n_qubits, config);
+        } else {
+            rho_0 = parse_initial_state(initial_state, config.get_atol(), n_qubits);
 
-        // Start the evolution from a normalized state, unless the user opts out
-        if (config.get_normalize_state()) {
-            normalize_state(rho_0);
+            // Start the evolution from a normalized state, unless the user opts out
+            if (config.get_normalize_state()) {
+                normalize_state(rho_0);
+            }
         }
-        int nqubits = static_cast<int>(std::log2(rho_0.rows()));
+        int nqubits = static_cast<int>(std::log2(matrix_free ? rho_t.rows() : rho_0.rows()));
         // Parse the time steps before the noise model so time-dependent Lindblad rates can be
         // evaluated at the schedule time points.
         std::vector<double> step_list = parse_time_steps(steps);
@@ -291,10 +305,9 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
 
         // Depending on the method, call the internal implementation
         std::vector<DenseMatrix> intermediate_rhos;
-        DenseMatrix rho_t;
         bool state_is_trajectories = false;
         std::vector<double> expectation_values;
-        if (config.get_time_evolution_method() == "integrate_rk4_matrix_free" || config.get_time_evolution_method() == "integrate_rk45_matrix_free" || config.get_time_evolution_method() == "arnoldi_matrix_free") {
+        if (matrix_free) {
             // Parse the Hamiltonians
             std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(nqubits, hamiltonians_values);
             if (hamiltonians.size() != parameters_list.size()) {
@@ -302,7 +315,7 @@ py::object QiliSimCpp::execute_analog_evolution(const py::object& functional, co
             }
 
             // Call the implementation
-            time_evolution_matrix_free(rho_0, hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos, &state_is_trajectories);
+            time_evolution_matrix_free(hamiltonians, parameters_list, step_list, noise_model_cpp, config, rho_t, intermediate_rhos, &state_is_trajectories);
 
         } else if (config.get_time_evolution_method() == "integrate_rk4" || config.get_time_evolution_method() == "arnoldi" || config.get_time_evolution_method() == "direct") {
             // Parse the Hamiltonians
@@ -376,6 +389,14 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
         throw py::value_error("nqubits must be positive.");
     }
 
+    // Reservoirs carry a density matrix between layers, so only the statevector methods can run their circuits
+    bool statevector_method = config.get_digital_method() == "statevector" || config.get_digital_method() == "statevector_matrix_free";
+    for (py::handle step : functional.attr("reservoir_layer")) {
+        if (!statevector_method && py::isinstance(step, Circuit)) {
+            throw py::value_error("Unsupported digital method for reservoirs: " + config.get_digital_method() + ". Use a statevector method instead.");
+        }
+    }
+
     qilisdk::log_debug("[QiliSim, C++] Quantum reservoir: " + std::to_string(n_qubits) + " qubits, " + std::to_string(py::len(functional.attr("input_per_layer"))) + " layers");
 
     // Parse the Python objects into C++ objects
@@ -436,11 +457,11 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 std::map<std::string, int> counts;
                 std::vector<py::object> intermediate_results;
                 if (config.get_digital_method() == "statevector_matrix_free") {
-                    sampling_matrix_free(gates, n_qubits, state.sparseView(), noise_model_cpp, state, intermediate_results, config, readout);
+                    sampling_matrix_free(gates, n_qubits, noise_model_cpp, state, intermediate_results, config, readout);
                 } else if (config.get_digital_method() == "statevector") {
-                    sampling(gates, n_qubits, state.sparseView(), noise_model_cpp, state, intermediate_results, config, readout);
+                    sampling(gates, n_qubits, noise_model_cpp, state, intermediate_results, config, readout);
                 } else {
-                    // GCOV_EXCL_START (config.validate() rejects any other sampling method before reaching here)
+                    // GCOV_EXCL_START (any other method is rejected before the first layer runs)
                     throw py::value_error("Unsupported sampling method for reservoirs: " + config.get_digital_method());
                     // GCOV_EXCL_STOP
                 }
@@ -490,7 +511,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                     }
 
                     // Call the implementation
-                    time_evolution_matrix_free(state.sparseView(), hamiltonians, parameters_list, step_list, noise_model_cpp, config, state, intermediate_rhos);
+                    time_evolution_matrix_free(hamiltonians, parameters_list, step_list, noise_model_cpp, config, state, intermediate_rhos);
 
                 } else if (config.get_time_evolution_method() == "integrate_rk4" || config.get_time_evolution_method() == "arnoldi" || config.get_time_evolution_method() == "direct") {
                     // Parse the Hamiltonians

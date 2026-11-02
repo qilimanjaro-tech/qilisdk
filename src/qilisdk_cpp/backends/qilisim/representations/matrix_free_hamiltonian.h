@@ -153,4 +153,8 @@ class MatrixFreeHamiltonian {
     size_t size() const { return operators.size(); }
 };
 
+// Estimate the expectation value of an observable from a finite number of measurements
+// (used in parsers.cpp and qtensor.cpp)
+QILISIM_EXPORT Complex sample_expectation_value(const std::vector<std::pair<Complex, double>>& terms, int nshots, int seed);
+
 // GCOV_EXCL_BR_STOP
