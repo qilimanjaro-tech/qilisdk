@@ -20,11 +20,14 @@ import numpy as np
 import pytest
 
 import qilisdk.utils.visualization.circuit_renderers
-from qilisdk.core import Parameter
+from qilisdk.analog import X as analog_X
+from qilisdk.analog import Y as analog_Y
+from qilisdk.analog.hamiltonian import PauliX
+from qilisdk.core import Parameter, QTensor
 from qilisdk.core.comparison import LEQ
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X
+from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X, Y
 from qilisdk.digital.circuit import _apply_gate_left
-from qilisdk.digital.exceptions import GateHasNoMatrixError, QubitOutOfRangeError
+from qilisdk.digital.exceptions import GateHasNoMatrixError, NotAGateError, QubitOutOfRangeError
 from qilisdk.digital.gates import BasicGate, Gate
 
 
@@ -44,7 +47,7 @@ def test_apply_gate_left_noop_for_zero_qubit_gate():
     class ZeroQubitGate(BasicGate):
         nqubits = 0
         qubits = ()
-        matrix = np.array([[1.0]], dtype=np.complex128)
+        matrix = QTensor(np.array([[1.0]], dtype=np.complex128))
         name = "ZeroQubitGate"
 
         def _generate_matrix(self):
@@ -559,7 +562,7 @@ def test_to_matrix_single_qubit_sequence():
     g2 = RZ(0, phi=np.pi / 3)
     c.add([g1, g2])
 
-    expected = g2.matrix @ g1.matrix
+    expected = (g2.matrix @ g1.matrix).dense()
     assert np.allclose(c.to_matrix(), expected)
     assert np.allclose(c.to_qtensor().dense(), expected)
 
@@ -717,12 +720,12 @@ def test_circuit_set_parameters_clears_gate_matrix_cache():
     c.add(gate)
 
     # Access matrix to populate the cached_property.
-    matrix_before = gate.matrix.copy()
+    matrix_before = gate.matrix.dense()
 
     c.set_parameters({"angle": np.pi / 2})
 
     # Matrix must reflect the new angle, not the cached one.
-    assert not np.allclose(matrix_before, gate.matrix)
+    assert not np.allclose(matrix_before, gate.matrix.dense())
 
 
 def test_circuit_set_parameter_values_clears_gate_matrix_cache():
@@ -731,11 +734,11 @@ def test_circuit_set_parameter_values_clears_gate_matrix_cache():
     c = Circuit(nqubits=1)
     c.add(gate)
 
-    matrix_before = gate.matrix.copy()
+    matrix_before = gate.matrix.dense()
 
     c.set_parameter_values([np.pi / 2])
 
-    assert not np.allclose(matrix_before, gate.matrix)
+    assert not np.allclose(matrix_before, gate.matrix.dense())
 
 
 # --- Shared Parameter Tests ---
@@ -779,7 +782,7 @@ def test_circuit_set_parameters_updates_all_shared_gates():
     c.set_parameters({"shared": 0.0})
 
     # U1(phi=0) is the identity on its slot.
-    np.testing.assert_allclose(g0.matrix, np.eye(2))
+    np.testing.assert_allclose(g0.matrix.dense(), np.eye(2))
     # U2(phi=0, gamma=0.1) has [1, 0] = 1/sqrt(2) (independent of gamma).
     assert np.isclose(g1.matrix[1, 0], 1 / np.sqrt(2))
 
@@ -834,3 +837,73 @@ def test_circuit_rejects_out_of_range_qubit(bad_qubit):
     gate = X(bad_qubit)
     with pytest.raises(QubitOutOfRangeError):
         circuit.add(gate)
+
+
+def test_circuit_add_analog_hamiltonian_raises_helpful_error():
+    """Adding an analog Hamiltonian to a circuit points at the analog/digital import mixup."""
+    circuit = Circuit(1)
+    hamiltonian = analog_X(0)
+    with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        circuit.add(hamiltonian)
+
+
+def test_circuit_add_analog_pauli_operator_raises_helpful_error():
+    """Adding a bare analog Pauli operator to a circuit gives the same guidance."""
+    circuit = Circuit(1)
+    pauli = PauliX(0)
+    with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        circuit.add(pauli)
+
+
+def test_circuit_insert_analog_hamiltonian_raises_helpful_error():
+    """Inserting an analog Hamiltonian into a circuit points at the analog/digital import mixup."""
+    circuit = Circuit(1)
+    hamiltonian = analog_X(0)
+    with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        circuit.insert(hamiltonian, 0)
+
+
+def test_circuit_add_operator_with_analog_hamiltonian_raises_helpful_error():
+    """The ``+`` operator rejects analog Hamiltonians with the same guidance."""
+    circuit = Circuit(1)
+    hamiltonian = analog_X(0)
+    with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        circuit += hamiltonian
+
+
+def test_gate_plus_gate_is_not_supported():
+    """Gates do not support arithmetic, so adding two of them raises the usual TypeError."""
+    first, second = X(0), Y(0)
+    with pytest.raises(TypeError, match="unsupported operand type"):
+        _ = first + second
+
+
+def test_gate_plus_analog_hamiltonian_raises_helpful_error():
+    """Adding an analog Hamiltonian to a digital gate points at the import mixup."""
+    gate = X(0)
+    hamiltonian = analog_Y(0)
+    with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        _ = gate + hamiltonian
+
+
+def test_gate_still_supports_addition_with_a_circuit():
+    """Rejecting gate arithmetic does not break prepending a gate to a circuit."""
+    circuit = Circuit(1)
+    circuit.add(X(0))
+    result = Y(0) + circuit
+    assert result.gates == [Y(0), X(0)]
+
+
+def test_gate_minus_gate_is_not_supported():
+    """Subtracting one gate from another raises the usual TypeError."""
+    first, second = X(0), Y(0)
+    with pytest.raises(TypeError, match="unsupported operand type"):
+        _ = first - second
+
+
+def test_gate_minus_analog_hamiltonian_raises_helpful_error():
+    """Subtracting an analog Hamiltonian from a digital gate points at the import mixup."""
+    gate = X(0)
+    hamiltonian = analog_Y(0)
+    with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
+        _ = gate - hamiltonian

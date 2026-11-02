@@ -62,6 +62,7 @@ extern py::object SupportsStaticLindblad;
 extern py::object SupportsTimeDerivedKraus;
 extern py::object SupportsTimeDerivedLindblad;
 extern py::object ReadoutAssignment;
+extern py::object EnvironmentNoise;
 extern py::object NoiseConfig;
 extern py::object ExpectationReadout;
 extern py::object ReadoutMethod;
@@ -80,6 +81,9 @@ void finalize_all_pybind_types();
 void info(std::string message);
 void warning(std::string message);
 void error(std::string message);
+
+// This should be called regularly during long-running loops to check for things like Ctrl-C
+void check_signals();
 
 #pragma GCC visibility pop
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-28 14:44+0300\n"
+"POT-Creation-Date: 2026-10-05 11:44+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -64,6 +64,7 @@ msgstr ":class:`~qilisdk.backends.qilisim.QiliSim`"
 #: ../../modules/noise/noise_overview.rst:82
 #: ../../modules/noise/noise_overview.rst:84
 #: ../../modules/noise/noise_overview.rst:86
+#: ../../modules/noise/noise_overview.rst:88
 msgid "✔"
 msgstr "✔"
 
@@ -167,17 +168,21 @@ msgstr ":class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation`"
 msgid ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`"
 msgstr ":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`"
 
-#: ../../modules/noise/noise_overview.rst:91
+#: ../../modules/noise/noise_overview.rst:88
+msgid ":class:`~qilisdk.noise.environment_noise.EnvironmentNoise`"
+msgstr ":class:`~qilisdk.noise.environment_noise.EnvironmentNoise`"
+
+#: ../../modules/noise/noise_overview.rst:93
 msgid "Things to note"
 msgstr "Aspectos a tener en cuenta"
 
-#: ../../modules/noise/noise_overview.rst:93
+#: ../../modules/noise/noise_overview.rst:95
 msgid "Global noise acts on all qubits for all gates, including controls."
 msgstr ""
 "El ruido global actúa sobre todos los cúbits para todas las puertas, "
 "incluidos los controles."
 
-#: ../../modules/noise/noise_overview.rst:94
+#: ../../modules/noise/noise_overview.rst:96
 msgid ""
 "Gate noise applies to all qubits that a gate acts on, so if you put noise"
 " on a CNOT, it will apply to both the controls and the targets."
@@ -186,11 +191,23 @@ msgstr ""
 "puerta, así que si pone ruido en una CNOT, se aplicará tanto a los "
 "controles como a los objetivos."
 
-#: ../../modules/noise/noise_overview.rst:95
+#: ../../modules/noise/noise_overview.rst:97
 msgid ""
 "Noise applied to a specific qubit will only ever target that qubit, even "
 "if the gate applying the noise acts on multiple qubits."
 msgstr ""
 "El ruido aplicado a un cúbit concreto solo afectará a ese cúbit, aunque "
 "la puerta que aplica el ruido actúe sobre varios cúbits."
+
+#: ../../modules/noise/noise_overview.rst:98
+msgid ""
+":class:`~qilisdk.noise.environment_noise.EnvironmentNoise` adds non-"
+"Markovian noise, from hidden environment qubits coupled to the system, "
+"and is only supported by :class:`~qilisdk.backends.qilisim.QiliSim`. See "
+":doc:`noise_non_markovian`."
+msgstr ""
+":class:`~qilisdk.noise.environment_noise.EnvironmentNoise` añade ruido no"
+" markoviano, a partir de qubits de entorno ocultos acoplados al sistema, "
+"y solo es compatible con :class:`~qilisdk.backends.qilisim.QiliSim`. "
+"Consulte :doc:`noise_non_markovian`."
 

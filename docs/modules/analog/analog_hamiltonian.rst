@@ -138,6 +138,16 @@ you can use the Pauli ``Z`` operators from the library:
 
     - Z(0) Z(1) - 2 Z(0) Z(2) - 4 Z(1) Z(2) - Z(0) - 2 Z(1) - 3 Z(2)
 
+The builtin :func:`sum` re-simplifies the growing Hamiltonian on every addition, which gets slow for large
+Hamiltonians. :meth:`Hamiltonian.sum()<qilisdk.analog.hamiltonian.Hamiltonian.sum>` adds all the terms in a single
+pass instead:
+
+.. code-block:: python
+
+    from qilisdk.analog import Hamiltonian, Z
+
+    H = Hamiltonian.sum(Z(i) * Z(i + 1) for i in range(1000))
+
 
 Visualizing
 ============================
