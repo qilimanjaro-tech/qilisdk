@@ -74,7 +74,7 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
             list[Gate]: Sequence of equivalent gates that rely on supported primitives.
         """
         # --- Multi-controlled gates ---
-        if _is_controlled(gate):
+        if _is_controlled(gate) and len(gate.control_qubits) > 1:
             basic_gate: BasicGate = gate.basic_gate
             if basic_gate.nqubits != 1:
                 raise NotImplementedError("Controlled version of multi-qubit gates is not supported.")
