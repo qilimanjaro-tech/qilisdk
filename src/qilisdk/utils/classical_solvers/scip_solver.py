@@ -176,7 +176,7 @@ class ScipSolver(ClassicalSolver):
         # Solve the model
         scip_model.optimize()
         solution = scip_model.getBestSol()
-        if solution is None:
+        if solution is None or scip_model.getNSols() == 0:
             raise ValueError(f"SCIP found no feasible solution (status: {scip_model.getStatus()}).")
 
         # Extract the best solution and return it
