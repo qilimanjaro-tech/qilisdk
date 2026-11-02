@@ -108,6 +108,12 @@ pybind11_add_module(expression_module SHARED src/qilisdk_cpp/core/expression/exp
 file(GLOB EXPRESSION_SOURCES src/qilisdk_cpp/core/expression/*.cpp)
 target_sources(expression_module PRIVATE ${EXPRESSION_SOURCES})
 target_link_libraries(expression_module PRIVATE qilisdk_libs)
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(expression_module PRIVATE -ffp-contract=off)
+endif()
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(expression_module PRIVATE -fno-semantic-interposition)
+endif()
 set_target_properties(expression_module PROPERTIES
     BUILD_RPATH "${RPATH_ORIGIN}"
     INSTALL_RPATH "${RPATH_ORIGIN}"

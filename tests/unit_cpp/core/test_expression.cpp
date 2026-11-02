@@ -410,3 +410,47 @@ TEST_F(ExpressionTest, NanAndSignedZeroConstantsAreStructurallyEqual) {
     EXPECT_EQ(compare(make_constant(Num::complex(1.0, 2.0)), make_constant(Num::complex(1.0, 1.0))), 1);
     EXPECT_EQ(r("float('nan') * x + 2 * y"), "2 * y + nan * x");
 }
+
+TEST_F(ExpressionTest, LongProductsAndSumsSpillAndSort) {
+    // More than 8 factors spill the inline buffers, and more than 16 out of order take the stable sort
+    py::exec(R"(
+        many = [BinaryVariable(f"v{i:02d}") for i in range(20)]
+    )");
+    py::list reversed = ev("many[::-1]");
+    py::object product = python::build_mul(reversed);
+    EXPECT_EQ(py::len(python::args(product)), 20u);
+    EXPECT_EQ(python::repr(python::args(product)[0]), "v00");
+    py::object sum = python::build_add(ev("[(i + 1) * v for i, v in enumerate(many[::-1])]"));
+    EXPECT_EQ(python::repr(python::args(sum)[0]), "v19");
+}
+
+TEST_F(ExpressionTest, MergedMonomialsKeepOrRebuildTheirNode) {
+    py::object xy = python::mul(g("x"), g("y"));
+    py::object twice = python::mul(xy, py::int_(2));
+    py::object minus = python::mul(xy, py::int_(-2));
+    // A scaled monomial merged back to coefficient 1 needs a node of its own
+    EXPECT_TRUE(python::equal(python::build_add(py::make_tuple(python::mul(xy, py::int_(3)), minus)), xy));
+    // A plain one keeps its node
+    EXPECT_TRUE(python::equal(python::build_add(py::make_tuple(xy, twice, minus)), xy));
+}
+
+TEST_F(ExpressionTest, ComparingANodeWithItselfOrAnEqualCopy) {
+    const NodePtr sum = node_of(python::add(g("x"), g("y")));
+    EXPECT_EQ(compare(sum, sum), 0);
+    const NodePtr copy = node_of(python::add(g("y"), g("x")));
+    EXPECT_EQ(compare(sum, copy), 0);
+    EXPECT_EQ(python::repr(python::build_add(py::make_tuple(python::pow(python::add(g("x"), g("y")), py::int_(3)), python::pow(python::add(g("y"), g("x")), py::int_(2))))), "(x + y)**2 + (x + y)**3");
+}
+
+TEST_F(ExpressionTest, LabelsCompareByTheirFirstEightBytesThenInFull) {
+    py::exec(R"(
+        short, longer = BinaryVariable("abc"), BinaryVariable("abc\x00")
+        long_a, long_b = BinaryVariable("prefix__a"), BinaryVariable("prefix__b")
+    )");
+    EXPECT_EQ(compare(node_of(g("short")), node_of(g("longer"))), -1);
+    EXPECT_EQ(compare(node_of(g("longer")), node_of(g("short"))), 1);
+    EXPECT_EQ(compare(node_of(g("long_a")), node_of(g("long_b"))), -1);
+    EXPECT_EQ(compare(node_of(g("long_b")), node_of(g("long_a"))), 1);
+    EXPECT_EQ(compare(node_of(g("long_a")), node_of(ev("BinaryVariable('prefix__a')"))), 0);
+    EXPECT_EQ(compare(node_of(g("x")), node_of(g("y"))), -1);
+}

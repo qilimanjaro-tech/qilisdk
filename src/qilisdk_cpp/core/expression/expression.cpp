@@ -14,6 +14,7 @@
 
 #include "expression.h"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstring>
 #include <limits>
@@ -22,6 +23,9 @@
 // GCOV_EXCL_BR_START
 
 namespace qilisdk::expr {
+
+uint64_t compound_hash(Kind kind, const NodePtr* first, NodeSpan rest);
+NodePtr make_node(Kind kind, const NodePtr* first, NodeSpan rest);
 
 namespace {
 
@@ -91,6 +95,37 @@ bool int_equals_double(int64_t i, double d) {
         return false;
     }
     return static_cast<int64_t>(d) == i;
+}
+
+// The first 8 bytes of a label as a big-endian integer, zero padded, so comparing keys orders labels like memcmp
+uint64_t label_key(const std::string& label) {
+    uint64_t key = 0;
+    for (size_t i = 0; i < 8; ++i) {
+        key = (key << 8) | (i < label.size() ? static_cast<unsigned char>(label[i]) : 0);
+    }
+    return key;
+}
+
+int compare_labels(const Node* a, const Node* b) {
+    if (a->label_key != b->label_key) {
+        return a->label_key < b->label_key ? -1 : 1;
+    }
+    // Equal keys settle labels of up to 8 bytes, where the zero padding makes the shorter one the smaller
+    if (a->label.size() <= 8 && b->label.size() <= 8) {
+        return a->label.size() == b->label.size() ? 0 : (a->label.size() < b->label.size() ? -1 : 1);
+    }
+    const int c = a->label.compare(b->label);
+    return c == 0 ? 0 : (c < 0 ? -1 : 1);
+}
+
+// Whether two numbers are the very same value, type and bits alike, so 2 and 2.0 or 0.0 and -0.0 differ
+bool same_number(const Num& a, const Num& b) {
+    return a.tag == b.tag && a.i == b.i && std::memcmp(&a.re, &b.re, sizeof(double)) == 0 && std::memcmp(&a.im, &b.im, sizeof(double)) == 0;
+}
+
+int compare_constants(const Node* a, const Node* b) {
+    const int by_real = compare_doubles(a->value.re, b->value.re);
+    return by_real != 0 ? by_real : compare_doubles(a->value.im, b->value.im);
 }
 
 // Python's complex arithmetic, so results match it to the last bit
@@ -168,8 +203,10 @@ NodePtr constant(const Num& value) {
     return make_constant(float_if_real(value));
 }
 
+// -1, 0 or 1. They are needed constantly (every plain factor of a product has exponent 1), so they are built once.
 NodePtr constant_int(int64_t value) {
-    return make_constant(Num::integer(value));
+    static const auto* common = new std::array<NodePtr, 3>{make_constant(Num::integer(-1)), make_constant(Num::integer(0)), make_constant(Num::integer(1))};
+    return (*common)[value + 1];
 }
 
 bool is_constant(const NodePtr& node, int64_t value) {
@@ -183,10 +220,8 @@ bool is_pos_int_constant(const NodePtr& node) {
 
 // The factors of a canonical product, multiplied out over its sums
 NodePtr mul_expand(const NodePtr& left, const NodePtr& right) {
-    const std::vector<NodePtr> left_only{left};
-    const std::vector<NodePtr> right_only{right};
-    const std::vector<NodePtr>& left_terms = left->kind == Kind::Add ? left->args : left_only;
-    const std::vector<NodePtr>& right_terms = right->kind == Kind::Add ? right->args : right_only;
+    const NodeSpan left_terms = left->kind == Kind::Add ? left->args : NodeSpan(&left, 1);
+    const NodeSpan right_terms = right->kind == Kind::Add ? right->args : NodeSpan(&right, 1);
     std::vector<NodePtr> products;
     products.reserve(left_terms.size() * right_terms.size());
     for (const NodePtr& x : left_terms) {
@@ -197,15 +232,118 @@ NodePtr mul_expand(const NodePtr& left, const NodePtr& right) {
     return build_add(products);
 }
 
+// A vector that keeps its first N elements inline and stays contiguous, so the short lists of a typical product
+// never touch the allocator
+template <typename T, size_t N>
+class SmallVector {
+   public:
+    T* begin() { return spilled_ ? heap_.data() : inline_.data(); }
+    T* end() { return begin() + size(); }
+    size_t size() const { return spilled_ ? heap_.size() : size_; }
+    void push_back(T value) {
+        if (!spilled_ && size_ < N) {
+            inline_[size_++] = std::move(value);
+            return;
+        }
+        if (!spilled_) {
+            heap_.reserve(2 * N);
+            std::move(inline_.begin(), inline_.end(), std::back_inserter(heap_));
+            spilled_ = true;
+        }
+        heap_.push_back(std::move(value));
+    }
+
+   private:
+    std::array<T, N> inline_{};
+    std::vector<T> heap_;
+    size_t size_ = 0;
+    bool spilled_ = false;
+};
+
+// Sorts canonically and stably. std::stable_sort allocates a buffer on every call, which for the handful of
+// operands of a typical node costs more than an insertion sort does.
+void sort_canonically(NodePtr* begin, NodePtr* end) {
+    const auto less = [](const NodePtr& a, const NodePtr& b) { return compare(a, b) < 0; };
+    if (std::is_sorted(begin, end, less)) {
+        return;
+    }
+    if (end - begin > 16) {
+        std::stable_sort(begin, end, less);
+        return;
+    }
+    for (NodePtr* it = begin + 1; it != end; ++it) {
+        NodePtr value = std::move(*it);
+        NodePtr* hole = it;
+        while (hole != begin && less(value, *(hole - 1))) {
+            *hole = std::move(*(hole - 1));
+            --hole;
+        }
+        *hole = std::move(value);
+    }
+}
+
 // The base is a canonical monomial without a coefficient, so prepending one keeps it canonical
 NodePtr scale(const NodePtr& base, const Num& coeff) {
-    std::vector<NodePtr> factors{make_constant(coeff)};
-    if (base->kind == Kind::Mul) {
-        factors.insert(factors.end(), base->args.begin(), base->args.end());
-    } else {
-        factors.push_back(base);
+    const NodePtr constant_factor = make_constant(coeff);
+    return make_node(Kind::Mul, &constant_factor, base->kind == Kind::Mul ? base->args : NodeSpan(&base, 1));
+}
+
+// A summand split into its coefficient and the factors of its monomial, viewed in place rather than built.
+// A product without a coefficient is viewed as its factors too, so it matches the same monomial scaled.
+struct Summand {
+    const NodePtr* term = nullptr;
+    NodeSpan factors;
+    uint64_t hash = 0;
+    Num coeff;
+    bool reusable = true;
+};
+
+Summand view_summand(const NodePtr& term) {
+    Summand summand;
+    summand.term = &term;
+    summand.coeff = Num::integer(1);
+    if (term->kind != Kind::Mul) {
+        summand.factors = NodeSpan(&term, 1);
+        summand.hash = term->hash;
+        return summand;
     }
-    return make_node(Kind::Mul, std::move(factors));
+    const bool scaled = term->args[0]->kind == Kind::Constant;
+    summand.factors = scaled ? NodeSpan(term->args.begin() + 1, term->args.size() - 1) : term->args;
+    if (scaled) {
+        summand.coeff = term->args[0]->value;
+        // Adding to 0 turns a complex coefficient's -0.0 real part into 0.0, which reusing the node would not show
+        summand.reusable = summand.coeff.is_real() || !(summand.coeff.re == 0.0 && std::signbit(summand.coeff.re));
+    }
+    // A single factor stands alone, otherwise the factors hash as the product they form
+    summand.hash = summand.factors.size() == 1 ? summand.factors[0]->hash : compound_hash(Kind::Mul, nullptr, summand.factors);
+    return summand;
+}
+
+bool same_factors(NodeSpan a, NodeSpan b) {
+    if (a.size() != b.size()) {
+        return false;  // GCOV_EXCL_LINE (only called on equal hashes, which cover the size, so this needs a hash collision)
+    }
+    for (size_t i = 0; i < a.size(); ++i) {
+        if (!equal(a[i], b[i])) {
+            return false;  // GCOV_EXCL_LINE (likewise only reachable through a hash collision)
+        }
+    }
+    return true;
+}
+
+// The node for a combined summand, reusing the original whenever nothing merged into it
+NodePtr rebuild_summand(const Summand& summand, const Num& coeff) {
+    if (summand.reusable) {
+        return *summand.term;
+    }
+    if (!num_eq(coeff, Num::integer(1))) {
+        const NodePtr constant_factor = make_constant(coeff);
+        return make_node(Kind::Mul, &constant_factor, summand.factors);
+    }
+    if (summand.factors.size() == 1) {
+        return summand.factors[0];
+    }
+    return (*summand.term)->kind == Kind::Mul && (*summand.term)->args.size() == summand.factors.size() ? *summand.term : make_node(Kind::Mul, summand.factors);
 }
 
 // Whether a summand is some coefficient times base, without building its monomial
@@ -230,7 +368,7 @@ bool has_base(const NodePtr& term, const NodePtr& base) {
 // Adds a single non-sum term to a canonical sum by merging it into the sorted operands, which gives the same
 // result as build_add but keeps a running sum() linear rather than rebuilding its index on every step
 NodePtr add_to_sum(const NodePtr& sum, const NodePtr& term, bool sum_first) {
-    std::vector<NodePtr> out = sum->args;
+    std::vector<NodePtr> out(sum->args.begin(), sum->args.end());
     const auto less = [](const NodePtr& a, const NodePtr& b) { return compare(a, b) < 0; };
     const auto insert_sorted = [&](const NodePtr& node) { out.insert(std::upper_bound(out.begin(), out.end(), node, less), node); };
     const bool has_constant = out[0]->kind == Kind::Constant;
@@ -270,7 +408,7 @@ NodePtr add_to_sum(const NodePtr& sum, const NodePtr& term, bool sum_first) {
     if (out.size() == 1) {
         return out[0];
     }
-    return make_node(Kind::Add, std::move(out));
+    return make_node(Kind::Add, out);
 }
 
 bool contains_symbol(const NodePtr& node, const NodePtr& symbol) {
@@ -627,92 +765,155 @@ uint64_t label_hash(const std::string& label) {
     return mix(static_cast<uint64_t>(Kind::Variable), h);
 }
 
-NodePtr make_constant(const Num& value) {
-    auto node = std::make_shared<Node>();
-    node->kind = Kind::Constant;
-    node->value = value;
-    node->hash = mix(mix(static_cast<uint64_t>(Kind::Constant), hash_double(value.re)), hash_double(value.im));
+uint64_t compound_hash(Kind kind, const NodePtr* first, NodeSpan rest) {
+    uint64_t h = mix(static_cast<uint64_t>(kind), (first != nullptr ? 1 : 0) + rest.size());
+    if (first != nullptr) {
+        h = mix(h, (*first)->hash);
+    }
+    for (const NodePtr& arg : rest) {
+        h = mix(h, arg->hash);
+    }
+    return h;
+}
+
+// Allocates a node with its operands, an optional first one and then the rest, copied into the same block right after it
+Node* allocate(Kind kind, const NodePtr* first, NodeSpan rest) {
+    const size_t count = (first != nullptr ? 1 : 0) + rest.size();
+    void* memory = ::operator new(sizeof(Node) + count * sizeof(NodePtr));
+    // Default- rather than value-initialized, which would zero the whole node before constructing it
+    Node* node = new (memory) Node;
+    node->kind = kind;
+    auto* storage = reinterpret_cast<NodePtr*>(node + 1);
+    size_t i = 0;
+    if (first != nullptr) {
+        new (storage + i++) NodePtr(*first);
+    }
+    for (const NodePtr& arg : rest) {
+        new (storage + i++) NodePtr(arg);
+    }
+    node->args = NodeSpan(storage, count);
     return node;
 }
 
+NodePtr make_node(Kind kind, const NodePtr* first, NodeSpan rest) {
+    Node* node = allocate(kind, first, rest);
+    node->hash = compound_hash(kind, first, rest);
+    return NodePtr(node);
+}
+
+void release(Node* node) {
+    auto* storage = reinterpret_cast<NodePtr*>(node + 1);
+    for (size_t i = 0; i < node->args.size(); ++i) {
+        storage[i].~NodePtr();
+    }
+    node->~Node();
+    ::operator delete(node);
+}
+
+NodePtr make_constant(const Num& value) {
+    const uint64_t hash = mix(mix(static_cast<uint64_t>(Kind::Constant), hash_double(value.re)), hash_double(value.im));
+    // Coefficients repeat a lot, so recently made constants are shared through a small direct-mapped cache. It
+    // only matches the exact same number, keeping 2 and 2.0 apart, and holds no Python objects.
+    static auto* cache = new std::array<NodePtr, 1024>();
+    NodePtr& cached = (*cache)[hash & (cache->size() - 1)];
+    if (cached && same_number(cached->value, value)) {
+        return cached;
+    }
+    Node* node = allocate(Kind::Constant, nullptr, {});
+    node->value = value;
+    node->hash = hash;
+    cached = NodePtr(node);
+    return cached;
+}
+
 NodePtr make_variable(const std::string& label, py::object owner, const ClassInfo& info) {
-    auto node = std::make_shared<Node>();
-    node->kind = Kind::Variable;
+    Node* node = allocate(Kind::Variable, nullptr, {});
     node->label = label;
     node->idempotent = info.idempotent;
     node->custom_binary = info.custom_binary;
     node->parameter = info.parameter;
     node->owner = std::move(owner);
     node->hash = label_hash(label);
-    return node;
+    node->label_key = label_key(label);
+    return NodePtr(node);
 }
 
-NodePtr make_node(Kind kind, std::vector<NodePtr> args) {
-    auto node = std::make_shared<Node>();
-    node->kind = kind;
-    uint64_t h = mix(static_cast<uint64_t>(kind), args.size());
-    for (const NodePtr& arg : args) {
-        h = mix(h, arg->hash);
-    }
-    node->hash = h;
-    node->args = std::move(args);
-    return node;
+NodePtr make_node(Kind kind, NodeSpan args) {
+    return make_node(kind, nullptr, args);
 }
 
 NodePtr make_function(py::object cls, const std::string& name, NodePtr arg) {
-    auto node = std::make_shared<Node>();
-    node->kind = Kind::Function;
+    Node* node = allocate(Kind::Function, &arg, {});
     node->label = name;
+    node->label_key = label_key(name);
     node->owner = std::move(cls);
     node->hash = mix(mix(static_cast<uint64_t>(Kind::Function), label_hash(name)), arg->hash);
-    node->args.push_back(std::move(arg));
-    return node;
+    return NodePtr(node);
 }
 
-NodePtr build_add(const std::vector<NodePtr>& raw) {
+NodePtr build_add(NodeSpan raw) {
     if (raw.size() == 2 && (raw[0]->kind == Kind::Add) != (raw[1]->kind == Kind::Add)) {
         const bool sum_first = raw[0]->kind == Kind::Add;
         return add_to_sum(raw[sum_first ? 0 : 1], raw[sum_first ? 1 : 0], sum_first);
     }
 
     Num constant_term = Num::integer(0);
-    std::vector<std::pair<NodePtr, Num>> terms;
-    std::unordered_map<NodePtr, size_t, NodeHash, NodeEqual> index;
+    std::vector<Summand> summands;
+    summands.reserve(raw.size());
+    // Open addressing with linear probing over indices into summands, plus one so zero means empty
+    std::vector<uint32_t> slots(16, 0);
+    size_t mask = slots.size() - 1;
 
-    // Flatten with an explicit stack; every pointer stays valid as its owner is held by raw or a parent
-    std::vector<const NodePtr*> stack;
-    stack.reserve(raw.size());
-    for (auto it = raw.rbegin(); it != raw.rend(); ++it) {
-        stack.push_back(&*it);
-    }
-    while (!stack.empty()) {
-        const NodePtr& term = *stack.back();
-        stack.pop_back();
-        if (term->kind == Kind::Constant) {
-            constant_term = num_add(constant_term, term->value);
-        } else if (term->kind == Kind::Add) {
-            for (auto it = term->args.rbegin(); it != term->args.rend(); ++it) {
-                stack.push_back(&*it);
+    const auto insert = [&](const NodePtr& term) {
+        Summand summand = view_summand(term);
+        size_t slot = summand.hash & mask;
+        while (slots[slot] != 0) {
+            Summand& existing = summands[slots[slot] - 1];
+            if (existing.hash == summand.hash && same_factors(existing.factors, summand.factors)) {
+                existing.coeff = num_add(existing.coeff, summand.coeff);
+                existing.reusable = false;
+                return;
             }
-        } else {
-            auto [base, coeff] = peel(term);
-            auto [it, inserted] = index.try_emplace(base, terms.size());
-            if (inserted) {
-                terms.emplace_back(base, num_add(Num::integer(0), coeff));
-            } else {
-                terms[it->second].second = num_add(terms[it->second].second, coeff);
+            slot = (slot + 1) & mask;
+        }
+        summand.coeff = num_add(Num::integer(0), summand.coeff);
+        summands.push_back(summand);
+        slots[slot] = static_cast<uint32_t>(summands.size());
+        // Keep the table at most half full
+        if (summands.size() * 2 > slots.size()) {
+            slots.assign(slots.size() * 2, 0);
+            mask = slots.size() - 1;
+            for (size_t i = 0; i < summands.size(); ++i) {
+                size_t free_slot = summands[i].hash & mask;
+                while (slots[free_slot] != 0) {
+                    free_slot = (free_slot + 1) & mask;
+                }
+                slots[free_slot] = static_cast<uint32_t>(i + 1);
             }
         }
-    }
+    };
+
+    // Flatten nested sums depth first, in the order their operands appear
+    const auto flatten = [&](const auto& self, NodeSpan terms) -> void {
+        for (const NodePtr& term : terms) {
+            if (term->kind == Kind::Constant) {
+                constant_term = num_add(constant_term, term->value);
+            } else if (term->kind == Kind::Add) {
+                self(self, term->args);
+            } else {
+                insert(term);
+            }
+        }
+    };
+    flatten(flatten, raw);
 
     std::vector<NodePtr> out;
-    out.reserve(terms.size() + 1);
-    for (const auto& [base, raw_coeff] : terms) {
-        const Num coeff = float_if_real(raw_coeff);
-        if (num_eq(coeff, Num::integer(0))) {
-            continue;
+    out.reserve(summands.size() + 1);
+    for (const Summand& summand : summands) {
+        const Num coeff = float_if_real(summand.coeff);
+        if (!num_eq(coeff, Num::integer(0))) {
+            out.push_back(rebuild_summand(summand, coeff));
         }
-        out.push_back(num_eq(coeff, Num::integer(1)) ? base : scale(base, coeff));
     }
     constant_term = float_if_real(constant_term);
     if (!num_eq(constant_term, Num::integer(0))) {
@@ -725,50 +926,43 @@ NodePtr build_add(const std::vector<NodePtr>& raw) {
     if (out.size() == 1) {
         return out[0];
     }
-    std::stable_sort(out.begin(), out.end(), [](const NodePtr& a, const NodePtr& b) { return compare(a, b) < 0; });
-    return make_node(Kind::Add, std::move(out));
+    sort_canonically(out.data(), out.data() + out.size());
+    return make_node(Kind::Add, out);
 }
 
-NodePtr build_mul(const std::vector<NodePtr>& raw) {
+NodePtr build_mul(NodeSpan raw) {
     Num coefficient = Num::integer(1);
-    std::vector<std::pair<NodePtr, NodePtr>> powers;
+    SmallVector<std::pair<NodePtr, NodePtr>, 8> powers;
 
-    std::vector<const NodePtr*> stack;
-    stack.reserve(raw.size());
-    for (auto it = raw.rbegin(); it != raw.rend(); ++it) {
-        stack.push_back(&*it);
-    }
-    while (!stack.empty()) {
-        const NodePtr& factor = *stack.back();
-        stack.pop_back();
-        if (factor->kind == Kind::Constant) {
-            coefficient = num_mul(coefficient, factor->value);
-            continue;
-        }
-        if (factor->kind == Kind::Mul) {
-            for (auto it = factor->args.rbegin(); it != factor->args.rend(); ++it) {
-                stack.push_back(&*it);
+    // Flatten nested products depth first, in the order their factors appear
+    const auto flatten = [&](const auto& self, NodeSpan factors) -> void {
+        for (const NodePtr& factor : factors) {
+            if (factor->kind == Kind::Constant) {
+                coefficient = num_mul(coefficient, factor->value);
+                continue;
             }
-            continue;
+            if (factor->kind == Kind::Mul) {
+                self(self, factor->args);
+                continue;
+            }
+            const bool is_pow = factor->kind == Kind::Pow;
+            const NodePtr& base = is_pow ? factor->args[0] : factor;
+            // Products are short, so a linear scan beats hashing
+            auto existing = std::find_if(powers.begin(), powers.end(), [&](const auto& entry) { return equal(entry.first, base); });
+            if (existing == powers.end()) {
+                powers.push_back({base, is_pow ? factor->args[1] : constant_int(1)});
+            } else {
+                existing->second = build_add({existing->second, is_pow ? factor->args[1] : constant_int(1)});
+            }
         }
-        const bool is_pow = factor->kind == Kind::Pow;
-        const NodePtr& base = is_pow ? factor->args[0] : factor;
-        NodePtr exponent = is_pow ? factor->args[1] : constant_int(1);
-        // Products are short, so a linear scan beats hashing
-        auto existing = std::find_if(powers.begin(), powers.end(), [&](const auto& entry) { return equal(entry.first, base); });
-        if (existing == powers.end()) {
-            powers.emplace_back(base, std::move(exponent));
-        } else {
-            existing->second = build_add({existing->second, exponent});
-        }
-    }
+    };
+    flatten(flatten, raw);
 
     coefficient = float_if_real(coefficient);
     if (num_eq(coefficient, Num::integer(0))) {
         return constant_int(0);
     }
-    std::vector<NodePtr> out;
-    out.reserve(powers.size() + 1);
+    SmallVector<NodePtr, 8> out;
     if (!num_eq(coefficient, Num::integer(1))) {
         out.push_back(make_constant(coefficient));
     }
@@ -785,14 +979,14 @@ NodePtr build_mul(const std::vector<NodePtr>& raw) {
         out.push_back(build_pow(base, exponent));
     }
 
-    if (out.empty()) {
+    if (out.size() == 0) {
         return constant_int(1);
     }
     if (out.size() == 1) {
-        return out[0];
+        return *out.begin();
     }
-    std::stable_sort(out.begin(), out.end(), [](const NodePtr& a, const NodePtr& b) { return compare(a, b) < 0; });
-    return make_node(Kind::Mul, std::move(out));
+    sort_canonically(out.begin(), out.end());
+    return make_node(Kind::Mul, NodeSpan(out.begin(), out.size()));
 }
 
 NodePtr build_pow(const NodePtr& base, const NodePtr& exp) {
@@ -868,7 +1062,9 @@ bool equal(const NodePtr& a, const NodePtr& b) {
     }
 }
 
-int compare(const NodePtr& a, const NodePtr& b) {
+namespace {
+
+int compare_nodes(const Node* a, const Node* b) {
     if (a == b) {
         return 0;
     }
@@ -876,21 +1072,34 @@ int compare(const NodePtr& a, const NodePtr& b) {
         return a->kind < b->kind ? -1 : 1;
     }
     switch (a->kind) {
-        case Kind::Constant: {
-            const int by_real = compare_doubles(a->value.re, b->value.re);
-            return by_real != 0 ? by_real : compare_doubles(a->value.im, b->value.im);
-        }
+        case Kind::Constant:
+            return compare_constants(a, b);
         case Kind::Variable:
-            return a->label.compare(b->label) < 0 ? -1 : (a->label == b->label ? 0 : 1);
-        case Kind::Function:
-            if (a->label != b->label) {
-                return a->label < b->label ? -1 : 1;
-            }
-            return compare(a->args[0], b->args[0]);
+            return compare_labels(a, b);
+        case Kind::Function: {
+            const int by_name = compare_labels(a, b);
+            return by_name != 0 ? by_name : compare_nodes(a->args[0].get(), b->args[0].get());
+        }
         default: {
             const size_t n = std::min(a->args.size(), b->args.size());
             for (size_t i = 0; i < n; ++i) {
-                const int c = compare(a->args[i], b->args[i]);
+                const Node* x = a->args[i].get();
+                const Node* y = b->args[i].get();
+                if (x == y) {
+                    continue;
+                }
+                if (x->kind != y->kind) {
+                    return x->kind < y->kind ? -1 : 1;
+                }
+                // Leaves settle most comparisons, so they are handled here rather than with a recursive call
+                int c = 0;
+                if (x->kind == Kind::Variable) {
+                    c = compare_labels(x, y);
+                } else if (x->kind == Kind::Constant) {
+                    c = compare_constants(x, y);
+                } else {
+                    c = compare_nodes(x, y);
+                }
                 if (c != 0) {
                     return c;
                 }
@@ -901,6 +1110,12 @@ int compare(const NodePtr& a, const NodePtr& b) {
             return a->args.size() < b->args.size() ? -1 : 1;
         }
     }
+}
+
+}  // namespace
+
+int compare(const NodePtr& a, const NodePtr& b) {
+    return compare_nodes(a.get(), b.get());
 }
 
 std::optional<int64_t> int_exponent(const NodePtr& node) {
@@ -922,7 +1137,7 @@ std::pair<NodePtr, Num> peel(const NodePtr& node) {
         if (node->args.size() == 2) {
             return {node->args[1], node->args[0]->value};
         }
-        return {make_node(Kind::Mul, std::vector<NodePtr>(node->args.begin() + 1, node->args.end())), node->args[0]->value};
+        return {make_node(Kind::Mul, NodeSpan(node->args.begin() + 1, node->args.size() - 1)), node->args[0]->value};
     }
     return {node, Num::integer(1)};
 }
@@ -950,9 +1165,10 @@ NodePtr expand(const NodePtr& node) {
             if (!has_sum) {
                 return build_mul(factors);
             }
-            NodePtr result = constant_int(1);
-            for (const NodePtr& factor : factors) {
-                result = mul_expand(result, factor);
+            // Multiplying out from 1 would first rebuild the opening factor unchanged, so start from it instead
+            NodePtr result = factors[0];
+            for (size_t i = 1; i < factors.size(); ++i) {
+                result = mul_expand(result, factors[i]);
             }
             return result;
         }
@@ -994,7 +1210,7 @@ NodePtr derivative(const NodePtr& node, const NodePtr& symbol) {
             std::vector<NodePtr> terms;
             terms.reserve(node->args.size());
             for (size_t i = 0; i < node->args.size(); ++i) {
-                std::vector<NodePtr> factors = node->args;
+                std::vector<NodePtr> factors(node->args.begin(), node->args.end());
                 factors[i] = derivative(node->args[i], symbol);
                 terms.push_back(build_mul(factors));
             }
@@ -1221,7 +1437,7 @@ NodePtr node_of(py::handle obj) {
         if (ptr == nullptr) {
             throw py::error_already_set();
         }
-        return *static_cast<NodePtr*>(ptr);
+        return NodePtr(static_cast<Node*>(ptr));
     }
     // Variables do not store a node, as it would reference them back: build a leaf on demand
     const ClassInfo& info = class_info(py::type::of(obj));
@@ -1242,12 +1458,18 @@ bool coerce(py::handle obj, NodePtr& out) {
 }
 
 py::object capsule(const NodePtr& node) {
-    auto* holder = new NodePtr(node);
-    PyObject* cap = PyCapsule_New(holder, capsule_name, [](PyObject* c) { delete static_cast<NodePtr*>(PyCapsule_GetPointer(c, capsule_name)); });
+    // The capsule holds one counted reference to the node, rather than a separately allocated NodePtr
+    Node* raw = const_cast<Node*>(node.get());
+    PyObject* cap = PyCapsule_New(raw, capsule_name, [](PyObject* c) {
+        auto* held = static_cast<Node*>(PyCapsule_GetPointer(c, capsule_name));
+        if (--held->refs == 0) {
+            release(held);
+        }
+    });
     if (cap == nullptr) {
-        delete holder;                  // GCOV_EXCL_LINE (only on out-of-memory)
-        throw py::error_already_set();  // GCOV_EXCL_LINE
+        throw py::error_already_set();  // GCOV_EXCL_LINE (only on out-of-memory)
     }
+    ++raw->refs;
     return py::reinterpret_steal<py::object>(cap);
 }
 

@@ -627,8 +627,9 @@ def test_signed_zeros_are_the_same_constant():
 
 def test_nan_constants_are_structurally_equal():
     nan = float("nan")
-    assert Constant(nan) == Constant(nan)
-    assert hash(Constant(nan)) == hash(Constant(-nan))
+    first, second = Constant(nan), Constant(-nan)
+    assert first == second
+    assert hash(first) == hash(second)
     assert math.isnan(Constant(nan).evaluate())
 
 
@@ -1513,3 +1514,11 @@ def test_random_expressions_evaluate_the_same_after_expanding_and_copying():
         value = expr.evaluate(values)
         assert expr.expand().evaluate(values) == pytest.approx(value, rel=1e-9, abs=1e-9)
         assert pickle.loads(pickle.dumps(expr)).evaluate(values) == pytest.approx(value, rel=1e-12, abs=1e-12)
+
+
+def test_complex_arithmetic_rounds_exactly_like_python():
+    # Fusing a * b - c * d into one FMA would round differently from Python, e.g. 7.56 for 7.559999999999999
+    value = -3.4 + 2j
+    assert (Constant(value) ** 2).value == value**2
+    assert (Constant(value) * Constant(value)).value == value * value
+    assert ((Constant(value) + BinaryVariable("b")) ** 2).expand().get_constant() == value * value

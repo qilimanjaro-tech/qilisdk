@@ -15,6 +15,8 @@
 #pragma once
 
 #include <cstdint>
+#include <initializer_list>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <string>
@@ -56,20 +58,100 @@ bool num_from_py(py::handle obj, Num& out);
 py::object num_to_py(const Num& value);
 
 struct Node;
-using NodePtr = std::shared_ptr<const Node>;
+void release(Node* node);
 
-// An immutable node of the expression tree
+// A counted reference to a node. Every node is only ever touched with the GIL held, so the count
+// needs no atomics, unlike a shared_ptr whose every copy is a locked instruction.
+class NodePtr {
+   public:
+    NodePtr() = default;
+    NodePtr(std::nullptr_t) {}
+    explicit NodePtr(Node* node);
+    NodePtr(const NodePtr& other);
+    NodePtr(NodePtr&& other) noexcept : node_(other.node_) { other.node_ = nullptr; }
+    NodePtr& operator=(NodePtr other) noexcept {
+        std::swap(node_, other.node_);
+        return *this;
+    }
+    ~NodePtr();
+    const Node* operator->() const { return node_; }
+    const Node& operator*() const { return *node_; }
+    const Node* get() const { return node_; }
+    explicit operator bool() const { return node_ != nullptr; }
+    friend bool operator==(const NodePtr& a, const NodePtr& b) { return a.node_ == b.node_; }
+    friend bool operator!=(const NodePtr& a, const NodePtr& b) { return a.node_ != b.node_; }
+
+   private:
+    Node* node_ = nullptr;
+};
+
+// A read-only view of a run of nodes, such as the operands stored after a node
+class NodeSpan {
+   public:
+    NodeSpan() = default;
+    NodeSpan(const NodePtr* data, size_t size) : data_(data), size_(size) {}
+    NodeSpan(const std::vector<NodePtr>& nodes) : data_(nodes.data()), size_(nodes.size()) {}
+// A span of a braced list is only ever passed straight into a call, during which the list lives
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Winit-list-lifetime"
+#endif
+    NodeSpan(std::initializer_list<NodePtr> nodes) : data_(nodes.begin()), size_(nodes.size()) {}
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+    const NodePtr* begin() const {
+        return data_;
+    }
+    const NodePtr* end() const {
+        return data_ + size_;
+    }
+    std::reverse_iterator<const NodePtr*> rbegin() const {
+        return std::reverse_iterator<const NodePtr*>(end());
+    }
+    std::reverse_iterator<const NodePtr*> rend() const {
+        return std::reverse_iterator<const NodePtr*>(begin());
+    }
+    size_t size() const {
+        return size_;
+    }
+    const NodePtr& operator[](size_t i) const {
+        return data_[i];
+    }
+
+   private:
+    const NodePtr* data_ = nullptr;
+    size_t size_ = 0;
+};
+
+// An immutable node of the expression tree, allocated in one block together with its operands
 struct Node {
+    mutable uint32_t refs = 0;
     Kind kind = Kind::Constant;
-    uint64_t hash = 0;
-    Num value;                   // Constant: the number
-    std::string label;           // Variable: its label; Function: its NAME
     bool idempotent = false;     // Variable: whether x * x == x
     bool custom_binary = false;  // Variable: whether it has its own to_binary
     bool parameter = false;      // Variable: whether it is a Parameter
-    py::object owner;            // Variable: the Python variable; Function: its class
-    std::vector<NodePtr> args;   // Add/Mul: operands; Pow: {base, exp}; Function: {arg}
+    uint64_t hash = 0;
+    uint64_t label_key = 0;  // Variable/Function: the label's first 8 bytes, big-endian, which order like the label
+    Num value;               // Constant: the number
+    std::string label;       // Variable: its label; Function: its NAME
+    py::object owner;        // Variable: the Python variable; Function: its class
+    NodeSpan args;           // Add/Mul: operands; Pow: {base, exp}; Function: {arg}
 };
+
+inline NodePtr::NodePtr(Node* node) : node_(node) {
+    ++node_->refs;
+}
+inline NodePtr::NodePtr(const NodePtr& other) : node_(other.node_) {
+    if (node_ != nullptr) {
+        ++node_->refs;
+    }
+}
+inline NodePtr::~NodePtr() {
+    if (node_ != nullptr && --node_->refs == 0) {
+        release(node_);
+    }
+}
 
 struct NodeHash {
     size_t operator()(const NodePtr& node) const { return node->hash; }
@@ -109,10 +191,10 @@ const ClassInfo& class_info(py::handle cls);
 // Node construction. The make_* functions trust their input to be canonical, the build_* functions canonicalize it.
 NodePtr make_constant(const Num& value);
 NodePtr make_variable(const std::string& label, py::object owner, const ClassInfo& info);
-NodePtr make_node(Kind kind, std::vector<NodePtr> args);
+NodePtr make_node(Kind kind, NodeSpan args);
 NodePtr make_function(py::object cls, const std::string& name, NodePtr arg);
-NodePtr build_add(const std::vector<NodePtr>& raw);
-NodePtr build_mul(const std::vector<NodePtr>& raw);
+NodePtr build_add(NodeSpan raw);
+NodePtr build_mul(NodeSpan raw);
 NodePtr build_pow(const NodePtr& base, const NodePtr& exp);
 NodePtr build_function(const py::object& cls, const NodePtr& arg);
 
