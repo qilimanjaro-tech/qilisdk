@@ -521,3 +521,20 @@ def test_functions_print_the_name_you_construct_them_with(params):
 def test_derivative_of_a_power(params):
     x, _, _ = params
     assert (x**3).derivative(x) == 3 * x**2
+
+
+# --------------------------------------------------------------------------- trusting constructors
+def test_trusting_constructors_keep_their_operands(params):
+    x, y, _ = params
+    assert Add((x, y)) == x + y
+    assert Mul((Constant(2), x)) == 2 * x
+    assert Pow(x, Constant(3)) == x**3
+
+
+def test_a_product_splits_into_coefficient_and_monomial(params):
+    x, y, _ = params
+    product = 3 * x * y
+    assert product.coefficient() == 3
+    assert product.monomial() == x * y
+    assert (x * y).coefficient() == 1
+    assert (x * y).monomial() == x * y

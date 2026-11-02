@@ -14,7 +14,7 @@
 
 """A symbolic expression tree (AST) for qilisdk.
 
-The public entry point is :class:`Expression`, the abstract base of every node:
+The public entry point is :class:`Expression`, the base of every node:
 
 * leaves -- :class:`Constant` and the variable family (``Parameter``, ``Variable``,
   ``BinaryVariable``, ``SpinVariable``) defined in :mod:`qilisdk.core.variables`;
@@ -27,6 +27,10 @@ folding constants, eliminating identities, ordering operands deterministically).
 the sole definition of ``==``/``hash`` -- equal expressions are structurally identical and equality
 is order-independent for ``+`` and ``*`` (``x + y == y + x``). Semantic rewrites -- :meth:`expand` and
 :meth:`derivative` -- are explicit and never participate in equality.
+
+The tree itself lives in C++ (``expression_module``): every operator and constant node holds a handle
+to its C++ node, and the classes here are thin wrappers over it. Variables are the exception, they
+stay plain Python objects that the C++ tree references.
 """
 
 from __future__ import annotations
@@ -34,40 +38,30 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, ClassVar
 
+import expression_module as _cpp  # ty:ignore
 import numpy as np
 
 from qilisdk.core.exceptions import NonPolynomialError, NotSupportedOperation
 from qilisdk.settings import get_settings
-from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
 
 from .types import Number, RealNumber
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Iterable, Mapping
 
     from .variables import BaseVariable, Parameter
 
 _TOL = get_settings().atol
-_DIVISION_MESSAGE = "Division by zero is not allowed in an Expression."
 
-# Leading element of ``_sort_key``. It groups operands by node kind so that a canonical ``Add`` or
-# ``Mul`` always lists constants first, then symbols, then compound nodes, whatever order the user
-# wrote them in. The exact numbers only matter relative to each other.
-# ``_RANK_VARIABLE`` is the rank assigned by ``BaseVariable`` in ``qilisdk.core.variables``.
-_RANK_CONSTANT = 0
-_RANK_VARIABLE = 1
-_RANK_POW = 2
-_RANK_MUL = 3
-_RANK_ADD = 4
-_RANK_FUNCTION = 5
+# The C++ node kinds that the trusting constructors build directly
+_KIND_POW = 2
+_KIND_MUL = 3
+_KIND_ADD = 4
 
 
 def _float_if_real(value: Number) -> Number:
     """Collapse a complex value with negligible imaginary part to a real value.
-
-    Used when *storing* a number, so an ``int`` stays an ``int`` and ``Constant(2)`` still prints as
-    ``2``. Compare :func:`_finalize`, which widens every real to ``float`` for evaluation results.
 
     Returns:
         Number: the real value if the imaginary part is negligible, otherwise ``value`` unchanged.
@@ -94,22 +88,6 @@ def _assert_real(value: Number) -> RealNumber:
     raise ValueError(f"Only real values are allowed but {real} was provided.")
 
 
-def _finalize(value: Number) -> Number:
-    """Normalize a numeric evaluation result.
-
-    Like :func:`_float_if_real` but always widens a real to ``float``, so ``evaluate()`` returns a
-    consistent numeric type instead of leaking whether the arithmetic happened to stay integral.
-
-    Returns:
-        Number: a ``float`` for (near-)real values, otherwise the complex value unchanged.
-    """
-    if isinstance(value, RealNumber):
-        return float(value)
-    if isinstance(value, complex) and abs(value.imag) < _TOL:
-        return float(value.real)
-    return value
-
-
 def _coerce(obj: object) -> Expression | None:
     """Coerce a value into an :class:`Expression`.
 
@@ -119,143 +97,19 @@ def _coerce(obj: object) -> Expression | None:
     """
     if isinstance(obj, Expression):
         return obj
-    if isinstance(obj, np.generic):
-        obj = obj.item()
-    if isinstance(obj, bool):
-        obj = int(obj)
-    if isinstance(obj, (int, float, complex)):
-        return Constant(obj)
-    return None
+    try:
+        return Constant(obj)  # ty:ignore[invalid-argument-type]
+    except TypeError:
+        return None
 
 
-def _int_exponent(expr: Expression) -> int | None:
-    """Return the integer value of a constant integer exponent, or ``None`` if it is not one."""
-    if isinstance(expr, Constant):
-        value = expr.value
-        if isinstance(value, int):
-            return value
-        if isinstance(value, float) and value.is_integer():
-            return int(value)
-    return None
+class Expression:
+    """Base of every node in the expression tree."""
 
+    __slots__ = ()
 
-def _is_pos_int_const(expr: Expression) -> bool:
-    value = _int_exponent(expr)
-    return value is not None and value > 0
-
-
-def _peel_coeff(expr: Expression) -> tuple[Expression, Number]:
-    """Split a monomial into its base and numeric coefficient.
-
-    Returns:
-        tuple[Expression, Number]: the monomial with its numeric coefficient stripped, and that coefficient.
-    """
-    if isinstance(expr, Mul):
-        return expr.monomial(), expr.coefficient()
-    return expr, 1
-
-
-def _scale(base: Expression, coeff: Number) -> Expression:
-    """Re-attach a numeric coefficient to a monomial.
-
-    Returns:
-        Expression: the product ``coeff * base``.
-    """
-    return Mul.build((Constant(coeff), base))
-
-
-def _safe_pow(base: Number, exponent: Number) -> Number:
-    """Raise ``base`` to ``exponent``, turning a zero base under a negative exponent into a clear error.
-
-    Returns:
-        Number: ``base ** exponent``.
-
-    Raises:
-        ValueError: if ``base`` is zero and ``exponent`` is negative.
-    """
-    if abs(base) < _TOL and isinstance(exponent, RealNumber) and exponent < 0:
-        raise ValueError(_DIVISION_MESSAGE)
-    return base**exponent
-
-
-def _collect_mul_factors(raw: tuple[Expression, ...]) -> tuple[Number, dict[Expression, Expression]]:
-    """Flatten a product into a numeric coefficient and a base-to-exponent map.
-
-    Nested ``Mul`` nodes are folded in, constants are multiplied together, and repeated bases have
-    their exponents added, so ``2 * x * (3 * x**2)`` collapses to ``(6, {x: 3})``.
-
-    Returns:
-        tuple[Number, dict[Expression, Expression]]: the numeric coefficient and the collected powers.
-    """
-    coefficient: Number = 1
-    powers: dict[Expression, Expression] = {}
-
-    # Iterate over the factors using an explicit stack to avoid recursion
-    stack = list(reversed(raw))
-    while stack:
-        expr = stack.pop()
-        if isinstance(expr, Constant):
-            coefficient *= expr.value
-        elif isinstance(expr, Mul):
-            stack.extend(reversed(expr.args))
-        else:
-            base, exponent = (expr.base, expr.exp) if isinstance(expr, Pow) else (expr, Constant(1))
-            powers[base] = exponent if base not in powers else powers[base] + exponent
-
-    return _float_if_real(coefficient), powers
-
-
-def _rebuild_power_factors(powers: dict[Expression, Expression]) -> list[Expression]:
-    """Turn a base-to-exponent map back into a list of factors.
-
-    Exponents of zero drop out, exponents of one leave the bare base, and an idempotent base (a
-    binary variable) collapses any positive integer power back to itself.
-
-    Returns:
-        list[Expression]: the surviving factors.
-    """
-    factors: list[Expression] = []
-    for base, exponent in powers.items():
-        if isinstance(exponent, Constant):
-            value = exponent.value
-            if value == 1 or (base.is_idempotent_under_mul and _is_pos_int_const(exponent)):
-                factors.append(base)
-                continue
-            if value == 0:
-                continue
-        factors.append(Pow.build(base, exponent))
-    return factors
-
-
-def _negate_for_repr(term: Expression) -> Expression | None:
-    """Flip the sign of a negative term so a sum can print ``a - b`` instead of ``a + -b``.
-
-    Only called for the terms after the first. A sum holds at most one :class:`Constant` and it
-    sorts first, so anything reaching here with a negative sign is a :class:`Mul`.
-
-    Returns:
-        Expression | None: the positive form of ``term``, or ``None`` if ``term`` is not negative.
-    """
-    if isinstance(term, Mul):
-        coefficient = term.coefficient()
-        if isinstance(coefficient, RealNumber) and coefficient < 0:
-            return Mul.build((Constant(-1), term))
-    return None
-
-
-def _mul_expand(left: Expression, right: Expression) -> Expression:
-    """Distribute the product of two (possibly ``Add``) expressions.
-
-    Returns:
-        Expression: the distributed product as a canonical sum.
-    """
-    left_terms = left.args if isinstance(left, Add) else (left,)
-    right_terms = right.args if isinstance(right, Add) else (right,)
-    return Add.build(tuple(Mul.build((x, y)) for x in left_terms for y in right_terms))
-
-
-class Expression(ABC):
-    """Abstract base of every node in the expression tree."""
+    # Variables keep no node of their own, so this default marks them for the C++ side
+    _node: ClassVar[object] = None
 
     # ---- markers ----
     # Plain class attributes rather than properties, for speed
@@ -266,46 +120,43 @@ class Expression(ABC):
     #: Whether this expression is a :class:`~qilisdk.core.variables.Parameter` leaf.
     is_parameter: ClassVar[bool] = False
 
-    # ---- abstract core ----
-    @abstractmethod
+    # ---- core ----
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
-        """Numerically evaluate the expression given an assignment of symbols to values."""
+        """Numerically evaluate the expression given an assignment of symbols to values.
 
-    @abstractmethod
+        Returns:
+            Number: a ``float`` for real results, otherwise a ``complex``.
+        """
+        return _cpp.evaluate(self, env)
+
     def free_symbols(self) -> set[BaseVariable]:
-        """The set of named leaves (variables/parameters) occurring in the expression."""
+        """The set of named leaves (variables/parameters) occurring in the expression.
+
+        Returns:
+            set[BaseVariable]: the variables and parameters.
+        """
+        return set(_cpp.free_symbols(self))
 
     @property
-    @abstractmethod
     def degree(self) -> int:
         """Polynomial degree. Raises :class:`NonPolynomialError` for non-polynomial expressions."""
+        return _cpp.degree(self)
 
-    @abstractmethod
     def derivative(self, symbol: BaseVariable) -> Expression:
-        """Symbolic derivative with respect to ``symbol``."""
+        """Symbolic derivative with respect to ``symbol``.
 
-    @abstractmethod
-    def _sort_key(self) -> tuple:
-        """A total-order key used to order operands deterministically and define equality.
-
-        The first element is always the node's kind rank (``_RANK_CONSTANT``, ``_RANK_VARIABLE``,
-        ``_RANK_POW``, ``_RANK_MUL``, ``_RANK_ADD``, ``_RANK_FUNCTION``), so nodes of different
-        kinds never need to be compared field by field. What follows is kind-specific and must
-        itself be comparable: the numeric value for a constant, the label for a variable, the
-        operands' own sort keys for the compound nodes.
+        Returns:
+            Expression: the derivative.
         """
+        return _cpp.derivative(self, symbol)
 
-    @abstractmethod
-    def _compute_hash(self) -> int: ...
-
-    # ---- shared semantics ----
     def expand(self) -> Expression:
         """Distribute products over sums.
 
         Returns:
             Expression: a canonical sum-of-monomials equal to this expression.
         """
-        return self
+        return _cpp.expand(self)
 
     def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
         """Structurally replace sub-expressions according to ``mapping``.
@@ -313,10 +164,7 @@ class Expression(ABC):
         Returns:
             Expression: the expression with substitutions applied.
         """
-        if self in mapping:
-            replacement = _coerce(mapping[self])
-            return replacement if replacement is not None else self
-        return self
+        return _cpp.substitute(self, mapping)
 
     def to_binary(self) -> Expression:
         """Encode every continuous ``Variable`` into binary variables (no-op for most nodes).
@@ -324,7 +172,7 @@ class Expression(ABC):
         Returns:
             Expression: an equivalent expression over binary variables.
         """
-        return self
+        return _cpp.to_binary(self)
 
     def free_parameters(self) -> set[Parameter]:
         """Collect the parameters occurring in the expression.
@@ -340,7 +188,7 @@ class Expression(ABC):
         Returns:
             list[BaseVariable]: the variables and parameters, sorted by label.
         """
-        return sorted(self.free_symbols(), key=lambda symbol: symbol.label)
+        return _cpp.variables(self)
 
     def is_parameterized(self) -> bool:
         """Whether every named leaf is a :class:`~qilisdk.core.variables.Parameter`.
@@ -348,15 +196,15 @@ class Expression(ABC):
         Returns:
             bool: ``True`` if the expression contains only parameters (or no variables).
         """
-        return all(symbol.is_parameter for symbol in self.free_symbols())
+        return _cpp.is_parameterized(self)
 
-    def get_constant(self) -> Number:  # ruff: ignore[no-self-use]
+    def get_constant(self) -> Number:
         """Return the additive constant of the expression.
 
         Returns:
             Number: the constant term (0 unless the expression is a sum or a constant).
         """
-        return 0
+        return _cpp.get_constant(self)
 
     def as_coefficients_dict(self) -> dict[Expression, Number]:
         """Map each (non-constant) monomial to its numeric coefficient.
@@ -364,7 +212,7 @@ class Expression(ABC):
         Returns:
             dict[Expression, Number]: a mapping from monomial to coefficient.
         """
-        return {self: 1}
+        return _cpp.as_coefficients_dict(self)
 
     def monomial_factors(self) -> list[tuple[Expression, int]]:
         """Decompose a single monomial into its factors.
@@ -372,7 +220,7 @@ class Expression(ABC):
         Returns:
             list[tuple[Expression, int]]: the ``(base, integer_power)`` factors.
         """
-        return [(self, 1)]
+        return _cpp.monomial_factors(self)
 
     def to_list(self) -> list[Expression]:
         """The node's operands as a list: the summands of a sum, the factors of a product.
@@ -382,17 +230,14 @@ class Expression(ABC):
         Returns:
             list[Expression]: the operands of this node.
         """
-        return [self]
+        return _cpp.to_list(self)
 
     # ---- identity ----
     def __hash__(self) -> int:
-        cached = self._hash_cache
-        if cached is None:
-            cached = self._hash_cache = self._compute_hash()
-        return cached
+        return _cpp.hash(self)
 
     def __eq__(self, other: object) -> bool:
-        return isinstance(other, Expression) and hash(self) == hash(other)
+        return _cpp.equal(self, other)
 
     def __contains__(self, item: object) -> bool:
         """Whether ``item`` is one of the named leaves (variables/parameters) of the expression.
@@ -402,56 +247,40 @@ class Expression(ABC):
         """
         return isinstance(item, Expression) and item in self.free_symbols()
 
-    def __getstate__(self) -> dict:
-        state = self.__dict__.copy()
-        state.pop("_hash_cache", None)
-        return state
-
-    def __setstate__(self, state: dict) -> None:
-        self.__dict__.update(state)
-        self._hash_cache = None
+    def __repr__(self) -> str:
+        return _cpp.repr(self)
 
     # ---- arithmetic ----
     def __add__(self, other: object) -> Expression:
-        rhs = _coerce(other)
-        return NotImplemented if rhs is None else Add.build((self, rhs))
+        return _cpp.add(self, other)
 
     __radd__ = __add__
     __iadd__ = __add__
 
     def __sub__(self, other: object) -> Expression:
-        rhs = _coerce(other)
-        return NotImplemented if rhs is None else Add.build((self, Mul.build((Constant(-1), rhs))))
+        return _cpp.sub(self, other)
 
     def __rsub__(self, other: object) -> Expression:
-        lhs = _coerce(other)
-        return NotImplemented if lhs is None else Add.build((lhs, Mul.build((Constant(-1), self))))
+        return _cpp.rsub(self, other)
 
     __isub__ = __sub__
 
     def __neg__(self) -> Expression:
-        return Mul.build((Constant(-1), self))
+        return _cpp.neg(self)
 
     def __mul__(self, other: object) -> Expression:
-        rhs = _coerce(other)
-        return NotImplemented if rhs is None else Mul.build((self, rhs))
+        return _cpp.mul(self, other)
 
     __rmul__ = __mul__
     __imul__ = __mul__
 
     def __truediv__(self, other: object) -> Expression:
-        if isinstance(other, (int, float)):
-            if abs(other) < _TOL:
-                raise ValueError(_DIVISION_MESSAGE)
-            return Mul.build((Constant(1.0 / other), self))
-        rhs = _coerce(other)
-        return NotImplemented if rhs is None else Mul.build((self, Pow.build(rhs, Constant(-1))))
+        return _cpp.truediv(self, other)
 
     __itruediv__ = __truediv__
 
     def __rtruediv__(self, other: object) -> Expression:
-        lhs = _coerce(other)
-        return NotImplemented if lhs is None else Mul.build((lhs, Pow.build(self, Constant(-1))))
+        return _cpp.rtruediv(self, other)
 
     def __floordiv__(self, other: object) -> Expression:
         raise NotSupportedOperation("Floor division is not supported for symbolic expressions")
@@ -459,419 +288,174 @@ class Expression(ABC):
     __rfloordiv__ = __floordiv__
 
     def __pow__(self, other: object) -> Expression:
-        exp = _coerce(other)
-        return NotImplemented if exp is None else Pow.build(self, exp)
+        return _cpp.pow(self, other)
 
     def __rpow__(self, other: object) -> Expression:
-        base = _coerce(other)
-        return NotImplemented if base is None else Pow.build(base, self)
+        return _cpp.rpow(self, other)
+
+
+class _Node(Expression):
+    """A constant, operator or function node, backed by a C++ node in ``_node``.
+
+    Nodes are immutable, so a copy shares the C++ node with the original.
+    """
+
+    __slots__ = ("_node",)
+
+    def __copy__(self) -> Expression:
+        clone = object.__new__(type(self))
+        clone._node = self._node
+        return clone
 
 
 @yaml.register_class
-class Constant(Expression):
+class Constant(_Node):
     """A numeric literal leaf. Replaces the old ``Term.CONST`` sentinel."""
 
+    __slots__ = ()
+
     def __init__(self, value: Number) -> None:
-        # Plain ints and floats need no normalisation and very common
-        if type(value) is int or type(value) is float:
-            self._value: Number = value
-        else:
-            raw: Number = value.item() if isinstance(value, np.generic) else value
-            self._value = _float_if_real(int(raw) if isinstance(raw, bool) else raw)
-        self._hash_cache: int | None = None
+        self._node = _cpp.constant_node(value)
 
     @property
     def value(self) -> Number:
         """The numeric literal. Read-only: nodes are immutable so the cached hash stays valid."""
-        return self._value
+        return _cpp.value(self)
 
-    def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
-        return _finalize(self._value)
+    def __getstate__(self) -> dict:
+        return {"_value": self.value}
 
-    def free_symbols(self) -> set[BaseVariable]:  # ruff: ignore[no-self-use]
-        return set()
-
-    @property
-    def degree(self) -> int:
-        return 0
-
-    def derivative(self, symbol: BaseVariable) -> Expression:  # ruff: ignore[no-self-use]
-        return Constant(0)
-
-    def get_constant(self) -> Number:
-        return self._value
-
-    def as_coefficients_dict(self) -> dict[Expression, Number]:  # ruff: ignore[no-self-use]
-        return {}
-
-    def monomial_factors(self) -> list[tuple[Expression, int]]:  # ruff: ignore[no-self-use]
-        return []
-
-    def _sort_key(self) -> tuple:
-        value = self._value
-        if isinstance(value, complex):
-            return (_RANK_CONSTANT, float(value.real), float(value.imag))
-        return (_RANK_CONSTANT, float(value), 0.0)
-
-    def _compute_hash(self) -> int:
-        return qili_hash("Constant", self._value)
-
-    def __repr__(self) -> str:
-        return repr(_float_if_real(self._value))
+    def __setstate__(self, state: dict) -> None:
+        self._node = _cpp.constant_node(state["_value"])
 
 
 @yaml.register_class
-class Add(Expression):
+class Add(_Node):
     """A canonical n-ary sum. Operands are deterministically ordered and combine like terms."""
+
+    __slots__ = ()
 
     def __init__(self, args: tuple[Expression, ...]) -> None:
         # Trusting constructor: ``args`` must already be canonical (flattened, like-terms combined,
         # at most one Constant, length >= 2, deterministically sorted). Use ``build`` to normalize.
-        self._args: tuple[Expression, ...] = tuple(args)
-        self._hash_cache: int | None = None
+        self._node = _cpp.node(_KIND_ADD, args)
 
     @property
     def args(self) -> tuple[Expression, ...]:
         """The summands. Read-only: nodes are immutable so the cached hash stays valid."""
-        return self._args
+        return _cpp.args(self)
 
     @classmethod
-    def build(cls, raw: tuple[Expression, ...]) -> Expression:
-        coefficients: dict[Expression, Number] = {}
-        const: Number = 0
+    def build(cls, raw: Iterable[Expression]) -> Expression:
+        """Build the canonical sum of ``raw``.
 
-        # Explicit stack rather than recursion
-        stack = list(reversed(raw))
-        while stack:
-            expr = stack.pop()
-            if isinstance(expr, Constant):
-                const += expr.value
-            elif isinstance(expr, Add):
-                stack.extend(reversed(expr.args))
-            else:
-                base, coeff = _peel_coeff(expr)
-                coefficients[base] = coefficients.get(base, 0) + coeff
+        Returns:
+            Expression: the sum, collapsed to a single operand or a constant where possible.
+        """
+        return _cpp.build_add(raw)
 
-        terms: list[Expression] = []
-        for base, raw_coeff in coefficients.items():
-            coeff = _float_if_real(raw_coeff)
-            if coeff == 0:
-                continue
-            terms.append(base if coeff == 1 else _scale(base, coeff))
-        const = _float_if_real(const)
-        if const != 0:
-            terms.append(Constant(const))
+    def __getstate__(self) -> dict:
+        return {"_args": self.args}
 
-        if not terms:
-            return Constant(0)
-        if len(terms) == 1:
-            return terms[0]
-        terms.sort(key=lambda term: term._sort_key())  # ruff: ignore[private-member-access]
-        return cls(tuple(terms))
-
-    def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
-        env = env if env is not None else {}
-        total: Number = 0
-        for term in self._args:
-            total += term.evaluate(env)
-        return _finalize(total)
-
-    def free_symbols(self) -> set[BaseVariable]:
-        symbols: set[BaseVariable] = set()
-        for term in self._args:
-            symbols |= term.free_symbols()
-        return symbols
-
-    @property
-    def degree(self) -> int:
-        return max((term.degree for term in self._args), default=0)
-
-    def derivative(self, symbol: BaseVariable) -> Expression:
-        return Add.build(tuple(term.derivative(symbol) for term in self._args))
-
-    def expand(self) -> Expression:
-        return Add.build(tuple(term.expand() for term in self._args))
-
-    def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
-        if self in mapping:
-            return super().substitute(mapping)
-        return Add.build(tuple(term.substitute(mapping) for term in self._args))
-
-    def to_binary(self) -> Expression:
-        return Add.build(tuple(term.to_binary() for term in self._args))
-
-    def get_constant(self) -> Number:
-        for term in self._args:
-            if isinstance(term, Constant):
-                return term.value
-        return 0
-
-    def to_list(self) -> list[Expression]:
-        return list(self._args)
-
-    def as_coefficients_dict(self) -> dict[Expression, Number]:
-        coefficients: dict[Expression, Number] = {}
-        for term in self._args:
-            if isinstance(term, Constant):
-                continue
-            base, coeff = _peel_coeff(term)
-            coefficients[base] = coeff
-        return coefficients
-
-    def _sort_key(self) -> tuple:
-        return (_RANK_ADD, tuple(term._sort_key() for term in self._args))  # ruff: ignore[private-member-access]
-
-    def _compute_hash(self) -> int:
-        return qili_hash("Add", self._args)
-
-    def __repr__(self) -> str:
-        out = repr(self._args[0])
-        for term in self._args[1:]:
-            negated = _negate_for_repr(term)
-            if negated is None:
-                out += f" + {term!r}"
-            else:
-                # A bare sum has to keep its parentheses: "a - (b + c)" is not "a - b + c".
-                body = f"({negated!r})" if isinstance(negated, Add) else repr(negated)
-                out += f" - {body}"
-        return out
+    def __setstate__(self, state: dict) -> None:
+        self._node = _cpp.node(_KIND_ADD, state["_args"])
 
 
 @yaml.register_class
-class Mul(Expression):
+class Mul(_Node):
     """A canonical n-ary product. Collects like powers and folds the numeric coefficient.
 
     ``Mul`` does **not** distribute over sums; use :meth:`expand` for that.
     """
 
+    __slots__ = ()
+
     def __init__(self, args: tuple[Expression, ...]) -> None:
         # Trusting constructor: ``args`` must already be canonical. Use ``build`` to normalize.
-        self._args: tuple[Expression, ...] = tuple(args)
-        self._hash_cache: int | None = None
+        self._node = _cpp.node(_KIND_MUL, args)
 
     @property
     def args(self) -> tuple[Expression, ...]:
         """The factors. Read-only: nodes are immutable so the cached hash stays valid."""
-        return self._args
+        return _cpp.args(self)
 
     @classmethod
-    def build(cls, raw: tuple[Expression, ...]) -> Expression:
-        coefficient, powers = _collect_mul_factors(raw)
-        if coefficient == 0:
-            return Constant(0)
+    def build(cls, raw: Iterable[Expression]) -> Expression:
+        """Build the canonical product of ``raw``.
 
-        out: list[Expression] = [Constant(coefficient)] if coefficient != 1 else []
-        out.extend(_rebuild_power_factors(powers))
-        if not out:
-            return Constant(1)
-        if len(out) == 1:
-            return out[0]
-        out.sort(key=lambda factor: factor._sort_key())  # ruff: ignore[private-member-access]
-        return cls(tuple(out))
+        Returns:
+            Expression: the product, collapsed to a single factor or a constant where possible.
+        """
+        return _cpp.build_mul(raw)
 
     def coefficient(self) -> Number:
-        first = self._args[0]
-        return first.value if isinstance(first, Constant) else 1
+        """The numeric coefficient of the product.
+
+        Returns:
+            Number: the leading constant factor, or 1 if there is none.
+        """
+        return _cpp.coefficient(self)
 
     def monomial(self) -> Expression:
-        if not isinstance(self._args[0], Constant):
-            return self
-        rest = self._args[1:]
-        if not rest:
-            return Constant(1)
-        if len(rest) == 1:
-            return rest[0]
-        return Mul(rest)
+        """The product without its numeric coefficient.
 
-    def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
-        env = env if env is not None else {}
-        total: Number = 1
-        for factor in self._args:
-            total *= factor.evaluate(env)
-        return _finalize(total)
+        Returns:
+            Expression: the remaining factors.
+        """
+        return _cpp.monomial(self)
 
-    def free_symbols(self) -> set[BaseVariable]:
-        symbols: set[BaseVariable] = set()
-        for factor in self._args:
-            symbols |= factor.free_symbols()
-        return symbols
+    def __getstate__(self) -> dict:
+        return {"_args": self.args}
 
-    @property
-    def degree(self) -> int:
-        return sum(factor.degree for factor in self._args)
-
-    def derivative(self, symbol: BaseVariable) -> Expression:
-        terms: list[Expression] = []
-        for index in range(len(self._args)):
-            factors = (*self._args[:index], self._args[index].derivative(symbol), *self._args[index + 1 :])
-            terms.append(Mul.build(factors))
-        return Add.build(tuple(terms))
-
-    def expand(self) -> Expression:
-        # Expand each of the factors
-        factors = [factor.expand() for factor in self._args]
-
-        # If it's a simple product with no sums, build it and return
-        if not any(isinstance(factor, Add) for factor in factors):
-            return Mul.build(tuple(factors))
-
-        # Otherwise, we need to distribute the multiplication over the sums
-        result: Expression = Constant(1)
-        for factor in factors:
-            result = _mul_expand(result, factor)
-        return result
-
-    def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
-        if self in mapping:
-            return super().substitute(mapping)
-        return Mul.build(tuple(factor.substitute(mapping) for factor in self._args))
-
-    def to_binary(self) -> Expression:
-        return Mul.build(tuple(factor.to_binary() for factor in self._args))
-
-    def to_list(self) -> list[Expression]:
-        return list(self._args)
-
-    def as_coefficients_dict(self) -> dict[Expression, Number]:
-        return {self.monomial(): self.coefficient()}
-
-    def monomial_factors(self) -> list[tuple[Expression, int]]:
-        factors: list[tuple[Expression, int]] = []
-        for factor in self._args:
-            if isinstance(factor, Constant):
-                continue
-            factors.extend(factor.monomial_factors())
-        return factors
-
-    def _sort_key(self) -> tuple:
-        return (_RANK_MUL, tuple(factor._sort_key() for factor in self._args))  # ruff: ignore[private-member-access]
-
-    def _compute_hash(self) -> int:
-        return qili_hash("Mul", self._args)
-
-    def __repr__(self) -> str:
-        args = self._args
-        # A coefficient of exactly -1 reads better as a leading minus than as "-1 * x".
-        sign = ""
-        if isinstance(args[0], Constant) and args[0].value == -1:
-            sign, args = "-", args[1:]
-        parts = [f"({factor!r})" if isinstance(factor, Add) else repr(factor) for factor in args]
-        return sign + " * ".join(parts)
+    def __setstate__(self, state: dict) -> None:
+        self._node = _cpp.node(_KIND_MUL, state["_args"])
 
 
 @yaml.register_class
-class Pow(Expression):
+class Pow(_Node):
     """A power ``base ** exp``. The exponent may be a numeric or symbolic :class:`Expression`."""
 
+    __slots__ = ()
+
     def __init__(self, base: Expression, exp: Expression) -> None:
-        # Trusting constructor: use ``_build`` to normalize.
-        self._base: Expression = base
-        self._exp: Expression = exp
-        self._hash_cache: int | None = None
+        # Trusting constructor: use ``build`` to normalize.
+        self._node = _cpp.node(_KIND_POW, (base, exp))
 
     @property
     def base(self) -> Expression:
         """The base. Read-only: nodes are immutable so the cached hash stays valid."""
-        return self._base
+        return _cpp.args(self)[0]
 
     @property
     def exp(self) -> Expression:
         """The exponent. Read-only: nodes are immutable so the cached hash stays valid."""
-        return self._exp
+        return _cpp.args(self)[1]
 
     @classmethod
     def build(cls, base: Expression, exp: Expression) -> Expression:
-        if isinstance(exp, Constant):
-            if exp.value == 1:
-                return base
-            if exp.value == 0:
-                return Constant(1)
-            if isinstance(base, Constant):
-                return Constant(_safe_pow(base.value, exp.value))
-            if isinstance(base, Pow):
-                inner = _int_exponent(base.exp)
-                outer = _int_exponent(exp)
-                if inner is not None and outer is not None:
-                    return cls.build(base.base, Constant(inner * outer))
-            if base.is_idempotent_under_mul and _is_pos_int_const(exp):
-                return base
-        if isinstance(base, Constant) and base.value == 1:
-            return Constant(1)
-        return cls(base, exp)
+        """Build the canonical power ``base ** exp``.
 
-    def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
-        env = env if env is not None else {}
-        return _finalize(_safe_pow(self._base.evaluate(env), self._exp.evaluate(env)))
+        Returns:
+            Expression: the power, folded or simplified where possible.
+        """
+        return _cpp.build_pow(base, exp)
 
-    def free_symbols(self) -> set[BaseVariable]:
-        return self._base.free_symbols() | self._exp.free_symbols()
+    def __getstate__(self) -> dict:
+        return {"_base": self.base, "_exp": self.exp}
 
-    @property
-    def degree(self) -> int:
-        exponent = _int_exponent(self._exp)
-        if exponent is not None and exponent >= 0:
-            return self._base.degree * exponent
-        raise NonPolynomialError(f"Expression {self!r} is not a polynomial; its degree is undefined.")
-
-    def derivative(self, symbol: BaseVariable) -> Expression:
-        base, exp = self._base, self._exp
-        if symbol not in exp.free_symbols():
-            # (b**c)' = c * b**(c-1) * b'
-            return Mul.build((exp, Pow.build(base, Add.build((exp, Constant(-1)))), base.derivative(symbol)))
-        # general case: b**e * (e' * ln(b) + e * b'/b)
-        chain = Add.build(
-            (
-                Mul.build((exp.derivative(symbol), Log(base))),
-                Mul.build((exp, base.derivative(symbol), Pow.build(base, Constant(-1)))),
-            )
-        )
-        return Mul.build((self, chain))
-
-    def expand(self) -> Expression:
-        base = self._base.expand()
-        exponent = _int_exponent(self._exp)
-        if exponent is not None and exponent > 0:
-            result = base
-            for _ in range(exponent - 1):
-                result = _mul_expand(result, base)
-            return result
-        return Pow.build(base, self._exp)
-
-    def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
-        if self in mapping:
-            return super().substitute(mapping)
-        return Pow.build(self._base.substitute(mapping), self._exp.substitute(mapping))
-
-    def to_binary(self) -> Expression:
-        return Pow.build(self._base.to_binary(), self._exp.to_binary())
-
-    def monomial_factors(self) -> list[tuple[Expression, int]]:
-        exponent = _int_exponent(self._exp)
-        if exponent is not None and exponent > 0:
-            return [(self._base, exponent)]
-        raise NonPolynomialError(f"Expression {self!r} is not a monomial with an integer power.")
-
-    def _sort_key(self) -> tuple:
-        return (_RANK_POW, self._base._sort_key(), self._exp._sort_key())  # ruff: ignore[private-member-access]
-
-    def _compute_hash(self) -> int:
-        return qili_hash("Pow", self._base, self._exp)
-
-    def __repr__(self) -> str:
-        # ``**`` is right-associative in Python, so a Pow base needs parentheses too: without them
-        # ``(x**2)**0.5`` would print as ``x**2**0.5``, which reads back as ``x**(2**0.5)``.
-        base = f"({self._base!r})" if isinstance(self._base, (Add, Mul, Pow)) else repr(self._base)
-        exp = f"({self._exp!r})" if isinstance(self._exp, (Add, Mul)) else repr(self._exp)
-        return f"{base}**{exp}"
+    def __setstate__(self, state: dict) -> None:
+        self._node = _cpp.node(_KIND_POW, (state["_base"], state["_exp"]))
 
 
-class Function(Expression, ABC):
+class Function(_Node, ABC):
     """Abstract base for unary maths functions (``sin``, ``cos``, ``exp``, ...).
 
     A concrete function declares -- all at the *class* level so serialization carries only the
     operand -- a stable ``NAME``, a numpy numeric kernel :meth:`_numeric`, and the local outer
     derivative :meth:`_outer_derivative` (the chain rule is applied by :meth:`derivative`).
     """
+
+    __slots__ = ()
 
     NAME: ClassVar[str] = ""
     _REGISTRY: ClassVar[dict[str, type[Function]]] = {}
@@ -882,22 +466,16 @@ class Function(Expression, ABC):
             Function._REGISTRY[cls.NAME] = cls
 
     def __new__(cls, arg: object) -> Expression:
-        operand = _coerce(arg)
-        if operand is None:
-            raise TypeError(f"{cls.__name__} expects an Expression or number, got {type(arg).__name__}")
-        if isinstance(operand, Constant):
-            return Constant(cls._numeric(_assert_real(operand.value)))
-        return super().__new__(cls)
+        # A constant operand folds straight to a Constant
+        return _cpp.function(cls, arg)
 
     def __init__(self, arg: object) -> None:
-        operand = _coerce(arg)
-        self._arg: Expression = operand  # ty:ignore[invalid-assignment]
-        self._hash_cache: int | None = None
+        """The node is already built by ``__new__``."""
 
     @property
     def arg(self) -> Expression:
         """The operand. Read-only: nodes are immutable so the cached hash stays valid."""
-        return self._arg
+        return _cpp.args(self)[0]
 
     @staticmethod
     @abstractmethod
@@ -908,50 +486,15 @@ class Function(Expression, ABC):
     def _outer_derivative(self, operand: Expression) -> Expression:
         """The outer derivative ``f'(operand)`` as an expression (chain rule applied by :meth:`derivative`)."""
 
-    def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
-        env = env if env is not None else {}
-        return _finalize(self._numeric(_assert_real(self._arg.evaluate(env))))
-
-    def free_symbols(self) -> set[BaseVariable]:
-        return self._arg.free_symbols()
-
-    @property
-    def degree(self) -> int:
-        if self._arg.free_symbols():
-            raise NonPolynomialError(f"Expression {self!r} is not a polynomial; its degree is undefined.")
-        return 0
-
-    def derivative(self, symbol: BaseVariable) -> Expression:
-        if symbol not in self.free_symbols():
-            return Constant(0)
-        return Mul.build((self._outer_derivative(self._arg), self._arg.derivative(symbol)))
-
-    def expand(self) -> Expression:
-        return type(self)(self._arg.expand())
-
-    def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
-        if self in mapping:
-            return super().substitute(mapping)
-        return type(self)(self._arg.substitute(mapping))
-
-    def to_binary(self) -> Expression:
-        return type(self)(self._arg.to_binary())
-
-    def _sort_key(self) -> tuple:
-        return (_RANK_FUNCTION, self.NAME, self._arg._sort_key())  # ruff: ignore[private-member-access]
-
-    def _compute_hash(self) -> int:
-        return qili_hash(self.NAME, self._arg)
-
     def __getnewargs__(self) -> tuple[Expression]:
         # __new__ needs the operand, so copy and pickle must hand it back.
-        return (self._arg,)
+        return (self.arg,)
 
-    def __copy__(self) -> Expression:
-        return type(self)(self._arg)
+    def __getstate__(self) -> dict:
+        return {"_arg": self.arg}
 
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}({self._arg!r})"
+    def __setstate__(self, state: dict) -> None:
+        """The node is already rebuilt by ``__new__`` from :meth:`__getnewargs__`."""
 
     @classmethod
     def to_yaml(cls, representer, node):  # ruff: ignore[missing-type-function-argument, missing-return-type-class-method]
@@ -1083,3 +626,6 @@ def Inv(arg: object) -> Expression:
     if operand is None:
         raise TypeError(f"Inv expects an Expression or number, got {type(arg).__name__}")
     return Pow.build(operand, Constant(-1))
+
+
+_cpp.initialize(Constant, Add, Mul, Pow, Expression, Log, NonPolynomialError, NotSupportedOperation, _TOL)
