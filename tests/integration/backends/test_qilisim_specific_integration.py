@@ -81,6 +81,18 @@ def test_seed_same(method):
     assert result1.get_samples() == result2.get_samples()
 
 
+@pytest.mark.parametrize("method", digital_methods)
+def test_seed_same_expectation_with_shots(method):
+    backend1 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
+    backend2 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
+    circuit = Circuit(nqubits=1)
+    circuit.add(H(0))
+    readout = Readout().with_expectation(observables=[pauli_z(0)], nshots=100)
+    result1 = backend1.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    result2 = backend2.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    assert result1.get_expectation_values() == result2.get_expectation_values()
+
+
 def test_no_seed():
     backend = QiliSim(execution_config=ExecutionConfig(seed=None, num_threads=1))
     seed = backend.get_config()["seed"]
@@ -888,6 +900,26 @@ def test_variational_annealing_many_qubit_correct():
     assert isinstance(result, FunctionalResult)
     ev = result.get_expectation_values()[0]
     assert np.isclose(ev, -nqubits, atol=0.2)
+
+
+def test_variational_annealing_is_reproducible_with_seed():
+    nqubits = 4
+    observable = sum(pauli_z(i) for i in range(nqubits))
+    functional = AnalogEvolution(
+        schedule=_make_many_qubit_annealing_schedule(nqubits), initial_state=InitialState.UNIFORM
+    )
+    readout = Readout().with_expectation(observables=[observable])
+
+    def run(seed):
+        backend = QiliSim(
+            analog_simulation_method=AnalogMethod.variational_annealing(shots=20, warmups=1),
+            execution_config=ExecutionConfig(seed=seed, num_threads=1),
+        )
+        return backend.execute(functional, readout).get_expectation_values()[0]
+
+    first = run(7)
+    second = run(7)
+    assert first == second
 
 
 def test_matrix_free_complex_gate_on_mixed_state_stays_hermitian():
