@@ -84,6 +84,8 @@ and analog schedules, while others are specific to one or the other:
    :class:`~qilisdk.noise.offset_perturbation.OffsetPerturbation`             ✔                    ✔
    -------------------------------------------------------------------------- -------------------- ----------------------
    :class:`~qilisdk.noise.readout_assignment.ReadoutAssignment`               ✔
+   -------------------------------------------------------------------------- -------------------- ----------------------
+   :class:`~qilisdk.noise.environment_noise.EnvironmentNoise`                 ✔                    ✔
    ========================================================================== ==================== ======================
 
 
@@ -93,3 +95,4 @@ Things to note
 - Global noise acts on all qubits for all gates, including controls.
 - Gate noise applies to all qubits that a gate acts on, so if you put noise on a CNOT, it will apply to both the controls and the targets.
 - Noise applied to a specific qubit will only ever target that qubit, even if the gate applying the noise acts on multiple qubits.
+- :class:`~qilisdk.noise.environment_noise.EnvironmentNoise` adds non-Markovian noise, from hidden environment qubits coupled to the system, and is only supported by :class:`~qilisdk.backends.qilisim.QiliSim`. See :doc:`noise_non_markovian`.
