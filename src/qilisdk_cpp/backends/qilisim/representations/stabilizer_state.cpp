@@ -18,6 +18,7 @@
 #include <iostream>
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <numeric>
@@ -348,16 +349,34 @@ namespace {
 // depends only on the state, so callers that need several amplitudes of the same state
 // (matrix_element's single-qubit contraction) build the reducer once and query each b.
 struct AmplitudeReducer {
+    // Qubit bits packed into 64-bit words, only the first nw words are touched so small n costs one word per op
+    static constexpr int MAX_WORDS = (MAX_ROWS_STABILIZER / 2 + 63) / 64;
+    using Bits = std::array<uint64_t, MAX_WORDS>;
+
     int n = 0;
-    int r = 0;  // X-pivot rank == log2 of the support size
-    std::vector<std::vector<uint8_t>> X, Z;
+    int nw = 0;
+    int r = 0;               // X-pivot rank == log2 of the support size
+    std::vector<Bits> X, Z;  // X/Z support of each reduced generator, indexed by qubit
     std::vector<int> p4;
     std::vector<int> pivot_qubit;
-    std::vector<uint8_t> ref;  // reference support state (X-pivot qubits set to 0)
+    Bits ref{};              // reference support state (X-pivot qubits set to 0)
+    std::string ref_string;  // ref as a bitstring
 
-    // Phase (mod 4) of multiplying two Paulis together, given their X and Z bits.
-    static int mul_phase(int x1, int z1, int x2, int z2) {
-        int m = x1 * z1 + x2 * z2 + 2 * z1 * x2 - ((x1 ^ x2) * (z1 ^ z2));
+    static int popcount64(uint64_t w) { return int(std::bitset<64>(w).count()); }
+    static bool test(const Bits& b, int q) { return (b[q >> 6] >> (q & 63)) & 1ULL; }
+    static void set(Bits& b, int q) { b[q >> 6] |= 1ULL << (q & 63); }
+    void xor_into(Bits& dst, const Bits& src) const {
+        for (int w = 0; w < nw; ++w) {
+            dst[w] ^= src[w];
+        }
+    }
+
+    // Phase (mod 4) of the Pauli product (x1, z1) * (x2, z2), summed over all qubits at once
+    int mul_phase(const Bits& x1, const Bits& z1, const Bits& x2, const Bits& z2) const {
+        int m = 0;
+        for (int w = 0; w < nw; ++w) {
+            m += popcount64(x1[w] & z1[w]) + popcount64(x2[w] & z2[w]) + 2 * popcount64(z1[w] & x2[w]) - popcount64((x1[w] ^ x2[w]) & (z1[w] ^ z2[w]));
+        }
         return ((m % 4) + 4) % 4;
     }
 
@@ -372,27 +391,30 @@ struct AmplitudeReducer {
             n_ (int): The number of qubits in the state.
         */
         n = n_;
+        nw = (n + 63) / 64;
         // Pull the n stabilizer generators into a row-major scratch tableau we can reduce in place
-        X.assign(n, std::vector<uint8_t>(n, 0));
-        Z.assign(n, std::vector<uint8_t>(n, 0));
+        X.assign(n, Bits{});
+        Z.assign(n, Bits{});
         p4.assign(n, 0);
-        for (int row = 0; row < n; ++row) {
-            for (int q = 0; q < n; ++q) {
-                X[row][q] = x_bits[q][row];
-                Z[row][q] = z_bits[q][row];
+        for (int q = 0; q < n; ++q) {
+            for (int row = 0; row < n; ++row) {
+                if (x_bits[q][row]) {
+                    set(X[row], q);
+                }
+                if (z_bits[q][row]) {
+                    set(Z[row], q);
+                }
             }
+        }
+        for (int row = 0; row < n; ++row) {
             p4[row] = phases[row] ? 2 : 0;
         }
 
         // Row sum: row dst <- row_dst * row_src (Pauli product), updating the tableau and phase.
         auto rowmul = [&](int dst, int src) {
-            int acc = p4[dst] + p4[src];
-            for (int q = 0; q < n; ++q) {
-                acc += mul_phase(X[dst][q], Z[dst][q], X[src][q], Z[src][q]);
-                X[dst][q] ^= X[src][q];
-                Z[dst][q] ^= Z[src][q];
-            }
-            p4[dst] = ((acc % 4) + 4) % 4;
+            p4[dst] = (p4[dst] + p4[src] + mul_phase(X[dst], Z[dst], X[src], Z[src])) % 4;
+            xor_into(X[dst], X[src]);
+            xor_into(Z[dst], Z[src]);
         };
 
         // Gaussian-eliminate the X block into reduced row echelon form
@@ -401,7 +423,7 @@ struct AmplitudeReducer {
         for (int q = 0; q < n && rank < n; ++q) {
             int sel = -1;
             for (int row = rank; row < n; ++row) {
-                if (X[row][q]) {
+                if (test(X[row], q)) {
                     sel = row;
                     break;
                 }
@@ -412,7 +434,7 @@ struct AmplitudeReducer {
             std::swap(Z[sel], Z[rank]);
             std::swap(p4[sel], p4[rank]);
             for (int row = 0; row < n; ++row) {
-                if (row != rank && X[row][q])
+                if (row != rank && test(X[row], q))
                     rowmul(row, rank);
             }
             pivot_qubit.push_back(q);
@@ -421,20 +443,20 @@ struct AmplitudeReducer {
         r = rank;
 
         // Rows [r, n) are now pure Z. Reduce their Z block to RREF so each fixes one (non-X-pivot) qubit
-        std::vector<uint8_t> is_xpivot(n, 0);
+        Bits is_xpivot{};
         for (int qa : pivot_qubit) {
-            is_xpivot[qa] = 1;
+            set(is_xpivot, qa);
         }
         std::vector<int> zpivot_qubit(n - r, -1);
         int zrank = 0;
         for (int q = 0; q < n && zrank < n - r; ++q) {
             // Pure-Z rows carry no Z on X-pivot qubits (they commute)
-            if (is_xpivot[q]) {
+            if (test(is_xpivot, q)) {
                 continue;
             }
             int sel = -1;
             for (int row = r + zrank; row < n; ++row) {
-                if (Z[row][q]) {
+                if (test(Z[row], q)) {
                     sel = row;
                     break;
                 }
@@ -446,7 +468,7 @@ struct AmplitudeReducer {
             std::swap(Z[sel], Z[r + zrank]);
             std::swap(p4[sel], p4[r + zrank]);
             for (int row = r; row < n; ++row) {
-                if (row != r + zrank && Z[row][q]) {
+                if (row != r + zrank && test(Z[row], q)) {
                     rowmul(row, r + zrank);
                 }
             }
@@ -456,7 +478,7 @@ struct AmplitudeReducer {
 
         // Build a concrete reference basis state in the support: X-pivot qubits are free (set to 0),
         // and each pure-Z row fixes its Z-pivot qubit to that row's sign
-        ref.assign(n, 0);
+        ref.fill(0);
         for (int row = r; row < n; ++row) {
             int d = zpivot_qubit[row - r];
             // Unreachable for a valid tableau: every pure-Z row obtains a Z-pivot above, so no entry of
@@ -464,68 +486,67 @@ struct AmplitudeReducer {
             if (d < 0) {
                 continue;  // GCOVR_EXCL_LINE
             }
-            ref[d] = (p4[row] == 2) ? 1 : 0;
+            if (p4[row] == 2) {
+                set(ref, d);
+            }
         }
+        ref_string = to_string(ref);
     }
 
-    std::complex<double> query(const std::string& b) const {
-        // Determine which X-pivot generators map the reference toward b (free bits = b on pivot qubits),
-        // then check b is actually reachable (i.e. lies in the support)
-        std::vector<int> subset;
-        for (int a = 0; a < r; ++a) {
-            if ((b[pivot_qubit[a]] == '1') != (ref[pivot_qubit[a]] != 0)) {
-                subset.push_back(a);
-            }
-        }
-        std::vector<uint8_t> target = ref;
-        for (int a : subset) {
-            for (int q = 0; q < n; ++q) {
-                target[q] ^= X[a][q];
-            }
-        }
+    std::string to_string(const Bits& bits) const {
+        std::string b(n, '0');
         for (int q = 0; q < n; ++q) {
-            if ((b[q] == '1') != (target[q] != 0)) {
+            if (test(bits, q)) {
+                b[q] = '1';
+            }
+        }
+        return b;
+    }
+
+    // The support is ref XOR span(X-pivot rows) with uniform probability, so XOR in a random subset of rows
+    std::string sample(std::mt19937_64& engine) const {
+        Bits b = ref;
+        std::uniform_int_distribution<int> coin(0, 1);
+        for (int a = 0; a < r; ++a) {
+            if (coin(engine)) {
+                xor_into(b, X[a]);
+            }
+        }
+        return to_string(b);
+    }
+
+    // The amplitude query() assigns to ref: real and positive, 2^(-r/2)
+    double ref_amplitude() const { return std::pow(2.0, -0.5 * r); }
+
+    std::complex<double> query(const std::string& b) const {
+        Bits target{};
+        for (int q = 0; q < n; ++q) {
+            if (b[q] == '1') {
+                set(target, q);
+            }
+        }
+
+        // Multiply the X-pivot generators that b selects (via its pivot qubits) into one Pauli (Xp, Zp)
+        Bits Xp{}, Zp{};
+        int pw = 0;
+        for (int a = 0; a < r; ++a) {
+            if (test(target, pivot_qubit[a]) != test(ref, pivot_qubit[a])) {
+                pw += mul_phase(Xp, Zp, X[a], Z[a]) + p4[a];
+                xor_into(Xp, X[a]);
+                xor_into(Zp, Z[a]);
+            }
+        }
+
+        // Reject b outside the support, else add the phases of Z|1> = -|1>, <1|Y|0> = i and <0|Y|1> = -i
+        for (int w = 0; w < nw; ++w) {
+            if ((ref[w] ^ Xp[w]) != target[w]) {
                 return {0.0, 0.0};
             }
-        }
-
-        // Multiply the selected X-pivot generators together into a single Pauli, tracking the phase
-        std::vector<uint8_t> Xp(n, 0), Zp(n, 0);
-        int pw = 0;
-        for (int a : subset) {
-            for (int q = 0; q < n; ++q) {
-                pw += mul_phase(Xp[q], Zp[q], X[a][q], Z[a][q]);
-                Xp[q] ^= X[a][q];
-                Zp[q] ^= Z[a][q];
-            }
-            pw += p4[a];
-        }
-        pw = ((pw % 4) + 4) % 4;
-
-        // <b| (selected product) |ref> = i^pw * prod_q <b_q| tau(Xp,Zp) |ref_q>
-        std::complex<double> amp(1.0, 0.0);
-        for (int q = 0; q < n; ++q) {
-            int x = Xp[q];
-            int zz = Zp[q];
-            int rq = ref[q];
-            if (x == 0) {
-                if (zz && rq) {
-                    amp = -amp;  // Z|1> = -|1>
-                }
-            } else if (zz) {
-                amp *= (rq == 0) ? std::complex<double>(0.0, 1.0)    // <1|Y|0> = i
-                                 : std::complex<double>(0.0, -1.0);  // <0|Y|1> = -i
-            }
+            const uint64_t y_part = Xp[w] & Zp[w];
+            pw += 2 * popcount64(~Xp[w] & Zp[w] & ref[w]) + popcount64(y_part & ~ref[w]) + 3 * popcount64(y_part & ref[w]);
         }
         static const std::complex<double> ipow[4] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
-        amp *= ipow[pw];
-
-        // Apply the 2^(-r/2) magnitude of the equal superposition over the support.
-        const double inv_sqrt2 = 1.0 / std::sqrt(2.0);
-        for (int a = 0; a < r; ++a)
-            amp *= inv_sqrt2;
-
-        return amp;
+        return ipow[((pw % 4) + 4) % 4] * ref_amplitude();
     }
 };
 
@@ -570,9 +591,14 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
 
     Importance sampling: pick states proportionally to |c_i| so that we naturally focus
     on bitstrings with the highest probability. For each sampled bitstring we compute the
-    exact amplitude A(b) = sum_i c_i <b|s_i> using amplitude(), so pre_samples[b] is always
-    exact (no Monte Carlo noise in the amplitude itself). We just need enough shots to discover
-    all bitstrings with significant probability.
+    exact amplitude A(b) = sum_i c_i <b|s_i>, so pre_samples[b] is always exact (no Monte
+    Carlo noise in the amplitude itself). We just need enough shots to discover all bitstrings
+    with significant probability.
+
+    Each term's tableau is reduced once up front (AmplitudeReducer). Its Z-basis support is then
+    the affine space ref XOR span(X-pivot rows) with uniform weight, so a shot is drawn by XOR-ing
+    a random subset of rows into ref, and every amplitude is a cheap query against the cached
+    reductions. Neither step repeats any Gaussian elimination.
 
     Args:
         nshots (int): The number of samples to draw.
@@ -591,6 +617,12 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
     for (size_t i = 0; i < M; ++i) {
         total_weight += std::abs(coefficients[i]);
         cum_weights[i] = total_weight;
+    }
+
+    // Reduce every term once, sampling and the amplitudes below only query these
+    std::vector<AmplitudeReducer> reducers(M);
+    for (size_t i = 0; i < M; ++i) {
+        reducers[i].build(states[i].get_x_bits(), states[i].get_z_bits(), states[i].get_phases(), nqubits);
     }
 
     // Try to find all interesting bitstrings
@@ -622,7 +654,7 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
             }
 
             // Sample a bitstring from that state using this thread's engine
-            local_samples.insert(states[index].sample(engine));
+            local_samples.insert(reducers[index].sample(engine));
         }
 
 #if defined(_OPENMP)
@@ -631,16 +663,19 @@ std::map<std::string, int> StabilizerStateSum::sample(int nshots) const {
         unique_samples.insert(local_samples.begin(), local_samples.end());
     }
 
-    // Compute the exact amplitude of each distinct bitstring. amplitude() is a const, race-free
-    // O(M * n^3) reduction, so distinct bitstrings are computed in parallel.
+    // Exact amplitude A(b) = sum_i c_i <b|s_i> of each distinct bitstring from the cached reductions
     const std::vector<std::string> sample_list(unique_samples.begin(), unique_samples.end());
     const int nsamples = static_cast<int>(sample_list.size());
     std::vector<std::complex<double>> sample_amps(nsamples);
 #if defined(_OPENMP)
-#pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(static)
 #endif
     for (int i = 0; i < nsamples; ++i) {
-        sample_amps[i] = amplitude(sample_list[i]);
+        std::complex<double> total = 0.0;
+        for (size_t j = 0; j < M; ++j) {
+            total += coefficients[j] * reducers[j].query(sample_list[i]);
+        }
+        sample_amps[i] = total;
     }
 
     std::uniform_real_distribution<double> unit_dist(0.0, 1.0);
@@ -1136,20 +1171,14 @@ std::complex<double> StabilizerState::dropped_global_phase(const StabilizerState
     Returns:
         std::complex<double>: The dropped global phase (unit modulus), or 1 if it cannot be determined.
     */
-    // The representative is, by construction, the basis state amplitude() assigns a positive real
-    // amplitude to, so conv = after.amplitude(b) is exactly 2^(-rank/2) (real, positive). We get
-    // rank straight out of representative() and avoid a second full tableau reduction of `after`.
-    int rank = 0;
-    const std::string b = after.representative(&rank);
-    double conv = 1.0;
-    const double inv_sqrt2 = 1.0 / std::sqrt(2.0);
-    for (int i = 0; i < rank; ++i) {
-        conv *= inv_sqrt2;
-    }
+    // The reference state of `after` has the positive real amplitude 2^(-rank/2) by construction
+    AmplitudeReducer after_reducer;
+    after_reducer.build(after.x_bits, after.z_bits, after.phases, after.nqubits);
+    const double conv = after_reducer.ref_amplitude();
     if (conv < 1e-12) {
         return {1.0, 0.0};
     }
-    const std::complex<double> truth = matrix_element(gate, b);
+    const std::complex<double> truth = matrix_element(gate, after_reducer.ref_string);
     std::complex<double> g = truth / conv;
     const double m = std::abs(g);
     return (m > 1e-12) ? g / m : std::complex<double>(1.0, 0.0);
@@ -1184,9 +1213,14 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
         return;
     }
 
-    // Each callback receives the projected StabilizerState and its coefficient, and returns a
-    // StabilizerStateSum whose terms are all added into the new sum
-    using BranchFn = std::function<StabilizerStateSum(const StabilizerState&, std::complex<double>)>;
+    // Each callback appends the terms for a projected state straight into the output buffers
+    using States = std::vector<StabilizerState>;
+    using Coeffs = std::vector<std::complex<double>>;
+    using BranchFn = std::function<void(StabilizerState, std::complex<double>, States&, Coeffs&)>;
+    const BranchFn keep = [](StabilizerState s, std::complex<double> c, States& ss, Coeffs& cs) {
+        ss.push_back(std::move(s));
+        cs.push_back(c);
+    };
     int branch_qubit = -1;
     BranchFn on_zero, on_one;
 
@@ -1196,17 +1230,20 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
         constexpr double pi = 3.14159265358979323846;
         static const std::complex<double> t_phase = std::exp(std::complex<double>(0.0, pi / 4.0));
         branch_qubit = targets[0];
-        on_zero = [](const StabilizerState& s, std::complex<double> c) { return StabilizerStateSum(s.get_nqubits(), {s}, {c}); };
-        on_one = [](const StabilizerState& s, std::complex<double> c) { return StabilizerStateSum(s.get_nqubits(), {s}, {c * t_phase}); };
+        on_zero = keep;
+        on_one = [](StabilizerState s, std::complex<double> c, States& ss, Coeffs& cs) {
+            ss.push_back(std::move(s));
+            cs.push_back(c * t_phase);
+        };
 
         // Toffoli gates: branch on the first control. On the 0 branch we do nothing, on the 1 branch we apply a CNOT from the second control to the target
     } else if (name == "X" && controls.size() == 2) {
         branch_qubit = controls[0];
-        on_zero = [](const StabilizerState& s, std::complex<double> c) { return StabilizerStateSum(s.get_nqubits(), {s}, {c}); };
-        on_one = [&gate](const StabilizerState& s, std::complex<double> c) {
-            StabilizerState s1 = s;
-            auto phase = s1.apply_gate(gate);
-            return StabilizerStateSum(s.get_nqubits(), {s1}, {c * phase});
+        on_zero = keep;
+        on_one = [&gate](StabilizerState s, std::complex<double> c, States& ss, Coeffs& cs) {
+            auto phase = s.apply_gate(gate);
+            ss.push_back(std::move(s));
+            cs.push_back(c * phase);
         };
 
         // Arbitrary single-qubit gate: the two columns of the 2x2 matrix give the output states for |0⟩ and |1⟩ inputs
@@ -1218,24 +1255,18 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
         std::complex<double> u10 = base.coeff(1, 0), u11 = base.coeff(1, 1);
         Gate x_gate("X", base, {}, {branch_qubit}, {});
         const double tol = 1e-12;
-        on_zero = [u00, u10, tol, x_gate](const StabilizerState& s, std::complex<double> c) {
-            std::vector<StabilizerState> ss;
-            std::vector<std::complex<double>> cs;
+        on_zero = [u00, u10, tol, x_gate](StabilizerState s, std::complex<double> c, States& ss, Coeffs& cs) {
             if (std::abs(u00) > tol) {
                 ss.push_back(s);
                 cs.push_back(c * u00);
             }
             if (std::abs(u10) > tol) {
-                StabilizerState s1 = s;
-                std::complex<double> flip_phase = s1.apply_gate(x_gate);
-                ss.push_back(std::move(s1));
+                std::complex<double> flip_phase = s.apply_gate(x_gate);
+                ss.push_back(std::move(s));
                 cs.push_back(c * u10 * flip_phase);
             }
-            return StabilizerStateSum(s.get_nqubits(), ss, cs);
         };
-        on_one = [u01, u11, tol, x_gate](const StabilizerState& s, std::complex<double> c) {
-            std::vector<StabilizerState> ss;
-            std::vector<std::complex<double>> cs;
+        on_one = [u01, u11, tol, x_gate](StabilizerState s, std::complex<double> c, States& ss, Coeffs& cs) {
             if (std::abs(u01) > tol) {
                 StabilizerState s0 = s;
                 std::complex<double> flip_phase = s0.apply_gate(x_gate);
@@ -1243,10 +1274,9 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
                 cs.push_back(c * u01 * flip_phase);
             }
             if (std::abs(u11) > tol) {
-                ss.push_back(s);
+                ss.push_back(std::move(s));
                 cs.push_back(c * u11);
             }
-            return StabilizerStateSum(s.get_nqubits(), ss, cs);
         };
 
         // Otherwise not supported
@@ -1265,30 +1295,20 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
     // then concatenate them in input order. Keeping the merge ordered preserves a deterministic
     // term ordering (important for reproducibility and combine_duplicates).
     const int nterms = static_cast<int>(states.size());
-    std::vector<std::vector<StabilizerState>> part_states(nterms);
-    std::vector<std::vector<std::complex<double>>> part_coeffs(nterms);
+    std::vector<States> part_states(nterms);
+    std::vector<Coeffs> part_coeffs(nterms);
 
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(dynamic)
 #endif
     for (int k = 0; k < nterms; ++k) {
-        // Add the terms from a branch callback's StabilizerStateSum into this term's buffer
-        auto add_sss = [&](StabilizerStateSum sss) {
-            for (auto& s : sss.get_states()) {
-                part_states[k].push_back(std::move(s));
-            }
-            for (auto& c : sss.get_coefficients()) {
-                part_coeffs[k].push_back(c);
-            }
-        };
-
         // Check if it's deterministic
         bool is_random = (states[k].find_x_pivot(branch_qubit) != -1);
 
         // Deterministic outcome: call the matching callback
         if (!is_random) {
             bool outcome = states[k].z_eigenvalue(branch_qubit);
-            add_sss(outcome ? on_one(states[k], coefficients[k]) : on_zero(states[k], coefficients[k]));
+            (outcome ? on_one : on_zero)(states[k], coefficients[k], part_states[k], part_coeffs[k]);
 
             // Random outcome: project onto each Z eigenstate and call both callbacks
         } else {
@@ -1296,14 +1316,18 @@ void StabilizerStateSum::apply_gate(const Gate& gate) {
             s0.project_z(branch_qubit, false);
             StabilizerState s1 = states[k];
             s1.project_z(branch_qubit, true);
-            const std::string r0 = s0.representative();
-            const std::string r1 = s1.representative();
-            const std::complex<double> d0 = s0.amplitude(r0);
-            const std::complex<double> d1 = s1.amplitude(r1);
-            const std::complex<double> a0 = (std::abs(d0) > 1e-12) ? states[k].amplitude(r0) / d0 : std::complex<double>(0.0, 0.0);
-            const std::complex<double> a1 = (std::abs(d1) > 1e-12) ? states[k].amplitude(r1) / d1 : std::complex<double>(0.0, 0.0);
-            add_sss(on_zero(s0, coefficients[k] * a0));
-            add_sss(on_one(s1, coefficients[k] * a1));
+
+            // Each projection's reference state has amplitude 2^(-r/2), so the parent's amplitude there gives the coefficient
+            AmplitudeReducer parent, red0, red1;
+            parent.build(states[k].get_x_bits(), states[k].get_z_bits(), states[k].get_phases(), nqubits);
+            red0.build(s0.get_x_bits(), s0.get_z_bits(), s0.get_phases(), nqubits);
+            red1.build(s1.get_x_bits(), s1.get_z_bits(), s1.get_phases(), nqubits);
+            const double d0 = red0.ref_amplitude();
+            const double d1 = red1.ref_amplitude();
+            const std::complex<double> a0 = (d0 > 1e-12) ? parent.query(red0.ref_string) / d0 : std::complex<double>(0.0, 0.0);
+            const std::complex<double> a1 = (d1 > 1e-12) ? parent.query(red1.ref_string) / d1 : std::complex<double>(0.0, 0.0);
+            on_zero(std::move(s0), coefficients[k] * a0, part_states[k], part_coeffs[k]);
+            on_one(std::move(s1), coefficients[k] * a1, part_states[k], part_coeffs[k]);
         }
     }
 

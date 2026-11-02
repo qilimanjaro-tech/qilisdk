@@ -256,6 +256,17 @@ def test_rewrite_gate_rejects_unsupported_cases() -> None:
         pass_instance._rewrite_gate(exponential_multi)
 
 
+@pytest.mark.parametrize("two_qubit_basis", [TwoQubitGateBasis.CZ, TwoQubitGateBasis.CNOT])
+def test_rewrite_gate_decomposes_single_controlled_swap(two_qubit_basis: TwoQubitGateBasis) -> None:
+    pass_instance = DecomposeToCanonicalBasisPass(two_qubit_basis=two_qubit_basis)
+    controlled_swap = Controlled(1, basic_gate=SWAP(2, 0))
+
+    rewritten = pass_instance._rewrite_gate(controlled_swap)
+
+    assert all(gate.nqubits == 1 or gate.name == two_qubit_basis.name for gate in rewritten)
+    _assert_gate_sequence_matches(controlled_swap, rewritten)
+
+
 def test_canonical_pass_supports_cnot_basis() -> None:
     pass_instance = DecomposeToCanonicalBasisPass(two_qubit_basis=TwoQubitGateBasis.CNOT)
 
