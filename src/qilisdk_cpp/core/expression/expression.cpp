@@ -264,9 +264,6 @@ class SmallVector {
 // operands of a typical node costs more than an insertion sort does.
 void sort_canonically(NodePtr* begin, NodePtr* end) {
     const auto less = [](const NodePtr& a, const NodePtr& b) { return compare(a, b) < 0; };
-    if (std::is_sorted(begin, end, less)) {
-        return;
-    }
     if (end - begin > 16) {
         std::stable_sort(begin, end, less);
         return;
@@ -366,7 +363,7 @@ bool has_base(const NodePtr& term, const NodePtr& base) {
 }
 
 // Adds a single non-sum term to a canonical sum by merging it into the sorted operands, which gives the same
-// result as build_add but keeps a running sum() linear rather than rebuilding its index on every step
+// result as build_add without rebuilding its hash index, so each step of a running sum() is one cheap pass
 NodePtr add_to_sum(const NodePtr& sum, const NodePtr& term, bool sum_first) {
     std::vector<NodePtr> out(sum->args.begin(), sum->args.end());
     const auto less = [](const NodePtr& a, const NodePtr& b) { return compare(a, b) < 0; };
@@ -402,9 +399,7 @@ NodePtr add_to_sum(const NodePtr& sum, const NodePtr& term, bool sum_first) {
         }
     }
 
-    if (out.empty()) {
-        return constant_int(0);
-    }
+    // The sum had at least two operands and at most one is removed, so at least one remains
     if (out.size() == 1) {
         return out[0];
     }
@@ -723,7 +718,7 @@ Registry& registry() {
     return *instance;
 }
 
-void initialize(py::object constant_cls, py::object add_cls, py::object mul_cls, py::object pow_cls, py::object expression_cls, py::object log_cls, py::object non_polynomial_error, py::object not_supported_error, double tol) {
+void initialize(py::object constant_cls, py::object add_cls, py::object mul_cls, py::object pow_cls, py::object expression_cls, py::object log_cls, py::object non_polynomial_error, double tol) {
     Registry& reg = registry();
     reg.constant_cls = std::move(constant_cls);
     reg.add_cls = std::move(add_cls);
@@ -733,7 +728,6 @@ void initialize(py::object constant_cls, py::object add_cls, py::object mul_cls,
     reg.expression_cls = std::move(expression_cls);
     reg.log_cls = std::move(log_cls);
     reg.non_polynomial_error = std::move(non_polynomial_error);
-    reg.not_supported_error = std::move(not_supported_error);
     reg.numpy_generic = py::module_::import("numpy").attr("generic");
     reg.empty_tuple = py::tuple();
     reg.tol = tol;
@@ -802,6 +796,7 @@ NodePtr make_node(Kind kind, const NodePtr* first, NodeSpan rest) {
 }
 
 void release(Node* node) {
+    Py_XDECREF(node->wrapper);
     auto* storage = reinterpret_cast<NodePtr*>(node + 1);
     for (size_t i = 0; i < node->args.size(); ++i) {
         storage[i].~NodePtr();
@@ -1044,7 +1039,11 @@ bool equal(const NodePtr& a, const NodePtr& b) {
     }
     switch (a->kind) {
         case Kind::Constant:
-            return num_eq(a->value, b->value) || (same_double(a->value.re, b->value.re) && same_double(a->value.im, b->value.im));
+            if (num_eq(a->value, b->value)) {
+                return true;
+            }
+            // NaN is never equal to itself numerically, but structurally every NaN is alike
+            return (std::isnan(a->value.re) || std::isnan(a->value.im)) && same_double(a->value.re, b->value.re) && same_double(a->value.im, b->value.im);
         case Kind::Variable:
             return a->label == b->label;
         case Kind::Function:
@@ -1505,6 +1504,32 @@ py::object wrap(const NodePtr& node) {
     return result;
 }
 
+py::object wrap_shared(const NodePtr& node) {
+    if (node->kind == Kind::Variable) {
+        return node->owner;
+    }
+    if (node->wrapper != nullptr) {
+        PyObject* alive = nullptr;
+#if PY_VERSION_HEX >= 0x030D0000
+        if (PyWeakref_GetRef(node->wrapper, &alive) == 1) {
+            return py::reinterpret_steal<py::object>(alive);
+        }
+#else
+        alive = PyWeakref_GetObject(node->wrapper);
+        if (alive != Py_None) {
+            return py::reinterpret_borrow<py::object>(alive);
+        }
+#endif
+    }
+    py::object result = wrap(node);
+    PyObject* ref = PyWeakref_NewRef(result.ptr(), nullptr);
+    if (ref == nullptr) {
+        throw py::error_already_set();  // GCOV_EXCL_LINE (every wrapper class has a __weakref__ slot)
+    }
+    Py_XSETREF(node->wrapper, ref);
+    return result;
+}
+
 namespace python {
 
 namespace core = qilisdk::expr;
@@ -1530,7 +1555,16 @@ py::object constant_node(py::handle value) {
 }
 
 py::object node(int kind, py::iterable args) {
-    return capsule(make_node(static_cast<Kind>(kind), nodes_of(args)));
+    const auto node_kind = static_cast<Kind>(kind);
+    if (node_kind != Kind::Add && node_kind != Kind::Mul && node_kind != Kind::Pow) {
+        throw py::value_error("Only an Add, Mul or Pow node can be built from operands.");
+    }
+    const std::vector<NodePtr> nodes = nodes_of(args);
+    // The trust only covers canonical form: too few operands would be read out of bounds
+    if (node_kind == Kind::Pow ? nodes.size() != 2 : nodes.size() < 2) {
+        throw py::value_error(node_kind == Kind::Pow ? "A Pow needs exactly two operands." : "An Add or Mul needs at least two operands.");
+    }
+    return capsule(make_node(node_kind, nodes));
 }
 
 py::object function(py::handle cls, py::handle arg) {
@@ -1730,8 +1764,10 @@ py::list to_list(py::handle self) {
 py::tuple args(py::handle self) {
     const NodePtr node = node_of(self);
     py::tuple out(node->args.size());
+    // A subtree shared by several parents comes back as one object, so pickle and deepcopy memoize it rather than
+    // copying it once per path, which is exponential in the depth of the sharing
     for (size_t i = 0; i < node->args.size(); ++i) {
-        out[i] = wrap(node->args[i]);
+        out[i] = wrap_shared(node->args[i]);
     }
     return out;
 }

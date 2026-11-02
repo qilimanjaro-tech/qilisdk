@@ -548,6 +548,14 @@ def test_trusting_constructors_keep_their_operands(params):
     assert Pow(x, Constant(3)) == x**3
 
 
+def test_trusting_constructors_reject_too_few_operands(params):
+    x, _, _ = params
+    with pytest.raises(ValueError, match="at least two operands"):
+        Add((x,))
+    with pytest.raises(ValueError, match="at least two operands"):
+        Mul(())
+
+
 def test_a_product_splits_into_coefficient_and_monomial(params):
     x, y, _ = params
     product = 3 * x * y
@@ -631,6 +639,11 @@ def test_nan_constants_are_structurally_equal():
     assert first == second
     assert hash(first) == hash(second)
     assert math.isnan(Constant(nan).evaluate())
+    assert Constant(nan) != Constant(1.0)
+
+
+def test_integers_beyond_double_precision_stay_distinct():
+    assert Constant(2**53) != Constant(2**53 + 1)
 
 
 def test_nan_coefficients_sort_and_compare_consistently(binaries):
@@ -1392,7 +1405,6 @@ def test_a_custom_function(params):
     assert repr(expr) == "Cube(1 + x)"
     assert expr.evaluate({x: 1.0}) == 8.0
     assert expr.derivative(x) == 3 * (x + 1) ** 2
-    assert Function._REGISTRY["cube"] is Cube
 
 
 def test_deeply_nested_functions(params):
@@ -1452,6 +1464,15 @@ def test_a_deep_copy_copies_the_variables(params):
     copied = next(symbol for symbol in clone.free_symbols() if symbol.label == "x")
     assert copied is not x
     assert copied == x
+
+
+def test_copying_a_shared_subtree_copies_it_once(binaries):
+    a, b, _ = binaries
+    expr = a + b
+    for _ in range(30):
+        expr = Sin(expr) + Sin(expr) * b
+    assert len(pickle.dumps(expr)) < 100_000
+    assert copy.deepcopy(expr) == expr
 
 
 def test_a_deserialized_parameter_keeps_its_value(params):

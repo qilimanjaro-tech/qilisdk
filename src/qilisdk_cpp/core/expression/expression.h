@@ -61,7 +61,8 @@ struct Node;
 void release(Node* node);
 
 // A counted reference to a node. Every node is only ever touched with the GIL held, so the count
-// needs no atomics, unlike a shared_ptr whose every copy is a locked instruction.
+// needs no atomics, unlike a shared_ptr whose every copy is a locked instruction. This is also why
+// the module must never be declared safe to import without the GIL (py::mod_gil_not_used).
 class NodePtr {
    public:
     NodePtr() = default;
@@ -132,11 +133,12 @@ struct Node {
     bool custom_binary = false;  // Variable: whether it has its own to_binary
     bool parameter = false;      // Variable: whether it is a Parameter
     uint64_t hash = 0;
-    uint64_t label_key = 0;  // Variable/Function: the label's first 8 bytes, big-endian, which order like the label
-    Num value;               // Constant: the number
-    std::string label;       // Variable: its label; Function: its NAME
-    py::object owner;        // Variable: the Python variable; Function: its class
-    NodeSpan args;           // Add/Mul: operands; Pow: {base, exp}; Function: {arg}
+    uint64_t label_key = 0;               // Variable/Function: the label's first 8 bytes, big-endian, which order like the label
+    Num value;                            // Constant: the number
+    std::string label;                    // Variable: its label; Function: its NAME
+    py::object owner;                     // Variable: the Python variable; Function: its class
+    mutable PyObject* wrapper = nullptr;  // Non-variables: weak reference to the wrapper wrap_shared() last made
+    NodeSpan args;                        // Add/Mul: operands; Pow: {base, exp}; Function: {arg}
 };
 
 inline NodePtr::NodePtr(Node* node) : node_(node) {
@@ -178,14 +180,13 @@ struct Registry {
     py::object log_cls;
     py::object expression_to_binary;
     py::object non_polynomial_error;
-    py::object not_supported_error;
     py::object numpy_generic;
     py::object empty_tuple;
     double tol = 1e-12;
     std::unordered_map<PyObject*, ClassInfo> classes;
 };
 Registry& registry();
-void initialize(py::object constant_cls, py::object add_cls, py::object mul_cls, py::object pow_cls, py::object expression_cls, py::object log_cls, py::object non_polynomial_error, py::object not_supported_error, double tol);
+void initialize(py::object constant_cls, py::object add_cls, py::object mul_cls, py::object pow_cls, py::object expression_cls, py::object log_cls, py::object non_polynomial_error, double tol);
 const ClassInfo& class_info(py::handle cls);
 
 // Node construction. The make_* functions trust their input to be canonical, the build_* functions canonicalize it.
@@ -222,6 +223,7 @@ std::string repr(const NodePtr& node);
 NodePtr node_of(py::handle obj);
 bool coerce(py::handle obj, NodePtr& out);
 py::object wrap(const NodePtr& node);
+py::object wrap_shared(const NodePtr& node);
 py::object capsule(const NodePtr& node);
 
 // The functions bound to Python, each taking and returning Python objects

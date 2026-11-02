@@ -108,6 +108,7 @@ pybind11_add_module(expression_module SHARED src/qilisdk_cpp/core/expression/exp
 file(GLOB EXPRESSION_SOURCES src/qilisdk_cpp/core/expression/*.cpp)
 target_sources(expression_module PRIVATE ${EXPRESSION_SOURCES})
 target_link_libraries(expression_module PRIVATE qilisdk_libs)
+# No fused multiply-adds, so constant arithmetic rounds exactly like Python's
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(expression_module PRIVATE -ffp-contract=off)
 endif()

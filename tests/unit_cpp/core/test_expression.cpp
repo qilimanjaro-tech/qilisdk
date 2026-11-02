@@ -41,7 +41,7 @@ class ExpressionTest : public ::testing::Test {
             s = SpinVariable("s")
             p, q = Parameter("p", 2.0), Parameter("q", 3.0)
         )");
-        initialize(g("Constant"), g("Add"), g("Mul"), g("Pow"), g("Expression"), g("Log"), g("NonPolynomialError"), g("NotSupportedOperation"), g("get_settings")().attr("atol").cast<double>());
+        initialize(g("Constant"), g("Add"), g("Mul"), g("Pow"), g("Expression"), g("Log"), g("NonPolynomialError"), g("get_settings")().attr("atol").cast<double>());
     }
 
     static py::object g(const char* name) { return py::globals()[name]; }
@@ -153,6 +153,10 @@ TEST_F(ExpressionTest, ConstantsAndTrustingConstructors) {
     py::object sum = g("Add").attr("__new__")(g("Add"));
     sum.attr("_node") = python::node(static_cast<int>(Kind::Add), py::make_tuple(g("x"), g("y")));
     EXPECT_TRUE(python::equal(sum, ev("x + y")));
+    EXPECT_THROW(python::node(static_cast<int>(Kind::Add), py::make_tuple(g("x"))), py::value_error);
+    EXPECT_THROW(python::node(static_cast<int>(Kind::Mul), py::tuple()), py::value_error);
+    EXPECT_THROW(python::node(static_cast<int>(Kind::Pow), py::make_tuple(g("x"), g("y"), g("z"))), py::value_error);
+    EXPECT_THROW(python::node(static_cast<int>(Kind::Variable), py::make_tuple(g("x"), g("y"))), py::value_error);
     EXPECT_EQ(python::variable_hash("x"), python::hash(g("x")));
     EXPECT_TRUE(python::value(ev("Constant(2.5)")).equal(py::float_(2.5)));
 }
@@ -218,10 +222,6 @@ TEST_F(ExpressionTest, AddingOneTermToASumMergesIt) {
     EXPECT_EQ(r("(2 * x * y + 1) + x * y * z"), "1 + 2 * x * y + x * y * z");
     EXPECT_EQ(r("(2 * x * y + 1) + x * z"), "1 + 2 * x * y + x * z");
     EXPECT_EQ(r("(2 * x * y + 1) + 3 * x * y"), "1 + 5 * x * y");
-    // A sum built without canonicalizing can be emptied
-    py::object one = g("Add").attr("__new__")(g("Add"));
-    one.attr("_node") = python::node(static_cast<int>(Kind::Add), py::make_tuple(ev("Constant(1)")));
-    EXPECT_TRUE(python::equal(python::add(one, py::int_(-1)), ev("Constant(0)")));
 }
 
 TEST_F(ExpressionTest, FunctionsFoldConstantsAndCheckTheirOperand) {
@@ -399,6 +399,9 @@ TEST_F(ExpressionTest, NanAndSignedZeroConstantsAreStructurallyEqual) {
     EXPECT_TRUE(equal(first, second));
     EXPECT_EQ(first->hash, second->hash);
     EXPECT_TRUE(equal(make_constant(Num::real(-0.0)), make_constant(Num::integer(0))));
+    // Integers past 2**53 share a double, which must not make them equal
+    EXPECT_FALSE(equal(make_constant(Num::integer(int64_t{1} << 53)), make_constant(Num::integer((int64_t{1} << 53) + 1))));
+    EXPECT_FALSE(equal(first, make_constant(Num::real(1.0))));
     EXPECT_EQ(make_constant(Num::real(-0.0))->hash, make_constant(Num::real(0.0))->hash);
     // NaN sorts after every number, consistently in both directions
     const NodePtr one = make_constant(Num::real(1.0));
@@ -453,4 +456,16 @@ TEST_F(ExpressionTest, LabelsCompareByTheirFirstEightBytesThenInFull) {
     EXPECT_EQ(compare(node_of(g("long_b")), node_of(g("long_a"))), 1);
     EXPECT_EQ(compare(node_of(g("long_a")), node_of(ev("BinaryVariable('prefix__a')"))), 0);
     EXPECT_EQ(compare(node_of(g("x")), node_of(g("y"))), -1);
+}
+
+TEST_F(ExpressionTest, ArgsHandBackTheLiveWrapperOfEachOperand) {
+    py::exec("shared = Sin(x + y)\nparent = shared * z + shared");
+    EXPECT_TRUE(python::args(ev("parent"))[0].is(python::args(ev("parent"))[0]));
+    EXPECT_TRUE(wrap_shared(node_of(g("x"))).is(g("x")));
+    // Once the wrapper dies, the next call makes a new one
+    const NodePtr node = node_of(ev("Cos(x)"));
+    py::object wrapper = wrap_shared(node);
+    EXPECT_TRUE(wrap_shared(node).is(wrapper));
+    wrapper = py::none();
+    EXPECT_TRUE(python::equal(wrap_shared(node), ev("Cos(x)")));
 }

@@ -59,8 +59,6 @@ from qilisdk.core.expression import (
     Sin,
     Sqrt,
     Tan,
-    _assert_real,
-    _float_if_real,
 )
 from qilisdk.core.variables import (
     LARGE_BOUND,
@@ -1135,9 +1133,9 @@ def test_symbolic_and_fractional_exponents():
     y = Parameter("y", 0.5)
 
     # None of these were expressible with the old flattened polynomial.
-    assert np.isclose(_assert_real((x**y).evaluate({})), 2.0)
-    assert np.isclose(_assert_real((x**0.5).evaluate({})), 2.0)
-    assert np.isclose(_assert_real((2**y).evaluate({})), np.sqrt(2))
+    assert np.isclose((x**y).evaluate({}), 2.0)
+    assert np.isclose((x**0.5).evaluate({}), 2.0)
+    assert np.isclose((2**y).evaluate({}), np.sqrt(2))
 
     assert (x**y).free_symbols() == {x, y}
     with pytest.raises(NonPolynomialError):
@@ -1180,21 +1178,21 @@ def test_sum_of_different_mathematical_maps_is_not_merged():
 
     term = Sin(p) + Cos(p)
     assert len(term.args) == 2
-    assert np.isclose(_assert_real(term.evaluate({})), np.sin(0.5) + np.cos(0.5))
+    assert np.isclose(term.evaluate({}), np.sin(0.5) + np.cos(0.5))
 
     # Maps of the same kind must still be merged.
     same_kind = Sin(p) + Sin(p)
     assert same_kind == 2 * Sin(p)
-    assert np.isclose(_assert_real(same_kind.evaluate({})), 2 * np.sin(0.5))
+    assert np.isclose(same_kind.evaluate({}), 2 * np.sin(0.5))
 
     pow_term = p**2 + p**3
     assert len(pow_term.args) == 2
-    assert np.isclose(_assert_real(pow_term.evaluate({})), 0.5**2 + 0.5**3)
+    assert np.isclose(pow_term.evaluate({}), 0.5**2 + 0.5**3)
 
     # A product of the same map is a square, not a doubling. The flattened Term model got this wrong.
     squared = Sin(p) * Sin(p)
     assert squared == Sin(p) ** 2
-    assert np.isclose(_assert_real(squared.evaluate({})), np.sin(0.5) ** 2)
+    assert np.isclose(squared.evaluate({}), np.sin(0.5) ** 2)
 
 
 def test_abs_map():
@@ -1546,21 +1544,6 @@ def test_extract_number():
     assert _extract_number("var(3)") == 3
     assert _extract_number("var(33)") == 33
     assert _extract_number("var(test)") == 0
-
-
-def test_float_if_real():
-    assert np.isclose(_float_if_real(3), 3.0)
-    assert np.isclose(_float_if_real(3.5), 3.5)
-    assert np.isclose(_float_if_real(complex(3, 0)), 3.0)
-    assert np.isclose(_float_if_real(complex(3, 2)), complex(3, 2))
-
-
-def test_assert_real():
-    assert _assert_real(3) == 3
-    assert np.isclose(_assert_real(3.5), 3.5)
-    assert np.isclose(_assert_real(complex(3, 0)), 3.0)
-    with pytest.raises(ValueError, match=r"Only real values"):
-        _ = _assert_real(complex(3, 2))
 
 
 def test_parameter_non_trainable_bounds_are_locked_to_value():

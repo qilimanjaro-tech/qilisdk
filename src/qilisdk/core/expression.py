@@ -45,11 +45,10 @@ from qilisdk.core.exceptions import NonPolynomialError, NotSupportedOperation
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
-from .types import Number, RealNumber
-
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
 
+    from .types import Number, RealNumber
     from .variables import BaseVariable, Parameter
 
 _TOL = get_settings().atol
@@ -58,34 +57,6 @@ _TOL = get_settings().atol
 _KIND_POW = 2
 _KIND_MUL = 3
 _KIND_ADD = 4
-
-
-def _float_if_real(value: Number) -> Number:
-    """Collapse a complex value with negligible imaginary part to a real value.
-
-    Returns:
-        Number: the real value if the imaginary part is negligible, otherwise ``value`` unchanged.
-    """
-    if isinstance(value, RealNumber):
-        return value
-    if isinstance(value, complex) and abs(value.imag) < _TOL:
-        return value.real
-    return value
-
-
-def _assert_real(value: Number) -> RealNumber:
-    """Coerce ``value`` to a real number.
-
-    Returns:
-        RealNumber: the real value.
-
-    Raises:
-        ValueError: if ``value`` has a non-negligible imaginary part.
-    """
-    real = _float_if_real(value)
-    if isinstance(real, RealNumber):
-        return real
-    raise ValueError(f"Only real values are allowed but {real} was provided.")
 
 
 def _coerce(obj: object) -> Expression | None:
@@ -300,7 +271,8 @@ class _Node(Expression):
     Nodes are immutable, so a copy shares the C++ node with the original.
     """
 
-    __slots__ = ("_node",)
+    # The weak reference lets a node hand back its live wrapper rather than a new one each time
+    __slots__ = ("__weakref__", "_node")
 
     def __copy__(self) -> Expression:
         clone = object.__new__(type(self))
@@ -458,12 +430,6 @@ class Function(_Node, ABC):
     __slots__ = ()
 
     NAME: ClassVar[str] = ""
-    _REGISTRY: ClassVar[dict[str, type[Function]]] = {}
-
-    def __init_subclass__(cls, **kwargs: object) -> None:
-        super().__init_subclass__(**kwargs)
-        if getattr(cls, "NAME", ""):
-            Function._REGISTRY[cls.NAME] = cls
 
     def __new__(cls, arg: object) -> Expression:
         # A constant operand folds straight to a Constant
@@ -629,4 +595,4 @@ def Inv(arg: object) -> Expression:
     return Pow.build(operand, Constant(-1))
 
 
-_cpp.initialize(Constant, Add, Mul, Pow, Expression, Log, NonPolynomialError, NotSupportedOperation, _TOL)
+_cpp.initialize(Constant, Add, Mul, Pow, Expression, Log, NonPolynomialError, _TOL)
