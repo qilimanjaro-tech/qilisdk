@@ -54,14 +54,13 @@ class QutipI(SingleQubitGate):
     """
     Single-qubit I gate.
 
-    Examples
-    --------
-    >>> from qutip_qip.operations import X
-    >>> I(0).get_compact_qobj()  # doctest: +NORMALIZE_WHITESPACE
-    Quantum object: dims=[[2], [2]], shape=(2, 2), type='oper', dtype=Dense, isherm=True
-    Qobj data =
-    [[1. 0.]
-     [0. 1.]]
+    Example:
+        >>> from qilisdk.backends.qutip_backend import QutipI
+        >>> QutipI(0).get_compact_qobj()  # doctest: +NORMALIZE_WHITESPACE
+        Quantum object: dims=[[2], [2]], shape=(2, 2), type='oper', dtype=Dense, isherm=True
+        Qobj data =
+        [[1. 0.]
+         [0. 1.]]
     """
 
     def __init__(self, targets, **kwargs) -> None:  # ruff: ignore[missing-type-function-argument, missing-type-kwargs]

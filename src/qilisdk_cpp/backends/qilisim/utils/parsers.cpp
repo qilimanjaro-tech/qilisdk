@@ -15,6 +15,7 @@
 #include "parsers.h"
 #include <algorithm>
 #include <cmath>
+#include "../../../core/qtensor.h"
 #include "../../../libs/logging.h"
 #include "../../../libs/numpy.h"
 #include "../digital/gate.h"
@@ -192,6 +193,37 @@ inline void validate_qubit_index(int qubit, int nqubits, const char* context) {
     }
 }
 
+inline SparseMatrix from_qtensor(py::handle qtensor, double atol) {
+    /*
+    Read a Python QTensor straight from its C++ storage, skipping the SciPy round-trip of from_spmatrix(qtensor.data).
+    Objects without a C++ backing (anything else exposing a SciPy ``data`` attribute) fall back to from_spmatrix.
+
+    Args:
+        qtensor (py::handle): The Python QTensor, or any object with a SciPy sparse ``data`` attribute.
+        atol (double): Absolute tolerance for considering values as non-zero.
+
+    Returns:
+        SparseMatrix: The tensor as a row-major sparse matrix, with the same filtering as from_spmatrix.
+    */
+    if (!py::hasattr(qtensor, "_qtensor_cpp")) {
+        return from_spmatrix(qtensor.attr("data"), atol);
+    }
+    const auto& tensor = qtensor.attr("_qtensor_cpp").cast<const QTensorCpp&>();
+    Triplets entries;
+    tensor.for_each_nonzero([&](int row, int col, Complex val) {
+        if (std::abs(val) > atol || !std::isfinite(val.real()) || !std::isfinite(val.imag())) {
+            entries.emplace_back(row, col, val);
+        }
+    });
+    SparseMatrix mat(tensor.rows(), tensor.cols());
+    mat.setFromTriplets(entries.begin(), entries.end());
+    return mat;
+}
+
+// Build the per-step sqrt(rate(t)) multiplier used to scale a base jump operator across an analog
+// evolution. A constant rate yields a constant series; a callable rate(t) is evaluated at every time
+// point in step_list. Validates that each rate value is a finite, non-negative real number (negative
+// rates are unphysical and would make sqrt(rate) NaN, silently poisoning the evolution).
 inline std::vector<double> make_sqrt_rate_series(py::handle rate, const std::vector<double>& step_list, double atol) {
     /*
     Build the per-step sqrt(rate(t)) multiplier used to scale a base jump operator across the evolution.
@@ -270,7 +302,7 @@ inline void collect_lindblad_jumps(py::handle py_noise_pass, double dt, double a
     // If it's a constant-rate pass, we can just grab the jump operators and their rates directly
     if (!time_dependent) {
         for (auto& lindblad_op : lindblad_gen.attr("jump_operators_with_rates")) {
-            jump_operators.push_back(from_spmatrix(lindblad_op.attr("data"), atol));
+            jump_operators.push_back(from_qtensor(lindblad_op, atol));
             jump_rate_series.emplace_back();
         }
         return;
@@ -280,7 +312,7 @@ inline void collect_lindblad_jumps(py::handle py_noise_pass, double dt, double a
     py::list base_ops = lindblad_gen.attr("jump_operators").cast<py::list>();
     py::list rates = lindblad_gen.attr("rates").cast<py::list>();
     for (size_t i = 0; i < base_ops.size(); ++i) {
-        jump_operators.push_back(from_spmatrix(base_ops[i].attr("data"), atol));
+        jump_operators.push_back(from_qtensor(base_ops[i], atol));
         jump_rate_series.push_back(make_sqrt_rate_series(rates[i], *step_list, atol));
     }
 }
@@ -502,7 +534,7 @@ py::object construct_result_object(const DenseMatrix& state_dense, const py::obj
                 py::list expectations_py = trajectory_expectation_values(state_dense, ro, n_qubits, config, nshots);
                 results.append(ExpectationReadoutResult.attr("from_expectations")("expectation_values"_a = expectations_py, "nshots"_a = nshots));
             } else {
-                results.append(ExpectationReadoutResult.attr("from_state")("expectation_readout"_a = py::module_::import("copy").attr("copy")(ro), "state"_a = QTensor(state_numpy())));
+                results.append(ExpectationReadoutResult.attr("from_state")("expectation_readout"_a = py::module_::import("copy").attr("copy")(ro), "state"_a = QTensor(state_numpy()), "seed"_a = config.next_seed()));
             }
 
             // If we have a sampling readout, sample from the state and return the counts directly
@@ -592,59 +624,13 @@ std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol, 
     */
     std::vector<SparseMatrix> hamiltonians;
     for (auto& hamiltonian : Hs) {
-        py::object spm = hamiltonian.attr("to_qtensor")("total_nqubits"_a = nqubits).attr("data");
-        SparseMatrix H = from_spmatrix(spm, atol);
+        SparseMatrix H = from_qtensor(hamiltonian.attr("to_qtensor")("total_nqubits"_a = nqubits), atol);
         hamiltonians.push_back(H);
     }
     if (hamiltonians.size() == 0) {
         throw py::value_error("At least one Hamiltonian must be provided");
     }
     return hamiltonians;
-}
-
-std::string normalize_gate_name(const std::string& name) {
-    /*
-    Map a gate's QiliSDK name to the name used internally during simulation.
-
-    Args:
-        name (std::string): The gate name from QiliSDK.
-
-    Returns:
-        std::string: The internal gate name.
-    */
-    if (name == "CNOT" || name == "CX" || name == "Toffoli" || name == "CCX") {
-        return "X";
-    }
-    if (name == "CY" || name == "CCY") {
-        return "Y";
-    }
-    if (name == "CZ" || name == "CCZ") {
-        return "Z";
-    }
-    return name;
-}
-
-int gate_num_controls(const std::string& name) {
-    /*
-    Number of control qubits implied by a QiliSDK controlled-gate name.
-
-    Controlled gates are represented internally by their base gate plus control qubits
-    (see normalize_gate_name), so the control count is what distinguishes, for example, a
-    CZ from a plain Z when matching noise by gate type.
-
-    Args:
-        name (std::string): The gate name from QiliSDK.
-
-    Returns:
-        int: The number of control qubits (0 for a non-controlled gate).
-    */
-    if (name == "CNOT" || name == "CX" || name == "CY" || name == "CZ") {
-        return 1;
-    }
-    if (name == "Toffoli" || name == "CCX" || name == "CCY" || name == "CCZ") {
-        return 2;
-    }
-    return 0;
 }
 
 std::map<std::string, float> resolve_gate_durations(const py::object& circuit, const py::object& noise_config) {
@@ -709,7 +695,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
             std::vector<SparseMatrix> kraus_operators;
             py::object as_kraus = py_noise_pass.attr("as_kraus")();
             for (auto& kraus_op : as_kraus.attr("operators")) {
-                kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                kraus_operators.push_back(from_qtensor(kraus_op, atol));
             }
             if (!kraus_operators.empty()) {
                 noise_model_cpp.add_kraus_operators_global(kraus_operators);
@@ -719,7 +705,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
                 std::vector<SparseMatrix> kraus_operators;
                 py::object as_kraus = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = dt);
                 for (auto& kraus_op : as_kraus.attr("operators")) {
-                    kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                    kraus_operators.push_back(from_qtensor(kraus_op, atol));
                 }
                 if (!kraus_operators.empty()) {
                     noise_model_cpp.add_kraus_operators_global(kraus_operators);
@@ -729,7 +715,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
                     std::vector<SparseMatrix> kraus_operators;
                     py::object as_kraus = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = gate_dt);
                     for (auto& kraus_op : as_kraus.attr("operators")) {
-                        kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                        kraus_operators.push_back(from_qtensor(kraus_op, atol));
                     }
                     if (!kraus_operators.empty()) {
                         noise_model_cpp.add_kraus_operators_per_gate(gate_name, kraus_operators);
@@ -792,7 +778,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
                 std::vector<SparseMatrix> kraus_operators;
                 py::object as_kraus = py_noise_pass.attr("as_kraus")();
                 for (auto& kraus_op : as_kraus.attr("operators")) {
-                    kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                    kraus_operators.push_back(from_qtensor(kraus_op, atol));
                 }
                 if (!kraus_operators.empty()) {
                     noise_model_cpp.add_kraus_operators_per_qubit(q, kraus_operators);
@@ -802,7 +788,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
                     std::vector<SparseMatrix> kraus_operators;
                     py::object as_kraus = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = dt);
                     for (auto& kraus_op : as_kraus.attr("operators")) {
-                        kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                        kraus_operators.push_back(from_qtensor(kraus_op, atol));
                     }
                     if (!kraus_operators.empty()) {
                         noise_model_cpp.add_kraus_operators_per_qubit(q, kraus_operators);
@@ -812,7 +798,7 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
                         std::vector<SparseMatrix> kraus_operators;
                         py::object as_kraus = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = gate_dt);
                         for (auto& kraus_op : as_kraus.attr("operators")) {
-                            kraus_operators.push_back(from_spmatrix(kraus_op.attr("data"), atol));
+                            kraus_operators.push_back(from_qtensor(kraus_op, atol));
                         }
                         if (!kraus_operators.empty()) {
                             noise_model_cpp.add_kraus_operators_per_gate_qubit(gate_name, q, kraus_operators);
@@ -856,15 +842,13 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
             if (py::isinstance(py_noise_pass, SupportsStaticKraus)) {
                 py::object as_kraus = py_noise_pass.attr("as_kraus")();
                 for (auto& kraus_op : as_kraus.attr("operators")) {
-                    py::object spm = kraus_op.attr("data");
-                    SparseMatrix K = from_spmatrix(spm, atol);
+                    SparseMatrix K = from_qtensor(kraus_op, atol);
                     kraus_operators.push_back(K);
                 }
             } else if (py::isinstance(py_noise_pass, SupportsTimeDerivedKraus)) {
                 py::object as_kraus_from_duration = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = gate_dt);
                 for (auto& kraus_op : as_kraus_from_duration.attr("operators")) {
-                    py::object spm = kraus_op.attr("data");
-                    SparseMatrix K = from_spmatrix(spm, atol);
+                    SparseMatrix K = from_qtensor(kraus_op, atol);
                     kraus_operators.push_back(K);
                 }
             }
@@ -890,15 +874,13 @@ NoiseModelCpp parse_noise_model(const py::object& noise_model, int nqubits, doub
             if (py::isinstance(py_noise_pass, SupportsStaticKraus)) {
                 py::object as_kraus = py_noise_pass.attr("as_kraus")();
                 for (auto& kraus_op : as_kraus.attr("operators")) {
-                    py::object spm = kraus_op.attr("data");
-                    SparseMatrix K = from_spmatrix(spm, atol);
+                    SparseMatrix K = from_qtensor(kraus_op, atol);
                     kraus_operators.push_back(K);
                 }
             } else if (py::isinstance(py_noise_pass, SupportsTimeDerivedKraus)) {
                 py::object as_kraus_from_duration = py_noise_pass.attr("as_kraus_from_duration")("duration"_a = gate_dt);
                 for (auto& kraus_op : as_kraus_from_duration.attr("operators")) {
-                    py::object spm = kraus_op.attr("data");
-                    SparseMatrix K = from_spmatrix(spm, atol);
+                    SparseMatrix K = from_qtensor(kraus_op, atol);
                     kraus_operators.push_back(K);
                 }
             }
@@ -994,8 +976,7 @@ std::vector<SparseMatrix> parse_observables(const py::object& observables, long 
 
         } else if (py::isinstance(obs, QTensor)) {
             // Get the data directly if it's a QTensor
-            py::object spm = obs.attr("data");
-            SparseMatrix O = from_spmatrix(spm, atol);
+            SparseMatrix O = from_qtensor(obs, atol);
             observable_matrices.push_back(O);
 
         } else {
@@ -1312,7 +1293,7 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
         // Get the matrix (if it's not a measurement, since those don't have matrices)
         SparseMatrix base_matrix;
         if (gate_type_str != "M") {
-            base_matrix = from_spmatrix(py_gate.attr("matrix").attr("data"), atol);
+            base_matrix = from_qtensor(py_gate.attr("matrix"), atol);
         } else {
             base_matrix = SparseMatrix(2, 2);
             base_matrix.coeffRef(0, 0) = 1.0;
@@ -1348,10 +1329,6 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
             SparseMatrix controlled_matrix = base_matrix.bottomRightCorner(dim, dim);
             base_matrix = controlled_matrix;
         }
-
-        // Turn controlled gates into their base gate with controls, since that's how we
-        // represent them internally (kept in sync with normalize_gate_name).
-        gate_type_str = normalize_gate_name(gate_type_str);
 
         // Get the parameter names
         std::vector<std::pair<std::string, double>> parameters;
