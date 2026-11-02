@@ -62,6 +62,7 @@ extern py::object SupportsStaticLindblad;
 extern py::object SupportsTimeDerivedKraus;
 extern py::object SupportsTimeDerivedLindblad;
 extern py::object ReadoutAssignment;
+extern py::object EnvironmentNoise;
 extern py::object NoiseConfig;
 extern py::object ExpectationReadout;
 extern py::object ReadoutMethod;

@@ -26,6 +26,7 @@ env:
     tests/unit_python/backends/test_qutip_backend.py
     tests/unit_python/backends/test_lazy_imports.py
     tests/unit_python/noise/test_noise_handling_cudaq.py
+    tests/unit_python/noise/test_environment_noise_backends.py
 
 jobs:
   core-tests:
