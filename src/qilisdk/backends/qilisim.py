@@ -18,14 +18,12 @@ from typing import TYPE_CHECKING
 from loguru import logger
 from qilisim_module import QiliSimCpp  # ty:ignore[unresolved-import]
 
-from qilisdk.core.qtensor import InitialState
 from qilisdk.settings import get_settings
 
 from .backend import Backend
 from .backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, SolverConfigDict
 
 if TYPE_CHECKING:
-    from qilisdk.core import QTensor
     from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir
     from qilisdk.functionals.functional_result import FunctionalResult
     from qilisdk.noise.noise_model import NoiseModel
@@ -153,7 +151,6 @@ class QiliSim(Backend):
         self,
         functional: DigitalPropagation,
         readout: list[ReadoutMethod],
-        initial_state: QTensor | InitialState = InitialState.ZERO,
     ) -> FunctionalResult:
         """Execute a digital-circuit propagation functional and return measurement results.
 
@@ -162,9 +159,6 @@ class QiliSim(Backend):
                 functional to execute.
             readout (list[ReadoutMethod]): Readout specifications for
                 result extraction.
-            initial_state (QTensor | InitialState): Optional initial state to start
-                the simulation from. Defaults to ``InitialState.ZERO`` (computational
-                basis zero state).
 
         Returns:
             FunctionalResult: The execution result containing the requested
@@ -178,7 +172,7 @@ class QiliSim(Backend):
             len(readout),
         )
         result = self.qili_sim.execute_digital_propagation(
-            functional, readout, self._noise_model, initial_state, self._solver_config
+            functional, readout, self._noise_model, functional.initial_state, self._solver_config
         )
         logger.info("[QiliSim] Digital Propagation finished")
         return result

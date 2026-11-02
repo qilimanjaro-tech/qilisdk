@@ -51,9 +51,9 @@ def test_is_close_mod_2pi_rejects_meaningful_difference() -> None:
 @pytest.mark.parametrize(
     ("helper_matrix", "expected_matrix"),
     [
-        (_mat_RZ(math.pi / 5.0), RZ(0, phi=math.pi / 5.0).matrix),
-        (_mat_RY(math.pi / 4.0), RY(0, theta=math.pi / 4.0).matrix),
-        (_mat_RX(math.pi / 3.0), RX(0, theta=math.pi / 3.0).matrix),
+        (_mat_RZ(math.pi / 5.0), RZ(0, phi=math.pi / 5.0).matrix.dense()),
+        (_mat_RY(math.pi / 4.0), RY(0, theta=math.pi / 4.0).matrix.dense()),
+        (_mat_RX(math.pi / 3.0), RX(0, theta=math.pi / 3.0).matrix.dense()),
     ],
 )
 def test_rotation_matrix_helpers_match_gate_matrices(helper_matrix: np.ndarray, expected_matrix: np.ndarray) -> None:
@@ -63,7 +63,7 @@ def test_rotation_matrix_helpers_match_gate_matrices(helper_matrix: np.ndarray, 
 def test_u3_matrix_helper_matches_gate_matrix() -> None:
     theta, phi, lam = (math.pi / 3.0, -math.pi / 4.0, math.pi / 7.0)
 
-    assert np.allclose(_mat_U3(theta, phi, lam), U3(0, theta=theta, phi=phi, gamma=lam).matrix)
+    assert np.allclose(_mat_U3(theta, phi, lam), U3(0, theta=theta, phi=phi, gamma=lam).matrix.dense())
 
 
 @pytest.mark.parametrize(
@@ -79,7 +79,7 @@ def test_u3_matrix_helper_matches_gate_matrix() -> None:
 def test_u3_and_phase_from_unitary_is_exact(name: str, unitary: np.ndarray) -> None:
     theta, phi, gamma, alpha = _u3_and_phase_from_unitary(unitary)
 
-    reconstructed = np.exp(1j * alpha) * U3(0, theta=theta, phi=phi, gamma=gamma).matrix
+    reconstructed = np.exp(1j * alpha) * U3(0, theta=theta, phi=phi, gamma=gamma).matrix.dense()
     assert np.allclose(unitary, reconstructed), f"Phased U3 reconstruction failed for {name}"
 
 

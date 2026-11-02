@@ -382,9 +382,9 @@ class DigitalMethod(BaseSimulatorConfig):
             reduces the number of passes over the statevector (the memory
             bandwidth bottleneck for large qubit counts) at the cost of extra
             arithmetic per fused block. Supersedes ``combine_single_qubit_gates``
-            when enabled, and only applies to the matrix-free statevector path
-            (disabled automatically when a noise model is present). Defaults to
-            ``True``.
+            when enabled, and applies to the matrix-free statevector path
+            (disabled automatically when a noise model is present) and to the
+            MPS path, where blocks span at most two qubits. Defaults to ``True``.
         max_fused_qubits (int): Maximum number of qubits a single fused block may
             span. Larger values fuse more aggressively but build larger dense
             matrices (``2**max_fused_qubits`` square). Defaults to ``4``.
@@ -392,10 +392,11 @@ class DigitalMethod(BaseSimulatorConfig):
             for statevector simulation. Defaults to ``True``.
     """
 
-    digital_method: str = Field(
+    digital_method: Literal["statevector", "statevector_matrix_free", "stabilizer", "mps"] = Field(
         default="statevector_matrix_free",
         description=(
-            "Digital simulation method to use. This is set automatically by the preferred constructors like `statevector`."
+            "Digital simulation method to use: 'statevector', 'statevector_matrix_free', 'stabilizer', or 'mps'. "
+            "This is set automatically by the preferred constructors like `statevector`."
         ),
     )
     max_cache_size: int = Field(
@@ -414,7 +415,7 @@ class DigitalMethod(BaseSimulatorConfig):
     )
     fuse_gates: bool = Field(
         default=True,
-        description="Whether to fuse runs of adjacent gates on a small set of qubits into a single dense multi-qubit operation to reduce passes over the statevector. Only applies to the matrix-free statevector path.",
+        description="Whether to fuse runs of adjacent gates on a small set of qubits into a single dense multi-qubit operation to reduce passes over the statevector. Applies to the matrix-free statevector and MPS paths.",
     )
     max_fused_qubits: int = Field(
         default=0,
@@ -432,6 +433,17 @@ class DigitalMethod(BaseSimulatorConfig):
         le=INT32_MAX,
         description="Maximum number of stabilizer states to track when using the stabilizer digital simulation method. Set to zero for unlimited.",
     )
+    mps_max_bond_dimension: int = Field(
+        default=64,
+        gt=0,
+        description="Largest bond dimension kept when using the MPS digital simulation method. Larger values are more accurate but cost memory and runtime.",
+    )
+    mps_truncation_cutoff: float = Field(
+        default=1e-7,
+        ge=0.0,
+        lt=1.0,
+        description="Singular values smaller than this fraction of the largest are discarded when using the MPS digital simulation method.",
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return digital simulation settings in backend-compatible key names."""
@@ -443,6 +455,8 @@ class DigitalMethod(BaseSimulatorConfig):
             "fuse_gates": self.fuse_gates,
             "max_fused_qubits": self.max_fused_qubits,
             "stabilizer_max_states": self.stabilizer_max_states,
+            "mps_max_bond_dimension": self.mps_max_bond_dimension,
+            "mps_truncation_cutoff": self.mps_truncation_cutoff,
         }
         return d
 
@@ -492,6 +506,56 @@ class DigitalMethod(BaseSimulatorConfig):
             fuse_gates=fuse_gates,
             max_fused_qubits=max_fused_qubits,
             matrix_free=matrix_free,
+        )
+
+    @classmethod
+    def mps(
+        cls,
+        max_bond_dimension: int = 64,
+        truncation_cutoff: float = 1e-7,
+        combine_single_qubit_gates: bool = True,
+        fuse_gates: bool = True,
+    ) -> DigitalMethod:
+        """Return a matrix-product-state simulation configuration.
+
+        The circuit is applied gate by gate to an MPS, whose memory cost grows with the
+        entanglement the circuit generates and only linearly with the qubit count. The only
+        approximation is the truncation after each two-qubit gate, and the total weight
+        discarded is reported as a warning when it exceeds 1%.
+
+        Mid-circuit measurements are reported as intermediate results, but cannot collapse
+        the state, so ``measurement_collapse`` is ignored with a warning. Noise models are
+        limited to readout error and parameter perturbations.
+
+        Args:
+            max_bond_dimension (int): Largest bond dimension to keep. Circuits whose
+                entanglement stays below this are simulated exactly.
+            truncation_cutoff (float): Singular values below this fraction of the largest
+                are discarded regardless of the bond dimension. Must be in ``[0, 1)``.
+            combine_single_qubit_gates (bool): Whether to combine consecutive single-qubit gates into a single
+                operation. Defaults to ``True``.
+            fuse_gates (bool): Whether to fuse runs of adjacent gates into a single dense operation. An MPS applies
+                one- and two-qubit gates only, so blocks never span more than a pair and there is no depth to tune,
+                but fusing a distant pair means routing it with swaps once instead of once per gate in the block.
+                Defaults to ``True``.
+
+        Returns:
+            DigitalMethod: Configured MPS digital configuration.
+        """
+        logger.debug(
+            "[BackendConfig] Configuring MPS digital method (max_bond_dimension={}, truncation_cutoff={}, "
+            "combine_single_qubit_gates={}, fuse_gates={})",
+            max_bond_dimension,
+            truncation_cutoff,
+            combine_single_qubit_gates,
+            fuse_gates,
+        )
+        return DigitalMethod(
+            digital_method="mps",
+            mps_max_bond_dimension=max_bond_dimension,
+            mps_truncation_cutoff=truncation_cutoff,
+            combine_single_qubit_gates=combine_single_qubit_gates,
+            fuse_gates=fuse_gates,
         )
 
     @classmethod
