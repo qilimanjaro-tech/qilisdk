@@ -333,7 +333,7 @@ def _as_basis_1q(gate: Gate) -> Gate:
     if isinstance(gate, Z):
         return U3(qubit, theta=0.0, phi=0.0, gamma=math.pi)
     if isinstance(gate, BasicGate) and gate.nqubits == 1:
-        theta, phi, gamma = _zyz_from_unitary(gate.matrix)
+        theta, phi, gamma = _zyz_from_unitary(gate.matrix.dense())
         return U3(qubit, theta=theta, phi=phi, gamma=gamma)
     raise NotImplementedError(f"Unsupported 1-qubit gate type {type(gate).__name__} in _as_basis_1q")
 
@@ -608,7 +608,7 @@ class DecomposeToCanonicalBasisPass(CircuitTranspilerPass):
                 raise NotImplementedError(
                     "Decomposing the exponential of a multi-qubit gate to a canonical basis is not supported."
                 )
-            unitary_matrix = gate.matrix
+            unitary_matrix = gate.matrix.dense()
             theta, phi, gamma = _zyz_from_unitary(unitary_matrix)
             return _normalize_single_qubit_sequence(
                 [U3(basic_gate.qubits[0], theta=theta, phi=phi, gamma=gamma)],
@@ -617,7 +617,7 @@ class DecomposeToCanonicalBasisPass(CircuitTranspilerPass):
 
         # generic 1q
         if isinstance(gate, BasicGate) and gate.nqubits == 1:
-            theta, phi, gamma = _zyz_from_unitary(gate.matrix)
+            theta, phi, gamma = _zyz_from_unitary(gate.matrix.dense())
             return _normalize_single_qubit_sequence(
                 [U3(gate.qubits[0], theta=theta, phi=phi, gamma=gamma)],
                 self._single_qubit_basis,

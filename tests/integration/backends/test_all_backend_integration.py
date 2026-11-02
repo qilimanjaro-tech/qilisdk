@@ -583,6 +583,18 @@ def test_partial_measurements_no_expansion(backend):
     assert samples["1"] == 50
 
 
+@pytest.mark.parametrize("backend", backends)
+def test_circuit_initial_state(backend):
+    circuit = Circuit(nqubits=1)
+    circuit.add(X(0))
+    functional = DigitalPropagation(circuit=circuit, initial_state=InitialState.ONE)
+    result = backend.execute(functional, Readout().with_sampling(nshots=100))
+    assert isinstance(result, FunctionalResult)
+    samples = result.get_samples()
+    assert "0" in samples
+    assert samples["0"] == 100
+
+
 # ---------------------------------------------------------------------------
 # Time-dependent Lindblad noise (analog evolution)
 # ---------------------------------------------------------------------------

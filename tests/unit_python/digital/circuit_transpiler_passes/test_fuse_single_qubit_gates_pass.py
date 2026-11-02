@@ -15,6 +15,7 @@
 import numpy as np
 import pytest
 
+from qilisdk.core import QTensor
 from qilisdk.digital import Circuit
 from qilisdk.digital.circuit_transpiler_passes import SingleQubitGateBasis
 from qilisdk.digital.circuit_transpiler_passes.fuse_single_qubit_gates_pass import FuseSingleQubitGatesPass
@@ -175,8 +176,8 @@ def test_try_single_qubit_unitary_rejects_non_2x2_matrix() -> None:
             return "BadShape"
 
         @property
-        def matrix(self) -> np.ndarray:
-            return np.eye(4, dtype=complex)
+        def matrix(self) -> QTensor:
+            return QTensor(np.eye(4, dtype=complex))
 
         @property
         def target_qubits(self) -> tuple[int, ...]:
@@ -188,7 +189,7 @@ def test_try_single_qubit_unitary_rejects_non_2x2_matrix() -> None:
 def test_emit_fused_basis_gates_recognizes_pure_ry_rotations() -> None:
     pass_instance = FuseSingleQubitGatesPass(single_qubit_basis=SingleQubitGateBasis.RxRyRz)
 
-    fused = pass_instance._emit_fused_basis_gates(0, RY(0, theta=0.4).matrix)
+    fused = pass_instance._emit_fused_basis_gates(0, RY(0, theta=0.4).matrix.dense())
 
     assert len(fused) == 1
     assert isinstance(fused[0], RY)

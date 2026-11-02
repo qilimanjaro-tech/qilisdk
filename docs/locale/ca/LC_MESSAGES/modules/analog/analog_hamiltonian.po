@@ -361,10 +361,9 @@ msgid ""
 "adds all the terms in a single pass instead:"
 msgstr ""
 "La funció integrada :func:`sum` torna a simplificar el Hamiltonià "
-"creixent a cada suma, cosa que esdevé lenta per a Hamiltonians grans. "
-"En canvi, "
+"acumulat a cada suma, cosa que resulta lenta per a Hamiltonians grans. "
 ":meth:`Hamiltonian.sum()<qilisdk.analog.hamiltonian.Hamiltonian.sum>` "
-"suma tots els termes d'una sola passada:"
+"suma tots els termes en una sola passada:"
 
 #: ../../modules/analog/analog_hamiltonian.rst:153
 msgid "Visualizing"
