@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Callable, Iterator, Mapping, overload
 from loguru import logger
 from numpy import linspace
 
-from qilisdk.analog.hamiltonian import Hamiltonian
+from qilisdk.analog.hamiltonian import Hamiltonian, _reject_digital_object
 from qilisdk.core.expression import Cos, Expression
 from qilisdk.core.interpolator import Interpolation, Interpolator, ParameterizedNumber, TimeDict
 from qilisdk.core.parameterizable import Parameterizable
@@ -39,6 +39,9 @@ CoeffDict = dict[str, TimeDict]
 InterpDict = dict[str, "Interpolator"]
 
 _DEFAULT_DT = 0.1
+
+# Name used for this class in the error messages raised for digital objects.
+_REJECT_TARGET = "a Schedule"
 
 
 @yaml.register_class
@@ -539,6 +542,7 @@ class Schedule(Parameterizable):
         coefficients: Interpolator | TimeDict,
         interpolation: Interpolation = Interpolation.LINEAR,
     ) -> None:
+        _reject_digital_object(hamiltonian, _REJECT_TARGET)
         if not isinstance(hamiltonian, Hamiltonian):
             raise ValueError(f"Expecting a Hamiltonian object but received {type(hamiltonian)} instead.")
 
@@ -593,6 +597,7 @@ class Schedule(Parameterizable):
         if label not in self._hamiltonians:
             raise ValueError(f"Can't update unknown hamiltonian {label}. Did you mean `add_hamiltonian`?")
         if new_hamiltonian is not None:
+            _reject_digital_object(new_hamiltonian, _REJECT_TARGET)
             if not isinstance(new_hamiltonian, Hamiltonian):
                 raise ValueError(f"Expecting a Hamiltonian object but received {type(new_hamiltonian)} instead.")
             self._hamiltonians[label] = new_hamiltonian

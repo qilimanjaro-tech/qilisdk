@@ -108,7 +108,7 @@ def _try_matrix(g: Gate) -> np.ndarray | None:
             a matrix.
     """
     try:
-        return g.matrix
+        return g.matrix.dense()
     except GateHasNoMatrixError:
         return None
 

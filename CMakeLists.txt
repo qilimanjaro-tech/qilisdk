@@ -49,9 +49,10 @@ if (NOT Eigen3_FOUND)
     include(FetchContent)
     FetchContent_Declare(
         eigen
-        GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-        GIT_TAG 5.0.1
-        GIT_SHALLOW TRUE
+        URL https://src.fedoraproject.org/repo/pkgs/eigen3/eigen-5.0.1.tar.bz2/sha512/5cb11c7f1945ae7f36c5deb067b8d5a962d2d3cff7d4dbec8a4ee255ee6aae1b7dbe6d5a6dcc6fe77554ef191e4101366bf79cfb34f5cf06a0e4de311afbeaf6/eigen-5.0.1.tar.bz2
+            https://distfiles.gentoo.org/distfiles/38/eigen-5.0.1.tar.bz2
+            https://gitlab.com/libeigen/eigen/-/archive/5.0.1/eigen-5.0.1.tar.bz2
+        URL_HASH SHA256=e4de6b08f33fd8b8985d2f204381408c660bffa6170ac65b68ae1bd3cd575c0a
     )
     FetchContent_MakeAvailable(eigen)
 endif()
@@ -102,6 +103,21 @@ set_target_properties(qtensor_module PROPERTIES
     INSTALL_RPATH "${RPATH_ORIGIN}"
 )
 
+# Check if we should compile with AVX2 + FMA support (x86-64-v3)
+check_cxx_compiler_flag("-march=x86-64-v3" QILISDK_HAS_X86_64_V3)
+set(QILISDK_USE_X86_64_V3 ${QILISDK_HAS_X86_64_V3})
+if (no_avx)
+    message(STATUS "[QiliSDK C++] Building without AVX2 + FMA as requested")
+    set(QILISDK_USE_X86_64_V3 FALSE)
+elseif (QILISDK_HAS_X86_64_V3 AND NOT CMAKE_CROSSCOMPILING AND CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64|i[3-6]86|x86")
+    include(CheckCXXSourceRuns)
+    check_cxx_source_runs("int main() { return (__builtin_cpu_supports(\"avx2\") && __builtin_cpu_supports(\"fma\")) ? 0 : 1; }" QILISDK_CPU_HAS_AVX2_FMA)
+    if (NOT QILISDK_CPU_HAS_AVX2_FMA)
+        message(STATUS "[QiliSDK C++] This CPU has no AVX2 + FMA, building without them")
+        set(QILISDK_USE_X86_64_V3 FALSE)
+    endif()
+endif()
+
 # Classical solvers
 pybind11_add_module(solvers_module SHARED src/qilisdk_cpp/solvers/solvers_bindings.cpp)
 file(GLOB SOLVERS_SOURCES src/qilisdk_cpp/solvers/*.cpp)
@@ -133,10 +149,8 @@ foreach(module ${MODULES_TO_BUILD})
         message(STATUS "[QiliSDK C++] Using GCC/Clang specific compile options")
         target_compile_options(${module} PRIVATE -Wall -Wextra -Wpedantic)
 
-        # Enable AVX2 + FMA for 2015+ CPUs
-        include(CheckCXXCompilerFlag)
-        check_cxx_compiler_flag("-march=x86-64-v3" QILISDK_HAS_X86_64_V3)
-        if (QILISDK_HAS_X86_64_V3)
+        # Enable AVX2 + FMA if this build is allowed to
+        if (QILISDK_USE_X86_64_V3)
             message(STATUS "[QiliSDK C++] Targeting x86-64-v3 (AVX2 + FMA)")
             target_compile_options(${module} PRIVATE -march=x86-64-v3)
         endif()
@@ -257,7 +271,7 @@ if (DEFINED tests AND tests STREQUAL "ON")
 
     # The test executable MUST use the same architecture flags as the modules
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-        if (QILISDK_HAS_X86_64_V3)
+        if (QILISDK_USE_X86_64_V3)
             target_compile_options(test_cpp PRIVATE -march=x86-64-v3)
         endif()
         if (build_native)

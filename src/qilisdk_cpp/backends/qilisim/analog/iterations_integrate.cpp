@@ -295,7 +295,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
 #if defined(_OPENMP)
 #pragma omp parallel for reduction(+ : norm_sq) schedule(static)
 #endif
-        for (int i = 0; i < rho_t.rows(); ++i) {
+        for (long i = 0; i < rho_t.rows(); ++i) {
             norm_sq += std::norm(rho_t(i, 0));
         }
         const Real norm = static_cast<Real>(std::sqrt(norm_sq));
@@ -303,7 +303,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
 #if defined(_OPENMP)
 #pragma omp parallel for schedule(static)
 #endif
-        for (int i = 0; i < rho_t.rows(); ++i) {
+        for (long i = 0; i < rho_t.rows(); ++i) {
             rho_t(i, 0) /= norm;
         }
     } else {
@@ -620,10 +620,9 @@ void iter_rk4(ExponentialAnsatz& rho_t, double t, double dt, const std::vector<d
     rhs(k, rho_tmp, current_hamiltonian);
     rho_t += k * dt_over_3;
 
-    // Third step: compute k3 at time t + dt/2
+    // Third step: compute k3 at time t + dt/2, reusing the Hamiltonian from the second step
     rho_tmp = rho_old;
     rho_tmp += k * dt_over_2;
-    current_hamiltonian = construct_current_hamiltonian(t_step + 0.5 * dt, step_list, hamiltonians, parameters_list);
     rhs(k, rho_tmp, current_hamiltonian);
     rho_t += k * dt_over_3;
 

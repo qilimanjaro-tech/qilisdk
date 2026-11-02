@@ -102,7 +102,7 @@ def _gate_steps(circuit: Circuit, noise_model: NoiseModel) -> list[tuple[np.ndar
     steps = []
     for gate in circuit.gates:
         qubits = [*gate.control_qubits, *gate.target_qubits]
-        local = gate.matrix
+        local = gate.matrix.dense()
         if qubits == list(range(circuit.nqubits)):
             full = local
         else:

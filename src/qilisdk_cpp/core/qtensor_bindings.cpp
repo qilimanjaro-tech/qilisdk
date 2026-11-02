@@ -86,6 +86,7 @@ PYBIND11_MODULE(qtensor_module, m) {
         .def("sample_python", &QTensorCpp::sample_python)
         .def("compute_eigendecomposition", &QTensorCpp::compute_eigendecomposition)
         .def("reset_qubits_python", &QTensorCpp::reset_qubits_python)
+        .def("permute_python", &QTensorCpp::permute_python)
         .def(py::init<>())
         .def(py::init<const py::object&>());
 }

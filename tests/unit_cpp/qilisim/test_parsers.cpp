@@ -1388,6 +1388,7 @@ TEST(ParseGates, BasicGate) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
 
         class FakeHGate:
             name = 'H'
@@ -1397,7 +1398,7 @@ TEST(ParseGates, BasicGate) {
             @property
             def matrix(self):
                 s = 1 / np.sqrt(2)
-                return np.array([[s, s], [s, -s]], dtype=complex)
+                return QTensor(np.array([[s, s], [s, -s]], dtype=complex))
             def get_parameters(self):
                 return {}
 
@@ -1422,6 +1423,7 @@ TEST(ParseGates, MeasurementGateIsNotSkipped) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
 
         class FakeMGate:
             name = 'M'
@@ -1430,7 +1432,7 @@ TEST(ParseGates, MeasurementGateIsNotSkipped) {
             is_parameterized = False
             @property
             def matrix(self): 
-                return np.eye(2, dtype=complex)
+                return QTensor(np.eye(2, dtype=complex))
             def get_parameters(self): return {}
 
         class FakeCircuitMGate:
@@ -1450,6 +1452,7 @@ TEST(ParseGates, ParameterizedGate) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
 
         class FakeRZGate:
             name = 'RZ'
@@ -1459,10 +1462,10 @@ TEST(ParseGates, ParameterizedGate) {
             _theta = 0.5
             @property
             def matrix(self):
-                return np.array([
+                return QTensor(np.array([
                     [np.exp(-1j * self._theta / 2), 0],
                     [0, np.exp(1j * self._theta / 2)]
-                ], dtype=complex)
+                ], dtype=complex))
             def get_parameters(self):
                 return {'theta': self._theta}
             def set_parameters(self, params):
@@ -1489,6 +1492,7 @@ TEST(ParseGates, ControlledGate) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
 
         class FakeCXGate:
             name = 'CX'
@@ -1497,7 +1501,7 @@ TEST(ParseGates, ControlledGate) {
             is_parameterized = False
             @property
             def matrix(self):
-                return np.array([[1,0,0,0],[0,1,0,0],[0,0,0,1],[0,0,1,0]], dtype=complex)
+                return QTensor(np.array([[1,0,0,0],[0,1,0,0],[0,0,0,1],[0,0,1,0]], dtype=complex))
             def get_parameters(self): return {}
 
         class FakeCircuitControlledGate:
@@ -1523,6 +1527,7 @@ TEST(ParseGates, ControlledYGate) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
 
         class FakeCYGate:
             name = 'CY'
@@ -1531,7 +1536,7 @@ TEST(ParseGates, ControlledYGate) {
             is_parameterized = False
             @property
             def matrix(self):
-                return np.array([[1,0,0,0],[0,1,0,0],[0,0,0,-1j],[0,0,1j,0]], dtype=complex)
+                return QTensor(np.array([[1,0,0,0],[0,1,0,0],[0,0,0,-1j],[0,0,1j,0]], dtype=complex))
             def get_parameters(self): return {}
 
         class FakeCircuitControlledYGate:
@@ -1557,6 +1562,7 @@ TEST(ParseGates, ControlledZGate) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
         class FakeCZGate:
             name = 'CZ'
             control_qubits = [0]
@@ -1564,7 +1570,7 @@ TEST(ParseGates, ControlledZGate) {
             is_parameterized = False
             @property
             def matrix(self):
-                return np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,-1]], dtype=complex)
+                return QTensor(np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,-1]], dtype=complex))
             def get_parameters(self): return {}
 
         class FakeCircuitControlledZGate:
@@ -1604,6 +1610,7 @@ TEST(ParseGates, ParameterPerturbationAppliedGlobalNoise) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
 
         class FakePerturbation:
             def perturb(self, value):
@@ -1617,7 +1624,7 @@ TEST(ParseGates, ParameterPerturbationAppliedGlobalNoise) {
             _theta = 0.5
             @property
             def matrix(self):
-                return np.eye(2, dtype=complex)
+                return QTensor(np.eye(2, dtype=complex))
             def get_parameters(self):
                 return {'theta': self._theta}
             def set_parameters(self, params):
@@ -1650,6 +1657,7 @@ TEST(ParseGates, ParameterPerturbationAppliedPerGate) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
         import numpy as np
+        from qilisdk.core.qtensor import QTensor
 
         class FakePerturbation:
             def perturb(self, value):
@@ -1663,7 +1671,7 @@ TEST(ParseGates, ParameterPerturbationAppliedPerGate) {
             _theta = 0.25
             @property
             def matrix(self):
-                return np.eye(2, dtype=complex)
+                return QTensor(np.eye(2, dtype=complex))
             def get_parameters(self):
                 return {'theta': self._theta}
             def set_parameters(self, params):
@@ -1886,6 +1894,59 @@ _traj_ro_qt = [ExpectationReadout(observables=[QTensor(sp.csr_matrix(np.array([[
     std::vector<double> reference = expectations_of(construct_result_object(trajectories_to_density_matrix(trajectories), readout, noise_model_cpp, 2, config, qubits_to_measure));
     ASSERT_EQ(averaged.size(), 1u);
     EXPECT_NEAR(averaged[0], reference[0], 1e-12);
+}
+
+TEST(ConstructResultsTrajectories, ExpectationWithShotsIsSampled) {
+    py::gil_scoped_acquire gil;
+    // The identity term of the second observable carries no shot noise, so only the X(0) term of it
+    // is sampled; the Z(0) term of the first observable is sampled on its own.
+    py::exec(R"(
+from qilisdk.readout import ExpectationReadout
+from qilisdk.analog.hamiltonian import Z, X
+_traj_ro_exp_shots = [ExpectationReadout(observables=[Z(0), 0.5 * X(0) + 2.0 * X(0) * X(0)], nshots=8)]
+_traj_ro_exp_exact = [ExpectationReadout(observables=[Z(0), 0.5 * X(0) + 2.0 * X(0) * X(0)])]
+    )");
+    py::list readout_shots = py::globals()["_traj_ro_exp_shots"].cast<py::list>();
+    py::list readout_exact = py::globals()["_traj_ro_exp_exact"].cast<py::list>();
+
+    DenseMatrix trajectories = two_qubit_trajectories();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true, true};
+
+    std::vector<double> sampled = expectations_of(construct_result_object(trajectories, readout_shots, noise_model_cpp, 2, config, qubits_to_measure, true));
+    std::vector<double> exact = expectations_of(construct_result_object(trajectories, readout_exact, noise_model_cpp, 2, config, qubits_to_measure, true));
+    ASSERT_EQ(sampled.size(), 2u);
+
+    // An eight shot average of +-1 outcomes can only take the values (2 k - 8) / 8
+    EXPECT_NE(sampled[0], exact[0]);
+    EXPECT_NEAR(8.0 * (sampled[0] + 1.0) / 2.0, std::round(8.0 * (sampled[0] + 1.0) / 2.0), 1e-9);
+
+    // The identity term contributes its coefficient exactly, the X(0) term is sampled
+    double x_term = (sampled[1] - 2.0) / 0.5;
+    EXPECT_NEAR(8.0 * (x_term + 1.0) / 2.0, std::round(8.0 * (x_term + 1.0) / 2.0), 1e-9);
+}
+
+TEST(ConstructResultsTrajectories, ExpectationOfQTensorObservableWithShotsIsSampled) {
+    py::gil_scoped_acquire gil;
+    // A QTensor observable cannot be measured term by term, so the shot noise is applied on the
+    // ensemble density matrix instead; the outcomes are still the +-1 eigenvalues of the observable.
+    py::exec(R"(
+from qilisdk.readout import ExpectationReadout
+from qilisdk.core.qtensor import QTensor
+import numpy as np, scipy.sparse as sp
+_traj_ro_qt_shots = [ExpectationReadout(observables=[QTensor(sp.csr_matrix(np.array([[1.0, 0.0], [0.0, -1.0]], dtype=complex)))], nshots=8)]
+    )");
+    py::list readout = py::globals()["_traj_ro_qt_shots"].cast<py::list>();
+
+    DenseMatrix trajectories = two_qubit_trajectories();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true, true};
+
+    std::vector<double> sampled = expectations_of(construct_result_object(trajectories, readout, noise_model_cpp, 2, config, qubits_to_measure, true));
+    ASSERT_EQ(sampled.size(), 1u);
+    EXPECT_NEAR(8.0 * (sampled[0] + 1.0) / 2.0, std::round(8.0 * (sampled[0] + 1.0) / 2.0), 1e-9);
 }
 
 TEST(ConstructResultsTrajectories, ImaginaryExpectationValueThrows) {
@@ -2250,6 +2311,31 @@ TEST(ConstructResultsStabilizer, ExpectationReadout_Succeeds) {
     EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); });
 }
 
+TEST(ConstructResultsStabilizer, ExpectationReadoutWithShotsIsSampled) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ExpectationReadout
+        from qilisdk.analog.hamiltonian import X, Z
+        _stab_ro_exp_shots = [ExpectationReadout(observables=[X(0), Z(0)], nshots=7)]
+    )");
+    // |0> has <X(0)> = 0, so seven shots give a quantised estimate rather than the exact zero, while
+    // <Z(0)> = 1 is deterministic and stays exact however few shots are taken.
+    StabilizerStateSum state(1);
+    py::list readout = py::globals()["_stab_ro_exp_shots"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+
+    py::object result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure);
+    py::list values = result.attr("expectation_values").attr("expectation_values").cast<py::list>();
+    ASSERT_EQ(values.size(), 2u);
+
+    double x_value = values[0].cast<Complex>().real();
+    EXPECT_NE(x_value, 0.0);
+    EXPECT_NEAR(7.0 * (x_value + 1.0) / 2.0, std::round(7.0 * (x_value + 1.0) / 2.0), 1e-9);
+    EXPECT_NEAR(values[1].cast<Complex>().real(), 1.0, 1e-12);
+}
+
 TEST(ConstructResultsStabilizer, StateTomographyReadoutExact_Succeeds) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
@@ -2286,6 +2372,150 @@ TEST(ConstructResultsStabilizer, UnsupportedReadoutThrows) {
     )");
     StabilizerStateSum state(1);
     py::list readout = py::globals()["_stab_ro_bad"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); }, py::value_error);
+}
+
+TEST(ParseSolverParams, MPSSettingsApplied) {
+    py::gil_scoped_acquire gil;
+    py::dict params;
+    params["mps_max_bond_dimension"] = py::int_(8);
+    params["mps_truncation_cutoff"] = py::float_(1e-6);
+    QiliSimConfig config;
+    EXPECT_NO_THROW(config = parse_solver_params(params));
+    EXPECT_EQ(config.get_mps_max_bond_dimension(), 8);
+    EXPECT_DOUBLE_EQ(config.get_mps_truncation_cutoff(), 1e-6);
+}
+
+TEST(ParseInitialStateMPS, NoneReturnsZeroState) {
+    py::gil_scoped_acquire gil;
+    auto state = parse_initial_state_mps(py::none(), 2);
+    EXPECT_EQ(state.get_nqubits(), 2);
+    EXPECT_NEAR(std::abs(state.amplitude("00") - Complex(1.0, 0.0)), 0.0, 1e-12);
+}
+
+TEST(ParseInitialStateMPS, UniformAppliesHadamards) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.core.qtensor import InitialState
+        _mps_is_uniform = InitialState.UNIFORM
+    )");
+    py::object is_obj = py::globals()["_mps_is_uniform"];
+    auto state = parse_initial_state_mps(is_obj, 2);
+    // Every amplitude of |++> is 1/2, and the state stays at bond dimension one
+    EXPECT_NEAR(std::abs(state.amplitude("01") - Complex(0.5, 0.0)), 0.0, 1e-12);
+    EXPECT_EQ(state.get_max_bond_dimension_used(), 1);
+}
+
+TEST(ParseInitialStateMPS, OneReturnsAllOnes) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.core.qtensor import InitialState
+        _mps_is_one = InitialState.ONE
+    )");
+    py::object is_obj = py::globals()["_mps_is_one"];
+    auto state = parse_initial_state_mps(is_obj, 2);
+    EXPECT_NEAR(std::abs(state.amplitude("11") - Complex(1.0, 0.0)), 0.0, 1e-12);
+}
+
+TEST(ParseInitialStateMPS, ZeroReturnsAllZeros) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.core.qtensor import InitialState
+        _mps_is_zero = InitialState.ZERO
+    )");
+    py::object is_obj = py::globals()["_mps_is_zero"];
+    auto state = parse_initial_state_mps(is_obj, 3);
+    EXPECT_NEAR(std::abs(state.amplitude("000") - Complex(1.0, 0.0)), 0.0, 1e-12);
+}
+
+TEST(ParseInitialStateMPS, UnrecognizedTypeThrows) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        _mps_is_bad = 123
+    )");
+    py::object obj = py::globals()["_mps_is_bad"];
+    EXPECT_THROW(parse_initial_state_mps(obj, 1), py::value_error);
+}
+
+TEST(ConstructResultsMPS, SamplingReadout_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout
+        _mps_ro_samp = [SamplingReadout(nshots=10)]
+    )");
+    MPSState state(1, "1");
+    py::list readout = py::globals()["_mps_ro_samp"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    py::dict samples = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure).attr("sampling").attr("samples");
+    ASSERT_EQ(py::len(samples), 1u);
+    EXPECT_EQ(samples["1"].cast<int>(), 10);
+}
+
+TEST(ConstructResultsMPS, ExpectationReadout_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ExpectationReadout
+        from qilisdk.analog.hamiltonian import X
+        _mps_ro_exp = [ExpectationReadout(observables=[X(0)])]
+    )");
+    // |+> has <X(0)> = 1
+    MPSState state(1);
+    DenseMatrix hadamard(2, 2);
+    hadamard << 1.0, 1.0, 1.0, -1.0;
+    state.apply_one_site(hadamard / std::sqrt(2.0), 0);
+    py::list readout = py::globals()["_mps_ro_exp"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    py::list values = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure).attr("expectation_values").attr("expectation_values");
+    ASSERT_EQ(py::len(values), 1u);
+    EXPECT_NEAR(std::abs(values[0].cast<Complex>() - Complex(1.0, 0.0)), 0.0, 1e-12);
+}
+
+TEST(ConstructResultsMPS, StateTomographyReadoutExact_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import StateTomographyReadout
+        _mps_ro_tomo = [StateTomographyReadout()]
+    )");
+    MPSState state(1, "1");
+    py::list readout = py::globals()["_mps_ro_tomo"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    py::object tomography = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure).attr("state_tomography").attr("state");
+    EXPECT_EQ(tomography.attr("nqubits").cast<int>(), 1);
+    EXPECT_NEAR(std::abs(tomography.attr("__getitem__")(py::make_tuple(0, 0)).cast<Complex>()), 0.0, 1e-12);
+    EXPECT_NEAR(std::abs(tomography.attr("__getitem__")(py::make_tuple(1, 0)).cast<Complex>() - Complex(1.0, 0.0)), 0.0, 1e-12);
+}
+
+TEST(ConstructResultsMPS, StateTomographyReadoutNonExact_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import StateTomographyReadout
+        _mps_ro_tomo_bad = [StateTomographyReadout(method="mle")]
+    )");
+    MPSState state(1);
+    py::list readout = py::globals()["_mps_ro_tomo_bad"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); }, py::value_error);
+}
+
+TEST(ConstructResultsMPS, UnsupportedReadoutThrows) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ReadoutMethod
+        _mps_ro_bad = [ReadoutMethod()]
+    )");
+    MPSState state(1);
+    py::list readout = py::globals()["_mps_ro_bad"].cast<py::list>();
     NoiseModelCpp noise_model_cpp;
     QiliSimConfig config;
     std::vector<bool> qubits_to_measure = {true};
