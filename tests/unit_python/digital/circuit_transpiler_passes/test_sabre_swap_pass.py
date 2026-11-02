@@ -19,7 +19,7 @@ from unittest.mock import MagicMock
 import pytest
 from rustworkx import PyGraph
 
-from qilisdk.digital import CZ, RX, RY, RZ, Adjoint, Circuit, Exponential, M
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, Adjoint, Circuit, Exponential, M
 from qilisdk.digital.circuit_transpiler_passes.sabre_swap_pass import SabreSwapPass
 from qilisdk.digital.circuit_transpiler_passes.transpilation_context import TranspilationContext
 
@@ -433,3 +433,27 @@ def test_remap_gate_qubits_inplace_handles_wrapped_gates() -> None:
 
     assert adjoint_gate.qubits == (2,)
     assert exponential_gate.qubits == (1,)
+
+
+def test_sabre_swap_multi_qubit_measurement_needs_no_connectivity():
+    swap_pass = SabreSwapPass(make_line_topology(4), seed=0)
+    circuit = Circuit(4)
+    circuit.add(M(0, 3))
+    circuit.add(CNOT(0, 2))
+
+    operation_indices, pairs, _ = SabreSwapPass._two_qubit_structure(circuit)
+    out = swap_pass.run(circuit)
+
+    assert operation_indices == [1]
+    assert pairs == [(0, 2)]
+    assert type(out.gates[0]) is M
+    assert sum(isinstance(gate, SWAP) for gate in out.gates) == 1
+
+
+def test_sabre_swap_layout_with_multi_qubit_measurement_is_routable():
+    swap_pass = SabreSwapPass(make_line_topology(4), seed=0)
+    circuit = Circuit(4)
+    circuit.add(M(0, 3))
+    circuit.add(CNOT(0, 1))
+
+    assert swap_pass._is_layout_routable(circuit, [0, 1, 2, 3])
