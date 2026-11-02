@@ -253,6 +253,17 @@ TEST(MatrixConversion, FromSpmatrixComplexValues) {
     EXPECT_NEAR(std::abs(result.coeff(0, 0)), 0.0, 1e-10);
 }
 
+TEST(MatrixConversion, FromSpmatrixTooLargeThrows) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        import scipy.sparse as sp
+        import numpy as np
+        sp_huge = sp.coo_matrix((np.array([1.0+0j]), (np.array([2**31]), np.array([0]))), shape=(2**31 + 1, 1))
+    )");
+    py::object sp_matrix = py::globals()["sp_huge"];
+    EXPECT_THROW(from_spmatrix(sp_matrix, 1e-10), py::value_error);
+}
+
 TEST(MatrixConversion, ToSpmatrixNonZeroCount) {
     py::gil_scoped_acquire gil;
     py::exec(R"(

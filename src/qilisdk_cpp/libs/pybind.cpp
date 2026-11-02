@@ -40,6 +40,7 @@ py::object SupportsStaticLindblad;
 py::object SupportsTimeDerivedKraus;
 py::object SupportsTimeDerivedLindblad;
 py::object ReadoutAssignment;
+py::object EnvironmentNoise;
 py::object NoiseConfig;
 py::object Circuit;
 py::object Schedule;
@@ -85,6 +86,7 @@ void initialize_all_pybind_types() {
     SupportsTimeDerivedKraus = py::module_::import("qilisdk.noise.protocols").attr("SupportsTimeDerivedKraus");
     SupportsTimeDerivedLindblad = py::module_::import("qilisdk.noise.protocols").attr("SupportsTimeDerivedLindblad");
     ReadoutAssignment = py::module_::import("qilisdk.noise.readout_assignment").attr("ReadoutAssignment");
+    EnvironmentNoise = py::module_::import("qilisdk.noise.environment_noise").attr("EnvironmentNoise");
     NoiseConfig = py::module_::import("qilisdk.noise.noise_config").attr("NoiseConfig");
     initialize_external_pybind_types();
 }
@@ -120,6 +122,22 @@ void error(std::string message) {
     }
 }
 
+void check_signals() {
+    /*
+    Run any pending Python signal handlers, so that a Ctrl-C (or any other signal) interrupts a
+    long-running C++ routine instead of only being raised once it returns to Python.
+
+    Cheap enough to call once per iteration of a simulation loop: with no signal pending it is a
+    flag check, and it is a no-op when called from a thread other than the main one.
+
+    Raises:
+        py::error_already_set: If a signal handler raised, e.g. KeyboardInterrupt for SIGINT.
+    */
+    if (PyErr_CheckSignals() != 0) {
+        throw py::error_already_set();
+    }
+}
+
 // GCOVR_EXCL_START
 void finalize_all_pybind_types() {
     QUBO = py::object();
@@ -149,6 +167,7 @@ void finalize_all_pybind_types() {
     SupportsTimeDerivedKraus = py::object();
     SupportsTimeDerivedLindblad = py::object();
     ReadoutAssignment = py::object();
+    EnvironmentNoise = py::object();
     NoiseConfig = py::object();
     numpy_array = py::object();
     numpy_array_type = py::object();

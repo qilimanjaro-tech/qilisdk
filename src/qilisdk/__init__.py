@@ -14,10 +14,13 @@
 
 from importlib.metadata import PackageNotFoundError, version
 
-from ._info import about
+from ._info import about, warn_if_no_avx
 from .logging import configure_logging
 
 configure_logging()
+
+# Check for AVX support and warn if not present
+warn_if_no_avx()
 
 try:
     __version__ = version("qilisdk")
