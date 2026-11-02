@@ -15,8 +15,8 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include "gate.h"
 #include <set>
+#include "gate.h"
 
 #include <algorithm>
 
