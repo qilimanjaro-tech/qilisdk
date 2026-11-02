@@ -1902,25 +1902,42 @@ def test_bp_state_tomography_matches_statevector():
     np.testing.assert_allclose(_fidelity(bp.dense().flatten(), exact.dense().flatten()), 1.0, atol=1e-10)
 
 
-def test_bp_rejects_sampling_readout():
-    """The method estimates expectation values, so it refuses to sample rather than return something wrong."""
-    circuit = Circuit(nqubits=2)
-    circuit.add(H(0))
-    backend = _bp_backend()
+def test_bp_sampling_matches_statevector():
+    """Sampling draws from the exactly contracted statevector, so a loopy circuit samples the same distribution."""
+    nqubits, edges = _LOOPY_GRAPHS["complete"]
+    circuit = _graph_circuit(nqubits, edges, layers=1, seed=21)
     propagation = DigitalPropagation(circuit=circuit)
-    readout = Readout().with_sampling(nshots=10)
-    with pytest.raises(ValueError, match="BP backend"):
-        backend.execute(propagation, readout)
+    readout = Readout().with_sampling(nshots=20000)
+    exact = _statevector_backend().execute(propagation, Readout().with_state_tomography()).get_state()
+    samples = _bp_backend().execute(propagation, readout).get_samples()
+    assert sum(samples.values()) == 20000
+    probabilities = np.abs(exact.dense().flatten()) ** 2
+    for index, probability in enumerate(probabilities):
+        assert samples.get(format(index, f"0{nqubits}b"), 0) / 20000 == pytest.approx(probability, abs=0.02)
 
 
-def test_bp_rejects_an_unsupported_readout_before_simulating():
-    """The readout is checked up front, so the gate BP cannot apply is never reached."""
-    circuit = Circuit(nqubits=3)
+def test_bp_sampling_applies_readout_error():
+    circuit = Circuit(nqubits=2)
+    circuit.add(X(0))
+    noise_model = NoiseModel()
+    noise_model.add(ReadoutAssignment(p01=1.0, p10=0.0), qubits=[1])
+    backend = QiliSim(
+        digital_simulation_method=DigitalMethod.bp(),
+        noise_model=noise_model,
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+    samples = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10)).get_samples()
+    assert samples == {"11": 10}
+
+
+def test_bp_rejects_sampling_too_many_qubits_before_simulating():
+    """Sampling materializes the statevector, so it shares the state tomography qubit limit, and the readout is checked before the gate BP cannot apply is reached."""
+    circuit = Circuit(nqubits=25)
     circuit.add(Controlled(0, 1, basic_gate=X(2)))
     backend = _bp_backend()
     propagation = DigitalPropagation(circuit=circuit)
     readout = Readout().with_sampling(nshots=10)
-    with pytest.raises(ValueError, match="BP backend"):
+    with pytest.raises(ValueError, match="Sampling would materialize"):
         backend.execute(propagation, readout)
 
 

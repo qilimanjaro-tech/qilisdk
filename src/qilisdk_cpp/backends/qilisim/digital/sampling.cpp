@@ -590,7 +590,7 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
     }
 }
 
-static std::vector<Gate> prepare_tensor_network_gates(const std::vector<Gate>& gates, int n_qubits, int initial_nqubits, NoiseModelCpp& noise_model_cpp, const QiliSimConfig& config, const py::object& readout, const std::string& backend, bool supports_sampling, int max_dense_qubits) {
+static std::vector<Gate> prepare_tensor_network_gates(const std::vector<Gate>& gates, int n_qubits, int initial_nqubits, NoiseModelCpp& noise_model_cpp, const QiliSimConfig& config, const py::object& readout, const std::string& backend, bool samples_from_dense, int max_dense_qubits) {
     /*
     The setup shared by the tensor network simulators: set the thread count, reject what a pure state cannot hold or the
     readout cannot produce before any work is done, warn about ignored settings, and simplify the circuit.
@@ -603,8 +603,8 @@ static std::vector<Gate> prepare_tensor_network_gates(const std::vector<Gate>& g
         config (QiliSimConfig): The simulation configuration.
         readout (py::object): A list with readout information.
         backend (std::string&): The name of the simulator, for the messages.
-        supports_sampling (bool): Whether the simulator can draw samples, and so apply readout error.
-        max_dense_qubits (int): The most qubits whose statevector a state tomography may materialize.
+        samples_from_dense (bool): Whether sampling materializes the statevector, as state tomography does.
+        max_dense_qubits (int): The most qubits whose statevector a readout may materialize.
 
     Returns:
         std::vector<Gate>: The gates to apply, with fused blocks of at most two qubits.
@@ -624,10 +624,13 @@ static std::vector<Gate> prepare_tensor_network_gates(const std::vector<Gate>& g
     if (initial_nqubits != n_qubits) {
         throw py::value_error("The initial " + backend + " state has " + std::to_string(initial_nqubits) + " qubits but the circuit has " + std::to_string(n_qubits) + ".");
     }
-    validate_readout(readout, supports_sampling, backend);
+    validate_readout(readout, backend);
     for (py::handle ro : readout) {
         if (py::isinstance(ro, StateTomographyReadout) && n_qubits > max_dense_qubits) {
             throw py::value_error("State tomography would materialize the statevector of " + std::to_string(n_qubits) + " qubits, but the " + backend + " simulator allows at most " + std::to_string(max_dense_qubits) + ".");
+        }
+        if (samples_from_dense && py::isinstance(ro, SamplingReadout) && n_qubits > max_dense_qubits) {
+            throw py::value_error("Sampling would materialize the statevector of " + std::to_string(n_qubits) + " qubits, but the " + backend + " simulator allows at most " + std::to_string(max_dense_qubits) + ".");
         }
         if (py::isinstance(ro, ExpectationReadout) && n_qubits > MAX_QUBITS_PAULI) {
             throw py::value_error("Expectation values are limited to observables on at most " + std::to_string(MAX_QUBITS_PAULI) + " qubits, but the circuit has " + std::to_string(n_qubits) + ".");
@@ -637,19 +640,7 @@ static std::vector<Gate> prepare_tensor_network_gates(const std::vector<Gate>& g
     // Kraus and Lindblad noise would make the state mixed, which a pure tensor network cannot hold
     bool has_kraus = !noise_model_cpp.get_kraus_operators_global().empty() || !noise_model_cpp.get_kraus_operators_per_qubit().empty() || !noise_model_cpp.get_kraus_operators_per_gate().empty() || !noise_model_cpp.get_kraus_operators_per_gate_qubit().empty();
     if (has_kraus || !noise_model_cpp.get_jump_operators().empty()) {
-        std::string supported = supports_sampling ? "readout error and parameter perturbation noise" : "parameter perturbation noise";
-        throw py::value_error("The " + backend + " simulator only supports " + supported + ", not Kraus or Lindblad noise. Use a statevector method instead.");
-    }
-
-    // Without sampling there is nothing for readout error to act on
-    if (!supports_sampling) {
-        for (int q = 0; q < n_qubits; ++q) {
-            std::pair<double, double> readout_error = noise_model_cpp.get_relevant_readout_error(q);
-            if (readout_error.first > 0.0 || readout_error.second > 0.0) {
-                warning("Readout error is not supported in the " + backend + " simulator. Readout error will be ignored.");
-                break;
-            }
-        }
+        throw py::value_error("The " + backend + " simulator only supports readout error and parameter perturbation noise, not Kraus or Lindblad noise. Use a statevector method instead.");
     }
 
     // Monte Carlo is not supported
@@ -701,7 +692,7 @@ void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& 
     Raises:
         py::value_error: If the noise model has Kraus or Lindblad terms, a readout is not supported, or the state diverges to NaN during the simulation.
     */
-    std::vector<Gate> optimized_gates = prepare_tensor_network_gates(gates, n_qubits, initial_state.get_nqubits(), noise_model_cpp, config, readout, "MPS", true, MPSState::MAX_DENSE_QUBITS);
+    std::vector<Gate> optimized_gates = prepare_tensor_network_gates(gates, n_qubits, initial_state.get_nqubits(), noise_model_cpp, config, readout, "MPS", false, MPSState::MAX_DENSE_QUBITS);
 
     // We start with the initial state, with the settings from the config
     state = initial_state;
@@ -775,7 +766,7 @@ void sampling_bp(const std::vector<Gate>& gates, int n_qubits, const BPState& in
         gates (std::vector<Gate>&): The list of gates in the circuit.
         n_qubits (int): The number of qubits in the circuit.
         initial_state (BPState&): The initial state of the system as a tensor network.
-        noise_model_cpp (NoiseModelCpp&): The noise model, of which only parameter perturbations are supported.
+        noise_model_cpp (NoiseModelCpp&): The noise model, of which only readout error and parameter perturbations are supported.
         state (BPState&): The final state after applying all gates.
         intermediate_results (std::vector<py::object>&): A vector to store intermediate results after each set of measurements.
         config (QiliSimConfig): The simulation configuration.
@@ -784,7 +775,7 @@ void sampling_bp(const std::vector<Gate>& gates, int n_qubits, const BPState& in
     Raises:
         py::value_error: If the noise model has Kraus or Lindblad terms, a readout is not supported, or the state diverges to NaN during the simulation.
     */
-    std::vector<Gate> optimized_gates = prepare_tensor_network_gates(gates, n_qubits, initial_state.get_nqubits(), noise_model_cpp, config, readout, "BP", false, BPState::MAX_DENSE_QUBITS);
+    std::vector<Gate> optimized_gates = prepare_tensor_network_gates(gates, n_qubits, initial_state.get_nqubits(), noise_model_cpp, config, readout, "BP", true, BPState::MAX_DENSE_QUBITS);
 
     // We start with the initial state, with the settings from the config
     state = initial_state;
@@ -810,7 +801,7 @@ void sampling_bp(const std::vector<Gate>& gates, int n_qubits, const BPState& in
             // Construct the result
             if (!are_final_measurements) {
                 state.run_belief_propagation();
-                py::object result = construct_result_object(state, readout, n_qubits, config);
+                py::object result = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure_after_gate);
                 intermediate_results.push_back(result);
             }
 

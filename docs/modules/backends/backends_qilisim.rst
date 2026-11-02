@@ -246,7 +246,7 @@ bounded-degree QAOA graphs, as long as correlations decay quickly. Its cost grow
 can be simulated on far more qubits than a statevector or a matrix product state can hold. It is not suited to densely connected circuits, or
 to deep circuits that build up long-range entanglement.
 
-Only expectation values and exact state tomography can be read out, since sampling is not supported. It has the following options:
+Sampling and exact state tomography contract the whole network into its statevector, so they are limited to 24 qubits. It has the following options:
 
 .. list-table::
    :header-rows: 1

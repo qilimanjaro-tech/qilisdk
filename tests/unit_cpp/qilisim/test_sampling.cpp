@@ -1389,11 +1389,11 @@ TEST_F(SamplingTest, BP_UnsupportedReadoutThrowsBeforeSimulating) {
     int n = 3;
     std::vector<Gate> gates = {Gate("X", pauliX2(), {0, 1}, {2}, {})};
     py::exec(R"(
-        from qilisdk.readout import SamplingReadout, StateTomographyReadout
-        _bp_early_samp = [SamplingReadout(nshots=10)]
+        from qilisdk.readout import ReadoutMethod, StateTomographyReadout
+        _bp_early_unknown = [ReadoutMethod()]
         _bp_early_tomo = [StateTomographyReadout(method="mle")]
     )");
-    for (const char* name : {"_bp_early_samp", "_bp_early_tomo"}) {
+    for (const char* name : {"_bp_early_unknown", "_bp_early_tomo"}) {
         BPState initial(n);
         BPState final_state(n);
         std::vector<py::object> intermediate_results;
@@ -1428,6 +1428,40 @@ TEST_F(SamplingTest, BP_LargeStateTomographyThrowsBeforeSimulating) {
     EXPECT_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, tomography_readout), py::value_error);
 }
 
+// Sampling draws from the statevector, so on more qubits than can be materialized it is rejected before the simulation starts.
+TEST_F(SamplingTest, BP_LargeSamplingThrowsBeforeSimulating) {
+    int n = BPState::MAX_DENSE_QUBITS + 1;
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout
+        _bp_large_samp = [SamplingReadout(nshots=10)]
+    )");
+    std::vector<Gate> gates = {makeX(0)};
+    BPState initial(n);
+    BPState final_state(n);
+    std::vector<py::object> intermediate_results;
+    py::list sampling_readout = py::globals()["_bp_large_samp"].cast<py::list>();
+    EXPECT_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, sampling_readout), py::value_error);
+}
+
+// A mid-circuit measurement with a sampling readout reports samples of only the qubits measured so far.
+TEST_F(SamplingTest, MidCircuitSamplingBP) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeM(0), makeX(1), makeM(1)};
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout
+        _bp_mid_samp = [SamplingReadout(nshots=20, expand_samples=False)]
+    )");
+    BPState initial(n);
+    BPState final_state(n);
+    std::vector<py::object> intermediate_results;
+    py::list sampling_readout = py::globals()["_bp_mid_samp"].cast<py::list>();
+    sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, sampling_readout);
+    ASSERT_EQ(intermediate_results.size(), 1u);
+    py::dict samples = intermediate_results[0].attr("sampling").attr("samples");
+    ASSERT_EQ(samples.size(), 1u);
+    EXPECT_EQ(samples["1"].cast<int>(), 20);
+}
+
 // Expectation values on more qubits than a Pauli string can hold are rejected before the simulation starts.
 TEST_F(SamplingTest, BP_LargeExpectationReadoutThrowsBeforeSimulating) {
     int n = MAX_QUBITS_PAULI + 1;
@@ -1444,8 +1478,8 @@ TEST_F(SamplingTest, BP_LargeExpectationReadoutThrowsBeforeSimulating) {
     EXPECT_THROW(sampling_bp(gates, n, initial, noNoise, final_state, intermediate_results, cfg, expectation_readout), py::value_error);
 }
 
-// Without sampling there is nothing for readout error to act on, so it is ignored with a warning.
-TEST_F(SamplingTest, BP_ReadoutErrorIgnoredWithWarning) {
+// Readout error is accepted, since it only acts on the samples and leaves the state alone.
+TEST_F(SamplingTest, BP_ReadoutErrorLeavesTheStateAlone) {
     int n = 2;
     std::vector<Gate> gates = {makeX(0)};
     NoiseModelCpp readout_noise;

@@ -605,8 +605,8 @@ class DigitalMethod(BaseSimulatorConfig):
         it. Both steps are exact on a tree, and on a loopy graph they neglect the correlations around loops, which is
         accurate for sparse, low-degree graphs with decaying correlations.
 
-        Only expectation values and exact state tomography are supported as readouts, and noise models are limited to
-        parameter perturbations.
+        Sampling and exact state tomography contract the whole network into its statevector, so they are limited to 24
+        qubits, and noise models are limited to readout error and parameter perturbations.
 
         Args:
             max_bond_dimension (int): Largest bond dimension to keep on each edge. Defaults to ``16``.

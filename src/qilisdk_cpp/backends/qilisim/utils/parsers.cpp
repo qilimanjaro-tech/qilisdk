@@ -15,6 +15,7 @@
 #include "parsers.h"
 #include <algorithm>
 #include <cmath>
+#include <optional>
 #include <type_traits>
 #include "../../../libs/numpy.h"
 #include "../digital/gate.h"
@@ -80,13 +81,12 @@ py::object expectation_readout_result(const State& state, const py::object& ro, 
 
 #pragma GCC visibility push(default)
 
-void validate_readout(const py::object& readout, bool supports_sampling, const std::string& backend) {
+void validate_readout(const py::object& readout, const std::string& backend) {
     /*
     Check that a simulator can produce every readout requested, so an unsupported one fails before the simulation runs.
 
     Args:
         readout (py::object): A list with readout information.
-        supports_sampling (bool): Whether the simulator can draw samples.
         backend (std::string&): The name of the simulator, for the error message.
 
     Raises:
@@ -97,7 +97,7 @@ void validate_readout(const py::object& readout, bool supports_sampling, const s
             if (ro.attr("method").cast<std::string>() != "exact") {
                 throw py::value_error("State Tomography methods that are not exact are not supported yet.");
             }
-        } else if (!py::isinstance(ro, ExpectationReadout) && !(supports_sampling && py::isinstance(ro, SamplingReadout))) {
+        } else if (!py::isinstance(ro, ExpectationReadout) && !py::isinstance(ro, SamplingReadout)) {
             throw py::value_error("Unsupported Readout Method for " + backend + " backend: " + py::repr(ro).cast<std::string>());
         }
     }
@@ -216,17 +216,19 @@ py::object construct_result_object(const MPSState& state, const py::object& read
     return ReadoutCompositeResults.attr("from_list")(results);
 }
 
-py::object construct_result_object(const BPState& state, const py::object& readout, int n_qubits, const QiliSimConfig& config) {
+py::object construct_result_object(const BPState& state, const py::object& readout, NoiseModelCpp& noise_model_cpp, int n_qubits, const QiliSimConfig& config, const std::vector<bool>& qubits_to_measure) {
     /*
     Construct a result object for a given BPState and readout. Expectation values are the belief propagation
-    estimates, and exact state tomography contracts the whole network. Sampling is not supported, and the readout
-    must already have passed validate_readout, as sampling_bp does before simulating.
+    estimates, while sampling and exact state tomography contract the whole network into its statevector. The
+    readout must already have passed validate_readout, as sampling_bp does before simulating.
 
     Args:
         state (BPState&): The BPState for which to construct the result.
         readout (py::object): A list with readout information.
+        noise_model_cpp (NoiseModelCpp&): The noise model, used only for readout error.
         n_qubits (int): The number of qubits in the circuit.
-        config (QiliSimConfig): The simulation configuration, which provides the seeds for finite-shot expectation values.
+        config (QiliSimConfig): The simulation configuration, which provides the sampling seeds.
+        qubits_to_measure (std::vector<bool>&): Which qubits to report.
 
     Returns:
         py::object: The result object for the given state and readout.
@@ -234,13 +236,36 @@ py::object construct_result_object(const BPState& state, const py::object& reado
     Raises:
         py::value_error: If a sampled expectation value is imaginary.
     */
+    // The statevector is contracted at most once, however many readouts need it
+    std::optional<DenseMatrix> statevector;
+    auto get_statevector = [&]() -> const DenseMatrix& {
+        if (!statevector) {
+            statevector = state.as_dense();
+        }
+        return *statevector;
+    };
     py::list results;
     for (py::handle ro_handle : readout) {
         py::object ro = py::reinterpret_borrow<py::object>(ro_handle);
-        if (py::isinstance(ro, ExpectationReadout)) {
+        if (py::isinstance(ro, SamplingReadout)) {
+            int nshots = ro.attr("nshots").cast<int>();
+            bool expand_samples = ro.attr("expand_samples").cast<bool>();
+            std::map<std::string, int> counts = construct_samples(get_statevector(), n_qubits, nshots, noise_model_cpp, config, qubits_to_measure);
+            py::dict samples_py;
+            for (const auto& pair : counts) {
+                samples_py[py::cast(pair.first)] = py::cast(pair.second);
+            }
+            py::list qubits_to_measure_list;
+            for (size_t i = 0; i < qubits_to_measure.size(); ++i) {
+                if (qubits_to_measure[i]) {
+                    qubits_to_measure_list.append(i);
+                }
+            }
+            results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples_py, "qubits_to_measure"_a = qubits_to_measure_list, "nqubits"_a = n_qubits, "expand_samples"_a = expand_samples));
+        } else if (py::isinstance(ro, ExpectationReadout)) {
             results.append(expectation_readout_result(state, ro, n_qubits, config));
         } else {
-            results.append(StateTomographyReadoutResult("state"_a = QTensor(to_numpy(state.as_dense()))));
+            results.append(StateTomographyReadoutResult("state"_a = QTensor(to_numpy(get_statevector()))));
         }
     }
     return ReadoutCompositeResults.attr("from_list")(results);

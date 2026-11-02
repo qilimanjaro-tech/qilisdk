@@ -152,7 +152,7 @@ py::object QiliSimCpp::execute_digital_propagation(const py::object& functional,
         sampling_bp(gates, n_qubits, initial_state_bp, noise_model_cpp, state_bp, intermediate_results, config, readout);
 
         // Construct the final result object
-        result = construct_result_object(state_bp, readout, n_qubits, config);
+        result = construct_result_object(state_bp, readout, noise_model_cpp, n_qubits, config, final_qubits_to_measure);
 
     } else {
         DenseMatrix state_dense = parse_initial_state_as_dense(initial_state, n_qubits, config);

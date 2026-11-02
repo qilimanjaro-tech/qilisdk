@@ -63,6 +63,7 @@ backends = [
     QutipBackend(),
     QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1)),
     QiliSim(digital_simulation_method=DigitalMethod.mps(), execution_config=ExecutionConfig(seed=42, num_threads=1)),
+    QiliSim(digital_simulation_method=DigitalMethod.bp(), execution_config=ExecutionConfig(seed=42, num_threads=1)),
 ]
 if pytest.importorskip(
     "cudaq",
@@ -71,12 +72,6 @@ if pytest.importorskip(
 ):
     backends.append(CudaqBackend())
 backends_no_cuda = [QutipBackend(), QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))]
-
-# The BP simulator cannot sample, so it only joins the tests that read out expectation values or the state
-expectation_backends = [
-    *backends,
-    QiliSim(digital_simulation_method=DigitalMethod.bp(), execution_config=ExecutionConfig(seed=42, num_threads=1)),
-]
 
 # Backends that support time-dependent (callable) Lindblad rates ``rate(t)`` for analog evolution.
 # The CUDA backend deliberately rejects callable rates, so it is excluded here.
@@ -160,8 +155,8 @@ def test_multi_controlled_execution(backend):
         pytest.skip(
             "Multi-controlled gates are not currently supported in statevector_matrix_free digital method of QiliSim."
         )
-    if type(backend) is QiliSim and backend.get_config()["digital_method"] == "mps":
-        pytest.skip("The MPS simulator only supports one- and two-qubit gates.")
+    if type(backend) is QiliSim and backend.get_config()["digital_method"] in {"mps", "bp"}:
+        pytest.skip("The tensor network simulators only support one- and two-qubit gates.")
     circuit = Circuit(nqubits=3)
     circuit.add(X(0))
     circuit.add(X(1))
@@ -556,8 +551,8 @@ def test_swap(backend):
 
 @pytest.mark.parametrize("backend", backends)
 def test_toffoli(backend):
-    if type(backend) is QiliSim and backend.get_config()["digital_method"] == "mps":
-        pytest.skip("The MPS simulator only supports one- and two-qubit gates.")
+    if type(backend) is QiliSim and backend.get_config()["digital_method"] in {"mps", "bp"}:
+        pytest.skip("The tensor network simulators only support one- and two-qubit gates.")
     circuit = Circuit(nqubits=3)
     circuit.add(X(0))
     circuit.add(X(1))
@@ -608,7 +603,7 @@ def _tree_circuit() -> Circuit:
     return circuit
 
 
-@pytest.mark.parametrize("backend", expectation_backends)
+@pytest.mark.parametrize("backend", backends)
 def test_expectation_values_match_the_state(backend):
     observables = [
         pauli_z(0),
@@ -630,7 +625,7 @@ def test_expectation_values_match_the_state(backend):
     assert np.isclose(abs(overlap), 1.0, atol=1e-6)
 
 
-@pytest.mark.parametrize("backend", expectation_backends)
+@pytest.mark.parametrize("backend", backends)
 def test_variational_program_minimizes_an_observable(backend):
     circuit = Circuit(nqubits=2)
     circuit.add(RY(0, theta=0.1))

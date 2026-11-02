@@ -539,11 +539,13 @@ msgstr ""
 
 #: ../../modules/backends/backends_qilisim.rst:249
 msgid ""
-"Only expectation values and exact state tomography can be read out, since"
-" sampling is not supported. It has the following options:"
+"Sampling and exact state tomography contract the whole network into its "
+"statevector, so they are limited to 24 qubits. It has the following "
+"options:"
 msgstr ""
-"Només es poden llegir valors esperats i la tomografia exacta de l'estat, "
-"ja que el mostreig no està suportat. Té les opcions següents:"
+"El mostreig i la tomografia exacta de l'estat contrauen tota la xarxa en "
+"el seu vector d'estat, de manera que estan limitats a 24 qubits. Té les "
+"opcions següents:"
 
 #: ../../modules/backends/backends_qilisim.rst:258
 msgid ""
