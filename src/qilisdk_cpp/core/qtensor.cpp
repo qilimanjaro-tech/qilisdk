@@ -164,26 +164,6 @@ void QTensorCpp::_set_from_row_sparse(const SparseMatrix& data, StorageFormat re
     }
 }
 
-Eigen::Index QTensorCpp::rows() const {
-    /*
-    Return the number of rows, regardless of the active storage backend.
-
-    Returns:
-        Eigen::Index: The number of rows in the tensor.
-    */
-    return std::visit([](const auto& mat) { return Eigen::Index(mat.rows()); }, _data);
-}
-
-Eigen::Index QTensorCpp::cols() const {
-    /*
-    Return the number of columns, regardless of the active storage backend.
-
-    Returns:
-        Eigen::Index: The number of columns in the tensor.
-    */
-    return std::visit([](const auto& mat) { return Eigen::Index(mat.cols()); }, _data);
-}
-
 Eigen::Index QTensorCpp::nnz() const {
     /*
     Return the number of stored non-zero entries, regardless of the active storage backend.
@@ -1743,7 +1723,7 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int ns
 #endif
 #endif
         for (int i = 0; i < H_rho_dense.rows(); ++i) {
-            expectation += std::real(H_rho_dense(i, i));
+            expectation += H_rho_dense(i, i);
         }
     }
 
