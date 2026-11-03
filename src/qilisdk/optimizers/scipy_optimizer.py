@@ -13,8 +13,10 @@
 # limitations under the License.
 from __future__ import annotations
 
+from functools import partial
 from typing import TYPE_CHECKING, Any, Callable
 
+import numpy as np
 from loguru import logger
 from scipy import optimize as scipy_optimize
 
@@ -70,6 +72,7 @@ class SciPyOptimizer(Optimizer):
 
         Extra Args:
             Any argument supported by `scipy.optimize.minimize <https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html>` can be passed.
+            For the global methods, any argument of the corresponding ``scipy.optimize`` function can be passed instead.
             Note: the parameters, cost function and the ``args`` that are passed to this function will be specified in the optimize method. Moreover, callbacks are not supported for the moment.
         """
         super().__init__()
@@ -90,6 +93,8 @@ class SciPyOptimizer(Optimizer):
             cost_function (Callable[[list[float]], float]): a function that takes in a list of parameters and returns the cost.
             init_parameters (list[float]): the list of initial parameters. Note: the length of this list determines the number of parameters the optimizer will consider.
             bounds (list[float, float]): a list of the variable value bounds.
+            store_intermediate_results (bool, optional): whether to record the parameters and cost reported by scipy at
+                each iteration. ``brute`` has no iterations, so nothing is recorded for it. Defaults to False.
 
         Returns:
             list[float]: the optimal set of parameters that minimize the cost function.
@@ -101,39 +106,70 @@ class SciPyOptimizer(Optimizer):
         )
         intermediate_results: list[OptimizerIntermediateResult] = []
 
-        def callback_fun(intermediate_result: OptimizeResult) -> None:
-            # Create an OptimizerResult for this intermediate iteration.
-            logger.trace("[SciPyOptimizer] Intermediate iteration with cost {}", intermediate_result.fun)
+        def store_intermediate_result(parameters: list[float], cost: float) -> None:
+            logger.trace("[SciPyOptimizer] Intermediate iteration with cost {}", cost)
             intermediate_results.append(
-                OptimizerIntermediateResult(cost=intermediate_result.fun, parameters=intermediate_result.x.tolist())
+                OptimizerIntermediateResult(cost=float(cost), parameters=np.asarray(parameters, dtype=float).tolist())
             )
 
-        # Only pass the callback if we want to store intermediate results.
-        callback = callback_fun if store_intermediate_results else None
+        # scipy uses a different callback signature depending on the method
+        def result_callback(intermediate_result: OptimizeResult | list[float]) -> None:
+            if isinstance(intermediate_result, scipy_optimize.OptimizeResult):
+                store_intermediate_result(intermediate_result.x, intermediate_result.fun)
+            else:
+                store_intermediate_result(intermediate_result, cost_function(intermediate_result))
+
+        def value_callback(parameters: list[float], cost: float, *_: object) -> None:
+            store_intermediate_result(parameters, cost)
+
+        callback: Callable | None = None
+        if store_intermediate_results and self.method in {"basinhopping", "dual_annealing"}:
+            callback = value_callback
+        elif store_intermediate_results:
+            callback = result_callback
+
+        logger.debug(
+            "[SciPyOptimizer] Using {} interface with method {}",
+            "global optimizer"
+            if self.method in {"basinhopping", "brute", "direct", "dual_annealing", "differential_evolution", "shgo"}
+            else "local minimizer",
+            self.method,
+        )
 
         # Global optimizer have a different interface, like `scipy.optimize.shgo` rather than `scipy.optimize.minimize`
         if self.method in {"direct", "dual_annealing", "differential_evolution", "shgo"} and isinstance(
             self.method, str
         ):
-            logger.debug("[SciPyOptimizer] Using global optimizer interface {}", self.method)
             res = getattr(scipy_optimize, self.method)(
                 cost_function,
                 bounds=bounds,
                 callback=callback,
                 **self.extra_arguments,
             )
-        # basinhopping doesn't allow bounds
-        elif self.method in {"basinhopping", "brute"}:
-            logger.debug("[SciPyOptimizer] Using global optimizer interface {}", self.method)
+        # basinhopping doesn't take bounds itself, so they are passed to its local minimizer
+        elif self.method == "basinhopping":
+            minimizer_kwargs = {"bounds": bounds, **self.extra_arguments.get("minimizer_kwargs", {})}
             res = scipy_optimize.basinhopping(
                 cost_function,
                 x0=init_parameters,
                 callback=callback,
-                **self.extra_arguments,
+                **{**self.extra_arguments, "minimizer_kwargs": minimizer_kwargs},
             )
+        # brute has a different syntax, it evaluates a grid over the bounds and then polishes the best point within the bounds
+        elif self.method == "brute":
+            if store_intermediate_results:
+                logger.warning(
+                    "[SciPyOptimizer] Intermediate results are not supported for method brute, none will be stored"
+                )
+            optimal_parameters, optimal_cost, *_ = scipy_optimize.brute(
+                cost_function,
+                ranges=bounds,
+                full_output=True,
+                **{"finish": partial(scipy_optimize.minimize, bounds=bounds), **self.extra_arguments},
+            )
+            res = scipy_optimize.OptimizeResult(x=np.atleast_1d(optimal_parameters), fun=optimal_cost)
         # the more general local minimizer interface
         else:
-            logger.debug("[SciPyOptimizer] Using local minimizer interface with method {}", self.method)
             res = scipy_optimize.minimize(
                 cost_function,
                 x0=init_parameters,
