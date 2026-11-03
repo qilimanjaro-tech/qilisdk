@@ -51,7 +51,7 @@ class DigitalPropagation(PrimitiveFunctional):
             counts = result.sampling.samples  # dict[str, int]
     """
 
-    result_type: ClassVar[type[FunctionalResult]] = FunctionalResult
+    result_type: ClassVar[type[FunctionalResult]] = FunctionalResult  # ty:ignore[invalid-mutable-override]
 
     def __init__(
         self,

@@ -44,8 +44,6 @@ DenseMatrix parse_initial_state_as_dense(const py::object& initial_state, int n_
 StabilizerStateSum parse_initial_state_stabilizer(const py::object& initial_state, int nqubits);
 MPSState parse_initial_state_mps(const py::object& initial_state, int nqubits);
 std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::object& noise_model);
-int gate_num_controls(const std::string& name);
-std::string normalize_gate_name(const std::string& name);
 std::vector<bool> parse_measurements(const py::object& circuit);
 std::map<std::string, float> resolve_gate_durations(const py::object& circuit, const py::object& noise_config);
 QiliSimConfig parse_solver_params(const py::dict& solver_params);
