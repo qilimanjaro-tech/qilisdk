@@ -29,6 +29,7 @@ from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
+from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.readout import (
     E,
     ExpectationReadout,
@@ -272,6 +273,13 @@ class Backend(ABC):
             )
         functional.functional.set_parameters(optimal_parameter_dict)
         optimal_results = self.execute(functional.functional, spec)
+
+        # Report the clamped parameters, since those are the ones the functional was left with
+        optimizer_result = OptimizerResult(
+            optimal_cost=optimizer_result.optimal_cost,
+            optimal_parameters=list(optimal_parameter_dict.values()),
+            intermediate_results=optimizer_result.intermediate_results,
+        )
 
         logger.info("[Backend] Variational Program finished")
         return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)
