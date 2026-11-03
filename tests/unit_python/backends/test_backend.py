@@ -83,9 +83,10 @@ class MockCostFunction:
 
 
 class MockOptimizerResult:
-    def __init__(self, optimal_parameters, optimal_value):
+    def __init__(self, optimal_parameters, optimal_cost):
         self.optimal_parameters = optimal_parameters
-        self.optimal_value = optimal_value
+        self.optimal_cost = optimal_cost
+        self.intermediate_results = []
 
 
 class MockOptimizer:
@@ -98,7 +99,7 @@ class MockOptimizer:
         else:
             assert np.isclose(cost_function([0.5]), 0.5)
             assert np.isclose(cost_function([0.7]), 0.7)
-        return MockOptimizerResult(optimal_parameters=[0.5], optimal_value=0.1)
+        return MockOptimizerResult(optimal_parameters=[0.5], optimal_cost=0.1)
 
 
 def test_backend_variational_program(monkeypatch):
@@ -119,6 +120,36 @@ def test_backend_variational_program(monkeypatch):
 
     res = backend._execute_variational_program(functional=var_prog, readout=readout)
     assert np.isclose(res.optimal_parameters[0], 0.5)
+
+
+def test_variational_program_clamps_out_of_bounds_parameters(monkeypatch):
+    backend = Backend()
+
+    circ = Circuit(1)
+    param = Parameter("phi", 0.5, bounds=(0.0, 1.0))
+    circ.add(RZ(0, phi=param))
+    func = DigitalPropagation(circuit=circ)
+    readout = [SamplingReadout(nshots=100)]
+
+    class OutOfBoundsOptimizer:
+        def optimize(self, cost_function, bounds, init_parameters, store_intermediate_results=False):
+            assert np.isclose(cost_function([2.9]), 1.0)
+            assert np.isclose(param.value, 1.0)
+            cost_function([-0.3])
+            assert np.isclose(param.value, 0.0)
+            return MockOptimizerResult(optimal_parameters=[2.9], optimal_cost=1.0)
+
+    var_prog = VariationalProgram(functional=func, optimizer=OutOfBoundsOptimizer(), cost_function=MockCostFunction())
+
+    monkeypatch.setattr(
+        backend,
+        "_execute_digital_propagation",
+        lambda f, ro: _make_mock_result(f),
+    )
+
+    result = backend._execute_variational_program(functional=var_prog, readout=readout)
+    assert np.isclose(param.value, 1.0)
+    assert np.allclose(result.optimal_parameters, [1.0])
 
 
 def test_non_parameterized_functional():
@@ -350,7 +381,7 @@ def test_variational_program_unsupported_result_type(monkeypatch):
 
         def optimize(self, cost_function, bounds, init_parameters, store_intermediate_results=False):
             cost_function(init_parameters)
-            return MockOptimizerResult(optimal_parameters=init_parameters, optimal_value=0.0)
+            return MockOptimizerResult(optimal_parameters=init_parameters, optimal_cost=0.0)
 
     var_prog = VariationalProgram(functional=func, optimizer=_SingleCallOptimizer(), cost_function=_BadCostFunction())
 

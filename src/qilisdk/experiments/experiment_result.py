@@ -19,7 +19,7 @@ import numpy as np
 from loguru import logger
 from matplotlib.figure import Figure
 
-from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.core.result import Result
 from qilisdk.yaml import yaml
 
 
@@ -84,7 +84,7 @@ def _secondary_axis_limits(
 
 
 @yaml.register_class
-class ExperimentResult(FunctionalResult):
+class ExperimentResult(Result):
     """Base class for storing and visualizing experiment results.
 
     This class defines common utilities for handling experimental data,
