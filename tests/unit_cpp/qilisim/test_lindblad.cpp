@@ -329,6 +329,51 @@ TEST_F(LindbladRhsExponentialAnsatzTest, DrhoIsZeroForZHamiltonianOnPlusState) {
     EXPECT_EQ(drho.get_terms().size(), rho.get_terms().size());
 }
 
+TEST_F(LindbladRhsExponentialAnsatzTest, FewerSamplesThanTermsMatchesDirectSolve) {
+    // With N_s < p the solve runs in sample space; it must match the textbook parameter-space solve
+    const int n = 4;
+    const int shots = 6;
+    ExponentialAnsatz rho(n, 2, shots, 2, 21);
+    ExponentialAnsatz reference(n, 2, shots, 2, 21);
+    double c = 0.03;
+    for (auto& [ps, coeff] : rho.get_terms().get_operators()) {
+        coeff = Complex(c, 0.01);
+        reference.get_terms().get_operators().at(ps) = coeff;
+        c += 0.04;
+    }
+    MatrixFreeHamiltonian H(n);
+    for (int i = 0; i < n; ++i) {
+        H.add(Complex(-1.0, 0.0), MatrixFreeOperator("X", i));
+        H.add(Complex(0.5, 0.0), MatrixFreeOperator("Z", i));
+    }
+
+    const auto& ops = reference.get_terms().get_operators();
+    const int p = static_cast<int>(ops.size());
+    ASSERT_LT(shots, p);
+    std::vector<PauliString> order;
+    for (const auto& [ps, coeff] : ops) {
+        order.push_back(ps);
+    }
+    SampleSet samples = reference.draw_samples();
+    Eigen::VectorXcd El = reference.local_energy(samples, H);
+    Eigen::MatrixXd O = samples.O_mat.cast<double>();
+    Eigen::VectorXd O_mean = O.colwise().mean();
+    Eigen::MatrixXd M = (O.transpose() * O) / shots - O_mean * O_mean.transpose();
+    Eigen::VectorXcd V = -((O.transpose().cast<Complex>() * El) / static_cast<double>(shots) - O_mean.cast<Complex>() * El.mean());
+    M.diagonal().array() += 0.1 / std::sqrt(static_cast<double>(shots));
+    Eigen::LLT<Eigen::MatrixXd> llt(M);
+    Eigen::VectorXd expected_re = llt.solve(V.real());
+    Eigen::VectorXd expected_im = llt.solve(V.imag());
+
+    ExponentialAnsatz drho = rho.zeroed();
+    lindblad_rhs(drho, rho, H);
+    for (int k = 0; k < p; ++k) {
+        Complex got = drho.get_terms().get_operators().at(order[k]);
+        EXPECT_NEAR(got.real(), expected_re(k), 1e-9);
+        EXPECT_NEAR(got.imag(), expected_im(k), 1e-9);
+    }
+}
+
 TEST_F(LindbladRhsExponentialAnsatzTest, GpuVariantRunsAndHasSameTermStructure) {
     // On a machine without a usable CUDA device qilisdk::gpu::sr_solve returns
     // false and lindblad_rhs_gpu takes its identical Eigen assembly + LLT

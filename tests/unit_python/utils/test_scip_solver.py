@@ -202,3 +202,11 @@ def test_scip_solver_returns_evaluate_of_best():
     m.set_objective(1 * x)
     result = ScipSolver().solve(m)
     assert result.results == m.evaluate(result.sample)
+
+
+def test_scip_solver_non_polynomial_objective():
+    x = Variable("x", Domain.REAL, bounds=(1, 4))
+    m = Model("inverse")
+    m.set_objective(1 / x)
+    result = ScipSolver().solve(m)
+    assert np.isclose(result.sample[x], 4, atol=1e-3)
