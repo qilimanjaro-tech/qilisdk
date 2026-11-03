@@ -142,14 +142,29 @@ struct Node {
 };
 
 inline NodePtr::NodePtr(Node* node) : node_(node) {
+    /*
+    Take a new reference to a node.
+
+    Args:
+        node (Node*): The node, which must not be null.
+    */
     ++node_->refs;
 }
 inline NodePtr::NodePtr(const NodePtr& other) : node_(other.node_) {
+    /*
+    Take another reference to the node of an existing reference.
+
+    Args:
+        other (NodePtr&): The reference to copy, which may be null.
+    */
     if (node_ != nullptr) {
         ++node_->refs;
     }
 }
 inline NodePtr::~NodePtr() {
+    /*
+    Drop the reference, freeing the node if it was the last one.
+    */
     if (node_ != nullptr && --node_->refs == 0) {
         release(node_);
     }

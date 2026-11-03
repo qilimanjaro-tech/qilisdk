@@ -43,17 +43,43 @@ struct Names {
     py::str item = py::str("item");
 };
 const Names& names() {
+    /*
+    The interned attribute names the engine looks up on Python objects.
+
+    Returns:
+        Names&: The process-wide set of names.
+    */
     // Never destroyed, since the Python objects would outlive the interpreter
     static const Names* instance = new Names();
     return *instance;
 }
 
 [[noreturn]] void raise(const py::object& type, const std::string& message) {
+    /*
+    Raise a Python exception of a given class from C++.
+
+    Args:
+        type (py::object&): The exception class, such as NonPolynomialError.
+        message (std::string&): The exception message.
+
+    Raises:
+        py::error_already_set: Always, carrying the exception.
+    */
     PyErr_SetString(type.ptr(), message.c_str());
     throw py::error_already_set();
 }
 
 uint64_t mix(uint64_t h, uint64_t v) {
+    /*
+    Fold a value into a running hash, finishing with a splitmix64-style avalanche.
+
+    Args:
+        h (uint64_t): The running hash.
+        v (uint64_t): The value to fold in.
+
+    Returns:
+        uint64_t: The combined hash.
+    */
     h ^= v + 0x9E3779B97F4A7C15ULL + (h << 6) + (h >> 2);
     h ^= h >> 31;
     h *= 0xBF58476D1CE4E5B9ULL;
@@ -62,6 +88,15 @@ uint64_t mix(uint64_t h, uint64_t v) {
 }
 
 uint64_t hash_double(double value) {
+    /*
+    Hash a double by its bit pattern.
+
+    Args:
+        value (double): The value to hash.
+
+    Returns:
+        uint64_t: The bits of the value, after mapping -0.0 to 0.0 and every NaN to one quiet NaN.
+    */
     // Both zeros compare equal, and so does every NaN structurally, so each must hash alike
     if (value == 0.0) {
         value = 0.0;
@@ -74,13 +109,31 @@ uint64_t hash_double(double value) {
     return bits;
 }
 
-// Structural sameness of two components, under which a NaN is the same as any other NaN
 bool same_double(double x, double y) {
+    /*
+    Structural sameness of two doubles, under which a NaN is the same as any other NaN.
+
+    Args:
+        x (double): The first value.
+        y (double): The second value.
+
+    Returns:
+        bool: True if the values are equal or both NaN.
+    */
     return x == y || (std::isnan(x) && std::isnan(y));
 }
 
-// A total order for sorting, which puts NaN after every number
 int compare_doubles(double x, double y) {
+    /*
+    A total order on doubles for sorting, which puts NaN after every number.
+
+    Args:
+        x (double): The first value.
+        y (double): The second value.
+
+    Returns:
+        int: -1, 0 or 1 as x orders before, alongside or after y.
+    */
     if (same_double(x, y)) {
         return 0;
     }
@@ -91,14 +144,34 @@ int compare_doubles(double x, double y) {
 }
 
 bool int_equals_double(int64_t i, double d) {
+    /*
+    Whether an integer and a double hold the same value, compared exactly rather than through a
+    rounding conversion of the integer.
+
+    Args:
+        i (int64_t): The integer.
+        d (double): The double.
+
+    Returns:
+        bool: True if d is a whole number within the int64 range equal to i.
+    */
     if (!std::isfinite(d) || d != std::floor(d) || d < -9223372036854775808.0 || d >= 9223372036854775808.0) {
         return false;
     }
     return static_cast<int64_t>(d) == i;
 }
 
-// The first 8 bytes of a label as a big-endian integer, zero padded, so comparing keys orders labels like memcmp
 uint64_t label_key(const std::string& label) {
+    /*
+    The first 8 bytes of a label as a big-endian integer, zero padded, so comparing keys orders labels
+    like memcmp.
+
+    Args:
+        label (std::string&): The label.
+
+    Returns:
+        uint64_t: The key.
+    */
     uint64_t key = 0;
     for (size_t i = 0; i < 8; ++i) {
         key = (key << 8) | (i < label.size() ? static_cast<unsigned char>(label[i]) : 0);
@@ -107,6 +180,17 @@ uint64_t label_key(const std::string& label) {
 }
 
 int compare_labels(const Node* a, const Node* b) {
+    /*
+    Order two variable or function nodes by label, comparing the precomputed label keys before falling
+    back to the full strings.
+
+    Args:
+        a (Node*): The first node.
+        b (Node*): The second node.
+
+    Returns:
+        int: -1, 0 or 1 as a orders before, alongside or after b.
+    */
     if (a->label_key != b->label_key) {
         return a->label_key < b->label_key ? -1 : 1;
     }
@@ -118,22 +202,66 @@ int compare_labels(const Node* a, const Node* b) {
     return c == 0 ? 0 : (c < 0 ? -1 : 1);
 }
 
-// Whether two numbers are the very same value, type and bits alike, so 2 and 2.0 or 0.0 and -0.0 differ
 bool same_number(const Num& a, const Num& b) {
+    /*
+    Whether two numbers are the very same value, type and bits alike, so 2 and 2.0 or 0.0 and -0.0
+    differ. This is what lets the constant cache share nodes without changing any result.
+
+    Args:
+        a (Num&): The first number.
+        b (Num&): The second number.
+
+    Returns:
+        bool: True if both numbers are identical.
+    */
     return a.tag == b.tag && a.i == b.i && std::memcmp(&a.re, &b.re, sizeof(double)) == 0 && std::memcmp(&a.im, &b.im, sizeof(double)) == 0;
 }
 
 int compare_constants(const Node* a, const Node* b) {
+    /*
+    Order two constant nodes by real part, then by imaginary part.
+
+    Args:
+        a (Node*): The first constant.
+        b (Node*): The second constant.
+
+    Returns:
+        int: -1, 0 or 1 as a orders before, alongside or after b.
+    */
     const int by_real = compare_doubles(a->value.re, b->value.re);
     return by_real != 0 ? by_real : compare_doubles(a->value.im, b->value.im);
 }
 
-// Python's complex arithmetic, so results match it to the last bit
 Num c_prod(const Num& a, const Num& b) {
+    /*
+    The complex product a * b, computed as Python's complex arithmetic does so results match it to the
+    last bit.
+
+    Args:
+        a (Num&): The first factor.
+        b (Num&): The second factor.
+
+    Returns:
+        Num: The complex product.
+    */
     return Num::complex(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re);
 }
 
 Num c_quot(const Num& a, const Num& b) {
+    /*
+    The complex quotient a / b, computed with the same scaled algorithm as Python's complex division
+    so results match it to the last bit.
+
+    Args:
+        a (Num&): The dividend.
+        b (Num&): The divisor.
+
+    Returns:
+        Num: The complex quotient.
+
+    Raises:
+        py::value_error: If b is zero.
+    */
     const double abs_breal = std::fabs(b.re);
     const double abs_bimag = std::fabs(b.im);
     if (abs_breal >= abs_bimag) {
@@ -150,6 +278,16 @@ Num c_quot(const Num& a, const Num& b) {
 }
 
 Num c_powu(const Num& x, int64_t n) {
+    /*
+    A complex number raised to a non-negative integer power by repeated squaring, as Python does.
+
+    Args:
+        x (Num&): The base.
+        n (int64_t): The exponent, which must not be negative.
+
+    Returns:
+        Num: The complex power.
+    */
     Num r = Num::complex(1.0, 0.0);
     Num p = x;
     for (int64_t mask = 1; mask > 0 && n >= mask; mask <<= 1) {
@@ -162,6 +300,20 @@ Num c_powu(const Num& x, int64_t n) {
 }
 
 Num complex_pow(const Num& a, const Num& b) {
+    /*
+    The complex power a ** b, following Python's algorithm: integer exponents of magnitude up to 100
+    use repeated squaring, and everything else goes through polar form.
+
+    Args:
+        a (Num&): The base.
+        b (Num&): The exponent.
+
+    Returns:
+        Num: The complex power.
+
+    Raises:
+        py::value_error: If a is zero and b is negative or not real.
+    */
     if (b.im == 0.0 && b.re == std::floor(b.re) && std::fabs(b.re) <= 100.0) {
         const auto n = static_cast<int64_t>(b.re);
         return n > 0 ? c_powu(a, n) : c_quot(Num::complex(1.0, 0.0), c_powu(a, -n));
@@ -183,8 +335,20 @@ Num complex_pow(const Num& a, const Num& b) {
     return Num::complex(len * std::cos(phase), len * std::sin(phase));
 }
 
-// Python's base ** exponent, raising for a zero base under a negative exponent
 Num safe_pow(const Num& base, const Num& exponent) {
+    /*
+    Python's base ** exponent, raising for a zero base under a negative exponent.
+
+    Args:
+        base (Num&): The base.
+        exponent (Num&): The exponent.
+
+    Returns:
+        Num: The power.
+
+    Raises:
+        py::value_error: If the base is zero within tolerance and the exponent is negative.
+    */
     if (num_abs(base) < registry().tol && exponent.is_real() && exponent.re < 0) {
         throw py::value_error(division_message);
     }
@@ -192,6 +356,19 @@ Num safe_pow(const Num& base, const Num& exponent) {
 }
 
 Num assert_real(const Num& value) {
+    /*
+    Drop a negligible imaginary part from a number and insist that it is then real, as the argument of
+    a maths function must be.
+
+    Args:
+        value (Num&): The number to check.
+
+    Returns:
+        Num: The number as a real.
+
+    Raises:
+        py::value_error: If the imaginary part is not negligible.
+    */
     const Num real = float_if_real(value);
     if (!real.is_real()) {
         throw py::value_error("Only real values are allowed but " + py::str(num_to_py(real)).cast<std::string>() + " was provided.");
@@ -200,26 +377,73 @@ Num assert_real(const Num& value) {
 }
 
 NodePtr constant(const Num& value) {
+    /*
+    The constant node for a number, dropping a negligible imaginary part.
+
+    Args:
+        value (Num&): The number.
+
+    Returns:
+        NodePtr: The constant node.
+    */
     return make_constant(float_if_real(value));
 }
 
-// -1, 0 or 1. They are needed constantly (every plain factor of a product has exponent 1), so they are built once.
 NodePtr constant_int(int64_t value) {
+    /*
+    The shared constant node for -1, 0 or 1. They are needed constantly (every plain factor of a
+    product has exponent 1), so they are built once.
+
+    Args:
+        value (int64_t): The value, which must be -1, 0 or 1.
+
+    Returns:
+        NodePtr: The constant node.
+    */
     static const auto* common = new std::array<NodePtr, 3>{make_constant(Num::integer(-1)), make_constant(Num::integer(0)), make_constant(Num::integer(1))};
     return (*common)[value + 1];
 }
 
 bool is_constant(const NodePtr& node, int64_t value) {
+    /*
+    Whether a node is a constant numerically equal to an integer.
+
+    Args:
+        node (NodePtr&): The node to check.
+        value (int64_t): The integer to compare against.
+
+    Returns:
+        bool: True if the node is a constant equal to value, so 1 and 1.0 both count as 1.
+    */
     return node->kind == Kind::Constant && num_eq(node->value, Num::integer(value));
 }
 
 bool is_pos_int_constant(const NodePtr& node) {
+    /*
+    Whether a node is a constant holding a positive whole number.
+
+    Args:
+        node (NodePtr&): The node to check.
+
+    Returns:
+        bool: True if the node is a constant positive integer, such as 2 or 2.0.
+    */
     const std::optional<int64_t> value = int_exponent(node);
     return value.has_value() && *value > 0;
 }
 
-// The factors of a canonical product, multiplied out over its sums
 NodePtr mul_expand(const NodePtr& left, const NodePtr& right) {
+    /*
+    The product of two expressions, multiplied out over their sums. Each side counts as the list of
+    its summands (a non-sum being a single one) and every pair of summands is multiplied.
+
+    Args:
+        left (NodePtr&): The first factor.
+        right (NodePtr&): The second factor.
+
+    Returns:
+        NodePtr: The canonical sum of the pairwise products.
+    */
     const NodeSpan left_terms = left->kind == Kind::Add ? left->args : NodeSpan(&left, 1);
     const NodeSpan right_terms = right->kind == Kind::Add ? right->args : NodeSpan(&right, 1);
     std::vector<NodePtr> products;
@@ -241,6 +465,12 @@ class SmallVector {
     T* end() { return begin() + size(); }
     size_t size() const { return spilled_ ? heap_.size() : size_; }
     void push_back(T value) {
+        /*
+        Append a value, moving the inline elements to the heap the first time the inline storage overflows.
+
+        Args:
+            value (T): The value to append.
+        */
         if (!spilled_ && size_ < N) {
             inline_[size_++] = std::move(value);
             return;
@@ -260,9 +490,16 @@ class SmallVector {
     bool spilled_ = false;
 };
 
-// Sorts canonically and stably. std::stable_sort allocates a buffer on every call, which for the handful of
-// operands of a typical node costs more than an insertion sort does.
 void sort_canonically(NodePtr* begin, NodePtr* end) {
+    /*
+    Sort nodes into canonical order, stably. std::stable_sort allocates a buffer on every call, which
+    for the handful of operands of a typical node costs more than an insertion sort does, so it is only
+    used for runs of more than 16 nodes.
+
+    Args:
+        begin (NodePtr*): The start of the run.
+        end (NodePtr*): One past the end of the run.
+    */
     const auto less = [](const NodePtr& a, const NodePtr& b) { return compare(a, b) < 0; };
     if (end - begin > 16) {
         std::stable_sort(begin, end, less);
@@ -279,8 +516,18 @@ void sort_canonically(NodePtr* begin, NodePtr* end) {
     }
 }
 
-// The base is a canonical monomial without a coefficient, so prepending one keeps it canonical
 NodePtr scale(const NodePtr& base, const Num& coeff) {
+    /*
+    Prepend a numeric coefficient to a monomial. The base is a canonical monomial without a coefficient,
+    so prepending one keeps it canonical.
+
+    Args:
+        base (NodePtr&): The monomial, without a coefficient.
+        coeff (Num&): The coefficient, which should not be 0 or 1.
+
+    Returns:
+        NodePtr: The product coeff * base.
+    */
     const NodePtr constant_factor = make_constant(coeff);
     return make_node(Kind::Mul, &constant_factor, base->kind == Kind::Mul ? base->args : NodeSpan(&base, 1));
 }
@@ -296,6 +543,15 @@ struct Summand {
 };
 
 Summand view_summand(const NodePtr& term) {
+    /*
+    View a summand as its coefficient and the factors of its monomial, without building the monomial.
+
+    Args:
+        term (NodePtr&): The summand, which must outlive the view.
+
+    Returns:
+        Summand: The view of the summand.
+    */
     Summand summand;
     summand.term = &term;
     summand.coeff = Num::integer(1);
@@ -317,6 +573,16 @@ Summand view_summand(const NodePtr& term) {
 }
 
 bool same_factors(NodeSpan a, NodeSpan b) {
+    /*
+    Whether two lists of factors are structurally equal, element by element.
+
+    Args:
+        a (NodeSpan): The first factors.
+        b (NodeSpan): The second factors.
+
+    Returns:
+        bool: True if both lists hold equal factors in the same order.
+    */
     if (a.size() != b.size()) {
         return false;  // GCOV_EXCL_LINE (only called on equal hashes, which cover the size, so this needs a hash collision)
     }
@@ -328,8 +594,17 @@ bool same_factors(NodeSpan a, NodeSpan b) {
     return true;
 }
 
-// The node for a combined summand, reusing the original whenever nothing merged into it
 NodePtr rebuild_summand(const Summand& summand, const Num& coeff) {
+    /*
+    The node for a combined summand, reusing the original whenever nothing merged into it.
+
+    Args:
+        summand (Summand&): The summand.
+        coeff (Num&): Its combined coefficient, which must not be zero.
+
+    Returns:
+        NodePtr: The summand scaled by its coefficient.
+    */
     if (summand.reusable) {
         return *summand.term;
     }
@@ -343,8 +618,17 @@ NodePtr rebuild_summand(const Summand& summand, const Num& coeff) {
     return (*summand.term)->kind == Kind::Mul && (*summand.term)->args.size() == summand.factors.size() ? *summand.term : make_node(Kind::Mul, summand.factors);
 }
 
-// Whether a summand is some coefficient times base, without building its monomial
 bool has_base(const NodePtr& term, const NodePtr& base) {
+    /*
+    Whether a summand is some coefficient times a monomial, without building the summand's monomial.
+
+    Args:
+        term (NodePtr&): The summand.
+        base (NodePtr&): The monomial, without a coefficient.
+
+    Returns:
+        bool: True if term is base, or a constant times base.
+    */
     if (term->kind != Kind::Mul || term->args[0]->kind != Kind::Constant) {
         return equal(term, base);
     }
@@ -362,9 +646,21 @@ bool has_base(const NodePtr& term, const NodePtr& base) {
     return true;
 }
 
-// Adds a single non-sum term to a canonical sum by merging it into the sorted operands, which gives the same
-// result as build_add without rebuilding its hash index, so each step of a running sum() is one cheap pass
 NodePtr add_to_sum(const NodePtr& sum, const NodePtr& term, bool sum_first) {
+    /*
+    Add a single non-sum term to a canonical sum by merging it into the sorted operands. This gives
+    the same result as build_add without rebuilding its hash index, so each step of a running sum()
+    is one cheap pass.
+
+    Args:
+        sum (NodePtr&): The canonical sum.
+        term (NodePtr&): The term to add, which must not itself be a sum.
+        sum_first (bool): Whether the sum is the left operand, which fixes the order the coefficients
+            are added in (so rounding matches build_add) and which of two like terms keeps its base.
+
+    Returns:
+        NodePtr: The canonical sum, or its single remaining operand.
+    */
     std::vector<NodePtr> out(sum->args.begin(), sum->args.end());
     const auto less = [](const NodePtr& a, const NodePtr& b) { return compare(a, b) < 0; };
     const auto insert_sorted = [&](const NodePtr& node) { out.insert(std::upper_bound(out.begin(), out.end(), node, less), node); };
@@ -407,6 +703,16 @@ NodePtr add_to_sum(const NodePtr& sum, const NodePtr& term, bool sum_first) {
 }
 
 bool contains_symbol(const NodePtr& node, const NodePtr& symbol) {
+    /*
+    Whether a variable occurs anywhere in a tree.
+
+    Args:
+        node (NodePtr&): The tree to search.
+        symbol (NodePtr&): The variable to look for.
+
+    Returns:
+        bool: True if the variable occurs in the tree.
+    */
     if (node->kind == Kind::Variable) {
         return equal(node, symbol);
     }
@@ -419,6 +725,15 @@ bool contains_symbol(const NodePtr& node, const NodePtr& symbol) {
 }
 
 bool contains_any_symbol(const NodePtr& node) {
+    /*
+    Whether any variable occurs anywhere in a tree.
+
+    Args:
+        node (NodePtr&): The tree to search.
+
+    Returns:
+        bool: True if the tree has at least one variable.
+    */
     if (node->kind == Kind::Variable) {
         return true;
     }
@@ -431,6 +746,14 @@ bool contains_any_symbol(const NodePtr& node) {
 }
 
 void collect_symbols(const NodePtr& node, std::vector<NodePtr>& out, std::unordered_set<NodePtr, NodeHash, NodeEqual>& seen) {
+    /*
+    Append each distinct variable of a tree to a list, depth first in the order they are first met.
+
+    Args:
+        node (NodePtr&): The tree to search.
+        out (std::vector<NodePtr>&): The list to append to.
+        seen (std::unordered_set&): The variables already appended.
+    */
     if (node->kind == Kind::Variable) {
         if (seen.insert(node).second) {
             out.push_back(node);
@@ -443,6 +766,21 @@ void collect_symbols(const NodePtr& node, std::vector<NodePtr>& out, std::unorde
 }
 
 NodePtr to_binary(const NodePtr& node, std::unordered_map<std::string, NodePtr>& memo) {
+    /*
+    Rewrite every variable that defines its own to_binary in terms of binary variables, rebuilding the
+    tree canonically on the way up.
+
+    Args:
+        node (NodePtr&): The tree to rewrite.
+        memo (std::unordered_map&): The rewrite of each variable already met, by label, so each
+            variable's to_binary is only called once.
+
+    Returns:
+        NodePtr: The rewritten tree.
+
+    Raises:
+        py::type_error: If a variable's to_binary returns neither an Expression nor a number.
+    */
     switch (node->kind) {
         case Kind::Constant:
             return node;
@@ -477,6 +815,22 @@ NodePtr to_binary(const NodePtr& node, std::unordered_map<std::string, NodePtr>&
 }
 
 Num evaluate(const NodePtr& node, py::handle env, std::unordered_map<std::string, Num>& memo) {
+    /*
+    Numerically evaluate a tree.
+
+    Args:
+        node (NodePtr&): The tree to evaluate.
+        env (py::handle): The mapping of variables to values, passed to each variable's evaluate.
+        memo (std::unordered_map&): The value of each variable already evaluated, by label, so each
+            variable's evaluate is only called once.
+
+    Returns:
+        Num: The value, as a float or a complex.
+
+    Raises:
+        py::type_error: If a variable or function does not evaluate to a number.
+        py::value_error: If the tree divides by zero or a function gets a complex argument.
+    */
     switch (node->kind) {
         case Kind::Constant:
             return finalize(node->value);
@@ -523,11 +877,28 @@ Num evaluate(const NodePtr& node, py::handle env, std::unordered_map<std::string
 }
 
 std::string repr_number(const Num& value) {
+    /*
+    Python's repr of a number, dropping a negligible imaginary part.
+
+    Args:
+        value (Num&): The number.
+
+    Returns:
+        std::string: The printed number.
+    */
     return py::repr(num_to_py(float_if_real(value))).cast<std::string>();
 }
 
-// The positive form of a negative summand, so a sum prints "a - b" rather than "a + -b"
 NodePtr negate_for_repr(const NodePtr& term) {
+    /*
+    The positive form of a negative summand, so a sum prints "a - b" rather than "a + -b".
+
+    Args:
+        term (NodePtr&): The summand.
+
+    Returns:
+        NodePtr: The negated summand if it is a product with a negative real coefficient, otherwise null.
+    */
     if (term->kind == Kind::Mul) {
         const Num coefficient = peel(term).second;
         if (coefficient.is_real() && coefficient.re < 0) {
@@ -538,6 +909,18 @@ NodePtr negate_for_repr(const NodePtr& term) {
 }
 
 std::vector<NodePtr> nodes_of(py::iterable raw) {
+    /*
+    Coerce every item of a Python iterable into a node.
+
+    Args:
+        raw (py::iterable): The Expressions and numbers.
+
+    Returns:
+        std::vector<NodePtr>: Their nodes, in order.
+
+    Raises:
+        py::type_error: If an item is neither an Expression nor a number.
+    */
     std::vector<NodePtr> nodes;
     for (py::handle item : raw) {
         NodePtr node;
@@ -554,6 +937,16 @@ std::vector<NodePtr> nodes_of(py::iterable raw) {
 // ---------------------------------------------------------------- numbers
 
 Num Num::integer(int64_t value) {
+    /*
+    A number standing for a Python int. The value is mirrored into re, so mixed arithmetic can read it
+    as a double directly.
+
+    Args:
+        value (int64_t): The integer.
+
+    Returns:
+        Num: The number.
+    */
     Num n;
     n.tag = Tag::Int;
     n.i = value;
@@ -562,6 +955,15 @@ Num Num::integer(int64_t value) {
 }
 
 Num Num::real(double value) {
+    /*
+    A number standing for a Python float.
+
+    Args:
+        value (double): The value.
+
+    Returns:
+        Num: The number.
+    */
     Num n;
     n.tag = Tag::Float;
     n.re = value;
@@ -569,6 +971,16 @@ Num Num::real(double value) {
 }
 
 Num Num::complex(double real, double imag) {
+    /*
+    A number standing for a Python complex.
+
+    Args:
+        real (double): The real part.
+        imag (double): The imaginary part.
+
+    Returns:
+        Num: The number.
+    */
     Num n;
     n.tag = Tag::Complex;
     n.re = real;
@@ -577,6 +989,17 @@ Num Num::complex(double real, double imag) {
 }
 
 Num num_add(const Num& a, const Num& b) {
+    /*
+    The sum a + b with Python's numeric promotion: two ints stay an int unless the sum overflows 64
+    bits, when it falls back to a float, two reals give a float, and anything else a complex.
+
+    Args:
+        a (Num&): The first operand.
+        b (Num&): The second operand.
+
+    Returns:
+        Num: The sum.
+    */
     if (a.tag == Num::Tag::Int && b.tag == Num::Tag::Int) {
         int64_t result = 0;
         if (!__builtin_add_overflow(a.i, b.i, &result)) {
@@ -591,6 +1014,17 @@ Num num_add(const Num& a, const Num& b) {
 }
 
 Num num_mul(const Num& a, const Num& b) {
+    /*
+    The product a * b with Python's numeric promotion: two ints stay an int unless the product
+    overflows 64 bits, when it falls back to a float, two reals give a float, and anything else a complex.
+
+    Args:
+        a (Num&): The first factor.
+        b (Num&): The second factor.
+
+    Returns:
+        Num: The product.
+    */
     if (a.tag == Num::Tag::Int && b.tag == Num::Tag::Int) {
         int64_t result = 0;
         if (!__builtin_mul_overflow(a.i, b.i, &result)) {
@@ -605,6 +1039,18 @@ Num num_mul(const Num& a, const Num& b) {
 }
 
 Num num_pow(const Num& base, const Num& exponent) {
+    /*
+    The power base ** exponent with Python's semantics: an int to a non-negative int stays an exact
+    int unless it overflows 64 bits, a negative real base under a fractional power gives a complex,
+    other reals give a float, and anything else a complex.
+
+    Args:
+        base (Num&): The base.
+        exponent (Num&): The exponent.
+
+    Returns:
+        Num: The power.
+    */
     if (base.tag == Num::Tag::Int && exponent.tag == Num::Tag::Int && exponent.i >= 0) {
         int64_t result = 1;
         int64_t factor = base.i;
@@ -630,6 +1076,17 @@ Num num_pow(const Num& base, const Num& exponent) {
 }
 
 bool num_eq(const Num& a, const Num& b) {
+    /*
+    Numeric equality like Python's ==, so 2, 2.0 and 2+0j are all equal, with an int compared against
+    a double exactly.
+
+    Args:
+        a (Num&): The first number.
+        b (Num&): The second number.
+
+    Returns:
+        bool: True if the numbers are equal.
+    */
     if (a.tag == Num::Tag::Int && b.tag == Num::Tag::Int) {
         return a.i == b.i;
     }
@@ -646,10 +1103,28 @@ bool num_eq(const Num& a, const Num& b) {
 }
 
 double num_abs(const Num& value) {
+    /*
+    The absolute value, or modulus for a complex.
+
+    Args:
+        value (Num&): The number.
+
+    Returns:
+        double: Its absolute value.
+    */
     return value.is_real() ? std::fabs(value.re) : std::hypot(value.re, value.im);
 }
 
 Num float_if_real(const Num& value) {
+    /*
+    Demote a complex whose imaginary part is below tolerance to a float.
+
+    Args:
+        value (Num&): The number.
+
+    Returns:
+        Num: The number, as a float if its imaginary part is negligible.
+    */
     if (!value.is_real() && std::fabs(value.im) < registry().tol) {
         return Num::real(value.re);
     }
@@ -657,6 +1132,16 @@ Num float_if_real(const Num& value) {
 }
 
 Num finalize(const Num& value) {
+    /*
+    The form of a number handed back as an evaluation result, where ints become floats and a negligible
+    imaginary part is dropped.
+
+    Args:
+        value (Num&): The number.
+
+    Returns:
+        Num: The number as a float or a complex.
+    */
     if (value.tag == Num::Tag::Int) {
         return Num::real(value.re);
     }
@@ -664,6 +1149,20 @@ Num finalize(const Num& value) {
 }
 
 bool num_from_py(py::handle obj, Num& out) {
+    /*
+    Read a Python bool, int, float, complex or numpy scalar. An int beyond 64 bits becomes the nearest
+    float.
+
+    Args:
+        obj (py::handle): The object to read.
+        out (Num&): Set to the number when obj is one.
+
+    Returns:
+        bool: True if obj is a number.
+
+    Raises:
+        py::error_already_set: If an int is too large even for a float.
+    */
     PyObject* ptr = obj.ptr();
     if (PyBool_Check(ptr)) {
         out = Num::integer(ptr == Py_True ? 1 : 0);
@@ -699,6 +1198,15 @@ bool num_from_py(py::handle obj, Num& out) {
 }
 
 py::object num_to_py(const Num& value) {
+    /*
+    The Python int, float or complex for a number.
+
+    Args:
+        value (Num&): The number.
+
+    Returns:
+        py::object: The Python number.
+    */
     switch (value.tag) {
         case Num::Tag::Int:
             return py::int_(value.i);
@@ -713,12 +1221,32 @@ py::object num_to_py(const Num& value) {
 // ---------------------------------------------------------------- registry
 
 Registry& registry() {
+    /*
+    The Python classes and settings the engine needs, set by initialize().
+
+    Returns:
+        Registry&: The process-wide registry.
+    */
     // Never destroyed, since the Python objects would outlive the interpreter
     static Registry* instance = new Registry();
     return *instance;
 }
 
 void initialize(py::object constant_cls, py::object add_cls, py::object mul_cls, py::object pow_cls, py::object expression_cls, py::object log_cls, py::object non_polynomial_error, double tol) {
+    /*
+    Register the Python classes and settings the engine needs. Called once by expression.py on import,
+    it also clears the cached class markers.
+
+    Args:
+        constant_cls (py::object): The Constant class.
+        add_cls (py::object): The Add class.
+        mul_cls (py::object): The Mul class.
+        pow_cls (py::object): The Pow class.
+        expression_cls (py::object): The Expression base class.
+        log_cls (py::object): The Log class, which the derivative of a symbolic power needs.
+        non_polynomial_error (py::object): The exception raised for an undefined degree.
+        tol (double): The tolerance under which a number counts as zero.
+    */
     Registry& reg = registry();
     reg.constant_cls = std::move(constant_cls);
     reg.add_cls = std::move(add_cls);
@@ -735,6 +1263,17 @@ void initialize(py::object constant_cls, py::object add_cls, py::object mul_cls,
 }
 
 const ClassInfo& class_info(py::handle cls) {
+    /*
+    The markers of a variable or function class, read from the class on first use and cached: whether
+    it is idempotent under multiplication, whether it is a Parameter, whether it overrides to_binary,
+    and its NAME.
+
+    Args:
+        cls (py::handle): The class.
+
+    Returns:
+        ClassInfo&: The markers, which stay valid for the life of the registry.
+    */
     Registry& reg = registry();
     auto found = reg.classes.find(cls.ptr());
     if (found != reg.classes.end()) {
@@ -752,6 +1291,16 @@ const ClassInfo& class_info(py::handle cls) {
 // ---------------------------------------------------------------- construction
 
 uint64_t label_hash(const std::string& label) {
+    /*
+    The FNV-1a hash of a label, mixed with the Variable kind. It is the hash of a variable's node, and
+    is also its Python hash through variable_hash, so the two always agree.
+
+    Args:
+        label (std::string&): The label.
+
+    Returns:
+        uint64_t: The hash.
+    */
     uint64_t h = 0xCBF29CE484222325ULL;
     for (unsigned char c : label) {
         h = (h ^ c) * 0x100000001B3ULL;
@@ -760,6 +1309,17 @@ uint64_t label_hash(const std::string& label) {
 }
 
 uint64_t compound_hash(Kind kind, const NodePtr* first, NodeSpan rest) {
+    /*
+    The hash of an operator node, from its kind, its operand count and each operand's hash in order.
+
+    Args:
+        kind (Kind): The node kind.
+        first (NodePtr*): An optional leading operand, or nullptr.
+        rest (NodeSpan): The remaining operands.
+
+    Returns:
+        uint64_t: The hash.
+    */
     uint64_t h = mix(static_cast<uint64_t>(kind), (first != nullptr ? 1 : 0) + rest.size());
     if (first != nullptr) {
         h = mix(h, (*first)->hash);
@@ -770,8 +1330,19 @@ uint64_t compound_hash(Kind kind, const NodePtr* first, NodeSpan rest) {
     return h;
 }
 
-// Allocates a node with its operands, an optional first one and then the rest, copied into the same block right after it
 Node* allocate(Kind kind, const NodePtr* first, NodeSpan rest) {
+    /*
+    Allocate a node with its operands, an optional first one and then the rest, copied into the same
+    block right after it.
+
+    Args:
+        kind (Kind): The node kind.
+        first (NodePtr*): An optional leading operand, or nullptr.
+        rest (NodeSpan): The remaining operands.
+
+    Returns:
+        Node*: The node, without references and with its hash still unset.
+    */
     const size_t count = (first != nullptr ? 1 : 0) + rest.size();
     void* memory = ::operator new(sizeof(Node) + count * sizeof(NodePtr));
     // Default- rather than value-initialized, which would zero the whole node before constructing it
@@ -790,12 +1361,30 @@ Node* allocate(Kind kind, const NodePtr* first, NodeSpan rest) {
 }
 
 NodePtr make_node(Kind kind, const NodePtr* first, NodeSpan rest) {
+    /*
+    Make an operator node from operands trusted to be canonical, without checking them.
+
+    Args:
+        kind (Kind): The node kind.
+        first (NodePtr*): An optional leading operand, or nullptr.
+        rest (NodeSpan): The remaining operands.
+
+    Returns:
+        NodePtr: The node.
+    */
     Node* node = allocate(kind, first, rest);
     node->hash = compound_hash(kind, first, rest);
     return NodePtr(node);
 }
 
 void release(Node* node) {
+    /*
+    Free a node once its last reference is gone, along with its wrapper's weak reference and its own
+    references to its operands.
+
+    Args:
+        node (Node*): The node to free.
+    */
     Py_XDECREF(node->wrapper);
     auto* storage = reinterpret_cast<NodePtr*>(node + 1);
     for (size_t i = 0; i < node->args.size(); ++i) {
@@ -806,6 +1395,15 @@ void release(Node* node) {
 }
 
 NodePtr make_constant(const Num& value) {
+    /*
+    Make a constant node, sharing one recently made for the very same number.
+
+    Args:
+        value (Num&): The number, kept exactly as given.
+
+    Returns:
+        NodePtr: The constant node.
+    */
     const uint64_t hash = mix(mix(static_cast<uint64_t>(Kind::Constant), hash_double(value.re)), hash_double(value.im));
     // Coefficients repeat a lot, so recently made constants are shared through a small direct-mapped cache. It
     // only matches the exact same number, keeping 2 and 2.0 apart, and holds no Python objects.
@@ -822,6 +1420,17 @@ NodePtr make_constant(const Num& value) {
 }
 
 NodePtr make_variable(const std::string& label, py::object owner, const ClassInfo& info) {
+    /*
+    Make the leaf for a Python variable.
+
+    Args:
+        label (std::string&): The variable's label.
+        owner (py::object): The Python variable, which the leaf keeps a reference to.
+        info (ClassInfo&): The markers of the variable's class.
+
+    Returns:
+        NodePtr: The leaf.
+    */
     Node* node = allocate(Kind::Variable, nullptr, {});
     node->label = label;
     node->idempotent = info.idempotent;
@@ -834,10 +1443,31 @@ NodePtr make_variable(const std::string& label, py::object owner, const ClassInf
 }
 
 NodePtr make_node(Kind kind, NodeSpan args) {
+    /*
+    Make an operator node from operands trusted to be canonical, without checking them.
+
+    Args:
+        kind (Kind): The node kind.
+        args (NodeSpan): The operands.
+
+    Returns:
+        NodePtr: The node.
+    */
     return make_node(kind, nullptr, args);
 }
 
 NodePtr make_function(py::object cls, const std::string& name, NodePtr arg) {
+    /*
+    Make a function node without folding its argument.
+
+    Args:
+        cls (py::object): The function's class, such as Sin.
+        name (std::string&): The class's NAME, which orders functions.
+        arg (NodePtr): The argument.
+
+    Returns:
+        NodePtr: The function node.
+    */
     Node* node = allocate(Kind::Function, &arg, {});
     node->label = name;
     node->label_key = label_key(name);
@@ -847,6 +1477,17 @@ NodePtr make_function(py::object cls, const std::string& name, NodePtr arg) {
 }
 
 NodePtr build_add(NodeSpan raw) {
+    /*
+    Build the canonical sum of a list of terms. Nested sums are flattened, like terms are combined by
+    adding their coefficients, constants fold into one, zero terms drop out and the rest are sorted. A
+    sum plus a single other term takes the quicker add_to_sum.
+
+    Args:
+        raw (NodeSpan): The terms.
+
+    Returns:
+        NodePtr: The sum, its single remaining operand, or 0 if nothing remains.
+    */
     if (raw.size() == 2 && (raw[0]->kind == Kind::Add) != (raw[1]->kind == Kind::Add)) {
         const bool sum_first = raw[0]->kind == Kind::Add;
         return add_to_sum(raw[sum_first ? 0 : 1], raw[sum_first ? 1 : 0], sum_first);
@@ -926,6 +1567,18 @@ NodePtr build_add(NodeSpan raw) {
 }
 
 NodePtr build_mul(NodeSpan raw) {
+    /*
+    Build the canonical product of a list of factors. Nested products are flattened, constants multiply
+    into one leading coefficient, repeated bases collect by adding their exponents, an idempotent base
+    drops any positive integer power, and the factors are sorted. Sums are not distributed over.
+
+    Args:
+        raw (NodeSpan): The factors.
+
+    Returns:
+        NodePtr: The product, its single remaining factor, 0 for a zero coefficient, or 1 if nothing
+        remains.
+    */
     Num coefficient = Num::integer(1);
     SmallVector<std::pair<NodePtr, NodePtr>, 8> powers;
 
@@ -985,6 +1638,21 @@ NodePtr build_mul(NodeSpan raw) {
 }
 
 NodePtr build_pow(const NodePtr& base, const NodePtr& exp) {
+    /*
+    Build the canonical power base ** exp. An exponent of 1 gives the base and 0 gives 1, a constant
+    base folds, nested integer powers merge, an idempotent base drops a positive integer power, and a
+    base of 1 gives 1.
+
+    Args:
+        base (NodePtr&): The base.
+        exp (NodePtr&): The exponent.
+
+    Returns:
+        NodePtr: The power, folded or simplified where possible.
+
+    Raises:
+        py::value_error: If a constant zero base has a negative exponent.
+    */
     if (exp->kind == Kind::Constant) {
         if (num_eq(exp->value, Num::integer(1))) {
             return base;
@@ -1014,6 +1682,20 @@ NodePtr build_pow(const NodePtr& base, const NodePtr& exp) {
 }
 
 NodePtr build_function(const py::object& cls, const NodePtr& arg) {
+    /*
+    Build a function node, folding a constant argument to the function's numeric value.
+
+    Args:
+        cls (py::object&): The function's class, such as Sin.
+        arg (NodePtr&): The argument.
+
+    Returns:
+        NodePtr: The function node, or a constant for a constant argument.
+
+    Raises:
+        py::value_error: If a constant argument is complex.
+        py::type_error: If the class's _numeric does not return a number.
+    */
     if (arg->kind == Kind::Constant) {
         Num value;
         if (!num_from_py(cls.attr(names().numeric)(num_to_py(assert_real(arg->value))), value)) {
@@ -1027,10 +1709,31 @@ NodePtr build_function(const py::object& cls, const NodePtr& arg) {
 // ---------------------------------------------------------------- structure
 
 bool NodeEqual::operator()(const NodePtr& a, const NodePtr& b) const {
+    /*
+    Structural equality, for keying hash containers by node.
+
+    Args:
+        a (NodePtr&): The first node.
+        b (NodePtr&): The second node.
+
+    Returns:
+        bool: True if the nodes are structurally equal.
+    */
     return equal(a, b);
 }
 
 bool equal(const NodePtr& a, const NodePtr& b) {
+    /*
+    Structural equality of two canonical trees, settled by pointer or hash wherever possible.
+    Constants compare numerically, so 2 and 2.0 are equal, and every NaN is alike.
+
+    Args:
+        a (NodePtr&): The first tree.
+        b (NodePtr&): The second tree.
+
+    Returns:
+        bool: True if the trees are structurally equal.
+    */
     if (a == b) {
         return true;
     }
@@ -1064,6 +1767,18 @@ bool equal(const NodePtr& a, const NodePtr& b) {
 namespace {
 
 int compare_nodes(const Node* a, const Node* b) {
+    /*
+    The canonical total order of nodes: by kind first, then constants by value, variables by label,
+    functions by name and then argument, and operator nodes by their operands in turn and then by
+    their count.
+
+    Args:
+        a (Node*): The first node.
+        b (Node*): The second node.
+
+    Returns:
+        int: -1, 0 or 1 as a orders before, alongside or after b.
+    */
     if (a == b) {
         return 0;
     }
@@ -1114,10 +1829,29 @@ int compare_nodes(const Node* a, const Node* b) {
 }  // namespace
 
 int compare(const NodePtr& a, const NodePtr& b) {
+    /*
+    The canonical order of two nodes, which sorts the operands of a sum or product.
+
+    Args:
+        a (NodePtr&): The first node.
+        b (NodePtr&): The second node.
+
+    Returns:
+        int: -1, 0 or 1 as a orders before, alongside or after b.
+    */
     return compare_nodes(a.get(), b.get());
 }
 
 std::optional<int64_t> int_exponent(const NodePtr& node) {
+    /*
+    The integer value of a constant holding a whole number, such as 2 or 2.0.
+
+    Args:
+        node (NodePtr&): The node.
+
+    Returns:
+        std::optional<int64_t>: The integer, or nothing if the node is not a whole-number constant.
+    */
     if (node->kind != Kind::Constant) {
         return std::nullopt;
     }
@@ -1132,6 +1866,15 @@ std::optional<int64_t> int_exponent(const NodePtr& node) {
 }
 
 std::pair<NodePtr, Num> peel(const NodePtr& node) {
+    /*
+    Split a term into its monomial and its numeric coefficient.
+
+    Args:
+        node (NodePtr&): The term.
+
+    Returns:
+        std::pair<NodePtr, Num>: The term without its leading constant, and that constant (or 1).
+    */
     if (node->kind == Kind::Mul && node->args[0]->kind == Kind::Constant) {
         if (node->args.size() == 2) {
             return {node->args[1], node->args[0]->value};
@@ -1144,6 +1887,15 @@ std::pair<NodePtr, Num> peel(const NodePtr& node) {
 // ---------------------------------------------------------------- symbolic operations
 
 NodePtr expand(const NodePtr& node) {
+    /*
+    Distribute products and positive integer powers over sums, all the way down the tree.
+
+    Args:
+        node (NodePtr&): The tree to expand.
+
+    Returns:
+        NodePtr: The canonical sum of monomials equal to the tree.
+    */
     switch (node->kind) {
         case Kind::Add: {
             std::vector<NodePtr> terms;
@@ -1191,6 +1943,20 @@ NodePtr expand(const NodePtr& node) {
 }
 
 NodePtr derivative(const NodePtr& node, const NodePtr& symbol) {
+    /*
+    The symbolic derivative with respect to a variable, by the sum, product, power and chain rules.
+    A function supplies its own outer derivative through _outer_derivative.
+
+    Args:
+        node (NodePtr&): The tree to differentiate.
+        symbol (NodePtr&): The variable to differentiate by.
+
+    Returns:
+        NodePtr: The derivative.
+
+    Raises:
+        py::type_error: If a function's _outer_derivative returns neither an Expression nor a number.
+    */
     switch (node->kind) {
         case Kind::Constant:
             return constant_int(0);
@@ -1241,6 +2007,17 @@ NodePtr derivative(const NodePtr& node, const NodePtr& symbol) {
 }
 
 NodePtr substitute(const NodePtr& node, const SubstitutionMap& mapping) {
+    /*
+    Replace the sub-trees found in a mapping, rebuilding canonically on the way up. A replaced sub-tree
+    is not searched any further.
+
+    Args:
+        node (NodePtr&): The tree.
+        mapping (SubstitutionMap&): The replacement for each sub-tree, where a null one leaves it as is.
+
+    Returns:
+        NodePtr: The tree with its replacements made.
+    */
     auto found = mapping.find(node);
     if (found != mapping.end()) {
         // A null replacement could not be coerced, which leaves the node alone
@@ -1266,16 +2043,55 @@ NodePtr substitute(const NodePtr& node, const SubstitutionMap& mapping) {
 }
 
 NodePtr to_binary(const NodePtr& node) {
+    /*
+    Rewrite every variable that defines its own to_binary in terms of binary variables.
+
+    Args:
+        node (NodePtr&): The tree to rewrite.
+
+    Returns:
+        NodePtr: The rewritten tree.
+
+    Raises:
+        py::type_error: If a variable's to_binary returns neither an Expression nor a number.
+    */
     std::unordered_map<std::string, NodePtr> memo;
     return to_binary(node, memo);
 }
 
 Num evaluate(const NodePtr& node, py::handle env) {
+    /*
+    Numerically evaluate a tree.
+
+    Args:
+        node (NodePtr&): The tree to evaluate.
+        env (py::handle): The mapping of variables to values, passed to each variable's evaluate.
+
+    Returns:
+        Num: The value, as a float or a complex.
+
+    Raises:
+        py::type_error: If a variable or function does not evaluate to a number.
+        py::value_error: If the tree divides by zero or a function gets a complex argument.
+    */
     std::unordered_map<std::string, Num> memo;
     return evaluate(node, env, memo);
 }
 
 int64_t degree(const NodePtr& node) {
+    /*
+    The polynomial degree of a tree.
+
+    Args:
+        node (NodePtr&): The tree.
+
+    Returns:
+        int64_t: The degree.
+
+    Raises:
+        NonPolynomialError: If the tree has a power that is not a non-negative integer, or a function
+            of a variable.
+    */
     switch (node->kind) {
         case Kind::Constant:
             return 0;
@@ -1312,6 +2128,15 @@ int64_t degree(const NodePtr& node) {
 }
 
 std::vector<NodePtr> free_symbols(const NodePtr& node) {
+    /*
+    The distinct variables of a tree.
+
+    Args:
+        node (NodePtr&): The tree.
+
+    Returns:
+        std::vector<NodePtr>: The variables, depth first in the order they are first met.
+    */
     std::vector<NodePtr> out;
     std::unordered_set<NodePtr, NodeHash, NodeEqual> seen;
     collect_symbols(node, out, seen);
@@ -1319,6 +2144,18 @@ std::vector<NodePtr> free_symbols(const NodePtr& node) {
 }
 
 std::vector<std::pair<NodePtr, int64_t>> monomial_factors(const NodePtr& node) {
+    /*
+    The factors of a monomial with their powers, leaving out its coefficient.
+
+    Args:
+        node (NodePtr&): The monomial.
+
+    Returns:
+        std::vector<std::pair<NodePtr, int64_t>>: Each base with its power, empty for a constant.
+
+    Raises:
+        NonPolynomialError: If a power is not a positive integer.
+    */
     switch (node->kind) {
         case Kind::Constant:
             return {};
@@ -1345,6 +2182,16 @@ std::vector<std::pair<NodePtr, int64_t>> monomial_factors(const NodePtr& node) {
 }
 
 std::vector<std::pair<NodePtr, Num>> coefficients(const NodePtr& node) {
+    /*
+    Each non-constant term of a tree with its coefficient. The constant term is left out, see
+    get_constant.
+
+    Args:
+        node (NodePtr&): The tree.
+
+    Returns:
+        std::vector<std::pair<NodePtr, Num>>: Each monomial with its coefficient.
+    */
     switch (node->kind) {
         case Kind::Constant:
             return {};
@@ -1364,6 +2211,15 @@ std::vector<std::pair<NodePtr, Num>> coefficients(const NodePtr& node) {
 }
 
 Num get_constant(const NodePtr& node) {
+    /*
+    The constant term of a tree.
+
+    Args:
+        node (NodePtr&): The tree.
+
+    Returns:
+        Num: The value of a constant, the leading constant of a sum, or 0 otherwise.
+    */
     if (node->kind == Kind::Constant) {
         return node->value;
     }
@@ -1374,6 +2230,15 @@ Num get_constant(const NodePtr& node) {
 }
 
 std::string repr(const NodePtr& node) {
+    /*
+    The printed form of a tree, with only the parentheses the precedence needs.
+
+    Args:
+        node (NodePtr&): The tree.
+
+    Returns:
+        std::string: The printed tree.
+    */
     switch (node->kind) {
         case Kind::Constant:
             return repr_number(node->value);
@@ -1430,6 +2295,19 @@ std::string repr(const NodePtr& node) {
 // ---------------------------------------------------------------- Python interop
 
 NodePtr node_of(py::handle obj) {
+    /*
+    The node of a Python Expression: the one held by its _node capsule, or for a variable, which holds
+    none, a leaf built on demand.
+
+    Args:
+        obj (py::handle): The Expression.
+
+    Returns:
+        NodePtr: Its node.
+
+    Raises:
+        py::error_already_set: If _node is not a node capsule.
+    */
     py::object attr = obj.attr(names().node);
     if (!attr.is_none()) {
         void* ptr = PyCapsule_GetPointer(attr.ptr(), capsule_name);
@@ -1444,6 +2322,17 @@ NodePtr node_of(py::handle obj) {
 }
 
 bool coerce(py::handle obj, NodePtr& out) {
+    /*
+    Turn an Expression or a number into a node.
+
+    Args:
+        obj (py::handle): The object to coerce.
+        out (NodePtr&): Set to the node when obj can be coerced.
+
+    Returns:
+        bool: True if obj is an Expression or a number, so an operator can otherwise return
+        NotImplemented.
+    */
     if (PyObject_TypeCheck(obj.ptr(), reinterpret_cast<PyTypeObject*>(registry().expression_cls.ptr()))) {
         out = node_of(obj);
         return true;
@@ -1457,6 +2346,15 @@ bool coerce(py::handle obj, NodePtr& out) {
 }
 
 py::object capsule(const NodePtr& node) {
+    /*
+    A Python capsule holding a reference to a node, as stored in a wrapper's _node.
+
+    Args:
+        node (NodePtr&): The node.
+
+    Returns:
+        py::object: The capsule.
+    */
     // The capsule holds one counted reference to the node, rather than a separately allocated NodePtr
     Node* raw = const_cast<Node*>(node.get());
     PyObject* cap = PyCapsule_New(raw, capsule_name, [](PyObject* c) {
@@ -1473,6 +2371,16 @@ py::object capsule(const NodePtr& node) {
 }
 
 py::object wrap(const NodePtr& node) {
+    /*
+    A new Python wrapper of the right class for a node, made without running the class's __new__ or
+    __init__. A variable leaf gives back its own Python variable.
+
+    Args:
+        node (NodePtr&): The node.
+
+    Returns:
+        py::object: The wrapper.
+    */
     const Registry& reg = registry();
     const py::object* cls = nullptr;
     switch (node->kind) {
@@ -1505,6 +2413,16 @@ py::object wrap(const NodePtr& node) {
 }
 
 py::object wrap_shared(const NodePtr& node) {
+    /*
+    A Python wrapper for a node, reusing the last one made for it while that is still alive, so a
+    sub-tree shared by several parents comes back as one object.
+
+    Args:
+        node (NodePtr&): The node.
+
+    Returns:
+        py::object: The wrapper.
+    */
     if (node->kind == Kind::Variable) {
         return node->owner;
     }
@@ -1537,6 +2455,18 @@ namespace core = qilisdk::expr;
 namespace {
 
 NodePtr operand(py::handle obj) {
+    /*
+    Coerce an operand into a node.
+
+    Args:
+        obj (py::handle): The Expression or number.
+
+    Returns:
+        NodePtr: Its node.
+
+    Raises:
+        py::type_error: If obj is neither an Expression nor a number.
+    */
     NodePtr node;
     if (!coerce(obj, node)) {
         throw py::type_error("Expected an Expression or a number, got " + py::str(py::type::of(obj).attr("__name__")).cast<std::string>() + ".");
@@ -1547,6 +2477,18 @@ NodePtr operand(py::handle obj) {
 }  // namespace
 
 py::object constant_node(py::handle value) {
+    /*
+    The node of a new Constant, for Constant.__init__ and __setstate__.
+
+    Args:
+        value (py::handle): The number.
+
+    Returns:
+        py::object: The node capsule.
+
+    Raises:
+        py::type_error: If value is not a number.
+    */
     Num number;
     if (!num_from_py(value, number)) {
         throw py::type_error("A Constant must be a number, got " + py::str(py::type::of(value).attr("__name__")).cast<std::string>() + ".");
@@ -1555,6 +2497,21 @@ py::object constant_node(py::handle value) {
 }
 
 py::object node(int kind, py::iterable args) {
+    /*
+    The node for the trusting constructors of Add, Mul and Pow, whose operands are taken to be
+    canonical already. Used by their __init__ and __setstate__.
+
+    Args:
+        kind (int): The node kind as its number in Kind: 2 for Pow, 3 for Mul or 4 for Add.
+        args (py::iterable): The operands.
+
+    Returns:
+        py::object: The node capsule.
+
+    Raises:
+        py::value_error: If kind is not Add, Mul or Pow, or the operand count does not suit it.
+        py::type_error: If an operand is neither an Expression nor a number.
+    */
     const auto node_kind = static_cast<Kind>(kind);
     if (node_kind != Kind::Add && node_kind != Kind::Mul && node_kind != Kind::Pow) {
         throw py::value_error("Only an Add, Mul or Pow node can be built from operands.");
@@ -1568,6 +2525,19 @@ py::object node(int kind, py::iterable args) {
 }
 
 py::object function(py::handle cls, py::handle arg) {
+    /*
+    A function of an argument, for Function.__new__, folded to a Constant for a constant argument.
+
+    Args:
+        cls (py::handle): The function's class, such as Sin.
+        arg (py::handle): The argument.
+
+    Returns:
+        py::object: The function, or a Constant.
+
+    Raises:
+        py::type_error: If arg is neither an Expression nor a number.
+    */
     NodePtr node;
     if (!coerce(arg, node)) {
         throw py::type_error(py::str(cls.attr("__name__")).cast<std::string>() + " expects an Expression or number, got " + py::str(py::type::of(arg).attr("__name__")).cast<std::string>());
@@ -1576,10 +2546,30 @@ py::object function(py::handle cls, py::handle arg) {
 }
 
 int64_t variable_hash(const std::string& label) {
+    /*
+    The hash of a variable, for BaseVariable.__hash__, matching the hash of its node.
+
+    Args:
+        label (std::string&): The variable's label.
+
+    Returns:
+        int64_t: The hash.
+    */
     return static_cast<int64_t>(label_hash(label));
 }
 
 py::object add(py::handle self, py::handle other) {
+    /*
+    Expression.__add__, which also serves as __radd__ since sums are order-independent.
+
+    Args:
+        self (py::handle): The Expression.
+        other (py::handle): The other operand.
+
+    Returns:
+        py::object: The canonical sum, or NotImplemented if other is neither an Expression nor a
+        number, so Python falls back to other's reflected operator.
+    */
     NodePtr rhs;
     if (!coerce(other, rhs)) {
         return py::reinterpret_borrow<py::object>(Py_NotImplemented);
@@ -1588,6 +2578,17 @@ py::object add(py::handle self, py::handle other) {
 }
 
 py::object sub(py::handle self, py::handle other) {
+    /*
+    Expression.__sub__.
+
+    Args:
+        self (py::handle): The Expression.
+        other (py::handle): The operand to subtract.
+
+    Returns:
+        py::object: The canonical self - other, or NotImplemented if other is neither an Expression
+        nor a number.
+    */
     NodePtr rhs;
     if (!coerce(other, rhs)) {
         return py::reinterpret_borrow<py::object>(Py_NotImplemented);
@@ -1596,6 +2597,17 @@ py::object sub(py::handle self, py::handle other) {
 }
 
 py::object rsub(py::handle self, py::handle other) {
+    /*
+    Expression.__rsub__.
+
+    Args:
+        self (py::handle): The Expression.
+        other (py::handle): The operand subtracted from.
+
+    Returns:
+        py::object: The canonical other - self, or NotImplemented if other is neither an Expression
+        nor a number.
+    */
     NodePtr lhs;
     if (!coerce(other, lhs)) {
         return py::reinterpret_borrow<py::object>(Py_NotImplemented);
@@ -1604,6 +2616,17 @@ py::object rsub(py::handle self, py::handle other) {
 }
 
 py::object mul(py::handle self, py::handle other) {
+    /*
+    Expression.__mul__, which also serves as __rmul__ since products are order-independent.
+
+    Args:
+        self (py::handle): The Expression.
+        other (py::handle): The other factor.
+
+    Returns:
+        py::object: The canonical product, or NotImplemented if other is neither an Expression nor a
+        number.
+    */
     NodePtr rhs;
     if (!coerce(other, rhs)) {
         return py::reinterpret_borrow<py::object>(Py_NotImplemented);
@@ -1612,10 +2635,34 @@ py::object mul(py::handle self, py::handle other) {
 }
 
 py::object neg(py::handle self) {
+    /*
+    Expression.__neg__.
+
+    Args:
+        self (py::handle): The Expression.
+
+    Returns:
+        py::object: The canonical -self.
+    */
     return wrap(core::build_mul({constant_int(-1), node_of(self)}));
 }
 
 py::object truediv(py::handle self, py::handle other) {
+    /*
+    Expression.__truediv__. A plain int or float divisor multiplies through its reciprocal, anything
+    else becomes a power of -1.
+
+    Args:
+        self (py::handle): The Expression.
+        other (py::handle): The divisor.
+
+    Returns:
+        py::object: The canonical self / other, or NotImplemented if other is neither an Expression
+        nor a number.
+
+    Raises:
+        py::value_error: If other is an int or float that is zero within tolerance.
+    */
     // A plain int or float divides through its reciprocal
     if (PyLong_Check(other.ptr()) || PyFloat_Check(other.ptr())) {
         Num divisor;
@@ -1633,6 +2680,17 @@ py::object truediv(py::handle self, py::handle other) {
 }
 
 py::object rtruediv(py::handle self, py::handle other) {
+    /*
+    Expression.__rtruediv__.
+
+    Args:
+        self (py::handle): The Expression, as the divisor.
+        other (py::handle): The dividend.
+
+    Returns:
+        py::object: The canonical other / self, or NotImplemented if other is neither an Expression
+        nor a number.
+    */
     NodePtr lhs;
     if (!coerce(other, lhs)) {
         return py::reinterpret_borrow<py::object>(Py_NotImplemented);
@@ -1641,6 +2699,17 @@ py::object rtruediv(py::handle self, py::handle other) {
 }
 
 py::object pow(py::handle self, py::handle other) {
+    /*
+    Expression.__pow__.
+
+    Args:
+        self (py::handle): The Expression, as the base.
+        other (py::handle): The exponent.
+
+    Returns:
+        py::object: The canonical self ** other, or NotImplemented if other is neither an Expression
+        nor a number.
+    */
     NodePtr exp;
     if (!coerce(other, exp)) {
         return py::reinterpret_borrow<py::object>(Py_NotImplemented);
@@ -1649,6 +2718,17 @@ py::object pow(py::handle self, py::handle other) {
 }
 
 py::object rpow(py::handle self, py::handle other) {
+    /*
+    Expression.__rpow__.
+
+    Args:
+        self (py::handle): The Expression, as the exponent.
+        other (py::handle): The base.
+
+    Returns:
+        py::object: The canonical other ** self, or NotImplemented if other is neither an Expression
+        nor a number.
+    */
     NodePtr base;
     if (!coerce(other, base)) {
         return py::reinterpret_borrow<py::object>(Py_NotImplemented);
@@ -1657,23 +2737,79 @@ py::object rpow(py::handle self, py::handle other) {
 }
 
 py::object build_add(py::iterable raw) {
+    /*
+    Add.build: the canonical sum of a list of terms.
+
+    Args:
+        raw (py::iterable): The Expressions and numbers to add.
+
+    Returns:
+        py::object: The sum, collapsed to a single operand or a constant where possible.
+
+    Raises:
+        py::type_error: If an item is neither an Expression nor a number.
+    */
     return wrap(core::build_add(nodes_of(raw)));
 }
 
 py::object build_mul(py::iterable raw) {
+    /*
+    Mul.build: the canonical product of a list of factors.
+
+    Args:
+        raw (py::iterable): The Expressions and numbers to multiply.
+
+    Returns:
+        py::object: The product, collapsed to a single factor or a constant where possible.
+
+    Raises:
+        py::type_error: If an item is neither an Expression nor a number.
+    */
     return wrap(core::build_mul(nodes_of(raw)));
 }
 
 py::object build_pow(py::handle base, py::handle exp) {
+    /*
+    Pow.build: the canonical power base ** exp.
+
+    Args:
+        base (py::handle): The base.
+        exp (py::handle): The exponent.
+
+    Returns:
+        py::object: The power, folded or simplified where possible.
+
+    Raises:
+        py::type_error: If base or exp is neither an Expression nor a number.
+    */
     return wrap(core::build_pow(operand(base), operand(exp)));
 }
 
 py::object evaluate(py::handle self, py::handle env) {
+    /*
+    Expression.evaluate.
+
+    Args:
+        self (py::handle): The Expression.
+        env (py::handle): The mapping of variables to values, or None for no variables.
+
+    Returns:
+        py::object: The value, as a float or a complex.
+    */
     py::object mapping = env.is_none() ? py::object(py::dict()) : py::reinterpret_borrow<py::object>(env);
     return num_to_py(core::evaluate(node_of(self), mapping));
 }
 
 py::list free_symbols(py::handle self) {
+    /*
+    Expression.free_symbols.
+
+    Args:
+        self (py::handle): The Expression.
+
+    Returns:
+        py::list: Its distinct variables and parameters, in the order they are first met.
+    */
     py::list out;
     for (const NodePtr& symbol : core::free_symbols(node_of(self))) {
         out.append(symbol->owner);
@@ -1682,6 +2818,15 @@ py::list free_symbols(py::handle self) {
 }
 
 py::list variables(py::handle self) {
+    /*
+    Expression.variables.
+
+    Args:
+        self (py::handle): The Expression.
+
+    Returns:
+        py::list: Its distinct variables and parameters, sorted by label.
+    */
     std::vector<NodePtr> symbols = core::free_symbols(node_of(self));
     std::stable_sort(symbols.begin(), symbols.end(), [](const NodePtr& a, const NodePtr& b) { return a->label < b->label; });
     py::list out;
@@ -1692,23 +2837,77 @@ py::list variables(py::handle self) {
 }
 
 bool is_parameterized(py::handle self) {
+    /*
+    Expression.is_parameterized.
+
+    Args:
+        self (py::handle): The Expression.
+
+    Returns:
+        bool: True if every free symbol is a Parameter, including when there are none.
+    */
     const std::vector<NodePtr> symbols = core::free_symbols(node_of(self));
     return std::all_of(symbols.begin(), symbols.end(), [](const NodePtr& symbol) { return symbol->parameter; });
 }
 
 int64_t degree(py::handle self) {
+    /*
+    Expression.degree.
+
+    Args:
+        self (py::handle): The Expression.
+
+    Returns:
+        int64_t: Its polynomial degree.
+
+    Raises:
+        NonPolynomialError: If the expression is not a polynomial.
+    */
     return core::degree(node_of(self));
 }
 
 py::object derivative(py::handle self, py::handle symbol) {
+    /*
+    Expression.derivative.
+
+    Args:
+        self (py::handle): The Expression.
+        symbol (py::handle): The variable to differentiate by.
+
+    Returns:
+        py::object: The derivative.
+
+    Raises:
+        py::type_error: If symbol is neither an Expression nor a number.
+    */
     return wrap(core::derivative(node_of(self), operand(symbol)));
 }
 
 py::object expand(py::handle self) {
+    /*
+    Expression.expand.
+
+    Args:
+        self (py::handle): The Expression.
+
+    Returns:
+        py::object: The canonical sum of monomials equal to it.
+    */
     return wrap(core::expand(node_of(self)));
 }
 
 py::object substitute(py::handle self, py::handle mapping) {
+    /*
+    Expression.substitute. Keys that are not Expressions are ignored, as are values that are neither
+    Expressions nor numbers.
+
+    Args:
+        self (py::handle): The Expression.
+        mapping (py::handle): Any mapping from sub-expressions to their replacements.
+
+    Returns:
+        py::object: The expression with its replacements made.
+    */
     // Any mapping works, not only a dict
     const py::dict items = PyDict_Check(mapping.ptr()) ? py::reinterpret_borrow<py::dict>(mapping) : py::dict(py::reinterpret_borrow<py::object>(mapping));
     SubstitutionMap nodes;
@@ -1725,14 +2924,41 @@ py::object substitute(py::handle self, py::handle mapping) {
 }
 
 py::object to_binary(py::handle self) {
+    /*
+    Expression.to_binary.
+
+    Args:
+        self (py::handle): The Expression.
+
+    Returns:
+        py::object: The expression with every variable rewritten in binary variables.
+    */
     return wrap(core::to_binary(node_of(self)));
 }
 
 py::object get_constant(py::handle self) {
+    /*
+    Expression.get_constant.
+
+    Args:
+        self (py::handle): The Expression.
+
+    Returns:
+        py::object: Its constant term, or 0 if it has none.
+    */
     return num_to_py(core::get_constant(node_of(self)));
 }
 
 py::dict as_coefficients_dict(py::handle self) {
+    /*
+    Expression.as_coefficients_dict.
+
+    Args:
+        self (py::handle): The Expression.
+
+    Returns:
+        py::dict: Each non-constant monomial mapped to its coefficient.
+    */
     py::dict out;
     for (const auto& [base, coeff] : coefficients(node_of(self))) {
         out[wrap(base)] = num_to_py(coeff);
@@ -1741,6 +2967,15 @@ py::dict as_coefficients_dict(py::handle self) {
 }
 
 py::list monomial_factors(py::handle self) {
+    /*
+    Expression.monomial_factors.
+
+    Args:
+        self (py::handle): The Expression, which must be a monomial.
+
+    Returns:
+        py::list: A (base, power) tuple for each factor, leaving out the coefficient.
+    */
     py::list out;
     for (const auto& [base, power] : core::monomial_factors(node_of(self))) {
         out.append(py::make_tuple(wrap(base), power));
@@ -1749,6 +2984,15 @@ py::list monomial_factors(py::handle self) {
 }
 
 py::list to_list(py::handle self) {
+    /*
+    Expression.to_list.
+
+    Args:
+        self (py::handle): The Expression.
+
+    Returns:
+        py::list: The operands of a sum or product, otherwise just the expression itself.
+    */
     const NodePtr node = node_of(self);
     py::list out;
     if (node->kind == Kind::Add || node->kind == Kind::Mul) {
@@ -1762,6 +3006,15 @@ py::list to_list(py::handle self) {
 }
 
 py::tuple args(py::handle self) {
+    /*
+    The operands of an Add, Mul, Pow or Function, behind their args, base, exp and arg properties.
+
+    Args:
+        self (py::handle): The Expression.
+
+    Returns:
+        py::tuple: The operands, in canonical order.
+    */
     const NodePtr node = node_of(self);
     py::tuple out(node->args.size());
     // A subtree shared by several parents comes back as one object, so pickle and deepcopy memoize it rather than
@@ -1773,22 +3026,68 @@ py::tuple args(py::handle self) {
 }
 
 py::object value(py::handle self) {
+    /*
+    Constant.value.
+
+    Args:
+        self (py::handle): The Constant.
+
+    Returns:
+        py::object: Its number.
+    */
     return num_to_py(node_of(self)->value);
 }
 
 py::object coefficient(py::handle self) {
+    /*
+    Mul.coefficient.
+
+    Args:
+        self (py::handle): The Mul.
+
+    Returns:
+        py::object: Its leading constant, or 1 if it has none.
+    */
     return num_to_py(peel(node_of(self)).second);
 }
 
 py::object monomial(py::handle self) {
+    /*
+    Mul.monomial.
+
+    Args:
+        self (py::handle): The Mul.
+
+    Returns:
+        py::object: The product without its leading constant.
+    */
     return wrap(peel(node_of(self)).first);
 }
 
 int64_t hash(py::handle self) {
+    /*
+    Expression.__hash__.
+
+    Args:
+        self (py::handle): The Expression.
+
+    Returns:
+        int64_t: The hash of its node.
+    */
     return static_cast<int64_t>(node_of(self)->hash);
 }
 
 bool equal(py::handle self, py::handle other) {
+    /*
+    Expression.__eq__.
+
+    Args:
+        self (py::handle): The Expression.
+        other (py::handle): The object to compare against.
+
+    Returns:
+        bool: True if other is a structurally equal Expression, False for anything else.
+    */
     if (!PyObject_TypeCheck(other.ptr(), reinterpret_cast<PyTypeObject*>(registry().expression_cls.ptr()))) {
         return false;
     }
@@ -1796,6 +3095,15 @@ bool equal(py::handle self, py::handle other) {
 }
 
 std::string repr(py::handle self) {
+    /*
+    Expression.__repr__.
+
+    Args:
+        self (py::handle): The Expression.
+
+    Returns:
+        std::string: The printed expression.
+    */
     return core::repr(node_of(self));
 }
 

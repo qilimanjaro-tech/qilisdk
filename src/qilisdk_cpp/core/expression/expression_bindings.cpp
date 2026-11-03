@@ -16,6 +16,12 @@
 
 // GCOVR_EXCL_START
 PYBIND11_MODULE(expression_module, m) {
+    /*
+    The expression engine's Python module, which qilisdk.core.expression wraps.
+
+    Args:
+        m (py::module_): The module being defined.
+    */
     namespace expr = qilisdk::expr;
     namespace bound = qilisdk::expr::python;
     m.def("initialize", &expr::initialize);
