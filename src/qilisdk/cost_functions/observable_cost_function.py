@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 from loguru import logger
 
-from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
+from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliZ
 from qilisdk.core.qtensor import QTensor, expect_val, ket
 from qilisdk.cost_functions.cost_function import CostFunction
 from qilisdk.settings import get_settings
@@ -153,7 +153,8 @@ class ObservableCostFunction(CostFunction):
 
         Each bitstring sample is converted to a computational-basis ket and the
         observable is evaluated against it; the total is a probability-weighted
-        sum of those evaluations.
+        sum of those evaluations. Since this only sees the diagonal of the
+        observable, the observable must be diagonal in the computational basis.
 
         Args:
             results (FunctionalResult): A result whose ``probabilities``
@@ -163,9 +164,27 @@ class ObservableCostFunction(CostFunction):
             Number: The probability-weighted expectation value.
 
         Raises:
+            ValueError: If the observable is not diagonal in the computational
+                basis (e.g. contains ``X`` or ``Y`` terms).
             ValueError: If the samples have fewer qubits than the observable
                 acts on.
         """
+        # Off-diagonal elements would silently contribute nothing to <b|O|b>
+        if isinstance(self._observable, Hamiltonian):
+            is_diagonal = all(
+                abs(coefficient) <= get_settings().atol or all(isinstance(op, (PauliZ, PauliI)) for op in term)
+                for term, coefficient in self._observable.simplify().elements.items()
+            )
+        else:
+            observable_coo = self._observable.data.tocoo()
+            off_diagonal = observable_coo.data[observable_coo.row != observable_coo.col]
+            is_diagonal = not np.any(np.abs(off_diagonal) > get_settings().atol)
+        if not is_diagonal:
+            raise ValueError(
+                "ObservableCostFunction can only estimate observables that are diagonal in the computational basis "
+                "from samples. Use a StateTomography readout, or rotate into the observable's basis before sampling."
+            )
+
         total_cost = complex(0.0)
         samples = results.get_samples()
         nshots = sum(samples.values())
