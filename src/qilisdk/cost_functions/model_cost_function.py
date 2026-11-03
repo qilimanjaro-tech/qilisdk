@@ -19,7 +19,7 @@ import numpy as np
 from loguru import logger
 
 from qilisdk.core.model import QUBO, Model
-from qilisdk.core.qtensor import QTensor, expect_val, ket
+from qilisdk.core.qtensor import expect_val, ket
 from qilisdk.cost_functions.cost_function import CostFunction
 from qilisdk.settings import get_settings
 
@@ -109,22 +109,23 @@ class ModelCostFunction(CostFunction):
             Number: The computed cost value.
 
         Raises:
-            ValueError: If the final state is neither a ket, bra, nor a valid
-                density matrix.
+            ValueError: If the final state has fewer qubits than the model has
+                variables, or is neither a ket, bra, nor a valid density matrix.
         """
         final_state = results.get_state()
 
         if isinstance(self.model, QUBO):
             logger.trace("[ModelCostFunction] Computing QUBO Hamiltonian expectation value from state")
             ham = self.model.to_hamiltonian()
-            total_cost = complex(
-                np.real_if_close(expect_val(QTensor(ham.to_matrix()), final_state), tol=get_settings().atol)
-            )
+            total_cost = complex(np.real_if_close(expect_val(ham, final_state), tol=get_settings().atol))
             if abs(total_cost.imag) < get_settings().atol:
                 return total_cost.real
             return total_cost
 
         total_cost = complex(0.0)
+        nvariables = len(self.model.variables())
+        if final_state.nqubits < nvariables:
+            raise ValueError(f"The state has {final_state.nqubits} qubits but the model has {nvariables} variables")
 
         if final_state.is_density_matrix(tol=1e-5):
             rho = final_state.dense()
@@ -153,7 +154,7 @@ class ModelCostFunction(CostFunction):
         if dense_state is None:
             raise ValueError("The final state is invalid.")
 
-        n = len(self.model.variables())
+        n = final_state.nqubits
 
         for i, prob in enumerate(dense_state):
             state = [int(b) for b in f"{i:0{n}b}"]
@@ -181,16 +182,18 @@ class ModelCostFunction(CostFunction):
             Number: The probability-weighted cost value.
 
         Raises:
-            ValueError: If the number of qubits in a sample does not match
-                the number of model variables.
+            ValueError: If a sample has fewer qubits than the model has
+                variables.
         """
         total_cost = complex(0.0)
         probabilities = results.get_probabilities()
         logger.trace("[ModelCostFunction] Evaluating model over {} sampled bitstrings", len(probabilities))
         for sample, prob in probabilities.items():
             bit_configuration = [int(i) for i in sample]
-            if len(self.model.variables()) != len(bit_configuration):
-                raise ValueError("Mapping samples to the model's variables is ambiguous.")
+            if len(self.model.variables()) > len(bit_configuration):
+                raise ValueError(
+                    f"The sample has {len(bit_configuration)} qubits but the model has {len(self.model.variables())} variables"
+                )
             variable_map = {v: bit_configuration[i] for i, v in enumerate(self.model.variables())}
             evaluate_results = self.model.evaluate(variable_map)
             total_cost += sum(v for v in evaluate_results.values()) * prob

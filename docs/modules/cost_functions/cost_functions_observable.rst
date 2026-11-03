@@ -6,8 +6,9 @@ an observable against either a final state (from time evolution) or the probabil
 It accepts three interchangeable representations for the observable: a
 :class:`~qilisdk.core.qtensor.QTensor`, a symbolic
 :class:`~qilisdk.analog.hamiltonian.Hamiltonian`, or a single
-:class:`~qilisdk.analog.hamiltonian.PauliOperator`. Internally, all inputs are converted to :class:`~qilisdk.core.qtensor.QTensor` so the same
-numeric pipeline can be reused for both analog and digital results.
+:class:`~qilisdk.analog.hamiltonian.PauliOperator`. The observable is resolved against the width of the evaluated state, so
+``Z(0)`` measures qubit 0 of a state of any size, and a :class:`~qilisdk.core.qtensor.QTensor` that acts on fewer qubits
+than the state is padded with identities on the remaining ones.
 
 **Example: expectation value from analog evolution**
 
@@ -56,5 +57,8 @@ numeric pipeline can be reused for both analog and digital results.
 
 For sampling workflows, the cost function iterates through the probability distribution exposed by
 :meth:`~qilisdk.functionals.functional_result.FunctionalResult.get_probabilities` and accumulates the expectation value in
-the computational basis.
+the computational basis. Samples only carry information about the diagonal of the observable, so on this path the
+observable must be diagonal in the computational basis (for example, built only from ``Z`` and identity terms). An
+observable with ``X`` or ``Y`` terms raises a ``ValueError``. To evaluate it, use a state tomography readout, or rotate
+the circuit into the observable's basis before measuring and pass the equivalent ``Z`` observable.
 
