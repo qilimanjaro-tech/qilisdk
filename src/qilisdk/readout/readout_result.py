@@ -250,10 +250,11 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
         state: QTensor,
         qubits_to_measure: list[int] | None = None,
         expand_samples: bool = True,
+        seed: int | np.random.Generator | None = None,
     ) -> Self:
         f_string = "{:0" + str(state.nqubits) + "b}"
         probabilities: dict[str, float] = {(f_string).format(i): p for i, p in enumerate(state.probabilities())}
-        samples: dict[str, int] = _samples_from_probabilities(probabilities, nshots=sampling_readout.nshots)
+        samples: dict[str, int] = _samples_from_probabilities(probabilities, nshots=sampling_readout.nshots, seed=seed)
         if qubits_to_measure is not None:
             samples = cls._adjust_samples(samples, qubits_to_measure, state.nqubits, expand_samples=expand_samples)
         return cls(samples=samples, probabilities=probabilities)
@@ -343,10 +344,14 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
         return cls(expectation_values=real_expectation_values, nshots=nshots)
 
     @classmethod
-    def from_state(cls, expectation_readout: ExpectationReadout, state: QTensor) -> Self:
+    def from_state(
+        cls, expectation_readout: ExpectationReadout, state: QTensor, seed: int | np.random.Generator | None = None
+    ) -> Self:
+        # Each observable gets its own seed so that their shot noise is not correlated
+        rng = np.random.default_rng(seed)
         try:
             expectation_values: list[int | float] = [
-                _assert_real((expect_val(o, state, expectation_readout.nshots)))
+                _assert_real(expect_val(o, state, expectation_readout.nshots, seed=int(rng.integers(2**31 - 1))))
                 for o in expectation_readout.expanded_observables(nqubits=state.nqubits)
             ]
         except ValueError as e:
@@ -673,7 +678,7 @@ def _samples_from_state(state: QTensor, nshots: int = 100, seed: int | None = No
 
 
 def _samples_from_probabilities(
-    probabilities: dict[str, float], nshots: int = 100, seed: int | None = None
+    probabilities: dict[str, float], nshots: int = 100, seed: int | np.random.Generator | None = None
 ) -> dict[str, int]:
     states = np.array(list(probabilities.keys()))
     probs = np.array(list(probabilities.values()), dtype=np.float64)
