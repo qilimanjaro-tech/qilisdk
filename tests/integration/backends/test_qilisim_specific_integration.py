@@ -1505,15 +1505,11 @@ def test_mps_rejects_a_density_matrix_initial_state():
 
 
 @pytest.mark.parametrize(("qubit_a", "qubit_b"), [(1, 2), (2, 3), (1, 3)])
-@pytest.mark.xfail(
-    reason="The matrix-free statevector kernel leaves a SWAP whose lower qubit is not 0 as a no-op", strict=True
-)
-def test_matrix_free_statevector_swap_gate_is_wrong(qubit_a, qubit_b):
+def test_matrix_free_statevector_swap_gate(qubit_a, qubit_b):
     """Found by cross-checking the MPS method against the statevector one.
 
-    SWAP(a, b) with a > 0 is silently skipped by the matrix-free kernel. The explicit-matrix
-    statevector, the MPS method and the Qutip backend all agree on the correct answer, so this is a
-    defect in that one kernel rather than a disagreement about conventions.
+    SWAP(a, b) with a > 0 used to be silently skipped by the matrix-free kernel, so check it agrees
+    with the explicit-matrix statevector.
     """
     circuit = Circuit(nqubits=4)
     circuit.add(X(qubit_a))

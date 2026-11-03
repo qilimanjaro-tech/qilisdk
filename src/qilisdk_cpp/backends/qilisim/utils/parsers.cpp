@@ -58,14 +58,16 @@ py::object construct_result_object(const StabilizerStateSum& state, const py::ob
         if (py::isinstance(ro, SamplingReadout)) {
             int nshots = ro.attr("nshots").cast<int>();
             bool expand_samples = ro.attr("expand_samples").cast<bool>();
-            std::map<std::string, int> counts = state.sample(nshots);
+            std::map<std::string, int> counts = filter_counts(state.sample(nshots), qubits_to_measure);
             py::dict samples_py;
             for (const auto& pair : counts) {
                 samples_py[py::cast(pair.first)] = py::cast(pair.second);
             }
             py::list qubits_to_measure_list;
-            for (size_t i = 0; i < size_t(n_qubits); ++i) {
-                qubits_to_measure_list.append(i);
+            for (size_t i = 0; i < qubits_to_measure.size(); ++i) {
+                if (qubits_to_measure[i]) {
+                    qubits_to_measure_list.append(i);
+                }
             }
             results.append(SamplingReadoutResult.attr("from_samples")("samples"_a = samples_py, "qubits_to_measure"_a = qubits_to_measure_list, "nqubits"_a = n_qubits, "expand_samples"_a = expand_samples));
 
@@ -631,51 +633,6 @@ std::vector<SparseMatrix> parse_hamiltonians(const py::object& Hs, double atol, 
         throw py::value_error("At least one Hamiltonian must be provided");
     }
     return hamiltonians;
-}
-
-std::string normalize_gate_name(const std::string& name) {
-    /*
-    Map a gate's QiliSDK name to the name used internally during simulation.
-
-    Args:
-        name (std::string): The gate name from QiliSDK.
-
-    Returns:
-        std::string: The internal gate name.
-    */
-    if (name == "CNOT" || name == "CX" || name == "Toffoli" || name == "CCX") {
-        return "X";
-    }
-    if (name == "CY" || name == "CCY") {
-        return "Y";
-    }
-    if (name == "CZ" || name == "CCZ") {
-        return "Z";
-    }
-    return name;
-}
-
-int gate_num_controls(const std::string& name) {
-    /*
-    Number of control qubits implied by a QiliSDK controlled-gate name.
-
-    Controlled gates are represented internally by their base gate plus control qubits
-    (see normalize_gate_name), so the control count is what distinguishes, for example, a
-    CZ from a plain Z when matching noise by gate type.
-
-    Args:
-        name (std::string): The gate name from QiliSDK.
-
-    Returns:
-        int: The number of control qubits (0 for a non-controlled gate).
-    */
-    if (name == "CNOT" || name == "CX" || name == "CY" || name == "CZ") {
-        return 1;
-    }
-    if (name == "Toffoli" || name == "CCX" || name == "CCY" || name == "CCZ") {
-        return 2;
-    }
-    return 0;
 }
 
 std::map<std::string, float> resolve_gate_durations(const py::object& circuit, const py::object& noise_config) {
@@ -1374,10 +1331,6 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
             SparseMatrix controlled_matrix = base_matrix.bottomRightCorner(dim, dim);
             base_matrix = controlled_matrix;
         }
-
-        // Turn controlled gates into their base gate with controls, since that's how we
-        // represent them internally (kept in sync with normalize_gate_name).
-        gate_type_str = normalize_gate_name(gate_type_str);
 
         // Get the parameter names
         std::vector<std::pair<std::string, double>> parameters;
