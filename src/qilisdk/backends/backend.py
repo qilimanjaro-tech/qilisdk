@@ -17,6 +17,7 @@ from abc import ABC
 from time import perf_counter
 from typing import TYPE_CHECKING, Any, Callable, cast, overload
 
+import numpy as np
 from loguru import logger
 
 from qilisdk.analog import Schedule
@@ -66,12 +67,17 @@ class Backend(ABC):
     def __init__(
         self,
         noise_model: NoiseModel | None = None,
+        seed: int | None = None,
     ) -> None:
         """Initialise the backend with an optional noise model.
 
         Args:
             noise_model (NoiseModel | None): Optional noise model applied
                 during execution. Defaults to ``None``.
+            seed (int | None): Seed for the random number generator used to draw
+                samples from a state. Repeated executions on one backend give new
+                samples, reproducible for a given seed. If ``None``, the samples
+                are not reproducible. Defaults to ``None``.
         """
         self._handlers: dict[type[Functional], Callable[[Functional, list[ReadoutMethod]], Result]] = {
             DigitalPropagation: lambda f, readout: self._execute_digital_propagation(
@@ -84,6 +90,7 @@ class Backend(ABC):
             ),
         }
         self._noise_model = noise_model
+        self._rng = np.random.default_rng(seed)
 
     @overload
     def execute(
@@ -202,7 +209,7 @@ class Backend(ABC):
                     "Try improving simulation precision (e.g., smaller dt, more integrator substeps, or higher precision)."
                 ) from exc
 
-            inter_results.append(Backend._construct_results_list(state, readout))
+            inter_results.append(Backend._construct_results_list(state, readout, seed=self._rng))
 
             if functional.reservoir_layer.qubits_to_reset:
                 logger.trace("[Backend] Resetting qubits {}", functional.reservoir_layer.qubits_to_reset)
@@ -293,7 +300,7 @@ class Backend(ABC):
         cls,
         final_state: QTensor,
         readout: list[ReadoutMethod],
-        seed: int | None = None,
+        seed: int | np.random.Generator | None = None,
         qubits_to_measure: list[int] | None = None,
     ) -> ReadoutCompositeResults:
         sampling_result: SamplingReadoutResult | None = None
@@ -320,6 +327,7 @@ class Backend(ABC):
                     state=final_state,
                     qubits_to_measure=qubits_to_measure,
                     expand_samples=ro.expand_samples,
+                    seed=seed,
                 )
             else:
                 raise ValueError(f"Unsupported Readout Method provided: {ro}")
