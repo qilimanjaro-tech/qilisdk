@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Iterable
 
 from loguru import logger
 
-from qilisdk.digital import Circuit
+from qilisdk.digital import Circuit, M
 from qilisdk.digital.topology import build_topology_graph
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
