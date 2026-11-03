@@ -27,6 +27,7 @@ from qilisdk.digital.circuit_transpiler_passes.numeric_helpers import (
     _round_float,
     _u3_and_phase_from_unitary,
     _unitary_sqrt_2x2,
+    _zyz_from_unitary,
 )
 from qilisdk.digital.gates import RX, RY, RZ, U3
 
@@ -139,3 +140,12 @@ def test_unitary_sqrt_rejects_non_2x2() -> None:
 def test_unitary_sqrt_rejects_non_unitary() -> None:
     with pytest.raises(ValueError, match="Expected a unitary matrix"):
         _unitary_sqrt_2x2(np.array([[1.0, 2.0], [0.0, 1.0]], dtype=complex))
+
+
+def test_zyz_from_unitary_does_not_mutate_input() -> None:
+    unitary = np.exp(0.3j) * _mat_U3(math.pi / 3.0, -math.pi / 4.0, math.pi / 7.0)
+    before = unitary.copy()
+
+    _zyz_from_unitary(unitary)
+
+    assert np.array_equal(unitary, before)

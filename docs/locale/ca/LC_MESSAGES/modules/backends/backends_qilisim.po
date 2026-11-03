@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-09 14:24+0200\n"
+"POT-Creation-Date: 2026-11-03 14:16+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -85,7 +85,7 @@ msgstr ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
 #: ../../modules/backends/backends_qilisim.rst:64
 #: ../../modules/backends/backends_qilisim.rst:67
 #: ../../modules/backends/backends_qilisim.rst:70
-#: ../../modules/backends/backends_qilisim.rst:309
+#: ../../modules/backends/backends_qilisim.rst:336
 msgid "|y|"
 msgstr "|y|"
 
@@ -247,7 +247,7 @@ msgstr ""
 "Hamiltonians dispersos."
 
 #: ../../modules/backends/backends_qilisim.rst:139
-#: ../../modules/backends/backends_qilisim.rst:308
+#: ../../modules/backends/backends_qilisim.rst:335
 msgid ""
 ":meth:`AnalogMethod.variational_annealing() "
 "<qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`"
@@ -313,7 +313,7 @@ msgstr ""
 "``dim`` per a la mida del subespai de Krylov."
 
 #: ../../modules/backends/backends_qilisim.rst:148
-#: ../../modules/backends/backends_qilisim.rst:300
+#: ../../modules/backends/backends_qilisim.rst:327
 msgid ""
 ":meth:`AnalogMethod.direct() "
 "<qilisdk.backends.backend_config.AnalogMethod.direct>`"
@@ -341,20 +341,22 @@ msgstr "Mètodes de simulació digital"
 
 #: ../../modules/backends/backends_qilisim.rst:163
 msgid ""
-"There are currently two digital simulation methods available. The first "
-"is a statevector simulator, which can be configured through the options:"
+"There are currently three digital simulation methods available. The first"
+" is a statevector simulator, which can be configured through the options:"
 msgstr ""
-"Actualment hi ha dos mètodes de simulació digital disponibles. El primer "
-"és un simulador de vector d'estat, que es pot configurar mitjançant les "
+"Actualment hi ha tres mètodes de simulació digital disponibles. El primer"
+" és un simulador de vector d'estat, que es pot configurar mitjançant les "
 "opcions:"
 
 #: ../../modules/backends/backends_qilisim.rst:169
 #: ../../modules/backends/backends_qilisim.rst:198
+#: ../../modules/backends/backends_qilisim.rst:219
 msgid "Option"
 msgstr "Opció"
 
 #: ../../modules/backends/backends_qilisim.rst:170
 #: ../../modules/backends/backends_qilisim.rst:199
+#: ../../modules/backends/backends_qilisim.rst:220
 msgid "Meaning"
 msgstr "Significat"
 
@@ -381,6 +383,7 @@ msgstr ""
 "cau entre execucions."
 
 #: ../../modules/backends/backends_qilisim.rst:175
+#: ../../modules/backends/backends_qilisim.rst:225
 msgid "``combine_single_qubit_gates``"
 msgstr "``combine_single_qubit_gates``"
 
@@ -428,11 +431,65 @@ msgstr ""
 "Nombre màxim de termes en la suma d'estabilitzadors. Augmentar-ho pot "
 "millorar la precisió a costa de memòria i temps d'execució."
 
-#: ../../modules/backends/backends_qilisim.rst:212
+#: ../../modules/backends/backends_qilisim.rst:211
+msgid ""
+"The third is a matrix product state simulator, which represents the state"
+" as a chain of tensors truncated after each two-qubit gate. Its cost "
+"grows with the entanglement the circuit generates and only linearly with "
+"the qubit count, so weakly entangling circuits on many qubits are cheap. "
+"It supports one- and two-qubit gates, and has the following options:"
+msgstr ""
+"El tercer és un simulador d'estat de producte matricial, que representa "
+"l'estat com una cadena de tensors truncada després de cada porta de dos "
+"qubits. El seu cost creix amb l'entrellaçament que genera el circuit i "
+"només linealment amb el nombre de qubits, de manera que els circuits poc "
+"entrellaçants sobre molts qubits són barats. Admet portes d'un i dos "
+"qubits, i té les opcions següents:"
+
+#: ../../modules/backends/backends_qilisim.rst:221
+msgid "``max_bond_dimension``"
+msgstr "``max_bond_dimension``"
+
+#: ../../modules/backends/backends_qilisim.rst:222
+msgid ""
+"Largest bond dimension kept. Circuits whose entanglement stays below this"
+" are simulated exactly, otherwise the state is approximate."
+msgstr ""
+"Dimensió d'enllaç màxima que es conserva. Els circuits amb un "
+"entrellaçament per sota d'aquest valor se simulen de manera exacta; "
+"altrament, l'estat és aproximat."
+
+#: ../../modules/backends/backends_qilisim.rst:223
+msgid "``truncation_cutoff``"
+msgstr "``truncation_cutoff``"
+
+#: ../../modules/backends/backends_qilisim.rst:224
+msgid "Singular values below this fraction of the largest are discarded."
+msgstr "Es descarten els valors singulars per sota d'aquesta fracció del més gran."
+
+#: ../../modules/backends/backends_qilisim.rst:226
+msgid ""
+"Whether to combine consecutive single-qubit gates on the same qubit into "
+"one operation."
+msgstr ""
+"Si es combinen en una única operació les portes d'un sol qubit "
+"consecutives sobre el mateix qubit."
+
+#: ../../modules/backends/backends_qilisim.rst:227
+msgid "``fuse_gates``"
+msgstr "``fuse_gates``"
+
+#: ../../modules/backends/backends_qilisim.rst:228
+msgid "Whether to fuse runs of adjacent two-qubit gates into one operation."
+msgstr ""
+"Si es fusionen en una única operació les seqüències de portes de dos "
+"qubits adjacents."
+
+#: ../../modules/backends/backends_qilisim.rst:239
 msgid "Execution and Monte Carlo"
 msgstr "Execució i Monte Carlo"
 
-#: ../../modules/backends/backends_qilisim.rst:214
+#: ../../modules/backends/backends_qilisim.rst:241
 msgid ""
 ":class:`~qilisdk.backends.backend_config.ExecutionConfig` controls "
 "threading, randomness, and optional Monte Carlo trajectory sampling for "
@@ -442,7 +499,7 @@ msgstr ""
 "fils, l'aleatorietat i el mostreig opcional de trajectòries de Monte "
 "Carlo per a simulacions de sistemes oberts."
 
-#: ../../modules/backends/backends_qilisim.rst:217
+#: ../../modules/backends/backends_qilisim.rst:244
 msgid ""
 "``num_threads`` controls the number of threads used for parallelization, "
 "defaults to using all available cores."
@@ -450,16 +507,16 @@ msgstr ""
 "``num_threads`` controla el nombre de fils utilitzats per a la "
 "paral·lelització; per defecte utilitza tots els nuclis disponibles."
 
-#: ../../modules/backends/backends_qilisim.rst:218
+#: ../../modules/backends/backends_qilisim.rst:245
 msgid ""
 "``seed`` controls the random number generator seed, defaults to a random "
 "seed. Subsequent runs will increment the seed automatically."
 msgstr ""
-"``seed`` controla la llavor del generador de nombres aleatoris; per defecte "
-"s'utilitza una llavor aleatòria. Les execucions posteriors incrementen la "
-"llavor automàticament."
+"``seed`` controla la llavor del generador de nombres aleatoris; per "
+"defecte s'utilitza una llavor aleatòria. Les execucions posteriors "
+"incrementen la llavor automàticament."
 
-#: ../../modules/backends/backends_qilisim.rst:219
+#: ../../modules/backends/backends_qilisim.rst:246
 msgid ""
 "``monte_carlo=MonteCarloConfig(trajectories=N)`` enables Monte Carlo "
 "sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled."
@@ -467,17 +524,17 @@ msgstr ""
 "``monte_carlo=MonteCarloConfig(trajectories=N)`` activa el mostreig Monte"
 " Carlo amb ``N`` trajectòries; si s'omet, Monte Carlo queda desactivat."
 
-#: ../../modules/backends/backends_qilisim.rst:220
+#: ../../modules/backends/backends_qilisim.rst:247
 msgid ""
 "``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` sets how "
 "many quantum jumps per schedule step are tolerated before a warning is "
 "displayed."
 msgstr ""
-"``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` estableix "
-"quants salts quàntics per pas del schedule es toleren abans de mostrar un "
-"avís."
+"``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` estableix"
+" quants salts quàntics per pas del schedule es toleren abans de mostrar "
+"un avís."
 
-#: ../../modules/backends/backends_qilisim.rst:221
+#: ../../modules/backends/backends_qilisim.rst:248
 msgid ""
 "``measurement_collapse`` controls whether measurements collapse the "
 "statevector in place (relevant for mid-circuit measurement and "
@@ -487,7 +544,7 @@ msgstr ""
 "d'estat in situ (rellevant per a mesures a mig circuit i reservoris); per"
 " defecte ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:222
+#: ../../modules/backends/backends_qilisim.rst:249
 msgid ""
 "``normalize_state`` controls whether the state should be renormalized - "
 "defaults to ``True``."
@@ -495,7 +552,7 @@ msgstr ""
 "``normalize_state`` controla si l'estat s'ha de renormalitzar; per "
 "defecte ``True``."
 
-#: ../../modules/backends/backends_qilisim.rst:223
+#: ../../modules/backends/backends_qilisim.rst:250
 msgid ""
 "``gpu`` controls whether to use GPU acceleration if available - defaults "
 "to ``False``."
@@ -503,13 +560,13 @@ msgstr ""
 "``gpu`` controla si s'utilitza l'acceleració per GPU si està disponible; "
 "per defecte ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:242
+#: ../../modules/backends/backends_qilisim.rst:269
 msgid "Monte Carlo results are statistical, so two things control their quality:"
 msgstr ""
-"Els resultats de Monte Carlo són estadístics, de manera que dos factors en "
-"controlen la qualitat:"
+"Els resultats de Monte Carlo són estadístics, de manera que dos factors "
+"en controlen la qualitat:"
 
-#: ../../modules/backends/backends_qilisim.rst:244
+#: ../../modules/backends/backends_qilisim.rst:271
 #, python-brace-format
 msgid ""
 "**Number of trajectories.** The statistical error of any estimate falls "
@@ -519,7 +576,7 @@ msgstr ""
 "decreix com :math:`1/\\sqrt{N}`, així que una execució amb molt soroll "
 "estadístic necessita més trajectòries."
 
-#: ../../modules/backends/backends_qilisim.rst:246
+#: ../../modules/backends/backends_qilisim.rst:273
 msgid ""
 "**Schedule step size.** If using noise, quantum jumps are applied at the "
 "end of the schedule step, so a step must be short enough that at most one"
@@ -529,15 +586,16 @@ msgid ""
 msgstr ""
 "**Mida del pas del schedule.** Si s'utilitza soroll, els salts quàntics "
 "s'apliquen al final del pas del schedule, de manera que el pas ha de ser "
-"prou curt perquè, com a màxim, sigui probable un sol salt a dins seu. Això "
-"també controla la qualitat general de la simulació: com en tots els mètodes "
-"de simulació, avançar en passos més petits millora la precisió global."
+"prou curt perquè, com a màxim, sigui probable un sol salt a dins seu. "
+"Això també controla la qualitat general de la simulació: com en tots els "
+"mètodes de simulació, avançar en passos més petits millora la precisió "
+"global."
 
-#: ../../modules/backends/backends_qilisim.rst:252
+#: ../../modules/backends/backends_qilisim.rst:279
 msgid "Noise model support"
 msgstr "Suport del model de soroll"
 
-#: ../../modules/backends/backends_qilisim.rst:254
+#: ../../modules/backends/backends_qilisim.rst:281
 msgid ""
 "Any :class:`~qilisdk.noise.NoiseModel` accepted by the SDK can be passed "
 "directly to the constructor; QiliSim applies it inside the C++ solver, so"
@@ -548,11 +606,11 @@ msgstr ""
 "C++, de manera que les execucions digitals, analògiques i de reservori "
 "veuen totes els mateixos canals de soroll:"
 
-#: ../../modules/backends/backends_qilisim.rst:269
+#: ../../modules/backends/backends_qilisim.rst:296
 msgid "GPU acceleration"
 msgstr "Acceleració per GPU"
 
-#: ../../modules/backends/backends_qilisim.rst:271
+#: ../../modules/backends/backends_qilisim.rst:298
 msgid ""
 "Some simulation methods in QiliSim support GPU acceleration if a CUDA-"
 "capable device is available. These require the ``cuda`` extra to be "
@@ -562,36 +620,37 @@ msgstr ""
 "hi ha disponible un dispositiu compatible amb CUDA. Aquests requereixen "
 "la instal·lació de l'extra ``cuda``:"
 
-#: ../../modules/backends/backends_qilisim.rst:276
+#: ../../modules/backends/backends_qilisim.rst:303
 msgid "Linux"
 msgstr "Linux"
 
-#: ../../modules/backends/backends_qilisim.rst:282
+#: ../../modules/backends/backends_qilisim.rst:309
 msgid "Mac OSX"
 msgstr "Mac OSX"
 
-#: ../../modules/backends/backends_qilisim.rst:288
+#: ../../modules/backends/backends_qilisim.rst:315
 msgid "Windows"
 msgstr "Windows"
 
-#: ../../modules/backends/backends_qilisim.rst:298
+#: ../../modules/backends/backends_qilisim.rst:325
 msgid "Method"
 msgstr "Mètode"
 
-#: ../../modules/backends/backends_qilisim.rst:299
+#: ../../modules/backends/backends_qilisim.rst:326
 msgid "GPU support"
 msgstr "Suport de GPU"
 
-#: ../../modules/backends/backends_qilisim.rst:301
-#: ../../modules/backends/backends_qilisim.rst:303
-#: ../../modules/backends/backends_qilisim.rst:305
-#: ../../modules/backends/backends_qilisim.rst:307
-#: ../../modules/backends/backends_qilisim.rst:311
-#: ../../modules/backends/backends_qilisim.rst:313
+#: ../../modules/backends/backends_qilisim.rst:328
+#: ../../modules/backends/backends_qilisim.rst:330
+#: ../../modules/backends/backends_qilisim.rst:332
+#: ../../modules/backends/backends_qilisim.rst:334
+#: ../../modules/backends/backends_qilisim.rst:338
+#: ../../modules/backends/backends_qilisim.rst:340
+#: ../../modules/backends/backends_qilisim.rst:342
 msgid "|n|"
 msgstr "|n|"
 
-#: ../../modules/backends/backends_qilisim.rst:302
+#: ../../modules/backends/backends_qilisim.rst:329
 msgid ""
 ":meth:`AnalogMethod.integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
@@ -599,7 +658,7 @@ msgstr ""
 ":meth:`AnalogMethod.integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
 
-#: ../../modules/backends/backends_qilisim.rst:304
+#: ../../modules/backends/backends_qilisim.rst:331
 msgid ""
 ":meth:`AnalogMethod.adaptive_integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
@@ -607,7 +666,7 @@ msgstr ""
 ":meth:`AnalogMethod.adaptive_integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
 
-#: ../../modules/backends/backends_qilisim.rst:306
+#: ../../modules/backends/backends_qilisim.rst:333
 msgid ""
 ":meth:`AnalogMethod.arnoldi() "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
@@ -615,7 +674,7 @@ msgstr ""
 ":meth:`AnalogMethod.arnoldi() "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
 
-#: ../../modules/backends/backends_qilisim.rst:310
+#: ../../modules/backends/backends_qilisim.rst:337
 msgid ""
 ":meth:`DigitalMethod.statevector() "
 "<qilisdk.backends.backend_config.DigitalMethod.statevector>`"
@@ -623,13 +682,21 @@ msgstr ""
 ":meth:`DigitalMethod.statevector() "
 "<qilisdk.backends.backend_config.DigitalMethod.statevector>`"
 
-#: ../../modules/backends/backends_qilisim.rst:312
+#: ../../modules/backends/backends_qilisim.rst:339
 msgid ""
 ":meth:`DigitalMethod.stabilizer() "
 "<qilisdk.backends.backend_config.DigitalMethod.stabilizer>`"
 msgstr ""
 ":meth:`DigitalMethod.stabilizer() "
 "<qilisdk.backends.backend_config.DigitalMethod.stabilizer>`"
+
+#: ../../modules/backends/backends_qilisim.rst:341
+msgid ""
+":meth:`DigitalMethod.mps() "
+"<qilisdk.backends.backend_config.DigitalMethod.mps>`"
+msgstr ""
+":meth:`DigitalMethod.mps() "
+"<qilisdk.backends.backend_config.DigitalMethod.mps>`"
 
 #~ msgid "Go to a specific subheading of a page."
 #~ msgstr "Aneu a un subapartat específic d'una pàgina."
@@ -769,4 +836,27 @@ msgstr ""
 #~ "un unraveling de Monte Carlo; deixeu-"
 #~ "ho a ``None`` per a una evolució"
 #~ " determinista de l'equació mestra."
+
+#~ msgid ""
+#~ "There are currently two digital "
+#~ "simulation methods available. The first "
+#~ "is a statevector simulator, which can"
+#~ " be configured through the options:"
+#~ msgstr ""
+#~ "Actualment hi ha dos mètodes de "
+#~ "simulació digital disponibles. El primer "
+#~ "és un simulador de vector d'estat, "
+#~ "que es pot configurar mitjançant les "
+#~ "opcions:"
+
+#~ msgid ""
+#~ "``monte_carlo=MonteCarloConfig(trajectories=N)`` enabled "
+#~ "Monte Carlo sampling with ``N`` "
+#~ "trajectories, if omitted, Monte Carlo is"
+#~ " disabled."
+#~ msgstr ""
+#~ "``monte_carlo=MonteCarloConfig(trajectories=N)`` activa el"
+#~ " mostreig Monte Carlo amb ``N`` "
+#~ "trajectòries; si s'omet, Monte Carlo "
+#~ "queda desactivat."
 

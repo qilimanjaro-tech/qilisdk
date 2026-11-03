@@ -1898,6 +1898,59 @@ _traj_ro_qt = [ExpectationReadout(observables=[QTensor(sp.csr_matrix(np.array([[
     EXPECT_NEAR(averaged[0], reference[0], 1e-12);
 }
 
+TEST(ConstructResultsTrajectories, ExpectationWithShotsIsSampled) {
+    py::gil_scoped_acquire gil;
+    // The identity term of the second observable carries no shot noise, so only the X(0) term of it
+    // is sampled; the Z(0) term of the first observable is sampled on its own.
+    py::exec(R"(
+from qilisdk.readout import ExpectationReadout
+from qilisdk.analog.hamiltonian import Z, X
+_traj_ro_exp_shots = [ExpectationReadout(observables=[Z(0), 0.5 * X(0) + 2.0 * X(0) * X(0)], nshots=8)]
+_traj_ro_exp_exact = [ExpectationReadout(observables=[Z(0), 0.5 * X(0) + 2.0 * X(0) * X(0)])]
+    )");
+    py::list readout_shots = py::globals()["_traj_ro_exp_shots"].cast<py::list>();
+    py::list readout_exact = py::globals()["_traj_ro_exp_exact"].cast<py::list>();
+
+    DenseMatrix trajectories = two_qubit_trajectories();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true, true};
+
+    std::vector<double> sampled = expectations_of(construct_result_object(trajectories, readout_shots, noise_model_cpp, 2, config, qubits_to_measure, true));
+    std::vector<double> exact = expectations_of(construct_result_object(trajectories, readout_exact, noise_model_cpp, 2, config, qubits_to_measure, true));
+    ASSERT_EQ(sampled.size(), 2u);
+
+    // An eight shot average of +-1 outcomes can only take the values (2 k - 8) / 8
+    EXPECT_NE(sampled[0], exact[0]);
+    EXPECT_NEAR(8.0 * (sampled[0] + 1.0) / 2.0, std::round(8.0 * (sampled[0] + 1.0) / 2.0), 1e-9);
+
+    // The identity term contributes its coefficient exactly, the X(0) term is sampled
+    double x_term = (sampled[1] - 2.0) / 0.5;
+    EXPECT_NEAR(8.0 * (x_term + 1.0) / 2.0, std::round(8.0 * (x_term + 1.0) / 2.0), 1e-9);
+}
+
+TEST(ConstructResultsTrajectories, ExpectationOfQTensorObservableWithShotsIsSampled) {
+    py::gil_scoped_acquire gil;
+    // A QTensor observable cannot be measured term by term, so the shot noise is applied on the
+    // ensemble density matrix instead; the outcomes are still the +-1 eigenvalues of the observable.
+    py::exec(R"(
+from qilisdk.readout import ExpectationReadout
+from qilisdk.core.qtensor import QTensor
+import numpy as np, scipy.sparse as sp
+_traj_ro_qt_shots = [ExpectationReadout(observables=[QTensor(sp.csr_matrix(np.array([[1.0, 0.0], [0.0, -1.0]], dtype=complex)))], nshots=8)]
+    )");
+    py::list readout = py::globals()["_traj_ro_qt_shots"].cast<py::list>();
+
+    DenseMatrix trajectories = two_qubit_trajectories();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true, true};
+
+    std::vector<double> sampled = expectations_of(construct_result_object(trajectories, readout, noise_model_cpp, 2, config, qubits_to_measure, true));
+    ASSERT_EQ(sampled.size(), 1u);
+    EXPECT_NEAR(8.0 * (sampled[0] + 1.0) / 2.0, std::round(8.0 * (sampled[0] + 1.0) / 2.0), 1e-9);
+}
+
 TEST(ConstructResultsTrajectories, ImaginaryExpectationValueThrows) {
     py::gil_scoped_acquire gil;
     // The raising operator is not Hermitian, so its expectation value over this ensemble has a
@@ -2260,6 +2313,31 @@ TEST(ConstructResultsStabilizer, ExpectationReadout_Succeeds) {
     EXPECT_NO_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); });
 }
 
+TEST(ConstructResultsStabilizer, ExpectationReadoutWithShotsIsSampled) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ExpectationReadout
+        from qilisdk.analog.hamiltonian import X, Z
+        _stab_ro_exp_shots = [ExpectationReadout(observables=[X(0), Z(0)], nshots=7)]
+    )");
+    // |0> has <X(0)> = 0, so seven shots give a quantised estimate rather than the exact zero, while
+    // <Z(0)> = 1 is deterministic and stays exact however few shots are taken.
+    StabilizerStateSum state(1);
+    py::list readout = py::globals()["_stab_ro_exp_shots"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+
+    py::object result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure);
+    py::list values = result.attr("expectation_values").attr("expectation_values").cast<py::list>();
+    ASSERT_EQ(values.size(), 2u);
+
+    double x_value = values[0].cast<Complex>().real();
+    EXPECT_NE(x_value, 0.0);
+    EXPECT_NEAR(7.0 * (x_value + 1.0) / 2.0, std::round(7.0 * (x_value + 1.0) / 2.0), 1e-9);
+    EXPECT_NEAR(values[1].cast<Complex>().real(), 1.0, 1e-12);
+}
+
 TEST(ConstructResultsStabilizer, StateTomographyReadoutExact_Succeeds) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
@@ -2302,6 +2380,150 @@ TEST(ConstructResultsStabilizer, UnsupportedReadoutThrows) {
     EXPECT_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); }, py::value_error);
 }
 
+TEST(ParseSolverParams, MPSSettingsApplied) {
+    py::gil_scoped_acquire gil;
+    py::dict params;
+    params["mps_max_bond_dimension"] = py::int_(8);
+    params["mps_truncation_cutoff"] = py::float_(1e-6);
+    QiliSimConfig config;
+    EXPECT_NO_THROW(config = parse_solver_params(params));
+    EXPECT_EQ(config.get_mps_max_bond_dimension(), 8);
+    EXPECT_DOUBLE_EQ(config.get_mps_truncation_cutoff(), 1e-6);
+}
+
+TEST(ParseInitialStateMPS, NoneReturnsZeroState) {
+    py::gil_scoped_acquire gil;
+    auto state = parse_initial_state_mps(py::none(), 2);
+    EXPECT_EQ(state.get_nqubits(), 2);
+    EXPECT_NEAR(std::abs(state.amplitude("00") - Complex(1.0, 0.0)), 0.0, 1e-12);
+}
+
+TEST(ParseInitialStateMPS, UniformAppliesHadamards) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.core.qtensor import InitialState
+        _mps_is_uniform = InitialState.UNIFORM
+    )");
+    py::object is_obj = py::globals()["_mps_is_uniform"];
+    auto state = parse_initial_state_mps(is_obj, 2);
+    // Every amplitude of |++> is 1/2, and the state stays at bond dimension one
+    EXPECT_NEAR(std::abs(state.amplitude("01") - Complex(0.5, 0.0)), 0.0, 1e-12);
+    EXPECT_EQ(state.get_max_bond_dimension_used(), 1);
+}
+
+TEST(ParseInitialStateMPS, OneReturnsAllOnes) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.core.qtensor import InitialState
+        _mps_is_one = InitialState.ONE
+    )");
+    py::object is_obj = py::globals()["_mps_is_one"];
+    auto state = parse_initial_state_mps(is_obj, 2);
+    EXPECT_NEAR(std::abs(state.amplitude("11") - Complex(1.0, 0.0)), 0.0, 1e-12);
+}
+
+TEST(ParseInitialStateMPS, ZeroReturnsAllZeros) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.core.qtensor import InitialState
+        _mps_is_zero = InitialState.ZERO
+    )");
+    py::object is_obj = py::globals()["_mps_is_zero"];
+    auto state = parse_initial_state_mps(is_obj, 3);
+    EXPECT_NEAR(std::abs(state.amplitude("000") - Complex(1.0, 0.0)), 0.0, 1e-12);
+}
+
+TEST(ParseInitialStateMPS, UnrecognizedTypeThrows) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        _mps_is_bad = 123
+    )");
+    py::object obj = py::globals()["_mps_is_bad"];
+    EXPECT_THROW(parse_initial_state_mps(obj, 1), py::value_error);
+}
+
+TEST(ConstructResultsMPS, SamplingReadout_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout
+        _mps_ro_samp = [SamplingReadout(nshots=10)]
+    )");
+    MPSState state(1, "1");
+    py::list readout = py::globals()["_mps_ro_samp"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    py::dict samples = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure).attr("sampling").attr("samples");
+    ASSERT_EQ(py::len(samples), 1u);
+    EXPECT_EQ(samples["1"].cast<int>(), 10);
+}
+
+TEST(ConstructResultsMPS, ExpectationReadout_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ExpectationReadout
+        from qilisdk.analog.hamiltonian import X
+        _mps_ro_exp = [ExpectationReadout(observables=[X(0)])]
+    )");
+    // |+> has <X(0)> = 1
+    MPSState state(1);
+    DenseMatrix hadamard(2, 2);
+    hadamard << 1.0, 1.0, 1.0, -1.0;
+    state.apply_one_site(hadamard / std::sqrt(2.0), 0);
+    py::list readout = py::globals()["_mps_ro_exp"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    py::list values = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure).attr("expectation_values").attr("expectation_values");
+    ASSERT_EQ(py::len(values), 1u);
+    EXPECT_NEAR(std::abs(values[0].cast<Complex>() - Complex(1.0, 0.0)), 0.0, 1e-12);
+}
+
+TEST(ConstructResultsMPS, StateTomographyReadoutExact_Succeeds) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import StateTomographyReadout
+        _mps_ro_tomo = [StateTomographyReadout()]
+    )");
+    MPSState state(1, "1");
+    py::list readout = py::globals()["_mps_ro_tomo"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    py::object tomography = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure).attr("state_tomography").attr("state");
+    EXPECT_EQ(tomography.attr("nqubits").cast<int>(), 1);
+    EXPECT_NEAR(std::abs(tomography.attr("__getitem__")(py::make_tuple(0, 0)).cast<Complex>()), 0.0, 1e-12);
+    EXPECT_NEAR(std::abs(tomography.attr("__getitem__")(py::make_tuple(1, 0)).cast<Complex>() - Complex(1.0, 0.0)), 0.0, 1e-12);
+}
+
+TEST(ConstructResultsMPS, StateTomographyReadoutNonExact_Throws) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import StateTomographyReadout
+        _mps_ro_tomo_bad = [StateTomographyReadout(method="mle")]
+    )");
+    MPSState state(1);
+    py::list readout = py::globals()["_mps_ro_tomo_bad"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); }, py::value_error);
+}
+
+TEST(ConstructResultsMPS, UnsupportedReadoutThrows) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.readout import ReadoutMethod
+        _mps_ro_bad = [ReadoutMethod()]
+    )");
+    MPSState state(1);
+    py::list readout = py::globals()["_mps_ro_bad"].cast<py::list>();
+    NoiseModelCpp noise_model_cpp;
+    QiliSimConfig config;
+    std::vector<bool> qubits_to_measure = {true};
+    EXPECT_THROW({ auto result = construct_result_object(state, readout, noise_model_cpp, 1, config, qubits_to_measure); }, py::value_error);
+}
+
 TEST(GateNameParser, GatesControlCounts) {
     EXPECT_EQ(gate_num_controls("H"), 0);
     EXPECT_EQ(gate_num_controls("X"), 0);
@@ -2315,6 +2537,17 @@ TEST(GateNameParser, GatesControlCounts) {
     EXPECT_EQ(gate_num_controls("CCY"), 2);
     EXPECT_EQ(gate_num_controls("CCZ"), 2);
     EXPECT_EQ(gate_num_controls("Toffoli"), 2);
+    EXPECT_EQ(gate_num_controls("CCCZ"), 3);
+    EXPECT_EQ(gate_num_controls("CSWAP"), 1);
+    EXPECT_EQ(gate_num_controls("CCSWAP"), 2);
+    EXPECT_EQ(gate_num_controls("CRX"), 1);
+    EXPECT_EQ(gate_num_controls("Controlled"), 0);
+    EXPECT_EQ(gate_num_controls("CustomH"), 0);
+    EXPECT_EQ(gate_num_controls("CC"), 0);
+    EXPECT_EQ(gate_num_controls(""), 0);
+    EXPECT_EQ(gate_num_controls("CPHASE"), 0);
+    EXPECT_EQ(gate_num_controls("C1"), 0);
+    EXPECT_EQ(gate_num_controls("CCPHASE"), 0);
 }
 
 TEST(GateNameParser, GateNamesNormalized) {
@@ -2330,6 +2563,268 @@ TEST(GateNameParser, GateNamesNormalized) {
     EXPECT_EQ(normalize_gate_name("CCY"), "Y");
     EXPECT_EQ(normalize_gate_name("CCZ"), "Z");
     EXPECT_EQ(normalize_gate_name("Toffoli"), "X");
+    EXPECT_EQ(normalize_gate_name("CCCZ"), "Z");
+    EXPECT_EQ(normalize_gate_name("CSWAP"), "SWAP");
+    EXPECT_EQ(normalize_gate_name("CCSWAP"), "SWAP");
+    EXPECT_EQ(normalize_gate_name("CRX"), "RX");
+    EXPECT_EQ(normalize_gate_name("Controlled"), "Controlled");
+    EXPECT_EQ(normalize_gate_name("CustomH"), "CustomH");
+    EXPECT_EQ(normalize_gate_name("CC"), "CC");
+    EXPECT_EQ(normalize_gate_name("CPHASE"), "CPHASE");
+    EXPECT_EQ(normalize_gate_name("C1"), "C1");
+}
+
+TEST(GateNameParser, NormalizationIsIdempotent) {
+    for (const std::string name : {"CNOT", "Toffoli", "CCX", "CSWAP", "CCCRX", "CPHASE", "CCPHASE", "Controlled", "H"}) {
+        EXPECT_EQ(normalize_gate_name(normalize_gate_name(name)), normalize_gate_name(name)) << name;
+    }
+}
+
+namespace {
+
+DenseMatrix numpy_to_dense(const py::object& array) {
+    py::tuple shape = array.attr("shape");
+    long rows = shape[0].cast<long>();
+    long cols = shape[1].cast<long>();
+    DenseMatrix out(rows, cols);
+    for (long i = 0; i < rows; ++i) {
+        for (long j = 0; j < cols; ++j) {
+            out(i, j) = array.attr("__getitem__")(py::make_tuple(i, j)).cast<Complex>();
+        }
+    }
+    return out;
+}
+
+// The Hamiltonian, jump operators and initial full-register state an environment adds to an evolution
+struct EnvironmentParts {
+    DenseMatrix hamiltonian;
+    DenseMatrix hamiltonian_matrix_free;
+    std::vector<DenseMatrix> jump_operators;
+    DenseMatrix initial_state;
+};
+
+EnvironmentParts environment_parts(const EnvironmentCpp& environment) {
+    long dim = 1L << environment.get_n_total_qubits();
+    EnvironmentParts parts;
+    std::vector<SparseMatrix> hamiltonians;
+    std::vector<MatrixFreeHamiltonian> hamiltonians_matrix_free;
+    std::vector<std::vector<double>> parameters_list;
+    NoiseModelCpp noise_model;
+    environment.add_to_evolution(hamiltonians, parameters_list, noise_model);
+    environment.add_to_evolution(hamiltonians_matrix_free, parameters_list, noise_model);
+    parts.hamiltonian = DenseMatrix(hamiltonians.at(0));
+    hamiltonians_matrix_free.at(0).apply(DenseMatrix::Identity(dim, dim), MatrixFreeApplicationType::Left, parts.hamiltonian_matrix_free);
+    // Each jump operator was added twice, once per call
+    const auto& jumps = noise_model.get_jump_operators();
+    for (size_t i = 0; i < jumps.size() / 2; ++i) {
+        parts.jump_operators.push_back(DenseMatrix(jumps[i]));
+    }
+    SparseMatrix system_zero(1L << environment.get_n_system_qubits(), 1);
+    system_zero.insert(0, 0) = 1.0;
+    parts.initial_state = DenseMatrix(environment.attach_to(system_zero));
+    return parts;
+}
+
+DenseMatrix kron_all(const std::vector<DenseMatrix>& factors) {
+    DenseMatrix out = DenseMatrix::Identity(1, 1);
+    for (const auto& factor : factors) {
+        out = Eigen::kroneckerProduct(out, factor).eval();
+    }
+    return out;
+}
+
+DenseMatrix pauli(char name) {
+    DenseMatrix out(2, 2);
+    if (name == 'X') {
+        out << 0.0, 1.0, 1.0, 0.0;
+    } else if (name == 'Z') {
+        out << 1.0, 0.0, 0.0, -1.0;
+    } else {
+        out = DenseMatrix::Identity(2, 2);
+    }
+    return out;
+}
+
+}  // namespace
+
+TEST(HasNonMarkovianNoise, NoneEmptyAndEnvironment) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.analog import Z
+        from qilisdk.noise import AmplitudeDamping, EnvironmentNoise, NoiseModel
+
+        nm_markovian = NoiseModel()
+        nm_markovian.add(AmplitudeDamping(t1=1.0))
+        nm_environment = NoiseModel()
+        nm_environment.add(EnvironmentNoise(n_environment_qubits=1, couplings=[(1.0, Z(0), Z(0))]))
+    )");
+
+    EXPECT_FALSE(has_non_markovian_noise(py::none()));
+    EXPECT_FALSE(has_non_markovian_noise(py::globals()["nm_markovian"]));
+    EXPECT_TRUE(has_non_markovian_noise(py::globals()["nm_environment"]));
+}
+
+TEST(ParseEnvironmentNoise, SingleEnvironment) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        import numpy as np
+        from qilisdk.analog import Z
+        from qilisdk.core import ket
+        from qilisdk.noise import AmplitudeDamping, EnvironmentNoise, NoiseModel
+
+        nm_single_environment = NoiseModel()
+        nm_single_environment.add(
+            EnvironmentNoise(
+                n_environment_qubits=1,
+                couplings=[(2.0, Z(0), Z(0))],
+                environment_noise={0: [AmplitudeDamping(t1=4.0)]},
+                environment_state=ket(1),
+            )
+        )
+        single_environment_jump = np.kron(
+            np.eye(2), AmplitudeDamping(t1=4.0).as_lindblad().jump_operators_with_rates[0].dense()
+        )
+    )");
+
+    EnvironmentCpp environment = parse_environment_noise(py::globals()["nm_single_environment"], 1, 1e-12);
+    EnvironmentParts parts = environment_parts(environment);
+
+    EXPECT_EQ(environment.get_n_total_qubits(), 2);
+    EXPECT_TRUE(parts.hamiltonian.isApprox(2.0 * kron_all({pauli('Z'), pauli('Z')}), 1e-12));
+    EXPECT_TRUE(parts.hamiltonian_matrix_free.isApprox(parts.hamiltonian, 1e-12));
+    ASSERT_EQ(parts.jump_operators.size(), 1u);
+    EXPECT_TRUE(parts.jump_operators[0].isApprox(numpy_to_dense(py::globals()["single_environment_jump"]), 1e-12));
+    DenseMatrix expected_state = DenseMatrix::Zero(4, 4);
+    expected_state(1, 1) = 1.0;
+    EXPECT_TRUE(parts.initial_state.isApprox(expected_state, 1e-12));
+}
+
+TEST(ParseEnvironmentNoise, TwoEnvironmentsAreStackedAndPadded) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        import numpy as np
+        from qilisdk.analog import X, Z
+        from qilisdk.core import ket
+        from qilisdk.noise import AmplitudeDamping, Dephasing, EnvironmentNoise, NoiseModel
+
+        nm_two_environments = NoiseModel()
+        nm_two_environments.add(
+            EnvironmentNoise(
+                n_environment_qubits=1,
+                couplings=[(1.0, Z(0), Z(0))],
+                environment_noise={0: [AmplitudeDamping(t1=1.0)]},
+                environment_state=ket(1),
+            )
+        )
+        nm_two_environments.add(
+            EnvironmentNoise(
+                n_environment_qubits=2,
+                couplings=[(0.5, X(0), X(1))],
+                environment_noise={1: [Dephasing(t_phi=2.0)]},
+            )
+        )
+        two_environments_damping = AmplitudeDamping(t1=1.0).as_lindblad().jump_operators_with_rates[0].dense()
+        two_environments_dephasing = Dephasing(t_phi=2.0).as_lindblad().jump_operators_with_rates[0].dense()
+    )");
+
+    EnvironmentCpp environment = parse_environment_noise(py::globals()["nm_two_environments"], 1, 1e-12);
+    EnvironmentParts parts = environment_parts(environment);
+
+    // Register: system 0, first environment 1, second environment 2 and 3
+    DenseMatrix I = pauli('I');
+    EXPECT_EQ(environment.get_n_environment_qubits(), 3);
+    DenseMatrix expected_hamiltonian = kron_all({pauli('Z'), pauli('Z'), I, I}) + 0.5 * kron_all({pauli('X'), I, I, pauli('X')});
+    EXPECT_TRUE(parts.hamiltonian.isApprox(expected_hamiltonian, 1e-12));
+    EXPECT_TRUE(parts.hamiltonian_matrix_free.isApprox(expected_hamiltonian, 1e-12));
+    ASSERT_EQ(parts.jump_operators.size(), 2u);
+    EXPECT_TRUE(parts.jump_operators[0].isApprox(kron_all({I, numpy_to_dense(py::globals()["two_environments_damping"]), I, I}), 1e-12));
+    EXPECT_TRUE(parts.jump_operators[1].isApprox(kron_all({I, I, I, numpy_to_dense(py::globals()["two_environments_dephasing"])}), 1e-12));
+    DenseMatrix expected_state = DenseMatrix::Zero(16, 16);
+    expected_state(4, 4) = 1.0;
+    EXPECT_TRUE(parts.initial_state.isApprox(expected_state, 1e-12));
+}
+
+TEST(ParseEnvironmentNoise, MixedEnvironmentState) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        import numpy as np
+        from qilisdk.analog import Z
+        from qilisdk.core import QTensor
+        from qilisdk.noise import EnvironmentNoise, NoiseModel
+
+        nm_mixed_environment = NoiseModel()
+        nm_mixed_environment.add(
+            EnvironmentNoise(
+                n_environment_qubits=1,
+                couplings=[(1.0, Z(0), Z(0))],
+                environment_state=QTensor(np.diag([0.25, 0.75])),
+            )
+        )
+    )");
+
+    EnvironmentParts parts = environment_parts(parse_environment_noise(py::globals()["nm_mixed_environment"], 1, 1e-12));
+
+    DenseMatrix expected_state = DenseMatrix::Zero(4, 4);
+    expected_state(0, 0) = 0.25;
+    expected_state(1, 1) = 0.75;
+    EXPECT_TRUE(parts.initial_state.isApprox(expected_state, 1e-12));
+}
+
+TEST(ParseEnvironmentNoise, AcceptsLindbladAndReadoutNoise) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.analog import Z
+        from qilisdk.noise import AmplitudeDamping, Dephasing, EnvironmentNoise, NoiseModel, ReadoutAssignment
+
+        nm_environment_with_markovian = NoiseModel()
+        nm_environment_with_markovian.add(EnvironmentNoise(n_environment_qubits=1, couplings=[(1.0, Z(0), Z(0))]))
+        nm_environment_with_markovian.add(Dephasing(t_phi=1.0))
+        nm_environment_with_markovian.add(AmplitudeDamping(t1=1.0), qubits=[0])
+        nm_environment_with_markovian.add(ReadoutAssignment(p01=0.1, p10=0.1))
+    )");
+
+    EXPECT_NO_THROW(parse_environment_noise(py::globals()["nm_environment_with_markovian"], 1, 1e-12));
+}
+
+TEST(ParseEnvironmentNoise, RejectsPerGateNoise) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.analog import Z
+        from qilisdk.digital import X
+        from qilisdk.noise import BitFlip, EnvironmentNoise, NoiseModel
+
+        nm_environment_per_gate = NoiseModel()
+        nm_environment_per_gate.add(EnvironmentNoise(n_environment_qubits=1, couplings=[(1.0, Z(0), Z(0))]))
+        nm_environment_per_gate.add(BitFlip(probability=0.1), gate=X)
+
+        nm_environment_per_gate_qubit = NoiseModel()
+        nm_environment_per_gate_qubit.add(EnvironmentNoise(n_environment_qubits=1, couplings=[(1.0, Z(0), Z(0))]))
+        nm_environment_per_gate_qubit.add(BitFlip(probability=0.1), gate=X, qubits=[0])
+    )");
+
+    EXPECT_THROW(parse_environment_noise(py::globals()["nm_environment_per_gate"], 1, 1e-12), py::value_error);
+    EXPECT_THROW(parse_environment_noise(py::globals()["nm_environment_per_gate_qubit"], 1, 1e-12), py::value_error);
+}
+
+TEST(ParseEnvironmentNoise, RejectsKrausOnlyNoise) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        import numpy as np
+        from qilisdk.analog import Z
+        from qilisdk.core import QTensor
+        from qilisdk.noise import EnvironmentNoise, KrausChannel, NoiseModel
+
+        nm_environment_global_kraus = NoiseModel()
+        nm_environment_global_kraus.add(EnvironmentNoise(n_environment_qubits=1, couplings=[(1.0, Z(0), Z(0))]))
+        nm_environment_global_kraus.add(KrausChannel(operators=[QTensor(np.eye(2))]))
+
+        nm_environment_qubit_kraus = NoiseModel()
+        nm_environment_qubit_kraus.add(EnvironmentNoise(n_environment_qubits=1, couplings=[(1.0, Z(0), Z(0))]))
+        nm_environment_qubit_kraus.add(KrausChannel(operators=[QTensor(np.eye(2))]), qubits=[0])
+    )");
+
+    EXPECT_THROW(parse_environment_noise(py::globals()["nm_environment_global_kraus"], 1, 1e-12), py::value_error);
+    EXPECT_THROW(parse_environment_noise(py::globals()["nm_environment_qubit_kraus"], 1, 1e-12), py::value_error);
 }
 
 // GCOV_EXCL_BR_STOP

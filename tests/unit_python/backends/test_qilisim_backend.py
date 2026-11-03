@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -25,7 +26,8 @@ from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core import QTensor, ket
-from qilisdk.digital import Circuit, H, X
+from qilisdk.digital import CNOT, Circuit, H, M, S, X
+from qilisdk.digital.gates import Adjoint, Controlled, Exponential
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.noise import Dephasing, LindbladGenerator, NoiseModel
@@ -158,6 +160,95 @@ def test_stabilizer_method_creates_okay():
     assert method.stabilizer_max_states == 50
 
 
+def test_stabilizer_measurements_are_not_applied_as_gates():
+    # Applying M as a gate would branch into 16 terms and get truncated to 4 outcomes
+    backend = QiliSim(
+        digital_simulation_method=DigitalMethod.stabilizer(max_states=4), execution_config=ExecutionConfig(seed=1234)
+    )
+    circuit = Circuit(nqubits=4)
+    circuit.add([H(q) for q in range(4)])
+    circuit.add(M(0, 1, 2, 3))
+    samples = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=2000)).get_samples()
+    assert len(samples) == 16
+
+
+def test_stabilizer_masks_unmeasured_qubits():
+    backend = QiliSim(digital_simulation_method=DigitalMethod.stabilizer(), execution_config=ExecutionConfig(seed=1234))
+    circuit = Circuit(nqubits=2)
+    circuit.add([X(0), X(1), M(1)])
+    samples = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=100)).get_samples()
+    assert samples == {"_1": 100}
+
+
+def test_mps_method_creates_okay():
+    method = DigitalMethod.mps(max_bond_dimension=32, truncation_cutoff=1e-8)
+    assert method.digital_method == "mps"
+    assert method.mps_max_bond_dimension == 32
+    assert np.isclose(method.mps_truncation_cutoff, 1e-8)
+
+    # The settings reach the backend configuration the C++ layer reads
+    config = QiliSim(digital_simulation_method=method).get_config()
+    assert config["digital_method"] == "mps"
+    assert config["mps_max_bond_dimension"] == 32
+    assert np.isclose(config["mps_truncation_cutoff"], 1e-8)
+
+    # A bond dimension has to be a positive number of states to keep
+    with pytest.raises(ValidationError):
+        DigitalMethod(mps_max_bond_dimension=0)
+    with pytest.raises(ValidationError):
+        DigitalMethod(mps_truncation_cutoff=-1e-3)
+
+    # A cutoff of 1 or more, or NaN, would collapse every bond to dimension 1
+    with pytest.raises(ValidationError):
+        DigitalMethod(mps_truncation_cutoff=1.0)
+    with pytest.raises(ValidationError):
+        DigitalMethod(mps_truncation_cutoff=math.nan)
+
+
+def test_mps_method_circuit_optimization_flags():
+    """The MPS path reads both optimization flags in the C++ layer, so they have to be reachable
+    from the factory and default to on, as they do for the statevector method."""
+    default = DigitalMethod.mps()
+    assert default.combine_single_qubit_gates is True
+    assert default.fuse_gates is True
+
+    method = DigitalMethod.mps(max_bond_dimension=16, combine_single_qubit_gates=False, fuse_gates=False)
+    assert method.combine_single_qubit_gates is False
+    assert method.fuse_gates is False
+
+    config = QiliSim(digital_simulation_method=method).get_config()
+    assert config["combine_single_qubit_gates"] is False
+    assert config["fuse_gates"] is False
+
+
+def test_mps_method_executes_a_circuit():
+    """The "mps" digital method has its own dispatch arm in the C++ layer, which only a real
+    execution reaches, so drive a circuit through it rather than only checking that the
+    configuration is plumbed through."""
+    circuit = Circuit(2)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    backend = QiliSim(
+        digital_simulation_method=DigitalMethod.mps(),
+        execution_config=ExecutionConfig(seed=42, num_threads=1),
+    )
+
+    # A Bell state, which an MPS holds exactly at bond dimension two
+    result = backend.execute(
+        DigitalPropagation(circuit),
+        Readout().with_state_tomography().with_expectation(observables=[pauli_z(0) * pauli_z(1)]),
+    )
+    data = result.get_state().data
+    state = np.asarray(data.todense() if hasattr(data, "todense") else data).reshape(-1)
+    assert np.allclose(state, [1 / np.sqrt(2), 0, 0, 1 / np.sqrt(2)], atol=1e-12)
+    assert np.isclose(complex(result.get_expectation_values()[0]), 1.0, atol=1e-12)
+
+    # Sampling goes down the same arm but returns through the sampling readout instead
+    samples = backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=200)).get_samples()
+    assert set(samples) <= {"00", "11"}, f"Unexpected outcomes: {samples}"
+    assert sum(samples.values()) == 200
+
+
 def test_adaptive_creates_okay():
     method = AnalogMethod.adaptive_integrator(tol=1e-2)
     assert method.evolution_method == "integrate_rk45_matrix_free"
@@ -199,6 +290,21 @@ def test_qilisim_time_evolution_dummy(monkeypatch):
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
     backend = QiliSim()
     assert backend.execute(func, Readout().with_expectation(observables=[pauli_z(0)])) == "mocked_time_evolution_result"
+
+
+@pytest.mark.parametrize("gate", [Adjoint(Controlled(2, basic_gate=S(0))), Exponential(CNOT(2, 0))])
+def test_modified_controlled_gate_matches_circuit_matrix(gate):
+    circuit = Circuit(3)
+    circuit.add(X(0))
+    circuit.add(H(2))
+    circuit.add(gate)
+    expected_state = circuit.to_matrix()[:, 0]
+    expected_state /= np.linalg.norm(expected_state)
+
+    backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
+    result = backend.execute(DigitalPropagation(circuit), Readout().with_state_tomography())
+
+    np.testing.assert_allclose(result.state_tomography.state.dense().flatten(), expected_state, atol=1e-6)
 
 
 def test_time_dependent_hamiltonian_bad_observable():

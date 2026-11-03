@@ -243,13 +243,18 @@ class TrotterizedSchedule(Ansatz):
     Example:
         .. code-block:: python
 
+            from qilisdk.analog import Schedule, X, Z
             from qilisdk.digital.ansatz import TrotterizedSchedule
-            from qilisdk.analog.schedule import Schedule
 
-            ansatz = TrotterizedSchedule(
-                schedule=Schedule(...),
-                trotter_steps=2,
+            schedule = Schedule(
+                hamiltonians={"driver": X(0) + X(1), "problem": Z(0) * Z(1)},
+                coefficients={
+                    "driver": {(0.0, 1.0): lambda t: 1 - t},
+                    "problem": {(0.0, 1.0): lambda t: t},
+                },
+                dt=0.1,
             )
+            ansatz = TrotterizedSchedule(schedule=schedule, trotter_steps=2)
             ansatz.draw()
     """
 
@@ -291,10 +296,11 @@ class QAOA(Ansatz):
     Example:
         .. code-block:: python
 
+            from qilisdk.analog import Z
             from qilisdk.digital.ansatz import QAOA
 
             ansatz = QAOA(
-                problem_hamiltonian=your_problem_hamiltonian,
+                problem_hamiltonian=Z(0) * Z(1) + Z(0),
                 layers=3,
                 mixer_hamiltonian=None,
                 trotter_steps=1,
