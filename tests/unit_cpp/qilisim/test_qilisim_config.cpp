@@ -159,6 +159,45 @@ TEST(QilisimConfig, MPSMethod_ValidatesAndRejectsBadTruncation) {
     }
 }
 
+TEST(QilisimConfig, BPSettings_GetterSetter) {
+    QiliSimConfig config;
+    config.set_bp_max_bond_dimension(32);
+    config.set_bp_truncation_cutoff(1e-9);
+    config.set_bp_max_iterations(7);
+    config.set_bp_tolerance(1e-6);
+    EXPECT_EQ(config.get_bp_max_bond_dimension(), 32);
+    EXPECT_DOUBLE_EQ(config.get_bp_truncation_cutoff(), 1e-9);
+    EXPECT_EQ(config.get_bp_max_iterations(), 7);
+    EXPECT_DOUBLE_EQ(config.get_bp_tolerance(), 1e-6);
+    EXPECT_NO_THROW(config.validate());
+}
+
+TEST(QilisimConfig, BPMethod_ValidatesAndRejectsBadSettings) {
+    QiliSimConfig config;
+    config.set_digital_method("bp");
+    EXPECT_NO_THROW(config.validate());
+
+    QiliSimConfig zero_bond;
+    zero_bond.set_bp_max_bond_dimension(0);
+    EXPECT_THROW(zero_bond.validate(), py::value_error);
+
+    for (double cutoff : {-1e-3, 1.0, std::nan("")}) {
+        QiliSimConfig bad_cutoff;
+        bad_cutoff.set_bp_truncation_cutoff(cutoff);
+        EXPECT_THROW(bad_cutoff.validate(), py::value_error) << "cutoff " << cutoff;
+    }
+
+    QiliSimConfig zero_iterations;
+    zero_iterations.set_bp_max_iterations(0);
+    EXPECT_THROW(zero_iterations.validate(), py::value_error);
+
+    for (double tolerance : {0.0, -1e-3, std::nan("")}) {
+        QiliSimConfig bad_tolerance;
+        bad_tolerance.set_bp_tolerance(tolerance);
+        EXPECT_THROW(bad_tolerance.validate(), py::value_error) << "tolerance " << tolerance;
+    }
+}
+
 TEST(QilisimConfig, NextSeedGivesDistinctStreams) {
     QiliSimConfig config;
     config.set_seed(7);
