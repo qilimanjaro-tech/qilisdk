@@ -26,7 +26,7 @@ from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core import QTensor, ket
-from qilisdk.digital import CNOT, Circuit, H, S, X, M, X
+from qilisdk.digital import CNOT, Circuit, H, M, S, X
 from qilisdk.digital.gates import Adjoint, Controlled, Exponential
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.functional_result import FunctionalResult
