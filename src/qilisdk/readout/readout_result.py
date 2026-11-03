@@ -344,7 +344,9 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
         return cls(expectation_values=real_expectation_values, nshots=nshots)
 
     @classmethod
-    def from_state(cls, expectation_readout: ExpectationReadout, state: QTensor, seed: int | None = None) -> Self:
+    def from_state(
+        cls, expectation_readout: ExpectationReadout, state: QTensor, seed: int | np.random.Generator | None = None
+    ) -> Self:
         # Each observable gets its own seed so that their shot noise is not correlated
         rng = np.random.default_rng(seed)
         try:
