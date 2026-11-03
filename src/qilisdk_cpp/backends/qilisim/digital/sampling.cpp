@@ -232,22 +232,9 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
         // If it's a measurement
         if (gate.get_name() == "M") {
             // Check for adjacent measurements and if we have any, do them all at once
-            int num_measurements = 0;
-            bool are_final_measurements = false;
             std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
-            for (int j = i; j < int(optimized_gates.size()); ++j) {
-                if (optimized_gates[j].get_name() == "M") {
-                    for (int target : optimized_gates[j].get_target_qubits()) {
-                        qubits_to_measure_after_gate[target] = true;
-                    }
-                    num_measurements++;
-                    if (j == int(optimized_gates.size()) - 1) {
-                        are_final_measurements = true;
-                    }
-                } else {
-                    break;
-                }
-            }
+            int num_measurements = group_measurements(optimized_gates, i, qubits_to_measure_after_gate);
+            bool are_final_measurements = (i + num_measurements == int(optimized_gates.size()));
 
             qilisdk::log_trace("[Sampling, C++] Measuring " + std::to_string(num_measurements) + " qubits at gate index " + std::to_string(i));
 
@@ -447,22 +434,9 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseMod
         // If it's a measurement
         if (gate.get_name() == "M") {
             // Check for adjacent measurements and if we have any, do them all at once
-            int num_measurements = 0;
-            bool are_final_measurements = false;
             std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
-            for (int j = i; j < int(optimized_gates.size()); ++j) {
-                if (optimized_gates[j].get_name() == "M") {
-                    for (int target : optimized_gates[j].get_target_qubits()) {
-                        qubits_to_measure_after_gate[target] = true;
-                    }
-                    num_measurements++;
-                    if (j == int(optimized_gates.size()) - 1) {
-                        are_final_measurements = true;
-                    }
-                } else {
-                    break;
-                }
-            }
+            int num_measurements = group_measurements(optimized_gates, i, qubits_to_measure_after_gate);
+            bool are_final_measurements = (i + num_measurements == int(optimized_gates.size()));
 
             // Construct the result
             if (!are_final_measurements) {
@@ -543,7 +517,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseMod
 
 #include <iostream>
 
-void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const StabilizerStateSum& initial_state, NoiseModelCpp& noise_model_cpp, StabilizerStateSum& state, const QiliSimConfig& config, const py::object& readout) {
+void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const StabilizerStateSum& initial_state, NoiseModelCpp& noise_model_cpp, StabilizerStateSum& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
     /*
     Execute a sampling functional using a stabilizer simulator.
 
@@ -574,15 +548,9 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
         warning("Monte Carlo sampling is not supported in the stabilizer simulator. Monte Carlo will be ignored.");
     }
 
-    // Throw a warning if we have mid-circuit measurements (any M followed by a gate), since the stabilizer simulator only supports final measurements
-    bool gate_after_measurement = false;
-    for (int i = int(gates.size()) - 1; i >= 0; --i) {
-        if (gates[i].get_name() != "M") {
-            gate_after_measurement = true;
-        } else if (gate_after_measurement) {
-            warning("Mid-circuit measurements are not supported in the stabilizer simulator. Only final measurements will be used.");
-            break;
-        }
+    // Throw a warning if we are using measurement collapse, since a stabilizer sum cannot represent the resulting mixed state
+    if (config.get_measurement_collapse()) {
+        warning("Measurement collapse is not supported in the stabilizer simulator. Measurement collapse will be ignored.");
     }
 
     // We start with the initial state
@@ -596,8 +564,23 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
         // Let Ctrl-C interrupt the circuit between gates
         check_signals();
 
-        // Measurements are not gates, the measured qubits are masked when constructing the result
+        // If it's a measurement
         if (gate.get_name() == "M") {
+            // Check for adjacent measurements and if we have any, do them all at once
+            std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
+            int num_measurements = group_measurements(gates, i, qubits_to_measure_after_gate);
+            bool are_final_measurements = (i + num_measurements == int(gates.size()));
+
+            // Construct the result
+            if (!are_final_measurements) {
+                py::object result = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure_after_gate);
+                intermediate_results.push_back(result);
+            }
+
+            qilisdk::log_trace("[Sampling, C++] Measuring " + std::to_string(num_measurements) + " qubits at gate index " + std::to_string(i));
+
+            // Skip the next measurements since we did them all at once
+            i += (num_measurements - 1);
             continue;
         }
 
