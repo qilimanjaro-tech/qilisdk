@@ -25,6 +25,7 @@
 namespace qilisdk::expr {
 
 uint64_t compound_hash(Kind kind, const NodePtr* first, NodeSpan rest);
+Node* allocate(Kind kind, size_t count);
 NodePtr make_node(Kind kind, const NodePtr* first, NodeSpan rest);
 
 namespace {
@@ -85,6 +86,35 @@ uint64_t mix(uint64_t h, uint64_t v) {
     h *= 0xBF58476D1CE4E5B9ULL;
     h ^= h >> 29;
     return h;
+}
+
+uint64_t count_seed(Kind kind, size_t count) {
+    /*
+    The part of a sum or product's hash that depends on its kind and operand count.
+
+    Args:
+        kind (Kind): The node kind.
+        count (size_t): The number of operands.
+
+    Returns:
+        uint64_t: The seed the operand hashes are added to.
+    */
+    return mix(static_cast<uint64_t>(kind), count);
+}
+
+uint64_t spread(Kind kind, uint64_t operand_hash) {
+    /*
+    The contribution of one operand to the hash of a sum or product. The contributions are added, so
+    the hash does not depend on the operand order and one operand can be swapped in or out in O(1).
+
+    Args:
+        kind (Kind): The kind of the node holding the operand.
+        operand_hash (uint64_t): The operand's hash.
+
+    Returns:
+        uint64_t: The operand's contribution.
+    */
+    return mix(static_cast<uint64_t>(kind) + 8, operand_hash);
 }
 
 uint64_t hash_double(double value) {
@@ -516,22 +546,6 @@ void sort_canonically(NodePtr* begin, NodePtr* end) {
     }
 }
 
-NodePtr scale(const NodePtr& base, const Num& coeff) {
-    /*
-    Prepend a numeric coefficient to a monomial. The base is a canonical monomial without a coefficient,
-    so prepending one keeps it canonical.
-
-    Args:
-        base (NodePtr&): The monomial, without a coefficient.
-        coeff (Num&): The coefficient, which should not be 0 or 1.
-
-    Returns:
-        NodePtr: The product coeff * base.
-    */
-    const NodePtr constant_factor = make_constant(coeff);
-    return make_node(Kind::Mul, &constant_factor, base->kind == Kind::Mul ? base->args : NodeSpan(&base, 1));
-}
-
 // A summand split into its coefficient and the factors of its monomial, viewed in place rather than built.
 // A product without a coefficient is viewed as its factors too, so it matches the same monomial scaled.
 struct Summand {
@@ -555,9 +569,9 @@ Summand view_summand(const NodePtr& term) {
     Summand summand;
     summand.term = &term;
     summand.coeff = Num::integer(1);
+    summand.hash = term->monomial_hash;
     if (term->kind != Kind::Mul) {
         summand.factors = NodeSpan(&term, 1);
-        summand.hash = term->hash;
         return summand;
     }
     const bool scaled = term->args[0]->kind == Kind::Constant;
@@ -567,8 +581,6 @@ Summand view_summand(const NodePtr& term) {
         // Adding to 0 turns a complex coefficient's -0.0 real part into 0.0, which reusing the node would not show
         summand.reusable = summand.coeff.is_real() || !(summand.coeff.re == 0.0 && std::signbit(summand.coeff.re));
     }
-    // A single factor stands alone, otherwise the factors hash as the product they form
-    summand.hash = summand.factors.size() == 1 ? summand.factors[0]->hash : compound_hash(Kind::Mul, nullptr, summand.factors);
     return summand;
 }
 
@@ -618,39 +630,12 @@ NodePtr rebuild_summand(const Summand& summand, const Num& coeff) {
     return (*summand.term)->kind == Kind::Mul && (*summand.term)->args.size() == summand.factors.size() ? *summand.term : make_node(Kind::Mul, summand.factors);
 }
 
-bool has_base(const NodePtr& term, const NodePtr& base) {
-    /*
-    Whether a summand is some coefficient times a monomial, without building the summand's monomial.
-
-    Args:
-        term (NodePtr&): The summand.
-        base (NodePtr&): The monomial, without a coefficient.
-
-    Returns:
-        bool: True if term is base, or a constant times base.
-    */
-    if (term->kind != Kind::Mul || term->args[0]->kind != Kind::Constant) {
-        return equal(term, base);
-    }
-    if (term->args.size() == 2) {
-        return equal(term->args[1], base);
-    }
-    if (base->kind != Kind::Mul || base->args.size() != term->args.size() - 1) {
-        return false;
-    }
-    for (size_t i = 0; i < base->args.size(); ++i) {
-        if (!equal(term->args[i + 1], base->args[i])) {
-            return false;
-        }
-    }
-    return true;
-}
-
 NodePtr add_to_sum(const NodePtr& sum, const NodePtr& term, bool sum_first) {
     /*
-    Add a single non-sum term to a canonical sum by merging it into the sorted operands. This gives
-    the same result as build_add without rebuilding its hash index, so each step of a running sum()
-    is one cheap pass.
+    Add a single non-sum term to a canonical sum by splicing it into the sorted operands. This gives
+    the same result as build_add without its hash index: like terms are found by comparing monomial
+    hashes, the new node's hash is updated rather than recomputed, and the operands are copied once,
+    so each step of a running sum() is one cheap pass.
 
     Args:
         sum (NodePtr&): The canonical sum.
@@ -661,45 +646,73 @@ NodePtr add_to_sum(const NodePtr& sum, const NodePtr& term, bool sum_first) {
     Returns:
         NodePtr: The canonical sum, or its single remaining operand.
     */
-    std::vector<NodePtr> out(sum->args.begin(), sum->args.end());
-    const auto less = [](const NodePtr& a, const NodePtr& b) { return compare(a, b) < 0; };
-    const auto insert_sorted = [&](const NodePtr& node) { out.insert(std::upper_bound(out.begin(), out.end(), node, less), node); };
-    const bool has_constant = out[0]->kind == Kind::Constant;
+    const NodeSpan terms = sum->args;
+    const bool has_constant = terms[0]->kind == Kind::Constant;
+    // The index of the operand that goes, or terms.size() for none, and the operand that comes, if any
+    size_t removed = terms.size();
+    NodePtr added;
 
     if (term->kind == Kind::Constant) {
-        const Num existing = has_constant ? out[0]->value : Num::integer(0);
+        const Num existing = has_constant ? terms[0]->value : Num::integer(0);
         const Num total = float_if_real(sum_first ? num_add(num_add(Num::integer(0), existing), term->value) : num_add(num_add(Num::integer(0), term->value), existing));
         if (has_constant) {
-            out.erase(out.begin());
+            removed = 0;
         }
         if (!num_eq(total, Num::integer(0))) {
-            out.insert(out.begin(), make_constant(total));
+            added = make_constant(total);
         }
     } else {
-        auto [base, coeff] = peel(term);
-        auto match = std::find_if(out.begin() + (has_constant ? 1 : 0), out.end(), [&](const NodePtr& existing) { return has_base(existing, base); });
-        if (match != out.end()) {
-            auto [existing_base, existing_coeff] = peel(*match);
-            coeff = sum_first ? num_add(num_add(Num::integer(0), existing_coeff), coeff) : num_add(num_add(Num::integer(0), coeff), existing_coeff);
+        const Summand incoming = view_summand(term);
+        const NodePtr* match = std::find_if(terms.begin() + (has_constant ? 1 : 0), terms.end(), [&](const NodePtr& existing) { return existing->monomial_hash == incoming.hash && same_factors(view_summand(existing).factors, incoming.factors); });
+        Num coeff;
+        Summand kept = incoming;
+        if (match != terms.end()) {
+            const Summand existing = view_summand(*match);
+            coeff = sum_first ? num_add(num_add(Num::integer(0), existing.coeff), incoming.coeff) : num_add(num_add(Num::integer(0), incoming.coeff), existing.coeff);
             // The sum keeps whichever base it met first
             if (sum_first) {
-                base = existing_base;
+                kept = existing;
             }
-            out.erase(match);
+            removed = static_cast<size_t>(match - terms.begin());
         } else {
-            coeff = num_add(Num::integer(0), coeff);
+            coeff = num_add(Num::integer(0), incoming.coeff);
         }
         coeff = float_if_real(coeff);
         if (!num_eq(coeff, Num::integer(0))) {
-            insert_sorted(num_eq(coeff, Num::integer(1)) ? base : scale(base, coeff));
+            kept.reusable = match == terms.end() && same_number(coeff, incoming.coeff);
+            added = rebuild_summand(kept, coeff);
         }
     }
 
     // The sum had at least two operands and at most one is removed, so at least one remains
-    if (out.size() == 1) {
-        return out[0];
+    const size_t count = terms.size() - (removed < terms.size() ? 1 : 0) + (added ? 1 : 0);
+    if (count == 1) {
+        return terms[removed == 0 ? 1 : 0];
     }
-    return make_node(Kind::Add, out);
+    const size_t insert_at = added ? static_cast<size_t>(std::upper_bound(terms.begin(), terms.end(), added, [](const NodePtr& a, const NodePtr& b) { return compare(a, b) < 0; }) - terms.begin()) : terms.size() + 1;
+    Node* node = allocate(Kind::Add, count);
+    auto* storage = const_cast<NodePtr*>(node->args.begin());
+    size_t out = 0;
+    for (size_t i = 0; i <= terms.size(); ++i) {
+        if (i == insert_at) {
+            new (storage + out++) NodePtr(added);
+        }
+        if (i < terms.size() && i != removed) {
+            new (storage + out++) NodePtr(terms[i]);
+        }
+    }
+    // A removed term's bits may linger, which the mask allows as it only has to cover the variables
+    node->symbol_mask = sum->symbol_mask | (added ? added->symbol_mask : 0);
+    uint64_t hash = sum->hash - count_seed(Kind::Add, terms.size()) + count_seed(Kind::Add, count);
+    if (removed < terms.size()) {
+        hash -= spread(Kind::Add, terms[removed]->hash);
+    }
+    if (added) {
+        hash += spread(Kind::Add, added->hash);
+    }
+    node->hash = hash;
+    node->monomial_hash = hash;
+    return NodePtr(node);
 }
 
 bool contains_symbol(const NodePtr& node, const NodePtr& symbol) {
@@ -713,32 +726,14 @@ bool contains_symbol(const NodePtr& node, const NodePtr& symbol) {
     Returns:
         bool: True if the variable occurs in the tree.
     */
+    if ((node->symbol_mask & symbol->symbol_mask) == 0) {
+        return false;
+    }
     if (node->kind == Kind::Variable) {
         return equal(node, symbol);
     }
     for (const NodePtr& arg : node->args) {
         if (contains_symbol(arg, symbol)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool contains_any_symbol(const NodePtr& node) {
-    /*
-    Whether any variable occurs anywhere in a tree.
-
-    Args:
-        node (NodePtr&): The tree to search.
-
-    Returns:
-        bool: True if the tree has at least one variable.
-    */
-    if (node->kind == Kind::Variable) {
-        return true;
-    }
-    for (const NodePtr& arg : node->args) {
-        if (contains_any_symbol(arg)) {
             return true;
         }
     }
@@ -1310,7 +1305,9 @@ uint64_t label_hash(const std::string& label) {
 
 uint64_t compound_hash(Kind kind, const NodePtr* first, NodeSpan rest) {
     /*
-    The hash of an operator node, from its kind, its operand count and each operand's hash in order.
+    The hash of an operator node. A power hashes its base and exponent in order, while a sum or product
+    adds up the spread of each operand's hash onto a seed for its kind and count, so that one operand
+    can be swapped in or out without rehashing the rest.
 
     Args:
         kind (Kind): The node kind.
@@ -1320,14 +1317,45 @@ uint64_t compound_hash(Kind kind, const NodePtr* first, NodeSpan rest) {
     Returns:
         uint64_t: The hash.
     */
-    uint64_t h = mix(static_cast<uint64_t>(kind), (first != nullptr ? 1 : 0) + rest.size());
+    const size_t count = (first != nullptr ? 1 : 0) + rest.size();
+    if (kind == Kind::Pow) {
+        uint64_t h = mix(static_cast<uint64_t>(kind), count);
+        if (first != nullptr) {
+            h = mix(h, (*first)->hash);
+        }
+        for (const NodePtr& arg : rest) {
+            h = mix(h, arg->hash);
+        }
+        return h;
+    }
+    uint64_t h = count_seed(kind, count);
     if (first != nullptr) {
-        h = mix(h, (*first)->hash);
+        h += spread(kind, (*first)->hash);
     }
     for (const NodePtr& arg : rest) {
-        h = mix(h, arg->hash);
+        h += spread(kind, arg->hash);
     }
     return h;
+}
+
+Node* allocate(Kind kind, size_t count) {
+    /*
+    Allocate a node with room for its operands in the same block right after it, leaving that room
+    for the caller to construct the operands in.
+
+    Args:
+        kind (Kind): The node kind.
+        count (size_t): The number of operands.
+
+    Returns:
+        Node*: The node, without references and with its operands and hashes still unset.
+    */
+    void* memory = ::operator new(sizeof(Node) + count * sizeof(NodePtr));
+    // Default- rather than value-initialized, which would zero the whole node before constructing it
+    Node* node = new (memory) Node;
+    node->kind = kind;
+    node->args = NodeSpan(reinterpret_cast<NodePtr*>(node + 1), count);
+    return node;
 }
 
 Node* allocate(Kind kind, const NodePtr* first, NodeSpan rest) {
@@ -1343,12 +1371,8 @@ Node* allocate(Kind kind, const NodePtr* first, NodeSpan rest) {
     Returns:
         Node*: The node, without references and with its hash still unset.
     */
-    const size_t count = (first != nullptr ? 1 : 0) + rest.size();
-    void* memory = ::operator new(sizeof(Node) + count * sizeof(NodePtr));
-    // Default- rather than value-initialized, which would zero the whole node before constructing it
-    Node* node = new (memory) Node;
-    node->kind = kind;
-    auto* storage = reinterpret_cast<NodePtr*>(node + 1);
+    Node* node = allocate(kind, (first != nullptr ? 1 : 0) + rest.size());
+    auto* storage = const_cast<NodePtr*>(node->args.begin());
     size_t i = 0;
     if (first != nullptr) {
         new (storage + i++) NodePtr(*first);
@@ -1356,7 +1380,6 @@ Node* allocate(Kind kind, const NodePtr* first, NodeSpan rest) {
     for (const NodePtr& arg : rest) {
         new (storage + i++) NodePtr(arg);
     }
-    node->args = NodeSpan(storage, count);
     return node;
 }
 
@@ -1374,6 +1397,15 @@ NodePtr make_node(Kind kind, const NodePtr* first, NodeSpan rest) {
     */
     Node* node = allocate(kind, first, rest);
     node->hash = compound_hash(kind, first, rest);
+    node->monomial_hash = node->hash;
+    for (const NodePtr& arg : node->args) {
+        node->symbol_mask |= arg->symbol_mask;
+    }
+    // A product with a coefficient also records the hash of its factors alone, which like terms match on
+    if (kind == Kind::Mul && node->args[0]->kind == Kind::Constant) {
+        const size_t count = node->args.size();
+        node->monomial_hash = count == 2 ? node->args[1]->hash : node->hash - count_seed(kind, count) + count_seed(kind, count - 1) - spread(kind, node->args[0]->hash);
+    }
     return NodePtr(node);
 }
 
@@ -1415,6 +1447,7 @@ NodePtr make_constant(const Num& value) {
     Node* node = allocate(Kind::Constant, nullptr, {});
     node->value = value;
     node->hash = hash;
+    node->monomial_hash = node->hash;
     cached = NodePtr(node);
     return cached;
 }
@@ -1438,6 +1471,8 @@ NodePtr make_variable(const std::string& label, py::object owner, const ClassInf
     node->parameter = info.parameter;
     node->owner = std::move(owner);
     node->hash = label_hash(label);
+    node->monomial_hash = node->hash;
+    node->symbol_mask = uint64_t{1} << (node->hash & 63);
     node->label_key = label_key(label);
     return NodePtr(node);
 }
@@ -1473,6 +1508,8 @@ NodePtr make_function(py::object cls, const std::string& name, NodePtr arg) {
     node->label_key = label_key(name);
     node->owner = std::move(cls);
     node->hash = mix(mix(static_cast<uint64_t>(Kind::Function), label_hash(name)), arg->hash);
+    node->monomial_hash = node->hash;
+    node->symbol_mask = arg->symbol_mask;
     return NodePtr(node);
 }
 
@@ -1964,17 +2001,20 @@ NodePtr derivative(const NodePtr& node, const NodePtr& symbol) {
             return constant_int(equal(node, symbol) ? 1 : 0);
         case Kind::Add: {
             std::vector<NodePtr> terms;
-            terms.reserve(node->args.size());
             for (const NodePtr& arg : node->args) {
-                terms.push_back(derivative(arg, symbol));
+                if ((arg->symbol_mask & symbol->symbol_mask) != 0) {
+                    terms.push_back(derivative(arg, symbol));
+                }
             }
             return build_add(terms);
         }
         case Kind::Mul: {
-            // Product rule: differentiate one factor at a time
+            // Product rule: differentiate one factor at a time, where a factor without the symbol adds nothing
             std::vector<NodePtr> terms;
-            terms.reserve(node->args.size());
             for (size_t i = 0; i < node->args.size(); ++i) {
+                if ((node->args[i]->symbol_mask & symbol->symbol_mask) == 0) {
+                    continue;
+                }
                 std::vector<NodePtr> factors(node->args.begin(), node->args.end());
                 factors[i] = derivative(node->args[i], symbol);
                 terms.push_back(build_mul(factors));
@@ -2119,7 +2159,7 @@ int64_t degree(const NodePtr& node) {
             break;
         }
         case Kind::Function:
-            if (!contains_any_symbol(node)) {
+            if (node->symbol_mask == 0) {
                 return 0;
             }
             break;

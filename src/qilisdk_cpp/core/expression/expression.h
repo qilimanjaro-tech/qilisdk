@@ -133,6 +133,8 @@ struct Node {
     bool custom_binary = false;  // Variable: whether it has its own to_binary
     bool parameter = false;      // Variable: whether it is a Parameter
     uint64_t hash = 0;
+    uint64_t monomial_hash = 0;           // The hash without a product's coefficient, which like terms share
+    uint64_t symbol_mask = 0;             // At least one bit per variable in the tree, by hash, so a clear bit rules a variable out
     uint64_t label_key = 0;               // Variable/Function: the label's first 8 bytes, big-endian, which order like the label
     Num value;                            // Constant: the number
     std::string label;                    // Variable: its label; Function: its NAME

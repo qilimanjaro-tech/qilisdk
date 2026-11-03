@@ -224,6 +224,39 @@ TEST_F(ExpressionTest, AddingOneTermToASumMergesIt) {
     EXPECT_EQ(r("(2 * x * y + 1) + 3 * x * y"), "1 + 5 * x * y");
 }
 
+TEST_F(ExpressionTest, RunningSumsMatchTheirFreshlyBuiltForm) {
+    py::exec(R"(
+        terms = [2 * x * y, -x, 3, y * z, x, -2 * x * y, 0.5 * z, -3, s, x * y * z, 1j * s]
+        running = 0
+        for term in terms:
+            running = running + term
+        fresh = Add.build(terms)
+    )");
+    const NodePtr running = node_of(g("running"));
+    const NodePtr fresh = node_of(g("fresh"));
+    EXPECT_TRUE(equal(running, fresh));
+    EXPECT_EQ(running->hash, fresh->hash);
+    EXPECT_EQ(running->monomial_hash, fresh->monomial_hash);
+    // Terms that cancelled may leave their bits behind, but every variable still present has its bit
+    EXPECT_EQ(running->symbol_mask & fresh->symbol_mask, fresh->symbol_mask);
+}
+
+TEST_F(ExpressionTest, ProductsKnowTheHashOfTheirMonomial) {
+    EXPECT_EQ(node_of(ev("3 * x * y"))->monomial_hash, node_of(ev("x * y"))->hash);
+    EXPECT_EQ(node_of(ev("3 * x"))->monomial_hash, node_of(g("x"))->hash);
+    EXPECT_EQ(node_of(ev("x * y"))->monomial_hash, node_of(ev("x * y"))->hash);
+    EXPECT_EQ(node_of(ev("x + y"))->monomial_hash, node_of(ev("x + y"))->hash);
+}
+
+TEST_F(ExpressionTest, SymbolMasksCoverExactlyTheVariablesBuiltIn) {
+    const uint64_t x_bit = node_of(g("x"))->symbol_mask;
+    const uint64_t p_bit = node_of(g("p"))->symbol_mask;
+    EXPECT_NE(x_bit, 0U);
+    EXPECT_EQ(node_of(ev("Constant(2)"))->symbol_mask, 0U);
+    EXPECT_EQ(node_of(ev("2 * x * p + Sin(p)"))->symbol_mask, x_bit | p_bit);
+    EXPECT_EQ(node_of(ev("Cos(p)"))->symbol_mask, p_bit);
+}
+
 TEST_F(ExpressionTest, FunctionsFoldConstantsAndCheckTheirOperand) {
     EXPECT_TRUE(python::equal(python::function(g("Sin"), py::int_(0)), ev("Constant(0.0)")));
     EXPECT_EQ(python::repr(python::function(g("Sin"), g("p"))), "Sin(p)");
@@ -282,6 +315,9 @@ TEST_F(ExpressionTest, DerivativesApplyTheUsualRules) {
     EXPECT_TRUE(python::equal(python::derivative(p, p), ev("Constant(1)")));
     EXPECT_TRUE(python::equal(python::derivative(q, p), ev("Constant(0)")));
     EXPECT_TRUE(python::equal(python::derivative(ev("p * q + p"), p), ev("q + 1")));
+    // Summands and factors without the variable are skipped rather than differentiated to zero
+    EXPECT_TRUE(python::equal(python::derivative(ev("2 * x * y + q * x + 3 * p * q * x"), p), ev("3 * q * x")));
+    EXPECT_TRUE(python::equal(python::derivative(ev("2 * x * y"), p), ev("Constant(0)")));
     EXPECT_TRUE(python::equal(python::derivative(ev("p**3"), p), ev("3 * p**2")));
     EXPECT_NEAR(python::evaluate(python::derivative(ev("p**q"), q), py::none()).cast<double>(), 8.0 * std::log(2.0), 1e-12);
     EXPECT_TRUE(python::equal(python::derivative(ev("Sin(p)"), p), ev("Cos(p)")));
