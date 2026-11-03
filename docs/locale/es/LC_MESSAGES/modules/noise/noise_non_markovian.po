@@ -1,0 +1,295 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-05 11:44+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/noise/noise_non_markovian.rst:2
+msgid "Non-Markovian Noise"
+msgstr "Ruido no markoviano"
+
+#: ../../modules/noise/noise_non_markovian.rst:4
+msgid ""
+"The noise types in :doc:`noise_types` are known as *Markovian*, meaning "
+"they act on the current state and have no memory of what happened before."
+" Many real imperfections do have memory. A two-level-system (TLS) defect "
+"near a qubit, for example, can absorb energy or phase from the qubit and "
+"hand it back later. This gives effects that no Markovian model can "
+"reproduce, such as coherence that collapses and then revives."
+msgstr ""
+"Los tipos de ruido de :doc:`noise_types` se denominan *markovianos*, es "
+"decir, actúan sobre el estado actual y no tienen memoria de lo que "
+"ocurrió antes. Muchas imperfecciones reales sí tienen memoria. Un defecto"
+" de sistema de dos niveles (TLS) cerca de un qubit, por ejemplo, puede "
+"absorber energía o fase del qubit y devolverla más tarde. Esto produce "
+"efectos que ningún modelo markoviano puede reproducir, como una "
+"coherencia que colapsa y luego reaparece."
+
+#: ../../modules/noise/noise_non_markovian.rst:10
+msgid ""
+"QiliSDK models this kind of noise with the class "
+":class:`~qilisdk.noise.environment_noise.EnvironmentNoise`. Here the "
+"source of the memory is written out as a small set of hidden "
+"**environment qubits**. They are coupled to the system, can carry their "
+"own Hamiltonian and Markovian noise, are evolved together with the "
+"system, and are traced out before results are returned. Every readout "
+"result (samples, expectation values, state tomography) refers to the "
+"system qubits only."
+msgstr ""
+"QiliSDK modela este tipo de ruido con la clase "
+":class:`~qilisdk.noise.environment_noise.EnvironmentNoise`. Aquí el "
+"origen de la memoria se representa explícitamente como un pequeño "
+"conjunto de **qubits de entorno** ocultos. Están acoplados al sistema, "
+"pueden tener su propio Hamiltoniano y ruido markoviano, evolucionan junto"
+" con el sistema y se trazan antes de devolver los resultados. Todos los "
+"resultados de lectura (muestras, valores esperados, tomografía de "
+"estados) se refieren únicamente a los qubits del sistema."
+
+#: ../../modules/noise/noise_non_markovian.rst:17
+msgid "How it works"
+msgstr "Cómo funciona"
+
+#: ../../modules/noise/noise_non_markovian.rst:19
+msgid ""
+"For a system with Hamiltonian :math:`H_S(t)`, an "
+":class:`~qilisdk.noise.environment_noise.EnvironmentNoise` adds a static "
+"coupling and environment Hamiltonian,"
+msgstr ""
+"Para un sistema con Hamiltoniano :math:`H_S(t)`, un "
+":class:`~qilisdk.noise.environment_noise.EnvironmentNoise` añade un "
+"acoplamiento estático y un Hamiltoniano del entorno,"
+
+#: ../../modules/noise/noise_non_markovian.rst:22
+#, python-brace-format
+msgid ""
+"H(t) = H_S(t) \\otimes I_E + \\sum_k g_k \\, P^{(k)}_S \\otimes P^{(k)}_E"
+" + I_S \\otimes H_E,"
+msgstr ""
+"H(t) = H_S(t) \\otimes I_E + \\sum_k g_k \\, P^{(k)}_S \\otimes P^{(k)}_E"
+" + I_S \\otimes H_E,"
+
+#: ../../modules/noise/noise_non_markovian.rst:26
+#, python-brace-format
+msgid ""
+"where each coupling term has a strength :math:`g_k`, an operator "
+":math:`P^{(k)}_S` on the system and an operator :math:`P^{(k)}_E` on the "
+"environment. The full register is evolved with the Lindblad master "
+"equation (as normally done for dynamics simulations), using both the "
+"system's Markovian noise and the environment's own Markovian noise as "
+"jump operators. Then the environment is traced out:"
+msgstr ""
+"donde cada término de acoplamiento tiene una intensidad :math:`g_k`, un "
+"operador :math:`P^{(k)}_S` sobre el sistema y un operador "
+":math:`P^{(k)}_E` sobre el entorno. El registro completo evoluciona con "
+"la ecuación maestra de Lindblad (como se hace normalmente en las "
+"simulaciones de dinámica), usando como operadores de salto tanto el ruido"
+" markoviano del sistema como el ruido markoviano propio del entorno. "
+"Después se traza el entorno:"
+
+#: ../../modules/noise/noise_non_markovian.rst:32
+#, python-brace-format
+msgid ""
+"\\rho_S(t) = \\mathrm{Tr}_E \\left[ \\rho(t) \\right], \\qquad \\rho(0) ="
+" \\rho_S(0) \\otimes \\rho_E(0)."
+msgstr ""
+"\\rho_S(t) = \\mathrm{Tr}_E \\left[ \\rho(t) \\right], \\qquad \\rho(0) ="
+" \\rho_S(0) \\otimes \\rho_E(0)."
+
+#: ../../modules/noise/noise_non_markovian.rst:36
+msgid ""
+"The reduced dynamics of :math:`\\rho_S` are non-Markovian even though the"
+" full register follows a Markovian master equation."
+msgstr ""
+"La dinámica reducida de :math:`\\rho_S` es no markoviana aunque el "
+"registro completo sigue una ecuación maestra markoviana."
+
+#: ../../modules/noise/noise_non_markovian.rst:39
+msgid ""
+"The environment qubits come after the system qubits in the register. "
+"Environment qubit indices are local to each "
+":class:`~qilisdk.noise.environment_noise.EnvironmentNoise` (``0`` to "
+"``n_environment_qubits - 1``), so several environments can be added to "
+"the same noise model and are stacked one after another."
+msgstr ""
+"Los qubits de entorno se sitúan después de los qubits del sistema en el "
+"registro. Los índices de los qubits de entorno son locales a cada "
+":class:`~qilisdk.noise.environment_noise.EnvironmentNoise` (de ``0`` a "
+"``n_environment_qubits - 1``), por lo que se pueden añadir varios "
+"entornos al mismo modelo de ruido y se colocan uno tras otro."
+
+#: ../../modules/noise/noise_non_markovian.rst:45
+msgid "Defining an environment"
+msgstr "Definir un entorno"
+
+#: ../../modules/noise/noise_non_markovian.rst:47
+msgid ":class:`~qilisdk.noise.environment_noise.EnvironmentNoise` takes:"
+msgstr ":class:`~qilisdk.noise.environment_noise.EnvironmentNoise` recibe:"
+
+#: ../../modules/noise/noise_non_markovian.rst:49
+msgid "``n_environment_qubits``: the number of hidden qubits in this environment."
+msgstr "``n_environment_qubits``: el número de qubits ocultos de este entorno."
+
+#: ../../modules/noise/noise_non_markovian.rst:50
+msgid ""
+"``couplings``: a list of ``(strength, system_operator, "
+"environment_operator)`` terms, each adding ``strength * system_operator ⊗"
+" environment_operator``. The operators can be Pauli operators or "
+"Hamiltonians, e.g. ``Z(0)`` or ``X(0) * X(1)``. The system operators use "
+"system qubit indices, while environment operators use local environment "
+"indices."
+msgstr ""
+"``couplings``: una lista de términos ``(strength, system_operator, "
+"environment_operator)``, cada uno de los cuales añade ``strength * "
+"system_operator ⊗ environment_operator``. Los operadores pueden ser "
+"operadores de Pauli o Hamiltonianos, p. ej. ``Z(0)`` o ``X(0) * X(1)``. "
+"Los operadores del sistema usan índices de qubits del sistema, mientras "
+"que los operadores del entorno usan índices locales del entorno."
+
+#: ../../modules/noise/noise_non_markovian.rst:53
+msgid ""
+"``environment_hamiltonian`` (optional): the free Hamiltonian of the "
+"environment, on local indices."
+msgstr ""
+"``environment_hamiltonian`` (opcional): el Hamiltoniano libre del "
+"entorno, sobre índices locales."
+
+#: ../../modules/noise/noise_non_markovian.rst:54
+msgid ""
+"``environment_noise`` (optional): Markovian noise on each environment "
+"qubit, as a dictionary from local environment index to a list of noise "
+"sources. Each must have a static Lindblad form, such as "
+":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping`, "
+":class:`~qilisdk.noise.dephasing.Dephasing` or a constant-rate "
+":class:`~qilisdk.noise.representations.LindbladGenerator`, since an "
+"environment qubit has no gate duration to derive rates from."
+msgstr ""
+"``environment_noise`` (opcional): ruido markoviano en cada qubit de "
+"entorno, como un diccionario que asocia cada índice local del entorno a "
+"una lista de fuentes de ruido. Cada una debe tener una forma de Lindblad "
+"estática, como "
+":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping`, "
+":class:`~qilisdk.noise.dephasing.Dephasing` o un "
+":class:`~qilisdk.noise.representations.LindbladGenerator` de tasa "
+"constante, ya que un qubit de entorno no tiene una duración de puerta de "
+"la que derivar las tasas."
+
+#: ../../modules/noise/noise_non_markovian.rst:60
+msgid ""
+"``environment_state`` (optional): the initial environment state, as a ket"
+" or a density matrix. Defaults to :math:`|0 \\dots 0\\rangle`."
+msgstr ""
+"``environment_state`` (opcional): el estado inicial del entorno, como un "
+"ket o una matriz de densidad. Por defecto es :math:`|0 \\dots 0\\rangle`."
+
+#: ../../modules/noise/noise_non_markovian.rst:63
+msgid ""
+"Coupling strengths, rates and gate/schedule times are combined directly, "
+"so they must use consistent units."
+msgstr ""
+"Las intensidades de acoplamiento, las tasas y los tiempos de "
+"puerta/programación se combinan directamente, por lo que deben usar "
+"unidades coherentes."
+
+#: ../../modules/noise/noise_non_markovian.rst:65
+msgid ""
+"An :class:`~qilisdk.noise.environment_noise.EnvironmentNoise` can only be"
+" added globally, since its couplings already name the system qubits it "
+"acts on:"
+msgstr ""
+"Un :class:`~qilisdk.noise.environment_noise.EnvironmentNoise` solo se "
+"puede añadir de forma global, ya que sus acoplamientos ya indican los "
+"qubits del sistema sobre los que actúa:"
+
+#: ../../modules/noise/noise_non_markovian.rst:87
+msgid "Example: coherence revivals"
+msgstr "Ejemplo: reapariciones de la coherencia"
+
+#: ../../modules/noise/noise_non_markovian.rst:89
+msgid ""
+"In a Ramsey-style experiment a qubit is prepared in :math:`|+\\rangle` "
+"and left idle. With Markovian dephasing :math:`\\langle X \\rangle` only "
+"decays. A qubit coupled through :math:`J \\, Z \\otimes Z` to a TLS in "
+":math:`|+\\rangle` instead follows :math:`\\langle X \\rangle = \\cos(2 J"
+" t)`: the coherence collapses at :math:`t = \\pi / 4J` and comes back at "
+":math:`t = \\pi / 2J` (with the opposite sign) and :math:`t = \\pi / J`. "
+"In a digital circuit the idle time is set through the gate time of an "
+":class:`~qilisdk.digital.gates.I` gate:"
+msgstr ""
+"En un experimento de tipo Ramsey se prepara un qubit en "
+":math:`|+\\rangle` y se deja en reposo. Con un desfase markoviano, "
+":math:`\\langle X \\rangle` solo decae. En cambio, un qubit acoplado "
+"mediante :math:`J \\, Z \\otimes Z` a un TLS en :math:`|+\\rangle` sigue "
+":math:`\\langle X \\rangle = \\cos(2 J t)`: la coherencia colapsa en "
+":math:`t = \\pi / 4J` y reaparece en :math:`t = \\pi / 2J` (con el signo "
+"opuesto) y en :math:`t = \\pi / J`. En un circuito digital, el tiempo de "
+"reposo se fija mediante el tiempo de puerta de una puerta "
+":class:`~qilisdk.digital.gates.I`:"
+
+#: ../../modules/noise/noise_non_markovian.rst:134
+msgid "which prints"
+msgstr "lo que imprime"
+
+#: ../../modules/noise/noise_non_markovian.rst:143
+msgid "Example: analog evolution"
+msgstr "Ejemplo: evolución analógica"
+
+#: ../../modules/noise/noise_non_markovian.rst:145
+msgid ""
+"The same environment can be attached to an "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`. The "
+"coupling and environment Hamiltonian act at every time step of the "
+"schedule:"
+msgstr ""
+"El mismo entorno se puede asociar a una "
+":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`. El "
+"acoplamiento y el Hamiltoniano del entorno actúan en cada paso de tiempo "
+"de la programación:"
+
+#: ../../modules/noise/noise_non_markovian.rst:178
+msgid "Several environments"
+msgstr "Varios entornos"
+
+#: ../../modules/noise/noise_non_markovian.rst:180
+msgid ""
+"Each :class:`~qilisdk.noise.environment_noise.EnvironmentNoise` is an "
+"independent set of environment qubits, placed after the system qubits in "
+"the order they were added. For example, two TLSs coupled to different "
+"qubits of a two-qubit system:"
+msgstr ""
+"Cada :class:`~qilisdk.noise.environment_noise.EnvironmentNoise` es un "
+"conjunto independiente de qubits de entorno, situado después de los "
+"qubits del sistema en el orden en que se añadieron. Por ejemplo, dos TLS "
+"acoplados a qubits distintos de un sistema de dos qubits:"
+
+#: ../../modules/noise/noise_non_markovian.rst:202
+msgid ""
+"Environment noise can be combined with Markovian noise on the system, as "
+"long as that noise has a Lindblad form (for example "
+":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping` or "
+":class:`~qilisdk.noise.dephasing.Dephasing`, globally or per qubit), and "
+"with :class:`~qilisdk.noise.readout_assignment.ReadoutAssignment` and "
+"parameter perturbations."
+msgstr ""
+"El ruido de entorno se puede combinar con ruido markoviano en el sistema,"
+" siempre que dicho ruido tenga una forma de Lindblad (por ejemplo "
+":class:`~qilisdk.noise.amplitude_damping.AmplitudeDamping` o "
+":class:`~qilisdk.noise.dephasing.Dephasing`, de forma global o por "
+"qubit), así como con "
+":class:`~qilisdk.noise.readout_assignment.ReadoutAssignment` y con "
+"perturbaciones de parámetros."
+

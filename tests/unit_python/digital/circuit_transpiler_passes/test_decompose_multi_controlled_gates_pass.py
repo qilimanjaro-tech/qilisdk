@@ -719,8 +719,10 @@ def test_decompose_pass_of_multi_controlled_generic_gate():
     multi_qubit_gate = MagicMock(spec=BasicGate)
     multi_qubit_gate.nqubits = 2
     multi_qubit_gate._parameters = {}
-    controlled_gate = Controlled(2, basic_gate=multi_qubit_gate)
-    circuit = Circuit(3)
+    multi_qubit_gate.control_qubits = ()
+    multi_qubit_gate.target_qubits = (0, 3)
+    controlled_gate = Controlled(1, 2, basic_gate=multi_qubit_gate)
+    circuit = Circuit(4)
     circuit.add(controlled_gate)
     with pytest.raises(NotImplementedError, match="Controlled version of multi-qubit gates is not supported"):
         DecomposeMultiControlledGatesPass().run(circuit)
