@@ -44,8 +44,11 @@ class Gate {
     std::string get_id() const;
     SparseMatrix get_base_matrix() const;
     SparseMatrix get_full_matrix(int num_qubits) const;
+    DenseMatrix get_local_matrix() const;
 };
 
+int gate_num_controls(const std::string& name);
+std::string normalize_gate_name(const std::string& name);
 std::ostream& operator<<(std::ostream& os, const Gate& gate);
 std::ostream& operator<<(std::ostream& os, const std::vector<Gate>& gates);
 

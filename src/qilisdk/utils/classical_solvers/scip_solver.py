@@ -17,6 +17,7 @@ from typing import Any, TypeAlias
 from pyscipopt import Expr
 from pyscipopt import Model as ScipModel
 from pyscipopt.recipes.nonlinear import set_nonlinear_objective
+from pyscipopt.scip import GenExpr
 
 from qilisdk.core import Model
 from qilisdk.core.comparison import ComparisonOperation
@@ -27,7 +28,7 @@ from qilisdk.core.variables import BaseVariable, BinaryVariable, Domain, RealNum
 from .base_solver import ClassicalSolver, ClassicalSolverResult, _assert_real, _variable_bounds
 
 # What SCIP accepts as an operand: one of its expressions (``Variable`` is an ``Expr``) or a plain number.
-ScipExpr: TypeAlias = Expr | float
+ScipExpr: TypeAlias = Expr | GenExpr | float
 
 
 def _expression_to_scip_expr(expression: Expression, var_exprs: dict[BaseVariable, ScipExpr]) -> ScipExpr:
@@ -144,10 +145,13 @@ class ScipSolver(ClassicalSolver):
         # Translate the objective, keeping the model's optimization sense
         sense = "maximize" if model.objective.sense is ObjectiveSense.MAXIMIZE else "minimize"
         objective_expr = _expression_to_scip_expr(model.objective.term, var_exprs)
-        try:
-            scip_model.setObjective(objective_expr, sense=sense)
-        except ValueError:
+        if isinstance(objective_expr, GenExpr):
             set_nonlinear_objective(scip_model, objective_expr, sense=sense)
+        else:
+            try:
+                scip_model.setObjective(objective_expr, sense=sense)
+            except ValueError:
+                set_nonlinear_objective(scip_model, objective_expr, sense=sense)
 
         # Add each constraint as a hard constraint.
         for constraint in model.constraints:
@@ -171,10 +175,10 @@ class ScipSolver(ClassicalSolver):
 
         # Solve the model
         scip_model.optimize()
-        if scip_model.getNSols() == 0:
+        solution = scip_model.getBestSol()
+        if solution is None or scip_model.getNSols() == 0:
             raise ValueError(f"SCIP found no feasible solution (status: {scip_model.getStatus()}).")
 
         # Extract the best solution and return it
-        solution = scip_model.getBestSol()
         best_sample = {v: _decode_scip_value(v, solution[scip_var]) for v, scip_var in scip_vars.items()}
         return ClassicalSolverResult.from_model(model, best_sample)

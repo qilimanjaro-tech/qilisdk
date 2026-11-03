@@ -398,4 +398,24 @@ TEST(GateEdgeTest, RZAtTwoPI_IsIdentityUpToGlobalPhase) {
     EXPECT_NEAR(std::abs(m(1, 0)), 0.0, kTol);
 }
 
+TEST_F(GateTest, FullMatrixRespectsReversedTargetsOnWholeRegister) {
+    // CNOT-like base matrix (control first, target second) placed on targets {1, 0}: qubit 1 controls qubit 0
+    SparseMatrix base(4, 4);
+    base.insert(0, 0) = 1.0;
+    base.insert(1, 1) = 1.0;
+    base.insert(2, 3) = 1.0;
+    base.insert(3, 2) = 1.0;
+    base.makeCompressed();
+
+    Eigen::MatrixXcd reversed = toDense(Gate("U", base, {}, {1, 0}, {}).get_full_matrix(2));
+
+    Eigen::MatrixXcd expected = Eigen::MatrixXcd::Zero(4, 4);
+    expected(0, 0) = 1.0;
+    expected(2, 2) = 1.0;
+    expected(1, 3) = 1.0;
+    expected(3, 1) = 1.0;
+    EXPECT_TRUE(reversed.isApprox(expected, kTol));
+    EXPECT_TRUE(toDense(Gate("U", base, {}, {0, 1}, {}).get_full_matrix(2)).isApprox(toDense(base), kTol));
+}
+
 // GCOV_EXCL_BR_STOP
