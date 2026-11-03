@@ -42,11 +42,9 @@ class PauliString {
 
     struct HashFunction {
         std::size_t operator()(const PauliString& ps) const {
-            std::size_t hash = 0;
-            for (size_t i = 0; i < size_t(ps.nqubits); ++i) {
-                hash ^= std::hash<bool>()(ps.x_mask[i]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-                hash ^= std::hash<bool>()(ps.z_mask[i]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-            }
+            // Hash whole words rather than bit by bit
+            std::size_t hash = std::hash<Bitset>()(ps.x_mask);
+            hash ^= std::hash<Bitset>()(ps.z_mask) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
             return hash;
         }
     };
