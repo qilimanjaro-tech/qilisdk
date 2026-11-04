@@ -29,6 +29,12 @@ if TYPE_CHECKING:
     from qilisdk.noise.noise_model import NoiseModel
     from qilisdk.readout import ReadoutMethod
 
+# Below these sizes a statevector simulation is slowed down by the threading overhead, so when the number of
+# threads is left to be chosen automatically it runs on a single thread. Monte Carlo simulations are not
+# limited, since they parallelize over the trajectories instead.
+_MIN_PARALLEL_QUBITS_DIGITAL = 12
+_MIN_PARALLEL_QUBITS_ANALOG = 9
+
 
 class QiliSim(Backend):
     """Backend that runs digital-circuit and analog time-evolution experiments using a custom C++ simulator.
@@ -121,6 +127,7 @@ class QiliSim(Backend):
         self._solver_config.update(execution_config.get_config())
         self._solver_config.update(digital_simulation_method.get_config())
         self._solver_config.update({"atol": get_settings().atol})
+        self._auto_num_threads = execution_config.num_threads is None
 
         logger.debug(
             "[QiliSim] Initialized QiliSim backend (analog={}, digital={}, noise_model={})",
@@ -149,6 +156,16 @@ class QiliSim(Backend):
         """Return the full flattened solver configuration used by the C++ backend."""
         return dict(self._solver_config)
 
+    def _solver_config_for(self, nqubits: int, min_parallel_qubits: int) -> SolverConfigDict:
+        """Return the solver config, limited to a single thread if the number of threads is chosen automatically
+        and the simulation is too small to benefit from more."""
+        if self._auto_num_threads and not self._solver_config["monte_carlo"] and nqubits < min_parallel_qubits:
+            logger.debug(
+                "[QiliSim] Running {} qubits on a single thread, as it is too small to benefit from more", nqubits
+            )
+            return {**self._solver_config, "num_threads": 1}
+        return self._solver_config
+
     def _execute_digital_propagation(
         self,
         functional: DigitalPropagation,
@@ -173,8 +190,13 @@ class QiliSim(Backend):
             len(functional.circuit.gates),
             len(readout),
         )
+        # Only the statevector methods scale with the number of qubits, so only they are limited
+        is_statevector = self._solver_config["digital_method"] in {"statevector", "statevector_matrix_free"}
+        solver_config = self._solver_config_for(
+            functional.circuit.nqubits, _MIN_PARALLEL_QUBITS_DIGITAL if is_statevector else 0
+        )
         result = self.qili_sim.execute_digital_propagation(
-            functional, readout, self._noise_model, functional.initial_state, self._solver_config
+            functional, readout, self._noise_model, functional.initial_state, solver_config
         )
         logger.info("[QiliSim] Digital Propagation finished")
         return result
@@ -197,7 +219,8 @@ class QiliSim(Backend):
         logger.info("[QiliSim] Executing TimeEvolution (T={}, dt={})", functional.schedule.T, functional.schedule.dt)
 
         # Execute the time evolution
-        result = self.qili_sim.execute_analog_evolution(functional, readout, self._noise_model, self._solver_config)
+        solver_config = self._solver_config_for(functional.schedule.nqubits, _MIN_PARALLEL_QUBITS_ANALOG)
+        result = self.qili_sim.execute_analog_evolution(functional, readout, self._noise_model, solver_config)
 
         logger.info("[QiliSim] TimeEvolution finished")
         return result
@@ -221,7 +244,8 @@ class QiliSim(Backend):
         logger.info("[QiliSim] Executing Quantum Reservoir")
 
         # Execute the time evolution
-        result = self.qili_sim.execute_quantum_reservoir(functional, readout, self._noise_model, self._solver_config)
+        solver_config = self._solver_config_for(functional.nqubits, _MIN_PARALLEL_QUBITS_ANALOG)
+        result = self.qili_sim.execute_quantum_reservoir(functional, readout, self._noise_model, solver_config)
 
         logger.info("[QiliSim] Quantum Reservoir finished")
         return result

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 16:45+0200\n"
+"POT-Creation-Date: 2026-11-04 14:00+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -465,8 +465,7 @@ msgstr "``truncation_cutoff``"
 
 #: ../../modules/backends/backends_qilisim.rst:224
 msgid "Singular values below this fraction of the largest are discarded."
-msgstr ""
-"Es descarten els valors singulars per sota d'aquesta fracció del més gran."
+msgstr "Es descarten els valors singulars per sota d'aquesta fracció del més gran."
 
 #: ../../modules/backends/backends_qilisim.rst:226
 msgid ""
@@ -502,11 +501,11 @@ msgstr ""
 
 #: ../../modules/backends/backends_qilisim.rst:244
 msgid ""
-"``num_threads`` controls the number of threads used for parallelization, "
-"defaults to using all available cores."
-msgstr ""
-"``num_threads`` controla el nombre de fils utilitzats per a la "
-"paral·lelització; per defecte utilitza tots els nuclis disponibles."
+"``num_threads`` controls the number of threads used for parallelization. "
+"By default all available cores are used, except for small simulations "
+"which run on a single thread since they are slowed down by the threading "
+"overhead. Set it to ``0`` to always use all available cores."
+msgstr "``num_threads`` controla el nombre de fils utilitzats per a la paral·lelització. Per defecte s'utilitzen tots els nuclis disponibles, excepte en les simulacions petites, que s'executen en un sol fil, ja que la sobrecàrrega dels fils les alenteix. Establiu-lo a ``0`` per utilitzar sempre tots els nuclis disponibles."
 
 #: ../../modules/backends/backends_qilisim.rst:245
 msgid ""
@@ -796,4 +795,14 @@ msgstr ""
 #~ "un unraveling de Monte Carlo; deixeu-"
 #~ "ho a ``None`` per a una evolució"
 #~ " determinista de l'equació mestra."
+
+#~ msgid ""
+#~ "``num_threads`` controls the number of "
+#~ "threads used for parallelization, defaults "
+#~ "to using all available cores."
+#~ msgstr ""
+#~ "``num_threads`` controla el nombre de "
+#~ "fils utilitzats per a la "
+#~ "paral·lelització; per defecte utilitza tots"
+#~ " els nuclis disponibles."
 
