@@ -2498,6 +2498,72 @@ QTensorCpp QTensorCpp::uniform(int nqubits) {
     return result;
 }
 
+QTensorCpp QTensorCpp::w(int nqubits) {
+    /*
+    Create a W state for the specified number of qubits, returning a new QTensor as the result.
+    This is the equal superposition of all basis states with exactly one qubit in the |1> state.
+
+    Args:
+        nqubits (int): The number of qubits in the W state.
+
+    Returns:
+        QTensorCpp: A new QTensor that is the W state for the specified number of qubits.
+
+    Raises:
+        py::value_error: If the number of qubits is less than one.
+    */
+    if (nqubits < 1) {
+        throw py::value_error("Number of qubits must be at least one");
+    }
+    Eigen::Index dim = Eigen::Index(1) << nqubits;
+    const Complex amplitude = 1.0 / std::sqrt(static_cast<double>(nqubits));
+    std::vector<std::pair<Eigen::Index, Complex>> entries;
+    entries.reserve(nqubits);
+    for (int i = 0; i < nqubits; ++i) {
+        entries.push_back({Eigen::Index(1) << i, amplitude});
+    }
+    return _col_ket_from_entries(dim, entries);
+}
+
+QTensorCpp QTensorCpp::random(int nqubits, std::uint32_t seed) {
+    /*
+    Create a random normalized state for the specified number of qubits, returning a new QTensor as the result.
+
+    The state is sampled uniformly over all pure states (i.e. from the Haar measure). This is done by
+    drawing the real and imaginary part of each amplitude from a standard normal distribution and then
+    normalizing, since this distribution is invariant under any unitary and so has no preferred direction.
+
+    Args:
+        nqubits (int): The number of qubits in the random state.
+        seed (std::uint32_t): The seed for the random generator.
+
+    Returns:
+        QTensorCpp: A new QTensor that is a random state for the specified number of qubits.
+
+    Raises:
+        py::value_error: If the number of qubits is negative.
+    */
+    if (nqubits < 0) {
+        throw py::value_error("Number of qubits must be non-negative");
+    }
+    Eigen::Index dim = Eigen::Index(1) << nqubits;
+    std::mt19937 gen(seed);
+    std::normal_distribution<double> normal(0.0, 1.0);
+    DenseMatrix vec(dim, 1);
+    for (Eigen::Index i = 0; i < dim; ++i) {
+        // Separate statements since C++ doesn't specify the evaluation order of constructor arguments,
+        // so drawing both inside Complex(...) could give a different state for the same seed on another compiler
+        double real = normal(gen);
+        double imag = normal(gen);
+        vec(i, 0) = Complex(real, imag);
+    }
+    vec.normalize();
+    QTensorCpp result;
+    result._data = std::move(vec);
+    result._format = StorageFormat::Dense;
+    return result;
+}
+
 QTensorCpp QTensorCpp::reset_qubits_python(const py::object& qubits) {
     /*
     Reset the specified qubits in this QTensor, returning a new QTensor as the result.

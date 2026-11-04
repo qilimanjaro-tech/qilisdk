@@ -1030,6 +1030,50 @@ def test_qtensor_uniform():
     np.testing.assert_allclose(qunif.dense(), expected.dense(), atol=1e-8)
 
 
+def test_qtensor_w():
+    qw = QTensor.w(3)
+    expected = (ket(0, 0, 1) + ket(0, 1, 0) + ket(1, 0, 0)) * (1 / np.sqrt(3))
+    np.testing.assert_allclose(qw.dense(), expected.dense(), atol=1e-8)
+    np.testing.assert_allclose(QTensor.w(1).dense(), ket(1).dense(), atol=1e-8)
+
+
+def test_qtensor_w_no_qubits():
+    with pytest.raises(ValueError, match="at least one"):
+        QTensor.w(0)
+
+
+@pytest.mark.parametrize("nqubits", [1, 3])
+def test_qtensor_random(nqubits):
+    state = QTensor.random(nqubits, seed=42)
+    assert state.is_ket()
+    assert state.nqubits == nqubits
+    assert np.isclose(state.norm(), 1.0)
+
+
+def test_qtensor_random_seed():
+    state = QTensor.random(3, seed=7)
+    same_seed = QTensor.random(3, seed=7)
+    other_seed = QTensor.random(3, seed=8)
+    unseeded = QTensor.random(3)
+    np.testing.assert_array_equal(state.dense(), same_seed.dense())
+    assert not np.allclose(state.dense(), other_seed.dense())
+    assert np.isclose(unseeded.norm(), 1.0)
+
+
+def test_qtensor_random_is_haar():
+    # For Haar random states the overlap with any fixed state has mean 1/d and second moment 2/(d(d+1))
+    nqubits = 2
+    dim = 2**nqubits
+    overlaps = np.array([abs(QTensor.random(nqubits, seed=seed).dense()[0, 0]) ** 2 for seed in range(4000)])
+    assert np.isclose(overlaps.mean(), 1 / dim, atol=0.01)
+    assert np.isclose((overlaps**2).mean(), 2 / (dim * (dim + 1)), atol=0.01)
+
+
+def test_qtensor_random_negative_qubits():
+    with pytest.raises(ValueError, match="non-negative"):
+        QTensor.random(-1)
+
+
 def test_qtensor_entropies():
     qket = ket(0, 1)
     qdm = qket.to_density_matrix()
