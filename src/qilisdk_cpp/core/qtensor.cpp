@@ -2510,10 +2510,13 @@ QTensorCpp QTensorCpp::w(int nqubits) {
         QTensorCpp: A new QTensor that is the W state for the specified number of qubits.
 
     Raises:
-        py::value_error: If the number of qubits is less than one.
+        py::value_error: If the number of qubits is less than one or more than MAX_QUBITS_DENSE.
     */
     if (nqubits < 1) {
         throw py::value_error("Number of qubits must be at least one");
+    }
+    if (nqubits > MAX_QUBITS_DENSE) {
+        throw py::value_error("Number of qubits must be at most " + std::to_string(MAX_QUBITS_DENSE));
     }
     Eigen::Index dim = Eigen::Index(1) << nqubits;
     const Complex amplitude = 1.0 / std::sqrt(static_cast<double>(nqubits));
@@ -2533,6 +2536,10 @@ QTensorCpp QTensorCpp::random(int nqubits, std::uint32_t seed) {
     drawing the real and imaginary part of each amplitude from a standard normal distribution and then
     normalizing, since this distribution is invariant under any unitary and so has no preferred direction.
 
+    The normal samples come from a Box-Muller transform of the raw generator output rather than from
+    std::normal_distribution, whose algorithm differs between standard libraries, so that the same seed
+    gives the same state on every platform.
+
     Args:
         nqubits (int): The number of qubits in the random state.
         seed (std::uint32_t): The seed for the random generator.
@@ -2541,21 +2548,27 @@ QTensorCpp QTensorCpp::random(int nqubits, std::uint32_t seed) {
         QTensorCpp: A new QTensor that is a random state for the specified number of qubits.
 
     Raises:
-        py::value_error: If the number of qubits is negative.
+        py::value_error: If the number of qubits is negative or more than MAX_QUBITS_DENSE.
     */
     if (nqubits < 0) {
         throw py::value_error("Number of qubits must be non-negative");
     }
+    if (nqubits > MAX_QUBITS_DENSE) {
+        throw py::value_error("Number of qubits must be at most " + std::to_string(MAX_QUBITS_DENSE));
+    }
     Eigen::Index dim = Eigen::Index(1) << nqubits;
     std::mt19937 gen(seed);
-    std::normal_distribution<double> normal(0.0, 1.0);
+    // M_PI is not a standard C++ macro (undefined under MSVC without _USE_MATH_DEFINES), so use an explicit constant
+    constexpr double pi = 3.14159265358979323846;
+    const double inv_two_pow_32 = 1.0 / 4294967296.0;
     DenseMatrix vec(dim, 1);
     for (Eigen::Index i = 0; i < dim; ++i) {
         // Separate statements since C++ doesn't specify the evaluation order of constructor arguments,
-        // so drawing both inside Complex(...) could give a different state for the same seed on another compiler
-        double real = normal(gen);
-        double imag = normal(gen);
-        vec(i, 0) = Complex(real, imag);
+        // and u1 is in (0, 1] so that the log is finite
+        double u1 = (static_cast<double>(gen()) + 1.0) * inv_two_pow_32;
+        double u2 = static_cast<double>(gen()) * inv_two_pow_32;
+        double radius = std::sqrt(-2.0 * std::log(u1));
+        vec(i, 0) = std::polar(radius, 2.0 * pi * u2);
     }
     vec.normalize();
     QTensorCpp result;

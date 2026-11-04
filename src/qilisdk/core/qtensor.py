@@ -712,7 +712,7 @@ class QTensor:
             QTensor: A new QTensor representing the W state.
 
         Raises:
-            ValueError: If ``nqubits`` is less than one.
+            ValueError: If ``nqubits`` is less than one or more than 30.
         """
         logger.trace("[QTensor] QTensor.w creating W state on {} qubits", nqubits)
         return QTensor(QTensorCpp.w(nqubits))
@@ -733,7 +733,7 @@ class QTensor:
             QTensor: A new QTensor representing the random state.
 
         Raises:
-            ValueError: If ``nqubits`` is negative.
+            ValueError: If ``nqubits`` is negative or more than 30.
         """
         if seed is None:
             seed = secrets.randbits(32)

@@ -813,6 +813,10 @@ TEST(WTest, NoQubits_Throws) {
     EXPECT_THROW(QTensorCpp::w(0), py::value_error);
 }
 
+TEST(WTest, TooManyQubits_Throws) {
+    EXPECT_THROW(QTensorCpp::w(MAX_QUBITS_DENSE + 1), py::value_error);
+}
+
 TEST(RandomTest, Normalized_AndDeterministicForSeed) {
     QTensorCpp q = QTensorCpp::random(3, 42);
     EXPECT_EQ(q.get_shape().first, 8);
@@ -823,6 +827,10 @@ TEST(RandomTest, Normalized_AndDeterministicForSeed) {
 
 TEST(RandomTest, NegativeQubits_Throws) {
     EXPECT_THROW(QTensorCpp::random(-1, 42), py::value_error);
+}
+
+TEST(RandomTest, TooManyQubits_Throws) {
+    EXPECT_THROW(QTensorCpp::random(MAX_QUBITS_DENSE + 1, 42), py::value_error);
 }
 
 TEST(TensorProductTest, Empty_Throws) {

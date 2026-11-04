@@ -1042,6 +1042,11 @@ def test_qtensor_w_no_qubits():
         QTensor.w(0)
 
 
+def test_qtensor_w_too_many_qubits():
+    with pytest.raises(ValueError, match="at most 30"):
+        QTensor.w(31)
+
+
 @pytest.mark.parametrize("nqubits", [1, 3])
 def test_qtensor_random(nqubits):
     state = QTensor.random(nqubits, seed=42)
@@ -1072,6 +1077,18 @@ def test_qtensor_random_is_haar():
 def test_qtensor_random_negative_qubits():
     with pytest.raises(ValueError, match="non-negative"):
         QTensor.random(-1)
+
+
+def test_qtensor_random_too_many_qubits():
+    with pytest.raises(ValueError, match="at most 30"):
+        QTensor.random(31)
+
+
+def test_qtensor_random_same_on_every_platform():
+    # The amplitudes come from raw Mersenne Twister output, so they must not depend on the standard library
+    state = QTensor.random(1, seed=42)
+    expected = np.array([[0.28114396 - 0.9338158j], [0.08985663 + 0.20216802j]])
+    np.testing.assert_allclose(state.dense(), expected, atol=1e-7)
 
 
 def test_qtensor_entropies():
