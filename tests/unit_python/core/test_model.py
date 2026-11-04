@@ -14,6 +14,8 @@
 
 
 import copy
+import operator
+from fractions import Fraction
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -1829,14 +1831,15 @@ def test_slack_penalty_vanishes_exactly_on_real_valued_feasible_set(name, operat
             assert penalty > 0, f"{name}: infeasible x={value} was not penalised"
 
 
-def _min_energy_by_items(qubo, a, b):
-    """Lowest energy of ``qubo`` at each assignment of ``a`` and ``b``, minimising over every other variable."""
+def _min_energy_by_items(qubo, *items):
+    """Lowest energy of ``qubo`` at each assignment of ``items``, minimising over every other variable."""
     term = qubo.qubo_objective.term
-    bins = term.variables()
+    # An item whose coefficient was rounded to zero no longer appears in the QUBO, but still takes both values
+    bins = list({*items, *term.variables()})
     energies = {}
     for i in range(2 ** len(bins)):
         assignment = {v: (i >> k) & 1 for k, v in enumerate(bins)}
-        key = (assignment[a], assignment[b])
+        key = tuple(assignment[item] for item in items)
         energies[key] = min(energies.get(key, np.inf), term.evaluate(assignment))
     return energies
 
@@ -2009,13 +2012,7 @@ def test_real_valued_coefficients_are_rounded_to_three_significant_digits_by_def
     m.add_constraint("c", LEQ(np.pi * a + np.e * b + c, 4))
 
     qubo = m.to_qubo()
-    term = qubo.qubo_objective.term
-    bins = term.variables()
-    penalties = {}
-    for i in range(2 ** len(bins)):
-        assignment = {v: (i >> k) & 1 for k, v in enumerate(bins)}
-        key = (assignment[a], assignment[b], assignment[c])
-        penalties[key] = min(penalties.get(key, np.inf), term.evaluate(assignment))
+    penalties = _min_energy_by_items(qubo, a, b, c)
 
     assert len(qubo.variables()) == 3 + 8
     for key, penalty in penalties.items():
@@ -2094,6 +2091,97 @@ def test_real_valued_knapsack_qubo_minimum_is_model_optimum():
     energies = _min_energy_by_items(m.to_qubo(), a, b)
 
     assert min(energies, key=energies.get) == (1, 0)
+
+
+@pytest.mark.parametrize(
+    ("operation", "holds", "coefficients", "rhs", "max_decimals_in_slack", "exact"),
+    [
+        # Exact within three significant digits, so the integer form keeps exactly the same feasible assignments
+        (LEQ, operator.le, [2.5, 2.5, 1.25], 4.9, None, True),
+        (GEQ, operator.ge, [1.25, -0.75, 2.0], 1.5, None, True),
+        (LT, operator.lt, [0.01, 0.02, -0.03], 0.0, None, True),
+        (GT, operator.gt, [-1.5, 3.25, 0.125], 1.75, None, True),
+        # Rounding the small coefficients away and moving the bound past their error would exclude every assignment,
+        # so these are retried at the finest scale, where they are exact
+        (LEQ, operator.le, [100, 0.5, 100, -0.5], -0.5, None, True),
+        (GEQ, operator.ge, [-0.001, -0.001, -1, 0.001], 0.001, None, True),
+        (LT, operator.lt, [1, -0.001, -0.001], -0.001, None, True),
+        (GT, operator.gt, [0.001, 0.001, -1], 0.001, None, True),
+        (LEQ, operator.le, [0.3, 0.3], 0.5, 0, True),
+        # Rounded, which may exclude feasible assignments close to the bound, but never admits an infeasible one
+        (LEQ, operator.le, [np.pi, np.e, -1 / 3], 2.5, None, False),
+        (GEQ, operator.ge, [100, 0.5, -0.7], 99.6, None, False),
+        (LT, operator.lt, [0.123456, -0.654321, 0.5], 0.1, None, False),
+        (GT, operator.gt, [1000, -0.001, 0.37], 0.2, None, False),
+    ],
+)
+def test_slack_penalty_agrees_with_real_valued_feasible_set(
+    monkeypatch, operation, holds, coefficients, rhs, max_decimals_in_slack, exact
+):
+    items = [BinaryVariable(f"x{i}") for i in range(len(coefficients))]
+    m = Model("m")
+    m.set_objective(0 * items[0])
+    m.add_constraint("c", operation(sum(c * x for c, x in zip(coefficients, items, strict=True)), rhs))
+    warning = MagicMock()
+    monkeypatch.setattr(model_module.logger, "warning", warning)
+
+    penalties = _min_energy_by_items(m.to_qubo(max_decimals_in_slack=max_decimals_in_slack), *items)
+
+    # Decided on the decimals as written, since float64 sums can land either side of a bound they lie on
+    feasible = {
+        key
+        for key in penalties
+        if holds(sum(Fraction(str(c)) * k for c, k in zip(coefficients, key, strict=True)), Fraction(str(rhs)))
+    }
+    for key, penalty in penalties.items():
+        if key not in feasible:
+            assert penalty > 0, f"infeasible {key} was not penalised"
+        elif exact:
+            assert penalty == pytest.approx(0), f"feasible {key} was penalised ({penalty})"
+    assert min(penalties[key] for key in feasible) == pytest.approx(0)
+    assert warning.called is not exact
+
+
+@pytest.mark.parametrize(
+    "constraint",
+    [
+        # Only a = b = 1 is feasible, lying exactly on the bound, which rounding at any scale moves past
+        lambda a, b: LEQ(-np.pi * a - np.e * b, -(np.pi + np.e)),
+        lambda a, b: GEQ(np.pi * a + np.e * b, np.pi + np.e),
+    ],
+)
+def test_constraint_that_no_scale_can_round_keeps_its_real_coefficients(constraint):
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", constraint(a, b))
+
+    penalties = _min_energy_by_items(m.to_qubo(), a, b)
+
+    assert penalties[1, 1] == pytest.approx(0)
+    for key in [(0, 0), (0, 1), (1, 0)]:
+        assert penalties[key] > 0, f"infeasible (a, b)={key} was not penalised"
+
+
+@pytest.mark.parametrize(
+    "constraint",
+    [
+        lambda a, b: LEQ(0.5 * a + 0.5 * b, -0.1),
+        lambda a, b: GEQ(0.5 * a + 0.5 * b, 1.1),
+        lambda a, b: LT(0.5 * a + 0.5 * b, 0),
+        lambda a, b: GT(0.5 * a + 0.5 * b, 1),
+        # Rounding 0.5 to 0 next to 100 also excludes every assignment, but so does the original constraint
+        lambda a, b: LEQ(100 * a + 0.5 * b, -0.1),
+    ],
+)
+def test_unsatisfiable_real_valued_constraint_is_rejected(constraint):
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", constraint(a, b))
+
+    with pytest.raises(ValueError, match=r"unsatisfiable"):
+        m.to_qubo()
 
 
 # ---------------------------------------------------------------------------
