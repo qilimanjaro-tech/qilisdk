@@ -284,6 +284,7 @@ class ExecutionConfig(BaseSimulatorConfig):
     """
 
     model_config = PydanticConfigDict(validate_default=True)
+    # 0 means "use all cores", None means "use all cores unless the simulation is small"
     num_threads: int | None = Field(
         default=None,
         ge=0,
@@ -291,7 +292,7 @@ class ExecutionConfig(BaseSimulatorConfig):
         description=(
             "Number of CPU threads used for simulation. If set to 0, all available cores are selected. If `None`, all available cores are selected except for small simulations, which run on a single thread."
         ),
-    )  # 0 means "use all cores", None means "use all cores unless the simulation is small"
+    )
     seed: int | None = Field(
         default=None,
         ge=0,
