@@ -12,24 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from qilisdk.analog.hamiltonian import X, Z
-from qilisdk.analog.schedule import Schedule
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz, TrotterizedSchedule
+from tests.timing.utils import best_time, linear_ramp_schedule
 
 
-def test_circuit_to_matrix(best_time):
+def test_circuit_to_matrix():
     circuit = HardwareEfficientAnsatz(9, layers=5)
-    assert best_time(circuit.to_matrix) < 2.0
+    assert best_time(circuit.to_matrix) < 1.6
 
 
-def test_trotterized_schedule(best_time):
-    nqubits = 10
-    schedule = Schedule(
-        hamiltonians={
-            "driver": sum(X(i) for i in range(nqubits)),
-            "problem": sum(Z(i) * Z(i + 1) for i in range(nqubits - 1)),
-        },
-        coefficients={"driver": {(0, 10): lambda t: 1 - t / 10}, "problem": {(0, 10): lambda t: t / 10}},
-        dt=0.1,
-    )
-    assert best_time(lambda: TrotterizedSchedule(schedule, trotter_steps=2)) < 1.0
+def test_trotterized_schedule():
+    schedule = linear_ramp_schedule(10, dt=0.1)
+    assert best_time(lambda: TrotterizedSchedule(schedule, trotter_steps=2)) < 0.8

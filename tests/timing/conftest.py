@@ -12,36 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Shared fixtures for the timing suite.
+"""Configuration for the timing suite.
 
-Each limit in this suite is roughly ten times what the operation takes on a developer machine,
-so the tests catch order-of-magnitude slowdowns rather than small fluctuations. Run the suite
-without ``-n``, since parallel workers compete for the CPU and skew the measurements.
+OpenMP (used by QTensor, Eigen and QiliSim) and OpenBLAS (used by numpy and scipy) read their
+thread counts when they are first loaded, so they are limited to one thread here, before any test
+module imports them. This makes the timings independent of how many cores the machine has, which
+only works if the suite is run on its own, as in ``pytest tests/timing``. Run it without ``-n``,
+too, since parallel workers compete for the CPU and skew the measurements.
 """
 
-import time
-from collections.abc import Callable
-from typing import Any
+import os
 
-import pytest
-
-REPEATS = 3
-
-
-@pytest.fixture
-def best_time() -> Callable[[Callable[[], Any]], float]:
-    """Return a function that runs a callable a few times and gives its fastest wall-clock time.
-
-    The fastest run is the least affected by other load on the machine, and the first run also
-    absorbs one-off costs such as lazy imports.
-    """
-
-    def measure(operation: Callable[[], Any]) -> float:
-        timings = []
-        for _ in range(REPEATS):
-            start = time.perf_counter()
-            operation()
-            timings.append(time.perf_counter() - start)
-        return min(timings)
-
-    return measure
+for variable in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ[variable] = "1"

@@ -14,15 +14,16 @@
 
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.circuit_transpiler import CircuitTranspiler
+from tests.timing.utils import best_time
 
 
-def test_transpile_without_topology(best_time):
+def test_transpile_without_topology():
     circuit = HardwareEfficientAnsatz(30, layers=20)
     transpiler = CircuitTranspiler.default()
-    assert best_time(lambda: transpiler.transpile(circuit)) < 1.5
+    assert best_time(lambda: transpiler.transpile(circuit)) < 1.4
 
 
-def test_transpile_with_routing(best_time):
+def test_transpile_with_routing():
     circuit = HardwareEfficientAnsatz(12, layers=6, connectivity="full")
     transpiler = CircuitTranspiler.default(topology=[(i, i + 1) for i in range(11)])
-    assert best_time(lambda: transpiler.transpile(circuit)) < 3.0
+    assert best_time(lambda: transpiler.transpile(circuit)) < 2.7

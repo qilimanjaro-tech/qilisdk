@@ -14,28 +14,29 @@
 
 from qilisdk.core import Model
 from qilisdk.digital.ansatz import QAOA
+from tests.timing.utils import best_time
 
 
-def test_travelling_salesman_to_qubo(best_time):
+def test_travelling_salesman_to_qubo():
     model = Model.random_travelling_salesman(6)
-    assert best_time(model.to_qubo) < 1.0
+    assert best_time(model.to_qubo) < 0.14
 
 
-def test_knapsack_to_qubo(best_time):
+def test_knapsack_to_qubo():
     model = Model.random_knapsack(60)
     assert best_time(model.to_qubo) < 1.0
 
 
-def test_qubo_to_hamiltonian(best_time):
+def test_qubo_to_hamiltonian():
     qubo = Model.random_travelling_salesman(8).to_qubo()
-    assert best_time(qubo.to_hamiltonian) < 0.5
+    assert best_time(qubo.to_hamiltonian) < 0.4
 
 
-def test_ising_model_to_hamiltonian(best_time):
+def test_ising_model_to_hamiltonian():
     model = Model.random_ising(60)
-    assert best_time(lambda: model.to_qubo().to_hamiltonian()) < 3.0
+    assert best_time(lambda: model.to_qubo().to_hamiltonian()) < 2.8
 
 
-def test_qaoa_from_qubo(best_time):
+def test_qaoa_from_qubo():
     hamiltonian = Model.random_travelling_salesman(6).to_qubo().to_hamiltonian()
-    assert best_time(lambda: QAOA(hamiltonian, layers=3)) < 1.0
+    assert best_time(lambda: QAOA(hamiltonian, layers=3)) < 0.6

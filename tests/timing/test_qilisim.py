@@ -27,28 +27,29 @@ from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.noise import Depolarizing, NoiseModel
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 from qilisdk.readout import Readout
+from tests.timing.utils import best_time, linear_ramp_schedule
 
-# A single thread, so the timings do not depend on how many cores the machine has.
+# These take their thread count from here rather than from OMP_NUM_THREADS, so pin it to one too.
 execution_config = ExecutionConfig(seed=42, num_threads=1)
 backend = QiliSim(execution_config=execution_config)
 
 
-def test_digital_sampling(best_time):
+def test_digital_sampling():
     functional = DigitalPropagation(HardwareEfficientAnsatz(20, layers=10))
     readout = Readout().with_sampling(nshots=10_000)
-    assert best_time(lambda: backend.execute(functional, readout)) < 5.0
+    assert best_time(lambda: backend.execute(functional, readout)) < 4.5
 
 
-def test_noisy_digital_sampling(best_time):
+def test_noisy_digital_sampling():
     noise_model = NoiseModel()
     noise_model.add(Depolarizing(probability=0.01))
     noisy_backend = QiliSim(noise_model=noise_model, execution_config=execution_config)
     functional = DigitalPropagation(HardwareEfficientAnsatz(8, layers=5))
     readout = Readout().with_sampling(nshots=1000)
-    assert best_time(lambda: noisy_backend.execute(functional, readout)) < 3.0
+    assert best_time(lambda: noisy_backend.execute(functional, readout)) < 1.6
 
 
-def test_variational_program(best_time):
+def test_variational_program():
     model = Model.random_max_cut(6)
     program = VariationalProgram(
         DigitalPropagation(HardwareEfficientAnsatz(6, layers=2)),
@@ -56,25 +57,17 @@ def test_variational_program(best_time):
         ModelCostFunction(model),
     )
     readout = Readout().with_sampling(nshots=1000)
-    assert best_time(lambda: backend.execute(program, readout)) < 2.0
+    assert best_time(lambda: backend.execute(program, readout)) < 0.5
 
 
-def test_analog_evolution(best_time):
-    nqubits = 12
-    schedule = Schedule(
-        hamiltonians={
-            "driver": sum(X(i) for i in range(nqubits)),
-            "problem": sum(Z(i) * Z(i + 1) for i in range(nqubits - 1)),
-        },
-        coefficients={"driver": {(0, 10): lambda t: 1 - t / 10}, "problem": {(0, 10): lambda t: t / 10}},
-        dt=0.01,
-    )
+def test_analog_evolution():
+    schedule = linear_ramp_schedule(12, dt=0.01)
     functional = AnalogEvolution(schedule, InitialState.UNIFORM)
     readout = Readout().with_sampling(nshots=1000)
-    assert best_time(lambda: backend.execute(functional, readout)) < 2.0
+    assert best_time(lambda: backend.execute(functional, readout)) < 2.5
 
 
-def test_quantum_reservoir(best_time):
+def test_quantum_reservoir():
     nqubits = 6
     input_encoding = Circuit(nqubits)
     input_encoding.add(RX(0, theta=ReservoirInput("u", 0.0)))
@@ -90,4 +83,4 @@ def test_quantum_reservoir(best_time):
         input_per_layer=[{"u": 0.01 * k} for k in range(100)],
     )
     readout = Readout().with_expectation(observables=[Z(i) for i in range(nqubits)])
-    assert best_time(lambda: backend.execute(functional, readout)) < 3.0
+    assert best_time(lambda: backend.execute(functional, readout)) < 2.6

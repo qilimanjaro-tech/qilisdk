@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from qilisdk.analog.hamiltonian import X, Z
+from tests.timing.utils import best_time
 
 
 def _all_to_all_ising(nqubits: int):
@@ -20,20 +21,20 @@ def _all_to_all_ising(nqubits: int):
     return couplings + sum(X(i) for i in range(nqubits))
 
 
-def test_build_hamiltonian(best_time):
-    assert best_time(lambda: _all_to_all_ising(40)) < 1.0
+def test_build_hamiltonian():
+    assert best_time(lambda: _all_to_all_ising(40)) < 0.8
 
 
-def test_hamiltonian_product(best_time):
+def test_hamiltonian_product():
     hamiltonian = _all_to_all_ising(20)
-    assert best_time(lambda: hamiltonian * hamiltonian) < 1.5
+    assert best_time(lambda: hamiltonian * hamiltonian) < 1.4
 
 
-def test_hamiltonian_to_matrix(best_time):
+def test_hamiltonian_to_matrix():
     hamiltonian = _all_to_all_ising(14)
-    assert best_time(hamiltonian.to_matrix) < 2.0
+    assert best_time(hamiltonian.to_matrix) < 1.8
 
 
-def test_hamiltonian_exponential(best_time):
+def test_hamiltonian_exponential():
     tensor = _all_to_all_ising(9).to_qtensor()
-    assert best_time(tensor.expm) < 2.0
+    assert best_time(tensor.expm) < 4.0

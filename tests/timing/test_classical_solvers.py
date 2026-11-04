@@ -14,21 +14,22 @@
 
 from qilisdk.core import Model
 from qilisdk.utils.classical_solvers import BruteForceSolver, SimulatedAnnealingSolver
+from tests.timing.utils import best_time
 
-# A single thread, so the timings do not depend on how many cores the machine has.
+# These take their thread count from here rather than from OMP_NUM_THREADS, so pin it to one too.
 annealer = SimulatedAnnealingSolver(seed=1, num_threads=1)
 
 
-def test_simulated_annealing_knapsack(best_time):
+def test_simulated_annealing_knapsack():
     qubo = Model.random_knapsack(40).to_qubo()
-    assert best_time(lambda: annealer.solve(qubo)) < 1.0
+    assert best_time(lambda: annealer.solve(qubo)) < 0.5
 
 
-def test_simulated_annealing_ising(best_time):
+def test_simulated_annealing_ising():
     qubo = Model.random_ising(100).to_qubo()
-    assert best_time(lambda: annealer.solve(qubo)) < 1.0
+    assert best_time(lambda: annealer.solve(qubo)) < 1.2
 
 
-def test_brute_force(best_time):
+def test_brute_force():
     model = Model.random_ising(12)
-    assert best_time(lambda: BruteForceSolver().solve(model)) < 2.0
+    assert best_time(lambda: BruteForceSolver().solve(model)) < 2.1

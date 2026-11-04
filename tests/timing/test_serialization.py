@@ -15,13 +15,14 @@
 from qilisdk.core import Model
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.utils.serialization import deserialize, serialize
+from tests.timing.utils import best_time
 
 
-def test_circuit_round_trip(best_time):
+def test_circuit_round_trip():
     circuit = HardwareEfficientAnsatz(10, layers=10)
-    assert best_time(lambda: deserialize(serialize(circuit))) < 2.0
+    assert best_time(lambda: deserialize(serialize(circuit))) < 1.8
 
 
-def test_model_round_trip(best_time):
+def test_model_round_trip():
     model = Model.random_travelling_salesman(6)
-    assert best_time(lambda: deserialize(serialize(model))) < 2.0
+    assert best_time(lambda: deserialize(serialize(model))) < 0.6
