@@ -158,6 +158,11 @@ To run the integration tests (bigger tests which use the full QiliSDK stack and 
 pytest tests/integration
 ```
 
+To run the timing tests (which fail if a common operation becomes more than ten times slower than expected):
+```bash
+pytest tests/timing
+```
+
 To run the CUDA, qutip, and SpeQtrum backend tests, install the optional dependencies first (e.g., `uv sync --all-groups --extra all-cu13`).
 
 To run the C++ tests, you first need to recompile with C++ testing enabled:
