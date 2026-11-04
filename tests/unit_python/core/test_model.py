@@ -14,6 +14,7 @@
 
 
 import copy
+import itertools
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -651,6 +652,28 @@ def test_model_random_travelling_salesman_sparse():
     assert len(m.objective.term.as_coefficients_dict()) == 3 * 4 * 2  # edges * positions * both orientations
 
 
+@pytest.mark.parametrize(
+    ("num_nodes", "edge_probability", "seed"), [(2, 0.5, 1), (9, 0.0, 2), (12, 0.3, 3), (30, 1.0, 4), (40, 0.1, 5)]
+)
+def test_random_connected_edges_draws_as_one_draw_per_pair(num_nodes, edge_probability, seed):
+    # The extra edges are drawn a row at a time; the graph, and where the generator is left, must be
+    # those of drawing once per pair outside the tree, in lexicographic order
+    generator = np.random.default_rng(seed)
+    order = [int(node) for node in generator.permutation(num_nodes)]
+    expected: set[tuple[int, int]] = set()
+    for index in range(1, num_nodes):
+        parent, child = order[int(generator.integers(index))], order[index]
+        expected.add((min(parent, child), max(parent, child)))
+    for u, v in itertools.combinations(range(num_nodes), 2):
+        if (u, v) not in expected and generator.random() < edge_probability:
+            expected.add((u, v))
+    after = generator.random()
+
+    generator = np.random.default_rng(seed)
+    assert model_module._random_connected_edges(num_nodes, edge_probability, generator) == sorted(expected)
+    assert generator.random() == after
+
+
 def test_random_connected_edges_is_connected():
     generator = np.random.default_rng(3)
     edges = model_module._random_connected_edges(8, 0.3, generator)
@@ -1285,6 +1308,22 @@ def test_generate_encoding_constraints_idempotent():
     assert enc_count > 0
     m.add_constraint("c2", LEQ(v, 2))
     assert len(m.encoding_constraints) == enc_count
+
+
+def test_encoding_constraints_come_from_the_term_that_first_uses_a_variable():
+    # Each variable gets its bound constraints once, with the multiplier of the term it first
+    # appears in, whatever is added after
+    m = Model("enc_order")
+    u = Variable("u", Domain.POSITIVE_INTEGER, bounds=(0, 3))
+    v = Variable("v", Domain.POSITIVE_INTEGER, bounds=(0, 5))
+    w = Variable("w", Domain.POSITIVE_INTEGER, bounds=(0, 2))
+    m.add_constraint("c1", LEQ(u + v, 4), lagrange_multiplier=5)
+    m.add_constraint("c2", EQ(v + w, 3), lagrange_multiplier=7)
+    m.set_objective(u + w)
+    m.add_constraint("c3", GEQ(u, 1), lagrange_multiplier=9)
+    names = [f"{var}_{side}_bound_constraint" for var in ("u", "v", "w") for side in ("upper", "lower")]
+    assert sorted(c.label for c in m.encoding_constraints) == sorted(names)
+    assert [m.lagrange_multipliers[name] for name in names] == [5, 5, 5, 5, 7, 7]
 
 
 def test_model_str_with_encoding_constraints():
