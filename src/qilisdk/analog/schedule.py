@@ -749,7 +749,12 @@ class Schedule(Parameterizable):
             tuple[list[list[float]], list[list[QTensor]]]: A tuple containing two lists, the first is a list
             of lists of eigenvalues for each Hamiltonian at each time step, and the second is a
             list of lists of corresponding eigenstates as QTensors.
+
+        Raises:
+            ValueError: If the schedule has no Hamiltonians.
         """
+        if not self.hamiltonians:
+            raise ValueError("Cannot compute eigenvalues of a schedule with no Hamiltonians")
         _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING = 7
         if self.nqubits > _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING:
             logger.warning(
@@ -760,18 +765,20 @@ class Schedule(Parameterizable):
         # Converting a Hamiltonian to a matrix is far more expensive than combining matrices,
         # so do it once per Hamiltonian rather than once per time step
         as_qtensors = {h: ham.to_qtensor(total_nqubits=self.nqubits) for h, ham in self.hamiltonians.items()}
-        full_hamiltonians = [
-            reduce(operator.add, (self.coefficients[h][float(t)] * as_qtensors[h] for h in as_qtensors))
-            for t in self.tlist
-        ]
 
-        # Each time step is independent and the decomposition releases the GIL, so run them in parallel
+        def eig_at(t: float) -> tuple[list[float], list[QTensor]]:
+            full_hamiltonian = reduce(
+                operator.add, (self.coefficients[h][float(t)] * as_qtensors[h] for h in as_qtensors)
+            )
+            vals, vecs = full_hamiltonian.eig()
+            return [float(ev.real) for ev in vals[:levels]], list(vecs[:levels])
+
+        # Each time step is independent and the decomposition releases the GIL, so run them in parallel,
+        # building each matrix inside the worker so only the kept levels outlive it
         with ThreadPoolExecutor() as executor:
-            decompositions = list(executor.map(lambda ham: ham.eig(), full_hamiltonians))
+            decompositions = list(executor.map(eig_at, self.tlist))
 
-        full_eigenvalues = [[float(ev.real) for ev in vals[:levels]] for vals, _ in decompositions]
-        full_eigenstates = [list(vecs[:levels]) for _, vecs in decompositions]
-        return full_eigenvalues, full_eigenstates
+        return [vals for vals, _ in decompositions], [vecs for _, vecs in decompositions]
 
     def __repr__(self) -> str:
         lines = [

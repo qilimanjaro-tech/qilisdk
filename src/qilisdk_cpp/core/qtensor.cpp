@@ -603,33 +603,42 @@ void QTensorCpp::compute_eigendecomposition() {
         return;
     }
     DenseMatrix dense_data = to_dense();
-    if (is_self_adjoint(default_atol)) {
-        Eigen::SelfAdjointEigenSolver<DenseMatrix> es(dense_data);
-        _eigenvectors.clear();
-        auto evecs = es.eigenvectors();
-        for (int i = 0; i < evecs.cols(); ++i) {
-            SparseMatrix vec = evecs.col(i).sparseView();
-            _eigenvectors.emplace_back(vec);
+    bool self_adjoint = is_self_adjoint(default_atol);
+
+    // Only the solver runs without the GIL, so that the caches are never written by two threads at once
+    std::vector<Complex> eigenvalues;
+    std::vector<SparseMatrix> eigenvectors;
+    {
+        std::optional<py::gil_scoped_release> release;
+        if (PyGILState_Check()) {
+            release.emplace();
         }
-        _eigenvalues.clear();
-        auto evals = es.eigenvalues();
-        for (int i = 0; i < evals.size(); ++i) {
-            _eigenvalues.push_back(evals[i]);
-        }
-    } else {
-        Eigen::ComplexEigenSolver<DenseMatrix> es(dense_data);
-        _eigenvectors.clear();
-        auto evecs = es.eigenvectors();
-        for (int i = 0; i < evecs.cols(); ++i) {
-            SparseMatrix vec = evecs.col(i).sparseView();
-            _eigenvectors.emplace_back(vec);
-        }
-        _eigenvalues.clear();
-        auto evs = es.eigenvalues();
-        for (int i = 0; i < evs.size(); ++i) {
-            _eigenvalues.push_back(evs[i]);
+        if (self_adjoint) {
+            Eigen::SelfAdjointEigenSolver<DenseMatrix> es(dense_data);
+            auto evecs = es.eigenvectors();
+            for (int i = 0; i < evecs.cols(); ++i) {
+                SparseMatrix vec = evecs.col(i).sparseView();
+                eigenvectors.emplace_back(vec);
+            }
+            auto evals = es.eigenvalues();
+            for (int i = 0; i < evals.size(); ++i) {
+                eigenvalues.push_back(evals[i]);
+            }
+        } else {
+            Eigen::ComplexEigenSolver<DenseMatrix> es(dense_data);
+            auto evecs = es.eigenvectors();
+            for (int i = 0; i < evecs.cols(); ++i) {
+                SparseMatrix vec = evecs.col(i).sparseView();
+                eigenvectors.emplace_back(vec);
+            }
+            auto evs = es.eigenvalues();
+            for (int i = 0; i < evs.size(); ++i) {
+                eigenvalues.push_back(evs[i]);
+            }
         }
     }
+    _eigenvalues = std::move(eigenvalues);
+    _eigenvectors = std::move(eigenvectors);
 }
 
 bool QTensorCpp::is_density_matrix(double atol) {

@@ -14,6 +14,7 @@
 
 
 import itertools
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import pytest
@@ -1134,6 +1135,15 @@ def test_qtensor_pow_zero():
     pow_qobj = qobj.pow(0)
     expected = np.eye(2)
     np.testing.assert_allclose(pow_qobj.dense(), expected, atol=1e-8)
+
+
+def test_eigendecomp_shared_between_threads():
+    arr = np.diag(np.arange(64.0))
+    qobj = QTensor(arr)
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        results = list(executor.map(lambda _: qobj.eigenvalues, range(8)))
+    for eigvals in results:
+        np.testing.assert_allclose(eigvals, np.arange(64.0), atol=1e-8)
 
 
 def test_qtensor_not_symmetric_pow_after_eig():
