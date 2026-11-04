@@ -389,11 +389,11 @@ def test_simulated_annealing_empty_qubo_has_nothing_to_anneal():
     assert result.results == qubo.evaluate(result.sample)
 
 
-def test_simulated_annealing_requires_a_qubo():
-    m = Model.random_ising(4, seed=1)
-    solver = SimulatedAnnealingSolver()
-    with pytest.raises(ValueError, match="requires a QUBO"):
-        solver.solve(m)
+def test_simulated_annealing_converts_a_model_to_a_qubo():
+    m = Model.knapsack(values=[5, 4, 3], weights=[3, 2, 1], max_weight=3)
+    model_result = SimulatedAnnealingSolver(num_reads=50, seed=1).solve(m)
+    qubo_result = SimulatedAnnealingSolver(num_reads=50, seed=1).solve(m.to_qubo())
+    assert model_result.results == qubo_result.results
 
 
 @pytest.mark.parametrize("beta_range", [(0.0, 1.0), (1.0, -1.0), (10.0, 1.0)])
