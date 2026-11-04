@@ -22,6 +22,9 @@
 
 // GCOV_EXCL_BR_START
 
+// Below this many state elements (a 9-qubit statevector) an evolution is slowed down by the threading overhead
+constexpr long min_parallel_state_size = 1L << 9;
+
 void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos, bool* output_is_trajectories) {
     /*
     Execute a time evolution functional.
@@ -126,6 +129,12 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     if (keep_trajectories) {
         *output_is_trajectories = false;
     }
+
+    // Small states run on a single thread, unless they are trajectories which are run in parallel
+    bool state_is_trajectories = use_monte_carlo || input_is_trajectories;
+    int num_threads = state_is_trajectories ? config.get_num_threads() : config.get_num_threads_for_state(rho_t.size(), min_parallel_state_size);
+    Eigen::setNbThreads(num_threads);
+
     auto record_intermediate = [&](const DenseMatrix& current) {
         if (state_is_ensemble && !keep_trajectories) {
             intermediate_rhos.push_back(trajectories_to_density_matrix(current));
@@ -306,6 +315,14 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
     if (keep_trajectories) {
         *output_is_trajectories = false;
     }
+
+    // Small states run on a single thread, unless they are trajectories which are run in parallel
+    bool state_is_trajectories = use_monte_carlo || input_is_trajectories;
+    int num_threads = state_is_trajectories ? config.get_num_threads() : config.get_num_threads_for_state(rho_t.size(), min_parallel_state_size);
+#if defined(_OPENMP)
+    omp_set_num_threads(num_threads);
+#endif
+
     auto record_intermediate = [&](const DenseMatrix& current) {
         if (state_is_ensemble && !keep_trajectories) {
             intermediate_rhos.push_back(trajectories_to_density_matrix(current));

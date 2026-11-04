@@ -200,4 +200,14 @@ TEST(QilisimConfig, SetSeedRestartsTheStream) {
     EXPECT_EQ(config.next_seed(), first_draw);
 }
 
+TEST(QilisimConfig, NumThreadsForStateOnlyLimitsSmallStatesWhenAutomatic) {
+    QiliSimConfig config;
+    config.set_num_threads(4);
+    EXPECT_EQ(config.get_num_threads_for_state(16, 512), 4);
+
+    config.set_auto_num_threads(true);
+    EXPECT_EQ(config.get_num_threads_for_state(16, 512), 1);
+    EXPECT_EQ(config.get_num_threads_for_state(512, 512), 4);
+}
+
 // GCOV_EXCL_BR_STOP

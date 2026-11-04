@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-23 16:45+0200\n"
+"POT-Creation-Date: 2026-11-04 14:00+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -465,8 +465,7 @@ msgstr "``truncation_cutoff``"
 
 #: ../../modules/backends/backends_qilisim.rst:224
 msgid "Singular values below this fraction of the largest are discarded."
-msgstr ""
-"Se descartan los valores singulares por debajo de esta fracción del mayor."
+msgstr "Se descartan los valores singulares por debajo de esta fracción del mayor."
 
 #: ../../modules/backends/backends_qilisim.rst:226
 msgid ""
@@ -502,11 +501,11 @@ msgstr ""
 
 #: ../../modules/backends/backends_qilisim.rst:244
 msgid ""
-"``num_threads`` controls the number of threads used for parallelization, "
-"defaults to using all available cores."
-msgstr ""
-"``num_threads`` controla el número de hilos usados para la "
-"paralelización; por defecto usa todos los núcleos disponibles."
+"``num_threads`` controls the number of threads used for parallelization. "
+"By default all available cores are used, except for small simulations "
+"which run on a single thread since they are slowed down by the threading "
+"overhead. Set it to ``0`` to always use all available cores."
+msgstr "``num_threads`` controla el número de hilos usados para la paralelización. Por defecto se usan todos los núcleos disponibles, excepto en las simulaciones pequeñas, que se ejecutan en un solo hilo ya que la sobrecarga de los hilos las ralentiza. Establézcalo a ``0`` para usar siempre todos los núcleos disponibles."
 
 #: ../../modules/backends/backends_qilisim.rst:245
 msgid ""
@@ -796,4 +795,14 @@ msgstr ""
 #~ "unraveling de Monte Carlo; déjelo en "
 #~ "``None`` para una evolución determinista "
 #~ "de la ecuación maestra."
+
+#~ msgid ""
+#~ "``num_threads`` controls the number of "
+#~ "threads used for parallelization, defaults "
+#~ "to using all available cores."
+#~ msgstr ""
+#~ "``num_threads`` controla el número de "
+#~ "hilos usados para la paralelización; por"
+#~ " defecto usa todos los núcleos "
+#~ "disponibles."
 
