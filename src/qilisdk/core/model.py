@@ -29,6 +29,8 @@ from .types import Number, QiliEnum, RealNumber
 from .variables import BaseVariable, BinaryVariable, Bitwise, Domain, SpinVariable, Variable
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from qilisdk.analog.hamiltonian import Hamiltonian
 
 
@@ -123,9 +125,18 @@ def _random_connected_edges(
         child = order[index]
         edges.add((min(parent, child), max(parent, child)))
 
-    for u, v in itertools.combinations(range(num_nodes), 2):
-        if (u, v) not in edges and generator.random() < edge_probability:
-            edges.add((u, v))
+    # One draw per pair not already in the tree, in lexicographic order of the pairs. Drawing a
+    # row's worth at once gives the same numbers as drawing them one by one, so a seed gives the
+    # same graph either way, and it takes a 5000-node graph from seconds to milliseconds
+    higher: list[list[int]] = [[] for _ in range(num_nodes)]
+    for u, v in edges:
+        higher[u].append(v)
+    for u in range(num_nodes - 1):
+        candidates = np.arange(u + 1, num_nodes)
+        if higher[u]:
+            candidates = np.delete(candidates, np.asarray(higher[u]) - (u + 1))
+        draws = generator.random(candidates.size)
+        edges.update((u, int(v)) for v in candidates[draws < edge_probability])
 
     return sorted(edges)
 
@@ -436,8 +447,18 @@ class Model:
     def _generate_encoding_constraints(
         self,
         lagrange_multiplier: float = 100,
+        variables: Iterable[BaseVariable] | None = None,
     ) -> None:
-        for var in self.variables():
+        """Add the bound constraints of every encoded variable that does not have them yet.
+
+        Args:
+            lagrange_multiplier (float, optional): the multiplier of the constraints added. Defaults to 100.
+            variables (Iterable[BaseVariable] | None, optional): the variables to look at, which only
+                need to be those of the term just added, since every other variable of the model was
+                looked at when its own term was added. Looking at all of them on every addition makes
+                building a model of many constraints quadratic. Defaults to None, all of the model's.
+        """
+        for var in self.variables() if variables is None else sorted(set(variables), key=lambda x: x.label):
             if not isinstance(var, Variable) or var.domain in {Domain.BINARY, Domain.SPIN}:
                 continue
             ub_encoding_name = f"{var}_upper_bound_constraint"
@@ -509,7 +530,7 @@ class Model:
         c = Constraint(label=label, term=copy.copy(term))
         self._constraints[label] = c
         self._lagrange_multipliers[label] = lagrange_multiplier
-        self._generate_encoding_constraints(lagrange_multiplier=lagrange_multiplier)
+        self._generate_encoding_constraints(lagrange_multiplier=lagrange_multiplier, variables=c.variables())
 
     def set_objective(
         self, term: Expression, label: str = "obj", sense: ObjectiveSense = ObjectiveSense.MINIMIZE
@@ -523,7 +544,7 @@ class Model:
                                                 Defaults to ObjectiveSense.MINIMIZE.
         """
         self._objective = Objective(label=label, term=copy.copy(term), sense=sense)
-        self._generate_encoding_constraints()
+        self._generate_encoding_constraints(variables=self._objective.variables())
 
     def evaluate(self, sample: Mapping[BaseVariable, RealNumber | list[int]]) -> dict[str, Number]:
         """Evaluates the objective and the constraints of the model given a set of values for the variables.

@@ -684,6 +684,20 @@ NodePtr add_to_sum(const NodePtr& sum, const NodePtr& term, bool sum_first) {
         }
     }
 
+    // A scaled sum whose coefficient combined to exactly 1 comes back as the bare sum, whose operands
+    // belong among this sum's own, so it takes the general path, which flattens it
+    if (added && added->kind == Kind::Add) {
+        std::vector<NodePtr> rest;
+        rest.reserve(terms.size());
+        for (size_t i = 0; i < terms.size(); ++i) {
+            if (i != removed) {
+                rest.push_back(terms[i]);
+            }
+        }
+        rest.push_back(added);
+        return build_add(rest);
+    }
+
     // The sum had at least two operands and at most one is removed, so at least one remains
     const size_t count = terms.size() - (removed < terms.size() ? 1 : 0) + (added ? 1 : 0);
     if (count == 1) {
@@ -1599,6 +1613,11 @@ NodePtr build_add(NodeSpan raw) {
     if (out.size() == 1) {
         return out[0];
     }
+    // A scaled sum such as 2 * (a + b) whose coefficient combined to exactly 1 comes back as the bare
+    // sum a + b, which must be flattened into this one like any other nested sum
+    if (std::any_of(out.begin(), out.end(), [](const NodePtr& term) { return term->kind == Kind::Add; })) {
+        return build_add(out);
+    }
     sort_canonically(out.data(), out.data() + out.size());
     return make_node(Kind::Add, out);
 }
@@ -2334,10 +2353,278 @@ std::string repr(const NodePtr& node) {
 
 // ---------------------------------------------------------------- Python interop
 
+namespace {
+
+// A sum still being added to. Each step of a running sum, as in Python's sum() or a loop of +=,
+// would otherwise copy every operand of the canonical sum so far into a new node, which makes
+// building a sum of T terms cost T^2. Instead `+` on a large enough sum gives an Add wrapper whose
+// _node holds one of these: the terms it is the sum of, in the order they were added, left to be
+// canonicalized in one pass (see accumulate) when something first needs the node.
+//
+// Wrappers share one buffer of terms, each reading only its first `count`, so a + b is a push onto
+// a's buffer, and a + c afterwards, which finds the buffer already longer than a, copies a's part
+// of it first. Every wrapper therefore keeps meaning exactly what it was built as.
+//
+// The wrapper's class is Add before the sum is built, so the sum must come out as an Add. Removing
+// an operand takes a summand merging into it -- cancelling it, zeroing its constant or collapsing
+// it -- and each summand merges once. The summands are the operands added, plus those a scaled sum
+// c * (a + b) releases when its coefficient combines to 1 and it is flattened into a + b. Such a
+// collapse needs a summand with the very same factors to merge into it, so what it releases is what
+// that summand could release itself, and counting each term added by the summands it could bring
+// (see summands) bounds every removal. A chain is built eagerly before that count could reach all but
+// two of the operands it began with. In the usual case every term counts one, and each build then
+// at least roughly doubles the canonical sum the next chain begins from, so the building costs
+// O(T log T) in all.
+const char* const pending_name = "qilisdk.expression.pending";
+
+// The fewest operands a sum has before adding to it is deferred. Below this, building the sum
+// straight away costs about as much as deferring it
+constexpr size_t kDeferFrom = 32;
+
+// The longest pending chain, counting the sum it began from, that is built a step at a time when
+// it settles rather than in one pass, each step costing a copy of the sum against the pass's
+// hashing of every operand
+constexpr size_t kStepwiseChain = 3;
+
+struct PendingSum {
+    std::shared_ptr<std::vector<NodePtr>> terms;  // The first is the canonical sum the chain began from
+    size_t count = 0;                             // How many of terms this sum is over
+    size_t base = 0;                              // The operands of the canonical sum it began from
+    size_t added = 0;                             // The summands that could merge into it (see summands)
+};
+
+size_t releasable(const NodePtr& term) {
+    /*
+    How many summands a summand could release into its sum: a scaled sum c * (a + b), when its
+    coefficient combines to exactly 1, is flattened into its operands, each of which may itself be
+    such a summand.
+
+    Args:
+        term (NodePtr&): The summand.
+
+    Returns:
+        size_t: The summands it could release, all the way down.
+    */
+    if (term->kind != Kind::Mul || term->args.size() != 2 || term->args[0]->kind != Kind::Constant || term->args[1]->kind != Kind::Add) {
+        return 0;
+    }
+    size_t count = 0;
+    for (const NodePtr& operand : term->args[1]->args) {
+        count += 1 + releasable(operand);
+    }
+    return count;
+}
+
+size_t summands(const NodePtr& term) {
+    /*
+    How many summands adding a term could merge into a sum: each operand of a sum, or the term
+    itself, and whatever each of those could release.
+
+    Args:
+        term (NodePtr&): The term added.
+
+    Returns:
+        size_t: The summands.
+    */
+    if (term->kind != Kind::Add) {
+        return 1 + releasable(term);
+    }
+    size_t count = 0;
+    for (const NodePtr& operand : term->args) {
+        count += 1 + releasable(operand);
+    }
+    return count;
+}
+
+const PendingSum* pending_of(const py::object& attr) {
+    /*
+    The pending sum a wrapper's _node holds, if it holds one.
+
+    Args:
+        attr (py::object&): The wrapper's _node.
+
+    Returns:
+        PendingSum*: The pending sum, or nullptr if _node is anything else.
+    */
+    if (!PyCapsule_IsValid(attr.ptr(), pending_name)) {
+        return nullptr;
+    }
+    return static_cast<const PendingSum*>(PyCapsule_GetPointer(attr.ptr(), pending_name));
+}
+
+NodePtr accumulate(NodeSpan terms) {
+    /*
+    The canonical sum of a canonical sum and the terms added to it one at a time, exactly as adding
+    them one at a time and building every step would give it, but in one pass over a hash index.
+
+    "Exactly" is the point. Building the whole list at once with build_add gives the same value but
+    not always the same canonical form or the same rounding: a step-by-step sum drops a summand the
+    moment its coefficient reaches zero, so a like term added later starts afresh, and flattens a
+    scaled sum such as 2 * (a + b) the moment its coefficient reaches 1, so later terms in (a + b)
+    gather separately. Following the same rules here means leaving a sum pending never changes it.
+    A term that is not a sum follows add_to_sum, and a term that is a sum follows build_add of the
+    sum so far and that term, which merges each of its operands into the sum in turn.
+
+    Args:
+        terms (NodeSpan): A canonical Add, then the terms added to it, in order.
+
+    Returns:
+        NodePtr: The canonical sum.
+    */
+    // A short chain is quicker taken a step at a time, which by definition gives the same sum: this
+    // is the case of a sum read straight after each addition, and of one large sum added at once
+    if (terms.size() <= kStepwiseChain) {
+        NodePtr sum = terms[0];
+        for (size_t i = 1; i < terms.size(); ++i) {
+            sum = build_add({sum, terms[i]});
+        }
+        return sum;
+    }
+    struct Entry {
+        Summand summand;
+        bool live = true;
+    };
+    std::vector<Entry> entries;
+    // Open addressing over indices into entries, plus one so zero means empty. An entry whose
+    // coefficient reaches zero stays indexed but dead, and a like term added later revives it afresh
+    std::vector<uint32_t> slots(16, 0);
+    size_t mask = slots.size() - 1;
+    bool has_constant = false;
+    Num constant = Num::integer(0);
+
+    const auto locate = [&](const Summand& summand) -> uint32_t* {
+        size_t slot = summand.hash & mask;
+        while (slots[slot] != 0) {
+            const Summand& existing = entries[slots[slot] - 1].summand;
+            if (existing.hash == summand.hash && same_factors(existing.factors, summand.factors)) {
+                break;
+            }
+            slot = (slot + 1) & mask;
+        }
+        return &slots[slot];
+    };
+    const auto append = [&](uint32_t* slot, const Summand& summand) {
+        entries.push_back({summand, true});
+        *slot = static_cast<uint32_t>(entries.size());
+        // Keep the table at most half full
+        if (entries.size() * 2 > slots.size()) {
+            slots.assign(slots.size() * 2, 0);
+            mask = slots.size() - 1;
+            for (size_t i = 0; i < entries.size(); ++i) {
+                size_t free_slot = entries[i].summand.hash & mask;
+                while (slots[free_slot] != 0) {
+                    free_slot = (free_slot + 1) & mask;
+                }
+                slots[free_slot] = static_cast<uint32_t>(i + 1);
+            }
+        }
+    };
+
+    // whole_sum: whether the term is an operand of a sum being added, which build_add merges, rather
+    // than a term added on its own, which add_to_sum merges. They differ only in when a new summand
+    // may reuse its node
+    const auto merge = [&](const auto& self, const NodePtr& term, bool whole_sum) -> void {
+        if (term->kind == Kind::Constant) {
+            constant = float_if_real(num_add(num_add(Num::integer(0), has_constant ? constant : Num::integer(0)), term->value));
+            has_constant = !num_eq(constant, Num::integer(0));
+            return;
+        }
+        Summand incoming = view_summand(term);
+        uint32_t* slot = locate(incoming);
+        if (*slot != 0 && entries[*slot - 1].live) {
+            // A like term: the sum keeps the base it met first, and its coefficient grows
+            Entry& entry = entries[*slot - 1];
+            const Num coeff = float_if_real(num_add(num_add(Num::integer(0), entry.summand.coeff), incoming.coeff));
+            entry.summand.coeff = coeff;
+            entry.summand.reusable = false;
+            if (num_eq(coeff, Num::integer(0))) {
+                entry.live = false;
+            } else if (num_eq(coeff, Num::integer(1)) && entry.summand.factors.size() == 1 && entry.summand.factors[0]->kind == Kind::Add) {
+                // A scaled sum left with coefficient 1 is that sum, whose operands join this one. The
+                // sum is held here, as merging its operands can grow entries and move `entry`
+                entry.live = false;
+                const NodePtr inner = entry.summand.factors[0];
+                for (const NodePtr& operand : inner->args) {
+                    self(self, operand, true);
+                }
+            }
+            return;
+        }
+        const Num coeff = float_if_real(num_add(Num::integer(0), incoming.coeff));
+        if (!whole_sum) {
+            incoming.reusable = same_number(coeff, incoming.coeff);
+        }
+        incoming.coeff = coeff;
+        if (*slot != 0) {
+            entries[*slot - 1] = {incoming, true};
+        } else {
+            append(slot, incoming);
+        }
+    };
+
+    // The operands of a canonical sum are already distinct, combined and in canonical form, and one
+    // nothing merges into is kept as it is
+    for (const NodePtr& operand : terms[0]->args) {
+        if (operand->kind == Kind::Constant) {
+            has_constant = true;
+            constant = operand->value;
+        } else {
+            Summand summand = view_summand(operand);
+            summand.reusable = true;
+            append(locate(summand), summand);
+        }
+    }
+    for (size_t i = 1; i < terms.size(); ++i) {
+        if (terms[i]->kind == Kind::Add) {
+            for (const NodePtr& operand : terms[i]->args) {
+                merge(merge, operand, true);
+            }
+        } else {
+            merge(merge, terms[i], false);
+        }
+    }
+
+    std::vector<NodePtr> out;
+    out.reserve(entries.size() + 1);
+    for (const Entry& entry : entries) {
+        if (entry.live) {
+            out.push_back(rebuild_summand(entry.summand, entry.summand.coeff));
+        }
+    }
+    if (has_constant) {
+        out.push_back(make_constant(constant));
+    }
+    // The bound on a pending chain keeps at least two operands (see PendingSum)
+    if (out.size() < 2) {
+        return out.empty() ? constant_int(0) : out[0];  // GCOV_EXCL_LINE
+    }
+    sort_canonically(out.data(), out.data() + out.size());
+    return make_node(Kind::Add, out);
+}
+
+NodePtr settle(py::handle obj, const PendingSum& pending) {
+    /*
+    Build the canonical sum a pending wrapper stands for, and store it in the wrapper's _node in
+    place of the pending sum, so the build happens once.
+
+    Args:
+        obj (py::handle): The wrapper.
+        pending (PendingSum&): Its pending sum, which may be freed once _node is replaced.
+
+    Returns:
+        NodePtr: The canonical sum, which is always an Add (see PendingSum).
+    */
+    NodePtr node = accumulate(NodeSpan(pending.terms->data(), pending.count));
+    obj.attr(names().node) = capsule(node);
+    return node;
+}
+
+}  // namespace
+
 NodePtr node_of(py::handle obj) {
     /*
     The node of a Python Expression: the one held by its _node capsule, or for a variable, which holds
-    none, a leaf built on demand.
+    none, a leaf built on demand. A sum still pending is built now.
 
     Args:
         obj (py::handle): The Expression.
@@ -2350,6 +2637,9 @@ NodePtr node_of(py::handle obj) {
     */
     py::object attr = obj.attr(names().node);
     if (!attr.is_none()) {
+        if (const PendingSum* pending = pending_of(attr)) {
+            return settle(obj, *pending);
+        }
         void* ptr = PyCapsule_GetPointer(attr.ptr(), capsule_name);
         if (ptr == nullptr) {
             throw py::error_already_set();
@@ -2514,6 +2804,84 @@ NodePtr operand(py::handle obj) {
     return node;
 }
 
+py::object wrap_pending(PendingSum pending) {
+    /*
+    A new Add wrapper for a sum left pending, made without running Add's __new__ or __init__.
+
+    Args:
+        pending (PendingSum): The pending sum, which the wrapper takes.
+
+    Returns:
+        py::object: The wrapper.
+    */
+    const Registry& reg = registry();
+    PyObject* obj = PyBaseObject_Type.tp_new(reinterpret_cast<PyTypeObject*>(reg.add_cls.ptr()), reg.empty_tuple.ptr(), nullptr);
+    if (obj == nullptr) {
+        throw py::error_already_set();  // GCOV_EXCL_LINE (Add is concrete)
+    }
+    py::object result = py::reinterpret_steal<py::object>(obj);
+    auto* held = new PendingSum(std::move(pending));
+    PyObject* cap = PyCapsule_New(held, pending_name, [](PyObject* c) { delete static_cast<PendingSum*>(PyCapsule_GetPointer(c, pending_name)); });
+    if (cap == nullptr) {
+        delete held;                    // GCOV_EXCL_LINE (only on out-of-memory)
+        throw py::error_already_set();  // GCOV_EXCL_LINE
+    }
+    result.attr(names().node) = py::reinterpret_steal<py::object>(cap);
+    return result;
+}
+
+py::object extend(const PendingSum& pending, const NodePtr& term) {
+    /*
+    The sum of a pending sum and one more term, itself pending unless it is due to be built.
+
+    Args:
+        pending (PendingSum&): The sum so far.
+        term (NodePtr&): The term to add, which may itself be a sum.
+
+    Returns:
+        py::object: The wrapper of the new sum.
+    */
+    const size_t incoming = summands(term);
+    // Built now if the summands added could otherwise remove all but two of the operands it began with
+    if (pending.added + incoming + 2 > pending.base) {
+        std::vector<NodePtr> all(pending.terms->begin(), pending.terms->begin() + static_cast<std::ptrdiff_t>(pending.count));
+        all.push_back(term);
+        return wrap(accumulate(all));
+    }
+    PendingSum next{pending.terms, pending.count + 1, pending.base, pending.added + incoming};
+    if (pending.terms->size() != pending.count) {
+        // The buffer already holds a longer sum branched off this one, so this branch gets its own
+        next.terms = std::make_shared<std::vector<NodePtr>>(pending.terms->begin(), pending.terms->begin() + static_cast<std::ptrdiff_t>(pending.count));
+    }
+    next.terms->push_back(term);
+    return wrap_pending(std::move(next));
+}
+
+py::object add_terms(py::handle self, const NodePtr& term) {
+    /*
+    The sum self + term, left pending when self is a large or pending sum (see PendingSum) and built
+    straight away otherwise.
+
+    Args:
+        self (py::handle): The left operand.
+        term (NodePtr&): The right operand's node.
+
+    Returns:
+        py::object: The wrapper of the sum.
+    */
+    const py::object attr = self.attr(names().node);
+    if (const PendingSum* pending = pending_of(attr)) {
+        return extend(*pending, term);
+    }
+    NodePtr lhs = node_of(self);
+    if (lhs->kind == Kind::Add && lhs->args.size() >= kDeferFrom) {
+        PendingSum start{std::make_shared<std::vector<NodePtr>>(), 1, lhs->args.size(), 0};
+        start.terms->push_back(lhs);
+        return extend(start, term);
+    }
+    return wrap(core::build_add({lhs, term}));
+}
+
 }  // namespace
 
 py::object constant_node(py::handle value) {
@@ -2614,7 +2982,7 @@ py::object add(py::handle self, py::handle other) {
     if (!coerce(other, rhs)) {
         return py::reinterpret_borrow<py::object>(Py_NotImplemented);
     }
-    return wrap(core::build_add({node_of(self), rhs}));
+    return add_terms(self, rhs);
 }
 
 py::object sub(py::handle self, py::handle other) {
@@ -2633,7 +3001,7 @@ py::object sub(py::handle self, py::handle other) {
     if (!coerce(other, rhs)) {
         return py::reinterpret_borrow<py::object>(Py_NotImplemented);
     }
-    return wrap(core::build_add({node_of(self), core::build_mul({constant_int(-1), rhs})}));
+    return add_terms(self, core::build_mul({constant_int(-1), rhs}));
 }
 
 py::object rsub(py::handle self, py::handle other) {

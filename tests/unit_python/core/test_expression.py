@@ -1543,3 +1543,133 @@ def test_complex_arithmetic_rounds_exactly_like_python():
     assert (Constant(value) ** 2).value == value**2
     assert (Constant(value) * Constant(value)).value == value * value
     assert ((Constant(value) + BinaryVariable("b")) ** 2).expand().get_constant() == value * value
+
+
+def test_a_scaled_sum_whose_coefficient_becomes_one_is_flattened():
+    # 2 * (a + b) - (a + b) leaves (a + b) with coefficient 1, whose operands belong in the outer sum
+    a, b, c = BinaryVariable("na"), BinaryVariable("nb"), BinaryVariable("nc")
+    stepwise = c + 2 * (a + b) - (a + b)
+    built = Add.build([c, 2 * (a + b), -1 * (a + b)])
+    for total in (stepwise, built):
+        assert total == Add.build([a, b, c])
+        assert not any(isinstance(arg, Add) for arg in total.args)
+
+
+# ---- running sums ----
+# Adding to a large sum leaves the result pending, built only once something reads it. These check
+# that what comes out is exactly what adding one term at a time and building each step gives.
+
+
+def _stepwise(start, terms, subtract=False):
+    """The running sum built at every step, which is how a sum was always built before."""
+    total = start
+    for term in terms:
+        total = total - term if subtract else total + term
+        hash(total)
+    return total
+
+
+def _running_terms(rng, symbols, count):
+    """Terms with repeated monomials and float coefficients, so like terms merge and round."""
+    terms = []
+    for _ in range(count):
+        a, b = rng.sample(symbols, 2)
+        kind = rng.randrange(4)
+        coeff = rng.choice([rng.uniform(-2, 2), rng.randint(-3, 3) or 1])
+        terms.append([coeff * a, coeff * a * b, Constant(coeff), coeff * (a + b)][kind])
+    return terms
+
+
+@pytest.mark.parametrize("subtract", [False, True])
+@pytest.mark.parametrize("seed", range(6))
+def test_a_running_sum_matches_building_every_step(seed, subtract):
+    rng = random.Random(seed)
+    symbols = [BinaryVariable(f"s{i}") for i in range(12)]
+    terms = _running_terms(rng, symbols, 400)
+    lazy = _stepwise(0, terms[:5])
+    for term in terms[5:]:
+        lazy = lazy - term if subtract else lazy + term
+    eager = _stepwise(_stepwise(0, terms[:5]), terms[5:], subtract)
+    assert type(lazy) is type(eager)
+    assert lazy == eager
+    assert hash(lazy) == hash(eager)
+    assert repr(lazy) == repr(eager)
+    assert lazy.args == eager.args
+
+
+@pytest.mark.parametrize("seed", range(8))
+def test_a_running_sum_whose_scaled_sums_collapse_and_cancel_matches_building_every_step(seed):
+    # Small integer coefficients over a few shared sums make c * (a + b) reach exactly 1 and flatten,
+    # and its operands then cancel others, all within one pending chain
+    rng = random.Random(seed)
+    x = [BinaryVariable(f"k{i}") for i in range(6)]
+    inner = [x[0] + x[1], x[2] + x[3] + x[4], x[1] + x[5]]
+    filler = [BinaryVariable(f"kf{i}") for i in range(40)]  # enough operands for the chain to be left pending
+    start = Add.build([*(rng.randint(2, 4) * s for s in inner), *((rng.randint(-2, 2) or 1) * v for v in x), *filler])
+    terms = [rng.choice([rng.randint(-2, 2) or 1, -1]) * rng.choice([*inner, *x]) for _ in range(300)]
+    lazy = start
+    for term in terms:
+        lazy = lazy + term
+    eager = _stepwise(start, terms)
+    assert type(lazy) is type(eager)
+    assert lazy == eager
+    assert repr(lazy) == repr(eager)
+
+
+def test_builtin_sum_of_many_terms_matches_add_build():
+    x = [BinaryVariable(f"x{i}") for i in range(300)]
+    terms = [(i % 5 - 2) * x[i] * x[(i * 7 + 1) % 300] for i in range(300)] + [3, 4.5]
+    total = sum(terms)
+    assert isinstance(total, Add)
+    assert total == Add.build(terms)
+    assert repr(total) == repr(Add.build(terms))
+
+
+def test_a_running_sum_can_branch_without_changing_either_branch():
+    x = [BinaryVariable(f"b{i}") for i in range(60)]
+    base = sum(x[:40])
+    left = base + x[40]
+    right = base + x[41]  # branches off base after left has already extended it
+    left_more = left + x[42]
+    left_other = left + x[43]  # branches off a sum that is itself still pending
+    assert base == Add.build(x[:40])
+    assert left == Add.build([*x[:40], x[40]])
+    assert right == Add.build([*x[:40], x[41]])
+    assert left_more == Add.build([*x[:40], x[40], x[42]])
+    assert left_other == Add.build([*x[:40], x[40], x[43]])
+
+
+def test_a_running_sum_that_cancels_comes_out_as_the_right_class():
+    x = [BinaryVariable(f"c{i}") for i in range(40)]
+    total = sum(x)
+    steps = []
+    for variable in x:
+        total -= variable
+        steps.append(total)
+    # Read only once the chain is done, so that every step was left pending as long as it could be
+    for i, step in enumerate(steps[:-2]):
+        assert isinstance(step, Add)
+        assert step == Add.build(x[i + 1 :])
+    assert steps[-2] is x[-1]
+    assert type(steps[-1]) is Constant
+    assert steps[-1].value == 0
+
+
+def test_adding_sums_to_a_running_sum_matches_add_build():
+    x = [BinaryVariable(f"d{i}") for i in range(50)]
+    total = sum(x[:35])
+    parts = [x[i] + 2 * x[(i + 3) % 50] - 1 for i in range(40)]
+    for part in parts:
+        total += part
+    assert total == Add.build([*x[:35], *parts])
+
+
+def test_a_pending_sum_copies_pickles_and_evaluates_like_its_built_form():
+    x = [BinaryVariable(f"e{i}") for i in range(40)]
+    pending = sum(x[:35]) + x[35] + 2 * x[36]
+    built = Add.build([*x[:35], x[35], 2 * x[36]])
+    assert copy.copy(pending) == built
+    assert copy.deepcopy(sum(x[:35]) + x[35] + 2 * x[36]) == built
+    assert pickle.loads(pickle.dumps(sum(x[:35]) + x[35] + 2 * x[36])) == built
+    values = dict.fromkeys(x, 1)
+    assert (sum(x[:35]) + x[35] + 2 * x[36]).evaluate(values) == 38
