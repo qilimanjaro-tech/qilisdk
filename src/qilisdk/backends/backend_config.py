@@ -328,7 +328,7 @@ class ExecutionConfig(BaseSimulatorConfig):
     def get_config(self) -> SolverConfigDict:
         """Return execution settings with resolved defaults."""
         d: dict[str, float | str] = {
-            "num_threads": self.num_threads or psutil.cpu_count(logical=False) or 1,
+            "num_threads": self.num_threads if self.num_threads is not None else 0,
             "seed": int(self.seed) if self.seed is not None else 0,  # defensive
             "monte_carlo": self.monte_carlo is not None,
             "measurement_collapse": self.measurement_collapse,
@@ -340,6 +340,15 @@ class ExecutionConfig(BaseSimulatorConfig):
         else:
             d.update({"num_monte_carlo_trajectories": 100})
         return d
+
+    @field_validator("num_threads", mode="after")
+    @classmethod
+    def _validate_num_threads(cls, num_threads: int | None) -> int | None:
+        if num_threads == 0:
+            resolved = psutil.cpu_count(logical=False) or 1
+            logger.debug("[BackendConfig] num_threads=0 requested, resolved to {} physical cores", resolved)
+            return resolved
+        return num_threads
 
     @field_validator("seed", mode="after")
     @classmethod

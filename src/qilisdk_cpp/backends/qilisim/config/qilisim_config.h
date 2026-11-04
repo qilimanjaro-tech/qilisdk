@@ -29,6 +29,7 @@ class QiliSimConfig {
     std::string digital_method = "statevector_matrix_free";
     bool store_intermediate_results = false;
     int num_threads = 1;
+    bool auto_num_threads = false;
     int seed = 42;
     double atol = 1e-12;
     int max_cache_size = 1000;
@@ -64,6 +65,7 @@ class QiliSimConfig {
     std::string get_digital_method() const { return digital_method; }
     bool get_store_intermediate_results() const { return store_intermediate_results; }
     int get_num_threads() const { return num_threads; }
+    bool get_auto_num_threads() const { return auto_num_threads; }
     int get_seed() const { return seed; }
 
     double get_atol() const { return atol; }
@@ -89,6 +91,7 @@ class QiliSimConfig {
     void set_digital_method(const std::string& value) { digital_method = value; }
     void set_store_intermediate_results(bool value) { store_intermediate_results = value; }
     void set_num_threads(int value) { num_threads = value; }
+    void set_auto_num_threads(bool value) { auto_num_threads = value; }
     void set_seed(int value) {
         seed = value;
         seed_stream = 0;
@@ -117,6 +120,9 @@ class QiliSimConfig {
 
     // Advance the seed and return the next one
     int next_seed() const;
+
+    // The number of threads to use for a state with this many elements
+    int get_num_threads_for_state(long state_size, long min_parallel_size) const;
 };
 
 // GCOV_EXCL_BR_STOP

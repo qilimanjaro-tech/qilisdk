@@ -44,7 +44,7 @@ def test_qilisim_init():
     assert config["monte_carlo"] is False
     assert config["num_monte_carlo_trajectories"] == 100
     assert config["max_cache_size"] == 1000
-    assert config["num_threads"] >= 1
+    assert config["num_threads"] == 0
     assert isinstance(config["seed"], int)
     assert config["atol"] > 0
 
@@ -269,7 +269,7 @@ class QiliSimMock:
 
 def test_qilisim_sampling_dummy(monkeypatch):
     monkeypatch.setattr(qilisdk.backends.qilisim, "QiliSimCpp", QiliSimMock)
-    circuit = MagicMock(nqubits=1)
+    circuit = MagicMock()
     digital_propagation = DigitalPropagation(circuit)
     backend = QiliSim()
     assert backend.execute(digital_propagation, Readout().with_sampling(nshots=100)) == "mocked_sampling_result"
@@ -285,49 +285,17 @@ def test_qilisim_time_evolution_dummy(monkeypatch):
     assert backend.execute(func, Readout().with_expectation(observables=[pauli_z(0)])) == "mocked_time_evolution_result"
 
 
-class QiliSimThreadsMock:
-    def __init__(self, *args, **kwargs):
-        self.num_threads = None
-
-    def execute_digital_propagation(self, *args, **kwargs):
-        self.num_threads = args[-1]["num_threads"]
-
-    def execute_analog_evolution(self, *args, **kwargs):
-        self.num_threads = args[-1]["num_threads"]
-
-
 @pytest.mark.parametrize(
-    ("nqubits", "execution_config", "digital_method", "single_threaded"),
-    [
-        (2, ExecutionConfig(), DigitalMethod.statevector(), True),
-        (2, ExecutionConfig(), DigitalMethod.statevector(matrix_free=True), True),
-        (12, ExecutionConfig(), DigitalMethod.statevector(), False),
-        (2, ExecutionConfig(num_threads=0), DigitalMethod.statevector(), False),
-        (2, ExecutionConfig(monte_carlo=MonteCarloConfig(trajectories=10)), DigitalMethod.statevector(), False),
-        (2, ExecutionConfig(), DigitalMethod.stabilizer(), False),
-    ],
+    ("num_threads", "expected_num_threads", "expected_config_num_threads"),
+    [(None, None, 0), (0, 8, 8), (3, 3, 3)],
 )
-def test_qilisim_digital_small_simulations_run_on_a_single_thread(
-    monkeypatch, nqubits, execution_config, digital_method, single_threaded
-):
-    monkeypatch.setattr(qilisdk.backends.qilisim, "QiliSimCpp", QiliSimThreadsMock)
-    backend = QiliSim(digital_simulation_method=digital_method, execution_config=execution_config)
-    backend.execute(DigitalPropagation(Circuit(nqubits)), Readout().with_sampling(nshots=10))
-    expected_threads = 1 if single_threaded else backend.get_config()["num_threads"]
-    assert backend.qili_sim.num_threads == expected_threads
-
-
-@pytest.mark.parametrize(("nqubits", "single_threaded"), [(2, True), (9, False)])
-def test_qilisim_analog_small_simulations_run_on_a_single_thread(monkeypatch, nqubits, single_threaded):
-    monkeypatch.setattr(qilisdk.backends.qilisim, "QiliSimCpp", QiliSimThreadsMock)
-    schedule = Schedule(hamiltonians={"h": pauli_z(nqubits - 1)}, dt=0.1, total_time=1.0)
-    backend = QiliSim()
-    backend.execute(
-        AnalogEvolution(schedule=schedule, initial_state=ket(*([0] * nqubits))),
-        Readout().with_expectation(observables=[pauli_z(0)]),
-    )
-    expected_threads = 1 if single_threaded else backend.get_config()["num_threads"]
-    assert backend.qili_sim.num_threads == expected_threads
+def test_execution_config_num_threads(monkeypatch, num_threads, expected_num_threads, expected_config_num_threads):
+    # Mock the core count so the resolved values don't depend on the runner
+    monkeypatch.setattr(qilisdk.backends.backend_config.psutil, "cpu_count", lambda logical: 8)
+    execution_config = ExecutionConfig(num_threads=num_threads)
+    config = execution_config.get_config()
+    assert execution_config.num_threads == expected_num_threads
+    assert config["num_threads"] == expected_config_num_threads
 
 
 @pytest.mark.parametrize("gate", [Adjoint(Controlled(2, basic_gate=S(0))), Exponential(CNOT(2, 0))])

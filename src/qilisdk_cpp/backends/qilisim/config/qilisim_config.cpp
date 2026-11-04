@@ -14,6 +14,7 @@
 
 #include "qilisim_config.h"
 #include <set>
+#include "../../../libs/logging.h"
 #include "../../../libs/pybind.h"
 
 // GCOV_EXCL_BR_START
@@ -113,6 +114,25 @@ int QiliSimConfig::next_seed() const {
     z = (z ^ (z >> 27)) * 0x94d049bb133111ebULL;
     z = z ^ (z >> 31);
     return static_cast<int>(z & 0x7fffffffULL);
+}
+
+int QiliSimConfig::get_num_threads_for_state(long state_size, long min_parallel_size) const {
+    /*
+    Get the number of threads to use for a state, which is a single thread if the number of threads
+    is chosen automatically and the state is too small to not be slowed down by the threading overhead.
+
+    Args:
+        state_size (long): The number of elements stored in the state (2^n for a statevector, 4^n for a density matrix).
+        min_parallel_size (long): The smallest state size that benefits from more than one thread.
+
+    Returns:
+        int: The number of threads to use.
+    */
+    if (auto_num_threads && state_size < min_parallel_size) {
+        qilisdk::log_debug("[QiliSim, C++] Running a state of size " + std::to_string(state_size) + " on a single thread, as it is too small to benefit from more");
+        return 1;
+    }
+    return num_threads;
 }
 
 // GCOV_EXCL_BR_STOP
