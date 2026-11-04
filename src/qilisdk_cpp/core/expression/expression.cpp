@@ -262,6 +262,51 @@ int compare_constants(const Node* a, const Node* b) {
     return by_real != 0 ? by_real : compare_doubles(a->value.im, b->value.im);
 }
 
+bool add_overflows(int64_t a, int64_t b, int64_t& result) {
+    /*
+    Store a + b in result, reporting whether the true sum overflows 64 bits.
+
+    Args:
+        a (int64_t): The first operand.
+        b (int64_t): The second operand.
+        result (int64_t&): Receives the sum, wrapped on overflow.
+
+    Returns:
+        bool: Whether the sum overflowed.
+    */
+#if defined(_MSC_VER) && !defined(__clang__)
+    // MSVC has no overflow builtins: wrap in unsigned, then overflow flips the sign of both operands
+    result = static_cast<int64_t>(static_cast<uint64_t>(a) + static_cast<uint64_t>(b));
+    return ((a ^ result) & (b ^ result)) < 0;
+#else
+    return __builtin_add_overflow(a, b, &result);
+#endif
+}
+
+bool mul_overflows(int64_t a, int64_t b, int64_t& result) {
+    /*
+    Store a * b in result, reporting whether the true product overflows 64 bits.
+
+    Args:
+        a (int64_t): The first factor.
+        b (int64_t): The second factor.
+        result (int64_t&): Receives the product, wrapped on overflow.
+
+    Returns:
+        bool: Whether the product overflowed.
+    */
+#if defined(_MSC_VER) && !defined(__clang__)
+    // MSVC has no overflow builtins: compare against the limits divided by one factor
+    constexpr int64_t max = std::numeric_limits<int64_t>::max();
+    constexpr int64_t min = std::numeric_limits<int64_t>::min();
+    const bool overflow = a > 0 ? (b > 0 ? a > max / b : b < min / a) : (b > 0 ? a < min / b : a != 0 && b < max / a);
+    result = static_cast<int64_t>(static_cast<uint64_t>(a) * static_cast<uint64_t>(b));
+    return overflow;
+#else
+    return __builtin_mul_overflow(a, b, &result);
+#endif
+}
+
 Num c_prod(const Num& a, const Num& b) {
     /*
     The complex product a * b, computed as Python's complex arithmetic does so results match it to the
@@ -1011,7 +1056,7 @@ Num num_add(const Num& a, const Num& b) {
     */
     if (a.tag == Num::Tag::Int && b.tag == Num::Tag::Int) {
         int64_t result = 0;
-        if (!__builtin_add_overflow(a.i, b.i, &result)) {
+        if (!add_overflows(a.i, b.i, result)) {
             return Num::integer(result);
         }
         return Num::real(a.re + b.re);
@@ -1036,7 +1081,7 @@ Num num_mul(const Num& a, const Num& b) {
     */
     if (a.tag == Num::Tag::Int && b.tag == Num::Tag::Int) {
         int64_t result = 0;
-        if (!__builtin_mul_overflow(a.i, b.i, &result)) {
+        if (!mul_overflows(a.i, b.i, result)) {
             return Num::integer(result);
         }
         return Num::real(a.re * b.re);
@@ -1066,10 +1111,10 @@ Num num_pow(const Num& base, const Num& exponent) {
         bool overflow = false;
         for (int64_t e = exponent.i; e > 0; e >>= 1) {
             if (e & 1) {
-                overflow |= __builtin_mul_overflow(result, factor, &result);
+                overflow |= mul_overflows(result, factor, result);
             }
             if (e > 1) {
-                overflow |= __builtin_mul_overflow(factor, factor, &factor);
+                overflow |= mul_overflows(factor, factor, factor);
             }
         }
         return overflow ? Num::real(std::pow(base.re, exponent.re)) : Num::integer(result);
@@ -1778,7 +1823,9 @@ bool NodeEqual::operator()(const NodePtr& a, const NodePtr& b) const {
     return equal(a, b);
 }
 
-bool equal(const NodePtr& a, const NodePtr& b) {
+namespace {
+
+bool equal_shared(const NodePtr& a, const NodePtr& b, std::unordered_map<const Node*, const Node*>& proven) {
     /*
     Structural equality of two canonical trees, settled by pointer or hash wherever possible.
     Constants compare numerically, so 2 and 2.0 are equal, and every NaN is alike.
@@ -1786,6 +1833,8 @@ bool equal(const NodePtr& a, const NodePtr& b) {
     Args:
         a (NodePtr&): The first tree.
         b (NodePtr&): The second tree.
+        proven (std::unordered_map&): The node of b each node of a was already found equal to, so a
+            subtree shared by many parents, as in a copy of a graph, is compared only once.
 
     Returns:
         bool: True if the trees are structurally equal.
@@ -1805,19 +1854,46 @@ bool equal(const NodePtr& a, const NodePtr& b) {
             return (std::isnan(a->value.re) || std::isnan(a->value.im)) && same_double(a->value.re, b->value.re) && same_double(a->value.im, b->value.im);
         case Kind::Variable:
             return a->label == b->label;
-        case Kind::Function:
-            return a->label == b->label && equal(a->args[0], b->args[0]);
         default:
-            if (a->args.size() != b->args.size()) {
-                return false;  // GCOV_EXCL_LINE (the hash covers the size, so this needs a hash collision)
-            }
-            for (size_t i = 0; i < a->args.size(); ++i) {
-                if (!equal(a->args[i], b->args[i])) {
-                    return false;  // GCOV_EXCL_LINE (likewise only reachable through a hash collision)
-                }
-            }
-            return true;
+            break;
     }
+    auto found = proven.find(a.get());
+    if (found != proven.end() && found->second == b.get()) {
+        return true;
+    }
+    if (a->kind == Kind::Function) {
+        if (a->label != b->label || !equal_shared(a->args[0], b->args[0], proven)) {
+            return false;  // GCOV_EXCL_LINE (the hash covers the name and argument, so this needs a hash collision)
+        }
+    } else {
+        if (a->args.size() != b->args.size()) {
+            return false;  // GCOV_EXCL_LINE (the hash covers the size, so this needs a hash collision)
+        }
+        for (size_t i = 0; i < a->args.size(); ++i) {
+            if (!equal_shared(a->args[i], b->args[i], proven)) {
+                return false;  // GCOV_EXCL_LINE (likewise only reachable through a hash collision)
+            }
+        }
+    }
+    proven[a.get()] = b.get();
+    return true;
+}
+
+}  // namespace
+
+bool equal(const NodePtr& a, const NodePtr& b) {
+    /*
+    Structural equality of two canonical trees, comparing each shared subtree only once.
+
+    Args:
+        a (NodePtr&): The first tree.
+        b (NodePtr&): The second tree.
+
+    Returns:
+        bool: True if the trees are structurally equal.
+    */
+    std::unordered_map<const Node*, const Node*> proven;
+    return equal_shared(a, b, proven);
 }
 
 namespace {

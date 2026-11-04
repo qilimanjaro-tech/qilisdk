@@ -101,24 +101,12 @@ class NodeSpan {
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
-    const NodePtr* begin() const {
-        return data_;
-    }
-    const NodePtr* end() const {
-        return data_ + size_;
-    }
-    std::reverse_iterator<const NodePtr*> rbegin() const {
-        return std::reverse_iterator<const NodePtr*>(end());
-    }
-    std::reverse_iterator<const NodePtr*> rend() const {
-        return std::reverse_iterator<const NodePtr*>(begin());
-    }
-    size_t size() const {
-        return size_;
-    }
-    const NodePtr& operator[](size_t i) const {
-        return data_[i];
-    }
+    const NodePtr* begin() const { return data_; }
+    const NodePtr* end() const { return data_ + size_; }
+    std::reverse_iterator<const NodePtr*> rbegin() const { return std::reverse_iterator<const NodePtr*>(end()); }
+    std::reverse_iterator<const NodePtr*> rend() const { return std::reverse_iterator<const NodePtr*>(begin()); }
+    size_t size() const { return size_; }
+    const NodePtr& operator[](size_t i) const { return data_[i]; }
 
    private:
     const NodePtr* data_ = nullptr;
