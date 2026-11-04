@@ -14,7 +14,10 @@
 from __future__ import annotations
 
 import math
+import operator
+from concurrent.futures import ThreadPoolExecutor
 from copy import copy
+from functools import reduce
 from typing import TYPE_CHECKING, Callable, Iterator, Mapping, overload
 
 from loguru import logger
@@ -746,9 +749,6 @@ class Schedule(Parameterizable):
             tuple[list[list[float]], list[list[QTensor]]]: A tuple containing two lists, the first is a list
             of lists of eigenvalues for each Hamiltonian at each time step, and the second is a
             list of lists of corresponding eigenstates as QTensors.
-
-        Raises:
-            ValueError: If the Hamiltonian at any time step is not a valid Hamiltonian object that can be converted to a QTensor for eigenvalue computation.
         """
         _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING = 7
         if self.nqubits > _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING:
@@ -757,18 +757,20 @@ class Schedule(Parameterizable):
                 _MAX_QUBITS_FOR_EIGENVALUE_PLOTTING,
                 self.nqubits,
             )
-        full_eigenvalues: list[list[float]] = []
-        full_eigenstates: list[list[QTensor]] = []
-        for i, t in enumerate(self.tlist):
-            full_hamiltonian = sum(self.coefficients[h][float(t)] * self.hamiltonians[h] for h in self.hamiltonians)
-            if not isinstance(full_hamiltonian, Hamiltonian):
-                raise ValueError(f"Expected full_hamiltonian to be a Hamiltonian, got {type(full_hamiltonian)}")
-            as_qtensor = full_hamiltonian.to_qtensor(total_nqubits=self.nqubits)
-            vals, vecs = as_qtensor.eig()
+        # Converting a Hamiltonian to a matrix is far more expensive than combining matrices,
+        # so do it once per Hamiltonian rather than once per time step
+        as_qtensors = {h: ham.to_qtensor(total_nqubits=self.nqubits) for h, ham in self.hamiltonians.items()}
+        full_hamiltonians = [
+            reduce(operator.add, (self.coefficients[h][float(t)] * as_qtensors[h] for h in as_qtensors))
+            for t in self.tlist
+        ]
 
-            full_eigenvalues.append([float(ev.real) for ev in vals[:levels]])
-            full_eigenstates.append(list(vecs[:levels]))
+        # Each time step is independent and the decomposition releases the GIL, so run them in parallel
+        with ThreadPoolExecutor() as executor:
+            decompositions = list(executor.map(lambda ham: ham.eig(), full_hamiltonians))
 
+        full_eigenvalues = [[float(ev.real) for ev in vals[:levels]] for vals, _ in decompositions]
+        full_eigenstates = [list(vecs[:levels]) for _, vecs in decompositions]
         return full_eigenvalues, full_eigenstates
 
     def __repr__(self) -> str:

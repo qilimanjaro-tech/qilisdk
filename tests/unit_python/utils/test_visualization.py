@@ -701,20 +701,6 @@ def test_schedule_draw_eigenvalues_with_no_state_but_overlaps_runs_with_warning(
     schedule.draw_eigenvalues(show_overlaps=True)  # Should warn but not fail
 
 
-def test_schedule_draw_eigenvalues_not_hamiltonian_raises(monkeypatch):
-    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt, "show", mock_show)
-    monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt.Figure, "savefig", mock_save)
-
-    fake_h = MagicMock()
-    fake_h.nqubits = 2
-
-    # Create a schedule with a non-Hamiltonian functional
-    schedule = Schedule(total_time=10, hamiltonians={"H0": fake_h}, coefficients={})
-    states = [QTensor.ket(0) for _ in range(11)]
-    with pytest.raises(ValueError, match="to be a Hamiltonian"):
-        schedule.draw_eigenvalues(intermediate_states=states)
-
-
 def test_schedule_draw_eigenvalues_calculate_overlaps(monkeypatch):
     monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt, "show", mock_show)
     monkeypatch.setattr(qilisdk.utils.visualization.schedule_renderers.plt.Figure, "savefig", mock_save)

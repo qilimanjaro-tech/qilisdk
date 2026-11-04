@@ -1600,18 +1600,18 @@ std::vector<SparseMatrix> QTensorCpp::get_eigenvectors() const {
 
 py::object QTensorCpp::get_eigenvectors_python() const {
     /*
-    Return the eigenvectors of this QTensor as a Python list of sparse matrices. If the
+    Return the eigenvectors of this QTensor as a Python list of QTensorCpp objects. If the
     eigenvectors have not been computed yet, an error is raised.
 
     Returns:
-        py::object: A Python list containing the eigenvectors of this QTensor as sparse matrices.
+        py::object: A Python list containing the eigenvectors of this QTensor as QTensorCpp objects.
 
     Raises:
         py::value_error: If the eigenvectors have not been computed yet.
     */
     py::list evecs;
     for (const auto& evec : get_eigenvectors()) {
-        evecs.append(to_spmatrix(evec));
+        evecs.append(py::cast(QTensorCpp(evec)));
     }
     return evecs;
 }

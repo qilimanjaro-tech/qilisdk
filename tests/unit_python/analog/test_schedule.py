@@ -923,6 +923,12 @@ def test_calculate_eigenvalues_with_too_many_qubits_runs_but_warns(monkeypatch):
         def __init__(self, nqubits):
             self.nqubits = nqubits
 
+        def __rmul__(self, other):
+            return self
+
+        def __add__(self, other):
+            return self
+
         def eig(self):
             return np.array([0.0]), []
 
