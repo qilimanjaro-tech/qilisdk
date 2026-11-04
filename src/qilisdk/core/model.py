@@ -1530,9 +1530,9 @@ class QUBO(Model):
         The scale is at most ``10**max_decimals``, and never past what keeps the integer form's squared penalty exactly
         representable in float64. Coefficients that are not exact within it are rounded to the nearest integer, and
         the constant past the largest error this can make, so that every assignment satisfying the rounded constraint
-        also satisfies the original one. If that leaves no assignment satisfying the rounded constraint, it is retried
-        at the finest scale. A constraint that is satisfied by every assignment, or by none even at the finest scale, is
-        returned unchanged.
+        also satisfies the original one. A coefficient that tightens the constraint is never rounded to zero, but to one.
+        If that leaves no assignment satisfying the rounded constraint, it is retried at the finest scale. A constraint
+        that is satisfied by every assignment, or by none even at the finest scale, is returned unchanged.
 
         Args:
             label (str): the label of the constraint.
@@ -1542,21 +1542,19 @@ class QUBO(Model):
                 keep ``_SLACK_SIGNIFICANT_DIGITS`` significant digits of the largest coefficient. Defaults to None.
 
         Returns:
-            tuple[Expression, RealNumber, ComparisonOperation]: the rescaled left hand side, the step, the value in the
-                constraint's units of one unit of the rescaled left hand side, and the operation comparing the rescaled
-                left hand side against zero.
+            tuple[Expression, RealNumber, ComparisonOperation]: the rescaled left hand side, the step (the value in the
+                constraint's units of one unit of the rescaled left hand side), and the operation comparing the
+                rescaled left hand side against zero.
         """
+        # h >= 0 and h > 0 are rescaled as -h <= 0 and -h < 0, and negated back at the end
+        sign = 1 if operation in {ComparisonOperation.LEQ, ComparisonOperation.LT} else -1
+        strict = operation in {ComparisonOperation.LT, ComparisonOperation.GT}
         const, coeffs = _real_coefficients(h)
-        values = np.array([const, *coeffs.values()], dtype=float)
+        values = sign * np.array([const, *coeffs.values()], dtype=float)
         coeff_values = values[1:]
-        never_binds = {
-            ComparisonOperation.LEQ: const + coeff_values[coeff_values > 0].sum() <= 0,
-            ComparisonOperation.LT: const + coeff_values[coeff_values > 0].sum() < 0,
-            ComparisonOperation.GEQ: const + coeff_values[coeff_values < 0].sum() >= 0,
-            ComparisonOperation.GT: const + coeff_values[coeff_values < 0].sum() > 0,
-        }[operation]
+        highest = values[0] + coeff_values[coeff_values > 0].sum()
         span = float(np.abs(coeff_values).sum())
-        if span == 0 or never_binds:
+        if span == 0 or highest < 0 or (highest == 0 and not strict):
             # _check_valid_constraint decides these as they are: the constraint is constant, or never binds
             return h, 1, operation
 
@@ -1577,41 +1575,24 @@ class QUBO(Model):
             if is_integer[1:].all():
                 break
 
-        # Every monomial is a product of binary variables, so it is never negative: the rounded coefficients change h
-        # by at least the sum of the negative rounding errors, and at most the sum of the positive ones. Moving the
-        # constant past the error in the direction of the inequality keeps every assignment satisfying the rounded
-        # constraint feasible in the original one.
+        # A positive coefficient rounded to zero would raise the bound below for every assignment, which can exclude
+        # its variable entirely, such as 1e-4 next to 1. Rounded up to one instead, it only excludes assignments close
+        # to the bound
+        rounded = nearest[1:]
+        rounded[~is_integer[1:] & (rounded == 0) & (scaled[1:] > 0)] = 1
+        # Every monomial is a product of binary variables, so it is never negative: the rounded coefficients lower h by
+        # at most the sum of the negative rounding errors. Raising the constant past it keeps every assignment
+        # satisfying the rounded constraint feasible in the original one.
         errors = np.where(is_integer, 0, nearest - scaled)[1:]
-        bound = (
-            scaled[0]
-            - {
-                ComparisonOperation.LEQ: errors[errors < 0].sum(),
-                ComparisonOperation.LT: errors[errors < 0].sum(),
-                ComparisonOperation.GEQ: errors[errors > 0].sum(),
-                ComparisonOperation.GT: errors[errors > 0].sum(),
-            }[operation]
-        )
+        bound = scaled[0] - errors[errors < 0].sum()
         if abs(bound - round(bound)) <= tolerance:
             bound = round(bound)
-        # The integer form only takes integer values, so a strict inequality becomes the non-strict one a unit further in
-        int_const = {
-            ComparisonOperation.LEQ: math.ceil(bound),
-            ComparisonOperation.LT: math.floor(bound) + 1,
-            ComparisonOperation.GEQ: math.floor(bound),
-            ComparisonOperation.GT: math.ceil(bound) - 1,
-        }[operation]
-        # Moving the bound past the rounding error can leave no assignment satisfying the rounded constraint although
-        # the original has some, such as when 0.5 is rounded to 0 next to 100. These are retried at the finest scale,
+        # The integer form only takes integer values, so h < 0 becomes h + 1 <= 0
+        int_const = math.floor(bound) + 1 if strict else math.ceil(bound)
+        # Raising the bound past the rounding error can leave no assignment satisfying the rounded constraint although
+        # the original has some, such as when -0.5 is rounded to 0 next to 100. These are retried at the finest scale,
         # and kept as they are if even that is not enough, so that only an unsatisfiable constraint is reported as such
-        rounded = nearest[1:]
-        lowest = int_const + rounded[rounded < 0].sum()
-        highest = int_const + rounded[rounded > 0].sum()
-        excludes_all = {
-            ComparisonOperation.LEQ: lowest > 0,
-            ComparisonOperation.LT: lowest > 0,
-            ComparisonOperation.GEQ: highest < 0,
-            ComparisonOperation.GT: highest < 0,
-        }[operation]
+        excludes_all = int_const + rounded[rounded < 0].sum() > 0
         if excludes_all and max_decimals < finest_decimals:
             return QUBO._to_integer_constraint(label, h, operation, finest_decimals)
         if excludes_all:
@@ -1623,19 +1604,17 @@ class QUBO(Model):
                 label,
                 round(math.log10(scale_limit)),
             )
-        operation = (
-            ComparisonOperation.LEQ
-            if operation in {ComparisonOperation.LEQ, ComparisonOperation.LT}
-            else ComparisonOperation.GEQ
-        )
-        int_coeffs = {monomial: int(value) for monomial, value in zip(coeffs, nearest[1:], strict=True) if value != 0}
+        int_coeffs = {monomial: int(value) for monomial, value in zip(coeffs, rounded, strict=True) if value != 0}
         divisor = math.gcd(*int_coeffs.values()) or 1
-        # Dividing the constant by the gcd leaves a fraction: round the bound down for h <= 0 and up for h >= 0
-        int_const = -(-int_const // divisor) if operation is ComparisonOperation.LEQ else int_const // divisor
+        # Dividing the constant by the gcd leaves a fraction: round it up, which rounds the bound down
+        int_const = -(-int_const // divisor)
         int_h = Add.build(
-            (Constant(int_const), *(coeff // divisor * monomial for monomial, coeff in int_coeffs.items()))
+            (
+                Constant(sign * int_const),
+                *(sign * (coeff // divisor) * monomial for monomial, coeff in int_coeffs.items()),
+            )
         )
-        return int_h, divisor / scale, operation
+        return int_h, divisor / scale, ComparisonOperation.LEQ if sign == 1 else ComparisonOperation.GEQ
 
     def _transform_constraint(
         self,

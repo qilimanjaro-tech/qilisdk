@@ -99,10 +99,12 @@ meaning. Every violation is at least one step of :math:`2.5` from the rounded bo
 
 Each extra decimal place multiplies the slack range by ten, adding roughly 3.3 slack bits. By default the scale keeps
 three significant digits of the largest coefficient, so next to :math:`2.53` a coefficient of :math:`1.01` is kept
-exactly, but coefficients such as :math:`\pi` or randomly generated weights are rounded. Coefficients are rounded to the nearest
-integer, and the bound is moved past the largest error this can make, so the rounded constraint never admits an
-assignment that the original rejects. It may exclude a few feasible assignments very close to the bound, and a warning
-is logged when coefficients are rounded. Inequalities that every assignment satisfies are dropped before any rounding.
+exactly, but coefficients such as :math:`\pi` or randomly generated weights are rounded. Coefficients are rounded to
+the nearest integer, and the bound is moved past the largest error this can make, so the rounded constraint never
+admits an assignment that the original rejects. A coefficient that tightens the constraint is rounded up to one rather
+than down to zero, so that a small one, such as :math:`10^{-4}` next to :math:`1`, does not move the bound for every
+assignment. The rounded constraint may exclude a few feasible assignments very close to the bound, and a warning is
+logged when coefficients are rounded. Inequalities that every assignment satisfies are dropped before any rounding.
 
 The ``max_decimals_in_slack`` argument of :meth:`~qilisdk.core.model.Model.to_qubo` sets the number of decimal places
 kept instead: fewer gives fewer slack bits, more gives a constraint closer to the original. It is capped at what keeps

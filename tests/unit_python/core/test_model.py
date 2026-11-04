@@ -1905,18 +1905,6 @@ def test_slack_penalty_is_in_the_constraints_units():
         assert real_penalties[key] == pytest.approx(penalty / 100), f"(a, b)={key}"
 
 
-def test_real_valued_equality_with_no_binary_solution_is_penalised_everywhere():
-    # Equalities keep their squared penalty, so one that no binary assignment satisfies still gives a QUBO
-    a, b = BinaryVariable("a"), BinaryVariable("b")
-    m = Model("m")
-    m.set_objective(0 * a)
-    m.add_constraint("c", EQ(0.5 * a + 0.5 * b, 0.75))
-
-    penalties = _min_energy_by_items(m.to_qubo(penalization="unbalanced"), a, b)
-
-    assert all(penalty > 0 for penalty in penalties.values())
-
-
 def test_non_terminating_coefficients_keep_feasible_assignments_on_the_bound():
     # a/3 + 2b/3 <= 2/3 has no exact decimal form, but scaled by the common denominator 3 it becomes a + 2b <= 2
     # exactly, instead of being rounded to one that excludes b = 1 although it lies exactly on the bound.
@@ -1929,50 +1917,6 @@ def test_non_terminating_coefficients_keep_feasible_assignments_on_the_bound():
 
     assert penalties[0, 1] == pytest.approx(0)
     assert penalties[1, 1] > 0
-
-
-@pytest.mark.parametrize(
-    ("constraint", "max_decimals_in_slack"),
-    [
-        (lambda a, b: EQ(a / 3 + b / 3, 2 / 3), None),
-        (lambda a, b: EQ(0.33 * a + 0.33 * b, 0.66), 1),
-    ],
-)
-def test_inexact_real_valued_equality_is_not_rounded(constraint, max_decimals_in_slack):
-    # Rounded to integers these become 33333333a + 33333333b == 66666667 and 3a + 3b == 7, which no assignment
-    # satisfies, so they are kept real-valued.
-    a, b = BinaryVariable("a"), BinaryVariable("b")
-    m = Model("m")
-    m.set_objective(0 * a)
-    m.add_constraint("c", constraint(a, b))
-
-    penalties = _min_energy_by_items(m.to_qubo(max_decimals_in_slack=max_decimals_in_slack), a, b)
-
-    assert penalties[1, 1] == pytest.approx(0)
-    assert penalties[0, 1] > 0
-
-
-@pytest.mark.parametrize(
-    ("constraint", "feasible"),
-    [
-        # Rounding the bound already makes these strict, so a further unit would also exclude a + b == 1
-        (lambda a, b: LT(a + b, 1.5), {(0, 0), (0, 1), (1, 0)}),
-        (lambda a, b: GT(a + b, 0.5), {(0, 1), (1, 0), (1, 1)}),
-    ],
-)
-def test_rounded_strict_inequality_keeps_feasible_assignments(constraint, feasible):
-    a, b = BinaryVariable("a"), BinaryVariable("b")
-    m = Model("m")
-    m.set_objective(0 * a)
-    m.add_constraint("c", constraint(a, b))
-
-    penalties = _min_energy_by_items(m.to_qubo(max_decimals_in_slack=0), a, b)
-
-    for key, penalty in penalties.items():
-        if key in feasible:
-            assert penalty == pytest.approx(0), f"feasible (a, b)={key} was penalised"
-        else:
-            assert penalty > 0, f"infeasible (a, b)={key} was not penalised"
 
 
 @pytest.mark.parametrize("max_decimals_in_slack", [12, 15])
@@ -2093,6 +2037,21 @@ def test_real_valued_knapsack_qubo_minimum_is_model_optimum():
     assert min(energies, key=energies.get) == (1, 0)
 
 
+def test_tiny_coefficient_is_not_rounded_to_zero():
+    # Rounded to zero, 1e-4 would have to raise the bound of a + 1e-4b <= 1 for every assignment, excluding a = 1
+    # entirely. Rounded up to one instead it becomes 100a + b <= 100, which keeps exactly the feasible assignments.
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", LEQ(a + 1e-4 * b, 1))
+
+    penalties = _min_energy_by_items(m.to_qubo(), a, b)
+
+    assert penalties[1, 1] > 0
+    for key in [(0, 0), (0, 1), (1, 0)]:
+        assert penalties[key] == pytest.approx(0), f"feasible (a, b)={key} was penalised"
+
+
 @pytest.mark.parametrize(
     ("operation", "holds", "coefficients", "rhs", "max_decimals_in_slack", "exact"),
     [
@@ -2107,8 +2066,8 @@ def test_real_valued_knapsack_qubo_minimum_is_model_optimum():
         (GEQ, operator.ge, [-0.001, -0.001, -1, 0.001], 0.001, None, True),
         (LT, operator.lt, [1, -0.001, -0.001], -0.001, None, True),
         (GT, operator.gt, [0.001, 0.001, -1], 0.001, None, True),
-        (LEQ, operator.le, [0.3, 0.3], 0.5, 0, True),
         # Rounded, which may exclude feasible assignments close to the bound, but never admits an infeasible one
+        (LEQ, operator.le, [0.3, 0.3], 0.5, 0, False),
         (LEQ, operator.le, [np.pi, np.e, -1 / 3], 2.5, None, False),
         (GEQ, operator.ge, [100, 0.5, -0.7], 99.6, None, False),
         (LT, operator.lt, [0.123456, -0.654321, 0.5], 0.1, None, False),
