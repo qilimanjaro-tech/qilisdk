@@ -122,7 +122,7 @@ static int group_measurements(const std::vector<Gate>& gates, int start, std::ve
     return num_measurements;
 }
 
-void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories) {
+void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories, bool input_is_trajectories) {
     /*
     Execute a sampling functional using a simple statevector simulator.
 
@@ -138,6 +138,8 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
         output_is_trajectories (bool*): Optional output parameter. If given, a Monte Carlo ensemble is
             returned as a batch of state vector columns instead of being averaged into a density
             matrix, and the flag is set to true when that is what `state` holds.
+        input_is_trajectories (bool): Whether `state` is a batch of Monte Carlo trajectories (one state
+            vector per column) rather than a state vector or density matrix.
 
     Raises:
         py::value_error: If functional is not a Sampling instance.
@@ -152,12 +154,9 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
 #endif
 
     long dim = 1L << n_qubits;
-    bool is_statevector = (state.cols() == 1 && state.rows() == dim);
+    bool is_statevector = !input_is_trajectories && state.cols() == 1 && state.rows() == dim;
     bool initially_was_statevector = is_statevector;
     qilisdk::log_debug("[Sampling, C++] Preparing initial state for " + std::to_string(n_qubits) + " qubits (" + (is_statevector ? "statevector" : "density matrix") + ")");
-
-    // Check if the input is a bunch of monte carlo trajectories
-    bool input_is_trajectories = (state.cols() > 1 && state.rows() != state.cols());
 
     // If it's a density matrix, check if it's pure
     if (!is_statevector && !input_is_trajectories) {
@@ -363,7 +362,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
     qilisdk::log_debug("[Sampling, C++] Applied " + std::to_string(gate_count) + " gates, circuit sampling complete");
 }
 
-void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories) {
+void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories, bool input_is_trajectories) {
     /*
     Execute a sampling functional using a matrix-free simulator.
 
@@ -379,6 +378,8 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseMod
         output_is_trajectories (bool*): Optional output parameter. If given, a Monte Carlo ensemble is
             returned as a batch of state vector columns instead of being averaged into a density
             matrix, and the flag is set to true when that is what `state` holds.
+        input_is_trajectories (bool): Whether `state` is a batch of Monte Carlo trajectories (one state
+            vector per column) rather than a state vector or density matrix.
 
     Raises:
         py::value_error: If functional is not a Sampling instance.
@@ -392,15 +393,12 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseMod
     Eigen::setNbThreads(config.get_num_threads());
 #endif
 
-    bool is_statevector = (state.cols() == 1 && state.rows() == (1L << n_qubits));
+    bool is_statevector = !input_is_trajectories && state.cols() == 1 && state.rows() == (1L << n_qubits);
     bool initially_was_statevector = is_statevector;
     qilisdk::log_debug("[Sampling, C++] Preparing initial state for " + std::to_string(n_qubits) + " qubits (matrix-free, " + (is_statevector ? "statevector" : "density matrix") + ")");
 
     // Check if we have noise
     bool has_noise = !noise_model_cpp.is_empty();
-
-    // Check if the input is a bunch of monte carlo trajectories
-    bool input_is_trajectories = (state.cols() > 1 && state.rows() != state.cols());
 
     // If it's a density matrix, check if it's pure
     if (!is_statevector && !input_is_trajectories) {

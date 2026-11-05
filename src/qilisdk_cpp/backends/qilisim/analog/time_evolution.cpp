@@ -24,7 +24,7 @@
 
 // GCOV_EXCL_BR_START
 
-void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos, bool* output_is_trajectories) {
+void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos, bool* output_is_trajectories, bool input_is_trajectories) {
     /*
     Execute a time evolution functional.
 
@@ -42,6 +42,8 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         output_is_trajectories (bool*): Optional output parameter. If given, a Monte Carlo ensemble is
             returned as a batch of state vector columns instead of being averaged into a density
             matrix, and the flag is set to true when that is what the outputs hold.
+        input_is_trajectories (bool): Whether the input state is a batch of Monte Carlo trajectories (one
+            state vector per column) rather than a state vector or density matrix.
 
     Returns:
         TimeEvolutionResult: The results of the evolution.
@@ -85,9 +87,6 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
         rho_0 = rho_0.adjoint();
     }
 
-    // Check if the input is a bunch of monte carlo trajectories
-    bool input_is_trajectories = (rho_0.cols() > 1 && rho_0.rows() != rho_0.cols());
-
     // Determine if should treat it as unitary evolution on a statevector
     bool is_unitary_on_statevector = input_is_trajectories || (is_unitary_dynamics && input_was_vector);
 
@@ -114,7 +113,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     bool use_monte_carlo = config.get_monte_carlo() && !input_is_trajectories;
 
     // If we have non-unitary dynamics and the input was a state vector, convert to density matrix
-    if (!is_unitary_dynamics && input_was_vector && !use_monte_carlo) {
+    if (!is_unitary_dynamics && input_was_vector && !use_monte_carlo && !input_is_trajectories) {
         rho_0 = rho_0 * rho_0.adjoint();
     }
 
@@ -251,7 +250,7 @@ void time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamilto
     }
 }
 
-void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos, bool* output_is_trajectories) {
+void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model_cpp, QiliSimConfig& config, DenseMatrix& rho_t, std::vector<DenseMatrix>& intermediate_rhos, bool* output_is_trajectories, bool input_is_trajectories) {
     /*
     Execute a time evolution functional.
 
@@ -267,6 +266,8 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
         output_is_trajectories (bool*): Optional output parameter. If given, a Monte Carlo ensemble is
             returned as a batch of state vector columns instead of being averaged into a density
             matrix, and the flag is set to true when that is what the outputs hold.
+        input_is_trajectories (bool): Whether the input state is a batch of Monte Carlo trajectories (one
+            state vector per column) rather than a state vector or density matrix.
 
     Returns:
         TimeEvolutionResult: The results of the evolution.
@@ -310,9 +311,6 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
         rho_t = rho_t.adjoint().eval();
     }
 
-    // Check if the input is a bunch of monte carlo trajectories
-    bool input_is_trajectories = (rho_t.cols() > 1 && rho_t.rows() != rho_t.cols());
-
     // Determine if should treat it as unitary evolution on a statevector
     bool is_unitary_on_statevector = input_is_trajectories || (is_unitary_dynamics && input_was_vector);
 
@@ -332,7 +330,7 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
     }
 
     // If we have non-unitary dynamics and the input was a state vector, convert to density matrix
-    if (!is_unitary_dynamics && input_was_vector && !use_monte_carlo) {
+    if (!is_unitary_dynamics && input_was_vector && !use_monte_carlo && !input_is_trajectories) {
         rho_t = rho_t * rho_t.adjoint();
     }
 

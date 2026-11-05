@@ -320,11 +320,38 @@ TEST(TrajectoryUnravelingKrausTest, CollapsedTrajectoryThrows) {
     EXPECT_ANY_THROW(unraveling.apply_kraus(trajectories, dampingKraus(0.5)));
 }
 
+TEST(NormGainWarningTest, WarnsOnceWhenTheIntegratorGainsNorm) {
+    // A squared norm of 1.01 can only come from integrator error, which would silently block the jumps
+    DenseMatrix trajectories = excitedTrajectories(8) * std::sqrt(1.01);
+    TrajectoryUnraveling unraveling(18);
+    reset_monte_carlo_warnings();
+
+    py::list records = captureWarnings([&]() {
+        for (int repeat = 0; repeat < 3; ++repeat) {
+            DenseMatrix step = trajectories;
+            unraveling.apply_jumps(step, DenseMatrix(step), {dampingJump()});
+        }
+    });
+
+    ASSERT_EQ(py::len(records), 1u);
+    EXPECT_TRUE(containsString(records[0].cast<std::string>(), "increased the norm of 8 of 8"));
+}
+
+TEST(NormGainWarningTest, StaysSilentWithinTheTolerance) {
+    DenseMatrix trajectories = excitedTrajectories(8) * std::sqrt(1.0 + 1e-9);
+    TrajectoryUnraveling unraveling(19);
+    reset_monte_carlo_warnings();
+
+    py::list records = captureWarnings([&]() { unraveling.apply_jumps(trajectories, DenseMatrix(trajectories), {dampingJump()}); });
+
+    EXPECT_EQ(py::len(records), 0u);
+}
+
 TEST(JumpResolutionWarningTest, WarnsOnceForACoarseSchedule) {
     // A drift whose jump rate makes each of these steps carry far more than one jump
     const SparseMatrix drift = jump_drift_operator({dampingJump(100.0)});
     const std::vector<double> coarse_schedule = {0.0, 1.0, 2.0};
-    reset_jump_resolution_warning();
+    reset_monte_carlo_warnings();
 
     // Repeat the evolution the way a reservoir would, and expect a single warning for the lot
     py::list records = captureWarnings([&]() {
@@ -340,7 +367,7 @@ TEST(JumpResolutionWarningTest, WarnsOnceForACoarseSchedule) {
 TEST(JumpResolutionWarningTest, StaysSilentForAFineSchedule) {
     const SparseMatrix drift = jump_drift_operator({dampingJump(1.0)});
     const std::vector<double> fine_schedule = {0.0, 1e-3, 2e-3};
-    reset_jump_resolution_warning();
+    reset_monte_carlo_warnings();
 
     py::list records = captureWarnings([&]() { warn_if_jumps_underresolved(drift, fine_schedule, 0.5); });
 
@@ -352,11 +379,11 @@ TEST(JumpResolutionWarningTest, ThresholdDecidesWhetherTheScheduleIsTooCoarse) {
     const SparseMatrix drift = jump_drift_operator({dampingJump(1.0)});
     const std::vector<double> schedule = {0.0, 2.0};
 
-    reset_jump_resolution_warning();
+    reset_monte_carlo_warnings();
     py::list tolerant = captureWarnings([&]() { warn_if_jumps_underresolved(drift, schedule, 5.0); });
     EXPECT_EQ(py::len(tolerant), 0u);
 
-    reset_jump_resolution_warning();
+    reset_monte_carlo_warnings();
     py::list strict = captureWarnings([&]() { warn_if_jumps_underresolved(drift, schedule, 0.1); });
     EXPECT_EQ(py::len(strict), 1u);
 }
@@ -365,7 +392,7 @@ TEST(JumpResolutionWarningTest, WarningStateSurvivesADifferentDrift) {
     const SparseMatrix strong = jump_drift_operator({dampingJump(100.0)});
     const SparseMatrix weak = jump_drift_operator({dampingJump(50.0)});
     const std::vector<double> coarse_schedule = {0.0, 1.0};
-    reset_jump_resolution_warning();
+    reset_monte_carlo_warnings();
 
     py::list records = captureWarnings([&]() {
         warn_if_jumps_underresolved(strong, coarse_schedule, 0.5);
@@ -380,18 +407,18 @@ TEST(JumpResolutionWarningTest, JudgesTheLongestStep) {
     const SparseMatrix drift = jump_drift_operator({dampingJump(1.0)});
     const std::vector<double> schedule = {0.0, 1.0, 1.0, 4.0};
 
-    reset_jump_resolution_warning();
+    reset_monte_carlo_warnings();
     py::list tolerant = captureWarnings([&]() { warn_if_jumps_underresolved(drift, schedule, 3.5); });
     EXPECT_EQ(py::len(tolerant), 0u);
 
-    reset_jump_resolution_warning();
+    reset_monte_carlo_warnings();
     py::list strict = captureWarnings([&]() { warn_if_jumps_underresolved(drift, schedule, 2.5); });
     EXPECT_EQ(py::len(strict), 1u);
 }
 
 TEST(JumpResolutionWarningTest, AnEmptyScheduleNeverWarns) {
     const SparseMatrix drift = jump_drift_operator({dampingJump(100.0)});
-    reset_jump_resolution_warning();
+    reset_monte_carlo_warnings();
     py::list records = captureWarnings([&]() { warn_if_jumps_underresolved(drift, {}, 0.5); });
     EXPECT_EQ(py::len(records), 0u);
 }

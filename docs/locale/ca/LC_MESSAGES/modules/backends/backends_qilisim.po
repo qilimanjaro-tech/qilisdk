@@ -526,13 +526,15 @@ msgstr ""
 
 #: ../../modules/backends/backends_qilisim.rst:247
 msgid ""
-"``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` sets how "
-"many quantum jumps per schedule step are tolerated before a warning is "
-"displayed."
+"``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` controls "
+"how finely analog evolutions resolve quantum jumps in time - lower is more"
+" accurate but slower, higher is faster but less accurate, defaults to "
+"``0.5``."
 msgstr ""
-"``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` estableix"
-" quants salts quàntics per pas del schedule es toleren abans de mostrar "
-"un avís."
+"``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` controla "
+"amb quina resolució temporal les evolucions analògiques resolen els salts"
+" quàntics: un valor menor és més precís però més lent, un de més gran és "
+"més ràpid però menys precís; per defecte ``0.5``."
 
 #: ../../modules/backends/backends_qilisim.rst:248
 msgid ""

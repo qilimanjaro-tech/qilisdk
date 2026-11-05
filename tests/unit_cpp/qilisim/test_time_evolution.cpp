@@ -109,9 +109,9 @@ struct TimeEvolutionOutputs {
     std::vector<std::vector<double>> intermediate_expectation_values;
 };
 
-TimeEvolutionOutputs run_time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model, const std::vector<SparseMatrix>& observables, QiliSimConfig& config) {
+TimeEvolutionOutputs run_time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model, const std::vector<SparseMatrix>& observables, QiliSimConfig& config, bool input_is_trajectories = false) {
     TimeEvolutionOutputs out;
-    time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model, config, out.rho_t, out.intermediate_rhos);
+    time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model, config, out.rho_t, out.intermediate_rhos, nullptr, input_is_trajectories);
 
     for (const auto& O : observables) {
         if (out.rho_t.cols() == 1) {
@@ -145,10 +145,10 @@ struct MatrixFreeOutputs {
     std::vector<std::vector<double>> intermediate_expectation_values;
 };
 
-MatrixFreeOutputs run_time_evolution_mf(SparseMatrix rho_0, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model, const std::vector<MatrixFreeHamiltonian>& observables, QiliSimConfig& config) {
+MatrixFreeOutputs run_time_evolution_mf(SparseMatrix rho_0, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model, const std::vector<MatrixFreeHamiltonian>& observables, QiliSimConfig& config, bool input_is_trajectories = false) {
     MatrixFreeOutputs out;
     out.rho_t = DenseMatrix(rho_0);
-    time_evolution_matrix_free(hamiltonians, parameters_list, step_list, noise_model, config, out.rho_t, out.intermediate_rhos);
+    time_evolution_matrix_free(hamiltonians, parameters_list, step_list, noise_model, config, out.rho_t, out.intermediate_rhos, nullptr, input_is_trajectories);
 
     // Apply the operators using the Born rule
     for (const auto& O : observables) {
@@ -867,12 +867,27 @@ TEST_F(TimeEvolutionMonteCarloNoiseTest, TrajectoryInputIsUnravelledToo) {
     DenseMatrix batch = DenseMatrix::Zero(2, 256);
     batch.row(1).setOnes();
     SparseMatrix trajectories = batch.sparseView();
-    auto noisy = run_time_evolution(trajectories, hamiltonians, params, steps, noise, {}, deterministic);
-    auto noiseless = run_time_evolution(trajectories, hamiltonians, params, steps, empty_noise, {}, deterministic);
+    auto noisy = run_time_evolution(trajectories, hamiltonians, params, steps, noise, {}, deterministic, true);
+    auto noiseless = run_time_evolution(trajectories, hamiltonians, params, steps, empty_noise, {}, deterministic, true);
     EXPECT_EQ(noisy.rho_t.cols(), 256);
     const DenseMatrix noisy_rho = trajectories_to_density_matrix(noisy.rho_t);
     const DenseMatrix noiseless_rho = trajectories_to_density_matrix(noiseless.rho_t);
     EXPECT_GT(std::real(noisy_rho(0, 0)) - std::real(noiseless_rho(0, 0)), 0.1);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, SquareTrajectoryBatchIsNotMistakenForADensityMatrix) {
+    // Two trajectories on one qubit give a 2x2 batch, which must still be evolved column by column
+    DenseMatrix batch = DenseMatrix::Zero(2, 2);
+    batch.row(1).setOnes();
+    auto out = run_time_evolution(batch.sparseView(), hamiltonians, params, steps, empty_noise, {}, deterministic, true);
+    QiliSimConfig matrix_free = deterministic;
+    matrix_free.set_time_evolution_method("integrate_rk4_matrix_free");
+    auto out_mf = run_time_evolution_mf(batch.sparseView(), hamiltonians_mf, params, steps, empty_noise, {}, matrix_free, true);
+    auto single = run_time_evolution(statevector_excited_sparse(), hamiltonians, params, steps, empty_noise, {}, deterministic);
+    for (long c = 0; c < 2; ++c) {
+        EXPECT_LT((out.rho_t.col(c) - single.rho_t.col(0)).cwiseAbs().maxCoeff(), kTol);
+        EXPECT_LT((out_mf.rho_t.col(c) - single.rho_t.col(0)).cwiseAbs().maxCoeff(), kTol);
+    }
 }
 
 TEST_F(TimeEvolutionMonteCarloNoiseTest, IntermediateResultsAreNormalizedDensityMatrices) {
@@ -988,7 +1003,7 @@ class TimeEvolutionAdaptiveTest : public ::testing::Test {
 TEST_F(TimeEvolutionAdaptiveTest, TrajectoryBatchKeepsEachColumnNormalized) {
     DenseMatrix batch = DenseMatrix::Zero(2, 8);
     batch.row(0).setOnes();
-    auto out = run_time_evolution_mf(batch.sparseView(), hamiltonians, params, steps, empty_noise, {}, config);
+    auto out = run_time_evolution_mf(batch.sparseView(), hamiltonians, params, steps, empty_noise, {}, config, true);
     ASSERT_EQ(out.rho_t.cols(), 8);
     for (long c = 0; c < out.rho_t.cols(); ++c) {
         EXPECT_NEAR(out.rho_t.col(c).norm(), 1.0, kTol);
@@ -996,12 +1011,11 @@ TEST_F(TimeEvolutionAdaptiveTest, TrajectoryBatchKeepsEachColumnNormalized) {
 }
 
 TEST_F(TimeEvolutionAdaptiveTest, ZeroTrajectoryInABatchThrows) {
-    // Three columns, so the batch is not mistaken for a density matrix
     DenseMatrix batch = DenseMatrix::Zero(2, 3);
     batch(0, 0) = 1.0;
     batch(0, 1) = 1.0;
     SparseMatrix trajectories = batch.sparseView();
-    EXPECT_ANY_THROW(run_time_evolution_mf(trajectories, hamiltonians, params, steps, empty_noise, {}, config));
+    EXPECT_ANY_THROW(run_time_evolution_mf(trajectories, hamiltonians, params, steps, empty_noise, {}, config, true));
 }
 
 TEST_F(TimeEvolutionAdaptiveTest, ArnoldiMatrixFreeHonoursNormalizeState) {

@@ -879,15 +879,18 @@ TEST_F(SamplingMonteCarloTest, MidCircuitCollapseKeepsTheTrajectoryBatch) {
     std::vector<Gate> gates = {makeH(0), makeM(0), makeX(0)};
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    cfgMC.set_num_monte_carlo_trajectories(256);
+    cfgMC.set_num_monte_carlo_trajectories(2000);
     cfgMC.set_measurement_collapse(true);
     NoiseModelCpp nm = dampingKrausNoise(0.1);
     DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
     sampling(gates, n, nm, state, intermediate_results, cfgMC, readout);
-    EXPECT_EQ(state.rows(), 2);
-    EXPECT_EQ(state.cols(), 2);
+    ASSERT_EQ(state.rows(), 2);
+    ASSERT_EQ(state.cols(), 2);
     EXPECT_NEAR(std::real(state.trace()), 1.0, kTol);
+    // Every trajectory collapsed to |0> or |1>, which X and damping keep diagonal, so no coherence survives
+    EXPECT_NEAR(std::abs(state(0, 1)), 0.0, kTol);
+    EXPECT_NEAR(std::real(state(0, 0)), 0.5, 0.05);
 }
 
 TEST_F(SamplingMonteCarloTest, MatrixFreeMidCircuitCollapseKeepsTheTrajectoryBatch) {
@@ -895,15 +898,18 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMidCircuitCollapseKeepsTheTrajectoryBat
     std::vector<Gate> gates = {makeH(0), makeM(0), makeX(0)};
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    cfgMC.set_num_monte_carlo_trajectories(256);
+    cfgMC.set_num_monte_carlo_trajectories(2000);
     cfgMC.set_measurement_collapse(true);
     NoiseModelCpp nm = dampingKrausNoise(0.1);
     DenseMatrix state = zeroState(n);
     std::vector<py::object> intermediate_results;
     sampling_matrix_free(gates, n, nm, state, intermediate_results, cfgMC, readout);
-    EXPECT_EQ(state.rows(), 2);
-    EXPECT_EQ(state.cols(), 2);
+    ASSERT_EQ(state.rows(), 2);
+    ASSERT_EQ(state.cols(), 2);
     EXPECT_NEAR(std::real(state.trace()), 1.0, kTol);
+    // Every trajectory collapsed to |0> or |1>, which X and damping keep diagonal, so no coherence survives
+    EXPECT_NEAR(std::abs(state(0, 1)), 0.0, kTol);
+    EXPECT_NEAR(std::real(state(0, 0)), 0.5, 0.05);
 }
 
 TEST_F(SamplingMonteCarloTest, MidCircuitCollapseWithoutMonteCarloGivesADensityMatrix) {
@@ -978,22 +984,22 @@ TEST_F(SamplingMonteCarloTest, MidCircuitCollapseKeepsTrajectories) {
     DenseMatrix state;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    cfgMC.set_num_monte_carlo_trajectories(8);
     cfgMC.set_measurement_collapse(true);
-    state = DenseMatrix::Zero(2, 2);
-    state(0, 0) = cx(0.5, 0);
-    state(1, 1) = cx(0.5, 0);
+    state = DenseMatrix::Zero(2, 2000);
+    state.row(0).setOnes();
     std::vector<py::object> intermediate_results;
 
-    bool is_trajectories = true;
-    sampling(gates, n, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+    bool is_trajectories = false;
+    sampling(gates, n, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories, true);
 
     EXPECT_TRUE(is_trajectories);
     EXPECT_EQ(state.rows(), 2);
-    EXPECT_EQ(state.cols(), 8);
+    EXPECT_EQ(state.cols(), 2000);
     const DenseMatrix averaged = trajectories_to_density_matrix(state);
     EXPECT_NEAR(std::real(trace(averaged)), 1.0, 1e-12);
     EXPECT_TRUE((averaged - averaged.adjoint()).isZero(1e-12));
+    // Without the collapse H M H would bring every trajectory back to |0>, with it the average is I/2
+    EXPECT_LT((averaged - 0.5 * DenseMatrix::Identity(2, 2)).cwiseAbs().maxCoeff(), 0.05);
 }
 
 TEST_F(SamplingMonteCarloTest, MatrixFreeMidCircuitCollapseKeepsTrajectories) {
@@ -1002,22 +1008,70 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMidCircuitCollapseKeepsTrajectories) {
     DenseMatrix state;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    cfgMC.set_num_monte_carlo_trajectories(8);
     cfgMC.set_measurement_collapse(true);
-    state = DenseMatrix::Zero(2, 2);
-    state(0, 0) = cx(0.5, 0);
-    state(1, 1) = cx(0.5, 0);
+    state = DenseMatrix::Zero(2, 2000);
+    state.row(0).setOnes();
     std::vector<py::object> intermediate_results;
 
-    bool is_trajectories = true;
-    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+    bool is_trajectories = false;
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories, true);
 
     EXPECT_TRUE(is_trajectories);
     EXPECT_EQ(state.rows(), 2);
-    EXPECT_EQ(state.cols(), 8);
+    EXPECT_EQ(state.cols(), 2000);
     const DenseMatrix averaged = trajectories_to_density_matrix(state);
     EXPECT_NEAR(std::real(trace(averaged)), 1.0, 1e-12);
     EXPECT_TRUE((averaged - averaged.adjoint()).isZero(1e-12));
+    // Without the collapse H M H would bring every trajectory back to |0>, with it the average is I/2
+    EXPECT_LT((averaged - 0.5 * DenseMatrix::Identity(2, 2)).cwiseAbs().maxCoeff(), 0.05);
+}
+
+// Measuring qubit 1 of a two-qubit batch must collapse that qubit, not qubit 0: with H(0) H(1) M(1) H(0),
+// qubit 0 returns to |0> and only qubit 1 is left as an even mixture.
+TEST_F(SamplingMonteCarloTest, MidCircuitCollapseHitsTheMeasuredQubit) {
+    int n = 2;
+    std::vector<Gate> gates = {makeH(0), makeH(1), makeM(1), makeH(0)};
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_measurement_collapse(true);
+    DenseMatrix expected = DenseMatrix::Zero(4, 4);
+    expected(0, 0) = 0.5;
+    expected(1, 1) = 0.5;
+    for (bool matrix_free : {false, true}) {
+        DenseMatrix state = DenseMatrix::Zero(4, 2000);
+        state.row(0).setOnes();
+        std::vector<py::object> intermediate_results;
+        if (matrix_free) {
+            sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfgMC, readout, nullptr, true);
+        } else {
+            sampling(gates, n, noNoise, state, intermediate_results, cfgMC, readout, nullptr, true);
+        }
+        ASSERT_EQ(state.rows(), 4);
+        ASSERT_EQ(state.cols(), 2000);
+        const DenseMatrix averaged = trajectories_to_density_matrix(state);
+        EXPECT_LT((averaged - expected).cwiseAbs().maxCoeff(), 0.05);
+    }
+}
+
+// A square batch (four trajectories on two qubits) must not be mistaken for a density matrix.
+TEST_F(SamplingMonteCarloTest, SquareTrajectoryBatchIsNotMistakenForADensityMatrix) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0)};
+    for (bool matrix_free : {false, true}) {
+        DenseMatrix state = DenseMatrix::Zero(4, 4);
+        state.row(0).setOnes();
+        std::vector<py::object> intermediate_results;
+        bool is_trajectories = false;
+        if (matrix_free) {
+            sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfg, readout, &is_trajectories, true);
+        } else {
+            sampling(gates, n, noNoise, state, intermediate_results, cfg, readout, &is_trajectories, true);
+        }
+        EXPECT_TRUE(is_trajectories);
+        ASSERT_EQ(state.cols(), 4);
+        DenseMatrix expected = DenseMatrix::Zero(4, 4);
+        expected.row(2).setOnes();
+        EXPECT_LT((state - expected).cwiseAbs().maxCoeff(), kTol);
+    }
 }
 
 TEST_F(SamplingMatrixFreeTest, BadGate_ThrowsException) {

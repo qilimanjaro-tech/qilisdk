@@ -24,7 +24,7 @@ std::vector<SparseMatrix> peak_rate_jumps(const std::vector<SparseMatrix>& jump_
 SparseMatrix effective_hamiltonian(const SparseMatrix& hamiltonian, const SparseMatrix& drift);
 double max_jump_rate_bound(const SparseMatrix& drift);
 void warn_if_jumps_underresolved(const SparseMatrix& jump_drift, const std::vector<double>& step_list, double max_expected_jumps_per_step);
-void reset_jump_resolution_warning();
+void reset_monte_carlo_warnings();
 
 class TrajectoryUnraveling {
    private:

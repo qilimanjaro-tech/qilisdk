@@ -47,7 +47,7 @@ std::size_t sample_index(const std::vector<double>& weights, double uniform_draw
         uniform_draw (double): A uniform draw in [0, 1).
 
     Returns:
-        std::size_t: The index of the sampled weight, or weights.size() if the weights do not add up to something usable.
+        std::size_t: The index of the sampled weight (never one whose weight is zero), or weights.size() if the weights do not add up to something usable.
     */
     double total = 0.0;
     for (double w : weights) {
@@ -60,7 +60,7 @@ std::size_t sample_index(const std::vector<double>& weights, double uniform_draw
     double cumulative = 0.0;
     for (std::size_t k = 0; k < weights.size(); ++k) {
         cumulative += weights[k];
-        if (target <= cumulative) {
+        if (target < cumulative) {
             return k;
         }
     }
@@ -166,6 +166,12 @@ namespace {
 // Whether the under-resolved jump warning has already been emitted in this process
 std::atomic<bool> jump_resolution_warning_emitted{false};
 
+// Whether the norm-gain warning has already been emitted in this process
+std::atomic<bool> norm_gain_warning_emitted{false};
+
+// How far above one a trajectory's squared norm may drift over a step before it is reported
+constexpr double kNormGainTolerance = 1e-6;
+
 }  // namespace
 
 void warn_if_jumps_underresolved(const SparseMatrix& jump_drift, const std::vector<double>& step_list, double max_expected_jumps_per_step) {
@@ -195,14 +201,15 @@ void warn_if_jumps_underresolved(const SparseMatrix& jump_drift, const std::vect
     if (jump_resolution_warning_emitted.exchange(true)) {
         return;
     }
-    qilisdk::log_warning("[QiliSim, C++] The schedule steps are long compared to the noise rates (up to " + std::to_string(expected_jumps) + " jumps per step), so the Monte Carlo jumps are poorly resolved in time. Reduce the schedule dt for accurate results, or raise max_expected_jumps_per_step to silence this warning. It is only reported once per process.");
+    qilisdk::log_warning("[QiliSim, C++] The schedule steps are long compared to the noise rates (up to " + std::to_string(expected_jumps) + " jumps per step), so the Monte Carlo jumps are poorly resolved in time. Reduce the schedule dt for accurate results (raising max_expected_jumps_per_step only silences this warning). It is only reported once per process.");
 }
 
-void reset_jump_resolution_warning() {
+void reset_monte_carlo_warnings() {
     /*
-    Re-arm the once-per-process under-resolved jump warning. Only used by the tests.
+    Re-arm the once-per-process Monte Carlo warnings (under-resolved jumps and norm gain). Only used by the tests.
     */
     jump_resolution_warning_emitted.store(false);
+    norm_gain_warning_emitted.store(false);
 }
 
 TrajectoryUnraveling::TrajectoryUnraveling(int seed) : base_seed(seed) {
@@ -242,6 +249,11 @@ void TrajectoryUnraveling::apply_jumps(DenseMatrix& trajectories, const DenseMat
     probability underflowed to zero the evolved state no longer says where the trajectory was, so the
     jump is applied to the state at the start of the step instead.
 
+    Since the trajectories are not renormalised inside the step, any norm the integrator itself loses
+    or gains is read as jump probability. A gain cannot be told apart from a genuine survival of one,
+    so it silently suppresses jumps; when a squared norm ends a step more than a small tolerance above
+    one, a warning is logged (once per process) suggesting a finer step or tighter integrator tolerance.
+
     Args:
         trajectories (DenseMatrix&): The (dim x num_trajectories) batch of state vectors, updated in
             place and left normalised column by column.
@@ -260,8 +272,9 @@ void TrajectoryUnraveling::apply_jumps(DenseMatrix& trajectories, const DenseMat
     ensure_capacity(num_trajectories);
 
     bool diverged = false;
+    long norm_gains = 0;
 #if defined(_OPENMP)
-#pragma omp parallel reduction(|| : diverged)
+#pragma omp parallel reduction(|| : diverged) reduction(+ : norm_gains)
 #endif
     {
         // Scratch space is allocated once per thread rather than once per trajectory
@@ -283,7 +296,10 @@ void TrajectoryUnraveling::apply_jumps(DenseMatrix& trajectories, const DenseMat
                 trajectories.col(c) /= std::sqrt(survival);
             }
 
-            // Integration error can leave the norm marginally above one, which simply never jumps
+            // Integration error can leave the norm above one, which never jumps, so count it to report it
+            if (survival > 1.0 + kNormGainTolerance) {
+                ++norm_gains;
+            }
             if (survival > 0.0 && next_uniform(streams[c]) <= survival) {
                 continue;
             }
@@ -304,18 +320,18 @@ void TrajectoryUnraveling::apply_jumps(DenseMatrix& trajectories, const DenseMat
             }
 
             // Renormalise the jumped state and replace the trajectory with it
-            const double norm = std::sqrt(weights[chosen]);
-            if (!std::isfinite(norm) || norm == 0.0) {
-                diverged = true;
-                continue;
-            }
-            trajectories.col(c) = jumped[chosen] / norm;
+            trajectories.col(c) = jumped[chosen] / std::sqrt(weights[chosen]);
         }
     }
 
     // Check for any trajectories that have diverged to a non-finite state
     if (diverged) {
         nan_error();
+    }
+
+    // Report integrator error that has been mistaken for a lack of jumps
+    if (norm_gains > 0 && !norm_gain_warning_emitted.exchange(true)) {
+        qilisdk::log_warning("[QiliSim, C++] The integrator increased the norm of " + std::to_string(norm_gains) + " of " + std::to_string(num_trajectories) + " Monte Carlo trajectories over a step, which suppresses quantum jumps and biases the noise. Reduce the schedule dt or tighten the integrator tolerance for accurate results. It is only reported once per process.");
     }
 }
 
@@ -367,12 +383,7 @@ void TrajectoryUnraveling::apply_kraus(DenseMatrix& trajectories, const std::vec
             }
 
             // Renormalise the chosen Kraus outcome and replace the trajectory with it
-            const double norm = std::sqrt(weights[chosen]);
-            if (!std::isfinite(norm) || norm == 0.0) {
-                diverged = true;
-                continue;
-            }
-            trajectories.col(c) = applied[chosen] / norm;
+            trajectories.col(c) = applied[chosen] / std::sqrt(weights[chosen]);
         }
     }
 
