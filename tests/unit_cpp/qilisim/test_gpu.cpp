@@ -15,6 +15,7 @@
 // GCOVR_EXCL_START
 
 #include <gtest/gtest.h>
+#include <cstdlib>
 #include <cmath>
 #include <complex>
 #include "../../../src/qilisdk_cpp/libs/gpu.h"
@@ -66,6 +67,11 @@ TEST(GpuSrSolve, MatchesCpuReference) {
     if (!qilisdk::gpu::cuda_available()) {
         GTEST_SKIP() << "No CUDA device/libraries available at runtime.";
     }
+
+    // This test verifies the correctness of the GPU compute path at small,
+    // representative sizes. Those sizes are below the default performance
+    // size-gate (gpu_min_work), so disable the gate here to force the GPU path.
+    setenv("QILISDK_GPU_MIN_WORK", "0", 1);
 
     for (const auto& dims : {std::pair<int, int>{200, 37}, std::pair<int, int>{1000, 64}}) {
         const int N_s = dims.first;
