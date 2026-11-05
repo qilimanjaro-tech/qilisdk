@@ -833,6 +833,48 @@ def test_calculate_eigenvalues_pads_to_full_register():
     assert np.allclose(eigenvalues[0], evals_h1[:levels])
 
 
+@pytest.mark.parametrize("nqubits", [1, 9])
+def test_minimum_gap_uncoupled_linear_anneal(nqubits):
+    # Each qubit sees (1 - s)(-X) + s Z, whose gap 2 sqrt((1 - s)^2 + s^2) is smallest (sqrt 2) at s = 1/2.
+    driver = sum(-X(i) for i in range(nqubits))
+    problem = sum(Z(i) for i in range(nqubits))
+    sched = Schedule.linear(driver, problem, total_time=10, dt=0.1)
+    gap, time = sched.minimum_gap()
+    assert np.isclose(gap, math.sqrt(2))
+    assert np.isclose(time, 5.0, atol=1e-3)
+
+
+def test_minimum_gap_refines_between_samples():
+    # With only three coarse samples the minimum at t = 4 falls between them and must be found by refinement.
+    sched = Schedule(
+        hamiltonians={"driver": -X(0), "problem": Z(0)},
+        coefficients={"driver": {0: 1.0, 4: 0.5, 10: 0.0}, "problem": {0: 0.0, 4: 0.5, 10: 1.0}},
+        dt=0.1,
+    )
+    gap, time = sched.minimum_gap(samples=3)
+    assert np.isclose(gap, math.sqrt(2))
+    assert np.isclose(time, 4.0, atol=1e-3)
+
+
+def test_minimum_gap_degenerate_ground_state_is_zero():
+    sched = Schedule.linear(-X(0) - X(1), Z(0) * Z(1), total_time=10, dt=1)
+    gap, time = sched.minimum_gap()
+    assert np.isclose(gap, 0.0)
+    assert np.isclose(time, 10.0)
+
+
+def test_minimum_gap_too_few_samples():
+    sched = Schedule.linear(-X(0), Z(0), total_time=10, dt=1)
+    with pytest.raises(ValueError, match=r"At least two samples"):
+        sched.minimum_gap(samples=1)
+
+
+def test_minimum_gap_empty_schedule():
+    sched = Schedule()
+    with pytest.raises(ValueError, match=r"acts on no qubits"):
+        sched.minimum_gap()
+
+
 def test_schedule_constant():
     dt = 1
     H1 = PauliZ(0).to_hamiltonian()
