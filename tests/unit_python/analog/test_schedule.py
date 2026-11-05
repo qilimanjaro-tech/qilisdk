@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import math
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -858,9 +859,11 @@ def test_minimum_gap_refines_between_samples():
 
 def test_minimum_gap_degenerate_ground_state_is_zero():
     sched = Schedule.linear(-X(0) - X(1), Z(0) * Z(1), total_time=10, dt=1)
-    gap, time = sched.minimum_gap()
+    with patch("qilisdk.analog.schedule.logger") as mock_logger:
+        gap, time = sched.minimum_gap()
     assert np.isclose(gap, 0.0)
     assert np.isclose(time, 10.0)
+    mock_logger.warning.assert_called_once()
 
 
 def test_minimum_gap_too_few_samples():

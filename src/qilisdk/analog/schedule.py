@@ -788,7 +788,10 @@ class Schedule(Parameterizable):
         never has to be diagonalised. Since the gap need not be unimodal, a narrow avoided crossing that falls
         entirely between two coarse samples can be missed; increase ``samples`` to guard against this.
 
-        A degenerate ground state gives a gap of zero at that time.
+        A degenerate ground state gives a gap of zero at that time. If this happens at the start or end of the
+        schedule (e.g. a problem Hamiltonian with a symmetric ground state, such as an Ising model without linear
+        terms) the returned minimum is that trivial zero rather than the avoided crossing that limits the anneal,
+        and a warning is logged.
 
         Args:
             samples (int): Number of evenly spaced times over ``[0, T]`` used for the coarse scan. Must be at least 2.
@@ -831,6 +834,13 @@ class Schedule(Parameterizable):
         refined = minimize_scalar(gap, bounds=(lower, upper), method="bounded", options={"xatol": tol * T})
         if refined.fun < best_gap:
             best_gap, best_time = float(refined.fun), float(refined.x)
+
+        if best_gap < get_settings().atol and best_time in {0.0, float(T)}:
+            logger.warning(
+                "[Schedule] The ground state is degenerate at t = {}, so the minimum gap is zero there. This hides "
+                "any avoided crossing during the anneal.",
+                best_time,
+            )
 
         return best_gap, best_time
 
