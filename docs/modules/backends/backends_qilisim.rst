@@ -244,7 +244,7 @@ optional Monte Carlo trajectory sampling for open-system simulations.
 - ``num_threads`` controls the number of threads used for parallelization, defaults to using all available cores.
 - ``seed`` controls the random number generator seed, defaults to a random seed. Subsequent runs will increment the seed automatically.
 - ``monte_carlo=MonteCarloConfig(trajectories=N)`` enables Monte Carlo sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled.
-- ``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` controls how finely analog evolutions resolve quantum jumps in time - lower is more accurate but slower, higher is faster but less accurate, defaults to ``0.5``.
+- ``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` sets how many quantum jumps an analog evolution step may expect - the adaptive ``integrate_rk45_matrix_free`` method shortens its steps to stay below it (lower is more accurate but slower), whilst fixed-step methods instead warn when the schedule is too coarse for it, defaults to ``0.5``.
 - ``measurement_collapse`` controls whether measurements collapse the statevector in place (relevant for mid-circuit measurement and reservoirs) - defaults to ``False``.
 - ``normalize_state`` controls whether the state should be renormalized - defaults to ``True``.
 - ``gpu`` controls whether to use GPU acceleration if available - defaults to ``False``.
