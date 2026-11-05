@@ -333,7 +333,7 @@ def _as_basis_1q(gate: Gate) -> Gate:
     if isinstance(gate, Z):
         return U3(qubit, theta=0.0, phi=0.0, gamma=math.pi)
     if isinstance(gate, BasicGate) and gate.nqubits == 1:
-        theta, phi, gamma = _zyz_from_unitary(gate.matrix)
+        theta, phi, gamma = _zyz_from_unitary(gate.matrix.dense())
         return U3(qubit, theta=theta, phi=phi, gamma=gamma)
     raise NotImplementedError(f"Unsupported 1-qubit gate type {type(gate).__name__} in _as_basis_1q")
 
@@ -563,6 +563,32 @@ class DecomposeToCanonicalBasisPass(CircuitTranspilerPass):
         if _is_controlled(gate):
             control_qubits = list(gate.control_qubits)
             basic_gate: BasicGate = gate.basic_gate
+            if len(control_qubits) == 1 and isinstance(basic_gate, SWAP):
+                # Fredkin: CSWAP(c, a, b) = CNOT(b, a) · Toffoli(c, a, b) · CNOT(b, a), Toffoli as in Nielsen & Chuang Fig. 4.9
+                control_qubit = control_qubits[0]
+                first_target_qubit, second_target_qubit = basic_gate.target_qubits
+                t_angle, t_dagger_angle = math.pi / 4, -math.pi / 4
+                return self._rewrite_list(
+                    [
+                        CNOT(second_target_qubit, first_target_qubit),
+                        H(second_target_qubit),
+                        CNOT(first_target_qubit, second_target_qubit),
+                        U1(second_target_qubit, phi=t_dagger_angle),
+                        CNOT(control_qubit, second_target_qubit),
+                        U1(second_target_qubit, phi=t_angle),
+                        CNOT(first_target_qubit, second_target_qubit),
+                        U1(second_target_qubit, phi=t_dagger_angle),
+                        CNOT(control_qubit, second_target_qubit),
+                        U1(first_target_qubit, phi=t_angle),
+                        U1(second_target_qubit, phi=t_angle),
+                        H(second_target_qubit),
+                        CNOT(control_qubit, first_target_qubit),
+                        U1(control_qubit, phi=t_angle),
+                        U1(first_target_qubit, phi=t_dagger_angle),
+                        CNOT(control_qubit, first_target_qubit),
+                        CNOT(second_target_qubit, first_target_qubit),
+                    ]
+                )
             if basic_gate.nqubits != 1:
                 raise NotImplementedError("Controlled of multi-qubit gates not supported.")
             if len(control_qubits) != 1:
@@ -608,7 +634,7 @@ class DecomposeToCanonicalBasisPass(CircuitTranspilerPass):
                 raise NotImplementedError(
                     "Decomposing the exponential of a multi-qubit gate to a canonical basis is not supported."
                 )
-            unitary_matrix = gate.matrix
+            unitary_matrix = gate.matrix.dense()
             theta, phi, gamma = _zyz_from_unitary(unitary_matrix)
             return _normalize_single_qubit_sequence(
                 [U3(basic_gate.qubits[0], theta=theta, phi=phi, gamma=gamma)],
@@ -617,7 +643,7 @@ class DecomposeToCanonicalBasisPass(CircuitTranspilerPass):
 
         # generic 1q
         if isinstance(gate, BasicGate) and gate.nqubits == 1:
-            theta, phi, gamma = _zyz_from_unitary(gate.matrix)
+            theta, phi, gamma = _zyz_from_unitary(gate.matrix.dense())
             return _normalize_single_qubit_sequence(
                 [U3(gate.qubits[0], theta=theta, phi=phi, gamma=gamma)],
                 self._single_qubit_basis,

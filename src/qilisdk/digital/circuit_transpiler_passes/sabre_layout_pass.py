@@ -17,20 +17,11 @@ from __future__ import annotations
 import math
 import random
 from collections import deque
-from copy import deepcopy
-from typing import TYPE_CHECKING, Iterable, TypeGuard
+from typing import TYPE_CHECKING, Iterable
 
 from loguru import logger
 
-from qilisdk.digital import (
-    Adjoint,
-    Circuit,
-    Controlled,
-    Exponential,
-    Gate,
-    M,
-)
-from qilisdk.digital.gates import BasicGate
+from qilisdk.digital import Circuit, M
 from qilisdk.digital.topology import build_topology_graph
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
@@ -38,33 +29,7 @@ from .circuit_transpiler_pass import CircuitTranspilerPass
 if TYPE_CHECKING:
     from rustworkx import PyGraph
 
-    from qilisdk.digital.types import LayoutMap, Topology
-
-
-def _is_controlled_gate(gate: Gate) -> TypeGuard[Controlled[BasicGate]]:
-    """Return whether a gate is a controlled gate with a basic-gate payload.
-
-    Args:
-        gate (Gate): Candidate gate.
-
-    Returns:
-        TypeGuard[Controlled[BasicGate]]: ``True`` when ``gate`` is a ``Controlled`` gate whose payload type is ``BasicGate``.
-    """
-    return isinstance(gate, Controlled)
-
-
-def _is_adjoint_or_exponential(
-    gate: Gate,
-) -> TypeGuard[Adjoint[BasicGate] | Exponential[BasicGate]]:
-    """Return whether a gate is an adjoint or exponential wrapper.
-
-    Args:
-        gate (Gate): Candidate gate.
-
-    Returns:
-        TypeGuard[Adjoint[BasicGate] | Exponential[BasicGate]]: ``True`` when ``gate`` is either ``Adjoint`` or ``Exponential``.
-    """
-    return isinstance(gate, (Adjoint, Exponential))
+    from qilisdk.digital.types import Topology
 
 
 class SabreLayoutPass(CircuitTranspilerPass):
@@ -79,7 +44,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
     - Accepts either a topology edge list or a rustworkx ``PyGraph`` and
       normalizes it to an undirected coupling graph internally.
     - Implements SABRE's heuristic:
-        * Front layer (first unscheduled 2Q gates on each qubit).
+        * Front layer (unscheduled 2Q gates that are the next gate on both of their qubits).
         * Extended look-ahead set of upcoming 2Q gates.
         * Cost = sum distances(front) + beta * sum distances(lookahead),
           with a light decay penalty on recently swapped physical qubits.
@@ -103,6 +68,9 @@ class SabreLayoutPass(CircuitTranspilerPass):
         a swap *would* be applied during simulation.
     decay_lambda : float
         Decay multiplier applied each iteration to gradually forget old penalties.
+    release_valve_factor : float
+        Number of simulated swaps per physical qubit allowed without executing a
+        gate before the closest front gate is forced through along a shortest path.
     apply_layout : bool
         Whether to return the circuit retargeted onto the chosen physical qubits.
         When ``False`` the pass only records the layout and returns the input
@@ -140,6 +108,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         beta: float = 0.5,
         decay_delta: float = 0.001,
         decay_lambda: float = 0.99,
+        release_valve_factor: float = 10.0,
         apply_layout: bool = True,
     ) -> None:
         """Initialize a SABRE layout pass.
@@ -152,6 +121,8 @@ class SabreLayoutPass(CircuitTranspilerPass):
             beta (float): Weight assigned to look-ahead cost.
             decay_delta (float): Increment applied to decay on selected swap endpoints.
             decay_lambda (float): Per-iteration decay factor for penalties.
+            release_valve_factor (float): Swaps allowed per physical qubit without executing a gate before
+                the closest front gate is forced through.
             apply_layout (bool): Whether to retarget the circuit onto the chosen physical
                 qubits. Set to ``False`` when a following router applies
                 ``context.initial_layout`` itself.
@@ -163,6 +134,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         self.beta = float(beta)
         self.decay_delta = float(decay_delta)
         self.decay_lambda = float(decay_lambda)
+        self.release_valve_factor = float(release_valve_factor)
         self.apply_layout = bool(apply_layout)
 
         self.last_layout: list[int] | None = None
@@ -324,18 +296,30 @@ class SabreLayoutPass(CircuitTranspilerPass):
         def front_set() -> set[int]:
             """Build the current front layer of unscheduled interactions.
 
+            A gate belongs to the front layer only when it is the next unscheduled
+            interaction on both of its logical qubits, so gates are never simulated
+            ahead of their predecessors.
+
             Returns:
-                set[int]: Indices of first unscheduled 2-qubit interactions across all logical qubits.
+                set[int]: Indices of unscheduled 2-qubit interactions with no unscheduled predecessors.
             """
             front_gate_indices: set[int] = set()
             for logical_qubit in range(num_logical_qubits):
                 if front_positions[logical_qubit] < len(gate_indices_per_qubit[logical_qubit]):
-                    front_gate_indices.add(gate_indices_per_qubit[logical_qubit][front_positions[logical_qubit]])
+                    gate_idx = gate_indices_per_qubit[logical_qubit][front_positions[logical_qubit]]
+                    logical_qubit_a, logical_qubit_b = two_qubit_pairs[gate_idx]
+                    partner = logical_qubit_b if logical_qubit == logical_qubit_a else logical_qubit_a
+                    if gate_indices_per_qubit[partner][front_positions[partner]] == gate_idx:
+                        front_gate_indices.add(gate_idx)
             return front_gate_indices
 
         # Initialize pointers
         for logical_qubit in range(num_logical_qubits):
             advance_front_for(logical_qubit)
+
+        # Release valve: after this many swaps without scheduling a gate, force the closest front gate through
+        release_valve_threshold = int(self.release_valve_factor * num_physical_qubits)
+        swaps_since_progress = 0
 
         # Main loop: continue until all 2Q gates are scheduled
         remaining = len(two_qubit_pairs)
@@ -346,8 +330,6 @@ class SabreLayoutPass(CircuitTranspilerPass):
                 progressed = False
                 front_gate_indices = list(front_set())
                 for gate_idx in front_gate_indices:
-                    if scheduled[gate_idx]:
-                        continue
                     logical_qubit_a, logical_qubit_b = two_qubit_pairs[gate_idx]
                     physical_qubit_a, physical_qubit_b = layout[logical_qubit_a], layout[logical_qubit_b]
                     if (
@@ -360,6 +342,8 @@ class SabreLayoutPass(CircuitTranspilerPass):
                         scheduled[gate_idx] = True
                         remaining -= 1
                         progressed = True
+                        swaps_since_progress = 0
+                        decay = [0.0] * num_physical_qubits
                         # Diagnostic score: adjacency cost is 1 by definition
                         score_accum += 1.0
                         # Advance fronts for both logical qubits involved
@@ -369,8 +353,46 @@ class SabreLayoutPass(CircuitTranspilerPass):
             if not remaining:
                 break  # done
 
-            # No front gate was executable: pick a simulated SWAP using SABRE heuristic.
             front_gate_indices: list[int] = list(front_set())
+
+            if swaps_since_progress >= release_valve_threshold:
+                # Greedy swaps are cycling: walk the closest front gate's qubits together along a shortest path.
+                current_distance, closest_gate_idx = min(
+                    (
+                        distance_matrix[physical_to_dense_index[layout[two_qubit_pairs[gate_idx][0]]]][
+                            physical_to_dense_index[layout[two_qubit_pairs[gate_idx][1]]]
+                        ],
+                        gate_idx,
+                    )
+                    for gate_idx in front_gate_indices
+                )
+                logical_qubit_a, logical_qubit_b = two_qubit_pairs[closest_gate_idx]
+                current_physical = layout[logical_qubit_a]
+                target_dense_index = physical_to_dense_index[layout[logical_qubit_b]]
+                if current_distance >= SabreLayoutPass._UNREACHABLE_DISTANCE:
+                    # Disconnected topology: no swap sequence helps, so let SabreSwapPass report it.
+                    break
+                while current_distance > 1:
+                    next_physical = next(
+                        int(neighbor)
+                        for neighbor in self.topology.neighbors(current_physical)
+                        if distance_matrix[physical_to_dense_index[int(neighbor)]][target_dense_index]
+                        == current_distance - 1
+                    )
+                    self._swap_mapping(
+                        layout,
+                        inverse_layout,
+                        physical_to_dense_index,
+                        current_physical,
+                        next_physical,
+                        inverse_layout[physical_to_dense_index[current_physical]],
+                        inverse_layout[physical_to_dense_index[next_physical]],
+                    )
+                    current_physical = next_physical
+                    current_distance -= 1
+                continue
+
+            # No front gate was executable: pick a simulated SWAP using SABRE heuristic.
             # Build candidate physical edges from neighbors of endpoints of non-executable front gates.
             candidate_edges: set[tuple[int, int]] = set()
             touched_physical_nodes: set[int] = set()
@@ -483,6 +505,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
                 # Increase decay on touched physical qubits
                 decay[physical_to_dense_index[chosen_physical_a]] += self.decay_delta
                 decay[physical_to_dense_index[chosen_physical_b]] += self.decay_delta
+                swaps_since_progress += 1
 
         # Final diagnostic cost: re-evaluate sum of distances for the entire 2Q list under final layout
         final_distance_cost = self._cost_front(
@@ -667,7 +690,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         two_qubit_pairs: list[tuple[int, int]] = []
         for gate_idx, gate in enumerate(circuit.gates):
             gate_qubits = gate.qubits
-            if len(gate_qubits) == SabreLayoutPass._TWO_QUBIT_ARITY:
+            if len(gate_qubits) == SabreLayoutPass._TWO_QUBIT_ARITY and not isinstance(gate, M):
                 two_qubit_gate_indices.append(gate_idx)
                 two_qubit_pairs.append((gate_qubits[0], gate_qubits[1]))
         gate_indices_per_qubit: list[list[int]] = [[] for _ in range(num_logical_qubits)]
@@ -737,49 +760,3 @@ class SabreLayoutPass(CircuitTranspilerPass):
             mapped_qubits = tuple(layout[logical_qubit] for logical_qubit in gate.qubits)
             retargeted_circuit.add(self._retarget_gate(gate, mapped_qubits))
         return retargeted_circuit
-
-    def _retarget_gate(self, gate: Gate, mapped_qubits: tuple[int, ...]) -> Gate:
-        """
-        Recreate ``gate`` on ``mapped_qubits`` by deep-copying and remapping indices.
-
-        The method deep-copies the gate object to preserve concrete gate type and all parameters, then updates control and target qubit tuples recursively through wrapped gates.
-
-        Args:
-            gate (Gate): Original gate to retarget.
-            mapped_qubits (tuple[int, ...]): Physical qubits where the gate should act.
-
-        Returns:
-            Gate: Retargeted gate equivalent to ``gate`` but acting on ``mapped_qubits``.
-        """
-        retargeted = deepcopy(gate)
-        qubit_map: LayoutMap = dict(zip(gate.qubits, mapped_qubits, strict=True))
-        self._remap_gate_qubits_inplace(retargeted, qubit_map)
-        return retargeted
-
-    @staticmethod
-    def _remap_gate_qubits_inplace(gate: Gate, qubit_map: LayoutMap) -> None:
-        """Recursively remap control/target qubits of a copied gate.
-
-        Args:
-            gate (Gate): Gate object to modify in place.
-            qubit_map (LayoutMap): Logical-to-physical mapping for qubits touched by ``gate``.
-
-        Raises:
-            NotImplementedError: If the gate type does not provide known internal storage for control or target qubits.
-        """
-        if isinstance(gate, (BasicGate, M)):
-            gate._target_qubits = tuple(qubit_map[logical_qubit] for logical_qubit in gate.target_qubits)  # ruff: ignore[private-member-access]
-            return
-
-        if _is_controlled_gate(gate):
-            gate._control_qubits = tuple(qubit_map[control_qubit] for control_qubit in gate.control_qubits)  # ruff: ignore[private-member-access]
-            SabreLayoutPass._remap_gate_qubits_inplace(gate.basic_gate, qubit_map)
-            return
-
-        if _is_adjoint_or_exponential(gate):
-            SabreLayoutPass._remap_gate_qubits_inplace(gate.basic_gate, qubit_map)
-            return
-
-        raise NotImplementedError(
-            f"Retargeting not implemented for gate type {type(gate).__name__} with arity {gate.nqubits}"
-        )

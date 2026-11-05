@@ -84,8 +84,8 @@ def test_unsupported_gate_raises(backend):
         @property
         def name(self) -> str: ...  # type: ignore
 
-        def _generate_matrix(self) -> np.ndarray:
-            return np.eye(2, dtype=complex)
+        def _generate_matrix(self) -> QTensor:
+            return QTensor(np.eye(2, dtype=complex))
 
     circuit = Circuit(nqubits=1)
     circuit.gates.append(DummyGate(0))
@@ -121,7 +121,7 @@ def test_adjoint_handler(gate_instance):
     circuit._gates.append(adjoint_gate)
     qutip_circuit = backend._get_qutip_circuit(circuit)
 
-    assert any(g.name == "Adjoint_" + adjoint_gate.name for g in qutip_circuit.gates)
+    assert any(g.name.startswith(f"Adjoint_{adjoint_gate.name}_") for g in qutip_circuit.gates)
 
 
 @pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases + swap_test_case])
@@ -184,6 +184,27 @@ def test_adjoint_fully(gate_instance):
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=100))
     assert isinstance(result, FunctionalResult)
     assert result.get_samples().get("00", 0) == 100
+
+
+def test_adjoint_of_controlled_gate():
+    backend = QutipBackend()
+    circuit = Circuit(nqubits=2)
+    circuit.add(X(0))
+    circuit.add(Adjoint(CNOT(0, 1)))
+    result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=100))
+    assert result.get_samples().get("11", 0) == 100
+
+
+def test_adjoints_with_same_name_use_their_own_matrices():
+    # Same theta so the matrices share their first element, which must not make them collide
+    circuit = Circuit(nqubits=1)
+    circuit.add(Adjoint(U3(0, theta=1.0, phi=0.0, gamma=0.5)))
+    circuit.add(Adjoint(U3(0, theta=1.0, phi=1.5, gamma=0.5)))
+    expected_state = circuit.to_matrix()[:, 0]
+
+    result = QutipBackend().execute(DigitalPropagation(circuit=circuit), Readout().with_state_tomography())
+
+    np.testing.assert_allclose(result.state_tomography.state.dense().flatten(), expected_state, atol=1e-6)
 
 
 ###################
@@ -272,6 +293,19 @@ def test_measurement_gates():
     result = backend.execute(DigitalPropagation(circuit=circuit), Readout().with_sampling(nshots=10))
     assert isinstance(result, FunctionalResult)
     assert all(len(key) == 2 for key in result.get_samples())
+
+
+def test_seed_makes_sampling_reproducible():
+    circuit = Circuit(nqubits=2)
+    circuit.add(H(0))
+    circuit.add(H(1))
+    readout = Readout().with_sampling(nshots=200)
+    first = [QutipBackend(seed=7).execute(DigitalPropagation(circuit), readout).get_samples() for _ in range(2)]
+    backend = QutipBackend(seed=7)
+    second = [backend.execute(DigitalPropagation(circuit), readout).get_samples() for _ in range(2)]
+    assert first[0] == first[1]
+    assert second[0] == first[0]
+    assert second[1] != second[0]
 
 
 def test_measurement_gates_mid_circuit():
@@ -448,6 +482,27 @@ def test_get_qutip_observable_unsupported_type_raises():
     backend = QutipBackend()
     with pytest.raises(ValueError, match="unsupported observable type"):
         backend._to_qubip_observables(42, nqubits=1)
+
+
+def test_qutip_digital_propagation_initial_state():
+    c = Circuit(1)
+    digital = DigitalPropagation(circuit=c, initial_state=InitialState.ONE)
+    backend = QutipBackend()
+    readout = Readout().with_sampling(10)
+    results = backend.execute(digital, readout)
+    assert isinstance(results, FunctionalResult)
+    assert "1" in results.get_samples()
+
+
+def test_qutip_digital_propagation_initial_state_qtensor():
+    c = Circuit(1)
+    initial_state_qtensor = QTensor.one(1)
+    digital = DigitalPropagation(circuit=c, initial_state=initial_state_qtensor)
+    backend = QutipBackend()
+    readout = Readout().with_sampling(10)
+    results = backend.execute(digital, readout)
+    assert isinstance(results, FunctionalResult)
+    assert "1" in results.get_samples()
 
 
 def test_to_qutip_observable_pauli_operator():

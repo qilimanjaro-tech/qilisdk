@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Annotated, Any, Literal, Optional
 
 import matplotlib.font_manager as fm
 from pydantic import BaseModel, Field
@@ -143,6 +143,28 @@ class CircuitStyle(Style):
     layout: Literal["normal", "compact"] = Field(
         default="normal",
         description="If 'compact' minimizes the layers to highlight circuit depth, if 'normal' conserves the order of the circuit",
+    )
+
+    fold: Annotated[int, Field(gt=0)] | Literal["auto"] | None = Field(
+        default="auto",
+        description="How deep circuits are wrapped onto several rows. 'auto' starts a new row whenever the current one would grow past `max_row_width`, an integer puts exactly that many layers on each row, and None draws the whole circuit on a single row.",
+    )
+    max_row_width: float = Field(
+        default=12.0, description="Maximum width (inches) of a row of the circuit when `fold` is 'auto'.", gt=0.0
+    )
+    row_separation: float = Field(default=1.0, description="Vertical separation (inches) between wrapped rows.", gt=0.0)
+    fold_edges: Literal["dashed", "closed", "open"] = Field(
+        default="dashed",
+        description="How the wires are drawn where a folded circuit breaks off and picks up again. 'dashed' trails them off in dashes, 'closed' joins them with a vertical line, and 'open' leaves them as bare wire ends.",
+    )
+    fold_dash: float = Field(
+        default=0.25,
+        description="Length (inches) of the dashed wire drawn at a fold when `fold_edges` is 'dashed'.",
+        gt=0.0,
+    )
+    max_view_height: Annotated[float, Field(gt=0.0)] | None = Field(
+        default=7.0,
+        description="Height (inches) of the circuit shown when the figure first opens in a window. A taller circuit opens on its first rows and can be panned or zoomed out to reach the rest; a figure saved to file always holds the whole circuit. None opens on the whole circuit.",
     )
 
 

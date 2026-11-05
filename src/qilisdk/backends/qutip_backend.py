@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Callable, Type, TypeVar, cast
 import numpy as np
 import qutip_qip.operations as QutipGates
 from loguru import logger
-from qutip import Qobj, basis, mesolve, qeye, tensor
+from qutip import Qobj, mesolve, qeye, tensor
 from qutip_qip.circuit import CircuitSimulator, QubitCircuit
 from qutip_qip.operations.gateclass import SingleQubitGate, is_qutip5
 
@@ -32,6 +32,7 @@ from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.noise import SupportsStaticLindblad, SupportsTimeDerivedLindblad
 from qilisdk.settings import get_settings
+from qilisdk.utils.hashing import hash as qili_hash
 
 if TYPE_CHECKING:
     from qilisdk.functionals import AnalogEvolution, DigitalPropagation
@@ -54,14 +55,13 @@ class QutipI(SingleQubitGate):
     """
     Single-qubit I gate.
 
-    Examples
-    --------
-    >>> from qutip_qip.operations import X
-    >>> I(0).get_compact_qobj()  # doctest: +NORMALIZE_WHITESPACE
-    Quantum object: dims=[[2], [2]], shape=(2, 2), type='oper', dtype=Dense, isherm=True
-    Qobj data =
-    [[1. 0.]
-     [0. 1.]]
+    Example:
+        >>> from qilisdk.backends.qutip_backend import QutipI
+        >>> QutipI(0).get_compact_qobj()  # doctest: +NORMALIZE_WHITESPACE
+        Quantum object: dims=[[2], [2]], shape=(2, 2), type='oper', dtype=Dense, isherm=True
+        Qobj data =
+        [[1. 0.]
+         [0. 1.]]
     """
 
     def __init__(self, targets, **kwargs) -> None:  # ruff: ignore[missing-type-function-argument, missing-type-kwargs]
@@ -81,7 +81,7 @@ class QutipBackend(Backend):
     notebooks.
     """
 
-    def __init__(self, nsteps: int = 10_000, noise_model: NoiseModel | None = None) -> None:
+    def __init__(self, nsteps: int = 10_000, noise_model: NoiseModel | None = None, seed: int | None = None) -> None:
         """Instantiate a new :class:`QutipBackend`.
 
         Args:
@@ -92,11 +92,13 @@ class QutipBackend(Backend):
                 converted into QuTiP collapse operators (including
                 time-dependent rates ``rate(t)``). Digital-circuit noise is not
                 supported and is ignored with a warning.
+            seed (int | None): Seed for the random number generator used to draw
+                samples from the simulated state. Defaults to ``None``.
         """
         self.noise_model = noise_model
         self.nsteps = nsteps
 
-        super().__init__()
+        super().__init__(noise_model=noise_model, seed=seed)
         self._basic_gate_handlers: BasicGateHandlersMapping = {
             I: QutipBackend._handle_I,
             X: QutipBackend._handle_X,
@@ -139,14 +141,21 @@ class QutipBackend(Backend):
         """
         logger.info("[QutipBackend] Executing Sampling")
 
+        # Get the initial state as a QTensor, by converting if needed
+        if isinstance(functional.initial_state, InitialState):
+            init_state_qtensor = functional.initial_state.as_qtensor(functional.circuit.nqubits)
+        else:
+            init_state_qtensor = functional.initial_state
+
+        # Convert to the qutip format
+        init_state = Qobj(init_state_qtensor.dense(), dims=[[2 for _ in range(init_state_qtensor.nqubits)], [1]])
+
         # Warn if noise model is provided, since we don't support digital noise here for now
         if self.noise_model is not None:
             logger.warning(
                 "Noise model provided to QutipBackend, but digital noise is not supported. "
                 "The noise model will be ignored."
             )
-
-        init_state = tensor(*[basis(2, 0) for _ in range(functional.circuit.nqubits)])
 
         measurements_set = {q for g in functional.circuit.gates if isinstance(g, M) for q in g.qubits}
         measurements = sorted(measurements_set)
@@ -176,11 +185,13 @@ class QutipBackend(Backend):
         if len(measurements) > 0 and len(measurements) != functional.circuit.nqubits:
             return FunctionalResult(
                 readout_results=QutipBackend._construct_results_list(
-                    final_state=final_state, readout=readout, qubits_to_measure=measurements
+                    final_state=final_state, readout=readout, seed=self._rng, qubits_to_measure=measurements
                 )
             )
         return FunctionalResult(
-            readout_results=QutipBackend._construct_results_list(final_state=final_state, readout=readout)
+            readout_results=QutipBackend._construct_results_list(
+                final_state=final_state, readout=readout, seed=self._rng
+            )
         )
 
     def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
@@ -272,11 +283,13 @@ class QutipBackend(Backend):
         logger.info("[QutipBackend] TimeEvolution finished")
         return FunctionalResult(
             readout_results=QutipBackend._construct_results_list(
-                final_state=QTensor(results.final_state.full()), readout=readout
+                final_state=QTensor(results.final_state.full()), readout=readout, seed=self._rng
             ),
             intermediate_results=(
                 [
-                    QutipBackend._construct_results_list(final_state=QTensor(state.full()), readout=readout)
+                    QutipBackend._construct_results_list(
+                        final_state=QTensor(state.full()), readout=readout, seed=self._rng
+                    )
                     for state in results.states
                 ]
                 if functional.store_intermediate_results
@@ -503,7 +516,7 @@ class QutipBackend(Backend):
         if gate.name == "CNOT":
             circuit.add_gate("CNOT", targets=[*gate.target_qubits], controls=[*gate.control_qubits])
         else:
-            base_matrix = gate.basic_gate.matrix
+            base_matrix = gate.basic_gate.matrix.dense()
             dim_target = base_matrix.shape[0]
             dim_total = 2 * dim_target
             dims = [[2] + [2] * len(gate.target_qubits), [2] + [2] * len(gate.target_qubits)]
@@ -514,8 +527,7 @@ class QutipBackend(Backend):
                 mat[dim_target:, dim_target:] = base_matrix
                 return Qobj(mat, dims=dims)
 
-            matrix_digest = base_matrix.tobytes().hex()[:16]
-            gate_name = f"{gate.name}_{matrix_digest}"
+            gate_name = f"{gate.name}_{qili_hash(base_matrix)}"
             if gate_name not in circuit.user_gates:
                 circuit.user_gates[gate_name] = qutip_controlled_gate
             circuit.add_gate(gate_name, targets=[*gate.control_qubits, *gate.target_qubits])
@@ -531,13 +543,15 @@ class QutipBackend(Backend):
             gate (Adjoint): The adjoint gate to handle.
         """
 
-        def qutip_adjoined_gate() -> Qobj:
-            return Qobj(gate.matrix)
+        adjoint_matrix = gate.matrix.dense()
 
-        gate_name = "Adjoint_" + gate.name
+        def qutip_adjoined_gate() -> Qobj:
+            return Qobj(adjoint_matrix, dims=[[2] * gate.nqubits, [2] * gate.nqubits])
+
+        gate_name = f"Adjoint_{gate.name}_{qili_hash(adjoint_matrix)}"
         if gate_name not in circuit.user_gates:
             circuit.user_gates[gate_name] = qutip_adjoined_gate
-        circuit.add_gate(gate_name, targets=[*gate.target_qubits])
+        circuit.add_gate(gate_name, targets=[*gate.qubits])
 
     @staticmethod
     def _handle_M(qutip_circuit: QubitCircuit, gate: M) -> None:

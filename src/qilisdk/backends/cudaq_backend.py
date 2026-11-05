@@ -28,6 +28,7 @@ from loguru import logger
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
 from qilisdk.core.qtensor import InitialState, QTensor
+from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import (
@@ -73,7 +74,6 @@ from qilisdk.settings import Precision, get_settings
 
 if TYPE_CHECKING:
     from qilisdk.analog.schedule import Schedule
-    from qilisdk.digital.circuit import Circuit
     from qilisdk.functionals.analog_evolution import AnalogEvolution
     from qilisdk.functionals.digital_propagation import DigitalPropagation
     from qilisdk.noise import NoiseModel
@@ -181,34 +181,39 @@ def reverse_bits(x: int, n: int) -> int:
     return y
 
 
-def cudaq_to_standard(statevector: np.ndarray) -> np.ndarray:
+def cudaq_to_standard(state: np.ndarray) -> np.ndarray:
     """
-    Convert a CUDA-Q style statevector to the more common qubit-ordering
+    Convert a CUDA-Q style state to the more common qubit-ordering
     convention where [0,1,0,0] corresponds to :math:`|01>` for 2 qubits.
 
+    CUDA-Q treats qubit 0 as the least significant bit, so the conversion reverses the bits of
+    every basis index. CUDA-Q also stores density matrices column-major, so the array it exposes
+    is the transpose of the density matrix, which is undone here. Both operations are their own
+    inverse, so the same function also converts a standard state to CUDA-Q's convention.
+
     Args:
-        statevector: 1D array-like of length 2^n
+        state: 1D statevector of length 2^n, or 2D density matrix of shape (2^n, 2^n).
 
     Returns:
-        np.ndarray: reordered statevector
+        np.ndarray: reordered state
 
     Raises:
-        ValueError: if the statevector is not a 1D array or the length is not a power of 2.
+        ValueError: if the state is neither a 1D array nor a square 2D array, or the dimension is not a power of 2.
     """
-    psi = np.asarray(statevector, dtype=complex)
+    psi = np.asarray(state, dtype=complex)
     dim = psi.shape[0]
 
-    if psi.ndim != 1:
-        raise ValueError("statevector must be a 1D array")
+    if psi.shape not in {(dim,), (dim, dim)}:
+        raise ValueError("state must be a 1D array or a square 2D array")
 
     n = int(np.log2(dim))
     if 2**n != dim:
-        raise ValueError("length of statevector must be a power of 2")
+        raise ValueError("dimension of state must be a power of 2")
 
-    out = np.empty_like(psi)
-    for i in range(dim):
-        out[reverse_bits(i, n)] = psi[i]
-    return out
+    perm = np.array([reverse_bits(i, n) for i in range(dim)])
+    if psi.ndim == 1:
+        return psi[perm]
+    return psi[np.ix_(perm, perm)].T
 
 
 class CudaqSamplingMethod(str, Enum):
@@ -235,6 +240,7 @@ class CudaqBackend(Backend):
         self,
         sampling_method: CudaqSamplingMethod = CudaqSamplingMethod.STATE_VECTOR,
         noise_model: NoiseModel | None = None,
+        seed: int | None = None,
     ) -> None:
         """Initialize the :class:`CudaqBackend`.
 
@@ -245,8 +251,10 @@ class CudaqBackend(Backend):
                 ``CPU``. Defaults to ``CudaqSamplingMethod.STATE_VECTOR``.
             noise_model (NoiseModel | None): Optional noise model applied
                 during execution. Defaults to ``None``.
+            seed (int | None): Seed for the random number generator used to draw
+                samples from a simulated state. Defaults to ``None``.
         """
-        super().__init__(noise_model=noise_model)
+        super().__init__(noise_model=noise_model, seed=seed)
         cudaq.register_operation("i", np.array([1, 0, 0, 1], dtype=_complex_dtype()))
         cudaq.register_operation(_SWAP_OP_NAME, np.array(_SWAP_MATRIX, dtype=_complex_dtype()))
         self._basic_gate_handlers: BasicGateHandlersMapping = {
@@ -273,6 +281,32 @@ class CudaqBackend(Backend):
         }
         self._sampling_method = sampling_method
         logger.info("[CudaqBackend] CudaqBackend initialised (sampling_method={})", sampling_method.value)
+
+    @staticmethod
+    def _circuit_from_initial_state(initial_state: InitialState | QTensor, nqubits: int) -> Circuit:
+        """Convert an initial state to a circuit representation.
+
+        Args:
+            initial_state (InitialState | QTensor): The initial state to convert.
+            nqubits (int): The number of qubits in the circuit.
+
+        Returns:
+            Circuit: A circuit that prepares the specified initial state.
+
+        Raises:
+            ValueError: If the initial state is not supported for conversion.
+        """
+        circuit = Circuit(nqubits)
+        if isinstance(initial_state, InitialState):
+            if initial_state == InitialState.UNIFORM:
+                for i in range(nqubits):
+                    circuit.add(H(i))
+            elif initial_state == InitialState.ONE:
+                for i in range(nqubits):
+                    circuit.add(X(i))
+        elif isinstance(initial_state, QTensor):
+            logger.warning("QTensor initial states are not natively supported by the CUDA backend, ignoring.")
+        return circuit
 
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
@@ -316,19 +350,23 @@ class CudaqBackend(Backend):
                 f"Only Sampling Readouts are supported for {self.sampling_method.value.upper()} simulation."
             )
 
+        # If an initial state is given, convert it to a circuit, since CUDA doesn't support any other initial state format
+        circuit = self._circuit_from_initial_state(functional.initial_state, functional.circuit.nqubits)
+        circuit.append(functional.circuit)
+
         # Apply parameter perturbations
         if self._noise_model:
             og_param = copy(functional.get_parameters())
-            self._handle_gate_parameter_perturbations(functional.circuit, self._noise_model)
+            self._handle_gate_parameter_perturbations(circuit, self._noise_model)
 
         # Transpile the circuit into CUDAQ format
-        transpiled_circuit = DecomposeMultiControlledGatesPass().run(functional.circuit)
+        transpiled_circuit = DecomposeMultiControlledGatesPass().run(circuit)
         measured_qubits = set()
         for i, gate in enumerate(transpiled_circuit.gates):
             if isinstance(gate, Controlled):
                 self._handle_controlled(kernel, gate, qubits[gate.control_qubits[0]], qubits[gate.target_qubits[0]])
             elif isinstance(gate, Adjoint):
-                self._handle_adjoint(kernel, gate, qubits[gate.target_qubits[0]])
+                self._handle_adjoint(kernel, gate, qubits)
             elif isinstance(gate, M):
                 if any(not isinstance(g, M) for g in transpiled_circuit.gates[i:]):
                     raise NotImplementedError("Intermediate-measurement is not Supported with Cuda Backend")
@@ -342,6 +380,7 @@ class CudaqBackend(Backend):
 
         qubits_to_measure = list(measured_qubits) if len(measured_qubits) > 0 else None
 
+        cudaq.set_random_seed(int(self._rng.integers(2**32)))
         if self._noise_model:
             cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, transpiled_circuit)
             cudaq_result = cudaq.sample(
@@ -349,7 +388,7 @@ class CudaqBackend(Backend):
                 shots_count=readout[0].nshots,  # ty:ignore[unresolved-attribute]
                 noise_model=cuda_noise_model,
             )
-            cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, functional.circuit.nqubits)
+            cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, circuit.nqubits, rng=self._rng)
             if og_param:
                 functional.set_parameters(og_param)
             logger.info("[CudaqBackend] Sampling finished, {} distinct bitstrings", len(cudaq_result))
@@ -360,7 +399,7 @@ class CudaqBackend(Backend):
                     sampling=SamplingReadoutResult.from_samples(
                         samples=dict(cudaq_result.items()),
                         qubits_to_measure=qubits_to_measure,
-                        nqubits=functional.circuit.nqubits,
+                        nqubits=circuit.nqubits,
                         expand_samples=expand_samples,
                     ),
                     expectation_values=None,
@@ -379,7 +418,7 @@ class CudaqBackend(Backend):
                     sampling=SamplingReadoutResult.from_samples(
                         samples=dict(cudaq_result.items()),
                         qubits_to_measure=qubits_to_measure,
-                        nqubits=functional.circuit.nqubits,
+                        nqubits=circuit.nqubits,
                         expand_samples=sampling_readout.expand_samples,
                     ),
                     expectation_values=None,
@@ -402,6 +441,7 @@ class CudaqBackend(Backend):
             readout_results=CudaqBackend._construct_results_list(
                 final_state=final_state,
                 readout=readout,
+                seed=self._rng,
                 qubits_to_measure=qubits_to_measure,
             )
         )
@@ -479,10 +519,7 @@ class CudaqBackend(Backend):
 
         logger.info("[CudaqBackend] TimeEvolution finished")
         # Dynamics computes in fp64; keep the results complex128 to match.
-        final_state = np.array(
-            evolution_result.final_state(),
-            dtype=np.complex128,
-        )
+        final_state = cudaq_to_standard(np.array(evolution_result.final_state(), dtype=np.complex128))
         if len(final_state.shape) == 1:
             final_state = final_state.reshape(-1, 1)
         final_state = QTensor(final_state)
@@ -493,15 +530,20 @@ class CudaqBackend(Backend):
         intermediate_states = []
         if evolution_result.intermediate_states() is not None and functional.store_intermediate_results:
             for state in evolution_result.intermediate_states():
-                _state = np.array(state, dtype=np.complex128)
+                _state = cudaq_to_standard(np.array(state, dtype=np.complex128))
                 if len(_state.shape) == 1:
                     _state = _state.reshape(-1, 1)
                 intermediate_states.append(QTensor(_state))
 
         return FunctionalResult(
-            readout_results=CudaqBackend._construct_results_list(final_state=final_state, readout=readout),
+            readout_results=CudaqBackend._construct_results_list(
+                final_state=final_state, readout=readout, seed=self._rng
+            ),
             intermediate_results=(
-                [CudaqBackend._construct_results_list(state, readout=readout) for state in intermediate_states]
+                [
+                    CudaqBackend._construct_results_list(state, readout=readout, seed=self._rng)
+                    for state in intermediate_states
+                ]
                 if functional.store_intermediate_results
                 else None
             ),
@@ -546,7 +588,8 @@ class CudaqBackend(Backend):
         Configure the cudaq simulation target based on the selected simulation method.
 
         For the STATE_VECTOR method, it checks for GPU availability and selects an appropriate target.
-        For the STATE_VECTOR_MGPU method, it checks for multiple GPU availability and selects an appropriate target.
+        For the STATE_VECTOR_MGPU method, it checks for multiple GPU availability and that it is running under multiple
+        MPI ranks, falling back to a single GPU otherwise.
         For TENSOR_NETWORK and MATRIX_PRODUCT_STATE methods, it explicitly sets the target to use tensor network-based simulations.
         For the CPU method, it sets the target to use CPU-based simulation.
 
@@ -557,6 +600,7 @@ class CudaqBackend(Backend):
         if self.sampling_method in {CudaqSamplingMethod.STATE_VECTOR, CudaqSamplingMethod.STATE_VECTOR_MGPU}:
             float_precision = "fp64" if get_settings().complex_precision == Precision.COMPLEX_128 else "fp32"
             num_gpus = cudaq.num_available_gpus()
+            logger.debug("[CudaqBackend] Number of available GPUs: {}", num_gpus)
             if num_gpus == 0:
                 cudaq.set_target("qpp-cpu")
                 logger.debug("[CudaqBackend] No GPU detected, using cudaq's 'qpp-cpu' backend")
@@ -568,7 +612,20 @@ class CudaqBackend(Backend):
                     )
                 else:
                     cudaq.set_target("nvidia", option="mgpu," + float_precision)
-                    logger.debug("[CudaqBackend] Multiple GPUs detected, using cudaq's 'nvidia-mgpu' backend")
+                    num_ranks = cudaq.mpi.num_ranks()
+                    if num_ranks < 2:  # ruff: ignore[magic-value-comparison]
+                        cudaq.set_target("nvidia", option=float_precision)
+                        logger.warning(
+                            "[CudaqBackend] Multiple GPU simulation method selected and {} GPUs detected, but only a single MPI rank is running. "
+                            "Falling back to single GPU. Launch with e.g. 'mpirun -np {} python ...' to use all GPUs.",
+                            num_gpus,
+                            num_gpus,
+                        )
+                    else:
+                        logger.debug(
+                            "[CudaqBackend] Multiple GPUs detected, using cudaq's 'nvidia-mgpu' backend across {} MPI ranks",
+                            num_ranks,
+                        )
             else:
                 cudaq.set_target("nvidia", option=float_precision)
                 logger.debug("[CudaqBackend] GPU detected, using cudaq's 'nvidia' backend")
@@ -585,7 +642,9 @@ class CudaqBackend(Backend):
             raise ValueError(f"Unsupported sampling method: {self.sampling_method.value}")
 
     @staticmethod
-    def _handle_readout_errors(cudaq_result: dict[str, int], noise_model: NoiseModel, nqubits: int) -> dict[str, int]:
+    def _handle_readout_errors(
+        cudaq_result: dict[str, int], noise_model: NoiseModel, nqubits: int, rng: np.random.Generator | None = None
+    ) -> dict[str, int]:
         """Apply readout-assignment errors to raw measurement counts.
 
         For each shot the method probabilistically flips measured bits
@@ -598,6 +657,9 @@ class CudaqBackend(Backend):
             noise_model (NoiseModel): The noise model containing readout
                 assignment errors.
             nqubits (int): Total number of qubits in the circuit.
+            rng (np.random.Generator | None): Random number generator used to
+                draw the bit flips. If ``None``, a fresh unseeded generator is
+                used. Defaults to ``None``.
 
         Returns:
             dict[str, int]: Adjusted bitstring counts with readout errors
@@ -622,7 +684,7 @@ class CudaqBackend(Backend):
             return cudaq_result
 
         # numpy generator
-        gen = np.random.default_rng(42)
+        gen = np.random.default_rng(rng)
 
         # First split into individual shots
         shots = []
@@ -1267,7 +1329,8 @@ class CudaqBackend(Backend):
         """Convert a ``QTensor`` initial state to a CUDA-Q ``State``.
 
         The state is normalized and, if given as a bra, transposed to a
-        ket before conversion.
+        ket before conversion. It is then reordered from the standard
+        qubit ordering to CUDA-Q's (see :func:`cudaq_to_standard`).
 
         Args:
             initial_state (QTensor): The initial quantum state to convert.
@@ -1287,7 +1350,7 @@ class CudaqBackend(Backend):
         if normalized_state.is_ket():
             cuda_state_data = cuda_state_data.reshape(-1)
 
-        return State.from_data(cuda_state_data)
+        return State.from_data(cudaq_to_standard(cuda_state_data).astype(cuda_state_data.dtype))
 
     def _handle_controlled(
         self, kernel: cudaq.Kernel, gate: Controlled, control_qubit: cudaq.QuakeValue, target_qubit: cudaq.QuakeValue
@@ -1312,6 +1375,9 @@ class CudaqBackend(Backend):
                 "[CudaqBackend] Controlled gate with {} control qubits not supported", len(gate.control_qubits)
             )
             raise UnsupportedGateError
+        if gate.basic_gate.nqubits != 1:
+            logger.error("[CudaqBackend] Controlled multi-qubit gate {} not supported", type(gate.basic_gate).__name__)
+            raise UnsupportedGateError
         target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
         handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
         if handler is None:
@@ -1320,28 +1386,40 @@ class CudaqBackend(Backend):
         handler(target_kernel, gate.basic_gate, qubit)
         kernel.control(target_kernel, control_qubit, target_qubit)
 
-    def _handle_adjoint(self, kernel: cudaq.Kernel, gate: Adjoint, target_qubit: cudaq.QuakeValue) -> None:
+    def _handle_adjoint(self, kernel: cudaq.Kernel, gate: Adjoint, qubits: cudaq.QuakeValue) -> None:
         """
         Handle an adjoint (inverse) gate operation.
 
         This method creates a temporary kernel for the basic gate wrapped by the adjoint,
         applies the corresponding handler, and then integrates it into the main kernel as an adjoint operation.
+        The adjoint of a controlled gate is applied as the controlled adjoint of its basic gate.
 
         Args:
             kernel (cudaq.Kernel): The main CUDA kernel being constructed.
             gate (Adjoint): The adjoint gate to be handled.
-            target_qubit (cudaq.QuakeValue): The target qubit for the gate.
+            qubits (cudaq.QuakeValue): The qubit register of the main kernel.
 
         Raises:
-            UnsupportedGateError: If the basic gate inside the adjoint is unsupported.
+            UnsupportedGateError: If the basic gate inside the adjoint is unsupported, or if it is controlled
+                by more than one qubit.
         """
-        target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
-        handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
-        if handler is None:
-            logger.error("[CudaqBackend] Unsupported gate inside Adjoint: {}", type(gate.basic_gate).__name__)
+        if len(gate.control_qubits) > 1:
+            logger.error("[CudaqBackend] Adjoint gate with {} control qubits not supported", len(gate.control_qubits))
             raise UnsupportedGateError
-        handler(target_kernel, gate.basic_gate, qubit)
-        kernel.adjoint(target_kernel, target_qubit)
+        basic_gate = gate.basic_gate.basic_gate if isinstance(gate.basic_gate, Controlled) else gate.basic_gate
+        target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
+        handler = self._basic_gate_handlers.get(type(basic_gate), None)
+        if handler is None:
+            logger.error("[CudaqBackend] Unsupported gate inside Adjoint: {}", type(basic_gate).__name__)
+            raise UnsupportedGateError
+        handler(target_kernel, basic_gate, qubit)
+        target_qubit = qubits[gate.target_qubits[0]]
+        if gate.control_qubits:
+            adjoint_kernel, adjoint_qubit = cudaq.make_kernel(cudaq.qubit)
+            adjoint_kernel.adjoint(target_kernel, adjoint_qubit)
+            kernel.control(adjoint_kernel, qubits[gate.control_qubits[0]], target_qubit)
+        else:
+            kernel.adjoint(target_kernel, target_qubit)
 
     @staticmethod
     def _handle_M(kernel: cudaq.Kernel, gate: M, circuit: Circuit, qubits: cudaq.QuakeValue) -> None:

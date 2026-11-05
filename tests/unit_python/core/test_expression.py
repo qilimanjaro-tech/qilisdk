@@ -186,6 +186,19 @@ def test_expand_binomial(params):
     assert ((x + y) ** 2).expand() == (x**2 + 2 * x * y + y**2)
 
 
+def test_expand_expands_a_float_valued_integer_power(params):
+    x, _, _ = params
+    assert (x**2.0).expand() == (x * x)
+
+
+@pytest.mark.parametrize("exponent", [0.5, -1.5])
+def test_expand_leaves_a_non_integer_power_inert(params, exponent):
+    x, _, _ = params
+    expr = x**exponent
+    assert expr.expand() == expr
+    assert isinstance(expr.expand(), Pow)
+
+
 def test_polynomial_accessors(params):
     x, y, _ = params
     expr = 2 * x * y + 3 * x + 5

@@ -57,17 +57,25 @@ class MatplotlibQTensorRenderer:
         """
         Render the QTensor on the current axes.
 
+        State vectors (kets and bras) are converted to their density matrix before being drawn, so that pure and
+        mixed states follow the same code path. Mixed states, such as those obtained from
+        :meth:`~qilisdk.core.qtensor.QTensor.partial_trace`, sit strictly inside the Bloch sphere.
+
         Raises:
-            ValueError: If the QTensor is not a single-qubit state vector (ket or bra).
-            ValueError: If the QTensor has more than one qubit.
+            ValueError: If the QTensor does not represent a single qubit.
+            ValueError: If the QTensor is neither a state vector (ket or bra) nor a density matrix.
         """
 
-        if not self.qtensor.is_ket() and not self.qtensor.is_bra():
-            raise ValueError("Drawing is only supported for state vectors (kets or bras)")
         if self.qtensor.nqubits != 1:
             raise ValueError(
-                "Drawing is only supported for single-qubit states: consider using .partial_trace([i]) to reduce to a single qubit i"
+                "Drawing is only supported for single-qubit states: consider using .partial_trace({i}) to reduce to a single qubit i"
             )
+
+        if not self.qtensor.is_ket() and not self.qtensor.is_bra() and not self.qtensor.is_density_matrix():
+            raise ValueError("Drawing is only supported for state vectors (kets or bras) and density matrices")
+
+        # State vectors are turned into their density matrix so that both cases share the same Bloch vector formula
+        rho = self.qtensor.as_density_matrix().dense()
 
         logger.debug("[QTensorRenderer] Rendering single-qubit state on Bloch sphere")
 
@@ -82,12 +90,21 @@ class MatplotlibQTensorRenderer:
         rotation_style = self.style.rotation_style
         figure_title = self.style.title or "Bloch Sphere Visualization"
         draw_center_circle = self.style.draw_center_circle
+        centre_circle_color = self.style.centre_circle_color
+        theme = self.style.theme
+        font = self.style.font
 
         # Better mouse rotation style
         mpl.rcParams["axes3d.mouserotationstyle"] = rotation_style
 
         # Set up the plot
         ax = self.axes
+
+        # Paint the canvas with the theme before drawing on it
+        ax.set_facecolor(theme.background)
+        if isinstance(ax.figure, Figure):
+            ax.figure.set_facecolor(theme.background)
+
         u = np.linspace(0, 2 * np.pi, sphere_points)
         v = np.linspace(0, np.pi, sphere_points)
         x = np.outer(np.cos(u), np.sin(v))
@@ -97,10 +114,10 @@ class MatplotlibQTensorRenderer:
         ax.set_xlim([-1, 1])
         ax.set_ylim([-1, 1])
         ax.set_zlim([-1, 1])
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
-        ax.set_title(figure_title)
+        ax.set_xlabel("X", color=theme.on_background, fontproperties=font)
+        ax.set_ylabel("Y", color=theme.on_background, fontproperties=font)
+        ax.set_zlabel("Z", color=theme.on_background, fontproperties=font)
+        ax.set_title(figure_title, color=theme.on_background, fontproperties=font)
         ax.xaxis.set_major_locator(plt.MaxNLocator(5))
         ax.yaxis.set_major_locator(plt.MaxNLocator(5))
         ax.zaxis.set_major_locator(plt.MaxNLocator(5))
@@ -108,21 +125,32 @@ class MatplotlibQTensorRenderer:
         # Fix the aspect ratio to be equal
         ax.set_box_aspect([1, 1, 1])
 
-        # Draw the arrow
-        coeffs = self.qtensor.dense().flatten()
-        x = 2 * np.real(coeffs[0] * np.conj(coeffs[1]))
-        y = 2 * np.imag(coeffs[0] * np.conj(coeffs[1]))
-        z = np.abs(coeffs[0]) ** 2 - np.abs(coeffs[1]) ** 2
+        # Draw the arrow, the Bloch vector being (tr(rho X), tr(rho Y), tr(rho Z))
+        x = 2 * np.real(rho[0, 1])
+        y = 2 * np.imag(rho[1, 0])
+        z = np.real(rho[0, 0] - rho[1, 1])
         ax.quiver(0, 0, 0, x, y, z, color=arrow_color, arrow_length_ratio=arrow_length_ratio)
 
         # Draw some key points for reference
         if draw_reference_points:
-            ax.text(0, 0, reference_point_distance, "|0⟩", fontsize=font_size, ha="center")
-            ax.text(0, 0, -reference_point_distance, "|1⟩", fontsize=font_size, ha="center")
-            ax.text(reference_point_distance, 0, 0, "|+⟩", fontsize=font_size, ha="center")
-            ax.text(-reference_point_distance, 0, 0, "|-⟩", fontsize=font_size, ha="center")
-            ax.text(0, reference_point_distance, 0, "|+i⟩", fontsize=font_size, ha="center")
-            ax.text(0, -reference_point_distance, 0, "|-i⟩", fontsize=font_size, ha="center")
+            d = reference_point_distance
+            for x_ref, y_ref, z_ref, label in (
+                (0, 0, d, "|0⟩"),
+                (0, 0, -d, "|1⟩"),
+                (d, 0, 0, "|+⟩"),
+                (-d, 0, 0, "|-⟩"),
+                (0, d, 0, "|+i⟩"),
+                (0, -d, 0, "|-i⟩"),
+            ):
+                ax.text(
+                    x_ref,
+                    y_ref,
+                    z_ref,
+                    label,
+                    fontsize=font_size,
+                    ha="center",
+                    color=theme.on_background,
+                )
 
         # Draw a circle around the centre
         if draw_center_circle:
@@ -131,7 +159,7 @@ class MatplotlibQTensorRenderer:
             x = radius * np.cos(u)
             y = radius * np.sin(u)
             z = np.zeros_like(x)
-            ax.plot(x, y, z, color="b", linestyle="--", alpha=0.5)
+            ax.plot(x, y, z, color=centre_circle_color, linestyle="--", alpha=0.5)
 
         # Hide the axes
         ax.set_axis_off()

@@ -17,6 +17,7 @@ from abc import ABC
 from time import perf_counter
 from typing import TYPE_CHECKING, Any, Callable, cast, overload
 
+import numpy as np
 from loguru import logger
 
 from qilisdk.analog import Schedule
@@ -29,6 +30,7 @@ from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.functionals.variational_program_result import VariationalProgramResult
+from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.readout import (
     E,
     ExpectationReadout,
@@ -59,15 +61,23 @@ class Backend(ABC):
     dispatches to the appropriate handler based on the functional type.
     """
 
+    # Whether the backend can simulate non-Markovian noise
+    _supports_non_markovian_noise: bool = False
+
     def __init__(
         self,
         noise_model: NoiseModel | None = None,
+        seed: int | None = None,
     ) -> None:
         """Initialise the backend with an optional noise model.
 
         Args:
             noise_model (NoiseModel | None): Optional noise model applied
                 during execution. Defaults to ``None``.
+            seed (int | None): Seed for the random number generator used to draw
+                samples from a state. Repeated executions on one backend give new
+                samples, reproducible for a given seed. If ``None``, the samples
+                are not reproducible. Defaults to ``None``.
         """
         self._handlers: dict[type[Functional], Callable[[Functional, list[ReadoutMethod]], Result]] = {
             DigitalPropagation: lambda f, readout: self._execute_digital_propagation(
@@ -80,6 +90,7 @@ class Backend(ABC):
             ),
         }
         self._noise_model = noise_model
+        self._rng = np.random.default_rng(seed)
 
     @overload
     def execute(
@@ -110,7 +121,8 @@ class Backend(ABC):
 
         Raises:
             NotImplementedError: If the backend does not support the given
-                functional type.
+                functional type, or the noise model contains non-Markovian
+                noise the backend cannot simulate.
             ValueError: If the readout specification is empty.
         """
         logger.debug("[Backend] Dispatching {} to {}", type(functional).__qualname__, type(self).__qualname__)
@@ -120,6 +132,12 @@ class Backend(ABC):
             raise NotImplementedError(
                 f"{type(self).__qualname__} does not support {type(functional).__qualname__}"
             ) from exc
+        if (
+            self._noise_model is not None
+            and self._noise_model.non_markovian_noise
+            and not self._supports_non_markovian_noise
+        ):
+            raise NotImplementedError(f"{type(self).__qualname__} does not support non-Markovian noise")
 
         readout_list = readout.to_list()
         if not readout_list:
@@ -191,7 +209,7 @@ class Backend(ABC):
                     "Try improving simulation precision (e.g., smaller dt, more integrator substeps, or higher precision)."
                 ) from exc
 
-            inter_results.append(Backend._construct_results_list(state, readout))
+            inter_results.append(Backend._construct_results_list(state, readout, seed=self._rng))
 
             if functional.reservoir_layer.qubits_to_reset:
                 logger.trace("[Backend] Resetting qubits {}", functional.reservoir_layer.qubits_to_reset)
@@ -216,7 +234,8 @@ class Backend(ABC):
                 name = param_names[i]
                 lower_bound, upper_bound = param_bounds[name]
                 if lower_bound != upper_bound:
-                    new_param_dict[name] = param
+                    # Ensure we clamp the parameter within its bounds, since some methods might ignore bounds
+                    new_param_dict[name] = min(max(param, lower_bound), upper_bound)
             err = functional.check_parameter_constraints(new_param_dict)
             if err > 0:
                 return err
@@ -240,8 +259,20 @@ class Backend(ABC):
             store_intermediate_results=functional.store_intermediate_results,
         )
 
-        param_names = functional.functional.get_parameter_names(where=lambda param: param.is_trainable)
-        optimal_parameter_dict = {param_names[i]: param for i, param in enumerate(optimizer_result.optimal_parameters)}
+        param_bounds = functional.functional.get_parameter_bounds(where=lambda param: param.is_trainable)
+        optimal_parameter_dict = {}
+        for name, param in zip(param_bounds, optimizer_result.optimal_parameters, strict=False):
+            lower_bound, upper_bound = param_bounds[name]
+            optimal_parameter_dict[name] = min(max(param, lower_bound), upper_bound)
+            if optimal_parameter_dict[name] != param:
+                logger.warning(
+                    "[Backend] Optimal value {} for parameter '{}' is outside its bounds {}, clamping to {}. "
+                    "The chosen optimizer method may not honour bounds.",
+                    param,
+                    name,
+                    (lower_bound, upper_bound),
+                    optimal_parameter_dict[name],
+                )
         err = functional.check_parameter_constraints(optimal_parameter_dict)
         if err > 0:
             raise ValueError(
@@ -249,6 +280,13 @@ class Backend(ABC):
             )
         functional.functional.set_parameters(optimal_parameter_dict)
         optimal_results = self.execute(functional.functional, spec)
+
+        # Report the clamped parameters, since those are the ones the functional was left with
+        optimizer_result = OptimizerResult(
+            optimal_cost=optimizer_result.optimal_cost,
+            optimal_parameters=list(optimal_parameter_dict.values()),
+            intermediate_results=optimizer_result.intermediate_results,
+        )
 
         logger.info("[Backend] Variational Program finished")
         return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)
@@ -262,7 +300,7 @@ class Backend(ABC):
         cls,
         final_state: QTensor,
         readout: list[ReadoutMethod],
-        seed: int | None = None,
+        seed: int | np.random.Generator | None = None,
         qubits_to_measure: list[int] | None = None,
     ) -> ReadoutCompositeResults:
         sampling_result: SamplingReadoutResult | None = None
@@ -281,7 +319,7 @@ class Backend(ABC):
             elif isinstance(ro, ExpectationReadout):
                 ro.expanded_observables(nqubits=final_state.nqubits)
                 expectation_result: ExpectationReadoutResult = ExpectationReadoutResult.from_state(
-                    expectation_readout=ro, state=final_state
+                    expectation_readout=ro, state=final_state, seed=seed
                 )
             elif isinstance(ro, SamplingReadout):
                 sampling_result: SamplingReadoutResult = SamplingReadoutResult.from_state(
@@ -289,6 +327,7 @@ class Backend(ABC):
                     state=final_state,
                     qubits_to_measure=qubits_to_measure,
                     expand_samples=ro.expand_samples,
+                    seed=seed,
                 )
             else:
                 raise ValueError(f"Unsupported Readout Method provided: {ro}")

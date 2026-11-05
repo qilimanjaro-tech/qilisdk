@@ -29,7 +29,7 @@ def _bits_to_int(bits: tuple[int, ...]) -> int:
 
 
 def _expand_gate_to_order(gate: Gate, order: tuple[int, ...]) -> np.ndarray:
-    local_matrix = gate.matrix
+    local_matrix = gate.matrix.dense()
     positions = tuple(order.index(q) for q in gate.qubits)
     nqubits = len(order)
     dim = 1 << nqubits
@@ -60,7 +60,7 @@ def _apply_gate_to_state(state: np.ndarray, gate: Gate, nqubits: int) -> np.ndar
 
     reshaped = state.reshape([2] * nqubits).transpose(perm)
     block = reshaped.reshape(2 ** len(axes), -1)
-    updated = gate.matrix @ block
+    updated = gate.matrix.dense() @ block
     reshaped = updated.reshape([2] * len(axes) + [2] * len(other_axes)).transpose(inverse)
     return reshaped.reshape(-1)
 

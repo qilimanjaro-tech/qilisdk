@@ -74,7 +74,7 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
             list[Gate]: Sequence of equivalent gates that rely on supported primitives.
         """
         # --- Multi-controlled gates ---
-        if _is_controlled(gate):
+        if _is_controlled(gate) and len(gate.control_qubits) > 1:
             basic_gate: BasicGate = gate.basic_gate
             if basic_gate.nqubits != 1:
                 raise NotImplementedError("Controlled version of multi-qubit gates is not supported.")
@@ -196,7 +196,7 @@ def _sqrt_of(gate: BasicGate) -> PhasedGate:
 
     # Build the 2x2 unitary matrix for gate
     if isinstance(gate, BasicGate) and gate.nqubits == 1:
-        unitary_matrix = gate.matrix
+        unitary_matrix = gate.matrix.dense()
     else:
         raise NotImplementedError(f"_sqrt_1q_gate_as_basis only supports 1-qubit gates; got {type(gate).__name__}")
 
@@ -262,7 +262,7 @@ def _adjoint_of(gate: BasicGate) -> PhasedGate:
     # ---------- Generic 1-qubit unitary via matrix adjoint ----------
 
     if isinstance(gate, BasicGate) and gate.nqubits == 1:
-        unitary_matrix = gate.matrix
+        unitary_matrix = gate.matrix.dense()
     else:
         raise NotImplementedError(f"_adjoint_1q only supports 1-qubit gates; got {type(gate).__name__}")
 
