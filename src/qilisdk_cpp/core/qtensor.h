@@ -204,6 +204,8 @@ class QTensorCpp {
     static QTensorCpp bra(const std::vector<int>& qubit_values);
     static QTensorCpp ghz(int nqubits);
     static QTensorCpp uniform(int nqubits);
+    static QTensorCpp w(int nqubits);
+    static QTensorCpp random(int nqubits, std::uint32_t seed);
     static QTensorCpp tensor_product_python(const py::list& others);
     static QTensorCpp tensor_product(const std::vector<QTensorCpp>& others);
 
