@@ -343,6 +343,24 @@ def test_execute_adjoint_handler(mock_set_target, mock_sample, mock_make_kernel,
     assert ("adjoint", "q0") in calls
 
 
+# The adjoint of a controlled gate should be applied as a controlled adjoint, keeping its control qubit.
+@pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases])
+@patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
+@patch("cudaq.sample", return_value={"00": 1000})
+@patch("cudaq.set_target")
+def test_execute_adjoint_of_controlled_handler(
+    mock_set_target, mock_sample, mock_make_kernel, gate_instance, monkeypatch
+):
+    monkeypatch.setattr(dummy_make_kernel, "main_kernel", DummyKernel())
+    backend = CudaqBackend()
+    circuit = Circuit(nqubits=2)
+    circuit._gates.append(Adjoint(Controlled(1, basic_gate=gate_instance)))
+    backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
+    calls = dummy_make_kernel.main_kernel.calls
+    assert ("control", "q1", "q0") in calls
+    assert all(call[0] != "adjoint" for call in calls)
+
+
 # --- Tests for measurement handling ---
 
 
@@ -427,6 +445,16 @@ def test_controlled_with_unsupported_basic_gate_raises(monkeypatch):
     read = Readout().with_sampling(nshots=10)
     with pytest.raises(UnsupportedGateError):
         be.execute(func, read)
+
+
+def test_controlled_with_multi_qubit_basic_gate_raises():
+    circuit = Circuit(3)
+    circuit.add(Controlled(0, basic_gate=SWAP(1, 2)))
+    func = DigitalPropagation(circuit)
+    read = Readout().with_sampling(nshots=10)
+    backend = CudaqBackend()
+    with pytest.raises(UnsupportedGateError):
+        backend.execute(func, read)
 
 
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
@@ -809,17 +837,29 @@ def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(mon
 
 
 def test_cudaq_to_standard_reorders_statevector():
-    # 2 qubits: |01> in CUDA-Q ordering → should map to standard ordering
+    # 2 qubits: |01> in CUDA-Q ordering → |10> in standard ordering
     psi = np.array([0, 1, 0, 0], dtype=complex)
     reordered = cudaq_to_standard(psi)
     assert reordered.shape == (4,)
-    assert np.isclose(np.sum(np.abs(reordered) ** 2), 1.0)
+    assert np.allclose(reordered, [0, 0, 1, 0])
+    assert np.allclose(cudaq_to_standard(reordered), psi)
 
 
-def test_cudaq_to_standard_invalid_ndim_raises():
-    arr = np.array([[1, 0], [0, 0]], dtype=complex)
-    with pytest.raises(ValueError, match="1D array"):
-        cudaq_to_standard(arr)
+def test_cudaq_to_standard_reorders_and_transposes_density_matrix():
+    # CUDA-Q exposes density matrices transposed (column-major storage)
+    psi = np.array([0, 1, 1j, 0], dtype=complex) / np.sqrt(2)
+    rho = np.outer(psi, psi.conj())
+    reordered = cudaq_to_standard(rho.T)
+    expected = cudaq_to_standard(psi)
+    assert np.allclose(reordered, np.outer(expected, expected.conj()))
+    assert np.allclose(cudaq_to_standard(reordered), rho.T)
+
+
+def test_cudaq_to_standard_invalid_shape_raises():
+    with pytest.raises(ValueError, match="1D array or a square 2D array"):
+        cudaq_to_standard(np.zeros((2, 2, 2), dtype=complex))
+    with pytest.raises(ValueError, match="1D array or a square 2D array"):
+        cudaq_to_standard(np.zeros((4, 1), dtype=complex))
 
 
 def test_cudaq_to_standard_non_power_of_two_raises():

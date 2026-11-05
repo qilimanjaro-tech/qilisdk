@@ -612,6 +612,24 @@ def test_expect_qtensor_sampled():
     assert len(observable.eigenvalues) == 4
 
 
+def test_expect_sampled_seed():
+    """Test that a fixed seed makes sampled expectation values reproducible."""
+    state = QTensor.uniform(2)
+    for observable in [Z(0) + X(1) * Z(0), (Z(0) + 0.5 * Z(1)).to_qtensor(2)]:
+        first = state.expectation_value(observable, nshots=100, seed=42)
+        second = state.expectation_value(observable, nshots=100, seed=42)
+        other = [state.expectation_value(observable, nshots=100, seed=seed) for seed in range(10)]
+        unseeded = [state.expectation_value(observable, nshots=100) for _ in range(10)]
+        assert first == second
+        assert len(set(other)) > 1
+        assert len(set(unseeded)) > 1
+
+        # Seeds outside the 32-bit range are reduced into it rather than rejected
+        assert state.expectation_value(observable, nshots=100, seed=2**32 + 42) == first
+        negative = state.expectation_value(observable, nshots=100, seed=-1)
+        assert negative == state.expectation_value(observable, nshots=100, seed=2**32 - 1)
+
+
 def test_expect_hamiltonian_sampled_shapes():
     """Test that sampling a Hamiltonian observable works for kets, bras and density matrices."""
     for state in [ket(0, 1), bra(0, 1), ket(0, 1).to_density_matrix()]:
@@ -689,6 +707,108 @@ def test_reset_qubits_invalid_indices_raise():
 def test_reset_qubits_requires_density_matrix():
     with pytest.raises(ValueError, match="requires a density matrix"):
         reset_qubits(ket(0), [0])
+
+
+def _permute_reference(matrix: np.ndarray, order: list[int]) -> np.ndarray:
+    n = len(order)
+    tensor = matrix.reshape([2] * (2 * n))
+    return tensor.transpose(order + [n + q for q in order]).reshape(matrix.shape)
+
+
+def _random_operator(nqubits: int, seed: int) -> np.ndarray:
+    rng = np.random.default_rng(seed)
+    dim = 2**nqubits
+    return rng.normal(size=(dim, dim)) + 1j * rng.normal(size=(dim, dim))
+
+
+@pytest.mark.parametrize("order", list(itertools.permutations(range(3))))
+def test_permute_operator_matches_reference(order):
+    matrix = _random_operator(3, seed=7)
+    permuted = QTensor(matrix).permute(list(order))
+    np.testing.assert_allclose(permuted.dense(), _permute_reference(matrix, list(order)), atol=1e-12)
+
+
+def test_permute_ket_and_bra():
+    np.testing.assert_allclose(ket(0, 1, 1).permute([2, 0, 1]).dense(), ket(1, 0, 1).dense())
+    np.testing.assert_allclose(bra(0, 0, 1).permute([2, 1, 0]).dense(), bra(1, 0, 0).dense())
+
+
+def test_permute_identity_order_is_noop():
+    matrix = _random_operator(2, seed=3)
+    np.testing.assert_allclose(QTensor(matrix).permute([0, 1]).dense(), matrix)
+
+
+@pytest.mark.parametrize("order", [[0], [0, 0], [0, 2], [-1, 0], [0, 1, 2]])
+def test_permute_invalid_order_raises(order):
+    state = ket(0, 1)
+    with pytest.raises(ValueError, match="Permutation must contain"):
+        state.permute(order)
+
+
+def test_permute_non_integer_order_raises():
+    state = ket(0, 1)
+    with pytest.raises(ValueError, match="iterable of integers"):
+        state.permute(["a", 0])
+
+
+def test_tensor_product_with_qubits_places_factors():
+    a = _random_operator(1, seed=1)
+    b = _random_operator(2, seed=2)
+    result = QTensor.tensor_product([QTensor(a), QTensor(b)], qubits=[[1], [0, 2]])
+    expected = _permute_reference(np.kron(a, b), [1, 0, 2])
+    np.testing.assert_allclose(result.dense(), expected, atol=1e-12)
+
+
+def test_tensor_product_with_qubits_replaces_traced_out_qubit():
+    rho = QTensor(_random_operator(3, seed=5))
+    varrho = QTensor(np.array([[0.6, 0.1], [0.1, 0.4]]))
+    result = QTensor.tensor_product([varrho, rho.partial_trace({0, 2})], qubits=[[1], [0, 2]])
+    swap = QTensor(np.kron(np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]]), np.eye(2)))
+    expected = swap @ tensor_prod([varrho, rho.partial_trace({0, 2})]) @ swap
+    np.testing.assert_allclose(result.dense(), expected.dense(), atol=1e-12)
+
+
+def test_tensor_product_with_qubits_kets():
+    result = tensor_prod([ket(1), ket(0, 1)], qubits=[[2], [1, 0]])
+    np.testing.assert_allclose(result.dense(), ket(1, 0, 1).dense())
+
+
+def test_tensor_product_with_qubits_non_involutive_placement():
+    result = tensor_prod([ket(1), ket(0, 0)], qubits=[[1], [2, 0]])
+    np.testing.assert_allclose(result.dense(), ket(0, 1, 0).dense())
+
+
+def test_permute_accepts_numpy_integers():
+    np.testing.assert_allclose(ket(0, 1).permute(np.array([1, 0])).dense(), ket(1, 0).dense())
+    np.testing.assert_allclose(ket(0, 1).permute([np.int64(1), np.int64(0)]).dense(), ket(1, 0).dense())
+
+
+@pytest.mark.parametrize("order", [[True, False], [2**40, 0], [2**100, 0]])
+def test_permute_bool_or_out_of_range_order_raises(order):
+    state = ket(0, 1)
+    with pytest.raises(ValueError, match=r"iterable of integers|Permutation must contain"):
+        state.permute(order)
+
+
+def test_tensor_product_with_qubits_in_order_matches_default():
+    factors = [ket(1), ket(0), ket(1)]
+    result = QTensor.tensor_product(factors, qubits=[[0], [1], [2]])
+    np.testing.assert_allclose(result.dense(), QTensor.tensor_product(factors).dense())
+
+
+@pytest.mark.parametrize(
+    ("qubits", "match"),
+    [
+        ([[0]], "Expected 2 lists of qubits"),
+        ([[0, 1], [2]], "cannot be placed on 2 qubits"),
+        ([[0], [0, 1]], "exactly once"),
+        ([[3], [0, 1]], "exactly once"),
+    ],
+)
+def test_tensor_product_with_invalid_qubits_raises(qubits, match):
+    factors = [ket(0), ket(0, 1)]
+    with pytest.raises(ValueError, match=match):
+        QTensor.tensor_product(factors, qubits=qubits)
 
 
 def test_non_hermitian_trace_norm():
@@ -908,6 +1028,67 @@ def test_qtensor_uniform():
     qunif = QTensor.uniform(2)
     expected = (ket(0, 0) + ket(0, 1) + ket(1, 0) + ket(1, 1)) * (0.5)
     np.testing.assert_allclose(qunif.dense(), expected.dense(), atol=1e-8)
+
+
+def test_qtensor_w():
+    qw = QTensor.w(3)
+    expected = (ket(0, 0, 1) + ket(0, 1, 0) + ket(1, 0, 0)) * (1 / np.sqrt(3))
+    np.testing.assert_allclose(qw.dense(), expected.dense(), atol=1e-8)
+    np.testing.assert_allclose(QTensor.w(1).dense(), ket(1).dense(), atol=1e-8)
+
+
+def test_qtensor_w_no_qubits():
+    with pytest.raises(ValueError, match="at least one"):
+        QTensor.w(0)
+
+
+def test_qtensor_w_too_many_qubits():
+    with pytest.raises(ValueError, match="at most 30"):
+        QTensor.w(31)
+
+
+@pytest.mark.parametrize("nqubits", [1, 3])
+def test_qtensor_random(nqubits):
+    state = QTensor.random(nqubits, seed=42)
+    assert state.is_ket()
+    assert state.nqubits == nqubits
+    assert np.isclose(state.norm(), 1.0)
+
+
+def test_qtensor_random_seed():
+    state = QTensor.random(3, seed=7)
+    same_seed = QTensor.random(3, seed=7)
+    other_seed = QTensor.random(3, seed=8)
+    unseeded = QTensor.random(3)
+    np.testing.assert_array_equal(state.dense(), same_seed.dense())
+    assert not np.allclose(state.dense(), other_seed.dense())
+    assert np.isclose(unseeded.norm(), 1.0)
+
+
+def test_qtensor_random_is_haar():
+    # For Haar random states the overlap with any fixed state has mean 1/d and second moment 2/(d(d+1))
+    nqubits = 2
+    dim = 2**nqubits
+    overlaps = np.array([abs(QTensor.random(nqubits, seed=seed).dense()[0, 0]) ** 2 for seed in range(4000)])
+    assert np.isclose(overlaps.mean(), 1 / dim, atol=0.01)
+    assert np.isclose((overlaps**2).mean(), 2 / (dim * (dim + 1)), atol=0.01)
+
+
+def test_qtensor_random_negative_qubits():
+    with pytest.raises(ValueError, match="non-negative"):
+        QTensor.random(-1)
+
+
+def test_qtensor_random_too_many_qubits():
+    with pytest.raises(ValueError, match="at most 30"):
+        QTensor.random(31)
+
+
+def test_qtensor_random_same_on_every_platform():
+    # The amplitudes come from raw Mersenne Twister output, so they must not depend on the standard library
+    state = QTensor.random(1, seed=42)
+    expected = np.array([[0.28114396 - 0.9338158j], [0.08985663 + 0.20216802j]])
+    np.testing.assert_allclose(state.dense(), expected, atol=1e-7)
 
 
 def test_qtensor_entropies():

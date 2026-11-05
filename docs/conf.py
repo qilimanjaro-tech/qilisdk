@@ -7,9 +7,11 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 import datetime
+import html
 import operator
 import os
 import posixpath
+import re
 import shutil
 import sys
 from dataclasses import asdict
@@ -19,7 +21,7 @@ from sphinx.ext import viewcode as _viewcode
 from sphinx.locale import _
 from sphinx.util import logging
 from sphinx.util.display import status_iterator
-from sphinxawesome_theme import ThemeOptions
+from sphinxawesome_theme import LinkIcon, ThemeOptions
 from sphinxawesome_theme.postprocess import Icons
 
 # -- Path setup ---------------------------------------------------------------
@@ -136,10 +138,27 @@ html_sidebars = {
     "**": ["sidebar_main_nav_links.html", "sidebar_toc.html", "versioning.html"],
 }
 
+DEFAULT_DESCRIPTION = (
+    "QiliSDK is an open-source Python framework for writing digital and analog quantum algorithms and executing them "
+    "across multiple quantum backends."
+)
+
+GITHUB_URL = "https://github.com/qilimanjaro-tech/qilisdk"
+GITHUB_ICON = (
+    '<svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 24 24" fill="currentColor" '
+    'aria-hidden="true"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 '
+    "0-.29-.01-1.05-.02-2.06-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 "
+    "1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 "
+    "0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6.01 0c2.29-1.55 "
+    "3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.8 5.63-5.48 5.92.43.37.81 "
+    '1.1.81 2.22 0 1.6-.01 2.89-.01 3.29 0 .32.21.7.83.58A12 12 0 0 0 24 12.5C24 5.87 18.63.5 12 .5Z"/></svg>'
+)
+
 theme_options = ThemeOptions(
     logo_light="_static/QiliSDK_blk.svg",
     logo_dark="_static/QiliSDK_wht.svg",
     awesome_external_links=True,
+    extra_header_link_icons={"GitHub repository": LinkIcon(link=GITHUB_URL, icon=GITHUB_ICON)},
 )
 
 html_theme_options = asdict(theme_options)
@@ -263,5 +282,27 @@ def _safe_collect_pages(app):  # noqa: ANN001, ANN201
 _viewcode.collect_pages = _safe_collect_pages
 
 
+def add_meta_description(app, pagename, templatename, context, doctree):  # noqa: ANN001, ANN201
+    """Give every page a meta description.
+
+    Pages that set their own description with a `.. meta::` directive keep it.
+    """
+    metatags = context.get("metatags", "")
+    if 'name="description"' in metatags:
+        return
+
+    title = re.sub(r"<[^>]+>", "", context.get("title") or "").strip()
+    description = f"{title} - {DEFAULT_DESCRIPTION}" if title and title != project else DEFAULT_DESCRIPTION
+    description = html.escape(description, quote=True)
+
+    context["metatags"] = metatags + (
+        f'\n<meta name="description" content="{description}" />'
+        f'\n<meta property="og:description" content="{description}" />'
+        f'\n<meta property="og:type" content="website" />'
+        f'\n<meta property="og:site_name" content="{html.escape(project)} documentation" />'
+    )
+
+
 def setup(sphinx):  # noqa: ANN001, ANN201
     sphinx.connect("autoapi-skip-member", skip_yaml_class_methods)
+    sphinx.connect("html-page-context", add_meta_description)
