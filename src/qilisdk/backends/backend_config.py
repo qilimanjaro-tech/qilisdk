@@ -65,11 +65,19 @@ class BaseSimulatorConfig(BaseModel, ABC):
 
 
 class MonteCarloConfig(BaseSimulatorConfig):
-    """Configuration for Monte Carlo trajectory sampling in open-system simulations.
+    """
+    Configuration for Monte Carlo trajectory sampling in open-system simulations.
+
+    A mixed state is represented as an ensemble of state vectors instead of a density matrix, which
+    keeps the memory cost at ``2**nqubits`` amplitudes per trajectory.
 
     Args:
         trajectories (int): Number of Monte Carlo trajectories to simulate
             when Monte Carlo mode is enabled. Defaults to ``100``.
+        max_expected_jumps_per_step (float): How finely analog evolutions resolve quantum jumps in
+            time. Lower values are more accurate but slower, higher values are faster but less
+            accurate. Methods with a fixed time step cannot refine themselves, so instead they warn
+            when the schedule is too coarse for this setting. Defaults to ``0.5``.
     """
 
     trajectories: int = Field(
@@ -78,10 +86,18 @@ class MonteCarloConfig(BaseSimulatorConfig):
         le=INT32_MAX,
         description="Number of Monte Carlo trajectories to simulate when Monte Carlo mode is enabled.",
     )
+    max_expected_jumps_per_step: float = Field(
+        default=0.5,
+        gt=0,
+        description="How finely analog evolutions resolve quantum jumps in time: lower is more accurate but slower, higher is faster but less accurate.",
+    )
 
     def get_config(self) -> SolverConfigDict:
         """Return Monte Carlo settings in backend-compatible key names."""
-        return {"num_monte_carlo_trajectories": self.trajectories}
+        return {
+            "num_monte_carlo_trajectories": self.trajectories,
+            "max_expected_jumps_per_step": self.max_expected_jumps_per_step,
+        }
 
 
 class AnalogMethod(BaseSimulatorConfig):
