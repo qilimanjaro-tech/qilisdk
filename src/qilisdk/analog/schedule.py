@@ -766,9 +766,12 @@ class Schedule(Parameterizable):
         # so do it once per Hamiltonian rather than once per time step
         as_qtensors = {h: ham.to_qtensor(total_nqubits=self.nqubits) for h, ham in self.hamiltonians.items()}
 
-        def eig_at(t: float) -> tuple[list[float], list[QTensor]]:
+        # Interpolators mutate shared state when evaluated, so compute the coefficients before going parallel
+        coefficients_per_step = [[self.coefficients[h][float(t)] for h in as_qtensors] for t in self.tlist]
+
+        def eig_at(coefficients: list[float]) -> tuple[list[float], list[QTensor]]:
             full_hamiltonian = reduce(
-                operator.add, (self.coefficients[h][float(t)] * as_qtensors[h] for h in as_qtensors)
+                operator.add, (c * qtensor for c, qtensor in zip(coefficients, as_qtensors.values(), strict=True))
             )
             vals, vecs = full_hamiltonian.eig()
             return [float(ev.real) for ev in vals[:levels]], list(vecs[:levels])
@@ -776,7 +779,7 @@ class Schedule(Parameterizable):
         # Each time step is independent and the decomposition releases the GIL, so run them in parallel,
         # building each matrix inside the worker so only the kept levels outlive it
         with ThreadPoolExecutor() as executor:
-            decompositions = list(executor.map(eig_at, self.tlist))
+            decompositions = list(executor.map(eig_at, coefficients_per_step))
 
         return [vals for vals, _ in decompositions], [vecs for _, vecs in decompositions]
 
