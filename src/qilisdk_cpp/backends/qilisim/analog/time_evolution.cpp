@@ -405,14 +405,21 @@ void time_evolution_matrix_free(const std::vector<MatrixFreeHamiltonian>& hamilt
             dt = step_list[1];
         }
 
-        // If we are doing jump unraveling, cap the adaptive step so that few jumps are expected per step
+        // If we are doing jump unraveling, cap the adaptive step at the schedule resolution and so that few jumps are expected per step
         double max_jump_dt = std::numeric_limits<double>::infinity();
         if (use_jump_unraveling) {
+            double previous = 0.0;
+            for (double time_point : step_list) {
+                if (time_point > previous) {
+                    max_jump_dt = std::min(max_jump_dt, time_point - previous);
+                }
+                previous = time_point;
+            }
             const double jump_rate = max_jump_rate_bound(jump_drift);
             if (jump_rate > 0.0) {
-                max_jump_dt = config.get_max_expected_jumps_per_step() / jump_rate;
-                qilisdk::log_debug("[QiliSim, C++] Capping the adaptive step at " + std::to_string(max_jump_dt) + " to resolve the quantum jumps");
+                max_jump_dt = std::min(max_jump_dt, config.get_max_expected_jumps_per_step() / jump_rate);
             }
+            qilisdk::log_debug("[QiliSim, C++] Capping the adaptive step at " + std::to_string(max_jump_dt) + " to resolve the quantum jumps");
         }
 
         // Loop until we reach the max time
