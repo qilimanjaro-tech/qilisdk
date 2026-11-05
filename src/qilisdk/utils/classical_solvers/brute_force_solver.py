@@ -39,9 +39,9 @@ class BruteForceSolver(ClassicalSolver):
         """Solve the given model by brute-force enumeration of all variable assignments.
 
         Binary variables are assigned values from {0, 1} and spin variables values from {-1, 1}.
-        Any other ``Variable`` is decomposed via its encoding, all bit patterns are enumerated and
-        decoded to their representable values, so the search covers every value the encoding can
-        express regardless of domain.
+        Any other ``Variable`` is decomposed via its encoding, all bit patterns that are valid code
+        words of that encoding are enumerated and decoded to their representable values, so the
+        search covers every value the encoding can express regardless of domain.
 
         Args:
             model: The ``Model`` instance to solve.
@@ -63,15 +63,12 @@ class BruteForceSolver(ClassicalSolver):
                 domains.append([-1, 1])
             elif isinstance(v, Variable):
                 n_bits = v.num_binary_equivalent()
-                seen = set()
-                vals = []
+                vals = {}
                 for bits_int in range(2**n_bits):
                     bits = [(bits_int >> b) & 1 for b in range(n_bits)]
-                    val = v.evaluate({v: bits})
-                    if val not in seen:
-                        seen.add(val)
-                        vals.append(val)
-                domains.append(vals)
+                    if v.check_valid(bits)[0]:
+                        vals[v.evaluate({v: bits})] = None
+                domains.append(list(vals))
             else:
                 raise ValueError(f"Brute-force enumeration is not supported for variable {v} of domain {v.domain}.")
 

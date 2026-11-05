@@ -343,6 +343,24 @@ def test_execute_adjoint_handler(mock_set_target, mock_sample, mock_make_kernel,
     assert ("adjoint", "q0") in calls
 
 
+# The adjoint of a controlled gate should be applied as a controlled adjoint, keeping its control qubit.
+@pytest.mark.parametrize("gate_instance", [case[0] for case in basic_gate_test_cases])
+@patch("cudaq.make_kernel", side_effect=dummy_make_kernel)
+@patch("cudaq.sample", return_value={"00": 1000})
+@patch("cudaq.set_target")
+def test_execute_adjoint_of_controlled_handler(
+    mock_set_target, mock_sample, mock_make_kernel, gate_instance, monkeypatch
+):
+    monkeypatch.setattr(dummy_make_kernel, "main_kernel", DummyKernel())
+    backend = CudaqBackend()
+    circuit = Circuit(nqubits=2)
+    circuit._gates.append(Adjoint(Controlled(1, basic_gate=gate_instance)))
+    backend.execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=10))
+    calls = dummy_make_kernel.main_kernel.calls
+    assert ("control", "q1", "q0") in calls
+    assert all(call[0] != "adjoint" for call in calls)
+
+
 # --- Tests for measurement handling ---
 
 
@@ -427,6 +445,16 @@ def test_controlled_with_unsupported_basic_gate_raises(monkeypatch):
     read = Readout().with_sampling(nshots=10)
     with pytest.raises(UnsupportedGateError):
         be.execute(func, read)
+
+
+def test_controlled_with_multi_qubit_basic_gate_raises():
+    circuit = Circuit(3)
+    circuit.add(Controlled(0, basic_gate=SWAP(1, 2)))
+    func = DigitalPropagation(circuit)
+    read = Readout().with_sampling(nshots=10)
+    backend = CudaqBackend()
+    with pytest.raises(UnsupportedGateError):
+        backend.execute(func, read)
 
 
 @patch("cudaq.make_kernel", side_effect=dummy_make_kernel)

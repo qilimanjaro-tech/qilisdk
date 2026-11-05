@@ -20,7 +20,9 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <limits>
+#include <optional>
 #include <random>
 #include <sstream>
 
@@ -162,26 +164,6 @@ void QTensorCpp::_set_from_row_sparse(const SparseMatrix& data, StorageFormat re
             break;
         }
     }
-}
-
-Eigen::Index QTensorCpp::rows() const {
-    /*
-    Return the number of rows, regardless of the active storage backend.
-
-    Returns:
-        Eigen::Index: The number of rows in the tensor.
-    */
-    return std::visit([](const auto& mat) { return Eigen::Index(mat.rows()); }, _data);
-}
-
-Eigen::Index QTensorCpp::cols() const {
-    /*
-    Return the number of columns, regardless of the active storage backend.
-
-    Returns:
-        Eigen::Index: The number of columns in the tensor.
-    */
-    return std::visit([](const auto& mat) { return Eigen::Index(mat.cols()); }, _data);
 }
 
 Eigen::Index QTensorCpp::nnz() const {
@@ -1648,7 +1630,7 @@ void QTensorCpp::clear_cache() {
     _eigenvectors.clear();
 }
 
-Complex QTensorCpp::expectation_value_python(const py::object& other, int nshots) const {
+Complex QTensorCpp::expectation_value_python(const py::object& other, int nshots, const py::object& seed) const {
     /*
     Compute the expectation value of another QTensor with respect to this QTensor.
     If nshots <= 0, compute the exact expectation value using the trace formula.
@@ -1659,27 +1641,32 @@ Complex QTensorCpp::expectation_value_python(const py::object& other, int nshots
     Args:
         other (py::object): The other QTensor for which to compute the expectation value with respect to this QTensor.
         nshots (int): The number of samples to use when estimating the expectation value. If nshots <= 0, the exact expectation value is computed using the trace formula.
+        seed (py::object): The random seed used for the sampling when nshots > 0, as a Python int in [0, 2**32) or None to use a random seed.
 
     Returns:
         Complex: The expectation value of the other QTensor with respect to this QTensor.
     */
+    std::optional<std::uint32_t> seed_cpp;
+    if (!seed.is_none()) {
+        seed_cpp = seed.cast<std::uint32_t>();
+    }
     if (py::isinstance<QTensorCpp>(other)) {
-        return expectation_value(other.cast<QTensorCpp&>(), nshots);
+        return expectation_value(other.cast<QTensorCpp&>(), nshots, seed_cpp);
     } else if (py::hasattr(other, "_elements")) {
         int nqubits = int(std::log2(std::max(rows(), cols())));
         py::list hamiltonians_py;
         hamiltonians_py.append(other);
         std::vector<MatrixFreeHamiltonian> hamiltonians = parse_hamiltonians_matrix_free(nqubits, hamiltonians_py);
-        return expectation_value(hamiltonians[0], nshots);
+        return expectation_value(hamiltonians[0], nshots, seed_cpp);
     } else if (py::hasattr(other, "_qtensor_cpp")) {
         py::object other_cpp = other.attr("_qtensor_cpp");
-        return expectation_value(other_cpp.cast<QTensorCpp&>(), nshots);
+        return expectation_value(other_cpp.cast<QTensorCpp&>(), nshots, seed_cpp);
     } else {
         throw py::value_error("Other object must be a QTensor");
     }
 }
 
-Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int nshots) const {
+Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int nshots, std::optional<std::uint32_t> seed) const {
     /*
     Compute the expectation value of a matrix-free Hamiltonian with respect to this QTensor.
     If nshots <= 0, compute the exact expectation value by applying the Hamiltonian to this QTensor.
@@ -1690,6 +1677,7 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int ns
     Args:
         other (MatrixFreeHamiltonian): The matrix-free Hamiltonian for which to compute the expectation value with respect to this QTensor.
         nshots (int): The number of samples to use per Pauli term when estimating the expectation value. If nshots <= 0, the exact expectation value is computed instead.
+        seed (std::optional<std::uint32_t>): The random seed used for the sampling when nshots > 0. If empty, a random seed is used.
 
     Returns:
         Complex: The expectation value of the matrix-free Hamiltonian with respect to this QTensor.
@@ -1711,9 +1699,9 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int ns
             terms.push_back({coefficient, term_expectation});
         }
 
-        // Sample the expectation value of the Hamiltonian by sampling each Pauli term with nshots shots
-        std::random_device rd;
-        return normalization * sample_expectation_value(terms, nshots, static_cast<int>(rd() & 0x7fffffffU));
+        // Sample each Pauli term with nshots shots, seeded from the given seed or the random device
+        std::uint32_t seed_value = seed ? *seed : std::random_device{}();
+        return normalization * sample_expectation_value(terms, nshots, static_cast<int>(seed_value));
     }
 
     Complex expectation = 0.0;
@@ -1743,14 +1731,14 @@ Complex QTensorCpp::expectation_value(const MatrixFreeHamiltonian& other, int ns
 #endif
 #endif
         for (int i = 0; i < H_rho_dense.rows(); ++i) {
-            expectation += std::real(H_rho_dense(i, i));
+            expectation += H_rho_dense(i, i);
         }
     }
 
     return expectation;
 }
 
-Complex QTensorCpp::expectation_value(const QTensorCpp& other, int nshots) const {
+Complex QTensorCpp::expectation_value(const QTensorCpp& other, int nshots, std::optional<std::uint32_t> seed) const {
     /*
     Compute the expectation value of another QTensor with respect to this QTensor.
     If nshots <= 0, compute the exact expectation value using the trace formula.
@@ -1761,6 +1749,7 @@ Complex QTensorCpp::expectation_value(const QTensorCpp& other, int nshots) const
     Args:
         other (QTensorCpp): The other QTensor for which to compute the expectation value with respect to this QTensor.
         nshots (int): The number of samples to use when estimating the expectation value. If nshots <= 0, the exact expectation value is computed using the trace formula.
+        seed (std::optional<std::uint32_t>): The random seed used for the sampling when nshots > 0. If empty, a random seed is used.
 
     Returns:
         Complex: The expectation value of the other QTensor with respect to this QTensor.
@@ -1785,9 +1774,8 @@ Complex QTensorCpp::expectation_value(const QTensorCpp& other, int nshots) const
             return expectation;
         }
     } else {
-        // Create the random device
-        std::random_device rd;
-        std::mt19937 gen(rd());
+        // Create the random generator from the given seed, or from the random device if none is given
+        std::mt19937 gen(seed ? *seed : std::random_device{}());
 
         // Get the eigenvalues and eigenvectors of the operator
         QTensorCpp& observable = const_cast<QTensorCpp&>(other);
@@ -2504,6 +2492,85 @@ QTensorCpp QTensorCpp::uniform(int nqubits) {
     for (Eigen::Index i = 0; i < dim; ++i) {
         data[i] = amplitude;
     }
+    QTensorCpp result;
+    result._data = std::move(vec);
+    result._format = StorageFormat::Dense;
+    return result;
+}
+
+QTensorCpp QTensorCpp::w(int nqubits) {
+    /*
+    Create a W state for the specified number of qubits, returning a new QTensor as the result.
+    This is the equal superposition of all basis states with exactly one qubit in the |1> state.
+
+    Args:
+        nqubits (int): The number of qubits in the W state.
+
+    Returns:
+        QTensorCpp: A new QTensor that is the W state for the specified number of qubits.
+
+    Raises:
+        py::value_error: If the number of qubits is less than one or more than MAX_QUBITS_DENSE.
+    */
+    if (nqubits < 1) {
+        throw py::value_error("Number of qubits must be at least one");
+    }
+    if (nqubits > MAX_QUBITS_DENSE) {
+        throw py::value_error("Number of qubits must be at most " + std::to_string(MAX_QUBITS_DENSE));
+    }
+    Eigen::Index dim = Eigen::Index(1) << nqubits;
+    const Complex amplitude = 1.0 / std::sqrt(static_cast<double>(nqubits));
+    std::vector<std::pair<Eigen::Index, Complex>> entries;
+    entries.reserve(nqubits);
+    for (int i = 0; i < nqubits; ++i) {
+        entries.push_back({Eigen::Index(1) << i, amplitude});
+    }
+    return _col_ket_from_entries(dim, entries);
+}
+
+QTensorCpp QTensorCpp::random(int nqubits, std::uint32_t seed) {
+    /*
+    Create a random normalized state for the specified number of qubits, returning a new QTensor as the result.
+
+    The state is sampled uniformly over all pure states (i.e. from the Haar measure). This is done by
+    drawing the real and imaginary part of each amplitude from a standard normal distribution and then
+    normalizing, since this distribution is invariant under any unitary and so has no preferred direction.
+
+    The normal samples come from a Box-Muller transform of the raw generator output rather than from
+    std::normal_distribution, whose algorithm differs between standard libraries, so that the same seed
+    gives the same state on every platform.
+
+    Args:
+        nqubits (int): The number of qubits in the random state.
+        seed (std::uint32_t): The seed for the random generator.
+
+    Returns:
+        QTensorCpp: A new QTensor that is a random state for the specified number of qubits.
+
+    Raises:
+        py::value_error: If the number of qubits is negative or more than MAX_QUBITS_DENSE.
+    */
+    if (nqubits < 0) {
+        throw py::value_error("Number of qubits must be non-negative");
+    }
+    if (nqubits > MAX_QUBITS_DENSE) {
+        throw py::value_error("Number of qubits must be at most " + std::to_string(MAX_QUBITS_DENSE));
+    }
+    Eigen::Index dim = Eigen::Index(1) << nqubits;
+    std::mt19937 gen(seed);
+    // M_PI is not a standard C++ macro (undefined under MSVC without _USE_MATH_DEFINES), so use an explicit constant
+    constexpr double pi = 3.14159265358979323846;
+    const double inv_two_pow_32 = 1.0 / 4294967296.0;
+    DenseMatrix vec(dim, 1);
+    for (Eigen::Index i = 0; i < dim; ++i) {
+        // Separate statements since C++ doesn't specify the evaluation order of constructor arguments,
+        // and u1 is in (0, 1] so that the log is finite
+        double u1 = (static_cast<double>(gen()) + 1.0) * inv_two_pow_32;
+        double u2 = static_cast<double>(gen()) * inv_two_pow_32;
+        double radius = std::sqrt(-2.0 * std::log(u1));
+        vec(i, 0) = std::polar(radius, 2.0 * pi * u2);
+    }
+    vec.normalize();
     QTensorCpp result;
     result._data = std::move(vec);
     result._format = StorageFormat::Dense;

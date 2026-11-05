@@ -81,6 +81,18 @@ def test_seed_same(method):
     assert result1.get_samples() == result2.get_samples()
 
 
+@pytest.mark.parametrize("method", digital_methods)
+def test_seed_same_expectation_with_shots(method):
+    backend1 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
+    backend2 = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1), digital_simulation_method=method)
+    circuit = Circuit(nqubits=1)
+    circuit.add(H(0))
+    readout = Readout().with_expectation(observables=[pauli_z(0)], nshots=100)
+    result1 = backend1.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    result2 = backend2.execute(DigitalPropagation(circuit=circuit), readout=readout)
+    assert result1.get_expectation_values() == result2.get_expectation_values()
+
+
 def test_no_seed():
     backend = QiliSim(execution_config=ExecutionConfig(seed=None, num_threads=1))
     seed = backend.get_config()["seed"]
@@ -1493,15 +1505,11 @@ def test_mps_rejects_a_density_matrix_initial_state():
 
 
 @pytest.mark.parametrize(("qubit_a", "qubit_b"), [(1, 2), (2, 3), (1, 3)])
-@pytest.mark.xfail(
-    reason="The matrix-free statevector kernel leaves a SWAP whose lower qubit is not 0 as a no-op", strict=True
-)
-def test_matrix_free_statevector_swap_gate_is_wrong(qubit_a, qubit_b):
+def test_matrix_free_statevector_swap_gate(qubit_a, qubit_b):
     """Found by cross-checking the MPS method against the statevector one.
 
-    SWAP(a, b) with a > 0 is silently skipped by the matrix-free kernel. The explicit-matrix
-    statevector, the MPS method and the Qutip backend all agree on the correct answer, so this is a
-    defect in that one kernel rather than a disagreement about conventions.
+    SWAP(a, b) with a > 0 used to be silently skipped by the matrix-free kernel, so check it agrees
+    with the explicit-matrix statevector.
     """
     circuit = Circuit(nqubits=4)
     circuit.add(X(qubit_a))

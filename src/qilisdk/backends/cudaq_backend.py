@@ -240,6 +240,7 @@ class CudaqBackend(Backend):
         self,
         sampling_method: CudaqSamplingMethod = CudaqSamplingMethod.STATE_VECTOR,
         noise_model: NoiseModel | None = None,
+        seed: int | None = None,
     ) -> None:
         """Initialize the :class:`CudaqBackend`.
 
@@ -250,8 +251,10 @@ class CudaqBackend(Backend):
                 ``CPU``. Defaults to ``CudaqSamplingMethod.STATE_VECTOR``.
             noise_model (NoiseModel | None): Optional noise model applied
                 during execution. Defaults to ``None``.
+            seed (int | None): Seed for the random number generator used to draw
+                samples from a simulated state. Defaults to ``None``.
         """
-        super().__init__(noise_model=noise_model)
+        super().__init__(noise_model=noise_model, seed=seed)
         cudaq.register_operation("i", np.array([1, 0, 0, 1], dtype=_complex_dtype()))
         cudaq.register_operation(_SWAP_OP_NAME, np.array(_SWAP_MATRIX, dtype=_complex_dtype()))
         self._basic_gate_handlers: BasicGateHandlersMapping = {
@@ -363,7 +366,7 @@ class CudaqBackend(Backend):
             if isinstance(gate, Controlled):
                 self._handle_controlled(kernel, gate, qubits[gate.control_qubits[0]], qubits[gate.target_qubits[0]])
             elif isinstance(gate, Adjoint):
-                self._handle_adjoint(kernel, gate, qubits[gate.target_qubits[0]])
+                self._handle_adjoint(kernel, gate, qubits)
             elif isinstance(gate, M):
                 if any(not isinstance(g, M) for g in transpiled_circuit.gates[i:]):
                     raise NotImplementedError("Intermediate-measurement is not Supported with Cuda Backend")
@@ -377,6 +380,7 @@ class CudaqBackend(Backend):
 
         qubits_to_measure = list(measured_qubits) if len(measured_qubits) > 0 else None
 
+        cudaq.set_random_seed(int(self._rng.integers(2**32)))
         if self._noise_model:
             cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, transpiled_circuit)
             cudaq_result = cudaq.sample(
@@ -384,7 +388,7 @@ class CudaqBackend(Backend):
                 shots_count=readout[0].nshots,  # ty:ignore[unresolved-attribute]
                 noise_model=cuda_noise_model,
             )
-            cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, circuit.nqubits)
+            cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, circuit.nqubits, rng=self._rng)
             if og_param:
                 functional.set_parameters(og_param)
             logger.info("[CudaqBackend] Sampling finished, {} distinct bitstrings", len(cudaq_result))
@@ -437,6 +441,7 @@ class CudaqBackend(Backend):
             readout_results=CudaqBackend._construct_results_list(
                 final_state=final_state,
                 readout=readout,
+                seed=self._rng,
                 qubits_to_measure=qubits_to_measure,
             )
         )
@@ -531,9 +536,14 @@ class CudaqBackend(Backend):
                 intermediate_states.append(QTensor(_state))
 
         return FunctionalResult(
-            readout_results=CudaqBackend._construct_results_list(final_state=final_state, readout=readout),
+            readout_results=CudaqBackend._construct_results_list(
+                final_state=final_state, readout=readout, seed=self._rng
+            ),
             intermediate_results=(
-                [CudaqBackend._construct_results_list(state, readout=readout) for state in intermediate_states]
+                [
+                    CudaqBackend._construct_results_list(state, readout=readout, seed=self._rng)
+                    for state in intermediate_states
+                ]
                 if functional.store_intermediate_results
                 else None
             ),
@@ -632,7 +642,9 @@ class CudaqBackend(Backend):
             raise ValueError(f"Unsupported sampling method: {self.sampling_method.value}")
 
     @staticmethod
-    def _handle_readout_errors(cudaq_result: dict[str, int], noise_model: NoiseModel, nqubits: int) -> dict[str, int]:
+    def _handle_readout_errors(
+        cudaq_result: dict[str, int], noise_model: NoiseModel, nqubits: int, rng: np.random.Generator | None = None
+    ) -> dict[str, int]:
         """Apply readout-assignment errors to raw measurement counts.
 
         For each shot the method probabilistically flips measured bits
@@ -645,6 +657,9 @@ class CudaqBackend(Backend):
             noise_model (NoiseModel): The noise model containing readout
                 assignment errors.
             nqubits (int): Total number of qubits in the circuit.
+            rng (np.random.Generator | None): Random number generator used to
+                draw the bit flips. If ``None``, a fresh unseeded generator is
+                used. Defaults to ``None``.
 
         Returns:
             dict[str, int]: Adjusted bitstring counts with readout errors
@@ -669,7 +684,7 @@ class CudaqBackend(Backend):
             return cudaq_result
 
         # numpy generator
-        gen = np.random.default_rng(42)
+        gen = np.random.default_rng(rng)
 
         # First split into individual shots
         shots = []
@@ -1360,6 +1375,9 @@ class CudaqBackend(Backend):
                 "[CudaqBackend] Controlled gate with {} control qubits not supported", len(gate.control_qubits)
             )
             raise UnsupportedGateError
+        if gate.basic_gate.nqubits != 1:
+            logger.error("[CudaqBackend] Controlled multi-qubit gate {} not supported", type(gate.basic_gate).__name__)
+            raise UnsupportedGateError
         target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
         handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
         if handler is None:
@@ -1368,28 +1386,40 @@ class CudaqBackend(Backend):
         handler(target_kernel, gate.basic_gate, qubit)
         kernel.control(target_kernel, control_qubit, target_qubit)
 
-    def _handle_adjoint(self, kernel: cudaq.Kernel, gate: Adjoint, target_qubit: cudaq.QuakeValue) -> None:
+    def _handle_adjoint(self, kernel: cudaq.Kernel, gate: Adjoint, qubits: cudaq.QuakeValue) -> None:
         """
         Handle an adjoint (inverse) gate operation.
 
         This method creates a temporary kernel for the basic gate wrapped by the adjoint,
         applies the corresponding handler, and then integrates it into the main kernel as an adjoint operation.
+        The adjoint of a controlled gate is applied as the controlled adjoint of its basic gate.
 
         Args:
             kernel (cudaq.Kernel): The main CUDA kernel being constructed.
             gate (Adjoint): The adjoint gate to be handled.
-            target_qubit (cudaq.QuakeValue): The target qubit for the gate.
+            qubits (cudaq.QuakeValue): The qubit register of the main kernel.
 
         Raises:
-            UnsupportedGateError: If the basic gate inside the adjoint is unsupported.
+            UnsupportedGateError: If the basic gate inside the adjoint is unsupported, or if it is controlled
+                by more than one qubit.
         """
-        target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
-        handler = self._basic_gate_handlers.get(type(gate.basic_gate), None)
-        if handler is None:
-            logger.error("[CudaqBackend] Unsupported gate inside Adjoint: {}", type(gate.basic_gate).__name__)
+        if len(gate.control_qubits) > 1:
+            logger.error("[CudaqBackend] Adjoint gate with {} control qubits not supported", len(gate.control_qubits))
             raise UnsupportedGateError
-        handler(target_kernel, gate.basic_gate, qubit)
-        kernel.adjoint(target_kernel, target_qubit)
+        basic_gate = gate.basic_gate.basic_gate if isinstance(gate.basic_gate, Controlled) else gate.basic_gate
+        target_kernel, qubit = cudaq.make_kernel(cudaq.qubit)
+        handler = self._basic_gate_handlers.get(type(basic_gate), None)
+        if handler is None:
+            logger.error("[CudaqBackend] Unsupported gate inside Adjoint: {}", type(basic_gate).__name__)
+            raise UnsupportedGateError
+        handler(target_kernel, basic_gate, qubit)
+        target_qubit = qubits[gate.target_qubits[0]]
+        if gate.control_qubits:
+            adjoint_kernel, adjoint_qubit = cudaq.make_kernel(cudaq.qubit)
+            adjoint_kernel.adjoint(target_kernel, adjoint_qubit)
+            kernel.control(adjoint_kernel, qubits[gate.control_qubits[0]], target_qubit)
+        else:
+            kernel.adjoint(target_kernel, target_qubit)
 
     @staticmethod
     def _handle_M(kernel: cudaq.Kernel, gate: M, circuit: Circuit, qubits: cudaq.QuakeValue) -> None:
