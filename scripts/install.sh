@@ -18,4 +18,4 @@ cd "$(dirname "$(dirname "$(realpath "$0")")")"
 echo "Installing qilisdk with all optional dependencies..."
 uv sync --python 3.13 --all-groups --extra all-cu13 -Ccmake.build-type=Release --reinstall-package qilisdk 2>&1
 
-echo "qilisdk version $(uv run python -c 'import qilisdk; print(qilisdk.__version__)') installed successfully!"
+echo "qilisdk version $(.venv/bin/python -c 'import qilisdk; print(qilisdk.__version__)')" installed successfully!
