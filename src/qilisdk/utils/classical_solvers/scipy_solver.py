@@ -18,7 +18,7 @@ from qilisdk.core import Model
 from qilisdk.core.variables import BaseVariable, BinaryVariable, Domain, RealNumber, SpinVariable, Variable
 from qilisdk.optimizers import SciPyOptimizer
 
-from .base_solver import ClassicalSolver, ClassicalSolverResult, _assert_real, _variable_bounds
+from .base_solver import ClassicalSolver, SolverResult, _assert_real, _variable_bounds
 
 
 def _decode_value(variable: BaseVariable, parameter: float) -> RealNumber:
@@ -76,14 +76,14 @@ class ScipySolver(ClassicalSolver):
         self.method = method
         self.extra_arguments = kwargs
 
-    def solve(self, model: Model) -> ClassicalSolverResult:
+    def solve(self, model: Model) -> SolverResult:
         """Solve the given model by minimizing its objective with SciPy.
 
         Args:
             model: The ``Model`` instance to solve.
 
         Returns:
-            ClassicalSolverResult: the results of the optimization, including the objective value and best solution.
+            SolverResult: the results of the optimization, including the objective value and best solution.
 
         Raises:
             ValueError: if the model contains a variable that is not a BinaryVariable, a
@@ -122,4 +122,4 @@ class ScipySolver(ClassicalSolver):
 
         # Return the best results
         best_sample = build_sample(result.optimal_parameters)
-        return ClassicalSolverResult.from_model(model, best_sample)
+        return SolverResult.from_model(model, best_sample)

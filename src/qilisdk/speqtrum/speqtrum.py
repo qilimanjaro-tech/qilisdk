@@ -25,6 +25,8 @@ import httpx
 from loguru import logger
 from pydantic import TypeAdapter, ValidationError
 
+from qilisdk.core import Model
+from qilisdk.core.result import Result
 from qilisdk.experiments import ExperimentFunctional
 from qilisdk.functionals import (
     AnalogEvolution,
@@ -50,6 +52,7 @@ from .speqtrum_models import (
     JobInfo,
     JobStatus,
     JobType,
+    ModelPayload,
     QuantumReservoirPayload,
     Token,
     TypedJobDetail,
@@ -60,9 +63,10 @@ if TYPE_CHECKING:
     from qilisdk.experiments.experiment_result import ExperimentResult
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
     from qilisdk.readout import E, Readout, S, T
+    from qilisdk.utils.classical_solvers import SolverResult
 
 
-TFunctionalResult = TypeVar("TFunctionalResult", bound=FunctionalResult)
+TResult = TypeVar("TResult", bound=Result)
 JSONValue: TypeAlias = dict[str, "JSONValue"] | list["JSONValue"] | str | int | float | bool | None
 
 _SKIP_ENSURE_OK_EXTENSION = "qilisdk.skip_ensure_ok"
@@ -372,8 +376,8 @@ class SpeQtrum:
     :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`,
     :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`,
     :class:`~qilisdk.functionals.variational_program.VariationalProgram`,
-    :class:`~qilisdk.functionals.quantum_reservoir.QuantumReservoir`, and
-    various experiment types.
+    :class:`~qilisdk.functionals.quantum_reservoir.QuantumReservoir`,
+    various experiment types, and optimization :class:`~qilisdk.core.model.Model` instances.
     """
 
     def __init__(self) -> None:
@@ -520,7 +524,7 @@ class SpeQtrum:
         return [j for j in jobs if where(j)] if where else jobs
 
     @overload
-    def get_job(self, job: JobHandle[TFunctionalResult]) -> TypedJobDetail[TFunctionalResult]: ...
+    def get_job(self, job: JobHandle[TResult]) -> TypedJobDetail[TResult]: ...
 
     @overload
     def get_job(self, job: int) -> JobDetail: ...
@@ -579,11 +583,11 @@ class SpeQtrum:
     @overload
     def wait_for_job(
         self,
-        job: JobHandle[TFunctionalResult],
+        job: JobHandle[TResult],
         *,
         poll_interval: float = 5.0,
         timeout: float | None = None,
-    ) -> TypedJobDetail[TFunctionalResult]: ...
+    ) -> TypedJobDetail[TResult]: ...
 
     @overload
     def wait_for_job(
@@ -650,7 +654,7 @@ class SpeQtrum:
     @overload
     def submit(
         self,
-        functional: PrimitiveFunctional,
+        task: PrimitiveFunctional,
         device: str,
         readout: Readout[S, E, T],
         job_name: str | None = None,
@@ -659,7 +663,7 @@ class SpeQtrum:
     @overload
     def submit(
         self,
-        functional: VariationalProgram,
+        task: VariationalProgram,
         device: str,
         readout: Readout[S, E, T],
         job_name: str | None = None,
@@ -667,18 +671,21 @@ class SpeQtrum:
 
     @overload
     def submit(
-        self, functional: ExperimentFunctional, device: str, job_name: str | None = None
+        self, task: ExperimentFunctional, device: str, job_name: str | None = None
     ) -> JobHandle[ExperimentResult]: ...
+
+    @overload
+    def submit(self, task: Model, device: str, *, job_name: str | None = None) -> JobHandle[SolverResult]: ...
 
     def submit(
         self,
-        functional: Functional,
+        task: Functional | Model,
         device: str,
         readout: Readout[S, E, T] | None = None,  # type: ignore[type-arg]
         job_name: str | None = None,
     ) -> JobHandle:
         """
-        Submit a quantum functional for execution on the selected device.
+        Submit a quantum functional or an optimization model for execution.
 
         Supported types:
 
@@ -687,9 +694,10 @@ class SpeQtrum:
         * :class:`~qilisdk.functionals.variational_program.VariationalProgram`
         * :class:`~qilisdk.experiments.experiment_functional.ExperimentFunctional`
             (e.g. those provided by the ``qili-experiments`` plugin library)
+        * :class:`~qilisdk.core.model.Model`, returning a :class:`~qilisdk.utils.classical_solvers.SolverResult`
 
         Args:
-            functional: A fully configured functional instance that defines the quantum workload.
+            task: The workload to run: a fully configured functional or experiment, or a model to solve.
             device: Device code returned by :py:meth:`list_devices`.
             readout: Readout method(s) specifying how results should be measured.
                 Required for ``DigitalPropagation``, ``AnalogEvolution``, and ``VariationalProgram``.
@@ -699,33 +707,40 @@ class SpeQtrum:
             JobHandle: A typed handle carrying the numeric job identifier and result type metadata.
 
         Raises:
-            NotImplementedError: If *functional* is not of a supported type.
-            ValueError: If *readout* is required but not provided, or contains invalid methods.
+            NotImplementedError: If *task* is not of a supported type.
+            ValueError: If *device* or *readout* is required but not provided, or *readout* contains
+                invalid methods.
         """
 
+        if not device:
+            raise ValueError("A device is required when submitting a job. Use `list_devices` to see available devices.")
+
+        if isinstance(task, Model):
+            return self._submit_model(task, device, job_name)
+
         # Experiments (no readout) are dispatched generically via the plugin registry.
-        if isinstance(functional, ExperimentFunctional):
-            return self._submit_experiment(functional, device, job_name)
+        if isinstance(task, ExperimentFunctional):
+            return self._submit_experiment(task, device, job_name)
 
         # Functionals with readout
 
         if readout is None:
             raise ValueError("Readout can't be none when submitting a functional")
 
-        if isinstance(functional, VariationalProgram):
-            return self._submit_variational_program(functional, device, readout, job_name)
+        if isinstance(task, VariationalProgram):
+            return self._submit_variational_program(task, device, readout, job_name)
 
-        if isinstance(functional, DigitalPropagation):
-            return self._submit_digital_propagation(functional, device, readout, job_name)
+        if isinstance(task, DigitalPropagation):
+            return self._submit_digital_propagation(task, device, readout, job_name)
 
-        if isinstance(functional, AnalogEvolution):
-            return self._submit_analog_evolution(functional, device, readout, job_name)
+        if isinstance(task, AnalogEvolution):
+            return self._submit_analog_evolution(task, device, readout, job_name)
 
-        if isinstance(functional, QuantumReservoir):
-            return self._submit_quantum_reservoir_functional(functional, device, readout, job_name)
+        if isinstance(task, QuantumReservoir):
+            return self._submit_quantum_reservoir_functional(task, device, readout, job_name)
 
-        logger.error("[SpeQtrum] Unsupported functional type: {}", type(functional).__qualname__)
-        raise NotImplementedError(f"{type(self).__qualname__} does not support {type(functional).__qualname__}")
+        logger.error("[SpeQtrum] Unsupported task type: {}", type(task).__qualname__)
+        raise NotImplementedError(f"{type(self).__qualname__} does not support {type(task).__qualname__}")
 
     def _submit_digital_propagation(
         self, functional: DigitalPropagation, device: str, readout: Readout[S, E, T], job_name: str | None = None
@@ -931,6 +946,35 @@ class SpeQtrum:
         if job.message is not None:
             logger.warning("{}", job.message)
         return JobHandle.variational_program(job.id)
+
+    def _submit_model(self, model: Model, device: str, job_name: str | None = None) -> JobHandle[SolverResult]:
+        """Submit an optimization ``Model`` to the SpeQtrum API.
+
+        Args:
+            model (Model): The model to solve.
+            device (str): Target device code.
+            job_name (str | None): Optional human-readable job name.
+
+        Returns:
+            JobHandle[SolverResult]: A handle for tracking the submitted job.
+        """
+        payload = ExecutePayload(type=ExecuteType.MODEL, model_payload=ModelPayload(model=model))
+        json = {
+            "device_code": device,
+            "payload": payload.model_dump_json(),
+            "job_type": JobType.MODEL,
+            "meta": {},
+        }
+        if job_name:
+            json["name"] = job_name
+        logger.debug("[SpeQtrum] Executing Model on device {}", device)
+        with self._create_client() as client:
+            response = client.post(_EXECUTE_URL, json=json, extensions=_request_extensions(context="Executing Model"))
+        job = JobId(**response.json())
+        logger.info("[SpeQtrum] Model job submitted: {}", job.id)
+        if job.message is not None:
+            logger.warning("{}", job.message)
+        return JobHandle.model(job.id)
 
     def __repr__(self) -> str:
         """Return a string representation of the client.
