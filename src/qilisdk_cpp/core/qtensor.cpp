@@ -25,6 +25,7 @@
 #include <optional>
 #include <random>
 #include <sstream>
+#include <stdexcept>
 
 // GCOV_EXCL_BR_START
 
@@ -203,7 +204,13 @@ Complex QTensorCpp::coeff(int row, int col) const {
 
     Returns:
         Complex: The value of the entry at (row, col).
+
+    Raises:
+        std::out_of_range: If row or col is outside the matrix.
     */
+    if (row < 0 || row >= rows() || col < 0 || col >= cols()) {
+        throw std::out_of_range("Index (" + std::to_string(row) + ", " + std::to_string(col) + ") is out of range for a QTensor of shape (" + std::to_string(rows()) + ", " + std::to_string(cols()) + ")");
+    }
     return std::visit(
         [&](const auto& mat) -> Complex {
             using M = std::decay_t<decltype(mat)>;
