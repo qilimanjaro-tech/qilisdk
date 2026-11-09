@@ -20,6 +20,7 @@
 #include "../../../libs/logging.h"
 #include "../../../libs/pybind.h"
 #include "../digital/circuit_optimizations.h"
+#include "../noise/monte_carlo.h"
 #include "../noise/noise_model.h"
 #include "../utils/matrix_utils.h"
 #include "../utils/parsers.h"
@@ -79,6 +80,26 @@ DenseMatrix collapse_state(const DenseMatrix& state, const std::vector<bool>& qu
     return density_matrix;
 }
 
+static unsigned long long measured_qubit_mask(const std::vector<bool>& qubits_measured) {
+    /*
+    Build the bitmask of the state-index bits belonging to a set of qubits.
+
+    Args:
+        qubits_measured (std::vector<bool>): Which qubits are in the set, indexed by qubit.
+
+    Returns:
+        unsigned long long: The mask of the corresponding state-index bits.
+    */
+    const int nqubits = static_cast<int>(qubits_measured.size());
+    unsigned long long mask = 0ULL;
+    for (int q = 0; q < nqubits; ++q) {
+        if (qubits_measured[q]) {
+            mask |= 1ULL << (nqubits - 1 - q);
+        }
+    }
+    return mask;
+}
+
 static int group_measurements(const std::vector<Gate>& gates, int start, std::vector<bool>& qubits_to_measure) {
     /*
     Group the run of adjacent measurement gates starting at a given index, so they can be done all at once.
@@ -101,7 +122,7 @@ static int group_measurements(const std::vector<Gate>& gates, int start, std::ve
     return num_measurements;
 }
 
-void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories) {
+void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories, bool input_is_trajectories) {
     /*
     Execute a sampling functional using a simple statevector simulator.
 
@@ -117,6 +138,8 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
         output_is_trajectories (bool*): Optional output parameter. If given, a Monte Carlo ensemble is
             returned as a batch of state vector columns instead of being averaged into a density
             matrix, and the flag is set to true when that is what `state` holds.
+        input_is_trajectories (bool): Whether `state` is a batch of Monte Carlo trajectories (one state
+            vector per column) rather than a state vector or density matrix.
 
     Raises:
         py::value_error: If functional is not a Sampling instance.
@@ -131,12 +154,9 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
 #endif
 
     long dim = 1L << n_qubits;
-    bool is_statevector = (state.cols() == 1 && state.rows() == dim);
+    bool is_statevector = !input_is_trajectories && state.cols() == 1 && state.rows() == dim;
     bool initially_was_statevector = is_statevector;
     qilisdk::log_debug("[Sampling, C++] Preparing initial state for " + std::to_string(n_qubits) + " qubits (" + (is_statevector ? "statevector" : "density matrix") + ")");
-
-    // Check if the input is a bunch of monte carlo trajectories
-    bool input_is_trajectories = (state.cols() > 1 && state.rows() != state.cols());
 
     // If it's a density matrix, check if it's pure
     if (!is_statevector && !input_is_trajectories) {
@@ -151,19 +171,30 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
     // Check if we have noise
     bool has_noise = !noise_model_cpp.is_empty();
 
+    // Whether we should do monte-carlo sampling
+    bool monte_carlo = input_is_trajectories || (config.get_monte_carlo() && (!is_statevector || has_noise));
+
     // If we have noise but start with a statevector, convert to density matrix
-    if (has_noise && is_statevector) {
+    if (has_noise && is_statevector && !monte_carlo) {
         qilisdk::log_debug("[Sampling, C++] Noise model present, promoting statevector to density matrix");
         state = state * state.adjoint();
         is_statevector = false;
     }
 
-    // Whether we should do monte-carlo sampling
-    bool monte_carlo = input_is_trajectories || (!is_statevector && config.get_monte_carlo());
+    // Build the trajectory ensemble
     if (monte_carlo && !input_is_trajectories) {
         qilisdk::log_debug("[Sampling, C++] Monte-Carlo sampling with " + std::to_string(config.get_num_monte_carlo_trajectories()) + " trajectories");
-        state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.next_seed());
+        if (is_statevector) {
+            state = state.replicate(1, config.get_num_monte_carlo_trajectories()).eval();
+        } else {
+            state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.next_seed());
+        }
+        is_statevector = false;
     }
+
+    // Object for handling the seeds of each trajectory, only drawing a seed when noise is unravelled
+    bool use_kraus_unraveling = monte_carlo && has_noise;
+    TrajectoryUnraveling unraveling(use_kraus_unraveling ? config.next_seed() : 0);
 
     // Whether the columns of `state` are currently Monte Carlo trajectories
     bool state_is_trajectories = monte_carlo;
@@ -232,22 +263,9 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
         // If it's a measurement
         if (gate.get_name() == "M") {
             // Check for adjacent measurements and if we have any, do them all at once
-            int num_measurements = 0;
-            bool are_final_measurements = false;
             std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
-            for (int j = i; j < int(optimized_gates.size()); ++j) {
-                if (optimized_gates[j].get_name() == "M") {
-                    for (int target : optimized_gates[j].get_target_qubits()) {
-                        qubits_to_measure_after_gate[target] = true;
-                    }
-                    num_measurements++;
-                    if (j == int(optimized_gates.size()) - 1) {
-                        are_final_measurements = true;
-                    }
-                } else {
-                    break;
-                }
-            }
+            int num_measurements = group_measurements(optimized_gates, i, qubits_to_measure_after_gate);
+            bool are_final_measurements = (i + num_measurements == int(optimized_gates.size()));
 
             qilisdk::log_trace("[Sampling, C++] Measuring " + std::to_string(num_measurements) + " qubits at gate index " + std::to_string(i));
 
@@ -258,15 +276,12 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
 
                 // If we have measurement_collapse enabled, apply the measurement and collapse the state
                 if (config.get_measurement_collapse()) {
-                    // If we have trajectories, convert to a density matrix first
                     if (state_is_trajectories) {
-                        state = trajectories_to_density_matrix(state);
-                        state_is_trajectories = false;
+                        state = collapse_trajectories(state, measured_qubit_mask(qubits_to_measure_after_gate), config.next_seed());
+                    } else {
+                        state = collapse_state(state, qubits_to_measure_after_gate);
+                        is_statevector = false;
                     }
-
-                    // Collapse the state based on the measurement result
-                    state = collapse_state(state, qubits_to_measure_after_gate);
-                    is_statevector = false;
                 }
             }
 
@@ -304,6 +319,10 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
         // Apply any relevant Kraus operators
         if (has_noise) {
             for (const auto& operator_set : noise_model_cpp.get_relevant_kraus_operators(gate.get_name(), static_cast<int>(gate.get_control_qubits().size()), gate.get_qubits(), n_qubits)) {
+                if (state_is_trajectories) {
+                    unraveling.apply_kraus(state, operator_set);
+                    continue;
+                }
                 DenseMatrix new_state(state.rows(), state.cols());
                 new_state.setZero();
                 for (const auto& K : operator_set) {
@@ -343,7 +362,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
     qilisdk::log_debug("[Sampling, C++] Applied " + std::to_string(gate_count) + " gates, circuit sampling complete");
 }
 
-void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories) {
+void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories, bool input_is_trajectories) {
     /*
     Execute a sampling functional using a matrix-free simulator.
 
@@ -359,6 +378,8 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseMod
         output_is_trajectories (bool*): Optional output parameter. If given, a Monte Carlo ensemble is
             returned as a batch of state vector columns instead of being averaged into a density
             matrix, and the flag is set to true when that is what `state` holds.
+        input_is_trajectories (bool): Whether `state` is a batch of Monte Carlo trajectories (one state
+            vector per column) rather than a state vector or density matrix.
 
     Raises:
         py::value_error: If functional is not a Sampling instance.
@@ -372,15 +393,12 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseMod
     Eigen::setNbThreads(config.get_num_threads());
 #endif
 
-    bool is_statevector = (state.cols() == 1 && state.rows() == (1L << n_qubits));
+    bool is_statevector = !input_is_trajectories && state.cols() == 1 && state.rows() == (1L << n_qubits);
     bool initially_was_statevector = is_statevector;
     qilisdk::log_debug("[Sampling, C++] Preparing initial state for " + std::to_string(n_qubits) + " qubits (matrix-free, " + (is_statevector ? "statevector" : "density matrix") + ")");
 
     // Check if we have noise
     bool has_noise = !noise_model_cpp.is_empty();
-
-    // Check if the input is a bunch of monte carlo trajectories
-    bool input_is_trajectories = (state.cols() > 1 && state.rows() != state.cols());
 
     // If it's a density matrix, check if it's pure
     if (!is_statevector && !input_is_trajectories) {
@@ -392,19 +410,30 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseMod
         }
     }
 
+    // Whether we should do monte-carlo sampling
+    bool monte_carlo = input_is_trajectories || (config.get_monte_carlo() && (!is_statevector || has_noise));
+
     // If we have noise but start with a statevector, convert to density matrix
-    if (has_noise && is_statevector) {
+    if (has_noise && is_statevector && !monte_carlo) {
         qilisdk::log_debug("[Sampling, C++] Noise model present, promoting statevector to density matrix");
         state = state * state.adjoint();
         is_statevector = false;
     }
 
-    // Whether we should do monte-carlo sampling
-    bool monte_carlo = input_is_trajectories || (!is_statevector && config.get_monte_carlo());
+    // Build the trajectory ensemble
     if (monte_carlo && !input_is_trajectories) {
         qilisdk::log_debug("[Sampling, C++] Monte-Carlo sampling with " + std::to_string(config.get_num_monte_carlo_trajectories()) + " trajectories");
-        state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.next_seed());
+        if (is_statevector) {
+            state = state.replicate(1, config.get_num_monte_carlo_trajectories()).eval();
+        } else {
+            state = sample_from_density_matrix(state, config.get_num_monte_carlo_trajectories(), config.next_seed());
+        }
+        is_statevector = false;
     }
+
+    // Draws the noise outcome of each individual trajectory, only drawing a seed when noise is unravelled
+    bool use_kraus_unraveling = monte_carlo && has_noise;
+    TrajectoryUnraveling unraveling(use_kraus_unraveling ? config.next_seed() : 0);
 
     // Whether the columns of `state` are currently Monte Carlo trajectories
     bool state_is_trajectories = monte_carlo;
@@ -447,22 +476,9 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseMod
         // If it's a measurement
         if (gate.get_name() == "M") {
             // Check for adjacent measurements and if we have any, do them all at once
-            int num_measurements = 0;
-            bool are_final_measurements = false;
             std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
-            for (int j = i; j < int(optimized_gates.size()); ++j) {
-                if (optimized_gates[j].get_name() == "M") {
-                    for (int target : optimized_gates[j].get_target_qubits()) {
-                        qubits_to_measure_after_gate[target] = true;
-                    }
-                    num_measurements++;
-                    if (j == int(optimized_gates.size()) - 1) {
-                        are_final_measurements = true;
-                    }
-                } else {
-                    break;
-                }
-            }
+            int num_measurements = group_measurements(optimized_gates, i, qubits_to_measure_after_gate);
+            bool are_final_measurements = (i + num_measurements == int(optimized_gates.size()));
 
             // Construct the result
             if (!are_final_measurements) {
@@ -471,15 +487,12 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseMod
 
                 // If we have measurement_collapse enabled, apply the measurement and collapse the state
                 if (config.get_measurement_collapse()) {
-                    // If we have trajectories, convert to a density matrix first
                     if (state_is_trajectories) {
-                        state = trajectories_to_density_matrix(state);
-                        state_is_trajectories = false;
+                        state = collapse_trajectories(state, measured_qubit_mask(qubits_to_measure_after_gate), config.next_seed());
+                    } else {
+                        state = collapse_state(state, qubits_to_measure_after_gate);
+                        is_statevector = false;
                     }
-
-                    // Collapse the state based on the measurement result
-                    state = collapse_state(state, qubits_to_measure_after_gate);
-                    is_statevector = false;
                 }
             }
 
@@ -508,6 +521,10 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseMod
         // Apply noise if we have it
         if (!noise_model_cpp.is_empty()) {
             for (const auto& operator_set : noise_model_cpp.get_relevant_kraus_operators(gate.get_name(), static_cast<int>(gate.get_control_qubits().size()), gate.get_qubits(), n_qubits)) {
+                if (state_is_trajectories) {
+                    unraveling.apply_kraus(state, operator_set);
+                    continue;
+                }
                 DenseMatrix new_state(state.rows(), state.cols());
                 new_state.setZero();
                 for (const auto& K : operator_set) {
@@ -543,7 +560,7 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseMod
 
 #include <iostream>
 
-void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const StabilizerStateSum& initial_state, NoiseModelCpp& noise_model_cpp, StabilizerStateSum& state, const QiliSimConfig& config, const py::object& readout) {
+void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const StabilizerStateSum& initial_state, NoiseModelCpp& noise_model_cpp, StabilizerStateSum& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout) {
     /*
     Execute a sampling functional using a stabilizer simulator.
 
@@ -574,17 +591,41 @@ void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const Sta
         warning("Monte Carlo sampling is not supported in the stabilizer simulator. Monte Carlo will be ignored.");
     }
 
+    // Throw a warning if we are using measurement collapse, since a stabilizer sum cannot represent the resulting mixed state
+    if (config.get_measurement_collapse()) {
+        warning("Measurement collapse is not supported in the stabilizer simulator. Measurement collapse will be ignored.");
+    }
+
     // We start with the initial state
     state = initial_state;
     state.set_max_terms(config.get_stabilizer_max_states());
 
     // Then we apply each gate
-    std::vector<bool> qubits_measured(n_qubits, false);
     for (int i = 0; i < int(gates.size()); ++i) {
         const auto& gate = gates[i];
 
         // Let Ctrl-C interrupt the circuit between gates
         check_signals();
+
+        // If it's a measurement
+        if (gate.get_name() == "M") {
+            // Check for adjacent measurements and if we have any, do them all at once
+            std::vector<bool> qubits_to_measure_after_gate(n_qubits, false);
+            int num_measurements = group_measurements(gates, i, qubits_to_measure_after_gate);
+            bool are_final_measurements = (i + num_measurements == int(gates.size()));
+
+            // Construct the result
+            if (!are_final_measurements) {
+                py::object result = construct_result_object(state, readout, noise_model_cpp, n_qubits, config, qubits_to_measure_after_gate);
+                intermediate_results.push_back(result);
+            }
+
+            qilisdk::log_trace("[Sampling, C++] Measuring " + std::to_string(num_measurements) + " qubits at gate index " + std::to_string(i));
+
+            // Skip the next measurements since we did them all at once
+            i += (num_measurements - 1);
+            continue;
+        }
 
         state.apply_gate(gate);
     }
