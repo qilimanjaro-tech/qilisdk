@@ -27,8 +27,8 @@
 #include "../representations/stabilizer_state.h"
 
 // Helper functions for sampling.cpp
-void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories = nullptr);
-void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories = nullptr);
+void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories = nullptr, bool input_is_trajectories = false);
+void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise_model_cpp, DenseMatrix& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout, bool* output_is_trajectories = nullptr, bool input_is_trajectories = false);
 DenseMatrix collapse_state(const DenseMatrix& state, const std::vector<bool>& qubits_measured);
 void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const StabilizerStateSum& initial_state, NoiseModelCpp& noise_model_cpp, StabilizerStateSum& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout);
 

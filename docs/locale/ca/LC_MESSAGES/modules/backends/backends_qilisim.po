@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-28 17:11+0100\n"
+"POT-Creation-Date: 2026-11-09 14:52+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -19,11 +19,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../modules/backends/backends_qilisim.rst:2
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:2
 msgid "QiliSim"
 msgstr "QiliSim"
 
-#: ../../modules/backends/backends_qilisim.rst:14
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:14
 msgid ""
 "The **QiliSim** backend is the default CPU simulator developed by "
 "Qilimanjaro and written in C++. It implements every primitive functional "
@@ -37,11 +37,11 @@ msgstr ""
 "d'execució i s'inclou amb la instal·lació principal de ``qilisdk`` — no "
 "requereix cap dependència ni maquinari addicional."
 
-#: ../../modules/backends/backends_qilisim.rst:19
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:19
 msgid "Installation"
 msgstr "Instal·lació"
 
-#: ../../modules/backends/backends_qilisim.rst:21
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:21
 msgid ""
 "QiliSim is bundled with the core ``qilisdk`` installation, so no extra "
 "package is required."
@@ -49,15 +49,15 @@ msgstr ""
 "QiliSim s'inclou amb la instal·lació principal de ``qilisdk``, per la "
 "qual cosa no cal cap paquet addicional."
 
-#: ../../modules/backends/backends_qilisim.rst:25
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:25
 msgid "Quick start"
 msgstr "Inici ràpid"
 
-#: ../../modules/backends/backends_qilisim.rst:49
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:49
 msgid "Functional support"
 msgstr "Suport de funcionals"
 
-#: ../../modules/backends/backends_qilisim.rst:51
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:51
 msgid ""
 "QiliSim natively supports all primitive functionals through dedicated C++"
 " routines:"
@@ -65,31 +65,31 @@ msgstr ""
 "QiliSim suporta de manera nativa tots els funcionals primitius mitjançant"
 " rutines dedicades en C++:"
 
-#: ../../modules/backends/backends_qilisim.rst:57
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:57
 msgid "Functional"
 msgstr "Funcional"
 
-#: ../../modules/backends/backends_qilisim.rst:58
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:58
 msgid "Support"
 msgstr "Suport"
 
-#: ../../modules/backends/backends_qilisim.rst:59
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:59
 msgid "Notes"
 msgstr "Notes"
 
-#: ../../modules/backends/backends_qilisim.rst:60
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:60
 msgid ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
 msgstr ":class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`"
 
-#: ../../modules/backends/backends_qilisim.rst:61
-#: ../../modules/backends/backends_qilisim.rst:64
-#: ../../modules/backends/backends_qilisim.rst:67
-#: ../../modules/backends/backends_qilisim.rst:70
-#: ../../modules/backends/backends_qilisim.rst:375
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:61
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:64
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:67
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:70
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:387
 msgid "|y|"
 msgstr "|y|"
 
-#: ../../modules/backends/backends_qilisim.rst:62
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:62
 msgid ""
 "Statevector-based simulation, configurable via "
 ":class:`~qilisdk.backends.backend_config.DigitalMethod`."
@@ -97,11 +97,11 @@ msgstr ""
 "Simulació basada en vector d'estat, configurable mitjançant "
 ":class:`~qilisdk.backends.backend_config.DigitalMethod`."
 
-#: ../../modules/backends/backends_qilisim.rst:63
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:63
 msgid ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`"
 msgstr ":class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`"
 
-#: ../../modules/backends/backends_qilisim.rst:65
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:65
 msgid ""
 "Multiple integration schemes, configurable via "
 ":class:`~qilisdk.backends.backend_config.AnalogMethod`."
@@ -109,11 +109,11 @@ msgstr ""
 "Múltiples esquemes d'integració, configurables mitjançant "
 ":class:`~qilisdk.backends.backend_config.AnalogMethod`."
 
-#: ../../modules/backends/backends_qilisim.rst:66
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:66
 msgid ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
 msgstr ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
 
-#: ../../modules/backends/backends_qilisim.rst:68
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:68
 msgid ""
 "Native C++ implementation; supports both Circuit and Schedule reservoir "
 "steps."
@@ -121,21 +121,21 @@ msgstr ""
 "Implementació nativa en C++; suporta tant passos Circuit com Schedule del"
 " reservori."
 
-#: ../../modules/backends/backends_qilisim.rst:69
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:69
 msgid ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
 msgstr ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
 
-#: ../../modules/backends/backends_qilisim.rst:71
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:71
 msgid "Reuses the primitive functional handlers above for each optimization step."
 msgstr ""
 "Reutilitza els manejadors de funcionals primitius anteriors a cada pas "
 "d'optimització."
 
-#: ../../modules/backends/backends_qilisim.rst:78
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:78
 msgid "Configuration"
 msgstr "Configuració"
 
-#: ../../modules/backends/backends_qilisim.rst:80
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:80
 msgid ""
 "QiliSim is configured at construction time through three orthogonal "
 "sections, all defined in :mod:`qilisdk.backends.backend_config`:"
@@ -144,7 +144,7 @@ msgstr ""
 "seccions ortogonals, totes definides a "
 ":mod:`qilisdk.backends.backend_config`:"
 
-#: ../../modules/backends/backends_qilisim.rst:83
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:83
 msgid ""
 ":class:`~qilisdk.backends.backend_config.AnalogMethod` — chooses the "
 "analog time-evolution scheme and its hyperparameters."
@@ -152,7 +152,7 @@ msgstr ""
 ":class:`~qilisdk.backends.backend_config.AnalogMethod` — escull l'esquema"
 " d'evolució temporal analògica i els seus hiperparàmetres."
 
-#: ../../modules/backends/backends_qilisim.rst:85
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:85
 msgid ""
 ":class:`~qilisdk.backends.backend_config.DigitalMethod` — chooses the "
 "digital simulation strategy and its hyperparameters."
@@ -160,7 +160,7 @@ msgstr ""
 ":class:`~qilisdk.backends.backend_config.DigitalMethod` — escull "
 "l'estratègia de simulació digital i els seus hiperparàmetres."
 
-#: ../../modules/backends/backends_qilisim.rst:87
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:87
 msgid ""
 ":class:`~qilisdk.backends.backend_config.ExecutionConfig` — global "
 "execution controls (threads, random seed, Monte Carlo trajectories, "
@@ -170,11 +170,11 @@ msgstr ""
 "globals d'execució (fils, llavor aleatòria, trajectòries de Monte Carlo, "
 "comportament del col·lapse de mesura)."
 
-#: ../../modules/backends/backends_qilisim.rst:115
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:115
 msgid "If any argument is omitted, QiliSim falls back to:"
 msgstr "Si s'omet qualsevol argument, QiliSim recau en:"
 
-#: ../../modules/backends/backends_qilisim.rst:117
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:117
 msgid ""
 ":meth:`AnalogMethod.integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>` (matrix-free "
@@ -184,7 +184,7 @@ msgstr ""
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>` (RK4 sense "
 "matriu),"
 
-#: ../../modules/backends/backends_qilisim.rst:119
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:119
 msgid ""
 ":meth:`DigitalMethod.statevector() "
 "<qilisdk.backends.backend_config.DigitalMethod.statevector>`,"
@@ -192,7 +192,7 @@ msgstr ""
 ":meth:`DigitalMethod.statevector() "
 "<qilisdk.backends.backend_config.DigitalMethod.statevector>`,"
 
-#: ../../modules/backends/backends_qilisim.rst:120
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:120
 msgid ""
 "a default :class:`~qilisdk.backends.backend_config.ExecutionConfig` (all "
 "cores, random seed, Monte Carlo disabled)."
@@ -200,11 +200,11 @@ msgstr ""
 "un :class:`~qilisdk.backends.backend_config.ExecutionConfig` per defecte "
 "(tots els nuclis, llavor aleatòria, Monte Carlo desactivat)."
 
-#: ../../modules/backends/backends_qilisim.rst:124
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:124
 msgid "Analog simulation methods"
 msgstr "Mètodes de simulació analògica"
 
-#: ../../modules/backends/backends_qilisim.rst:126
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:126
 msgid ""
 "Use the classmethods of "
 ":class:`~qilisdk.backends.backend_config.AnalogMethod` to choose how the "
@@ -214,19 +214,19 @@ msgstr ""
 ":class:`~qilisdk.backends.backend_config.AnalogMethod` per triar com "
 "s'integra el schedule:"
 
-#: ../../modules/backends/backends_qilisim.rst:133
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:133
 msgid "Constructor"
 msgstr "Constructor"
 
-#: ../../modules/backends/backends_qilisim.rst:134
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:134
 msgid "Underlying scheme"
 msgstr "Esquema subjacent"
 
-#: ../../modules/backends/backends_qilisim.rst:135
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:135
 msgid "When to use it"
 msgstr "Quan utilitzar-lo"
 
-#: ../../modules/backends/backends_qilisim.rst:136
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:136
 msgid ""
 ":meth:`AnalogMethod.integrator(matrix_free=True) "
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
@@ -234,11 +234,11 @@ msgstr ""
 ":meth:`AnalogMethod.integrator(matrix_free=True) "
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
 
-#: ../../modules/backends/backends_qilisim.rst:137
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:137
 msgid "RK4"
 msgstr "RK4"
 
-#: ../../modules/backends/backends_qilisim.rst:138
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:138
 msgid ""
 "Default. Fixed-step Runge-Kutta 4. matrix-free is faster for sparse "
 "Hamiltonians."
@@ -246,8 +246,8 @@ msgstr ""
 "Per defecte. Runge-Kutta 4 amb pas fix. Sense matriu és més ràpid per a "
 "Hamiltonians dispersos."
 
-#: ../../modules/backends/backends_qilisim.rst:139
-#: ../../modules/backends/backends_qilisim.rst:374
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:139
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:386
 msgid ""
 ":meth:`AnalogMethod.variational_annealing() "
 "<qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`"
@@ -255,11 +255,11 @@ msgstr ""
 ":meth:`AnalogMethod.variational_annealing() "
 "<qilisdk.backends.backend_config.AnalogMethod.variational_annealing>`"
 
-#: ../../modules/backends/backends_qilisim.rst:140
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:140
 msgid "Variational annealing"
 msgstr "Recuit variacional"
 
-#: ../../modules/backends/backends_qilisim.rst:141
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:141
 msgid ""
 "Only available for X to Z annealing schedules. Can be used to simulate "
 "large (i.e. 60+ qubits) systems at the cost of accuracy. Set `order=1` "
@@ -272,7 +272,7 @@ msgstr ""
 "Augmentar els escalfaments també pot millorar la precisió a costa del "
 "temps."
 
-#: ../../modules/backends/backends_qilisim.rst:142
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:142
 msgid ""
 ":meth:`AnalogMethod.adaptive_integrator(tol=1e-2) "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
@@ -280,11 +280,11 @@ msgstr ""
 ":meth:`AnalogMethod.adaptive_integrator(tol=1e-2) "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
 
-#: ../../modules/backends/backends_qilisim.rst:143
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:143
 msgid "Dormand-Prince RK4/5"
 msgstr "Dormand-Prince RK4/5"
 
-#: ../../modules/backends/backends_qilisim.rst:144
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:144
 msgid ""
 "Adaptive step size; ``tol`` bounds the fidelity error between the RK4 and"
 " RK5 estimates."
@@ -292,7 +292,7 @@ msgstr ""
 "Mida de pas adaptativa; ``tol`` limita l'error de fidelitat entre les "
 "estimacions RK4 i RK5."
 
-#: ../../modules/backends/backends_qilisim.rst:145
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:145
 msgid ""
 ":meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1, matrix_free=True) "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
@@ -300,11 +300,11 @@ msgstr ""
 ":meth:`AnalogMethod.arnoldi(dim=10, num_substeps=1, matrix_free=True) "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
 
-#: ../../modules/backends/backends_qilisim.rst:146
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:146
 msgid "Krylov / Arnoldi"
 msgstr "Krylov / Arnoldi"
 
-#: ../../modules/backends/backends_qilisim.rst:147
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:147
 msgid ""
 "Can offer decent scaling for large sparse Hamiltonians; tune ``dim`` for "
 "the Krylov subspace size."
@@ -312,8 +312,8 @@ msgstr ""
 "Pot oferir un escalat decent per a Hamiltonians dispersos grans; ajusteu "
 "``dim`` per a la mida del subespai de Krylov."
 
-#: ../../modules/backends/backends_qilisim.rst:148
-#: ../../modules/backends/backends_qilisim.rst:366
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:148
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:378
 msgid ""
 ":meth:`AnalogMethod.direct() "
 "<qilisdk.backends.backend_config.AnalogMethod.direct>`"
@@ -321,25 +321,25 @@ msgstr ""
 ":meth:`AnalogMethod.direct() "
 "<qilisdk.backends.backend_config.AnalogMethod.direct>`"
 
-#: ../../modules/backends/backends_qilisim.rst:149
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:149
 msgid "Matrix exponential"
 msgstr "Exponencial de matriu"
 
-#: ../../modules/backends/backends_qilisim.rst:150
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:150
 msgid "Reference scheme for small systems; cost grows quickly with qubit count."
 msgstr ""
 "Esquema de referència per a sistemes petits; el cost creix ràpidament amb"
 " el nombre de qubits."
 
-#: ../../modules/backends/backends_qilisim.rst:152
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:152
 msgid "Example, using the adaptive integrator:"
 msgstr "Exemple, utilitzant l'integrador adaptatiu:"
 
-#: ../../modules/backends/backends_qilisim.rst:161
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:161
 msgid "Digital simulation methods"
 msgstr "Mètodes de simulació digital"
 
-#: ../../modules/backends/backends_qilisim.rst:163
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:163
 msgid ""
 "There are currently four digital simulation methods available. The first "
 "is a statevector simulator, which can be configured through the options:"
@@ -348,25 +348,25 @@ msgstr ""
 "primer és un simulador de vector d'estat, que es pot configurar "
 "mitjançant les opcions:"
 
-#: ../../modules/backends/backends_qilisim.rst:169
-#: ../../modules/backends/backends_qilisim.rst:198
-#: ../../modules/backends/backends_qilisim.rst:219
-#: ../../modules/backends/backends_qilisim.rst:255
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:169
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:198
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:219
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:255
 msgid "Option"
 msgstr "Opció"
 
-#: ../../modules/backends/backends_qilisim.rst:170
-#: ../../modules/backends/backends_qilisim.rst:199
-#: ../../modules/backends/backends_qilisim.rst:220
-#: ../../modules/backends/backends_qilisim.rst:256
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:170
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:199
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:220
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:256
 msgid "Meaning"
 msgstr "Significat"
 
-#: ../../modules/backends/backends_qilisim.rst:171
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:171
 msgid "``matrix_free``"
 msgstr "``matrix_free``"
 
-#: ../../modules/backends/backends_qilisim.rst:172
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:172
 msgid ""
 "Apply gates directly to the statevector instead of building dense "
 "matrices. Default ``True``."
@@ -374,23 +374,23 @@ msgstr ""
 "Aplica les portes directament al vector d'estat en lloc de construir "
 "matrius denses. Per defecte ``True``."
 
-#: ../../modules/backends/backends_qilisim.rst:173
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:173
 msgid "``max_cache_size``"
 msgstr "``max_cache_size``"
 
-#: ../../modules/backends/backends_qilisim.rst:174
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:174
 msgid "Maximum number of precomputed gate matrices cached between executions."
 msgstr ""
 "Nombre màxim de matrius de porta precomputades emmagatzemades en memòria "
 "cau entre execucions."
 
-#: ../../modules/backends/backends_qilisim.rst:175
-#: ../../modules/backends/backends_qilisim.rst:225
-#: ../../modules/backends/backends_qilisim.rst:265
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:175
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:225
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:265
 msgid "``combine_single_qubit_gates``"
 msgstr "``combine_single_qubit_gates``"
 
-#: ../../modules/backends/backends_qilisim.rst:176
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:176
 msgid ""
 "Merge adjacent single-qubit gates into a single operation before "
 "propagating. Disabled if gate-specific noise is used."
@@ -398,11 +398,11 @@ msgstr ""
 "Fusiona portes d'un sol qubit adjacents en una única operació abans de "
 "propagar. Desactivat si s'utilitza soroll específic de porta."
 
-#: ../../modules/backends/backends_qilisim.rst:177
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:177
 msgid "``normalize_after_each_gate``"
 msgstr "``normalize_after_each_gate``"
 
-#: ../../modules/backends/backends_qilisim.rst:178
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:178
 msgid ""
 "Renormalize the statevector after each gate to mitigate numerical drift, "
 "at a runtime cost."
@@ -410,7 +410,7 @@ msgstr ""
 "Renormalitza el vector d'estat després de cada porta per mitigar la "
 "deriva numèrica, amb un cost de temps d'execució."
 
-#: ../../modules/backends/backends_qilisim.rst:191
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:191
 msgid ""
 "The second is a stabilizer simulator, which can efficiently simulate "
 "circuits composed of Clifford gates and Pauli measurements, at the cost "
@@ -422,11 +422,11 @@ msgstr ""
 "costa de ser més lent si el circuit conté moltes portes no-Clifford. Té "
 "les següents opcions:"
 
-#: ../../modules/backends/backends_qilisim.rst:200
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:200
 msgid "``max_states``"
 msgstr "``max_states``"
 
-#: ../../modules/backends/backends_qilisim.rst:201
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:201
 msgid ""
 "Maximum number of terms in the stabilizer sum. Increasing this can "
 "improve accuracy at the cost of memory and runtime."
@@ -434,7 +434,7 @@ msgstr ""
 "Nombre màxim de termes en la suma d'estabilitzadors. Augmentar-ho pot "
 "millorar la precisió a costa de memòria i temps d'execució."
 
-#: ../../modules/backends/backends_qilisim.rst:211
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:211
 msgid ""
 "The third is a matrix product state simulator, which represents the state"
 " as a chain of tensors truncated after each two-qubit gate. Its cost "
@@ -449,12 +449,12 @@ msgstr ""
 "entrellaçants sobre molts qubits són barats. Admet portes d'un i dos "
 "qubits, i té les opcions següents:"
 
-#: ../../modules/backends/backends_qilisim.rst:221
-#: ../../modules/backends/backends_qilisim.rst:257
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:221
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:257
 msgid "``max_bond_dimension``"
 msgstr "``max_bond_dimension``"
 
-#: ../../modules/backends/backends_qilisim.rst:222
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:222
 msgid ""
 "Largest bond dimension kept. Circuits whose entanglement stays below this"
 " are simulated exactly, otherwise the state is approximate."
@@ -463,18 +463,18 @@ msgstr ""
 "entrellaçament per sota d'aquest valor se simulen de manera exacta; "
 "altrament, l'estat és aproximat."
 
-#: ../../modules/backends/backends_qilisim.rst:223
-#: ../../modules/backends/backends_qilisim.rst:259
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:223
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:259
 msgid "``truncation_cutoff``"
 msgstr "``truncation_cutoff``"
 
-#: ../../modules/backends/backends_qilisim.rst:224
-#: ../../modules/backends/backends_qilisim.rst:260
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:224
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:260
 msgid "Singular values below this fraction of the largest are discarded."
 msgstr "Es descarten els valors singulars per sota d'aquesta fracció del més gran."
 
-#: ../../modules/backends/backends_qilisim.rst:226
-#: ../../modules/backends/backends_qilisim.rst:266
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:226
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:266
 msgid ""
 "Whether to combine consecutive single-qubit gates on the same qubit into "
 "one operation."
@@ -482,18 +482,18 @@ msgstr ""
 "Si es combinen en una única operació les portes d'un sol qubit "
 "consecutives sobre el mateix qubit."
 
-#: ../../modules/backends/backends_qilisim.rst:227
-#: ../../modules/backends/backends_qilisim.rst:267
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:227
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:267
 msgid "``fuse_gates``"
 msgstr "``fuse_gates``"
 
-#: ../../modules/backends/backends_qilisim.rst:228
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:228
 msgid "Whether to fuse runs of adjacent two-qubit gates into one operation."
 msgstr ""
 "Si es fusionen en una única operació les seqüències de portes de dos "
 "qubits adjacents."
 
-#: ../../modules/backends/backends_qilisim.rst:238
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:238
 msgid ""
 "The fourth is a belief propagation tensor network simulator. Like the "
 "matrix product state simulator it keeps one tensor per qubit, but rather "
@@ -504,17 +504,17 @@ msgid ""
 "rest of the network around the gate, and expectation values are estimated"
 " in the same way."
 msgstr ""
-"El quart és un simulador de xarxes de tensors amb propagació de creences. "
-"Igual que el simulador d'estat de producte matricial, guarda un tensor "
+"El quart és un simulador de xarxes de tensors amb propagació de creences."
+" Igual que el simulador d'estat de producte matricial, guarda un tensor "
 "per qubit, però en lloc d'una cadena afegeix un enllaç entre cada parell "
 "de qubits sobre el qual actua una porta de dos qubits, de manera que la "
 "xarxa pren la forma del graf d'interacció del circuit i no calen "
-"intercanvis. Cada enllaç es trunca en el gauge donat per la propagació de "
-"creences, un esquema de pas de missatges que aproxima la resta de la "
+"intercanvis. Cada enllaç es trunca en el gauge donat per la propagació de"
+" creences, un esquema de pas de missatges que aproxima la resta de la "
 "xarxa al voltant de la porta, i els valors esperats s'estimen de la "
 "mateixa manera."
 
-#: ../../modules/backends/backends_qilisim.rst:243
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:243
 msgid ""
 "On a tree, such as a chain, this is exact up to truncation and agrees "
 "with the matrix product state simulator. On a graph with loops it "
@@ -526,18 +526,18 @@ msgid ""
 " can hold. It is not suited to densely connected circuits, or to deep "
 "circuits that build up long-range entanglement."
 msgstr ""
-"En un arbre, com una cadena, és exacte llevat del truncament i coincideix "
-"amb el simulador d'estat de producte matricial. En un graf amb cicles "
+"En un arbre, com una cadena, és exacte llevat del truncament i coincideix"
+" amb el simulador d'estat de producte matricial. En un graf amb cicles "
 "negligeix les correlacions al voltant dels cicles, cosa que és precisa "
 "per a grafs dispersos i de grau baix, com les xarxes heavy-hex o "
-"quadrades i els grafs de QAOA de grau acotat, sempre que les correlacions "
-"decaiguin ràpidament. El seu cost creix només linealment amb el nombre de "
-"qubits, de manera que aquests circuits es poden simular amb molts més "
+"quadrades i els grafs de QAOA de grau acotat, sempre que les correlacions"
+" decaiguin ràpidament. El seu cost creix només linealment amb el nombre "
+"de qubits, de manera que aquests circuits es poden simular amb molts més "
 "qubits dels que caben en un vector d'estat o en un estat de producte "
 "matricial. No és adequat per a circuits densament connectats, ni per a "
 "circuits profunds que acumulen entrellaçament de llarg abast."
 
-#: ../../modules/backends/backends_qilisim.rst:249
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:249
 msgid ""
 "Sampling and exact state tomography contract the whole network into its "
 "statevector, so they are limited to 24 qubits. It has the following "
@@ -547,7 +547,7 @@ msgstr ""
 "el seu vector d'estat, de manera que estan limitats a 24 qubits. Té les "
 "opcions següents:"
 
-#: ../../modules/backends/backends_qilisim.rst:258
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:258
 msgid ""
 "Largest bond dimension kept on each edge. Larger values are more accurate"
 " but cost memory and runtime."
@@ -555,24 +555,24 @@ msgstr ""
 "Dimensió d'enllaç màxima que es conserva a cada aresta. Els valors més "
 "grans són més precisos, però costen memòria i temps d'execució."
 
-#: ../../modules/backends/backends_qilisim.rst:261
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:261
 msgid "``max_iterations``"
 msgstr "``max_iterations``"
 
-#: ../../modules/backends/backends_qilisim.rst:262
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:262
 msgid ""
 "Most message-passing sweeps a single belief propagation run may take. A "
 "warning is logged if a run does not converge."
 msgstr ""
-"Nombre màxim d'escombrats de pas de missatges que pot fer una execució de "
-"propagació de creences. Es registra un avís si una execució no "
+"Nombre màxim d'escombrats de pas de missatges que pot fer una execució de"
+" propagació de creences. Es registra un avís si una execució no "
 "convergeix."
 
-#: ../../modules/backends/backends_qilisim.rst:263
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:263
 msgid "``tolerance``"
 msgstr "``tolerance``"
 
-#: ../../modules/backends/backends_qilisim.rst:264
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:264
 msgid ""
 "Largest change in any message at which belief propagation counts as "
 "converged."
@@ -580,7 +580,7 @@ msgstr ""
 "Canvi màxim en qualsevol missatge amb el qual la propagació de creences "
 "es considera convergida."
 
-#: ../../modules/backends/backends_qilisim.rst:268
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:268
 msgid ""
 "Whether to fuse runs of adjacent gates on the same pair of qubits into "
 "one operation."
@@ -588,11 +588,11 @@ msgstr ""
 "Si es fusionen en una única operació les seqüències de portes adjacents "
 "sobre el mateix parell de qubits."
 
-#: ../../modules/backends/backends_qilisim.rst:290
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:290
 msgid "Execution and Monte Carlo"
 msgstr "Execució i Monte Carlo"
 
-#: ../../modules/backends/backends_qilisim.rst:292
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:292
 msgid ""
 ":class:`~qilisdk.backends.backend_config.ExecutionConfig` controls "
 "threading, randomness, and optional Monte Carlo trajectory sampling for "
@@ -602,7 +602,7 @@ msgstr ""
 "fils, l'aleatorietat i el mostreig opcional de trajectòries de Monte "
 "Carlo per a simulacions de sistemes oberts."
 
-#: ../../modules/backends/backends_qilisim.rst:295
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:295
 msgid ""
 "``num_threads`` controls the number of threads used for parallelization, "
 "defaults to using all available cores."
@@ -610,7 +610,7 @@ msgstr ""
 "``num_threads`` controla el nombre de fils utilitzats per a la "
 "paral·lelització; per defecte utilitza tots els nuclis disponibles."
 
-#: ../../modules/backends/backends_qilisim.rst:296
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:296
 msgid ""
 "``seed`` controls the random number generator seed, defaults to a random "
 "seed. Subsequent runs will increment the seed automatically."
@@ -619,15 +619,30 @@ msgstr ""
 "defecte s'utilitza una llavor aleatòria. Les execucions posteriors "
 "incrementen la llavor automàticament."
 
-#: ../../modules/backends/backends_qilisim.rst:297
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:297
 msgid ""
-"``monte_carlo=MonteCarloConfig(trajectories=N)`` enabled Monte Carlo "
+"``monte_carlo=MonteCarloConfig(trajectories=N)`` enables Monte Carlo "
 "sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled."
 msgstr ""
 "``monte_carlo=MonteCarloConfig(trajectories=N)`` activa el mostreig Monte"
 " Carlo amb ``N`` trajectòries; si s'omet, Monte Carlo queda desactivat."
 
-#: ../../modules/backends/backends_qilisim.rst:298
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:298
+msgid ""
+"``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` sets how "
+"many quantum jumps an analog evolution step may expect - the adaptive "
+"``integrate_rk45_matrix_free`` method shortens its steps to stay below it"
+" (lower is more accurate but slower), whilst fixed-step methods instead "
+"warn when the schedule is too coarse for it, defaults to ``0.5``."
+msgstr ""
+"``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` fixa "
+"quants salts quàntics pot esperar un pas d'una evolució analògica: el "
+"mètode adaptatiu ``integrate_rk45_matrix_free`` escurça els seus passos "
+"per mantenir-se per sota (un valor menor és més precís però més lent), "
+"mentre que els mètodes de pas fix avisen quan el schedule és massa "
+"gruixut per a ell; per defecte ``0.5``."
+
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:299
 msgid ""
 "``measurement_collapse`` controls whether measurements collapse the "
 "statevector in place (relevant for mid-circuit measurement and "
@@ -637,7 +652,7 @@ msgstr ""
 "d'estat in situ (rellevant per a mesures a mig circuit i reservoris); per"
 " defecte ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:299
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:300
 msgid ""
 "``normalize_state`` controls whether the state should be renormalized - "
 "defaults to ``True``."
@@ -645,7 +660,7 @@ msgstr ""
 "``normalize_state`` controla si l'estat s'ha de renormalitzar; per "
 "defecte ``True``."
 
-#: ../../modules/backends/backends_qilisim.rst:300
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:301
 msgid ""
 "``gpu`` controls whether to use GPU acceleration if available - defaults "
 "to ``False``."
@@ -653,11 +668,42 @@ msgstr ""
 "``gpu`` controla si s'utilitza l'acceleració per GPU si està disponible; "
 "per defecte ``False``."
 
-#: ../../modules/backends/backends_qilisim.rst:318
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:320
+msgid "Monte Carlo results are statistical, so two things control their quality:"
+msgstr ""
+"Els resultats de Monte Carlo són estadístics, de manera que dos factors "
+"en controlen la qualitat:"
+
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:322
+#, python-brace-format
+msgid ""
+"**Number of trajectories.** The statistical error of any estimate falls "
+"as :math:`1/\\sqrt{N}`, so a noisy run needs more trajectories."
+msgstr ""
+"**Nombre de trajectòries.** L'error estadístic de qualsevol estimació "
+"decreix com :math:`1/\\sqrt{N}`, així que una execució amb molt soroll "
+"estadístic necessita més trajectòries."
+
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:324
+msgid ""
+"**Schedule step size.** If using noise, quantum jumps are applied at the "
+"end of the schedule step, so a step must be short enough that at most one"
+" jump is likely within it. This also controls the general quality of the "
+"simulation as with all simulation methods, doing things in smaller steps "
+"improves overall accuracy."
+msgstr ""
+"**Mida del pas del schedule.** Si s'utilitza soroll, els salts quàntics "
+"s'apliquen al final del pas del schedule, de manera que el pas ha de ser "
+"prou curt perquè, com a màxim, sigui probable un sol salt a dins seu. "
+"Això també controla la qualitat general de la simulació: com en tots els "
+"mètodes de simulació, avançar en passos més petits millora la precisió "
+"global."
+
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:330
 msgid "Noise model support"
 msgstr "Suport del model de soroll"
 
-#: ../../modules/backends/backends_qilisim.rst:320
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:332
 msgid ""
 "Any :class:`~qilisdk.noise.NoiseModel` accepted by the SDK can be passed "
 "directly to the constructor; QiliSim applies it inside the C++ solver, so"
@@ -668,11 +714,11 @@ msgstr ""
 "C++, de manera que les execucions digitals, analògiques i de reservori "
 "veuen totes els mateixos canals de soroll:"
 
-#: ../../modules/backends/backends_qilisim.rst:335
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:347
 msgid "GPU acceleration"
 msgstr "Acceleració per GPU"
 
-#: ../../modules/backends/backends_qilisim.rst:337
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:349
 msgid ""
 "Some simulation methods in QiliSim support GPU acceleration if a CUDA-"
 "capable device is available. These require the ``cuda`` extra to be "
@@ -682,38 +728,38 @@ msgstr ""
 "hi ha disponible un dispositiu compatible amb CUDA. Aquests requereixen "
 "la instal·lació de l'extra ``cuda``:"
 
-#: ../../modules/backends/backends_qilisim.rst:342
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:354
 msgid "Linux"
 msgstr "Linux"
 
-#: ../../modules/backends/backends_qilisim.rst:348
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:360
 msgid "Mac OSX"
 msgstr "Mac OSX"
 
-#: ../../modules/backends/backends_qilisim.rst:354
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:366
 msgid "Windows"
 msgstr "Windows"
 
-#: ../../modules/backends/backends_qilisim.rst:364
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:376
 msgid "Method"
 msgstr "Mètode"
 
-#: ../../modules/backends/backends_qilisim.rst:365
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:377
 msgid "GPU support"
 msgstr "Suport de GPU"
 
-#: ../../modules/backends/backends_qilisim.rst:367
-#: ../../modules/backends/backends_qilisim.rst:369
-#: ../../modules/backends/backends_qilisim.rst:371
-#: ../../modules/backends/backends_qilisim.rst:373
-#: ../../modules/backends/backends_qilisim.rst:377
-#: ../../modules/backends/backends_qilisim.rst:379
-#: ../../modules/backends/backends_qilisim.rst:381
-#: ../../modules/backends/backends_qilisim.rst:383
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:379
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:381
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:383
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:385
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:389
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:391
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:393
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:395
 msgid "|n|"
 msgstr "|n|"
 
-#: ../../modules/backends/backends_qilisim.rst:368
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:380
 msgid ""
 ":meth:`AnalogMethod.integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
@@ -721,7 +767,7 @@ msgstr ""
 ":meth:`AnalogMethod.integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.integrator>`"
 
-#: ../../modules/backends/backends_qilisim.rst:370
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:382
 msgid ""
 ":meth:`AnalogMethod.adaptive_integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
@@ -729,7 +775,7 @@ msgstr ""
 ":meth:`AnalogMethod.adaptive_integrator() "
 "<qilisdk.backends.backend_config.AnalogMethod.adaptive_integrator>`"
 
-#: ../../modules/backends/backends_qilisim.rst:372
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:384
 msgid ""
 ":meth:`AnalogMethod.arnoldi() "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
@@ -737,7 +783,7 @@ msgstr ""
 ":meth:`AnalogMethod.arnoldi() "
 "<qilisdk.backends.backend_config.AnalogMethod.arnoldi>`"
 
-#: ../../modules/backends/backends_qilisim.rst:376
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:388
 msgid ""
 ":meth:`DigitalMethod.statevector() "
 "<qilisdk.backends.backend_config.DigitalMethod.statevector>`"
@@ -745,7 +791,7 @@ msgstr ""
 ":meth:`DigitalMethod.statevector() "
 "<qilisdk.backends.backend_config.DigitalMethod.statevector>`"
 
-#: ../../modules/backends/backends_qilisim.rst:378
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:390
 msgid ""
 ":meth:`DigitalMethod.stabilizer() "
 "<qilisdk.backends.backend_config.DigitalMethod.stabilizer>`"
@@ -753,7 +799,7 @@ msgstr ""
 ":meth:`DigitalMethod.stabilizer() "
 "<qilisdk.backends.backend_config.DigitalMethod.stabilizer>`"
 
-#: ../../modules/backends/backends_qilisim.rst:380
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:392
 msgid ""
 ":meth:`DigitalMethod.mps() "
 "<qilisdk.backends.backend_config.DigitalMethod.mps>`"
@@ -761,7 +807,7 @@ msgstr ""
 ":meth:`DigitalMethod.mps() "
 "<qilisdk.backends.backend_config.DigitalMethod.mps>`"
 
-#: ../../modules/backends/backends_qilisim.rst:382
+#: ../../../../../../../home/luke/Documents/qilisdk/docs/modules/backends/backends_qilisim.rst:394
 msgid ""
 ":meth:`DigitalMethod.bp() "
 "<qilisdk.backends.backend_config.DigitalMethod.bp>`"
@@ -842,12 +888,6 @@ msgstr ""
 #~ msgstr "Ús d'un model de soroll"
 
 #~ msgid ""
-#~ "QiliSim is bundled with the core "
-#~ "``qilisdk`` installation, so no extra "
-#~ "package is required:"
-#~ msgstr ""
-
-#~ msgid ""
 #~ "Digital execution is currently always "
 #~ "state-vector based; the "
 #~ ":class:`~qilisdk.backends.backend_config.DigitalMethod` "
@@ -862,21 +902,6 @@ msgstr ""
 #~ " les seves característiques de rendiment"
 #~ " en lloc de triar un algoritme "
 #~ "diferent:"
-
-#~ msgid ""
-#~ "``gpu=True`` enables GPU acceleration if "
-#~ "a CUDA-capable device is available; "
-#~ "defaults to ``False``. Right now only"
-#~ " the Variational Annealing method supports"
-#~ " GPU acceleration."
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Right now only the varational annealing"
-#~ " method supports GPU acceleration, but "
-#~ "acceleration for other methods is "
-#~ "planned in future releases."
-#~ msgstr ""
 
 #~ msgid "``num_threads=0`` (default) lets the simulator use every physical core."
 #~ msgstr ""
@@ -907,4 +932,39 @@ msgstr ""
 #~ "un unraveling de Monte Carlo; deixeu-"
 #~ "ho a ``None`` per a una evolució"
 #~ " determinista de l'equació mestra."
+
+#~ msgid ""
+#~ "There are currently two digital "
+#~ "simulation methods available. The first "
+#~ "is a statevector simulator, which can"
+#~ " be configured through the options:"
+#~ msgstr ""
+#~ "Actualment hi ha dos mètodes de "
+#~ "simulació digital disponibles. El primer "
+#~ "és un simulador de vector d'estat, "
+#~ "que es pot configurar mitjançant les "
+#~ "opcions:"
+
+#~ msgid ""
+#~ "``monte_carlo=MonteCarloConfig(trajectories=N)`` enabled "
+#~ "Monte Carlo sampling with ``N`` "
+#~ "trajectories, if omitted, Monte Carlo is"
+#~ " disabled."
+#~ msgstr ""
+#~ "``monte_carlo=MonteCarloConfig(trajectories=N)`` activa el"
+#~ " mostreig Monte Carlo amb ``N`` "
+#~ "trajectòries; si s'omet, Monte Carlo "
+#~ "queda desactivat."
+
+#~ msgid ""
+#~ "There are currently three digital "
+#~ "simulation methods available. The first "
+#~ "is a statevector simulator, which can"
+#~ " be configured through the options:"
+#~ msgstr ""
+#~ "Actualment hi ha tres mètodes de "
+#~ "simulació digital disponibles. El primer "
+#~ "és un simulador de vector d'estat, "
+#~ "que es pot configurar mitjançant les "
+#~ "opcions:"
 

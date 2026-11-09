@@ -659,9 +659,9 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 std::map<std::string, int> counts;
                 std::vector<py::object> intermediate_results;
                 if (config.get_digital_method() == "statevector_matrix_free") {
-                    sampling_matrix_free(gates, n_qubits, noise_model_cpp, state, intermediate_results, config, readout);
+                    sampling_matrix_free(gates, n_qubits, noise_model_cpp, state, intermediate_results, config, readout, nullptr, trajectory_mode);
                 } else if (config.get_digital_method() == "statevector") {
-                    sampling(gates, n_qubits, noise_model_cpp, state, intermediate_results, config, readout);
+                    sampling(gates, n_qubits, noise_model_cpp, state, intermediate_results, config, readout, nullptr, trajectory_mode);
                 } else {
                     // GCOV_EXCL_START (any other method is rejected before the first layer runs)
                     throw py::value_error("Unsupported sampling method for reservoirs: " + config.get_digital_method());
@@ -713,7 +713,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                     }
 
                     // Call the implementation
-                    time_evolution_matrix_free(hamiltonians, parameters_list, step_list, noise_model_cpp, config, state, intermediate_rhos);
+                    time_evolution_matrix_free(hamiltonians, parameters_list, step_list, noise_model_cpp, config, state, intermediate_rhos, nullptr, trajectory_mode);
 
                 } else if (config.get_time_evolution_method() == "integrate_rk4" || config.get_time_evolution_method() == "arnoldi" || config.get_time_evolution_method() == "direct") {
                     // Parse the Hamiltonians
@@ -728,7 +728,7 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                     }
 
                     // Call the implementation
-                    time_evolution(state.sparseView(), hamiltonians, parameters_list, step_list, noise_model_cpp, config, state, intermediate_rhos);
+                    time_evolution(state.sparseView(), hamiltonians, parameters_list, step_list, noise_model_cpp, config, state, intermediate_rhos, nullptr, trajectory_mode);
 
                 } else {
                     throw py::value_error("Unknown time evolution method: " + config.get_time_evolution_method());
@@ -789,7 +789,6 @@ py::object QiliSimCpp::execute_quantum_reservoir(const py::object& functional, c
                 }
             }
         }
-        layer_index++;
     }
 
     // Construct the final result object
