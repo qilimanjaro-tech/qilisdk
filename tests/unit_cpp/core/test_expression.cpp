@@ -505,3 +505,114 @@ TEST_F(ExpressionTest, ArgsHandBackTheLiveWrapperOfEachOperand) {
     wrapper = py::none();
     EXPECT_TRUE(python::equal(wrap_shared(node), ev("Cos(x)")));
 }
+
+TEST_F(ExpressionTest, ContainsSymbolLooksPastACollidingMaskBit) {
+    // A variable sharing x's mask bit has to be told apart from x by looking inside the tree
+    const uint64_t x_bit = node_of(g("x"))->symbol_mask;
+    py::object twin;
+    for (int i = 0; !twin; ++i) {
+        py::object candidate = ev("BinaryVariable('twin" + std::to_string(i) + "')");
+        if (node_of(candidate)->symbol_mask == x_bit) {
+            twin = candidate;
+        }
+    }
+    EXPECT_TRUE(python::equal(python::derivative(ev("Sin(x)"), twin), ev("Constant(0)")));
+}
+
+TEST_F(ExpressionTest, ScaledSumsCollapsingToCoefficientOneAreFlattened) {
+    // Into a sum one term at a time, and when every term is built at once
+    EXPECT_EQ(r("(2 * (x + y) + z) - (x + y)"), "x + y + z");
+    EXPECT_EQ(r("Add.build([2 * (x + y), -(x + y), z])"), "x + y + z");
+}
+
+// ---------------------------------------------------------------- pending sums
+
+class PendingSumTest : public ExpressionTest {
+   protected:
+    void SetUp() override {
+        ExpressionTest::SetUp();
+        // A sum long enough that adding to it is deferred, and two ways of adding the same terms to it:
+        // all at once, leaving one pending chain, and reading the sum after every step, which builds it
+        py::exec(R"(
+            many = [BinaryVariable(f"b{i:02d}") for i in range(40)]
+            big = Add.build([(i + 1) * v for i, v in enumerate(many)] + [2 * (x + y), 7])
+
+            def chained(start, terms):
+                out = start
+                for term in terms:
+                    out = out + term
+                return out
+
+            def stepwise(start, terms):
+                out = start
+                for term in terms:
+                    out = out + term
+                    repr(out)
+                return out
+        )");
+    }
+
+    // Whether the chained and stepwise sums of the given terms onto big come out identical
+    static void expect_deferral_is_invisible(const std::string& terms) {
+        py::exec("terms = " + terms);
+        const NodePtr chained = node_of(ev("chained(big, terms)"));
+        const NodePtr stepwise = node_of(ev("stepwise(big, terms)"));
+        EXPECT_TRUE(equal(chained, stepwise)) << terms;
+        EXPECT_EQ(chained->hash, stepwise->hash) << terms;
+        EXPECT_EQ(repr(chained), repr(stepwise)) << terms;
+    }
+};
+
+TEST_F(PendingSumTest, AddingToALongSumIsDeferredUntilRead) {
+    py::exec("pending = big + z + s");
+    EXPECT_TRUE(PyCapsule_IsValid(ev("pending._node").ptr(), "qilisdk.expression.pending"));
+    EXPECT_EQ(ev("type(pending).__name__").cast<std::string>(), "Add");
+    // Reading it builds it once and keeps the result
+    EXPECT_TRUE(python::equal(g("pending"), ev("stepwise(big, [z, s])")));
+    EXPECT_TRUE(PyCapsule_IsValid(ev("pending._node").ptr(), "qilisdk.expression.node"));
+    // A short sum is built straight away
+    EXPECT_TRUE(PyCapsule_IsValid(ev("((x + y) + z)._node").ptr(), "qilisdk.expression.node"));
+}
+
+TEST_F(PendingSumTest, ShortChainsBuildAStepAtATime) {
+    expect_deferral_is_invisible("[z]");
+    expect_deferral_is_invisible("[z, s]");
+}
+
+TEST_F(PendingSumTest, LongChainsMergeEveryKindOfTermLikeSteppingWould) {
+    // New and like monomials, a summand cancelled and revived, constants cancelled and restarted, a
+    // whole sum, a complex coefficient, subtraction, and the scaled sum 2 * (x + y) collapsing to x + y
+    expect_deferral_is_invisible("[z, -many[0], 3, many[0], -7, -3, 1.5, x + y + many[1], 1j * s, -(x + y), z, 2 * many[2] * many[3], -z, -z]");
+    expect_deferral_is_invisible("[-(x + y), x, y, 2 * many[4]]");
+    // Scaled sums nested inside scaled sums release their operands all the way down
+    expect_deferral_is_invisible("[2 * (x + 3 * (y + z)), z, -2 * (x + 3 * (y + z)) + (x + 3 * (y + z)), x]");
+    // A chain starting from a sum without a constant takes its first constant from the terms
+    py::exec("big = big - 7");
+    expect_deferral_is_invisible("[z, 4, s, -4, many[5]]");
+}
+
+TEST_F(PendingSumTest, BranchingOffAPendingSumLeavesEachBranchIntact) {
+    py::exec(R"(
+        trunk = big + x + y + z
+        left = trunk + s
+        right = trunk - s
+    )");
+    EXPECT_TRUE(python::equal(g("left"), ev("stepwise(big, [x, y, z, s])")));
+    EXPECT_TRUE(python::equal(g("right"), ev("stepwise(big, [x, y, z, -s])")));
+    EXPECT_TRUE(python::equal(g("trunk"), ev("stepwise(big, [x, y, z])")));
+}
+
+TEST_F(PendingSumTest, AddingManySummandsBuildsTheSumStraightAway) {
+    // Enough summands could cancel nearly every operand, so the sum is built rather than deferred
+    py::exec(R"(
+        wide = Add.build([BinaryVariable(f"w{i:02d}") for i in range(60)])
+        at_once = big + wide
+        after_one = big + z + wide
+    )");
+    EXPECT_FALSE(PyCapsule_IsValid(ev("at_once._node").ptr(), "qilisdk.expression.pending"));
+    EXPECT_FALSE(PyCapsule_IsValid(ev("after_one._node").ptr(), "qilisdk.expression.pending"));
+    EXPECT_TRUE(python::equal(g("at_once"), ev("stepwise(big, [wide])")));
+    EXPECT_TRUE(python::equal(g("after_one"), ev("stepwise(big, [z, wide])")));
+}
+
+// GCOV_EXCL_BR_STOP
