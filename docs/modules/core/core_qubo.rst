@@ -97,19 +97,21 @@ measured in the constraint's own units and a Lagrange multiplier calibrated for 
 meaning. Every violation is at least one step of :math:`2.5` from the rounded bound, so it costs at least
 :math:`6.25 \lambda`.
 
-Each extra decimal place multiplies the slack range by ten, adding roughly 3.3 slack bits. By default the scale keeps
-three significant digits of the largest coefficient, so next to :math:`2.53` a coefficient of :math:`1.01` is kept
-exactly, but coefficients such as :math:`\pi` or randomly generated weights are rounded. Coefficients are rounded to
-the nearest integer, and the bound is moved past the largest error this can make, so the rounded constraint never
-admits an assignment that the original rejects. A coefficient that tightens the constraint is rounded up to one rather
+The exact integer form is kept whenever its slack fits in 12 bits, so :math:`2.53 a + 1.01 b \leq 3.1`, which becomes
+:math:`253 a + 101 b \leq 310` with a 9 bit slack, is kept exactly. Coefficients such as :math:`\pi` or randomly
+generated weights have no exact form that small, so the constraint is instead scaled as far as the slack bits allow,
+truncated to its leading digit so that coefficients with few decimals stay exact, and its coefficients are rounded to
+the nearest integer. The bound is moved past the largest error this can make, so the rounded constraint never admits
+an assignment that the original rejects. A coefficient that tightens the constraint is rounded up to one rather
 than down to zero, so that a small one, such as :math:`10^{-4}` next to :math:`1`, does not move the bound for every
 assignment. The rounded constraint may exclude a few feasible assignments very close to the bound, and a warning is
 logged when coefficients are rounded. Inequalities that every assignment satisfies are dropped before any rounding.
 
-The ``max_decimals_in_slack`` argument of :meth:`~qilisdk.core.model.Model.to_qubo` sets the number of decimal places
-kept instead: fewer gives fewer slack bits, more gives a constraint closer to the original. It is capped at what keeps
-the range of the integer form within :math:`2^{26}`, so that the squared penalty stays exactly representable in
-float64. Equalities need no slack, so their squared penalty is used as it is.
+The ``max_slack_bits`` argument of :meth:`~qilisdk.core.model.Model.to_qubo` sets that budget instead: fewer bits
+give fewer slack variables, more give a constraint closer to the original. It is capped at 26 bits, so that the squared
+penalty stays exactly representable in float64. The scale never goes below one, so constraints whose coefficients are
+already integers are never rounded, even when their slack needs more bits than the budget. Equalities need no slack,
+so their squared penalty is used as it is.
 
 .. code-block:: python
 
@@ -121,13 +123,13 @@ float64. Equalities need no slack, so their squared penalty is used as it is.
     model.add_constraint("capacity", LEQ(2.53 * a + 1.01 * b, 3.1))
 
     exact = model.to_qubo()  # 253a + 101b <= 310, with a 9 bit slack
-    rounded = model.to_qubo(max_decimals_in_slack=1)  # 25a + 10b <= 30, i.e. 5a + 2b <= 6, with a 3 bit slack
+    rounded = model.to_qubo(max_slack_bits=4)  # 8a + 3b <= 9, with a 4 bit slack
 
     print(len(exact.variables()), len(rounded.variables()))
 
 **Output**::
 
-    11 5
+    11 6
 
 
 
