@@ -98,6 +98,20 @@ NoiseModelCpp emptyNoise() {
     return NoiseModelCpp();
 }
 
+NoiseModelCpp dampingKrausNoise(double p) {
+    // The amplitude-damping channel with jump probability p, as a global Kraus channel
+    DenseMatrix K0 = DenseMatrix::Zero(2, 2);
+    K0(0, 0) = cx(1, 0);
+    K0(1, 1) = cx(std::sqrt(1.0 - p), 0);
+    DenseMatrix K1 = DenseMatrix::Zero(2, 2);
+    K1(0, 1) = cx(std::sqrt(p), 0);
+    SparseMatrix K0_sparse = K0.sparseView();
+    SparseMatrix K1_sparse = K1.sparseView();
+    NoiseModelCpp nm;
+    nm.add_kraus_operators_global({K0_sparse, K1_sparse});
+    return nm;
+}
+
 NoiseModelCpp symmetricReadoutNoise(int n_qubits, double p) {
     NoiseModelCpp nm;
     for (int q = 0; q < n_qubits; ++q) {
@@ -781,6 +795,142 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloEnabled_ProducesNonDeterminis
     EXPECT_TRUE(counts.count("1") > 0);
 }
 
+// With Monte Carlo enabled a noise channel is unravelled over the trajectories: each of them picks
+// one Kraus operator instead of the channel being applied to a density matrix. The ensemble average
+// has to come back to the deterministic result.
+TEST_F(SamplingMonteCarloTest, KrausNoiseIsUnravelledOverTrajectories) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0)};
+    NoiseModelCpp nm = dampingKrausNoise(0.3);
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(4000);
+
+    DenseMatrix deterministic_state = zeroState(n);
+    DenseMatrix sampled_state = zeroState(n);
+    std::vector<py::object> intermediate_results;
+    sampling(gates, n, nm, deterministic_state, intermediate_results, cfg, readout);
+    sampling(gates, n, nm, sampled_state, intermediate_results, cfgMC, readout);
+
+    ASSERT_EQ(sampled_state.rows(), 2);
+    ASSERT_EQ(sampled_state.cols(), 2);
+    EXPECT_NEAR(std::real(sampled_state.trace()), 1.0, kTol);
+    EXPECT_LT((sampled_state - deterministic_state).cwiseAbs().maxCoeff(), kLoose);
+}
+
+TEST_F(SamplingMonteCarloTest, MatrixFreeKrausNoiseIsUnravelledOverTrajectories) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0)};
+    NoiseModelCpp nm = dampingKrausNoise(0.3);
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(4000);
+
+    DenseMatrix deterministic_state = zeroState(n);
+    DenseMatrix sampled_state = zeroState(n);
+    std::vector<py::object> intermediate_results;
+    sampling_matrix_free(gates, n, nm, deterministic_state, intermediate_results, cfg, readout);
+    sampling_matrix_free(gates, n, nm, sampled_state, intermediate_results, cfgMC, readout);
+
+    ASSERT_EQ(sampled_state.cols(), 2);
+    EXPECT_LT((sampled_state - deterministic_state).cwiseAbs().maxCoeff(), kLoose);
+}
+
+TEST_F(SamplingMonteCarloTest, PureStateWithoutNoiseStaysASingleStateVector) {
+    // Trajectories of a noiseless pure state would all be identical, so Monte Carlo is skipped
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0)};
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    DenseMatrix state = zeroState(n);
+    std::vector<py::object> intermediate_results;
+    sampling(gates, n, noNoise, state, intermediate_results, cfgMC, readout);
+    EXPECT_EQ(state.cols(), 1);
+}
+
+TEST_F(SamplingMonteCarloTest, MidCircuitReadoutMeasuresTheEnsemble) {
+    // A mid-circuit readout of a trajectory batch has to sample the ensemble average, not try to
+    // read the batch as if it were a state
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0), makeM(0), makeX(0), makeM(0)};
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(512);
+    NoiseModelCpp nm = dampingKrausNoise(0.2);
+    py::list sampling_readout;
+    sampling_readout.append(SamplingReadout("nshots"_a = 1000));
+    DenseMatrix state = zeroState(n);
+    std::vector<py::object> intermediate_results;
+    sampling(gates, n, nm, state, intermediate_results, cfgMC, sampling_readout);
+
+    ASSERT_EQ(intermediate_results.size(), 1u);
+    py::dict counts = intermediate_results[0].attr("get_samples")().cast<py::dict>();
+    int total = 0;
+    for (auto item : counts) {
+        total += item.second.cast<int>();
+    }
+    EXPECT_EQ(total, 1000);
+}
+
+TEST_F(SamplingMonteCarloTest, MidCircuitCollapseKeepsTheTrajectoryBatch) {
+    // Collapsing a measurement is unravelled as well: every trajectory samples one outcome, so the
+    // batch stays a batch of state vectors of the expected width
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0), makeM(0), makeX(0)};
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(2000);
+    cfgMC.set_measurement_collapse(true);
+    NoiseModelCpp nm = dampingKrausNoise(0.1);
+    DenseMatrix state = zeroState(n);
+    std::vector<py::object> intermediate_results;
+    sampling(gates, n, nm, state, intermediate_results, cfgMC, readout);
+    ASSERT_EQ(state.rows(), 2);
+    ASSERT_EQ(state.cols(), 2);
+    EXPECT_NEAR(std::real(state.trace()), 1.0, kTol);
+    // Every trajectory collapsed to |0> or |1>, which X and damping keep diagonal, so no coherence survives
+    EXPECT_NEAR(std::abs(state(0, 1)), 0.0, kTol);
+    EXPECT_NEAR(std::real(state(0, 0)), 0.5, 0.05);
+}
+
+TEST_F(SamplingMonteCarloTest, MatrixFreeMidCircuitCollapseKeepsTheTrajectoryBatch) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0), makeM(0), makeX(0)};
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);
+    cfgMC.set_num_monte_carlo_trajectories(2000);
+    cfgMC.set_measurement_collapse(true);
+    NoiseModelCpp nm = dampingKrausNoise(0.1);
+    DenseMatrix state = zeroState(n);
+    std::vector<py::object> intermediate_results;
+    sampling_matrix_free(gates, n, nm, state, intermediate_results, cfgMC, readout);
+    ASSERT_EQ(state.rows(), 2);
+    ASSERT_EQ(state.cols(), 2);
+    EXPECT_NEAR(std::real(state.trace()), 1.0, kTol);
+    // Every trajectory collapsed to |0> or |1>, which X and damping keep diagonal, so no coherence survives
+    EXPECT_NEAR(std::abs(state(0, 1)), 0.0, kTol);
+    EXPECT_NEAR(std::real(state(0, 0)), 0.5, 0.05);
+}
+
+TEST_F(SamplingMonteCarloTest, MidCircuitCollapseWithoutMonteCarloGivesADensityMatrix) {
+    // Without trajectories the collapse goes through the non-selective density-matrix version, which
+    // keeps both measurement outcomes as a mixture
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0), makeM(0), makeX(0)};
+    QiliSimConfig cfgCollapse = cfg;
+    cfgCollapse.set_measurement_collapse(true);
+    DenseMatrix state = zeroState(n);
+    std::vector<py::object> intermediate_results;
+    sampling(gates, n, noNoise, state, intermediate_results, cfgCollapse, readout);
+    ASSERT_EQ(state.rows(), 2);
+    ASSERT_EQ(state.cols(), 2);
+    EXPECT_NEAR(std::real(state.trace()), 1.0, kTol);
+    // X after the collapse swaps the two halves of an even mixture, so it stays even and diagonal
+    EXPECT_NEAR(std::real(state(0, 0)), 0.5, kTol);
+    EXPECT_NEAR(std::real(state(1, 1)), 0.5, kTol);
+    EXPECT_NEAR(std::abs(state(0, 1)), 0.0, kTol);
+}
+
 // A caller that passes output_is_trajectories opts into receiving the raw Monte Carlo ensemble
 // (columns are state vectors) instead of the averaged density matrix, so the readouts can be
 // averaged over the trajectories.
@@ -826,52 +976,102 @@ TEST_F(SamplingMonteCarloTest, MatrixFreeMonteCarloKeepsTrajectoriesWhenRequeste
     EXPECT_NEAR(std::real(trace(trajectories_to_density_matrix(state))), 1.0, 1e-12);
 }
 
-// A mid-circuit collapse turns the ensemble back into a density matrix, so the caller must be told
-// the output is no longer a batch of trajectories (and the state must stay a valid density matrix).
-TEST_F(SamplingMonteCarloTest, MidCircuitCollapseDropsTrajectories) {
+// A mid-circuit collapse is unravelled per trajectory, so the ensemble survives it and a caller that
+// asked for the trajectories still gets them back (their average staying a valid density matrix).
+TEST_F(SamplingMonteCarloTest, MidCircuitCollapseKeepsTrajectories) {
     int n = 1;
     std::vector<Gate> gates = {makeH(0), makeM(0), makeH(0)};
     DenseMatrix state;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    cfgMC.set_num_monte_carlo_trajectories(8);
     cfgMC.set_measurement_collapse(true);
-    state = DenseMatrix::Zero(2, 2);
-    state(0, 0) = cx(0.5, 0);
-    state(1, 1) = cx(0.5, 0);
+    state = DenseMatrix::Zero(2, 2000);
+    state.row(0).setOnes();
     std::vector<py::object> intermediate_results;
 
-    bool is_trajectories = true;
-    sampling(gates, n, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+    bool is_trajectories = false;
+    sampling(gates, n, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories, true);
 
-    EXPECT_FALSE(is_trajectories);
+    EXPECT_TRUE(is_trajectories);
     EXPECT_EQ(state.rows(), 2);
-    EXPECT_EQ(state.cols(), 2);
-    EXPECT_NEAR(std::real(trace(state)), 1.0, 1e-12);
-    EXPECT_TRUE((state - state.adjoint()).isZero(1e-12));
+    EXPECT_EQ(state.cols(), 2000);
+    const DenseMatrix averaged = trajectories_to_density_matrix(state);
+    EXPECT_NEAR(std::real(trace(averaged)), 1.0, 1e-12);
+    EXPECT_TRUE((averaged - averaged.adjoint()).isZero(1e-12));
+    // Without the collapse H M H would bring every trajectory back to |0>, with it the average is I/2
+    EXPECT_LT((averaged - 0.5 * DenseMatrix::Identity(2, 2)).cwiseAbs().maxCoeff(), 0.05);
 }
 
-TEST_F(SamplingMonteCarloTest, MatrixFreeMidCircuitCollapseDropsTrajectories) {
+TEST_F(SamplingMonteCarloTest, MatrixFreeMidCircuitCollapseKeepsTrajectories) {
     int n = 1;
     std::vector<Gate> gates = {makeH(0), makeM(0), makeH(0)};
     DenseMatrix state;
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);
-    cfgMC.set_num_monte_carlo_trajectories(8);
     cfgMC.set_measurement_collapse(true);
-    state = DenseMatrix::Zero(2, 2);
-    state(0, 0) = cx(0.5, 0);
-    state(1, 1) = cx(0.5, 0);
+    state = DenseMatrix::Zero(2, 2000);
+    state.row(0).setOnes();
     std::vector<py::object> intermediate_results;
 
-    bool is_trajectories = true;
-    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories);
+    bool is_trajectories = false;
+    sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfgMC, readout, &is_trajectories, true);
 
-    EXPECT_FALSE(is_trajectories);
+    EXPECT_TRUE(is_trajectories);
     EXPECT_EQ(state.rows(), 2);
-    EXPECT_EQ(state.cols(), 2);
-    EXPECT_NEAR(std::real(trace(state)), 1.0, 1e-12);
-    EXPECT_TRUE((state - state.adjoint()).isZero(1e-12));
+    EXPECT_EQ(state.cols(), 2000);
+    const DenseMatrix averaged = trajectories_to_density_matrix(state);
+    EXPECT_NEAR(std::real(trace(averaged)), 1.0, 1e-12);
+    EXPECT_TRUE((averaged - averaged.adjoint()).isZero(1e-12));
+    // Without the collapse H M H would bring every trajectory back to |0>, with it the average is I/2
+    EXPECT_LT((averaged - 0.5 * DenseMatrix::Identity(2, 2)).cwiseAbs().maxCoeff(), 0.05);
+}
+
+// Measuring qubit 1 of a two-qubit batch must collapse that qubit, not qubit 0: with H(0) H(1) M(1) H(0),
+// qubit 0 returns to |0> and only qubit 1 is left as an even mixture.
+TEST_F(SamplingMonteCarloTest, MidCircuitCollapseHitsTheMeasuredQubit) {
+    int n = 2;
+    std::vector<Gate> gates = {makeH(0), makeH(1), makeM(1), makeH(0)};
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_measurement_collapse(true);
+    DenseMatrix expected = DenseMatrix::Zero(4, 4);
+    expected(0, 0) = 0.5;
+    expected(1, 1) = 0.5;
+    for (bool matrix_free : {false, true}) {
+        DenseMatrix state = DenseMatrix::Zero(4, 2000);
+        state.row(0).setOnes();
+        std::vector<py::object> intermediate_results;
+        if (matrix_free) {
+            sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfgMC, readout, nullptr, true);
+        } else {
+            sampling(gates, n, noNoise, state, intermediate_results, cfgMC, readout, nullptr, true);
+        }
+        ASSERT_EQ(state.rows(), 4);
+        ASSERT_EQ(state.cols(), 2000);
+        const DenseMatrix averaged = trajectories_to_density_matrix(state);
+        EXPECT_LT((averaged - expected).cwiseAbs().maxCoeff(), 0.05);
+    }
+}
+
+// A square batch (four trajectories on two qubits) must not be mistaken for a density matrix.
+TEST_F(SamplingMonteCarloTest, SquareTrajectoryBatchIsNotMistakenForADensityMatrix) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0)};
+    for (bool matrix_free : {false, true}) {
+        DenseMatrix state = DenseMatrix::Zero(4, 4);
+        state.row(0).setOnes();
+        std::vector<py::object> intermediate_results;
+        bool is_trajectories = false;
+        if (matrix_free) {
+            sampling_matrix_free(gates, n, noNoise, state, intermediate_results, cfg, readout, &is_trajectories, true);
+        } else {
+            sampling(gates, n, noNoise, state, intermediate_results, cfg, readout, &is_trajectories, true);
+        }
+        EXPECT_TRUE(is_trajectories);
+        ASSERT_EQ(state.cols(), 4);
+        DenseMatrix expected = DenseMatrix::Zero(4, 4);
+        expected.row(2).setOnes();
+        EXPECT_LT((state - expected).cwiseAbs().maxCoeff(), kTol);
+    }
 }
 
 TEST_F(SamplingMatrixFreeTest, BadGate_ThrowsException) {
@@ -1056,6 +1256,43 @@ TEST_F(SamplingTest, MidCircuitMeasurements) {
     EXPECT_EQ(intermediate_results.size(), 1u);
 }
 
+TEST_F(SamplingTest, MidCircuitMeasurementsStabilizer) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeM(0), makeX(0), makeM(0)};
+    StabilizerStateSum initial(n);
+    StabilizerStateSum final_state(n);
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout
+        _stab_mid_ro = [SamplingReadout(nshots=10, expand_samples=False)]
+    )");
+    py::list sampling_readout = py::globals()["_stab_mid_ro"].cast<py::list>();
+    std::vector<py::object> intermediate_results;
+    sampling_stabilizer(gates, n, initial, noNoise, final_state, intermediate_results, cfg, sampling_readout);
+    ASSERT_EQ(intermediate_results.size(), 1u);
+    py::dict samples = intermediate_results[0].attr("sampling").attr("samples");
+    EXPECT_EQ(samples.size(), 1u);
+    EXPECT_EQ(samples["1"].cast<int>(), 10);                // only qubit 0 was measured, after X
+    EXPECT_EQ(final_state.sample(1).begin()->first, "00");  // X X |00> = |00>
+}
+
+TEST_F(SamplingTest, MidCircuitMeasurementsStabilizer_AdjacentMeasurementsGrouped) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeM(0), makeM(1), makeX(1), makeM(1)};
+    StabilizerStateSum initial(n);
+    StabilizerStateSum final_state(n);
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout
+        _stab_grouped_ro = [SamplingReadout(nshots=10, expand_samples=False)]
+    )");
+    py::list sampling_readout = py::globals()["_stab_grouped_ro"].cast<py::list>();
+    std::vector<py::object> intermediate_results;
+    sampling_stabilizer(gates, n, initial, noNoise, final_state, intermediate_results, cfg, sampling_readout);
+    ASSERT_EQ(intermediate_results.size(), 1u);
+    py::dict samples = intermediate_results[0].attr("sampling").attr("samples");
+    EXPECT_EQ(samples.size(), 1u);
+    EXPECT_EQ(samples["10"].cast<int>(), 10);  // M(0) and M(1) give one result over both qubits
+}
+
 // The stabilizer simulator ignores noise models, warning the user. The circuit still runs.
 TEST_F(SamplingTest, Stabilizer_NoiseModel_IgnoredWithWarning) {
     int n = 1;
@@ -1063,7 +1300,8 @@ TEST_F(SamplingTest, Stabilizer_NoiseModel_IgnoredWithWarning) {
     StabilizerStateSum initial(n);
     StabilizerStateSum final_state(n);
     NoiseModelCpp nm = symmetricReadoutNoise(n, 0.1);  // non-empty -> triggers the warning
-    EXPECT_NO_THROW(sampling_stabilizer(gates, n, initial, nm, final_state, cfg, readout));
+    std::vector<py::object> intermediate_results;
+    EXPECT_NO_THROW(sampling_stabilizer(gates, n, initial, nm, final_state, intermediate_results, cfg, readout));
     EXPECT_EQ(final_state.sample(1).begin()->first, "1");  // X|0> = |1>
 }
 
@@ -1075,8 +1313,181 @@ TEST_F(SamplingTest, Stabilizer_MonteCarlo_IgnoredWithWarning) {
     StabilizerStateSum final_state(n);
     QiliSimConfig cfgMC = cfg;
     cfgMC.set_monte_carlo(true);  // triggers the warning
-    EXPECT_NO_THROW(sampling_stabilizer(gates, n, initial, noNoise, final_state, cfgMC, readout));
+    std::vector<py::object> intermediate_results;
+    EXPECT_NO_THROW(sampling_stabilizer(gates, n, initial, noNoise, final_state, intermediate_results, cfgMC, readout));
     EXPECT_EQ(final_state.sample(1).begin()->first, "1");  // X|0> = |1>
+}
+
+// Measurements are skipped by the stabilizer simulator rather than applied, so a multi-target M
+// neither throws nor branches the sum into one term per outcome.
+TEST_F(SamplingTest, Stabilizer_Measurements_NotAppliedAsGates) {
+    int n = 2;
+    std::vector<Gate> gates = {makeH(0), makeH(1), Gate("M", SparseMatrix(), {}, {0, 1}, {})};
+    StabilizerStateSum initial(n);
+    StabilizerStateSum final_state(n);
+    std::vector<py::object> intermediate_results;
+    EXPECT_NO_THROW(sampling_stabilizer(gates, n, initial, noNoise, final_state, intermediate_results, cfg, readout));
+    EXPECT_EQ(final_state.get_states().size(), 1u);
+}
+
+// Readout error is applied after sampling, so the MPS simulator accepts it and runs the circuit.
+TEST_F(SamplingTest, MPS_ReadoutNoise_Accepted) {
+    int n = 1;
+    std::vector<Gate> gates = {makeX(0)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    std::vector<py::object> intermediate_results;
+    NoiseModelCpp nm = symmetricReadoutNoise(n, 0.1);
+    EXPECT_NO_THROW(sampling_mps(gates, n, initial, nm, final_state, intermediate_results, cfg, readout));
+    EXPECT_EQ(final_state.sample(1).begin()->first, "1");  // X|0> = |1>
+}
+
+// Kraus and Lindblad noise would make the state mixed, so both are rejected rather than dropped.
+TEST_F(SamplingTest, MPS_KrausAndLindbladNoise_Throw) {
+    int n = 1;
+    std::vector<Gate> gates = {makeX(0)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    std::vector<py::object> intermediate_results;
+    SparseMatrix identity = pauliX2() * pauliX2();
+    NoiseModelCpp kraus_global;
+    kraus_global.add_kraus_operators_global({identity});
+    NoiseModelCpp kraus_per_qubit;
+    kraus_per_qubit.add_kraus_operators_per_qubit(0, {identity});
+    NoiseModelCpp kraus_per_gate;
+    kraus_per_gate.add_kraus_operators_per_gate("X", {identity});
+    NoiseModelCpp kraus_per_gate_qubit;
+    kraus_per_gate_qubit.add_kraus_operators_per_gate_qubit("X", 0, {identity});
+    NoiseModelCpp lindblad;
+    lindblad.add_jump_operator(identity);
+    for (NoiseModelCpp* nm : {&kraus_global, &kraus_per_qubit, &kraus_per_gate, &kraus_per_gate_qubit, &lindblad}) {
+        EXPECT_THROW(sampling_mps(gates, n, initial, *nm, final_state, intermediate_results, cfg, readout), py::value_error);
+    }
+}
+
+// The MPS simulator ignores Monte Carlo sampling, warning the user. The circuit still runs.
+TEST_F(SamplingTest, MPS_MonteCarlo_IgnoredWithWarning) {
+    int n = 1;
+    std::vector<Gate> gates = {makeX(0)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    std::vector<py::object> intermediate_results;
+    QiliSimConfig cfgMC = cfg;
+    cfgMC.set_monte_carlo(true);  // triggers the warning
+    EXPECT_NO_THROW(sampling_mps(gates, n, initial, noNoise, final_state, intermediate_results, cfgMC, readout));
+    EXPECT_EQ(final_state.sample(1).begin()->first, "1");
+}
+
+// A mid-circuit measurement is read out without collapsing, final measurements are left to the caller.
+TEST_F(SamplingTest, MPS_MeasurementsAndSingleQubitMerging) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeM(0), makeX(0), makeX(0), makeM(1)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    std::vector<py::object> intermediate_results;
+    QiliSimConfig cfgMerge = cfg;
+    cfgMerge.set_combine_single_qubit_gates(true);
+    cfgMerge.set_normalize_after_gate(true);
+    EXPECT_NO_THROW(sampling_mps(gates, n, initial, noNoise, final_state, intermediate_results, cfgMerge, readout));
+    EXPECT_EQ(intermediate_results.size(), 1u);
+    EXPECT_EQ(final_state.sample(1).begin()->first, "10");
+    EXPECT_NEAR(final_state.get_truncation_error(), 0.0, 1e-12);
+}
+
+// Collapsing after a mid-circuit measurement leaves a mixed state, so it is ignored with a warning.
+TEST_F(SamplingTest, MPS_MeasurementCollapse_IgnoredWithWarning) {
+    int n = 1;
+    std::vector<Gate> gates = {makeH(0), makeM(0), makeH(0), makeM(0)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    std::vector<py::object> intermediate_results;
+    QiliSimConfig cfgCollapse = cfg;
+    cfgCollapse.set_measurement_collapse(true);
+    EXPECT_NO_THROW(sampling_mps(gates, n, initial, noNoise, final_state, intermediate_results, cfgCollapse, readout));
+    EXPECT_EQ(intermediate_results.size(), 1u);
+    EXPECT_EQ(final_state.sample(1).begin()->first, "0");  // H H |0> = |0>, uncollapsed
+}
+
+TEST_F(SamplingTest, MidCircuitMeasurementsMPS) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeM(0), makeX(0), makeM(0)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout
+        _mps_mid_ro = [SamplingReadout(nshots=10, expand_samples=False)]
+    )");
+    py::list sampling_readout = py::globals()["_mps_mid_ro"].cast<py::list>();
+    std::vector<py::object> intermediate_results;
+    sampling_mps(gates, n, initial, noNoise, final_state, intermediate_results, cfg, sampling_readout);
+    ASSERT_EQ(intermediate_results.size(), 1u);
+    py::dict samples = intermediate_results[0].attr("sampling").attr("samples");
+    EXPECT_EQ(samples.size(), 1u);
+    EXPECT_EQ(samples["1"].cast<int>(), 10);                // only qubit 0 was measured, after X
+    EXPECT_EQ(final_state.sample(1).begin()->first, "00");  // X X |00> = |00>
+}
+
+TEST_F(SamplingTest, MidCircuitMeasurementsMPS_AdjacentMeasurementsGrouped) {
+    int n = 2;
+    std::vector<Gate> gates = {makeX(0), makeM(0), makeM(1), makeX(1), makeM(1)};
+    MPSState initial(n);
+    MPSState final_state(n);
+    py::exec(R"(
+        from qilisdk.readout import SamplingReadout
+        _mps_grouped_ro = [SamplingReadout(nshots=10, expand_samples=False)]
+    )");
+    py::list sampling_readout = py::globals()["_mps_grouped_ro"].cast<py::list>();
+    std::vector<py::object> intermediate_results;
+    sampling_mps(gates, n, initial, noNoise, final_state, intermediate_results, cfg, sampling_readout);
+    ASSERT_EQ(intermediate_results.size(), 1u);
+    py::dict samples = intermediate_results[0].attr("sampling").attr("samples");
+    EXPECT_EQ(samples.size(), 1u);
+    EXPECT_EQ(samples["10"].cast<int>(), 10);  // M(0) and M(1) give one result over both qubits
+}
+
+// A gate that turns the state into NaN is reported as such, rather than as a zero norm.
+TEST_F(SamplingTest, MPS_NaNGateThrows) {
+    int n = 2;
+    SparseMatrix nan_matrix = pauliX2();
+    nan_matrix.coeffRef(0, 1) = Complex(std::nan(""), 0.0);
+    std::vector<Gate> gates = {Gate("U1", nan_matrix, {}, {1}, {})};
+    MPSState initial(n);
+    MPSState final_state(n);
+    std::vector<py::object> intermediate_results;
+    QiliSimConfig cfgNormalize = cfg;
+    cfgNormalize.set_normalize_after_gate(true);
+    std::string message;
+    try {
+        sampling_mps(gates, n, initial, noNoise, final_state, intermediate_results, cfgNormalize, readout);
+    } catch (const py::value_error& e) {
+        message = e.what();
+    }
+    EXPECT_NE(message.find("NaN"), std::string::npos);
+}
+
+// A bond dimension of one cannot hold a Bell state, so the discarded weight is warned about.
+TEST_F(SamplingTest, MPS_TruncationWarnsWhenSignificant) {
+    int n = 2;
+    std::vector<Gate> gates = {makeH(0), Gate("X", pauliX2(), {0}, {1}, {})};
+    MPSState initial(n);
+    MPSState final_state(n);
+    std::vector<py::object> intermediate_results;
+    QiliSimConfig cfgTight = cfg;
+    cfgTight.set_mps_max_bond_dimension(1);
+    cfgTight.set_mps_truncation_cutoff(1e-12);
+    EXPECT_NO_THROW(sampling_mps(gates, n, initial, noNoise, final_state, intermediate_results, cfgTight, readout));
+    EXPECT_NEAR(final_state.get_truncation_error(), 0.5, 1e-12);
+    EXPECT_GT(final_state.get_truncation_error(), MPSState::TRUNCATION_WARNING_THRESHOLD);
+    EXPECT_EQ(final_state.get_max_bond_dimension_used(), 1);
+}
+
+// The circuit and the state must agree on how many qubits there are.
+TEST_F(SamplingTest, MPS_QubitCountMismatchThrows) {
+    std::vector<Gate> gates = {makeX(0)};
+    MPSState initial(2);
+    MPSState final_state(2);
+    std::vector<py::object> intermediate_results;
+    EXPECT_THROW(sampling_mps(gates, 3, initial, noNoise, final_state, intermediate_results, cfg, readout), py::value_error);
 }
 
 // GCOV_EXCL_BR_STOP

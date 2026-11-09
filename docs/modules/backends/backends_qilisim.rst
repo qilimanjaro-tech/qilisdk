@@ -160,7 +160,7 @@ Example, using the adaptive integrator:
 Digital simulation methods
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There are currently two digital simulation methods available. The first is a statevector simulator, which can be configured through the options:
+There are currently three digital simulation methods available. The first is a statevector simulator, which can be configured through the options:
 
 .. list-table::
    :header-rows: 1
@@ -208,6 +208,33 @@ at the cost of being slower if the circuit contains many non-Clifford gates. It 
         digital_simulation_method=DigitalMethod.stabilizer(max_states=100),
     )
 
+The third is a matrix product state simulator, which represents the state as a chain of tensors truncated after each two-qubit gate.
+Its cost grows with the entanglement the circuit generates and only linearly with the qubit count, so weakly entangling circuits on
+many qubits are cheap. It supports one- and two-qubit gates, and has the following options:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 35 65
+
+   * - Option
+     - Meaning
+   * - ``max_bond_dimension``
+     - Largest bond dimension kept. Circuits whose entanglement stays below this are simulated exactly, otherwise the state is approximate.
+   * - ``truncation_cutoff``
+     - Singular values below this fraction of the largest are discarded.
+   * - ``combine_single_qubit_gates``
+     - Whether to combine consecutive single-qubit gates on the same qubit into one operation.
+   * - ``fuse_gates``
+     - Whether to fuse runs of adjacent two-qubit gates into one operation.
+
+.. code-block:: python
+
+    from qilisdk.backends import DigitalMethod, QiliSim
+
+    backend = QiliSim(
+        digital_simulation_method=DigitalMethod.mps(max_bond_dimension=64),
+    )
+
 Execution and Monte Carlo
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -216,7 +243,8 @@ optional Monte Carlo trajectory sampling for open-system simulations.
 
 - ``num_threads`` controls the number of threads used for parallelization, defaults to using all available cores.
 - ``seed`` controls the random number generator seed, defaults to a random seed. Subsequent runs will increment the seed automatically.
-- ``monte_carlo=MonteCarloConfig(trajectories=N)`` enabled Monte Carlo sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled.
+- ``monte_carlo=MonteCarloConfig(trajectories=N)`` enables Monte Carlo sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled.
+- ``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` sets how many quantum jumps an analog evolution step may expect - the adaptive ``integrate_rk45_matrix_free`` method shortens its steps to stay below it (lower is more accurate but slower), whilst fixed-step methods instead warn when the schedule is too coarse for it, defaults to ``0.5``.
 - ``measurement_collapse`` controls whether measurements collapse the statevector in place (relevant for mid-circuit measurement and reservoirs) - defaults to ``False``.
 - ``normalize_state`` controls whether the state should be renormalized - defaults to ``True``.
 - ``gpu`` controls whether to use GPU acceleration if available - defaults to ``False``.
@@ -229,12 +257,23 @@ optional Monte Carlo trajectory sampling for open-system simulations.
         execution_config=ExecutionConfig(
             num_threads=8,
             seed=42,
-            monte_carlo=MonteCarloConfig(trajectories=500),
+            monte_carlo=MonteCarloConfig(trajectories=500, max_expected_jumps_per_step=0.5),
             measurement_collapse=True,
             normalize_state=False,
             gpu=True,
         ),
     )
+
+.. note::
+
+   Monte Carlo results are statistical, so two things control their quality:
+
+   - **Number of trajectories.** The statistical error of any estimate falls as
+     :math:`1/\sqrt{N}`, so a noisy run needs more trajectories.
+   - **Schedule step size.** If using noise, quantum jumps are applied at the end of the schedule step,
+     so a step must be short enough that at most one jump is likely within it. This also controls
+     the general quality of the simulation as with all simulation methods, doing things in smaller steps
+     improves overall accuracy.
 
 Noise model support
 -------------------
@@ -246,7 +285,7 @@ noise channels:
 .. code-block:: python
 
     from qilisdk.backends import QiliSim
-    from qilisdk.noise import NoiseModel, Depolarizing 
+    from qilisdk.noise import NoiseModel, Depolarizing
 
     nm = NoiseModel()
     nm.add(Depolarizing(probability=1e-3))
@@ -298,4 +337,6 @@ These require the ``cuda`` extra to be installed:
     * - :meth:`DigitalMethod.statevector() <qilisdk.backends.backend_config.DigitalMethod.statevector>`
       - |n|
     * - :meth:`DigitalMethod.stabilizer() <qilisdk.backends.backend_config.DigitalMethod.stabilizer>`
+      - |n|
+    * - :meth:`DigitalMethod.mps() <qilisdk.backends.backend_config.DigitalMethod.mps>`
       - |n|

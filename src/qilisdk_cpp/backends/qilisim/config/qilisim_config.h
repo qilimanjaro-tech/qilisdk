@@ -23,6 +23,7 @@ class QiliSimConfig {
    private:
     bool monte_carlo = false;
     int num_monte_carlo_trajectories = 1000;
+    double max_expected_jumps_per_step = 0.5;
     int arnoldi_dim = 10;
     int num_arnoldi_substeps = 10;
     std::string time_evolution_method = "integrate_rk4_matrix_free";
@@ -44,6 +45,8 @@ class QiliSimConfig {
     int warmups = 100;
     bool gpu = false;
     int stabilizer_max_states = 100;
+    int mps_max_bond_dimension = 64;
+    double mps_truncation_cutoff = 1e-7;
 
     // Counter of many times we've advanced the seed
     mutable uint64_t seed_stream = 0;
@@ -51,8 +54,11 @@ class QiliSimConfig {
    public:
     // Getters
     int get_stabilizer_max_states() const { return stabilizer_max_states; }
+    int get_mps_max_bond_dimension() const { return mps_max_bond_dimension; }
+    double get_mps_truncation_cutoff() const { return mps_truncation_cutoff; }
     bool get_monte_carlo() const { return monte_carlo; }
     int get_num_monte_carlo_trajectories() const { return num_monte_carlo_trajectories; }
+    double get_max_expected_jumps_per_step() const { return max_expected_jumps_per_step; }
     int get_arnoldi_dim() const { return arnoldi_dim; }
     double get_adaptive_tol() const { return adaptive_tol; }
     int get_num_arnoldi_substeps() const { return num_arnoldi_substeps; }
@@ -78,6 +84,7 @@ class QiliSimConfig {
     // Setters
     void set_monte_carlo(bool value) { monte_carlo = value; }
     void set_num_monte_carlo_trajectories(int value) { num_monte_carlo_trajectories = value; }
+    void set_max_expected_jumps_per_step(double value) { max_expected_jumps_per_step = value; }
     void set_arnoldi_dim(int value) { arnoldi_dim = value; }
     void set_adaptive_tol(double value) { adaptive_tol = value; }
     void set_num_arnoldi_substeps(int value) { num_arnoldi_substeps = value; }
@@ -102,6 +109,8 @@ class QiliSimConfig {
     void set_warmups(int value) { warmups = value; }
     void set_gpu(bool value) { gpu = value; }
     void set_stabilizer_max_states(int value) { stabilizer_max_states = value; }
+    void set_mps_max_bond_dimension(int value) { mps_max_bond_dimension = value; }
+    void set_mps_truncation_cutoff(double value) { mps_truncation_cutoff = value; }
 
     // Initialize with default values
     QiliSimConfig() = default;
