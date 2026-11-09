@@ -556,7 +556,11 @@ class QTensor:
         return qili_hash(self.data, self.shape, self.nqubits)
 
     def __getitem__(self, index: tuple[int, int]) -> complex:
-        return self._qtensor_cpp.coeff(index[0], index[1])
+        row, col = index
+        rows, cols = self.shape
+        if row not in range(rows) or col not in range(cols):
+            raise IndexError(f"Index {index} is out of range for a QTensor of shape {(rows, cols)}")
+        return self._qtensor_cpp.coeff(row, col)
 
     @classmethod
     def tensor_product(cls, others: list[QTensor], qubits: list[list[int]] | None = None) -> QTensor:
