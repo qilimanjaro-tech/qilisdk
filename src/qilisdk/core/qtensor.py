@@ -698,6 +698,49 @@ class QTensor:
         return QTensor(QTensorCpp.uniform(nqubits))
 
     @classmethod
+    def w(cls, nqubits: int) -> QTensor:
+        r"""
+        Create a W state for the specified number of qubits.
+
+        This is the equal superposition of all basis states with exactly one qubit in the :math:`|1⟩` state,
+        e.g. :math:`(|001⟩ + |010⟩ + |100⟩) / \sqrt{3}` for three qubits.
+
+        Args:
+            nqubits (int): The number of qubits in the W state.
+
+        Returns:
+            QTensor: A new QTensor representing the W state.
+
+        Raises:
+            ValueError: If ``nqubits`` is less than one or more than 30.
+        """
+        logger.trace("[QTensor] QTensor.w creating W state on {} qubits", nqubits)
+        return QTensor(QTensorCpp.w(nqubits))
+
+    @classmethod
+    def random(cls, nqubits: int, seed: int | None = None) -> QTensor:
+        """
+        Create a random normalized statevector for the specified number of qubits.
+
+        The state is sampled uniformly over all pure states (i.e. from the Haar measure), so that it has no bias
+        towards any particular region of the Hilbert space.
+
+        Args:
+            nqubits (int): The number of qubits in the random state.
+            seed (int | None, optional): The random seed used to generate the state. If None, a random seed is generated.
+
+        Returns:
+            QTensor: A new QTensor representing the random state.
+
+        Raises:
+            ValueError: If ``nqubits`` is negative or more than 30.
+        """
+        if seed is None:
+            seed = secrets.randbits(32)
+        logger.trace("[QTensor] QTensor.random creating random state on {} qubits with seed {}", nqubits, seed)
+        return QTensor(QTensorCpp.random(nqubits, seed % 2**32))
+
+    @classmethod
     def basis_state(cls, n: int, N: int) -> QTensor:
         r"""
         Generate the n'th basis vector representation, on a N-size Hilbert space (N=2**num_qubits).

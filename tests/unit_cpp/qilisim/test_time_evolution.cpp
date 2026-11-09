@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 #include "../../../src/qilisdk_cpp/backends/qilisim/analog/time_evolution.h"
 #include "../../../src/qilisdk_cpp/backends/qilisim/utils/matrix_utils.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/utils/random.h"
 
 #if defined(_OPENMP)
 #include <omp.h>
@@ -55,6 +56,18 @@ SparseMatrix pure_plus_sparse() {
     DenseMatrix r(2, 2);
     r << 0.5, 0.5, 0.5, 0.5;
     return to_sparse(r);
+}
+
+SparseMatrix pure_excited_sparse() {
+    DenseMatrix r = DenseMatrix::Zero(2, 2);
+    r(1, 1) = 1.0;
+    return to_sparse(r);
+}
+
+SparseMatrix statevector_excited_sparse() {
+    DenseMatrix v = DenseMatrix::Zero(2, 1);
+    v(1, 0) = 1.0;
+    return to_sparse(v);
 }
 
 SparseMatrix statevector_zero_sparse() {
@@ -100,9 +113,9 @@ struct TimeEvolutionOutputs {
     std::vector<std::vector<double>> intermediate_expectation_values;
 };
 
-TimeEvolutionOutputs run_time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model, const std::vector<SparseMatrix>& observables, QiliSimConfig& config) {
+TimeEvolutionOutputs run_time_evolution(SparseMatrix rho_0, const std::vector<SparseMatrix>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model, const std::vector<SparseMatrix>& observables, QiliSimConfig& config, bool input_is_trajectories = false) {
     TimeEvolutionOutputs out;
-    time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model, config, out.rho_t, out.intermediate_rhos);
+    time_evolution(rho_0, hamiltonians, parameters_list, step_list, noise_model, config, out.rho_t, out.intermediate_rhos, nullptr, input_is_trajectories);
 
     for (const auto& O : observables) {
         if (out.rho_t.cols() == 1) {
@@ -136,10 +149,10 @@ struct MatrixFreeOutputs {
     std::vector<std::vector<double>> intermediate_expectation_values;
 };
 
-MatrixFreeOutputs run_time_evolution_mf(SparseMatrix rho_0, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model, const std::vector<MatrixFreeHamiltonian>& observables, QiliSimConfig& config) {
+MatrixFreeOutputs run_time_evolution_mf(SparseMatrix rho_0, const std::vector<MatrixFreeHamiltonian>& hamiltonians, const std::vector<std::vector<double>>& parameters_list, const std::vector<double>& step_list, NoiseModelCpp& noise_model, const std::vector<MatrixFreeHamiltonian>& observables, QiliSimConfig& config, bool input_is_trajectories = false) {
     MatrixFreeOutputs out;
     out.rho_t = DenseMatrix(rho_0);
-    time_evolution_matrix_free(hamiltonians, parameters_list, step_list, noise_model, config, out.rho_t, out.intermediate_rhos);
+    time_evolution_matrix_free(hamiltonians, parameters_list, step_list, noise_model, config, out.rho_t, out.intermediate_rhos, nullptr, input_is_trajectories);
 
     // Apply the operators using the Born rule
     for (const auto& O : observables) {
@@ -753,6 +766,227 @@ TEST_F(TimeEvolutionMonteCarloMatrixFreeTest, GroundStateRemainsGroundStateMF) {
     EXPECT_NEAR(std::real(out.rho_t(0, 0)), 1.0, kTolLoose);
 }
 
+// A Monte Carlo ensemble carrying real noise has to reproduce the deterministic Lindblad evolution,
+// which is what these check. The dynamics are a resonant drive on a relaxing qubit, integrated with a
+// step short enough that the jump-time discretisation stays well inside the sampling error.
+class TimeEvolutionMonteCarloNoiseTest : public ::testing::Test {
+   protected:
+    SparseMatrix H_x = to_sparse(0.5 * pauli_x());
+    MatrixFreeHamiltonian H_x_mf = make_matrix_free_H(0.5, 0, "X");
+    std::vector<SparseMatrix> hamiltonians = {H_x};
+    std::vector<MatrixFreeHamiltonian> hamiltonians_mf = {H_x_mf};
+    std::vector<std::vector<double>> params;
+    std::vector<double> steps;
+    NoiseModelCpp noise;
+    NoiseModelCpp empty_noise;
+    QiliSimConfig deterministic;
+    QiliSimConfig monte_carlo;
+
+    // 2000 trajectories keep the sampling error of a bounded observable near 1/sqrt(2000) ~ 0.02
+    static constexpr int kTrajectories = 2000;
+    static constexpr double kEnsembleTol = 0.05;
+
+    void SetUp() override {
+        const int num_steps = 50;
+        const double dt = 0.02;
+        for (int step = 1; step <= num_steps; ++step) {
+            steps.push_back(dt * step);
+        }
+        params = {std::vector<double>(steps.size(), 1.0)};
+        noise.add_jump_operator(amp_damp_jump());
+        deterministic.set_time_evolution_method("integrate_rk4");
+        monte_carlo = deterministic;
+        monte_carlo.set_monte_carlo(true);
+        monte_carlo.set_num_monte_carlo_trajectories(kTrajectories);
+        monte_carlo.set_seed(1234);
+    }
+};
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, MatchesTheDeterministicLindbladEvolution) {
+    auto reference = run_time_evolution(pure_excited_sparse(), hamiltonians, params, steps, noise, {}, deterministic);
+    auto sampled = run_time_evolution(pure_excited_sparse(), hamiltonians, params, steps, noise, {}, monte_carlo);
+    EXPECT_LT((sampled.rho_t - reference.rho_t).cwiseAbs().maxCoeff(), kEnsembleTol);
+    EXPECT_NEAR(std::real(sampled.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, MatchesTheDeterministicLindbladEvolutionMatrixFree) {
+    deterministic.set_time_evolution_method("integrate_rk4_matrix_free");
+    monte_carlo.set_time_evolution_method("integrate_rk4_matrix_free");
+    auto reference = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, params, steps, noise, {}, deterministic);
+    auto sampled = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, params, steps, noise, {}, monte_carlo);
+    EXPECT_LT((sampled.rho_t - reference.rho_t).cwiseAbs().maxCoeff(), kEnsembleTol);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, MatchesTheDeterministicLindbladEvolutionArnoldi) {
+    deterministic.set_time_evolution_method("arnoldi");
+    monte_carlo.set_time_evolution_method("arnoldi");
+    auto reference = run_time_evolution(pure_excited_sparse(), hamiltonians, params, steps, noise, {}, deterministic);
+    auto sampled = run_time_evolution(pure_excited_sparse(), hamiltonians, params, steps, noise, {}, monte_carlo);
+    EXPECT_LT((sampled.rho_t - reference.rho_t).cwiseAbs().maxCoeff(), kEnsembleTol);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, MatchesTheDeterministicLindbladEvolutionArnoldiMatrixFree) {
+    deterministic.set_time_evolution_method("arnoldi_matrix_free");
+    monte_carlo.set_time_evolution_method("arnoldi_matrix_free");
+    auto reference = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, params, steps, noise, {}, deterministic);
+    auto sampled = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, params, steps, noise, {}, monte_carlo);
+    EXPECT_LT((sampled.rho_t - reference.rho_t).cwiseAbs().maxCoeff(), kEnsembleTol);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, MatchesTheDeterministicLindbladEvolutionDirect) {
+    deterministic.set_time_evolution_method("direct");
+    monte_carlo.set_time_evolution_method("direct");
+    auto reference = run_time_evolution(pure_excited_sparse(), hamiltonians, params, steps, noise, {}, deterministic);
+    auto sampled = run_time_evolution(pure_excited_sparse(), hamiltonians, params, steps, noise, {}, monte_carlo);
+    EXPECT_LT((sampled.rho_t - reference.rho_t).cwiseAbs().maxCoeff(), kEnsembleTol);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, MatchesTheDeterministicLindbladEvolutionAdaptive) {
+    deterministic.set_time_evolution_method("integrate_rk45_matrix_free");
+    monte_carlo.set_time_evolution_method("integrate_rk45_matrix_free");
+    auto reference = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, params, steps, noise, {}, deterministic);
+    auto sampled = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, params, steps, noise, {}, monte_carlo);
+    EXPECT_LT((sampled.rho_t - reference.rho_t).cwiseAbs().maxCoeff(), kEnsembleTol);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, NoiseIsNotSilentlyDropped) {
+    auto noisy = run_time_evolution(pure_excited_sparse(), hamiltonians, params, steps, noise, {}, monte_carlo);
+    auto noiseless = run_time_evolution(pure_excited_sparse(), hamiltonians, params, steps, empty_noise, {}, monte_carlo);
+    // The excited state relaxes, so the ground-state population has to end up clearly higher
+    EXPECT_GT(std::real(noisy.rho_t(0, 0)) - std::real(noiseless.rho_t(0, 0)), 0.1);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, StateVectorInputGivesTheSameEnsemble) {
+    // A pure input never has to be promoted to a density matrix, which is the point of trajectories
+    auto from_density_matrix = run_time_evolution(pure_excited_sparse(), hamiltonians, params, steps, noise, {}, monte_carlo);
+    auto from_state_vector = run_time_evolution(statevector_excited_sparse(), hamiltonians, params, steps, noise, {}, monte_carlo);
+    EXPECT_EQ(from_state_vector.rho_t.rows(), 2);
+    EXPECT_EQ(from_state_vector.rho_t.cols(), 2);
+    EXPECT_LT((from_state_vector.rho_t - from_density_matrix.rho_t).cwiseAbs().maxCoeff(), kEnsembleTol);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, TrajectoryInputIsUnravelledToo) {
+    // A batch of trajectories handed straight in (as the reservoir does between layers) keeps being
+    // unravelled rather than evolving as if there were no noise
+    DenseMatrix batch = DenseMatrix::Zero(2, 256);
+    batch.row(1).setOnes();
+    SparseMatrix trajectories = batch.sparseView();
+    auto noisy = run_time_evolution(trajectories, hamiltonians, params, steps, noise, {}, deterministic, true);
+    auto noiseless = run_time_evolution(trajectories, hamiltonians, params, steps, empty_noise, {}, deterministic, true);
+    EXPECT_EQ(noisy.rho_t.cols(), 256);
+    const DenseMatrix noisy_rho = trajectories_to_density_matrix(noisy.rho_t);
+    const DenseMatrix noiseless_rho = trajectories_to_density_matrix(noiseless.rho_t);
+    EXPECT_GT(std::real(noisy_rho(0, 0)) - std::real(noiseless_rho(0, 0)), 0.1);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, SquareTrajectoryBatchIsNotMistakenForADensityMatrix) {
+    // Two trajectories on one qubit give a 2x2 batch, which must still be evolved column by column
+    DenseMatrix batch = DenseMatrix::Zero(2, 2);
+    batch.row(1).setOnes();
+    auto out = run_time_evolution(batch.sparseView(), hamiltonians, params, steps, empty_noise, {}, deterministic, true);
+    QiliSimConfig matrix_free = deterministic;
+    matrix_free.set_time_evolution_method("integrate_rk4_matrix_free");
+    auto out_mf = run_time_evolution_mf(batch.sparseView(), hamiltonians_mf, params, steps, empty_noise, {}, matrix_free, true);
+    auto single = run_time_evolution(statevector_excited_sparse(), hamiltonians, params, steps, empty_noise, {}, deterministic);
+    for (long c = 0; c < 2; ++c) {
+        EXPECT_LT((out.rho_t.col(c) - single.rho_t.col(0)).cwiseAbs().maxCoeff(), kTol);
+        EXPECT_LT((out_mf.rho_t.col(c) - single.rho_t.col(0)).cwiseAbs().maxCoeff(), kTol);
+    }
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, IntermediateResultsAreNormalizedDensityMatrices) {
+    monte_carlo.set_store_intermediate_results(true);
+    auto sampled = run_time_evolution(pure_excited_sparse(), hamiltonians, params, steps, noise, {}, monte_carlo);
+    ASSERT_EQ(sampled.intermediate_rhos.size(), steps.size());
+    for (const auto& rho_intermediate : sampled.intermediate_rhos) {
+        EXPECT_EQ(rho_intermediate.rows(), 2);
+        EXPECT_EQ(rho_intermediate.cols(), 2);
+        EXPECT_NEAR(std::real(rho_intermediate.trace()), 1.0, kTol);
+    }
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, TimeDependentRatesAreUnravelled) {
+    // A rate that is zero for the first half of the schedule and on for the second half must relax
+    // less than a rate that is on throughout
+    NoiseModelCpp ramped_noise;
+    std::vector<double> sqrt_rates(steps.size(), 0.0);
+    for (size_t step = steps.size() / 2; step < steps.size(); ++step) {
+        sqrt_rates[step] = 1.0;
+    }
+    ramped_noise.add_jump_operator(amp_damp_jump(), sqrt_rates);
+    auto ramped = run_time_evolution(pure_excited_sparse(), hamiltonians, params, steps, ramped_noise, {}, monte_carlo);
+    auto always_on = run_time_evolution(pure_excited_sparse(), hamiltonians, params, steps, noise, {}, monte_carlo);
+    EXPECT_GT(std::real(ramped.rho_t(1, 1)), std::real(always_on.rho_t(1, 1)));
+    EXPECT_NEAR(std::real(ramped.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, TimeDependentRatesAreUnravelledMatrixFree) {
+    // The drift has to be rebuilt at every step when the rate moves, which the matrix-free path does
+    // on its own since it carries the drift as a separate operator
+    monte_carlo.set_time_evolution_method("integrate_rk4_matrix_free");
+    NoiseModelCpp ramped_noise;
+    std::vector<double> sqrt_rates(steps.size(), 0.0);
+    for (size_t step = steps.size() / 2; step < steps.size(); ++step) {
+        sqrt_rates[step] = 1.0;
+    }
+    ramped_noise.add_jump_operator(amp_damp_jump(), sqrt_rates);
+    auto ramped = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, params, steps, ramped_noise, {}, monte_carlo);
+    auto always_on = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, params, steps, noise, {}, monte_carlo);
+    EXPECT_GT(std::real(ramped.rho_t(1, 1)), std::real(always_on.rho_t(1, 1)));
+    EXPECT_NEAR(std::real(ramped.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, StateVectorInputGivesTheSameEnsembleMatrixFree) {
+    monte_carlo.set_time_evolution_method("integrate_rk4_matrix_free");
+    auto from_density_matrix = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, params, steps, noise, {}, monte_carlo);
+    auto from_state_vector = run_time_evolution_mf(statevector_excited_sparse(), hamiltonians_mf, params, steps, noise, {}, monte_carlo);
+    EXPECT_EQ(from_state_vector.rho_t.rows(), 2);
+    EXPECT_EQ(from_state_vector.rho_t.cols(), 2);
+    EXPECT_LT((from_state_vector.rho_t - from_density_matrix.rho_t).cwiseAbs().maxCoeff(), kEnsembleTol);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, ScheduleStartingAtZeroIsAccepted) {
+    // Schedules built on the Python side start their time list at t = 0, so the leading step of zero
+    // length has to be skipped rather than taken as the shortest step
+    std::vector<double> steps_from_zero = {0.0};
+    steps_from_zero.insert(steps_from_zero.end(), steps.begin(), steps.end());
+    std::vector<std::vector<double>> params_from_zero = {std::vector<double>(steps_from_zero.size(), 1.0)};
+    monte_carlo.set_time_evolution_method("integrate_rk45_matrix_free");
+    auto sampled = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, params_from_zero, steps_from_zero, noise, {}, monte_carlo);
+    EXPECT_NEAR(std::real(sampled.rho_t.trace()), 1.0, kTol);
+    EXPECT_GT(std::real(sampled.rho_t(0, 0)), 0.5);  // the excited state has relaxed
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, CoarseScheduleWarnsButStillRuns) {
+    // One step long enough for several jumps cannot resolve them in time, which is worth a warning
+    std::vector<double> coarse_steps = {5.0, 10.0};
+    std::vector<std::vector<double>> coarse_params = {{1.0, 1.0}};
+    auto sampled = run_time_evolution(pure_excited_sparse(), hamiltonians, coarse_params, coarse_steps, noise, {}, monte_carlo);
+    EXPECT_NEAR(std::real(sampled.rho_t.trace()), 1.0, kTol);
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, UnnormalizedStateVectorGivesTheSameEnsemble) {
+    // The jump test reads the lost norm as a probability, so the input norm must not change the statistics
+    SparseMatrix scaled = statevector_excited_sparse() * std::sqrt(2.0);
+    monte_carlo.set_normalize_state(false);
+    QiliSimConfig scaled_config = monte_carlo;
+    auto from_unit = run_time_evolution(statevector_excited_sparse(), hamiltonians, params, steps, noise, {}, monte_carlo);
+    auto from_scaled = run_time_evolution(scaled, hamiltonians, params, steps, noise, {}, scaled_config);
+    EXPECT_TRUE(from_scaled.rho_t.isApprox(from_unit.rho_t, kTol));
+}
+
+TEST_F(TimeEvolutionMonteCarloNoiseTest, AdaptiveStepResolvesJumpsOnACoarseSchedule) {
+    // The adaptive step is also capped by the jump rate, so one long schedule step is still accurate
+    std::vector<double> coarse_steps = {1.0};
+    std::vector<std::vector<double>> coarse_params = {{1.0}};
+    deterministic.set_time_evolution_method("integrate_rk45_matrix_free");
+    monte_carlo.set_time_evolution_method("integrate_rk45_matrix_free");
+    monte_carlo.set_max_expected_jumps_per_step(0.02);
+    auto reference = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, coarse_params, coarse_steps, noise, {}, deterministic);
+    auto sampled = run_time_evolution_mf(pure_excited_sparse(), hamiltonians_mf, coarse_params, coarse_steps, noise, {}, monte_carlo);
+    EXPECT_LT((sampled.rho_t - reference.rho_t).cwiseAbs().maxCoeff(), kEnsembleTol);
+}
+
 TEST_F(TimeEvolutionMethodTest, BadMethodThrows) {
     QiliSimConfig cfg;
     cfg.set_time_evolution_method("not_a_real_method");
@@ -769,6 +1003,33 @@ class TimeEvolutionAdaptiveTest : public ::testing::Test {
     QiliSimConfig config;
     virtual void SetUp() override { config.set_time_evolution_method("integrate_rk45_matrix_free"); }
 };
+
+TEST_F(TimeEvolutionAdaptiveTest, TrajectoryBatchKeepsEachColumnNormalized) {
+    DenseMatrix batch = DenseMatrix::Zero(2, 8);
+    batch.row(0).setOnes();
+    auto out = run_time_evolution_mf(batch.sparseView(), hamiltonians, params, steps, empty_noise, {}, config, true);
+    ASSERT_EQ(out.rho_t.cols(), 8);
+    for (long c = 0; c < out.rho_t.cols(); ++c) {
+        EXPECT_NEAR(out.rho_t.col(c).norm(), 1.0, kTol);
+    }
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, ZeroTrajectoryInABatchThrows) {
+    DenseMatrix batch = DenseMatrix::Zero(2, 3);
+    batch(0, 0) = 1.0;
+    batch(0, 1) = 1.0;
+    SparseMatrix trajectories = batch.sparseView();
+    EXPECT_ANY_THROW(run_time_evolution_mf(trajectories, hamiltonians, params, steps, empty_noise, {}, config, true));
+}
+
+TEST_F(TimeEvolutionAdaptiveTest, ArnoldiMatrixFreeHonoursNormalizeState) {
+    // Unitary evolution keeps the norm, so without renormalization a scaled input keeps its scale
+    config.set_time_evolution_method("arnoldi_matrix_free");
+    config.set_normalize_state(false);
+    SparseMatrix scaled = statevector_zero_sparse() * 2.0;
+    auto out = run_time_evolution_mf(scaled, hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_NEAR(out.rho_t.norm(), 2.0, kTol);
+}
 
 TEST_F(TimeEvolutionAdaptiveTest, DefaultConfigDoesNotThrow) {
     auto out = run_time_evolution_mf(pure_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);

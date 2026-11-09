@@ -14,6 +14,8 @@
 
 
 import copy
+import math
+import re
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -33,7 +35,16 @@ from qilisdk.core.model import (
     _Linearizer,
     _validate_undirected_edges,
 )
-from qilisdk.core.variables import BinaryVariable, Bitwise, Domain, OneHot, Parameter, SpinVariable, Variable
+from qilisdk.core.variables import (
+    BinaryVariable,
+    Bitwise,
+    Domain,
+    DomainWall,
+    OneHot,
+    Parameter,
+    SpinVariable,
+    Variable,
+)
 from qilisdk.utils.classical_solvers import BruteForceSolver
 
 
@@ -792,7 +803,7 @@ def test_qubo_add_constraint_and_objective_errors():
     y = Variable("y", Domain.INTEGER)
     t2 = Comparison(lhs=y, rhs=0, operation=ComparisonOperation.EQ)
     q2 = QUBO(label="q4")
-    with pytest.raises(ValueError, match=r"Variable y spans too many values"):
+    with pytest.raises(ValueError, match=r"Variable y expands into too many binary variables"):
         q2.add_constraint("c2", t2)
 
 
@@ -1659,8 +1670,18 @@ def test_check_variables_rejects_unbounded_variables(domain):
     x = Variable("x", domain)
 
     con = EQ(x, 1)
-    with pytest.raises(ValueError, match=r"Variable x spans too many values"):
+    with pytest.raises(ValueError, match=r"Variable x expands into too many binary variables"):
         q._check_variables(con)
+
+
+def test_to_qubo_rejects_an_unbounded_positive_integer():
+    x = Variable("x", Domain.POSITIVE_INTEGER)
+    m = Model("m")
+    m.set_objective(x)
+    m.add_constraint("c", EQ(x, 3))
+
+    with pytest.raises(ValueError, match=r"Variable x expands into too many binary variables"):
+        m.to_qubo()
 
 
 def test_check_variables_rejects_real_variable_whose_precision_is_too_fine():
@@ -1668,8 +1689,124 @@ def test_check_variables_rejects_real_variable_whose_precision_is_too_fine():
     x = Variable("x", Domain.REAL, bounds=(0, 1), precision=1e-15)
 
     con = EQ(x, 1)
-    with pytest.raises(ValueError, match=r"Variable x spans too many values"):
+    with pytest.raises(ValueError, match=r"Variable x expands into too many binary variables"):
         q._check_variables(con)
+
+
+@pytest.mark.parametrize(
+    ("encoding", "accepted_bounds", "rejected_bounds"),
+    [
+        (Bitwise, (0, 2**32 - 1), (0, 2**32)),
+        (OneHot, (0, 31), (0, 32)),
+        (DomainWall, (0, 32), (0, 33)),
+    ],
+)
+def test_check_variables_accepts_32_binary_variables_and_rejects_33(encoding, accepted_bounds, rejected_bounds):
+    accepted = Variable("x", Domain.INTEGER, bounds=accepted_bounds, encoding=encoding)
+    QUBO("test")._check_variables(EQ(accepted, 1))
+
+    rejected = Variable("y", Domain.INTEGER, bounds=rejected_bounds, encoding=encoding)
+    con = EQ(rejected, 1)
+    q = QUBO("test")
+    with pytest.raises(ValueError, match=r"Variable y expands into too many binary variables \(33\)"):
+        q._check_variables(con)
+
+
+def test_check_variables_error_suggests_bitwise_for_other_encodings():
+    x = Variable("x", Domain.INTEGER, bounds=(0, 40), encoding=OneHot)
+    con = EQ(x, 1)
+    q = QUBO("test")
+    expected = (
+        "Variable x expands into too many binary variables (41) under the One-Hot encoding, the maximum supported"
+        " being 32. Set tighter bounds on the variable (or a coarser precision for real variables), or use a more"
+        " compact encoding such as Bitwise."
+    )
+    with pytest.raises(ValueError, match=f"^{re.escape(expected)}$"):
+        q._check_variables(con)
+
+
+def test_check_variables_error_does_not_suggest_bitwise_for_bitwise():
+    x = Variable("x", Domain.INTEGER, bounds=(0, 2**40), encoding=Bitwise)
+    con = EQ(x, 1)
+    q = QUBO("test")
+    expected = (
+        "Variable x expands into too many binary variables (41) under the Bitwise encoding, the maximum supported"
+        " being 32. Set tighter bounds on the variable (or a coarser precision for real variables)."
+    )
+    with pytest.raises(ValueError, match=f"^{re.escape(expected)}$"):
+        q._check_variables(con)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"bounds": (0, math.inf)},
+        {"bounds": (-1e308, 1e308)},
+        {"bounds": (0, 1e10), "precision": 1e-300},
+    ],
+)
+def test_check_variables_rejects_real_variables_with_an_infinite_span(kwargs):
+    x = Variable("x", Domain.REAL, **kwargs)
+    con = EQ(x, 1)
+    q = QUBO("test")
+    with pytest.raises(ValueError, match=r"Variable x expands into too many binary variables \(inf\)"):
+        q._check_variables(con)
+
+
+def test_check_variables_rejects_one_hot_but_accepts_bitwise_at_the_same_precision():
+    one_hot = Variable("x", Domain.REAL, bounds=(0, 1), encoding=OneHot, precision=1e-2)
+    con = EQ(one_hot, 1)
+    q = QUBO("test")
+    with pytest.raises(ValueError, match=r"Variable x expands into too many binary variables"):
+        q._check_variables(con)
+
+    bitwise = Variable("y", Domain.REAL, bounds=(0, 1), encoding=Bitwise, precision=1e-2)
+    q._check_variables(EQ(bitwise, 1))
+    assert "y" in q.continuous_vars
+
+
+def test_to_qubo_rejects_a_bounded_one_hot_variable_that_is_too_wide():
+    x = Variable("x", Domain.INTEGER, bounds=(0, 40), encoding=OneHot)
+    m = Model("m")
+    m.set_objective(x)
+    m.add_constraint("c", EQ(x, 3))
+
+    with pytest.raises(ValueError, match=r"Variable x expands into too many binary variables"):
+        m.to_qubo()
+
+
+def test_check_variables_accepts_a_rejected_variable_once_its_bounds_are_tightened():
+    x = Variable("x", Domain.INTEGER, bounds=(0, 40), encoding=OneHot)
+    con = EQ(x, 1)
+    q = QUBO("test")
+    with pytest.raises(ValueError, match=r"Variable x expands into too many binary variables"):
+        q._check_variables(con)
+
+    x.set_bounds(0, 10)
+    q._check_variables(con)
+
+    assert x.num_binary_equivalent() == 11
+    assert "x" in q.continuous_vars
+
+
+def test_add_constraint_rejects_a_slack_variable_that_expands_into_too_many_binary_variables():
+    x = Variable("x", Domain.INTEGER, bounds=(0, 10**6))
+    y = Variable("y", Domain.INTEGER, bounds=(0, 10**6))
+    con = GEQ(10**6 * x + 10**6 * y, 5)
+    q = QUBO("q")
+    with pytest.raises(ValueError, match=r"Variable c_slack expands into too many binary variables"):
+        q.add_constraint("c", con)
+
+
+def test_check_variables_accepts_a_wide_range_of_values_under_a_compact_encoding():
+    """Bitwise needs only log2 of the range, so a range far wider than the limit is still encodable."""
+    q = QUBO("test")
+    x = Variable("x", Domain.INTEGER, bounds=(0, 2**20), encoding=Bitwise)
+
+    q._check_variables(EQ(x, 1))
+
+    assert x.num_binary_equivalent() <= model_module._MAX_BINARY_VARS
+    assert "x" in q.continuous_vars
 
 
 def test_check_variables_accepts_a_real_variable_with_a_workable_precision():
