@@ -49,9 +49,10 @@ if (NOT Eigen3_FOUND)
     include(FetchContent)
     FetchContent_Declare(
         eigen
-        GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-        GIT_TAG 5.0.1
-        GIT_SHALLOW TRUE
+        URL https://src.fedoraproject.org/repo/pkgs/eigen3/eigen-5.0.1.tar.bz2/sha512/5cb11c7f1945ae7f36c5deb067b8d5a962d2d3cff7d4dbec8a4ee255ee6aae1b7dbe6d5a6dcc6fe77554ef191e4101366bf79cfb34f5cf06a0e4de311afbeaf6/eigen-5.0.1.tar.bz2
+            https://distfiles.gentoo.org/distfiles/38/eigen-5.0.1.tar.bz2
+            https://gitlab.com/libeigen/eigen/-/archive/5.0.1/eigen-5.0.1.tar.bz2
+        URL_HASH SHA256=e4de6b08f33fd8b8985d2f204381408c660bffa6170ac65b68ae1bd3cd575c0a
     )
     FetchContent_MakeAvailable(eigen)
 endif()

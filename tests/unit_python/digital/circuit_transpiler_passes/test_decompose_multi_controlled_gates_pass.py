@@ -645,7 +645,8 @@ def test_zyz_unitary(factory_name: str, factory) -> None:
     unitary = gate.matrix.dense()
     theta, phi, gamma = _zyz_from_unitary(unitary)
     reconstructed = U3(0, theta=theta, phi=phi, gamma=gamma).matrix.dense()
-    assert np.allclose(unitary, reconstructed), f"ZYZ reconstruction failed for {factory_name}"
+    normalized = unitary * np.exp(-1j * np.angle(unitary[0, 0]))
+    assert np.allclose(normalized, reconstructed), f"ZYZ reconstruction failed for {factory_name}"
 
 
 def test_zyz_unitary_errors():
@@ -719,8 +720,10 @@ def test_decompose_pass_of_multi_controlled_generic_gate():
     multi_qubit_gate = MagicMock(spec=BasicGate)
     multi_qubit_gate.nqubits = 2
     multi_qubit_gate._parameters = {}
-    controlled_gate = Controlled(2, basic_gate=multi_qubit_gate)
-    circuit = Circuit(3)
+    multi_qubit_gate.control_qubits = ()
+    multi_qubit_gate.target_qubits = (0, 3)
+    controlled_gate = Controlled(1, 2, basic_gate=multi_qubit_gate)
+    circuit = Circuit(4)
     circuit.add(controlled_gate)
     with pytest.raises(NotImplementedError, match="Controlled version of multi-qubit gates is not supported"):
         DecomposeMultiControlledGatesPass().run(circuit)

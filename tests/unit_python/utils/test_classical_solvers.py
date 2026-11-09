@@ -12,14 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import importlib
+import importlib.metadata
+from importlib.metadata import PackageNotFoundError
 from unittest.mock import patch
 
 import numpy as np
 import pytest
+from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 
+import qilisdk.utils.classical_solvers as classical_solvers
+from qilisdk._optionals import OptionalDependencyError
 from qilisdk.core.comparison import EQ
 from qilisdk.core.model import QUBO, Model, ObjectiveSense
-from qilisdk.core.variables import BinaryVariable, Domain, OneHot, Parameter, SpinVariable, Variable
+from qilisdk.core.variables import BinaryVariable, Domain, DomainWall, OneHot, Parameter, SpinVariable, Variable
 from qilisdk.utils.classical_solvers import (
     BruteForceSolver,
     ClassicalSolver,
@@ -141,6 +147,28 @@ def test_brute_force_integer_variable_enumeration():
     m.set_objective(v * 1)
     result = BruteForceSolver().solve(m)
     assert result.sample[v] == 0
+
+
+@pytest.mark.parametrize("encoding", [OneHot, DomainWall])
+@pytest.mark.parametrize("sense", [ObjectiveSense.MINIMIZE, ObjectiveSense.MAXIMIZE])
+def test_brute_force_skips_invalid_code_words(encoding, sense):
+    v = Variable("v", Domain.POSITIVE_INTEGER, bounds=(0, 2), encoding=encoding)
+    m = Model("encoded_model")
+    m.set_objective(v * 1, sense=sense)
+    result = BruteForceSolver().solve(m)
+    expected = 0 if sense == ObjectiveSense.MINIMIZE else 2
+    assert result.sample[v] == expected
+
+
+@pytest.mark.parametrize("encoding", [OneHot, DomainWall])
+@pytest.mark.parametrize("sense", [ObjectiveSense.MINIMIZE, ObjectiveSense.MAXIMIZE])
+def test_brute_force_skips_invalid_code_words_real(encoding, sense):
+    v = Variable("v", Domain.REAL, bounds=(0, 1), encoding=encoding, precision=0.5)
+    m = Model("encoded_real_model")
+    m.set_objective(v * 1, sense=sense)
+    result = BruteForceSolver().solve(m)
+    expected = 0 if sense == ObjectiveSense.MINIMIZE else 1
+    assert result.sample[v] == pytest.approx(expected)
 
 
 def test_brute_force_spin_variable():
@@ -388,3 +416,83 @@ def test_simulated_annealing_invalid_effort_raises(num_reads, num_sweeps):
     solver = SimulatedAnnealingSolver(num_reads=num_reads, num_sweeps=num_sweeps)
     with pytest.raises(ValueError, match="must be positive"):
         solver.solve(qubo)
+
+
+def _forget_optional_symbols():
+    """Drop symbols an earlier lazy access cached, so the next one goes through ``__getattr__``."""
+    for name in classical_solvers._OPTIONAL_FEATURE_BY_SYMBOL:
+        classical_solvers.__dict__.pop(name, None)
+
+
+def _reload_without_pyscipopt(mp):
+    """Reload the package as if ``pyscipopt`` were not installed."""
+    real_version = importlib.metadata.version
+
+    def fake_version(name):
+        if name == "pyscipopt":
+            raise PackageNotFoundError(name)
+        return real_version(name)
+
+    mp.setattr(importlib.metadata, "version", fake_version)
+    module = importlib.reload(classical_solvers)
+    _forget_optional_symbols()
+    return module
+
+
+def test_importing_the_package_without_scip_does_not_warn(caplog):  # ruff: ignore[redefined-while-unused]
+    """Importing a solver must stay silent when the optional 'scip' extra is absent."""
+    try:
+        with pytest.MonkeyPatch.context() as mp:
+            module = _reload_without_pyscipopt(mp)
+
+            assert module.BruteForceSolver is not None
+            assert "scip" not in caplog.text
+            assert "unavailable" not in caplog.text
+    finally:
+        importlib.reload(classical_solvers)
+        _forget_optional_symbols()
+
+
+def test_accessing_scip_solver_without_scip_warns_and_stubs(caplog):  # ruff: ignore[redefined-while-unused]
+    """The warning and the stub only appear once ScipSolver itself is requested."""
+    try:
+        with pytest.MonkeyPatch.context() as mp:
+            module = _reload_without_pyscipopt(mp)
+
+            stub = module.ScipSolver
+
+            assert "Optional feature scip unavailable" in caplog.text
+            with pytest.raises(OptionalDependencyError, match=r"pip install qilisdk\[scip\]"):
+                stub()
+    finally:
+        importlib.reload(classical_solvers)
+        _forget_optional_symbols()
+
+
+def test_scip_solver_is_cached_after_first_access(caplog):  # ruff: ignore[redefined-while-unused]
+    """The first access caches ScipSolver on the module, so later ones skip ``__getattr__`` and stay silent."""
+    try:
+        with pytest.MonkeyPatch.context() as mp:
+            module = _reload_without_pyscipopt(mp)
+
+            first = module.ScipSolver
+            second = module.ScipSolver
+
+            assert first is second
+            assert "ScipSolver" in module.__dict__
+            assert caplog.text.count("Optional feature scip unavailable") == 1
+    finally:
+        importlib.reload(classical_solvers)
+        _forget_optional_symbols()
+
+
+def test_unknown_attribute_raises_attribute_error():
+    with pytest.raises(AttributeError, match="has no attribute 'NotASolver'"):
+        classical_solvers.NotASolver
+
+
+def test_dir_advertises_the_optional_solver():
+    _forget_optional_symbols()
+
+    assert "ScipSolver" not in classical_solvers.__dict__
+    assert "ScipSolver" in dir(classical_solvers)

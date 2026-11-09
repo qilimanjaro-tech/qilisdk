@@ -20,6 +20,7 @@
 #if defined(_OPENMP)
 #include <omp.h>
 #endif
+#include <set>
 
 namespace py = pybind11;
 
@@ -797,6 +798,41 @@ TEST(UniformTest, ThreeQubits_EqualAmplitudes) {
     }
 }
 
+TEST(WTest, ThreeQubits_SingleExcitations) {
+    QTensorCpp q = QTensorCpp::w(3);
+    EXPECT_EQ(q.get_shape().first, 8);
+    EXPECT_EQ(q.get_shape().second, 1);
+    double c = 1.0 / std::sqrt(3.0);
+    for (int i = 0; i < 8; i++) {
+        double expected = (i == 1 || i == 2 || i == 4) ? c : 0.0;
+        EXPECT_NEAR(q.get_data().coeff(i, 0).real(), expected, 1e-10);
+    }
+}
+
+TEST(WTest, NoQubits_Throws) {
+    EXPECT_THROW(QTensorCpp::w(0), py::value_error);
+}
+
+TEST(WTest, TooManyQubits_Throws) {
+    EXPECT_THROW(QTensorCpp::w(MAX_QUBITS_DENSE + 1), py::value_error);
+}
+
+TEST(RandomTest, Normalized_AndDeterministicForSeed) {
+    QTensorCpp q = QTensorCpp::random(3, 42);
+    EXPECT_EQ(q.get_shape().first, 8);
+    EXPECT_EQ(q.get_shape().second, 1);
+    EXPECT_NEAR(q.norm("l2"), 1.0, 1e-10);
+    EXPECT_EQ(q, QTensorCpp::random(3, 42));
+}
+
+TEST(RandomTest, NegativeQubits_Throws) {
+    EXPECT_THROW(QTensorCpp::random(-1, 42), py::value_error);
+}
+
+TEST(RandomTest, TooManyQubits_Throws) {
+    EXPECT_THROW(QTensorCpp::random(MAX_QUBITS_DENSE + 1, 42), py::value_error);
+}
+
 TEST(TensorProductTest, Empty_Throws) {
     EXPECT_THROW(QTensorCpp::tensor_product({}), py::value_error);
 }
@@ -1253,6 +1289,15 @@ TEST(ExpectationValueTest, SampledSuperposition_ConvergesToExactValue) {
     QTensorCpp op_z(Z);
     EXPECT_NEAR(std::abs(ket.expectation_value(op_z, 1).real()), 1.0, 1e-10);
     EXPECT_NEAR(ket.expectation_value(op_z, 100000).real(), 0.0, 0.05);
+
+    // A fixed seed is reproducible, while no seed draws fresh randomness each call
+    Complex seeded = ket.expectation_value(op_z, 100, 7);
+    EXPECT_EQ(seeded, ket.expectation_value(op_z, 100, 7));
+    std::set<double> unseeded;
+    for (int i = 0; i < 10; ++i) {
+        unseeded.insert(ket.expectation_value(op_z, 100).real());
+    }
+    EXPECT_GT(unseeded.size(), 1u);
 }
 
 TEST(ExpectationValueTest, SampledNonNormalizedState_KeepsNormalization) {

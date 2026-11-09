@@ -13,7 +13,9 @@
 // limitations under the License.
 #pragma once
 
+#include <cstdint>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <type_traits>
@@ -76,8 +78,12 @@ class QTensorCpp {
     // Backend-agnostic accessors
     StorageFormat get_format() const { return _format; }
     std::string get_format_string() const;
-    Eigen::Index rows() const;
-    Eigen::Index cols() const;
+    Eigen::Index rows() const {
+        return std::visit([](const auto& mat) { return Eigen::Index(mat.rows()); }, _data);
+    }
+    Eigen::Index cols() const {
+        return std::visit([](const auto& mat) { return Eigen::Index(mat.cols()); }, _data);
+    }
     Eigen::Index nnz() const;
     SparseMatrix to_row_sparse() const;
     DenseMatrix to_dense() const;
@@ -174,9 +180,9 @@ class QTensorCpp {
     py::list probabilities_python() const;
     std::map<std::string, int> sample(int nshots = 1000, int seed = 42) const;
     py::dict sample_python(int nshots = 1000, int seed = 42) const;
-    Complex expectation_value(const QTensorCpp& other, int nshots = 0) const;
-    Complex expectation_value(const MatrixFreeHamiltonian& other, int nshots = 0) const;
-    Complex expectation_value_python(const py::object& other, int nshots = 0) const;
+    Complex expectation_value(const QTensorCpp& other, int nshots = 0, std::optional<std::uint32_t> seed = std::nullopt) const;
+    Complex expectation_value(const MatrixFreeHamiltonian& other, int nshots = 0, std::optional<std::uint32_t> seed = std::nullopt) const;
+    Complex expectation_value_python(const py::object& other, int nshots = 0, const py::object& seed = py::none()) const;
     QTensorCpp partial_trace_python(const py::object& keep) const;
     QTensorCpp partial_trace(const std::set<int>& keep) const;
     QTensorCpp commutator(const QTensorCpp& other) const;
@@ -198,6 +204,8 @@ class QTensorCpp {
     static QTensorCpp bra(const std::vector<int>& qubit_values);
     static QTensorCpp ghz(int nqubits);
     static QTensorCpp uniform(int nqubits);
+    static QTensorCpp w(int nqubits);
+    static QTensorCpp random(int nqubits, std::uint32_t seed);
     static QTensorCpp tensor_product_python(const py::list& others);
     static QTensorCpp tensor_product(const std::vector<QTensorCpp>& others);
 
