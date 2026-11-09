@@ -483,10 +483,12 @@ class SabreLayoutPass(CircuitTranspilerPass):
                 if candidate_cost < best_cost - SabreLayoutPass._TIE_EPSILON:
                     best_cost = candidate_cost
                     best_edge = (physical_a, physical_b)
-                elif abs(candidate_cost - best_cost) <= SabreLayoutPass._TIE_EPSILON:
+                elif (
+                    abs(candidate_cost - best_cost) <= SabreLayoutPass._TIE_EPSILON
                     # Tie-break randomly for diversification
-                    if random_generator.random() < SabreLayoutPass._TIE_BREAK_PROBABILITY:
-                        best_edge = (physical_a, physical_b)
+                    and random_generator.random() < SabreLayoutPass._TIE_BREAK_PROBABILITY
+                ):
+                    best_edge = (physical_a, physical_b)
 
             # Apply the chosen swap *to the mapping only* (layout-only SABRE).
             if best_edge is not None:
