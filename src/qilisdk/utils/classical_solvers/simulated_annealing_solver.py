@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from solvers_module import solve_with_simulated_annealing  # ty:ignore[unresolved-import]
+from solvers_module import solve_with_simulated_annealing  # ty:ignore[import-not-found]
 
 from qilisdk.core import Model
 
