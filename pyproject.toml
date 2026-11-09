@@ -112,8 +112,7 @@ all-cu13 = [
 # and qutip powers QutipBackend, both installed by the user. These floors are mirrored
 # in qilisdk.backends.OPTIONAL_FEATURES, which enforces them at runtime.
 backends = [
-    # CUDA-Q has no wheels for 3.14 yet, so CudaqBackend is untested there.
-    "cuda-quantum-cu13>=0.14.0; python_version < '3.14'",
+    "cuda-quantum-cu13>=0.14.0",
     "qutip>=5.2.2",
     "qutip-qip>=0.4.0",
 ]

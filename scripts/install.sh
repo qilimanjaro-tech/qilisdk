@@ -14,8 +14,7 @@ set -euo pipefail
 cd "$(dirname "$(dirname "$(realpath "$0")")")"
 
 # Install everything, rebuilding the C++ in release mode
-# (Python 3.13 since CUDA-Q has no 3.14 wheels yet, matching CI)
 echo "Installing qilisdk with all optional dependencies..."
-uv sync --python 3.13 --all-groups --extra all-cu13 -Ccmake.build-type=Release --reinstall-package qilisdk 2>&1
+uv sync --all-groups --extra all-cu13 -Ccmake.build-type=Release --reinstall-package qilisdk 2>&1
 
-echo "qilisdk version $(.venv/bin/python -c 'import qilisdk; print(qilisdk.__version__)')" installed successfully!
+echo "qilisdk version $(.venv/bin/python -c 'import qilisdk; print(qilisdk.__version__)') installed successfully!"
