@@ -3473,7 +3473,8 @@ provides-extras = ["cuda", "cuda12", "cuda13", "speqtrum", "openfermion", "qir",
 
 [package.metadata.requires-dev]
 backends = [
-    { name = "cuda-quantum-cu13", specifier = ">=0.14.0" },
+    { name = "cuda-quantum-cu13", marker = "python_full_version < '3.14'", specifier = ">=0.14.0" },
+    { name = "cuda-quantum-cu13", marker = "python_full_version >= '3.14'", specifier = ">=0.16.0" },
     { name = "qutip", specifier = ">=5.2.2" },
     { name = "qutip-qip", specifier = ">=0.4.0" },
 ]
