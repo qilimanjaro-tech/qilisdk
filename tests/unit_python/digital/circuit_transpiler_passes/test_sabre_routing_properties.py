@@ -233,7 +233,10 @@ def test_layout_and_routing_are_deterministic_for_a_seed(apply_layout: bool) -> 
         result = CircuitTranspiler([layout_pass, SabreSwapPass(edges, seed=11)]).transpile(circuit)
         return [(type(gate).__name__, gate.qubits) for gate in result.circuit.gates], layout_pass.last_layout
 
-    assert transpile() == transpile()
+    first_run = transpile()
+    second_run = transpile()
+
+    assert first_run == second_run
 
 
 def test_layout_simulation_does_not_mutate_its_input_layout() -> None:
