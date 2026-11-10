@@ -425,12 +425,16 @@ class SabreSwapPass(CircuitTranspilerPass):
                     candidate_delta = front_delta + beta * extended_delta
 
                     # Distance of the gate being routed after the hypothetical swap
-                    new_position_a = (
-                        dense_b if position_a == dense_a else dense_a if position_a == dense_b else position_a
-                    )
-                    new_position_b = (
-                        dense_b if position_b == dense_a else dense_a if position_b == dense_b else position_b
-                    )
+                    new_position_a = position_a
+                    if position_a == dense_a:
+                        new_position_a = dense_b
+                    elif position_a == dense_b:
+                        new_position_a = dense_a
+                    new_position_b = position_b
+                    if position_b == dense_a:
+                        new_position_b = dense_b
+                    elif position_b == dense_b:
+                        new_position_b = dense_a
                     if distance_matrix[new_position_a][new_position_b] < current_distance:
                         if candidate_delta < improving_delta - tie_epsilon:
                             improving_delta = candidate_delta
