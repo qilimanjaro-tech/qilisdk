@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import itertools
 import math
 import random
 from itertools import starmap
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -275,8 +275,7 @@ def test_layout_tie_break(monkeypatch):
     layout_pass = SabreLayoutPass(graph, lookahead_size=1, seed=0)
     circuit = _circuit_with_cz()
 
-    # Force candidate swaps to have exactly equal cost
-    monkeypatch.setattr(layout_pass, "_cost_front", lambda *args, **kwargs: 1.0)
+    # Both edges next to the CZ endpoints shorten it equally, so their scores tie.
     monkeypatch.setattr(random.Random, "random", lambda self: 0.4)
 
     layout_pass.run(circuit)
@@ -313,12 +312,8 @@ def test_sabre_layout_simulation_uses_sampled_candidate_when_neighbors_are_unava
 
     graph = make_graph([], nodes=[0, 1])
     layout_pass = SabreLayoutPass(graph, num_trials=1, seed=0)
-    fake_cost_front = MagicMock(side_effect=SampledCandidateUsed())
-    monkeypatch.setattr(
-        layout_pass,
-        "_cost_front",
-        fake_cost_front,
-    )
+    random_generator = MagicMock()
+    random_generator.sample.side_effect = SampledCandidateUsed()
 
     with pytest.raises(SampledCandidateUsed):
         layout_pass._sabre_simulate_layout(
@@ -326,34 +321,45 @@ def test_sabre_layout_simulation_uses_sampled_candidate_when_neighbors_are_unava
             [[0, 2], [2, 0]],
             [(0, 1)],
             [[0], [0]],
-            random.Random(0),
+            random_generator,
             [0, 1],
             {0: 0, 1: 1},
         )
 
 
-def test_sabre_layout_release_valve_breaks_swap_cycles(monkeypatch: pytest.MonkeyPatch) -> None:
-    class SwapBudgetExceeded(RuntimeError):
-        pass
+def test_sabre_layout_simulation_applies_sampled_candidate_when_neighbors_are_unavailable() -> None:
+    # No coupling edges, but the distance matrix makes a 1 <-> 2 swap bring both front gates together.
+    graph = make_graph([], nodes=[0, 1, 2, 3])
+    layout_pass = SabreLayoutPass(graph, num_trials=1, seed=0)
+    distance_matrix = [[0, 2, 1, 2], [2, 0, 2, 1], [1, 2, 0, 2], [2, 1, 2, 0]]
+    random_generator = MagicMock()
+    random_generator.sample.return_value = [2, 1]
+    random_generator.random.return_value = 0.9
 
+    final_layout, score = layout_pass._sabre_simulate_layout(
+        [0, 1, 2, 3],
+        distance_matrix,
+        [(0, 1), (2, 3)],
+        [[0], [0], [1], [1]],
+        random_generator,
+        [0, 1, 2, 3],
+        {0: 0, 1: 1, 2: 2, 3: 3},
+    )
+
+    random_generator.sample.assert_called_once_with([0, 1, 2, 3], 2)
+    assert final_layout == [0, 2, 1, 3]
+    assert math.isclose(score, 1.0)
+
+
+def test_sabre_layout_release_valve_breaks_swap_cycles() -> None:
     pairs = [(3, 2), (1, 4), (3, 2), (4, 2), (3, 0), (1, 0), (3, 1), (1, 2)]
     pairs += [(1, 2), (4, 0), (0, 4), (3, 2), (1, 0), (2, 3), (1, 0), (0, 4)]
     circuit = Circuit(5)
     for control, target in pairs:
         circuit.add(CNOT(control, target))
     layout_pass = SabreLayoutPass([(0, 1), (1, 2), (2, 3), (3, 4)], seed=2, num_trials=1)
-    original_swap_mapping = SabreLayoutPass._swap_mapping
-    swap_calls = 0
 
-    def bounded_swap_mapping(*args: Any) -> None:
-        nonlocal swap_calls
-        swap_calls += 1
-        if swap_calls > 100_000:
-            raise SwapBudgetExceeded
-        original_swap_mapping(*args)
-
-    monkeypatch.setattr(SabreLayoutPass, "_swap_mapping", staticmethod(bounded_swap_mapping))
-
+    # Without the release valve this circuit makes the greedy heuristic swap back and forth forever.
     layout_pass.run(circuit)
 
     assert sorted(layout_pass.last_layout) == [0, 1, 2, 3, 4]
@@ -379,8 +385,9 @@ def test_sabre_layout_release_valve_walks_closest_gate_into_adjacency() -> None:
         physical_to_dense_index,
     )
 
+    # Logical qubit 0 walks 0 -> 1 -> 2 -> 3, one SWAP per step.
     assert final_layout == [3, 4]
-    assert math.isclose(score, 1.0)
+    assert math.isclose(score, 3.0)
 
 
 def test_sabre_layout_release_valve_stops_on_disconnected_topology() -> None:
@@ -401,20 +408,73 @@ def test_sabre_layout_release_valve_stops_on_disconnected_topology() -> None:
     )
 
     assert final_layout == [0, 2]
-    assert math.isclose(score, 0.5 * 1e6)
+    assert math.isclose(score, 0.0)
 
 
-def test_sabre_layout_cost_front_penalizes_unreachable_interactions() -> None:
-    cost = SabreLayoutPass._cost_front(
-        {0},
-        [0, 1],
-        [(0, 1)],
-        [[0, SabreLayoutPass._UNREACHABLE_DISTANCE], [SabreLayoutPass._UNREACHABLE_DISTANCE, 0]],
-        None,
-        {0: 0, 1: 1},
+def test_sabre_layout_rescales_decay_when_it_underflows() -> None:
+    # A tiny decay_lambda drives the lazy decay scale below the rescale threshold within two swaps.
+    layout_pass = SabreLayoutPass(_line_graph(5), num_trials=1, seed=0, decay_lambda=1e-60)
+    physical_nodes = [0, 1, 2, 3, 4]
+    physical_to_dense_index = {node: node for node in physical_nodes}
+    distance_matrix = layout_pass._all_pairs_shortest_path_unweighted(
+        layout_pass.topology, physical_nodes, physical_to_dense_index
     )
 
-    assert math.isclose(cost, 1e6)
+    final_layout, score = layout_pass._sabre_simulate_layout(
+        [0, 4],
+        distance_matrix,
+        [(0, 1)],
+        [[0], [0]],
+        random.Random(0),
+        physical_nodes,
+        physical_to_dense_index,
+    )
+
+    assert abs(final_layout[0] - final_layout[1]) == 1
+    assert math.isclose(score, 3.0)
+
+
+def test_sabre_layout_scores_disconnected_front_gates_with_finite_penalty() -> None:
+    # Gate (2, 3) can never be routed across components; gate (0, 1) must still be brought together.
+    graph = make_graph([(0, 1), (1, 2), (3, 4)])
+    layout_pass = SabreLayoutPass(graph, num_trials=1, seed=0)
+    physical_nodes = [0, 1, 2, 3, 4]
+    physical_to_dense_index = {node: node for node in physical_nodes}
+    distance_matrix = layout_pass._all_pairs_shortest_path_unweighted(graph, physical_nodes, physical_to_dense_index)
+
+    final_layout, _ = layout_pass._sabre_simulate_layout(
+        [0, 2, 1, 3],
+        distance_matrix,
+        [(0, 1), (2, 3)],
+        [[0], [0], [1], [1]],
+        random.Random(0),
+        physical_nodes,
+        physical_to_dense_index,
+    )
+
+    assert sorted(final_layout) == [0, 1, 2, 3]
+
+
+@pytest.mark.parametrize("seed", range(5))
+def test_sabre_layout_finds_swap_free_layout_for_scrambled_chain(seed: int) -> None:
+    # The chain 3-0-5-1-4-2 fits a line exactly once laid out; forward-backward refinement must find it.
+    order = [3, 0, 5, 1, 4, 2]
+    circuit = Circuit(6)
+    for control, target in itertools.pairwise(order):
+        circuit.add(CNOT(control, target))
+    layout_pass = SabreLayoutPass([(i, i + 1) for i in range(5)], seed=seed)
+
+    out = layout_pass.run(circuit)
+
+    assert math.isclose(layout_pass.last_score, 0.0)
+    assert all(abs(gate.qubits[0] - gate.qubits[1]) == 1 for gate in out.gates)
+
+
+def test_sabre_layout_clamps_iteration_and_trial_counts() -> None:
+    layout_pass = SabreLayoutPass(_line_graph(2), num_trials=0, num_iterations=0)
+
+    assert layout_pass.num_trials == 1
+    assert layout_pass.num_iterations == 1
 
 
 def test_sabre_layout_random_initial_layout_requires_enough_physical_nodes() -> None:
