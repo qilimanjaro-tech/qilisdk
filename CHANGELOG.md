@@ -271,6 +271,7 @@
 - Added a docs page describing the global QiliSDK settings. ([PR #498](https://github.com/qilimanjaro-tech/qilisdk/pull/498))
 - Added a utils section to the docs. ([PR #505](https://github.com/qilimanjaro-tech/qilisdk/pull/505))
 - Updated the `docs.sh` script to also check the code blocks found in function docstrings. In doing so, all of the wrong docstrings have also been fixed. The checker does the same as it does with the code block in the docs: copying them to a new python script, running it and ensuring that it runs successfully. This will help prevent older code examples in the docstrings from going out of sync with the rest of the code. ([PR #543](https://github.com/qilimanjaro-tech/qilisdk/pull/543))
+- Added a code of conduct and a `CONTRIBUTING.md` guide, which includes the policy on using AI tools in pull requests. ([PR #610](https://github.com/qilimanjaro-tech/qilisdk/pull/610))
 
 ## Misc
 
