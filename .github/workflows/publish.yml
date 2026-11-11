@@ -209,11 +209,11 @@ jobs:
             --output text)
           uvx twine upload dist/*
 
-  # Once a release is on PyPI, open the PR that moves main to the next dev
-  # version. Only X.Y.Z releases cut from main count: a post release, or a
-  # release from a qilisdk-X.Y.Z line, leaves main alone.
+  # Once an X.Y.Z release is on PyPI, start its qilisdk-X.Y.Z release line and
+  # open the PR that moves main to the next dev version. Post releases are
+  # skipped, and main is only bumped when the release was cut from main.
   post-release:
-    name: Open post-release PR
+    name: Post release
     runs-on: ubuntu-latest
     needs: [deploy-pypi]
     if: ${{ github.event_name == 'release' }}
@@ -240,16 +240,33 @@ jobs:
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
           enable-cache: false
+      - name: Work out the next dev version
+        id: versions
+        run: |
+          if [[ ! "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "::notice::$VERSION is not an X.Y.Z release, so there is nothing to do"
+            exit 0
+          fi
+          echo "dev=${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.$((BASH_REMATCH[3] + 1)).dev0" >> "$GITHUB_OUTPUT"
+      # On a release event GITHUB_SHA is the commit the tag points at.
+      - name: Start the qilisdk-${{ github.event.release.tag_name }} release line
+        if: ${{ steps.versions.outputs.dev }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          line="qilisdk-$VERSION"
+          if git ls-remote --exit-code origin "refs/heads/$line" > /dev/null; then
+            echo "::notice::$line already exists"
+            exit 0
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/heads/$line" -f sha="$GITHUB_SHA" > /dev/null
       - name: Bump main and open the PR
+        if: ${{ steps.versions.outputs.dev }}
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          DEV: ${{ steps.versions.outputs.dev }}
         run: |
-          if [[ ! "$VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-            echo "::notice::$VERSION is not an X.Y.Z release, so main is left alone"
-            exit 0
-          fi
-          dev="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}.$((BASH_REMATCH[3] + 1)).dev0"
           branch="postrelease/$VERSION"
           if ! grep -qx "version = \"$VERSION\"" pyproject.toml; then
             echo "::notice::main is not at $VERSION, so it was not released from main"
@@ -261,9 +278,9 @@ jobs:
           fi
 
           git switch -c "$branch"
-          sed -i -E "0,/^version = .*/s//version = \"$dev\"/" pyproject.toml
-          sed -i "/^name = \"qilisdk\"$/{n;s/^version = \".*\"$/version = \"$dev\"/}" uv.lock
-          grep -qx "version = \"$dev\"" pyproject.toml
+          sed -i -E "0,/^version = .*/s//version = \"$DEV\"/" pyproject.toml
+          sed -i "/^name = \"qilisdk\"$/{n;s/^version = \".*\"$/version = \"$DEV\"/}" uv.lock
+          grep -qx "version = \"$DEV\"" pyproject.toml
           uv lock --check
 
           bot="${APP_SLUG}[bot]"
@@ -273,4 +290,4 @@ jobs:
           git push "https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY" "$branch"
           gh pr create --base main --head "$branch" \
             --title "[PostRelease] $VERSION" \
-            --body "Bumps the development version to $dev after the $VERSION release."
+            --body "Bumps the development version to $DEV after the $VERSION release."
