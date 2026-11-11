@@ -1584,6 +1584,30 @@ def test_variable_copy_preserves_precision_and_encoding():
     assert y.to_binary() == x.to_binary()
 
 
+@pytest.mark.parametrize("precision", [0, -0.1, math.nan, math.inf])
+def test_variable_rejects_a_precision_that_is_not_finite_and_positive(precision):
+    with pytest.raises(ValueError, match=r"The precision of variable x must be finite and positive"):
+        Variable("x", Domain.REAL, bounds=(0, 1), precision=precision)
+
+
+@pytest.mark.parametrize("precision", [0, -0.1, math.nan, math.inf])
+def test_set_precision_rejects_a_precision_that_is_not_finite_and_positive(precision):
+    x = Variable("x", Domain.REAL, bounds=(0, 1))
+
+    with pytest.raises(ValueError, match=r"The precision of variable x must be finite and positive"):
+        x.set_precision(precision)
+
+    assert x.precision == 1e-2
+
+
+def test_bitwise_encodes_a_range_narrower_than_the_precision_with_one_binary_variable():
+    x = Variable("x", Domain.REAL, bounds=(0, 0.005), encoding=Bitwise, precision=1e-2)
+
+    assert x.num_binary_equivalent() == 1
+    assert x.evaluate({x: [0]}) == 0
+    assert x.evaluate({x: [1]}) == pytest.approx(0.005)
+
+
 def test_bitwise_num_binary_equivalent_with_equal_bounds():
     x = Variable("x", Domain.INTEGER, bounds=(3, 3), encoding=Bitwise)
 

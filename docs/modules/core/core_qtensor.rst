@@ -67,6 +67,8 @@ There are also several constructors for common quantum objects:
  - :func:`~qilisdk.core.qtensor.one` for generating statevectors in the all-one state.
  - :func:`~qilisdk.core.qtensor.ghz` for generating GHZ states of specified number of qubits
  - :meth:`~qilisdk.core.qtensor.QTensor.uniform` for generating uniform superposition states of specified number of qubits
+ - :meth:`~qilisdk.core.qtensor.QTensor.w` for generating W states of specified number of qubits
+ - :meth:`~qilisdk.core.qtensor.QTensor.random` for generating random states of specified number of qubits, sampled uniformly over all pure states
 
 .. code-block:: python
 

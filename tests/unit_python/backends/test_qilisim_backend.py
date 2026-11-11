@@ -26,7 +26,8 @@ from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core import QTensor, ket
-from qilisdk.digital import CNOT, Circuit, H, M, X
+from qilisdk.digital import CNOT, Circuit, H, M, S, X
+from qilisdk.digital.gates import Adjoint, Controlled, Exponential
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir, ReservoirLayer
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.noise import Dephasing, LindbladGenerator, NoiseModel
@@ -58,7 +59,11 @@ def test_qilisim_config_builders_and_validation():
         num_substeps=3,
     )
     digital = DigitalMethod.statevector(max_cache_size=2048)
-    execution = ExecutionConfig(seed=42, num_threads=2, monte_carlo=MonteCarloConfig(trajectories=250))
+    execution = ExecutionConfig(
+        seed=42,
+        num_threads=2,
+        monte_carlo=MonteCarloConfig(trajectories=250, max_expected_jumps_per_step=0.25),
+    )
 
     backend = QiliSim(
         analog_simulation_method=analog,
@@ -72,6 +77,7 @@ def test_qilisim_config_builders_and_validation():
     assert config["num_arnoldi_substeps"] == 3
     assert config["monte_carlo"] is True
     assert config["num_monte_carlo_trajectories"] == 250
+    assert config["max_expected_jumps_per_step"] == 0.25
     assert config["max_cache_size"] == 2048
     assert config["num_threads"] == 2
     assert config["seed"] == 42
@@ -82,6 +88,8 @@ def test_qilisim_config_builders_and_validation():
         AnalogMethod(arnoldi_dim=0)
     with pytest.raises(ValidationError):
         MonteCarloConfig(trajectories=0)
+    with pytest.raises(ValidationError):
+        MonteCarloConfig(max_expected_jumps_per_step=0.0)
     with pytest.raises(ValidationError):
         DigitalMethod(max_cache_size=-5)
     with pytest.raises(ValidationError):
@@ -282,6 +290,21 @@ def test_qilisim_time_evolution_dummy(monkeypatch):
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
     backend = QiliSim()
     assert backend.execute(func, Readout().with_expectation(observables=[pauli_z(0)])) == "mocked_time_evolution_result"
+
+
+@pytest.mark.parametrize("gate", [Adjoint(Controlled(2, basic_gate=S(0))), Exponential(CNOT(2, 0))])
+def test_modified_controlled_gate_matches_circuit_matrix(gate):
+    circuit = Circuit(3)
+    circuit.add(X(0))
+    circuit.add(H(2))
+    circuit.add(gate)
+    expected_state = circuit.to_matrix()[:, 0]
+    expected_state /= np.linalg.norm(expected_state)
+
+    backend = QiliSim(execution_config=ExecutionConfig(seed=42, num_threads=1))
+    result = backend.execute(DigitalPropagation(circuit), Readout().with_state_tomography())
+
+    np.testing.assert_allclose(result.state_tomography.state.dense().flatten(), expected_state, atol=1e-6)
 
 
 def test_time_dependent_hamiltonian_bad_observable():
