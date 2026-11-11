@@ -23,15 +23,19 @@
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#030711" />
   
+<meta name="description" content="qilisdk.noise.pauli_channel - QiliSDK is an open-source Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends." />
+<meta property="og:description" content="qilisdk.noise.pauli_channel - QiliSDK is an open-source Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends." />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="QiliSDK documentation" />
   <title>qilisdk.noise.pauli_channel | QiliSDK</title>
   <meta property="og:title" content="qilisdk.noise.pauli_channel | QiliSDK" />
   <meta name="twitter:title" content="qilisdk.noise.pauli_channel | QiliSDK" />
   <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=af2a1b69" />
-  <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=d6d7c91b" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=009055c6" />
   <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
   <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-  <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=73a96f5a" />
-  <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=a81faafa" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=901373fb" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=b41b1d54" />
   <link rel="icon" href="../../../_static/QiliSDK_q.png" />
   <link rel="search" title="Búsqueda" href="../../../search.html" />
   <link rel="index" title="Índice" href="../../../genindex.html" />
@@ -49,26 +53,6 @@
 <a href="../../../index.html" class="flex items-center mr-6">
     <img style="height: 2rem; width: auto;" class="hidden dark:block" src="../../../_static/QiliSDK_wht.svg" alt="QiliSDK" />
     <img style="height: 2rem; width: auto;" class="dark:hidden" src="../../../_static/QiliSDK_blk.svg" alt="QiliSDK" /></a>
-
-
-<div class="language-switcher">
-  
-  
-  
-  
-    
-        <a href="../../../../../en/main/_modules/qilisdk/noise/pauli_channel.html" class="lang-link">EN</a>
-    
-  
-    
-        <span class="lang-active">ES</span>
-    
-  
-    
-        <a href="../../../../../ca/main/_modules/qilisdk/noise/pauli_channel.html" class="lang-link">CA</a>
-    
-  
-</div>
 </div><button
       class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden"
       type="button" @click="showSidebar = true">
@@ -79,26 +63,35 @@
       </svg>
       <span class="sr-only">Toggle navigation menu</span>
     </button>
-    <div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
-      <div class="flex-1 w-full md:w-auto md:flex-none"><form id="searchbox"
-      action="../../../search.html"
-      method="get"
-      class="relative flex items-center group"
-      @keydown.k.window.meta="$refs.search.focus()">
-  <input x-ref="search"
-          name="q"
-          id="search-input"
-          type="search"
-          aria-label="Search the docs"
-          placeholder="Search ..."
-          class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" />
-  <kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
-    <span class="text-xs">⌘</span>
-    K
-  </kbd>
-</form>
-      </div>
+<div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
+  
+  <div class="language-switcher">
+    
+    
+    
+    
+      
+          <a href="../../../../../en/main/_modules/qilisdk/noise/pauli_channel.html" class="lang-link">EN</a>
+      
+    
+      
+          <span class="lang-active">ES</span>
+      
+    
+      
+          <a href="../../../../../ca/main/_modules/qilisdk/noise/pauli_channel.html" class="lang-link">CA</a>
+      
+    
+  </div>
+  
       <nav class="flex items-center gap-1">
+        <a href="https://github.com/qilimanjaro-tech/qilisdk" title="Visit GitHub repository" rel="noopener nofollow">
+          <div
+            class="inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.29-.01-1.05-.02-2.06-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6.01 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.29 0 .32.21.7.83.58A12 12 0 0 0 24 12.5C24 5.87 18.63.5 12 .5Z"/></svg>
+          </div>
+        </a>
+        
         <button @click="darkMode = !darkMode"
           class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9"
           type="button"
@@ -115,7 +108,27 @@
           </svg>
         </button>
       </nav>
-    </div>
+  
+  <div class="flex-1 w-full md:w-auto md:flex-none"><form id="searchbox"
+      action="../../../search.html"
+      method="get"
+      class="relative flex items-center group"
+      @keydown.k.window.meta="$refs.search.focus()">
+  <input x-ref="search"
+          name="q"
+          id="search-input"
+          type="search"
+          aria-label="Search the docs"
+          placeholder="Search ..."
+          class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" />
+  <kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+    <span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
+  </div>
+</div>
+
   </div>
 </header>
 
@@ -135,7 +148,7 @@
       <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
   <p class="caption" role="heading"><span class="caption-text">Primeros pasos</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/introduction.html">Introducción</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Instalación</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Inicio rápido</a></li>
 </ul>
@@ -217,6 +230,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/noise/noise_overview.html">Visión general</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/noise/noise_config.html">Configuración de ruido</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/noise/noise_types.html">Tipos de ruido</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/noise/noise_non_markovian.html">Ruido no markoviano</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/ml/ml.html">Aprendizaje automático</a><ul>
@@ -225,6 +239,14 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils/utils.html">Utils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils/utils_overview.html">Descripción general</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils/utils_classical_solvers.html">Solucionadores Clásicos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils/utils_interoperability.html">Interoperabilidad</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils/utils_serialization.html">Serialización y hashing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/settings/settings.html">Configuración</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/logging/logging.html">Registro</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Referencia de la API</span></p>
@@ -300,6 +322,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/dephasing/index.html">qilisdk.noise.dephasing</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/depolarizing/index.html">qilisdk.noise.depolarizing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/environment_noise/index.html">qilisdk.noise.environment_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/gaussian_perturbation/index.html">qilisdk.noise.gaussian_perturbation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/noise/index.html">qilisdk.noise.noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/noise_abc/index.html">qilisdk.noise.noise_abc</a></li>
@@ -355,6 +378,10 @@
 </nav>
   
   
+  
+  
+  
+  
 
   <nav class="table w-full min-w-full my-6 lg:my-8 border-t pt-6">
     
@@ -363,30 +390,41 @@
     </p>
     <ul>
       <li class="toctree-l1">
+        <a class="reference internal" href="../../../../0.3.2/index.html">0.3.2</a>
+      </li>
+      <li class="toctree-l1">
         <a class="reference internal" href="../../../../0.3.1/index.html">0.3.1</a>
       </li>
       <li class="toctree-l1">
         <a class="reference internal" href="../../../../0.3.0/index.html">0.3.0</a>
       </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../0.2.1/index.html">0.2.1</a>
-      </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../0.2.0/index.html">0.2.0</a>
-      </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../0.1.8/index.html">0.1.8</a>
-      </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../0.1.7/index.html">0.1.7</a>
-      </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../0.1.6/index.html">0.1.6</a>
-      </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../0.1.5/index.html">0.1.5</a>
-      </li>
     </ul>
+
+    
+    <details class="older-versions">
+      <summary class="toctree-l1">older versions</summary>
+      <ul>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../0.2.1/index.html">0.2.1</a>
+        </li>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../0.2.0/index.html">0.2.0</a>
+        </li>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../0.1.8/index.html">0.1.8</a>
+        </li>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../0.1.7/index.html">0.1.7</a>
+        </li>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../0.1.6/index.html">0.1.6</a>
+        </li>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../0.1.5/index.html">0.1.5</a>
+        </li>
+      </ul>
+    </details>
+    
     
 
     
@@ -466,123 +504,164 @@
 </span><span id="line-24"><span class="kn">from</span><span class="w"> </span><span class="nn">.representations</span><span class="w"> </span><span class="kn">import</span> <span class="n">KrausChannel</span><span class="p">,</span> <span class="n">LindbladGenerator</span>
 </span><span id="line-25"><span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_check_probability</span><span class="p">,</span> <span class="n">_identity</span><span class="p">,</span> <span class="n">_sigma_x</span><span class="p">,</span> <span class="n">_sigma_y</span><span class="p">,</span> <span class="n">_sigma_z</span>
 </span><span id="line-26">
-</span><span id="line-27">
+</span><span id="line-27"><span class="n">_RELATIVE_RATE_TOLERANCE</span> <span class="o">=</span> <span class="mf">1e-10</span>
+</span><span id="line-28"><span class="n">_MIN_BLOCH_SCALING</span> <span class="o">=</span> <span class="mf">1e-12</span>
+</span><span id="line-29">
+</span><span id="line-30">
 <div class="viewcode-block" id="PauliChannel">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/pauli_channel/index.html#qilisdk.noise.pauli_channel.PauliChannel">[documentos]</a>
-</span><span id="line-28"><span class="k">class</span><span class="w"> </span><span class="nc">PauliChannel</span><span class="p">(</span><span class="n">Noise</span><span class="p">,</span> <span class="n">SupportsStaticKraus</span><span class="p">,</span> <span class="n">SupportsTimeDerivedLindblad</span><span class="p">,</span> <span class="n">HasAllowedScopes</span><span class="p">):</span>
-</span><span id="line-29"><span class="w">    </span><span class="sd">"""General single-qubit Pauli channel.</span>
-</span><span id="line-30">
-</span><span id="line-31"><span class="sd">    Channel:</span>
-</span><span id="line-32"><span class="sd">        E(rho) = pI * rho + pX * X rho X + pY * Y rho Y + pZ * Z rho Z</span>
-</span><span id="line-33"><span class="sd">        where pI = 1 - (pX + pY + pZ).</span>
-</span><span id="line-34"><span class="sd">    """</span>
-</span><span id="line-35">
-</span><span id="line-36">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">pX</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">pY</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">pZ</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-37"><span class="w">        </span><span class="sd">"""Args:</span>
-</span><span id="line-38"><span class="sd">            pX (float): Probability of X error.</span>
-</span><span id="line-39"><span class="sd">            pY (float): Probability of Y error.</span>
-</span><span id="line-40"><span class="sd">            pZ (float): Probability of Z error.</span>
-</span><span id="line-41">
-</span><span id="line-42"><span class="sd">        Raises:</span>
-</span><span id="line-43"><span class="sd">            ValueError: If any probability is outside [0, 1] or pX + pY + pZ &gt; 1.</span>
-</span><span id="line-44"><span class="sd">        """</span>
-</span><span id="line-45">        <span class="bp">self</span><span class="o">.</span><span class="n">_pX</span> <span class="o">=</span> <span class="n">_check_probability</span><span class="p">(</span><span class="n">pX</span><span class="p">,</span> <span class="s2">"pX"</span><span class="p">)</span>
-</span><span id="line-46">        <span class="bp">self</span><span class="o">.</span><span class="n">_pY</span> <span class="o">=</span> <span class="n">_check_probability</span><span class="p">(</span><span class="n">pY</span><span class="p">,</span> <span class="s2">"pY"</span><span class="p">)</span>
-</span><span id="line-47">        <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span> <span class="o">=</span> <span class="n">_check_probability</span><span class="p">(</span><span class="n">pZ</span><span class="p">,</span> <span class="s2">"pZ"</span><span class="p">)</span>
-</span><span id="line-48">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pX</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pY</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span> <span class="o">&gt;</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="mf">1e-12</span><span class="p">:</span>
-</span><span id="line-49">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"pX + pY + pZ must be &lt;= 1."</span><span class="p">)</span>
-</span><span id="line-50">
-</span><span id="line-51">    <span class="nd">@property</span>
+</span><span id="line-31"><span class="k">class</span><span class="w"> </span><span class="nc">PauliChannel</span><span class="p">(</span><span class="n">Noise</span><span class="p">,</span> <span class="n">SupportsStaticKraus</span><span class="p">,</span> <span class="n">SupportsTimeDerivedLindblad</span><span class="p">,</span> <span class="n">HasAllowedScopes</span><span class="p">):</span>
+</span><span id="line-32"><span class="w">    </span><span class="sd">"""General single-qubit Pauli channel.</span>
+</span><span id="line-33">
+</span><span id="line-34"><span class="sd">    Channel:</span>
+</span><span id="line-35"><span class="sd">        E(rho) = pI * rho + pX * X rho X + pY * Y rho Y + pZ * Z rho Z</span>
+</span><span id="line-36"><span class="sd">        where pI = 1 - (pX + pY + pZ).</span>
+</span><span id="line-37"><span class="sd">    """</span>
+</span><span id="line-38">
+</span><span id="line-39">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">pX</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">pY</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">pZ</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-40"><span class="w">        </span><span class="sd">"""Args:</span>
+</span><span id="line-41"><span class="sd">            pX (float): Probability of X error.</span>
+</span><span id="line-42"><span class="sd">            pY (float): Probability of Y error.</span>
+</span><span id="line-43"><span class="sd">            pZ (float): Probability of Z error.</span>
+</span><span id="line-44">
+</span><span id="line-45"><span class="sd">        Raises:</span>
+</span><span id="line-46"><span class="sd">            ValueError: If any probability is outside [0, 1] or pX + pY + pZ &gt; 1.</span>
+</span><span id="line-47"><span class="sd">        """</span>
+</span><span id="line-48">        <span class="bp">self</span><span class="o">.</span><span class="n">_pX</span> <span class="o">=</span> <span class="n">_check_probability</span><span class="p">(</span><span class="n">pX</span><span class="p">,</span> <span class="s2">"pX"</span><span class="p">)</span>
+</span><span id="line-49">        <span class="bp">self</span><span class="o">.</span><span class="n">_pY</span> <span class="o">=</span> <span class="n">_check_probability</span><span class="p">(</span><span class="n">pY</span><span class="p">,</span> <span class="s2">"pY"</span><span class="p">)</span>
+</span><span id="line-50">        <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span> <span class="o">=</span> <span class="n">_check_probability</span><span class="p">(</span><span class="n">pZ</span><span class="p">,</span> <span class="s2">"pZ"</span><span class="p">)</span>
+</span><span id="line-51">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pX</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pY</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span> <span class="o">&gt;</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="mf">1e-12</span><span class="p">:</span>
+</span><span id="line-52">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"pX + pY + pZ must be &lt;= 1."</span><span class="p">)</span>
+</span><span id="line-53">        <span class="bp">self</span><span class="o">.</span><span class="n">_lindblad_warning_logged</span> <span class="o">=</span> <span class="kc">False</span>
+</span><span id="line-54">
+</span><span id="line-55">    <span class="nd">@property</span>
 <div class="viewcode-block" id="PauliChannel.pX">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/pauli_channel/index.html#qilisdk.noise.pauli_channel.PauliChannel.pX">[documentos]</a>
-</span><span id="line-52">    <span class="k">def</span><span class="w"> </span><span class="nf">pX</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-53"><span class="w">        </span><span class="sd">"""Return the probability of an X error.</span>
-</span><span id="line-54">
-</span><span id="line-55"><span class="sd">        Returns:</span>
-</span><span id="line-56"><span class="sd">            float: Probability for the X Pauli error.</span>
-</span><span id="line-57"><span class="sd">        """</span>
-</span><span id="line-58">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pX</span></div>
+</span><span id="line-56">    <span class="k">def</span><span class="w"> </span><span class="nf">pX</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-57"><span class="w">        </span><span class="sd">"""Return the probability of an X error.</span>
+</span><span id="line-58">
+</span><span id="line-59"><span class="sd">        Returns:</span>
+</span><span id="line-60"><span class="sd">            float: Probability for the X Pauli error.</span>
+</span><span id="line-61"><span class="sd">        """</span>
+</span><span id="line-62">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pX</span></div>
 
-</span><span id="line-59">
-</span><span id="line-60">    <span class="nd">@property</span>
+</span><span id="line-63">
+</span><span id="line-64">    <span class="nd">@property</span>
 <div class="viewcode-block" id="PauliChannel.pY">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/pauli_channel/index.html#qilisdk.noise.pauli_channel.PauliChannel.pY">[documentos]</a>
-</span><span id="line-61">    <span class="k">def</span><span class="w"> </span><span class="nf">pY</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-62"><span class="w">        </span><span class="sd">"""Return the probability of a Y error.</span>
-</span><span id="line-63">
-</span><span id="line-64"><span class="sd">        Returns:</span>
-</span><span id="line-65"><span class="sd">            float: Probability for the Y Pauli error.</span>
-</span><span id="line-66"><span class="sd">        """</span>
-</span><span id="line-67">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pY</span></div>
+</span><span id="line-65">    <span class="k">def</span><span class="w"> </span><span class="nf">pY</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-66"><span class="w">        </span><span class="sd">"""Return the probability of a Y error.</span>
+</span><span id="line-67">
+</span><span id="line-68"><span class="sd">        Returns:</span>
+</span><span id="line-69"><span class="sd">            float: Probability for the Y Pauli error.</span>
+</span><span id="line-70"><span class="sd">        """</span>
+</span><span id="line-71">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pY</span></div>
 
-</span><span id="line-68">
-</span><span id="line-69">    <span class="nd">@property</span>
+</span><span id="line-72">
+</span><span id="line-73">    <span class="nd">@property</span>
 <div class="viewcode-block" id="PauliChannel.pZ">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/pauli_channel/index.html#qilisdk.noise.pauli_channel.PauliChannel.pZ">[documentos]</a>
-</span><span id="line-70">    <span class="k">def</span><span class="w"> </span><span class="nf">pZ</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-</span><span id="line-71"><span class="w">        </span><span class="sd">"""Return the probability of a Z error.</span>
-</span><span id="line-72">
-</span><span id="line-73"><span class="sd">        Returns:</span>
-</span><span id="line-74"><span class="sd">            float: Probability for the Z Pauli error.</span>
-</span><span id="line-75"><span class="sd">        """</span>
-</span><span id="line-76">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span></div>
+</span><span id="line-74">    <span class="k">def</span><span class="w"> </span><span class="nf">pZ</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="line-75"><span class="w">        </span><span class="sd">"""Return the probability of a Z error.</span>
+</span><span id="line-76">
+</span><span id="line-77"><span class="sd">        Returns:</span>
+</span><span id="line-78"><span class="sd">            float: Probability for the Z Pauli error.</span>
+</span><span id="line-79"><span class="sd">        """</span>
+</span><span id="line-80">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span></div>
 
-</span><span id="line-77">
+</span><span id="line-81">
 <div class="viewcode-block" id="PauliChannel.as_kraus">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/pauli_channel/index.html#qilisdk.noise.pauli_channel.PauliChannel.as_kraus">[documentos]</a>
-</span><span id="line-78">    <span class="k">def</span><span class="w"> </span><span class="nf">as_kraus</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KrausChannel</span><span class="p">:</span>
-</span><span id="line-79">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-</span><span id="line-80">            <span class="s2">"[PauliChannel] Building Kraus representation with pX=</span><span class="si">{}</span><span class="s2">, pY=</span><span class="si">{}</span><span class="s2">, pZ=</span><span class="si">{}</span><span class="s2">"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pX</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pY</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span>
-</span><span id="line-81">        <span class="p">)</span>
-</span><span id="line-82">        <span class="n">pI</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pX</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pY</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span><span class="p">))</span>
-</span><span id="line-83">        <span class="n">operators</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-84">        <span class="k">if</span> <span class="n">pI</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-85">            <span class="n">operators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">pI</span><span class="p">)</span> <span class="o">*</span> <span class="n">_identity</span><span class="p">())</span>
-</span><span id="line-86">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pX</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-87">            <span class="n">operators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pX</span><span class="p">)</span> <span class="o">*</span> <span class="n">_sigma_x</span><span class="p">())</span>
-</span><span id="line-88">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pY</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-89">            <span class="n">operators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pY</span><span class="p">)</span> <span class="o">*</span> <span class="n">_sigma_y</span><span class="p">())</span>
-</span><span id="line-90">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-91">            <span class="n">operators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span><span class="p">)</span> <span class="o">*</span> <span class="n">_sigma_z</span><span class="p">())</span>
-</span><span id="line-92">        <span class="k">return</span> <span class="n">KrausChannel</span><span class="p">([</span><span class="n">QTensor</span><span class="p">(</span><span class="n">operator</span><span class="p">)</span> <span class="k">for</span> <span class="n">operator</span> <span class="ow">in</span> <span class="n">operators</span><span class="p">])</span></div>
+</span><span id="line-82">    <span class="k">def</span><span class="w"> </span><span class="nf">as_kraus</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KrausChannel</span><span class="p">:</span>
+</span><span id="line-83">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+</span><span id="line-84">            <span class="s2">"[PauliChannel] Building Kraus representation with pX=</span><span class="si">{}</span><span class="s2">, pY=</span><span class="si">{}</span><span class="s2">, pZ=</span><span class="si">{}</span><span class="s2">"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pX</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pY</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span>
+</span><span id="line-85">        <span class="p">)</span>
+</span><span id="line-86">        <span class="n">pI</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pX</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pY</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span><span class="p">))</span>
+</span><span id="line-87">        <span class="n">operators</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-88">        <span class="k">if</span> <span class="n">pI</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-89">            <span class="n">operators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">pI</span><span class="p">)</span> <span class="o">*</span> <span class="n">_identity</span><span class="p">())</span>
+</span><span id="line-90">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pX</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-91">            <span class="n">operators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pX</span><span class="p">)</span> <span class="o">*</span> <span class="n">_sigma_x</span><span class="p">())</span>
+</span><span id="line-92">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pY</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-93">            <span class="n">operators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pY</span><span class="p">)</span> <span class="o">*</span> <span class="n">_sigma_y</span><span class="p">())</span>
+</span><span id="line-94">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-95">            <span class="n">operators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span><span class="p">)</span> <span class="o">*</span> <span class="n">_sigma_z</span><span class="p">())</span>
+</span><span id="line-96">        <span class="k">return</span> <span class="n">KrausChannel</span><span class="p">([</span><span class="n">QTensor</span><span class="p">(</span><span class="n">operator</span><span class="p">)</span> <span class="k">for</span> <span class="n">operator</span> <span class="ow">in</span> <span class="n">operators</span><span class="p">])</span></div>
 
-</span><span id="line-93">
+</span><span id="line-97">
 <div class="viewcode-block" id="PauliChannel.as_lindblad_from_duration">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/pauli_channel/index.html#qilisdk.noise.pauli_channel.PauliChannel.as_lindblad_from_duration">[documentos]</a>
-</span><span id="line-94">    <span class="k">def</span><span class="w"> </span><span class="nf">as_lindblad_from_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LindbladGenerator</span><span class="p">:</span>
-</span><span id="line-95">        <span class="k">if</span> <span class="n">duration</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-96">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Duration must be positive."</span><span class="p">)</span>
-</span><span id="line-97">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"[PauliChannel] Building Lindblad representation from duration </span><span class="si">{}</span><span class="s2">"</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
-</span><span id="line-98">        <span class="n">rates</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-99">        <span class="n">operators</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-100">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pX</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-101">            <span class="n">rates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pX</span> <span class="o">/</span> <span class="n">duration</span><span class="p">)</span>
-</span><span id="line-102">            <span class="n">operators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">QTensor</span><span class="p">(</span><span class="n">_sigma_x</span><span class="p">()))</span>
-</span><span id="line-103">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pY</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-104">            <span class="n">rates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pY</span> <span class="o">/</span> <span class="n">duration</span><span class="p">)</span>
-</span><span id="line-105">            <span class="n">operators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">QTensor</span><span class="p">(</span><span class="n">_sigma_y</span><span class="p">()))</span>
-</span><span id="line-106">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-</span><span id="line-107">            <span class="n">rates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span> <span class="o">/</span> <span class="n">duration</span><span class="p">)</span>
-</span><span id="line-108">            <span class="n">operators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">QTensor</span><span class="p">(</span><span class="n">_sigma_z</span><span class="p">()))</span>
-</span><span id="line-109">        <span class="k">return</span> <span class="n">LindbladGenerator</span><span class="p">(</span><span class="n">operators</span><span class="p">,</span> <span class="n">rates</span><span class="p">)</span></div>
+</span><span id="line-98">    <span class="k">def</span><span class="w"> </span><span class="nf">as_lindblad_from_duration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LindbladGenerator</span><span class="p">:</span>
+</span><span id="line-99"><span class="w">        </span><span class="sd">"""Return the Lindblad generator whose evolution over ``duration`` reproduces this channel exactly.</span>
+</span><span id="line-100">
+</span><span id="line-101"><span class="sd">        The channel scales the Bloch vector components by lambda_x = 1 - 2 (pY + pZ), lambda_y = 1 - 2 (pX + pZ)</span>
+</span><span id="line-102"><span class="sd">        and lambda_z = 1 - 2 (pX + pY). Pauli jump operators with rates gamma_X, gamma_Y, gamma_Z scale them by</span>
+</span><span id="line-103"><span class="sd">        exp(-2 (gamma_Y + gamma_Z) t), exp(-2 (gamma_X + gamma_Z) t) and exp(-2 (gamma_X + gamma_Y) t). Matching</span>
+</span><span id="line-104"><span class="sd">        the two gives gamma_X = (a_y + a_z - a_x) / 2 (and cyclically), where a_i = -ln(lambda_i) / (2 t).</span>
+</span><span id="line-105">
+</span><span id="line-106"><span class="sd">        Some Pauli channels cannot be reproduced by any Lindbladian, so they are approximated with a warning</span>
+</span><span id="line-107"><span class="sd">        (logged once per channel instance):</span>
+</span><span id="line-108">
+</span><span id="line-109"><span class="sd">        - If pX + pY, pX + pZ or pY + pZ exceeds 0.5, the channel inverts a Bloch component. That component's</span>
+</span><span id="line-110"><span class="sd">          scaling is clamped to a tiny positive value, i.e. the component is fully decohered instead of inverted.</span>
+</span><span id="line-111"><span class="sd">        - If the matching rates include a negative one (e.g. pX = pY = 0.2), it is clamped to zero, giving the</span>
+</span><span id="line-112"><span class="sd">          closest Markovian approximation.</span>
+</span><span id="line-113">
+</span><span id="line-114"><span class="sd">        A pair sum of exactly 0.5 (e.g. Depolarizing(0.75) or BitFlip(0.5)) fully decoheres a component, which is</span>
+</span><span id="line-115"><span class="sd">        reproduced up to the same tiny scaling without a warning.</span>
+</span><span id="line-116">
+</span><span id="line-117"><span class="sd">        Args:</span>
+</span><span id="line-118"><span class="sd">            duration (float): Duration over which the noise acts.</span>
+</span><span id="line-119">
+</span><span id="line-120"><span class="sd">        Returns:</span>
+</span><span id="line-121"><span class="sd">            LindbladGenerator: Pauli jump operators with the matching rates.</span>
+</span><span id="line-122">
+</span><span id="line-123"><span class="sd">        Raises:</span>
+</span><span id="line-124"><span class="sd">            ValueError: If the duration is not positive.</span>
+</span><span id="line-125"><span class="sd">        """</span>
+</span><span id="line-126">        <span class="k">if</span> <span class="n">duration</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span id="line-127">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Duration must be positive."</span><span class="p">)</span>
+</span><span id="line-128">        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"[PauliChannel] Building Lindblad representation from duration </span><span class="si">{}</span><span class="s2">"</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
+</span><span id="line-129">        <span class="n">pair_sums</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_pY</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pX</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pX</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pY</span><span class="p">])</span>
+</span><span id="line-130">        <span class="n">inverts_component</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pair_sums</span> <span class="o">&gt;</span> <span class="mf">0.5</span> <span class="o">+</span> <span class="mf">1e-12</span><span class="p">))</span>
+</span><span id="line-131">        <span class="n">decays</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">pair_sums</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">_MIN_BLOCH_SCALING</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">duration</span><span class="p">)</span>
+</span><span id="line-132">        <span class="n">rates</span> <span class="o">=</span> <span class="n">decays</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">-</span> <span class="n">decays</span>
+</span><span id="line-133">        <span class="n">tolerance</span> <span class="o">=</span> <span class="n">_RELATIVE_RATE_TOLERANCE</span> <span class="o">*</span> <span class="n">decays</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+</span><span id="line-134">        <span class="n">has_negative_rate</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">rates</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">tolerance</span><span class="p">))</span>
+</span><span id="line-135">        <span class="k">if</span> <span class="p">(</span><span class="n">inverts_component</span> <span class="ow">or</span> <span class="n">has_negative_rate</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lindblad_warning_logged</span><span class="p">:</span>
+</span><span id="line-136">            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+</span><span id="line-137">                <span class="s2">"[PauliChannel] Channel with pX=</span><span class="si">{}</span><span class="s2">, pY=</span><span class="si">{}</span><span class="s2">, pZ=</span><span class="si">{}</span><span class="s2"> is not reachable by a Lindbladian, approximating it "</span>
+</span><span id="line-138">                <span class="s2">"by fully decohering inverted Bloch components and clamping negative rates to zero."</span><span class="p">,</span>
+</span><span id="line-139">                <span class="bp">self</span><span class="o">.</span><span class="n">_pX</span><span class="p">,</span>
+</span><span id="line-140">                <span class="bp">self</span><span class="o">.</span><span class="n">_pY</span><span class="p">,</span>
+</span><span id="line-141">                <span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span><span class="p">,</span>
+</span><span id="line-142">            <span class="p">)</span>
+</span><span id="line-143">            <span class="bp">self</span><span class="o">.</span><span class="n">_lindblad_warning_logged</span> <span class="o">=</span> <span class="kc">True</span>
+</span><span id="line-144">        <span class="n">operators</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-145">        <span class="n">kept_rates</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-146">        <span class="k">for</span> <span class="n">pauli</span><span class="p">,</span> <span class="n">rate</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">((</span><span class="n">_sigma_x</span><span class="p">,</span> <span class="n">_sigma_y</span><span class="p">,</span> <span class="n">_sigma_z</span><span class="p">),</span> <span class="n">rates</span><span class="p">):</span>
+</span><span id="line-147">            <span class="k">if</span> <span class="n">rate</span> <span class="o">&gt;</span> <span class="n">tolerance</span><span class="p">:</span>
+</span><span id="line-148">                <span class="n">operators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">QTensor</span><span class="p">(</span><span class="n">pauli</span><span class="p">()))</span>
+</span><span id="line-149">                <span class="n">kept_rates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">rate</span><span class="p">))</span>
+</span><span id="line-150">        <span class="k">return</span> <span class="n">LindbladGenerator</span><span class="p">(</span><span class="n">operators</span><span class="p">,</span> <span class="n">kept_rates</span><span class="p">)</span></div>
 
-</span><span id="line-110">
-</span><span id="line-111">    <span class="nd">@classmethod</span>
+</span><span id="line-151">
+</span><span id="line-152">    <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="PauliChannel.allowed_scopes">
 <a class="viewcode-back" href="../../../code/api/qilisdk/noise/pauli_channel/index.html#qilisdk.noise.pauli_channel.PauliChannel.allowed_scopes">[documentos]</a>
-</span><span id="line-112">    <span class="k">def</span><span class="w"> </span><span class="nf">allowed_scopes</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">AttachmentScope</span><span class="p">]:</span>
-</span><span id="line-113">        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span>
-</span><span id="line-114">            <span class="p">{</span>
-</span><span id="line-115">                <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">GLOBAL</span><span class="p">,</span>
-</span><span id="line-116">                <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">PER_QUBIT</span><span class="p">,</span>
-</span><span id="line-117">                <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">PER_GATE_TYPE</span><span class="p">,</span>
-</span><span id="line-118">                <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">PER_GATE_TYPE_PER_QUBIT</span><span class="p">,</span>
-</span><span id="line-119">            <span class="p">}</span>
-</span><span id="line-120">        <span class="p">)</span></div>
+</span><span id="line-153">    <span class="k">def</span><span class="w"> </span><span class="nf">allowed_scopes</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">AttachmentScope</span><span class="p">]:</span>
+</span><span id="line-154">        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span>
+</span><span id="line-155">            <span class="p">{</span>
+</span><span id="line-156">                <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">GLOBAL</span><span class="p">,</span>
+</span><span id="line-157">                <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">PER_QUBIT</span><span class="p">,</span>
+</span><span id="line-158">                <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">PER_GATE_TYPE</span><span class="p">,</span>
+</span><span id="line-159">                <span class="n">AttachmentScope</span><span class="o">.</span><span class="n">PER_GATE_TYPE_PER_QUBIT</span><span class="p">,</span>
+</span><span id="line-160">            <span class="p">}</span>
+</span><span id="line-161">        <span class="p">)</span></div>
 
-</span><span id="line-121">
-</span><span id="line-122">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-123">        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">(pX=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_pX</span><span class="si">}</span><span class="s2">, pY=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_pY</span><span class="si">}</span><span class="s2">, pZ=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span><span class="si">}</span><span class="s2">)"</span></div>
+</span><span id="line-162">
+</span><span id="line-163">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-164">        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">(pX=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_pX</span><span class="si">}</span><span class="s2">, pY=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_pY</span><span class="si">}</span><span class="s2">, pZ=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_pZ</span><span class="si">}</span><span class="s2">)"</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
@@ -601,7 +680,7 @@
     <script src="../../../_static/documentation_options.js?v=00904b1e"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script defer="defer" src="../../../_static/theme.js?v=5db23cf8"></script>
+    <script defer="defer" src="../../../_static/theme.js?v=49cc6205"></script>
     <script src="../../../_static/translations.js?v=f85f4cfb"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>

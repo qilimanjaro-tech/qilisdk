@@ -23,15 +23,19 @@
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#030711" />
   
+<meta name="description" content="qilisdk.cost_functions.observable_cost_function - QiliSDK is an open-source Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends." />
+<meta property="og:description" content="qilisdk.cost_functions.observable_cost_function - QiliSDK is an open-source Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends." />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="QiliSDK documentation" />
   <title>qilisdk.cost_functions.observable_cost_function | QiliSDK</title>
   <meta property="og:title" content="qilisdk.cost_functions.observable_cost_function | QiliSDK" />
   <meta name="twitter:title" content="qilisdk.cost_functions.observable_cost_function | QiliSDK" />
   <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=af2a1b69" />
-  <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=d6d7c91b" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/theme.css?v=009055c6" />
   <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
   <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
-  <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=73a96f5a" />
-  <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=a81faafa" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=901373fb" />
+  <link rel="stylesheet" type="text/css" href="../../../_static/awesome-sphinx-design.css?v=b41b1d54" />
   <link rel="icon" href="../../../_static/QiliSDK_q.png" />
   <link rel="search" title="Cerca" href="../../../search.html" />
   <link rel="index" title="Índex" href="../../../genindex.html" />
@@ -49,26 +53,6 @@
 <a href="../../../index.html" class="flex items-center mr-6">
     <img style="height: 2rem; width: auto;" class="hidden dark:block" src="../../../_static/QiliSDK_wht.svg" alt="QiliSDK" />
     <img style="height: 2rem; width: auto;" class="dark:hidden" src="../../../_static/QiliSDK_blk.svg" alt="QiliSDK" /></a>
-
-
-<div class="language-switcher">
-  
-  
-  
-  
-    
-        <a href="../../../../../en/main/_modules/qilisdk/cost_functions/observable_cost_function.html" class="lang-link">EN</a>
-    
-  
-    
-        <a href="../../../../../es/main/_modules/qilisdk/cost_functions/observable_cost_function.html" class="lang-link">ES</a>
-    
-  
-    
-        <span class="lang-active">CA</span>
-    
-  
-</div>
 </div><button
       class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden"
       type="button" @click="showSidebar = true">
@@ -79,26 +63,35 @@
       </svg>
       <span class="sr-only">Toggle navigation menu</span>
     </button>
-    <div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
-      <div class="flex-1 w-full md:w-auto md:flex-none"><form id="searchbox"
-      action="../../../search.html"
-      method="get"
-      class="relative flex items-center group"
-      @keydown.k.window.meta="$refs.search.focus()">
-  <input x-ref="search"
-          name="q"
-          id="search-input"
-          type="search"
-          aria-label="Search the docs"
-          placeholder="Search ..."
-          class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" />
-  <kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
-    <span class="text-xs">⌘</span>
-    K
-  </kbd>
-</form>
-      </div>
+<div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
+  
+  <div class="language-switcher">
+    
+    
+    
+    
+      
+          <a href="../../../../../en/main/_modules/qilisdk/cost_functions/observable_cost_function.html" class="lang-link">EN</a>
+      
+    
+      
+          <a href="../../../../../es/main/_modules/qilisdk/cost_functions/observable_cost_function.html" class="lang-link">ES</a>
+      
+    
+      
+          <span class="lang-active">CA</span>
+      
+    
+  </div>
+  
       <nav class="flex items-center gap-1">
+        <a href="https://github.com/qilimanjaro-tech/qilisdk" title="Visit GitHub repository" rel="noopener nofollow">
+          <div
+            class="inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.29-.01-1.05-.02-2.06-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6.01 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.29 0 .32.21.7.83.58A12 12 0 0 0 24 12.5C24 5.87 18.63.5 12 .5Z"/></svg>
+          </div>
+        </a>
+        
         <button @click="darkMode = !darkMode"
           class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9"
           type="button"
@@ -115,7 +108,27 @@
           </svg>
         </button>
       </nav>
-    </div>
+  
+  <div class="flex-1 w-full md:w-auto md:flex-none"><form id="searchbox"
+      action="../../../search.html"
+      method="get"
+      class="relative flex items-center group"
+      @keydown.k.window.meta="$refs.search.focus()">
+  <input x-ref="search"
+          name="q"
+          id="search-input"
+          type="search"
+          aria-label="Search the docs"
+          placeholder="Search ..."
+          class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" />
+  <kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+    <span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
+  </div>
+</div>
+
   </div>
 </header>
 
@@ -135,7 +148,7 @@
       <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
   <p class="caption" role="heading"><span class="caption-text">Primers passos</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/introduction.html">Introducció</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Instal·lació</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Inici ràpid</a></li>
 </ul>
@@ -217,6 +230,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/noise/noise_overview.html">Visió general</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/noise/noise_config.html">Configuració del soroll</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../modules/noise/noise_types.html">Tipus de soroll</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/noise/noise_non_markovian.html">Soroll no markovià</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/ml/ml.html">Aprenentatge automàtic</a><ul>
@@ -225,6 +239,14 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/utils/utils.html">Utils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils/utils_overview.html">Visió general</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils/utils_classical_solvers.html">Solucionadors Clàssics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils/utils_interoperability.html">Interoperabilitat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../modules/utils/utils_serialization.html">Serialització i hashing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules/settings/settings.html">Configuració</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../modules/logging/logging.html">Registre</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Referència de l'API</span></p>
@@ -300,6 +322,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/dephasing/index.html">qilisdk.noise.dephasing</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/depolarizing/index.html">qilisdk.noise.depolarizing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/environment_noise/index.html">qilisdk.noise.environment_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/gaussian_perturbation/index.html">qilisdk.noise.gaussian_perturbation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/noise/index.html">qilisdk.noise.noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../code/api/qilisdk/noise/noise_abc/index.html">qilisdk.noise.noise_abc</a></li>
@@ -355,6 +378,10 @@
 </nav>
   
   
+  
+  
+  
+  
 
   <nav class="table w-full min-w-full my-6 lg:my-8 border-t pt-6">
     
@@ -363,30 +390,41 @@
     </p>
     <ul>
       <li class="toctree-l1">
+        <a class="reference internal" href="../../../../0.3.2/index.html">0.3.2</a>
+      </li>
+      <li class="toctree-l1">
         <a class="reference internal" href="../../../../0.3.1/index.html">0.3.1</a>
       </li>
       <li class="toctree-l1">
         <a class="reference internal" href="../../../../0.3.0/index.html">0.3.0</a>
       </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../0.2.1/index.html">0.2.1</a>
-      </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../0.2.0/index.html">0.2.0</a>
-      </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../0.1.8/index.html">0.1.8</a>
-      </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../0.1.7/index.html">0.1.7</a>
-      </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../0.1.6/index.html">0.1.6</a>
-      </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../0.1.5/index.html">0.1.5</a>
-      </li>
     </ul>
+
+    
+    <details class="older-versions">
+      <summary class="toctree-l1">older versions</summary>
+      <ul>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../0.2.1/index.html">0.2.1</a>
+        </li>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../0.2.0/index.html">0.2.0</a>
+        </li>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../0.1.8/index.html">0.1.8</a>
+        </li>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../0.1.7/index.html">0.1.7</a>
+        </li>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../0.1.6/index.html">0.1.6</a>
+        </li>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../0.1.5/index.html">0.1.5</a>
+        </li>
+      </ul>
+    </details>
+    
     
 
     
@@ -460,7 +498,7 @@
 </span><span id="line-18"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 </span><span id="line-19"><span class="kn">from</span><span class="w"> </span><span class="nn">loguru</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
 </span><span id="line-20">
-</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.hamiltonian</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hamiltonian</span><span class="p">,</span> <span class="n">PauliOperator</span>
+</span><span id="line-21"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.analog.hamiltonian</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hamiltonian</span><span class="p">,</span> <span class="n">PauliI</span><span class="p">,</span> <span class="n">PauliOperator</span><span class="p">,</span> <span class="n">PauliZ</span>
 </span><span id="line-22"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.core.qtensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">QTensor</span><span class="p">,</span> <span class="n">expect_val</span><span class="p">,</span> <span class="n">ket</span>
 </span><span id="line-23"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.cost_functions.cost_function</span><span class="w"> </span><span class="kn">import</span> <span class="n">CostFunction</span>
 </span><span id="line-24"><span class="kn">from</span><span class="w"> </span><span class="nn">qilisdk.settings</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_settings</span>
@@ -477,144 +515,185 @@
 </span><span id="line-33">
 </span><span id="line-34"><span class="sd">    The observable can be supplied as a :class:`~qilisdk.core.qtensor.QTensor`,</span>
 </span><span id="line-35"><span class="sd">    a :class:`~qilisdk.analog.hamiltonian.Hamiltonian`, or a</span>
-</span><span id="line-36"><span class="sd">    :class:`~qilisdk.analog.hamiltonian.PauliOperator`. It is stored internally</span>
-</span><span id="line-37"><span class="sd">    as a ``QTensor``.</span>
-</span><span id="line-38">
-</span><span id="line-39"><span class="sd">    When a ``FunctionalResult`` (from a ``DigitalPropagation`` or</span>
-</span><span id="line-40"><span class="sd">    ``AnalogEvolution``) is passed to :meth:`compute_cost`, the expectation</span>
-</span><span id="line-41"><span class="sd">    value is computed either exactly from the final state or estimated from</span>
-</span><span id="line-42"><span class="sd">    sampled probabilities.</span>
-</span><span id="line-43">
-</span><span id="line-44"><span class="sd">    Example:</span>
-</span><span id="line-45"><span class="sd">        .. code-block:: python</span>
+</span><span id="line-36"><span class="sd">    :class:`~qilisdk.analog.hamiltonian.PauliOperator`. A ``PauliOperator`` is</span>
+</span><span id="line-37"><span class="sd">    stored as a one-term ``Hamiltonian``, and the observable is resolved against</span>
+</span><span id="line-38"><span class="sd">    the width of the evaluated state at compute time, so ``Z(0)`` measures qubit</span>
+</span><span id="line-39"><span class="sd">    0 of a state of any size. A ``QTensor`` observable acts on the leading qubits</span>
+</span><span id="line-40"><span class="sd">    and is padded with identities on the rest.</span>
+</span><span id="line-41">
+</span><span id="line-42"><span class="sd">    When a ``FunctionalResult`` (from a ``DigitalPropagation`` or</span>
+</span><span id="line-43"><span class="sd">    ``AnalogEvolution``) is passed to :meth:`compute_cost`, the expectation</span>
+</span><span id="line-44"><span class="sd">    value is computed either exactly from the final state or estimated from</span>
+</span><span id="line-45"><span class="sd">    sampled probabilities.</span>
 </span><span id="line-46">
-</span><span id="line-47"><span class="sd">            from qilisdk.analog.hamiltonian import Z</span>
-</span><span id="line-48"><span class="sd">            from qilisdk.cost_functions import ObservableCostFunction</span>
+</span><span id="line-47"><span class="sd">    Example:</span>
+</span><span id="line-48"><span class="sd">        .. code-block:: python</span>
 </span><span id="line-49">
-</span><span id="line-50"><span class="sd">            cost_fn = ObservableCostFunction(Z(0))</span>
-</span><span id="line-51"><span class="sd">    """</span>
+</span><span id="line-50"><span class="sd">            from qilisdk.analog.hamiltonian import Z</span>
+</span><span id="line-51"><span class="sd">            from qilisdk.cost_functions import ObservableCostFunction</span>
 </span><span id="line-52">
-</span><span id="line-53">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observable</span><span class="p">:</span> <span class="n">QTensor</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">PauliOperator</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="line-54"><span class="w">        </span><span class="sd">"""Initialise an ``ObservableCostFunction``.</span>
+</span><span id="line-53"><span class="sd">            cost_fn = ObservableCostFunction(Z(0))</span>
+</span><span id="line-54"><span class="sd">    """</span>
 </span><span id="line-55">
-</span><span id="line-56"><span class="sd">        Args:</span>
-</span><span id="line-57"><span class="sd">            observable (QTensor | Hamiltonian | PauliOperator): Quantum</span>
-</span><span id="line-58"><span class="sd">                observable whose expectation value defines the cost.</span>
-</span><span id="line-59">
-</span><span id="line-60"><span class="sd">        Raises:</span>
-</span><span id="line-61"><span class="sd">            ValueError: If the provided observable type is unsupported.</span>
-</span><span id="line-62"><span class="sd">        """</span>
-</span><span id="line-63">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-</span><span id="line-64">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">observable</span><span class="p">,</span> <span class="n">QTensor</span><span class="p">):</span>
-</span><span id="line-65">            <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span> <span class="o">=</span> <span class="n">observable</span>
-</span><span id="line-66">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">observable</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">):</span>
-</span><span id="line-67">            <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">observable</span><span class="o">.</span><span class="n">to_matrix</span><span class="p">())</span>
-</span><span id="line-68">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">observable</span><span class="p">,</span> <span class="n">PauliOperator</span><span class="p">):</span>
-</span><span id="line-69">            <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span> <span class="o">=</span> <span class="n">QTensor</span><span class="p">(</span><span class="n">observable</span><span class="o">.</span><span class="n">matrix</span><span class="p">)</span>
-</span><span id="line-70">        <span class="k">else</span><span class="p">:</span>
-</span><span id="line-71">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-72">                <span class="sa">f</span><span class="s2">"Observable needs to be of type QTensor, Hamiltonian, or PauliOperator but </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">observable</span><span class="p">)</span><span class="si">}</span><span class="s2"> was provided"</span>
-</span><span id="line-73">            <span class="p">)</span>
-</span><span id="line-74">
-</span><span id="line-75">    <span class="nd">@property</span>
+</span><span id="line-56">    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observable</span><span class="p">:</span> <span class="n">QTensor</span> <span class="o">|</span> <span class="n">Hamiltonian</span> <span class="o">|</span> <span class="n">PauliOperator</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+</span><span id="line-57"><span class="w">        </span><span class="sd">"""Initialise an ``ObservableCostFunction``.</span>
+</span><span id="line-58">
+</span><span id="line-59"><span class="sd">        Args:</span>
+</span><span id="line-60"><span class="sd">            observable (QTensor | Hamiltonian | PauliOperator): Quantum</span>
+</span><span id="line-61"><span class="sd">                observable whose expectation value defines the cost.</span>
+</span><span id="line-62">
+</span><span id="line-63"><span class="sd">        Raises:</span>
+</span><span id="line-64"><span class="sd">            ValueError: If the provided observable type is unsupported.</span>
+</span><span id="line-65"><span class="sd">        """</span>
+</span><span id="line-66">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+</span><span id="line-67">        <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="p">:</span> <span class="n">QTensor</span> <span class="o">|</span> <span class="n">Hamiltonian</span>
+</span><span id="line-68">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">observable</span><span class="p">,</span> <span class="p">(</span><span class="n">QTensor</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">)):</span>
+</span><span id="line-69">            <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span> <span class="o">=</span> <span class="n">observable</span>
+</span><span id="line-70">        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">observable</span><span class="p">,</span> <span class="n">PauliOperator</span><span class="p">):</span>
+</span><span id="line-71">            <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span> <span class="o">=</span> <span class="n">observable</span><span class="o">.</span><span class="n">to_hamiltonian</span><span class="p">()</span>
+</span><span id="line-72">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-73">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-74">                <span class="sa">f</span><span class="s2">"Observable needs to be of type QTensor, Hamiltonian, or PauliOperator but </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">observable</span><span class="p">)</span><span class="si">}</span><span class="s2"> was provided"</span>
+</span><span id="line-75">            <span class="p">)</span>
+</span><span id="line-76">
+</span><span id="line-77">    <span class="nd">@property</span>
 <div class="viewcode-block" id="ObservableCostFunction.observable">
 <a class="viewcode-back" href="../../../code/api/qilisdk/cost_functions/observable_cost_function/index.html#qilisdk.cost_functions.observable_cost_function.ObservableCostFunction.observable">[documents]</a>
-</span><span id="line-76">    <span class="k">def</span><span class="w"> </span><span class="nf">observable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span><span class="p">:</span>
-</span><span id="line-77"><span class="w">        </span><span class="sd">"""Return the observable in ``QTensor`` form.</span>
-</span><span id="line-78">
-</span><span id="line-79"><span class="sd">        Returns:</span>
-</span><span id="line-80"><span class="sd">            QTensor: The matrix representation of the observable.</span>
-</span><span id="line-81"><span class="sd">        """</span>
-</span><span id="line-82">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span></div>
+</span><span id="line-78">    <span class="k">def</span><span class="w"> </span><span class="nf">observable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span> <span class="o">|</span> <span class="n">Hamiltonian</span><span class="p">:</span>
+</span><span id="line-79"><span class="w">        </span><span class="sd">"""Return the observable, with a ``PauliOperator`` converted to a ``Hamiltonian``.</span>
+</span><span id="line-80">
+</span><span id="line-81"><span class="sd">        Returns:</span>
+</span><span id="line-82"><span class="sd">            QTensor | Hamiltonian: The observable whose expectation value defines the cost.</span>
+</span><span id="line-83"><span class="sd">        """</span>
+</span><span id="line-84">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span></div>
 
-</span><span id="line-83">
+</span><span id="line-85">
+</span><span id="line-86">    <span class="k">def</span><span class="w"> </span><span class="nf">_observable_expanded</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nqubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QTensor</span> <span class="o">|</span> <span class="n">Hamiltonian</span><span class="p">:</span>
+</span><span id="line-87"><span class="w">        </span><span class="sd">"""Resolve the observable against a state of ``nqubits`` qubits.</span>
+</span><span id="line-88">
+</span><span id="line-89"><span class="sd">        A ``QTensor`` is padded with identities on the trailing qubits, while a</span>
+</span><span id="line-90"><span class="sd">        ``Hamiltonian`` is returned as-is since it is evaluated term by term.</span>
+</span><span id="line-91">
+</span><span id="line-92"><span class="sd">        Args:</span>
+</span><span id="line-93"><span class="sd">            nqubits (int): Number of qubits of the state being evaluated.</span>
+</span><span id="line-94">
+</span><span id="line-95"><span class="sd">        Returns:</span>
+</span><span id="line-96"><span class="sd">            QTensor | Hamiltonian: An observable acting on ``nqubits`` qubits.</span>
+</span><span id="line-97">
+</span><span id="line-98"><span class="sd">        Raises:</span>
+</span><span id="line-99"><span class="sd">            ValueError: If the observable acts on more qubits than the state has.</span>
+</span><span id="line-100"><span class="sd">        """</span>
+</span><span id="line-101">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">&gt;</span> <span class="n">nqubits</span><span class="p">:</span>
+</span><span id="line-102">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-103">                <span class="sa">f</span><span class="s2">"The result has </span><span class="si">{</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits but the observable acts on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits"</span>
+</span><span id="line-104">            <span class="p">)</span>
+</span><span id="line-105">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="p">,</span> <span class="n">QTensor</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">&lt;</span> <span class="n">nqubits</span><span class="p">:</span>
+</span><span id="line-106">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">nqubits</span><span class="p">)</span>
+</span><span id="line-107">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span>
+</span><span id="line-108">
 <div class="viewcode-block" id="ObservableCostFunction.compute_cost">
 <a class="viewcode-back" href="../../../code/api/qilisdk/cost_functions/observable_cost_function/index.html#qilisdk.cost_functions.observable_cost_function.ObservableCostFunction.compute_cost">[documents]</a>
-</span><span id="line-84">    <span class="k">def</span><span class="w"> </span><span class="nf">compute_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
-</span><span id="line-85"><span class="w">        </span><span class="sd">"""Compute the cost from a ``FunctionalResult``.</span>
-</span><span id="line-86">
-</span><span id="line-87"><span class="sd">        Uses the final state if available (exact expectation value via</span>
-</span><span id="line-88"><span class="sd">        ``StateTomography``), otherwise falls back to sampling-based estimation.</span>
-</span><span id="line-89">
-</span><span id="line-90"><span class="sd">        Args:</span>
-</span><span id="line-91"><span class="sd">            results (FunctionalResult): The result from executing a functional.</span>
-</span><span id="line-92">
-</span><span id="line-93"><span class="sd">        Returns:</span>
-</span><span id="line-94"><span class="sd">            Number: The expectation value of the observable.</span>
-</span><span id="line-95">
-</span><span id="line-96"><span class="sd">        Raises:</span>
-</span><span id="line-97"><span class="sd">            ValueError: If ``results`` contains neither a ``StateTomography``</span>
-</span><span id="line-98"><span class="sd">                nor a ``Sampling`` readout.</span>
-</span><span id="line-99"><span class="sd">        """</span>
-</span><span id="line-100">        <span class="k">if</span> <span class="n">results</span><span class="o">.</span><span class="n">has_state</span><span class="p">():</span>
-</span><span id="line-101">            <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">"[ObservableCostFunction] Computing expectation value from final state"</span><span class="p">)</span>
-</span><span id="line-102">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_from_state</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
-</span><span id="line-103">        <span class="k">if</span> <span class="n">results</span><span class="o">.</span><span class="n">has_samples</span><span class="p">():</span>
-</span><span id="line-104">            <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">"[ObservableCostFunction] Computing expectation value from samples"</span><span class="p">)</span>
-</span><span id="line-105">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_from_samples</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
-</span><span id="line-106">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"ObservableCostFunction requires either a StateTomography or Sampling readout in the results."</span><span class="p">)</span></div>
-
-</span><span id="line-107">
-</span><span id="line-108">    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_from_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
-</span><span id="line-109"><span class="w">        </span><span class="sd">"""Compute the exact expectation value from the final quantum state.</span>
-</span><span id="line-110">
-</span><span id="line-111"><span class="sd">        Args:</span>
-</span><span id="line-112"><span class="sd">            results (FunctionalResult): A result whose ``final_state`` is</span>
-</span><span id="line-113"><span class="sd">                available.</span>
+</span><span id="line-109">    <span class="k">def</span><span class="w"> </span><span class="nf">compute_cost</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
+</span><span id="line-110"><span class="w">        </span><span class="sd">"""Compute the cost from a ``FunctionalResult``.</span>
+</span><span id="line-111">
+</span><span id="line-112"><span class="sd">        Uses the final state if available (exact expectation value via</span>
+</span><span id="line-113"><span class="sd">        ``StateTomography``), otherwise falls back to sampling-based estimation.</span>
 </span><span id="line-114">
-</span><span id="line-115"><span class="sd">        Returns:</span>
-</span><span id="line-116"><span class="sd">            Number: The expectation value ``&lt;psi|O|psi&gt;`` (or ``Tr(rho O)``</span>
-</span><span id="line-117"><span class="sd">            for mixed states).</span>
-</span><span id="line-118"><span class="sd">        """</span>
-</span><span id="line-119">        <span class="n">final_state</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get_state</span><span class="p">()</span>
-</span><span id="line-120">        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">expect_val</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="p">,</span> <span class="n">final_state</span><span class="p">),</span> <span class="n">tol</span><span class="o">=</span><span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">))</span>
-</span><span id="line-121">        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
-</span><span id="line-122">            <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
-</span><span id="line-123">        <span class="k">return</span> <span class="n">total_cost</span>
-</span><span id="line-124">
-</span><span id="line-125">    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_from_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
-</span><span id="line-126"><span class="w">        </span><span class="sd">"""Estimate the expectation value from sampled probability distributions.</span>
-</span><span id="line-127">
-</span><span id="line-128"><span class="sd">        Each bitstring sample is converted to a computational-basis ket and the</span>
-</span><span id="line-129"><span class="sd">        observable is evaluated against it; the total is a probability-weighted</span>
-</span><span id="line-130"><span class="sd">        sum of those evaluations.</span>
-</span><span id="line-131">
-</span><span id="line-132"><span class="sd">        Args:</span>
-</span><span id="line-133"><span class="sd">            results (FunctionalResult): A result whose ``probabilities``</span>
-</span><span id="line-134"><span class="sd">                are available.</span>
+</span><span id="line-115"><span class="sd">        Args:</span>
+</span><span id="line-116"><span class="sd">            results (FunctionalResult): The result from executing a functional.</span>
+</span><span id="line-117">
+</span><span id="line-118"><span class="sd">        Returns:</span>
+</span><span id="line-119"><span class="sd">            Number: The expectation value of the observable.</span>
+</span><span id="line-120">
+</span><span id="line-121"><span class="sd">        Raises:</span>
+</span><span id="line-122"><span class="sd">            ValueError: If ``results`` contains neither a ``StateTomography``</span>
+</span><span id="line-123"><span class="sd">                nor a ``Sampling`` readout.</span>
+</span><span id="line-124"><span class="sd">        """</span>
+</span><span id="line-125">        <span class="k">if</span> <span class="n">results</span><span class="o">.</span><span class="n">has_state</span><span class="p">():</span>
+</span><span id="line-126">            <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">"[ObservableCostFunction] Computing expectation value from final state"</span><span class="p">)</span>
+</span><span id="line-127">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_from_state</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</span><span id="line-128">        <span class="k">if</span> <span class="n">results</span><span class="o">.</span><span class="n">has_samples</span><span class="p">():</span>
+</span><span id="line-129">            <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">"[ObservableCostFunction] Computing expectation value from samples"</span><span class="p">)</span>
+</span><span id="line-130">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_from_samples</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+</span><span id="line-131">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"ObservableCostFunction requires either a StateTomography or Sampling readout in the results."</span><span class="p">)</span></div>
+
+</span><span id="line-132">
+</span><span id="line-133">    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_from_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
+</span><span id="line-134"><span class="w">        </span><span class="sd">"""Compute the exact expectation value from the final quantum state.</span>
 </span><span id="line-135">
-</span><span id="line-136"><span class="sd">        Returns:</span>
-</span><span id="line-137"><span class="sd">            Number: The probability-weighted expectation value.</span>
-</span><span id="line-138">
-</span><span id="line-139"><span class="sd">        Raises:</span>
-</span><span id="line-140"><span class="sd">            ValueError: If the number of qubits in a sample does not match the</span>
-</span><span id="line-141"><span class="sd">                number of qubits of the observable.</span>
-</span><span id="line-142"><span class="sd">        """</span>
-</span><span id="line-143">        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
-</span><span id="line-144">        <span class="n">nqubits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="o">.</span><span class="n">nqubits</span>
-</span><span id="line-145">        <span class="n">samples</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get_samples</span><span class="p">()</span>
-</span><span id="line-146">        <span class="n">nshots</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-</span><span id="line-147">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">"[ObservableCostFunction] Estimating expectation value from </span><span class="si">{}</span><span class="s2"> distinct samples"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">))</span>
-</span><span id="line-148">        <span class="k">for</span> <span class="n">sample</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-</span><span id="line-149">            <span class="n">state</span> <span class="o">=</span> <span class="n">ket</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span> <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">sample</span><span class="p">])</span>
-</span><span id="line-150">            <span class="k">if</span> <span class="n">nqubits</span> <span class="o">!=</span> <span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">:</span>
-</span><span id="line-151">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span id="line-152">                    <span class="sa">f</span><span class="s2">"The samples provided have </span><span class="si">{</span><span class="n">state</span><span class="o">.</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits but the observable has </span><span class="si">{</span><span class="n">nqubits</span><span class="si">}</span><span class="s2"> qubits"</span>
-</span><span id="line-153">                <span class="p">)</span>
-</span><span id="line-154">            <span class="n">evaluate_results</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">expect_val</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="p">,</span> <span class="n">state</span><span class="p">),</span> <span class="n">tol</span><span class="o">=</span><span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">))</span>
-</span><span id="line-155">            <span class="n">total_cost</span> <span class="o">+=</span> <span class="n">evaluate_results</span> <span class="o">*</span> <span class="p">(</span><span class="n">prob</span> <span class="o">/</span> <span class="n">nshots</span><span class="p">)</span>
-</span><span id="line-156">
-</span><span id="line-157">        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
-</span><span id="line-158">            <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
-</span><span id="line-159">        <span class="k">return</span> <span class="n">total_cost</span>
-</span><span id="line-160">
-</span><span id="line-161">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="line-162"><span class="w">        </span><span class="sd">"""Return a string representation of this cost function.</span>
-</span><span id="line-163">
-</span><span id="line-164"><span class="sd">        Returns:</span>
-</span><span id="line-165"><span class="sd">            str: A string of the form ``ObservableCostFunction(observable=...)``.</span>
-</span><span id="line-166"><span class="sd">        """</span>
-</span><span id="line-167">        <span class="k">return</span> <span class="sa">f</span><span class="s2">"ObservableCostFunction(observable=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="si">}</span><span class="s2">)"</span></div>
+</span><span id="line-136"><span class="sd">        Args:</span>
+</span><span id="line-137"><span class="sd">            results (FunctionalResult): A result whose ``final_state`` is</span>
+</span><span id="line-138"><span class="sd">                available.</span>
+</span><span id="line-139">
+</span><span id="line-140"><span class="sd">        Returns:</span>
+</span><span id="line-141"><span class="sd">            Number: The expectation value ``&lt;psi|O|psi&gt;`` (or ``Tr(rho O)``</span>
+</span><span id="line-142"><span class="sd">            for mixed states).</span>
+</span><span id="line-143"><span class="sd">        """</span>
+</span><span id="line-144">        <span class="n">final_state</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get_state</span><span class="p">()</span>
+</span><span id="line-145">        <span class="n">observable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observable_expanded</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">nqubits</span><span class="p">)</span>
+</span><span id="line-146">        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">expect_val</span><span class="p">(</span><span class="n">observable</span><span class="p">,</span> <span class="n">final_state</span><span class="p">),</span> <span class="n">tol</span><span class="o">=</span><span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">))</span>
+</span><span id="line-147">        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
+</span><span id="line-148">            <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
+</span><span id="line-149">        <span class="k">return</span> <span class="n">total_cost</span>
+</span><span id="line-150">
+</span><span id="line-151">    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_from_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="n">FunctionalResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Number</span><span class="p">:</span>
+</span><span id="line-152"><span class="w">        </span><span class="sd">"""Estimate the expectation value from sampled probability distributions.</span>
+</span><span id="line-153">
+</span><span id="line-154"><span class="sd">        Each bitstring sample is converted to a computational-basis ket and the</span>
+</span><span id="line-155"><span class="sd">        observable is evaluated against it; the total is a probability-weighted</span>
+</span><span id="line-156"><span class="sd">        sum of those evaluations. Since this only sees the diagonal of the</span>
+</span><span id="line-157"><span class="sd">        observable, the observable must be diagonal in the computational basis.</span>
+</span><span id="line-158">
+</span><span id="line-159"><span class="sd">        Args:</span>
+</span><span id="line-160"><span class="sd">            results (FunctionalResult): A result whose ``probabilities``</span>
+</span><span id="line-161"><span class="sd">                are available.</span>
+</span><span id="line-162">
+</span><span id="line-163"><span class="sd">        Returns:</span>
+</span><span id="line-164"><span class="sd">            Number: The probability-weighted expectation value.</span>
+</span><span id="line-165">
+</span><span id="line-166"><span class="sd">        Raises:</span>
+</span><span id="line-167"><span class="sd">            ValueError: If the observable is not diagonal in the computational</span>
+</span><span id="line-168"><span class="sd">                basis (e.g. contains ``X`` or ``Y`` terms).</span>
+</span><span id="line-169"><span class="sd">            ValueError: If the samples have fewer qubits than the observable</span>
+</span><span id="line-170"><span class="sd">                acts on.</span>
+</span><span id="line-171"><span class="sd">        """</span>
+</span><span id="line-172">        <span class="c1"># Off-diagonal elements would silently contribute nothing to &lt;b|O|b&gt;</span>
+</span><span id="line-173">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="p">,</span> <span class="n">Hamiltonian</span><span class="p">):</span>
+</span><span id="line-174">            <span class="n">is_diagonal</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span>
+</span><span id="line-175">                <span class="nb">abs</span><span class="p">(</span><span class="n">coefficient</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span> <span class="ow">or</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="p">(</span><span class="n">PauliZ</span><span class="p">,</span> <span class="n">PauliI</span><span class="p">))</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">term</span><span class="p">)</span>
+</span><span id="line-176">                <span class="k">for</span> <span class="n">term</span><span class="p">,</span> <span class="n">coefficient</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span><span class="o">.</span><span class="n">elements</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+</span><span id="line-177">            <span class="p">)</span>
+</span><span id="line-178">        <span class="k">else</span><span class="p">:</span>
+</span><span id="line-179">            <span class="n">observable_coo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">tocoo</span><span class="p">()</span>
+</span><span id="line-180">            <span class="n">off_diagonal</span> <span class="o">=</span> <span class="n">observable_coo</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">observable_coo</span><span class="o">.</span><span class="n">row</span> <span class="o">!=</span> <span class="n">observable_coo</span><span class="o">.</span><span class="n">col</span><span class="p">]</span>
+</span><span id="line-181">            <span class="n">is_diagonal</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">off_diagonal</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">)</span>
+</span><span id="line-182">        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_diagonal</span><span class="p">:</span>
+</span><span id="line-183">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span id="line-184">                <span class="s2">"ObservableCostFunction can only estimate observables that are diagonal in the computational basis "</span>
+</span><span id="line-185">                <span class="s2">"from samples. Use a StateTomography readout, or rotate into the observable's basis before sampling."</span>
+</span><span id="line-186">            <span class="p">)</span>
+</span><span id="line-187">
+</span><span id="line-188">        <span class="n">total_cost</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+</span><span id="line-189">        <span class="n">samples</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get_samples</span><span class="p">()</span>
+</span><span id="line-190">        <span class="n">nshots</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">samples</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+</span><span id="line-191">        <span class="n">observable</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observable_expanded</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">samples</span><span class="p">))))</span>
+</span><span id="line-192">        <span class="n">logger</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">"[ObservableCostFunction] Estimating expectation value from </span><span class="si">{}</span><span class="s2"> distinct samples"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">))</span>
+</span><span id="line-193">        <span class="k">for</span> <span class="n">sample</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span id="line-194">            <span class="n">state</span> <span class="o">=</span> <span class="n">ket</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span> <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">sample</span><span class="p">])</span>
+</span><span id="line-195">            <span class="n">evaluate_results</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real_if_close</span><span class="p">(</span><span class="n">expect_val</span><span class="p">(</span><span class="n">observable</span><span class="p">,</span> <span class="n">state</span><span class="p">),</span> <span class="n">tol</span><span class="o">=</span><span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">))</span>
+</span><span id="line-196">            <span class="n">total_cost</span> <span class="o">+=</span> <span class="n">evaluate_results</span> <span class="o">*</span> <span class="p">(</span><span class="n">prob</span> <span class="o">/</span> <span class="n">nshots</span><span class="p">)</span>
+</span><span id="line-197">
+</span><span id="line-198">        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">total_cost</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">get_settings</span><span class="p">()</span><span class="o">.</span><span class="n">atol</span><span class="p">:</span>
+</span><span id="line-199">            <span class="k">return</span> <span class="n">total_cost</span><span class="o">.</span><span class="n">real</span>
+</span><span id="line-200">        <span class="k">return</span> <span class="n">total_cost</span>
+</span><span id="line-201">
+</span><span id="line-202">    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="line-203"><span class="w">        </span><span class="sd">"""Return a string representation of this cost function.</span>
+</span><span id="line-204">
+</span><span id="line-205"><span class="sd">        Returns:</span>
+</span><span id="line-206"><span class="sd">            str: A string of the form ``ObservableCostFunction(observable=...)``.</span>
+</span><span id="line-207"><span class="sd">        """</span>
+</span><span id="line-208">        <span class="k">return</span> <span class="sa">f</span><span class="s2">"ObservableCostFunction(observable=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_observable</span><span class="si">}</span><span class="s2">)"</span></div>
 
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
@@ -633,7 +712,7 @@
     <script src="../../../_static/documentation_options.js?v=62dba230"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script defer="defer" src="../../../_static/theme.js?v=5db23cf8"></script>
+    <script defer="defer" src="../../../_static/theme.js?v=49cc6205"></script>
     <script src="../../../_static/translations.js?v=5e30842e"></script>
     <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>

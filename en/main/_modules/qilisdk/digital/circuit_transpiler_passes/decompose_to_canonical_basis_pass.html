@@ -23,15 +23,19 @@
   <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
   <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#030711" />
   
+<meta name="description" content="qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass - QiliSDK is an open-source Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends." />
+<meta property="og:description" content="qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass - QiliSDK is an open-source Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends." />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="QiliSDK documentation" />
   <title>qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass | QiliSDK</title>
   <meta property="og:title" content="qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass | QiliSDK" />
   <meta name="twitter:title" content="qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass | QiliSDK" />
   <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=af2a1b69" />
-  <link rel="stylesheet" type="text/css" href="../../../../_static/theme.css?v=d6d7c91b" />
+  <link rel="stylesheet" type="text/css" href="../../../../_static/theme.css?v=009055c6" />
   <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
   <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
-  <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=73a96f5a" />
-  <link rel="stylesheet" type="text/css" href="../../../../_static/awesome-sphinx-design.css?v=a81faafa" />
+  <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=901373fb" />
+  <link rel="stylesheet" type="text/css" href="../../../../_static/awesome-sphinx-design.css?v=b41b1d54" />
   <link rel="icon" href="../../../../_static/QiliSDK_q.png" />
   <link rel="search" title="Search" href="../../../../search.html" />
   <link rel="index" title="Index" href="../../../../genindex.html" />
@@ -49,26 +53,6 @@
 <a href="../../../../index.html" class="flex items-center mr-6">
     <img style="height: 2rem; width: auto;" class="hidden dark:block" src="../../../../_static/QiliSDK_wht.svg" alt="QiliSDK" />
     <img style="height: 2rem; width: auto;" class="dark:hidden" src="../../../../_static/QiliSDK_blk.svg" alt="QiliSDK" /></a>
-
-
-<div class="language-switcher">
-  
-  
-  
-  
-    
-        <span class="lang-active">EN</span>
-    
-  
-    
-        <a href="../../../../../../es/main/_modules/qilisdk/digital/circuit_transpiler_passes/decompose_to_canonical_basis_pass.html" class="lang-link">ES</a>
-    
-  
-    
-        <a href="../../../../../../ca/main/_modules/qilisdk/digital/circuit_transpiler_passes/decompose_to_canonical_basis_pass.html" class="lang-link">CA</a>
-    
-  
-</div>
 </div><button
       class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden"
       type="button" @click="showSidebar = true">
@@ -79,26 +63,35 @@
       </svg>
       <span class="sr-only">Toggle navigation menu</span>
     </button>
-    <div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
-      <div class="flex-1 w-full md:w-auto md:flex-none"><form id="searchbox"
-      action="../../../../search.html"
-      method="get"
-      class="relative flex items-center group"
-      @keydown.k.window.meta="$refs.search.focus()">
-  <input x-ref="search"
-          name="q"
-          id="search-input"
-          type="search"
-          aria-label="Search the docs"
-          placeholder="Search ..."
-          class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" />
-  <kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
-    <span class="text-xs">⌘</span>
-    K
-  </kbd>
-</form>
-      </div>
+<div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
+  
+  <div class="language-switcher">
+    
+    
+    
+    
+      
+          <span class="lang-active">EN</span>
+      
+    
+      
+          <a href="../../../../../../es/main/_modules/qilisdk/digital/circuit_transpiler_passes/decompose_to_canonical_basis_pass.html" class="lang-link">ES</a>
+      
+    
+      
+          <a href="../../../../../../ca/main/_modules/qilisdk/digital/circuit_transpiler_passes/decompose_to_canonical_basis_pass.html" class="lang-link">CA</a>
+      
+    
+  </div>
+  
       <nav class="flex items-center gap-1">
+        <a href="https://github.com/qilimanjaro-tech/qilisdk" title="Visit GitHub repository" rel="noopener nofollow">
+          <div
+            class="inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.29-.01-1.05-.02-2.06-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6.01 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.29 0 .32.21.7.83.58A12 12 0 0 0 24 12.5C24 5.87 18.63.5 12 .5Z"/></svg>
+          </div>
+        </a>
+        
         <button @click="darkMode = !darkMode"
           class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9"
           type="button"
@@ -115,7 +108,27 @@
           </svg>
         </button>
       </nav>
-    </div>
+  
+  <div class="flex-1 w-full md:w-auto md:flex-none"><form id="searchbox"
+      action="../../../../search.html"
+      method="get"
+      class="relative flex items-center group"
+      @keydown.k.window.meta="$refs.search.focus()">
+  <input x-ref="search"
+          name="q"
+          id="search-input"
+          type="search"
+          aria-label="Search the docs"
+          placeholder="Search ..."
+          class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" />
+  <kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+    <span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
+  </div>
+</div>
+
   </div>
 </header>
 
@@ -135,7 +148,7 @@
       <div class="overflow-y-auto h-full w-full relative pr-6"><nav class="table w-full min-w-full my-6 lg:my-8">
   <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../getting_started/quickstart.html">Quickstart</a></li>
 </ul>
@@ -217,6 +230,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/noise/noise_overview.html">Overview</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/noise/noise_config.html">Noise Config</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../../../modules/noise/noise_types.html">Noise Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/noise/noise_non_markovian.html">Non-Markovian Noise</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules/ml/ml.html">Machine Learning</a><ul>
@@ -225,6 +239,14 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules/speqtrum/speqtrum.html">SpeQtrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/utils/utils.html">Utils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/utils/utils_overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/utils/utils_classical_solvers.html">Classical Solvers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/utils/utils_interoperability.html">Interoperability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../modules/utils/utils_serialization.html">Serialization and Hashing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/settings/settings.html">Settings</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../modules/logging/logging.html">Logging</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
@@ -300,6 +322,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/bit_flip/index.html">qilisdk.noise.bit_flip</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/dephasing/index.html">qilisdk.noise.dephasing</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/depolarizing/index.html">qilisdk.noise.depolarizing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/environment_noise/index.html">qilisdk.noise.environment_noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/gaussian_perturbation/index.html">qilisdk.noise.gaussian_perturbation</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/noise/index.html">qilisdk.noise.noise</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../../../code/api/qilisdk/noise/noise_abc/index.html">qilisdk.noise.noise_abc</a></li>
@@ -355,6 +378,10 @@
 </nav>
   
   
+  
+  
+  
+  
 
   <nav class="table w-full min-w-full my-6 lg:my-8 border-t pt-6">
     
@@ -363,30 +390,41 @@
     </p>
     <ul>
       <li class="toctree-l1">
+        <a class="reference internal" href="../../../../../0.3.2/index.html">0.3.2</a>
+      </li>
+      <li class="toctree-l1">
         <a class="reference internal" href="../../../../../0.3.1/index.html">0.3.1</a>
       </li>
       <li class="toctree-l1">
         <a class="reference internal" href="../../../../../0.3.0/index.html">0.3.0</a>
       </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../../0.2.1/index.html">0.2.1</a>
-      </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../../0.2.0/index.html">0.2.0</a>
-      </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../../0.1.8/index.html">0.1.8</a>
-      </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../../0.1.7/index.html">0.1.7</a>
-      </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../../0.1.6/index.html">0.1.6</a>
-      </li>
-      <li class="toctree-l1">
-        <a class="reference internal" href="../../../../../0.1.5/index.html">0.1.5</a>
-      </li>
     </ul>
+
+    
+    <details class="older-versions">
+      <summary class="toctree-l1">older versions</summary>
+      <ul>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../../0.2.1/index.html">0.2.1</a>
+        </li>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../../0.2.0/index.html">0.2.0</a>
+        </li>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../../0.1.8/index.html">0.1.8</a>
+        </li>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../../0.1.7/index.html">0.1.7</a>
+        </li>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../../0.1.6/index.html">0.1.6</a>
+        </li>
+        <li class="toctree-l1">
+          <a class="reference internal" href="../../../../../0.1.5/index.html">0.1.5</a>
+        </li>
+      </ul>
+    </details>
+    
     
 
     
@@ -1034,118 +1072,144 @@
 </span><span id="line-563">        <span class="k">if</span> <span class="n">_is_controlled</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
 </span><span id="line-564">            <span class="n">control_qubits</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">control_qubits</span><span class="p">)</span>
 </span><span id="line-565">            <span class="n">basic_gate</span><span class="p">:</span> <span class="n">BasicGate</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">basic_gate</span>
-</span><span id="line-566">            <span class="k">if</span> <span class="n">basic_gate</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-567">                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Controlled of multi-qubit gates not supported."</span><span class="p">)</span>
-</span><span id="line-568">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">control_qubits</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-569">                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-</span><span id="line-570">                    <span class="s2">"CircuitToCanonicalBasisPass supports only single-control gates. "</span>
-</span><span id="line-571">                    <span class="s2">"Run DecomposeMultiControlledGatesPass first."</span>
-</span><span id="line-572">                <span class="p">)</span>
-</span><span id="line-573">            <span class="n">target_qubit</span> <span class="o">=</span> <span class="n">basic_gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="line-574">            <span class="n">basis_one_qubit_gate</span> <span class="o">=</span> <span class="n">_as_basis_1q</span><span class="p">(</span><span class="n">basic_gate</span><span class="p">)</span>
-</span><span id="line-575">            <span class="k">if</span> <span class="n">basis_one_qubit_gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">target_qubit</span><span class="p">:</span>
-</span><span id="line-576">                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">basis_one_qubit_gate</span><span class="p">,</span> <span class="n">U3</span><span class="p">):</span>
-</span><span id="line-577">                    <span class="n">basis_one_qubit_gate</span> <span class="o">=</span> <span class="n">U3</span><span class="p">(</span>
-</span><span id="line-578">                        <span class="n">target_qubit</span><span class="p">,</span>
-</span><span id="line-579">                        <span class="n">theta</span><span class="o">=</span><span class="n">basis_one_qubit_gate</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span>
-</span><span id="line-580">                        <span class="n">phi</span><span class="o">=</span><span class="n">basis_one_qubit_gate</span><span class="o">.</span><span class="n">phi</span><span class="p">,</span>
-</span><span id="line-581">                        <span class="n">gamma</span><span class="o">=</span><span class="n">basis_one_qubit_gate</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span>
-</span><span id="line-582">                    <span class="p">)</span>
-</span><span id="line-583">                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">basis_one_qubit_gate</span><span class="p">,</span> <span class="n">RX</span><span class="p">):</span>
-</span><span id="line-584">                    <span class="n">basis_one_qubit_gate</span> <span class="o">=</span> <span class="n">RX</span><span class="p">(</span><span class="n">target_qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">basis_one_qubit_gate</span><span class="o">.</span><span class="n">theta</span><span class="p">)</span>
-</span><span id="line-585">                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">basis_one_qubit_gate</span><span class="p">,</span> <span class="n">RY</span><span class="p">):</span>
-</span><span id="line-586">                    <span class="n">basis_one_qubit_gate</span> <span class="o">=</span> <span class="n">RY</span><span class="p">(</span><span class="n">target_qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">basis_one_qubit_gate</span><span class="o">.</span><span class="n">theta</span><span class="p">)</span>
-</span><span id="line-587">                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">basis_one_qubit_gate</span><span class="p">,</span> <span class="n">RZ</span><span class="p">):</span>
-</span><span id="line-588">                    <span class="n">basis_one_qubit_gate</span> <span class="o">=</span> <span class="n">RZ</span><span class="p">(</span><span class="n">target_qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">basis_one_qubit_gate</span><span class="o">.</span><span class="n">phi</span><span class="p">)</span>
-</span><span id="line-589">            <span class="k">return</span> <span class="n">_single_controlled</span><span class="p">(</span>
-</span><span id="line-590">                <span class="n">control_qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-</span><span id="line-591">                <span class="n">basis_one_qubit_gate</span><span class="p">,</span>
-</span><span id="line-592">                <span class="bp">self</span><span class="o">.</span><span class="n">_two_qubit_basis</span><span class="p">,</span>
-</span><span id="line-593">                <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span><span class="p">,</span>
-</span><span id="line-594">            <span class="p">)</span>
-</span><span id="line-595">
-</span><span id="line-596">        <span class="c1"># Adjoint</span>
-</span><span id="line-597">        <span class="k">if</span> <span class="n">_is_adjoint</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
-</span><span id="line-598">            <span class="n">rewritten_base_sequence</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rewrite_gate</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">basic_gate</span><span class="p">)</span>
-</span><span id="line-599">            <span class="n">inverse_sequence</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Gate</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-</span><span id="line-600">            <span class="k">for</span> <span class="n">base_gate</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">rewritten_base_sequence</span><span class="p">):</span>
-</span><span id="line-601">                <span class="n">inverse_sequence</span> <span class="o">+=</span> <span class="n">_invert_basis_gate</span><span class="p">(</span><span class="n">base_gate</span><span class="p">)</span>
-</span><span id="line-602">            <span class="k">return</span> <span class="n">_normalize_single_qubit_sequence</span><span class="p">(</span><span class="n">inverse_sequence</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span><span class="p">)</span>
-</span><span id="line-603">
-</span><span id="line-604">        <span class="c1"># Exponential(1q)</span>
-</span><span id="line-605">        <span class="k">if</span> <span class="n">_is_exponential</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
-</span><span id="line-606">            <span class="n">basic_gate</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">basic_gate</span>
-</span><span id="line-607">            <span class="k">if</span> <span class="n">basic_gate</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-608">                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
-</span><span id="line-609">                    <span class="s2">"Decomposing the exponential of a multi-qubit gate to a canonical basis is not supported."</span>
-</span><span id="line-610">                <span class="p">)</span>
-</span><span id="line-611">            <span class="n">unitary_matrix</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">dense</span><span class="p">()</span>
-</span><span id="line-612">            <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="n">_zyz_from_unitary</span><span class="p">(</span><span class="n">unitary_matrix</span><span class="p">)</span>
-</span><span id="line-613">            <span class="k">return</span> <span class="n">_normalize_single_qubit_sequence</span><span class="p">(</span>
-</span><span id="line-614">                <span class="p">[</span><span class="n">U3</span><span class="p">(</span><span class="n">basic_gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">)],</span>
-</span><span id="line-615">                <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span><span class="p">,</span>
-</span><span id="line-616">            <span class="p">)</span>
-</span><span id="line-617">
-</span><span id="line-618">        <span class="c1"># generic 1q</span>
-</span><span id="line-619">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">BasicGate</span><span class="p">)</span> <span class="ow">and</span> <span class="n">gate</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-</span><span id="line-620">            <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="n">_zyz_from_unitary</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">dense</span><span class="p">())</span>
-</span><span id="line-621">            <span class="k">return</span> <span class="n">_normalize_single_qubit_sequence</span><span class="p">(</span>
-</span><span id="line-622">                <span class="p">[</span><span class="n">U3</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">)],</span>
-</span><span id="line-623">                <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span><span class="p">,</span>
-</span><span id="line-624">            <span class="p">)</span>
-</span><span id="line-625">
-</span><span id="line-626">        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No canonicalization rule for </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
-
-</span><span id="line-627">
-</span><span id="line-628">    <span class="c1"># --- single-control synthesis ---</span>
+</span><span id="line-566">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">control_qubits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">basic_gate</span><span class="p">,</span> <span class="n">SWAP</span><span class="p">):</span>
+</span><span id="line-567">                <span class="c1"># Fredkin: CSWAP(c, a, b) = CNOT(b, a) · Toffoli(c, a, b) · CNOT(b, a), Toffoli as in Nielsen &amp; Chuang Fig. 4.9</span>
+</span><span id="line-568">                <span class="n">control_qubit</span> <span class="o">=</span> <span class="n">control_qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="line-569">                <span class="n">first_target_qubit</span><span class="p">,</span> <span class="n">second_target_qubit</span> <span class="o">=</span> <span class="n">basic_gate</span><span class="o">.</span><span class="n">target_qubits</span>
+</span><span id="line-570">                <span class="n">t_angle</span><span class="p">,</span> <span class="n">t_dagger_angle</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span><span class="p">,</span> <span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span>
+</span><span id="line-571">                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rewrite_list</span><span class="p">(</span>
+</span><span id="line-572">                    <span class="p">[</span>
+</span><span id="line-573">                        <span class="n">CNOT</span><span class="p">(</span><span class="n">second_target_qubit</span><span class="p">,</span> <span class="n">first_target_qubit</span><span class="p">),</span>
+</span><span id="line-574">                        <span class="n">H</span><span class="p">(</span><span class="n">second_target_qubit</span><span class="p">),</span>
+</span><span id="line-575">                        <span class="n">CNOT</span><span class="p">(</span><span class="n">first_target_qubit</span><span class="p">,</span> <span class="n">second_target_qubit</span><span class="p">),</span>
+</span><span id="line-576">                        <span class="n">U1</span><span class="p">(</span><span class="n">second_target_qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">t_dagger_angle</span><span class="p">),</span>
+</span><span id="line-577">                        <span class="n">CNOT</span><span class="p">(</span><span class="n">control_qubit</span><span class="p">,</span> <span class="n">second_target_qubit</span><span class="p">),</span>
+</span><span id="line-578">                        <span class="n">U1</span><span class="p">(</span><span class="n">second_target_qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">t_angle</span><span class="p">),</span>
+</span><span id="line-579">                        <span class="n">CNOT</span><span class="p">(</span><span class="n">first_target_qubit</span><span class="p">,</span> <span class="n">second_target_qubit</span><span class="p">),</span>
+</span><span id="line-580">                        <span class="n">U1</span><span class="p">(</span><span class="n">second_target_qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">t_dagger_angle</span><span class="p">),</span>
+</span><span id="line-581">                        <span class="n">CNOT</span><span class="p">(</span><span class="n">control_qubit</span><span class="p">,</span> <span class="n">second_target_qubit</span><span class="p">),</span>
+</span><span id="line-582">                        <span class="n">U1</span><span class="p">(</span><span class="n">first_target_qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">t_angle</span><span class="p">),</span>
+</span><span id="line-583">                        <span class="n">U1</span><span class="p">(</span><span class="n">second_target_qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">t_angle</span><span class="p">),</span>
+</span><span id="line-584">                        <span class="n">H</span><span class="p">(</span><span class="n">second_target_qubit</span><span class="p">),</span>
+</span><span id="line-585">                        <span class="n">CNOT</span><span class="p">(</span><span class="n">control_qubit</span><span class="p">,</span> <span class="n">first_target_qubit</span><span class="p">),</span>
+</span><span id="line-586">                        <span class="n">U1</span><span class="p">(</span><span class="n">control_qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">t_angle</span><span class="p">),</span>
+</span><span id="line-587">                        <span class="n">U1</span><span class="p">(</span><span class="n">first_target_qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">t_dagger_angle</span><span class="p">),</span>
+</span><span id="line-588">                        <span class="n">CNOT</span><span class="p">(</span><span class="n">control_qubit</span><span class="p">,</span> <span class="n">first_target_qubit</span><span class="p">),</span>
+</span><span id="line-589">                        <span class="n">CNOT</span><span class="p">(</span><span class="n">second_target_qubit</span><span class="p">,</span> <span class="n">first_target_qubit</span><span class="p">),</span>
+</span><span id="line-590">                    <span class="p">]</span>
+</span><span id="line-591">                <span class="p">)</span>
+</span><span id="line-592">            <span class="k">if</span> <span class="n">basic_gate</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-593">                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"Controlled of multi-qubit gates not supported."</span><span class="p">)</span>
+</span><span id="line-594">            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">control_qubits</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-595">                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+</span><span id="line-596">                    <span class="s2">"CircuitToCanonicalBasisPass supports only single-control gates. "</span>
+</span><span id="line-597">                    <span class="s2">"Run DecomposeMultiControlledGatesPass first."</span>
+</span><span id="line-598">                <span class="p">)</span>
+</span><span id="line-599">            <span class="n">target_qubit</span> <span class="o">=</span> <span class="n">basic_gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="line-600">            <span class="n">basis_one_qubit_gate</span> <span class="o">=</span> <span class="n">_as_basis_1q</span><span class="p">(</span><span class="n">basic_gate</span><span class="p">)</span>
+</span><span id="line-601">            <span class="k">if</span> <span class="n">basis_one_qubit_gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">target_qubit</span><span class="p">:</span>
+</span><span id="line-602">                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">basis_one_qubit_gate</span><span class="p">,</span> <span class="n">U3</span><span class="p">):</span>
+</span><span id="line-603">                    <span class="n">basis_one_qubit_gate</span> <span class="o">=</span> <span class="n">U3</span><span class="p">(</span>
+</span><span id="line-604">                        <span class="n">target_qubit</span><span class="p">,</span>
+</span><span id="line-605">                        <span class="n">theta</span><span class="o">=</span><span class="n">basis_one_qubit_gate</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span>
+</span><span id="line-606">                        <span class="n">phi</span><span class="o">=</span><span class="n">basis_one_qubit_gate</span><span class="o">.</span><span class="n">phi</span><span class="p">,</span>
+</span><span id="line-607">                        <span class="n">gamma</span><span class="o">=</span><span class="n">basis_one_qubit_gate</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span>
+</span><span id="line-608">                    <span class="p">)</span>
+</span><span id="line-609">                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">basis_one_qubit_gate</span><span class="p">,</span> <span class="n">RX</span><span class="p">):</span>
+</span><span id="line-610">                    <span class="n">basis_one_qubit_gate</span> <span class="o">=</span> <span class="n">RX</span><span class="p">(</span><span class="n">target_qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">basis_one_qubit_gate</span><span class="o">.</span><span class="n">theta</span><span class="p">)</span>
+</span><span id="line-611">                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">basis_one_qubit_gate</span><span class="p">,</span> <span class="n">RY</span><span class="p">):</span>
+</span><span id="line-612">                    <span class="n">basis_one_qubit_gate</span> <span class="o">=</span> <span class="n">RY</span><span class="p">(</span><span class="n">target_qubit</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="n">basis_one_qubit_gate</span><span class="o">.</span><span class="n">theta</span><span class="p">)</span>
+</span><span id="line-613">                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">basis_one_qubit_gate</span><span class="p">,</span> <span class="n">RZ</span><span class="p">):</span>
+</span><span id="line-614">                    <span class="n">basis_one_qubit_gate</span> <span class="o">=</span> <span class="n">RZ</span><span class="p">(</span><span class="n">target_qubit</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">basis_one_qubit_gate</span><span class="o">.</span><span class="n">phi</span><span class="p">)</span>
+</span><span id="line-615">            <span class="k">return</span> <span class="n">_single_controlled</span><span class="p">(</span>
+</span><span id="line-616">                <span class="n">control_qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+</span><span id="line-617">                <span class="n">basis_one_qubit_gate</span><span class="p">,</span>
+</span><span id="line-618">                <span class="bp">self</span><span class="o">.</span><span class="n">_two_qubit_basis</span><span class="p">,</span>
+</span><span id="line-619">                <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span><span class="p">,</span>
+</span><span id="line-620">            <span class="p">)</span>
+</span><span id="line-621">
+</span><span id="line-622">        <span class="c1"># Adjoint</span>
+</span><span id="line-623">        <span class="k">if</span> <span class="n">_is_adjoint</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
+</span><span id="line-624">            <span class="n">rewritten_base_sequence</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rewrite_gate</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">basic_gate</span><span class="p">)</span>
+</span><span id="line-625">            <span class="n">inverse_sequence</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Gate</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="line-626">            <span class="k">for</span> <span class="n">base_gate</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">rewritten_base_sequence</span><span class="p">):</span>
+</span><span id="line-627">                <span class="n">inverse_sequence</span> <span class="o">+=</span> <span class="n">_invert_basis_gate</span><span class="p">(</span><span class="n">base_gate</span><span class="p">)</span>
+</span><span id="line-628">            <span class="k">return</span> <span class="n">_normalize_single_qubit_sequence</span><span class="p">(</span><span class="n">inverse_sequence</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span><span class="p">)</span>
 </span><span id="line-629">
-</span><span id="line-630">
-</span><span id="line-631"><span class="k">def</span><span class="w"> </span><span class="nf">_single_controlled</span><span class="p">(</span>
-</span><span id="line-632">    <span class="n">control_qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-</span><span id="line-633">    <span class="n">target_gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">,</span>
-</span><span id="line-634">    <span class="n">basis</span><span class="p">:</span> <span class="n">TwoQubitGateBasis</span> <span class="o">=</span> <span class="n">TwoQubitGateBasis</span><span class="o">.</span><span class="n">CZ</span><span class="p">,</span>
-</span><span id="line-635">    <span class="n">single_qubit_basis</span><span class="p">:</span> <span class="n">SingleQubitGateBasis</span> <span class="o">=</span> <span class="n">SingleQubitGateBasis</span><span class="o">.</span><span class="n">U3</span><span class="p">,</span>
-</span><span id="line-636"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Gate</span><span class="p">]:</span>
-</span><span id="line-637"><span class="w">    </span><span class="sd">"""Return a single-control decomposition for a one-qubit target gate.</span>
-</span><span id="line-638">
-</span><span id="line-639"><span class="sd">    Args:</span>
-</span><span id="line-640"><span class="sd">        control_qubit (int): Control qubit index.</span>
-</span><span id="line-641"><span class="sd">        target_gate (Gate): One-qubit target gate to control.</span>
-</span><span id="line-642"><span class="sd">        basis (TwoQubitGateBasis): Selected two-qubit basis used in the decomposition.</span>
-</span><span id="line-643"><span class="sd">        single_qubit_basis (SingleQubitGateBasis): Selected one-qubit basis used to normalize emitted 1Q gates.</span>
-</span><span id="line-644">
-</span><span id="line-645"><span class="sd">    Returns:</span>
-</span><span id="line-646"><span class="sd">        list[Gate]: Equivalent sequence with canonical two-qubit primitives.</span>
-</span><span id="line-647"><span class="sd">    """</span>
-</span><span id="line-648">    <span class="n">target_qubit</span> <span class="o">=</span> <span class="n">target_gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="line-649">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_gate</span><span class="p">,</span> <span class="n">RZ</span><span class="p">):</span>
-</span><span id="line-650">        <span class="k">return</span> <span class="n">_normalize_single_qubit_sequence</span><span class="p">(</span>
-</span><span id="line-651">            <span class="n">_CRZ_using_CNOT</span><span class="p">(</span><span class="n">control_qubit</span><span class="p">,</span> <span class="n">target_qubit</span><span class="p">,</span> <span class="n">target_gate</span><span class="o">.</span><span class="n">phi</span><span class="p">,</span> <span class="n">basis</span><span class="p">),</span>
-</span><span id="line-652">            <span class="n">single_qubit_basis</span><span class="p">,</span>
-</span><span id="line-653">        <span class="p">)</span>
-</span><span id="line-654">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_gate</span><span class="p">,</span> <span class="n">RX</span><span class="p">):</span>
-</span><span id="line-655">        <span class="k">return</span> <span class="n">_normalize_single_qubit_sequence</span><span class="p">(</span>
-</span><span id="line-656">            <span class="n">_CRX_using_CRZ</span><span class="p">(</span><span class="n">control_qubit</span><span class="p">,</span> <span class="n">target_qubit</span><span class="p">,</span> <span class="n">target_gate</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">basis</span><span class="p">),</span>
-</span><span id="line-657">            <span class="n">single_qubit_basis</span><span class="p">,</span>
-</span><span id="line-658">        <span class="p">)</span>
-</span><span id="line-659">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_gate</span><span class="p">,</span> <span class="n">RY</span><span class="p">):</span>
-</span><span id="line-660">        <span class="k">return</span> <span class="n">_normalize_single_qubit_sequence</span><span class="p">(</span>
-</span><span id="line-661">            <span class="n">_CRY_using_CRZ</span><span class="p">(</span><span class="n">control_qubit</span><span class="p">,</span> <span class="n">target_qubit</span><span class="p">,</span> <span class="n">target_gate</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">basis</span><span class="p">),</span>
-</span><span id="line-662">            <span class="n">single_qubit_basis</span><span class="p">,</span>
-</span><span id="line-663">        <span class="p">)</span>
-</span><span id="line-664">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_gate</span><span class="p">,</span> <span class="n">U3</span><span class="p">):</span>
-</span><span id="line-665">        <span class="k">return</span> <span class="n">_normalize_single_qubit_sequence</span><span class="p">(</span>
-</span><span id="line-666">            <span class="n">_CU3_using_CNOT</span><span class="p">(</span>
-</span><span id="line-667">                <span class="n">control_qubit</span><span class="p">,</span>
-</span><span id="line-668">                <span class="n">target_qubit</span><span class="p">,</span>
-</span><span id="line-669">                <span class="n">target_gate</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span>
-</span><span id="line-670">                <span class="n">target_gate</span><span class="o">.</span><span class="n">phi</span><span class="p">,</span>
-</span><span id="line-671">                <span class="n">target_gate</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span>
-</span><span id="line-672">                <span class="n">basis</span><span class="p">,</span>
-</span><span id="line-673">            <span class="p">),</span>
-</span><span id="line-674">            <span class="n">single_qubit_basis</span><span class="p">,</span>
-</span><span id="line-675">        <span class="p">)</span>
-</span><span id="line-676">    <span class="k">return</span> <span class="n">_single_controlled</span><span class="p">(</span><span class="n">control_qubit</span><span class="p">,</span> <span class="n">_as_basis_1q</span><span class="p">(</span><span class="n">target_gate</span><span class="p">),</span> <span class="n">basis</span><span class="p">,</span> <span class="n">single_qubit_basis</span><span class="p">)</span>
+</span><span id="line-630">        <span class="c1"># Exponential(1q)</span>
+</span><span id="line-631">        <span class="k">if</span> <span class="n">_is_exponential</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
+</span><span id="line-632">            <span class="n">basic_gate</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">basic_gate</span>
+</span><span id="line-633">            <span class="k">if</span> <span class="n">basic_gate</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-634">                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+</span><span id="line-635">                    <span class="s2">"Decomposing the exponential of a multi-qubit gate to a canonical basis is not supported."</span>
+</span><span id="line-636">                <span class="p">)</span>
+</span><span id="line-637">            <span class="n">unitary_matrix</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">dense</span><span class="p">()</span>
+</span><span id="line-638">            <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="n">_zyz_from_unitary</span><span class="p">(</span><span class="n">unitary_matrix</span><span class="p">)</span>
+</span><span id="line-639">            <span class="k">return</span> <span class="n">_normalize_single_qubit_sequence</span><span class="p">(</span>
+</span><span id="line-640">                <span class="p">[</span><span class="n">U3</span><span class="p">(</span><span class="n">basic_gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">)],</span>
+</span><span id="line-641">                <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span><span class="p">,</span>
+</span><span id="line-642">            <span class="p">)</span>
+</span><span id="line-643">
+</span><span id="line-644">        <span class="c1"># generic 1q</span>
+</span><span id="line-645">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gate</span><span class="p">,</span> <span class="n">BasicGate</span><span class="p">)</span> <span class="ow">and</span> <span class="n">gate</span><span class="o">.</span><span class="n">nqubits</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+</span><span id="line-646">            <span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">,</span> <span class="n">gamma</span> <span class="o">=</span> <span class="n">_zyz_from_unitary</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">dense</span><span class="p">())</span>
+</span><span id="line-647">            <span class="k">return</span> <span class="n">_normalize_single_qubit_sequence</span><span class="p">(</span>
+</span><span id="line-648">                <span class="p">[</span><span class="n">U3</span><span class="p">(</span><span class="n">gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">theta</span><span class="o">=</span><span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">)],</span>
+</span><span id="line-649">                <span class="bp">self</span><span class="o">.</span><span class="n">_single_qubit_basis</span><span class="p">,</span>
+</span><span id="line-650">            <span class="p">)</span>
+</span><span id="line-651">
+</span><span id="line-652">        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No canonicalization rule for </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+
+</span><span id="line-653">
+</span><span id="line-654">    <span class="c1"># --- single-control synthesis ---</span>
+</span><span id="line-655">
+</span><span id="line-656">
+</span><span id="line-657"><span class="k">def</span><span class="w"> </span><span class="nf">_single_controlled</span><span class="p">(</span>
+</span><span id="line-658">    <span class="n">control_qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+</span><span id="line-659">    <span class="n">target_gate</span><span class="p">:</span> <span class="n">Gate</span><span class="p">,</span>
+</span><span id="line-660">    <span class="n">basis</span><span class="p">:</span> <span class="n">TwoQubitGateBasis</span> <span class="o">=</span> <span class="n">TwoQubitGateBasis</span><span class="o">.</span><span class="n">CZ</span><span class="p">,</span>
+</span><span id="line-661">    <span class="n">single_qubit_basis</span><span class="p">:</span> <span class="n">SingleQubitGateBasis</span> <span class="o">=</span> <span class="n">SingleQubitGateBasis</span><span class="o">.</span><span class="n">U3</span><span class="p">,</span>
+</span><span id="line-662"><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Gate</span><span class="p">]:</span>
+</span><span id="line-663"><span class="w">    </span><span class="sd">"""Return a single-control decomposition for a one-qubit target gate.</span>
+</span><span id="line-664">
+</span><span id="line-665"><span class="sd">    Args:</span>
+</span><span id="line-666"><span class="sd">        control_qubit (int): Control qubit index.</span>
+</span><span id="line-667"><span class="sd">        target_gate (Gate): One-qubit target gate to control.</span>
+</span><span id="line-668"><span class="sd">        basis (TwoQubitGateBasis): Selected two-qubit basis used in the decomposition.</span>
+</span><span id="line-669"><span class="sd">        single_qubit_basis (SingleQubitGateBasis): Selected one-qubit basis used to normalize emitted 1Q gates.</span>
+</span><span id="line-670">
+</span><span id="line-671"><span class="sd">    Returns:</span>
+</span><span id="line-672"><span class="sd">        list[Gate]: Equivalent sequence with canonical two-qubit primitives.</span>
+</span><span id="line-673"><span class="sd">    """</span>
+</span><span id="line-674">    <span class="n">target_qubit</span> <span class="o">=</span> <span class="n">target_gate</span><span class="o">.</span><span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="line-675">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_gate</span><span class="p">,</span> <span class="n">RZ</span><span class="p">):</span>
+</span><span id="line-676">        <span class="k">return</span> <span class="n">_normalize_single_qubit_sequence</span><span class="p">(</span>
+</span><span id="line-677">            <span class="n">_CRZ_using_CNOT</span><span class="p">(</span><span class="n">control_qubit</span><span class="p">,</span> <span class="n">target_qubit</span><span class="p">,</span> <span class="n">target_gate</span><span class="o">.</span><span class="n">phi</span><span class="p">,</span> <span class="n">basis</span><span class="p">),</span>
+</span><span id="line-678">            <span class="n">single_qubit_basis</span><span class="p">,</span>
+</span><span id="line-679">        <span class="p">)</span>
+</span><span id="line-680">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_gate</span><span class="p">,</span> <span class="n">RX</span><span class="p">):</span>
+</span><span id="line-681">        <span class="k">return</span> <span class="n">_normalize_single_qubit_sequence</span><span class="p">(</span>
+</span><span id="line-682">            <span class="n">_CRX_using_CRZ</span><span class="p">(</span><span class="n">control_qubit</span><span class="p">,</span> <span class="n">target_qubit</span><span class="p">,</span> <span class="n">target_gate</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">basis</span><span class="p">),</span>
+</span><span id="line-683">            <span class="n">single_qubit_basis</span><span class="p">,</span>
+</span><span id="line-684">        <span class="p">)</span>
+</span><span id="line-685">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_gate</span><span class="p">,</span> <span class="n">RY</span><span class="p">):</span>
+</span><span id="line-686">        <span class="k">return</span> <span class="n">_normalize_single_qubit_sequence</span><span class="p">(</span>
+</span><span id="line-687">            <span class="n">_CRY_using_CRZ</span><span class="p">(</span><span class="n">control_qubit</span><span class="p">,</span> <span class="n">target_qubit</span><span class="p">,</span> <span class="n">target_gate</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">basis</span><span class="p">),</span>
+</span><span id="line-688">            <span class="n">single_qubit_basis</span><span class="p">,</span>
+</span><span id="line-689">        <span class="p">)</span>
+</span><span id="line-690">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_gate</span><span class="p">,</span> <span class="n">U3</span><span class="p">):</span>
+</span><span id="line-691">        <span class="k">return</span> <span class="n">_normalize_single_qubit_sequence</span><span class="p">(</span>
+</span><span id="line-692">            <span class="n">_CU3_using_CNOT</span><span class="p">(</span>
+</span><span id="line-693">                <span class="n">control_qubit</span><span class="p">,</span>
+</span><span id="line-694">                <span class="n">target_qubit</span><span class="p">,</span>
+</span><span id="line-695">                <span class="n">target_gate</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span>
+</span><span id="line-696">                <span class="n">target_gate</span><span class="o">.</span><span class="n">phi</span><span class="p">,</span>
+</span><span id="line-697">                <span class="n">target_gate</span><span class="o">.</span><span class="n">gamma</span><span class="p">,</span>
+</span><span id="line-698">                <span class="n">basis</span><span class="p">,</span>
+</span><span id="line-699">            <span class="p">),</span>
+</span><span id="line-700">            <span class="n">single_qubit_basis</span><span class="p">,</span>
+</span><span id="line-701">        <span class="p">)</span>
+</span><span id="line-702">    <span class="k">return</span> <span class="n">_single_controlled</span><span class="p">(</span><span class="n">control_qubit</span><span class="p">,</span> <span class="n">_as_basis_1q</span><span class="p">(</span><span class="n">target_gate</span><span class="p">),</span> <span class="n">basis</span><span class="p">,</span> <span class="n">single_qubit_basis</span><span class="p">)</span>
 </span></code></pre></div>
     </div><div class="flex justify-between items-center pt-6 mt-12 border-t border-border gap-4">
 </div></div>
@@ -1163,7 +1227,7 @@
     <script src="../../../../_static/documentation_options.js?v=7f41d439"></script>
     <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
-    <script defer="defer" src="../../../../_static/theme.js?v=5db23cf8"></script>
+    <script defer="defer" src="../../../../_static/theme.js?v=49cc6205"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     

@@ -21,15 +21,19 @@
 <meta content="#ffffff" media="(prefers-color-scheme: light)" name="theme-color"/>
 <meta content="#030711" media="(prefers-color-scheme: dark)" name="theme-color"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
+<meta content="Descripción general - QiliSDK is an open-source Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends." name="description"/>
+<meta content="Descripción general - QiliSDK is an open-source Python framework for writing digital and analog quantum algorithms and executing them across multiple quantum backends." property="og:description"/>
+<meta content="website" property="og:type"/>
+<meta content="QiliSDK documentation" property="og:site_name"/>
 <title>Descripción general | QiliSDK</title>
 <meta content="Descripción general | QiliSDK" property="og:title"/>
 <meta content="Descripción general | QiliSDK" name="twitter:title"/>
 <link href="../../_static/pygments.css?v=af2a1b69" rel="stylesheet" type="text/css"/>
-<link href="../../_static/theme.css?v=d6d7c91b" rel="stylesheet" type="text/css"/>
+<link href="../../_static/theme.css?v=009055c6" rel="stylesheet" type="text/css"/>
 <link href="../../_static/graphviz.css?v=4ae1632d" rel="stylesheet" type="text/css"/>
 <link href="../../_static/sphinx-design.min.css?v=95c83b7e" rel="stylesheet" type="text/css"/>
-<link href="../../_static/custom.css?v=73a96f5a" rel="stylesheet" type="text/css"/>
-<link href="../../_static/awesome-sphinx-design.css?v=a81faafa" rel="stylesheet" type="text/css"/>
+<link href="../../_static/custom.css?v=901373fb" rel="stylesheet" type="text/css"/>
+<link href="../../_static/awesome-sphinx-design.css?v=b41b1d54" rel="stylesheet" type="text/css"/>
 <link href="../../_static/QiliSDK_q.png" rel="icon"/>
 <link href="../../search.html" rel="search" title="Búsqueda"/>
 <link href="../../genindex.html" rel="index" title="Índice"/>
@@ -44,11 +48,6 @@
 <a class="flex items-center mr-6" href="../../index.html">
 <img alt="QiliSDK" class="hidden dark:block" src="../../_static/QiliSDK_wht.svg" style="height: 2rem; width: auto;"/>
 <img alt="QiliSDK" class="dark:hidden" src="../../_static/QiliSDK_blk.svg" style="height: 2rem; width: auto;"/></a>
-<div class="language-switcher">
-<a class="lang-link" href="../../../../en/0.2.1/modules/digital/digital_overview.html">EN</a>
-<span class="lang-active">ES</span>
-<a class="lang-link" href="../../../../ca/0.2.1/modules/digital/digital_overview.html">CA</a>
-</div>
 </div><button @click="showSidebar = true" class="inline-flex items-center justify-center h-10 px-0 py-2 mr-2 text-base font-medium transition-colors rounded-md hover:text-accent-foreground hover:bg-transparent md:hidden" type="button">
 <svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 96 960 960" width="24" xmlns="http://www.w3.org/2000/svg">
 <path d="M152.587 825.087q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440Zm0-203.587q-19.152 0-32.326-13.174T107.087 576q0-19.152 13.174-32.326t32.326-13.174h320q19.152 0 32.326 13.174T518.087 576q0 19.152-13.174 32.326T472.587 621.5h-320Zm0-203.587q-19.152 0-32.326-13.174t-13.174-32.326q0-19.152 13.174-32.326t32.326-13.174h440q19.152 0 32.326 13.174t13.174 32.326q0 19.152-13.174 32.326t-32.326 13.174h-440ZM708.913 576l112.174 112.174q12.674 12.674 12.674 31.826t-12.674 31.826Q808.413 764.5 789.261 764.5t-31.826-12.674l-144-144Q600 594.391 600 576t13.435-31.826l144-144q12.674-12.674 31.826-12.674t31.826 12.674q12.674 12.674 12.674 31.826t-12.674 31.826L708.913 576Z"></path>
@@ -56,15 +55,17 @@
 <span class="sr-only">Toggle navigation menu</span>
 </button>
 <div class="flex items-center justify-between flex-1 gap-2 sm:gap-4 md:justify-end">
-<div class="flex-1 w-full md:w-auto md:flex-none"><form @keydown.k.window.meta="$refs.search.focus()" action="../../search.html" class="relative flex items-center group" id="searchbox" method="get">
-<input aria-label="Search the docs" class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" id="search-input" name="q" placeholder="Search ..." type="search" x-ref="search"/>
-<kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
-<span class="text-xs">⌘</span>
-    K
-  </kbd>
-</form>
+<div class="language-switcher">
+<a class="lang-link" href="../../../../en/0.2.1/modules/digital/digital_overview.html">EN</a>
+<span class="lang-active">ES</span>
+<a class="lang-link" href="../../../../ca/0.2.1/modules/digital/digital_overview.html">CA</a>
 </div>
 <nav class="flex items-center gap-1">
+<a href="https://github.com/qilimanjaro-tech/qilisdk" rel="noopener nofollow" title="Visit GitHub repository">
+<div class="inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9">
+<svg aria-hidden="true" fill="currentColor" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.29-.01-1.05-.02-2.06-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.75.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6.01 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.23 1.91 1.23 3.22 0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.29 0 .32.21.7.83.58A12 12 0 0 0 24 12.5C24 5.87 18.63.5 12 .5Z"></path></svg>
+</div>
+</a>
 <button @click="darkMode = !darkMode" class="relative inline-flex items-center justify-center px-0 text-sm font-medium transition-colors rounded-md hover:bg-accent hover:text-accent-foreground h-9 w-9" title="Toggle color scheme" type="button">
 <svg class="absolute transition-all scale-100 rotate-0 dark:-rotate-90 dark:scale-0" fill="currentColor" height="16" viewbox="0 96 960 960" width="16" xmlns="http://www.w3.org/2000/svg">
 <path d="M480 685q45.456 0 77.228-31.772Q589 621.456 589 576q0-45.456-31.772-77.228Q525.456 467 480 467q-45.456 0-77.228 31.772Q371 530.544 371 576q0 45.456 31.772 77.228Q434.544 685 480 685Zm0 91q-83 0-141.5-58.5T280 576q0-83 58.5-141.5T480 376q83 0 141.5 58.5T680 576q0 83-58.5 141.5T480 776ZM80 621.5q-19.152 0-32.326-13.174T34.5 576q0-19.152 13.174-32.326T80 530.5h80q19.152 0 32.326 13.174T205.5 576q0 19.152-13.174 32.326T160 621.5H80Zm720 0q-19.152 0-32.326-13.174T754.5 576q0-19.152 13.174-32.326T800 530.5h80q19.152 0 32.326 13.174T925.5 576q0 19.152-13.174 32.326T880 621.5h-80Zm-320-320q-19.152 0-32.326-13.174T434.5 256v-80q0-19.152 13.174-32.326T480 130.5q19.152 0 32.326 13.174T525.5 176v80q0 19.152-13.174 32.326T480 301.5Zm0 720q-19.152 0-32.326-13.17Q434.5 995.152 434.5 976v-80q0-19.152 13.174-32.326T480 850.5q19.152 0 32.326 13.174T525.5 896v80q0 19.152-13.174 32.33-13.174 13.17-32.326 13.17ZM222.174 382.065l-43-42Q165.5 327.391 166 308.239t13.174-33.065q13.435-13.674 32.587-13.674t32.065 13.674l42.239 43q12.674 13.435 12.555 31.706-.12 18.272-12.555 31.946-12.674 13.674-31.445 13.413-18.772-.261-32.446-13.174Zm494 494.761-42.239-43q-12.674-13.435-12.674-32.087t12.674-31.565Q686.609 756.5 705.38 757q18.772.5 32.446 13.174l43 41.761Q794.5 824.609 794 843.761t-13.174 33.065Q767.391 890.5 748.239 890.5t-32.065-13.674Zm-42-494.761Q660.5 369.391 661 350.62q.5-18.772 13.174-32.446l41.761-43Q728.609 261.5 747.761 262t33.065 13.174q13.674 13.435 13.674 32.587t-13.674 32.065l-43 42.239q-13.435 12.674-31.706 12.555-18.272-.12-31.946-12.555Zm-495 494.761Q165.5 863.391 165.5 844.239t13.674-32.065l43-42.239q13.435-12.674 32.087-12.674t31.565 12.674Q299.5 782.609 299 801.38q-.5 18.772-13.174 32.446l-41.761 43Q231.391 890.5 212.239 890t-33.065-13.174ZM480 576Z"></path>
@@ -74,6 +75,14 @@
 </svg>
 </button>
 </nav>
+<div class="flex-1 w-full md:w-auto md:flex-none"><form @keydown.k.window.meta="$refs.search.focus()" action="../../search.html" class="relative flex items-center group" id="searchbox" method="get">
+<input aria-label="Search the docs" class="inline-flex items-center font-medium transition-colors bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background border border-input hover:bg-accent focus:bg-accent hover:text-accent-foreground focus:text-accent-foreground hover:placeholder-accent-foreground py-2 px-4 relative h-9 w-full justify-start rounded-[0.5rem] text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64" id="search-input" name="q" placeholder="Search ..." type="search" x-ref="search"/>
+<kbd class="pointer-events-none absolute right-1.5 top-2 hidden h-5 select-none text-muted-foreground items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex group-hover:bg-accent group-hover:text-accent-foreground">
+<span class="text-xs">⌘</span>
+    K
+  </kbd>
+</form>
+</div>
 </div>
 </div>
 </header>
@@ -296,11 +305,18 @@
 </p>
 <ul>
 <li class="toctree-l1">
+<a class="reference internal" href="../../../0.3.2/modules/digital/digital_overview.html">0.3.2</a>
+</li>
+<li class="toctree-l1">
 <a class="reference internal" href="../../../0.3.1/modules/digital/digital_overview.html">0.3.1</a>
 </li>
 <li class="toctree-l1">
 <a class="reference internal" href="../../../0.3.0/modules/digital/digital_overview.html">0.3.0</a>
 </li>
+</ul>
+<details class="older-versions" open="">
+<summary class="toctree-l1">older versions</summary>
+<ul>
 <li class="toctree-l1">
 <a class="reference internal" href="digital_overview.html">0.2.1</a>
 </li>
@@ -320,6 +336,7 @@
 <a class="reference internal" href="../../../0.1.5/index.html">0.1.5</a>
 </li>
 </ul>
+</details>
 <p class="caption" role="heading">
 <span class="caption_text">Desarrollo</span>
 </p>
@@ -391,7 +408,7 @@
 <script src="../../_static/documentation_options.js?v=00904b1e"></script>
 <script src="../../_static/doctools.js?v=9bcbadda"></script>
 <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
-<script defer="defer" src="../../_static/theme.js?v=5db23cf8"></script>
+<script defer="defer" src="../../_static/theme.js?v=49cc6205"></script>
 <script src="../../_static/translations.js?v=f85f4cfb"></script>
 <script src="../../_static/design-tabs.js?v=f930bc37"></script>
 <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
