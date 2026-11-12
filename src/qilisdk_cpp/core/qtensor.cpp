@@ -2302,7 +2302,7 @@ static std::vector<Complex> _normalized_pure_state(const QTensorCpp& state, cons
         py::value_error: If the QTensor is not a ket or bra, or if it is the zero vector.
     */
     if (!state.is_ket() && !state.is_bra()) {
-        throw py::value_error(quantity + " is only defined for pure states; provide a ket or bra QTensor");
+        throw py::value_error("The " + quantity + " is only defined for pure states; provide a ket or bra QTensor");
     }
     const DenseMatrix dense = state.to_dense();
     const Eigen::Index dim = Eigen::Index(1) << state.get_nqubits();
@@ -2313,7 +2313,7 @@ static std::vector<Complex> _normalized_pure_state(const QTensorCpp& state, cons
         norm_sq += std::norm(psi[i]);
     }
     if (norm_sq == 0.0) {
-        throw py::value_error("Cannot compute " + quantity + " of a zero state");
+        throw py::value_error("Cannot compute the " + quantity + " of a zero state");
     }
     const double inv_norm = 1.0 / std::sqrt(norm_sq);
     for (Eigen::Index i = 0; i < dim; ++i) {
@@ -2341,7 +2341,7 @@ double QTensorCpp::magic(double alpha) {
     if (alpha <= 0) {
         throw py::value_error("The Renyi index alpha must be positive");
     }
-    const std::vector<Complex> psi = _normalized_pure_state(*this, "Magic (SRE)");
+    const std::vector<Complex> psi = _normalized_pure_state(*this, "magic (SRE)");
     const int n = get_nqubits();
     const Eigen::Index dim = Eigen::Index(1) << n;
 
@@ -2429,7 +2429,7 @@ double QTensorCpp::fermionic_antiflatness(int k) {
     if (k < 1) {
         throw py::value_error("The order k of the fermionic antiflatness must be at least 1");
     }
-    const std::vector<Complex> psi = _normalized_pure_state(*this, "Fermionic antiflatness");
+    const std::vector<Complex> psi = _normalized_pure_state(*this, "fermionic antiflatness");
     const int n = get_nqubits();
     const Eigen::Index dim = Eigen::Index(1) << n;
     const Eigen::Index nmaj = 2 * n;
