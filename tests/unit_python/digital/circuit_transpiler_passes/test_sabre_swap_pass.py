@@ -13,8 +13,6 @@
 # limitations under the License.
 
 import builtins
-import random
-from unittest.mock import MagicMock
 
 import pytest
 from rustworkx import PyGraph
@@ -248,7 +246,7 @@ def test_run_raises_after_all_attempts(monkeypatch):
         swap_pass.run(circuit)
 
 
-def test_run_no_candidate_swaps_available(monkeypatch):
+def test_run_rejects_layout_placing_two_qubits_on_one_node(monkeypatch):
     graph = _empty_graph(2)  # no edges
     swap_pass = SabreSwapPass(graph, max_attempts=1)
     circuit = _two_qubit_circuit()
@@ -258,7 +256,7 @@ def test_run_no_candidate_swaps_available(monkeypatch):
 
     monkeypatch.setattr(SabreSwapPass, "_init_layout", fake_init_layout)
 
-    with pytest.raises(RuntimeError, match="No candidate swaps available; coupling graph likely degenerate"):
+    with pytest.raises(RuntimeError, match="not connected in the coupling graph"):
         swap_pass.run(circuit)
 
 
@@ -337,19 +335,15 @@ def test_sabre_swap_rejects_multi_qubit_gate_after_entering_main_routing_loop() 
         swap_pass.run(circuit)
 
 
-def test_sabre_swap_fallback_samples_candidate_edge_when_no_neighbors_exist(monkeypatch: pytest.MonkeyPatch) -> None:
-    graph = _empty_graph(2)
-    # The unreachable sentinel distance would allow ~1e9 swaps, so shrink the budget to a single one.
-    swap_pass = SabreSwapPass(graph, max_attempts=1, max_swaps_factor=1e-9)
-    circuit = _two_qubit_circuit()
-    sample = MagicMock(return_value=[1, 0])
-    monkeypatch.setattr(random.Random, "sample", sample)
+def test_sabre_swap_rejects_gate_across_disconnected_components() -> None:
+    # Two separate lines: SWAPs never move a qubit between them, so routing must fail at once rather than loop.
+    swap_pass = SabreSwapPass([(0, 1), (1, 2), (3, 4), (4, 5)], seed=1)
+    circuit = Circuit(6)
+    circuit.add(CZ(0, 1))
+    circuit.add(CZ(0, 5))
 
-    # Isolated qubits stay unreachable whatever is swapped, so the sampled SWAPs end in the swap budget error.
-    with pytest.raises(RuntimeError, match="Exceeded swap budget"):
+    with pytest.raises(RuntimeError, match=r"logical qubits \(0, 5\).*not connected"):
         swap_pass.run(circuit)
-
-    sample.assert_called_with([0, 1], 2)
 
 
 def test_sabre_swap_routes_with_lookahead_gates_in_order() -> None:

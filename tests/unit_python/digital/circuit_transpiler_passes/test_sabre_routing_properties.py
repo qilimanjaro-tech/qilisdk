@@ -312,7 +312,8 @@ def test_layout_usually_recovers_hidden_grid_placement() -> None:
     # The interaction graph is the 4x4 grid itself under a random relabelling, so a SWAP-free layout exists.
     edges = _grid_edges(4, 4)
     found = 0
-    for seed in range(10):
+    # About three seeds in four recover it; 20 seeds keep the bound robust to changes in tie-breaking.
+    for seed in range(20):
         relabel = list(range(16))
         random.Random(seed).shuffle(relabel)
         circuit = Circuit(16)
@@ -322,7 +323,7 @@ def test_layout_usually_recovers_hidden_grid_placement() -> None:
         layout_pass = SabreLayoutPass(edges, seed=seed, apply_layout=False)
         layout_pass.run(circuit)
         found += layout_pass.last_score == 0
-    assert found >= 8
+    assert found >= 14
 
 
 def test_layout_beats_identity_placement_on_random_circuits() -> None:

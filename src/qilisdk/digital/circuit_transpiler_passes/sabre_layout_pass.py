@@ -311,17 +311,13 @@ class SabreLayoutPass(CircuitTranspilerPass):
         tie_break_probability = SabreLayoutPass._TIE_BREAK_PROBABILITY
         beta = self.beta
 
-        # Everything below works on dense physical indices.
+        # Everything below works on dense physical indices. rustworkx lists neighbors in hash order, so sort them.
         neighbors = [
-            [physical_to_dense_index[int(neighbor)] for neighbor in self.topology.neighbors(node)]
+            sorted(physical_to_dense_index[int(neighbor)] for neighbor in self.topology.neighbors(node))
             for node in physical_nodes
         ]
-        incident_edges = [
-            [
-                (min(dense_index, neighbor), max(dense_index, neighbor))
-                for neighbor in node_neighbors
-                if neighbor != dense_index
-            ]
+        swap_neighbors = [
+            [neighbor for neighbor in node_neighbors if neighbor != dense_index]
             for dense_index, node_neighbors in enumerate(neighbors)
         ]
         # Disconnected pairs are scored with a large finite penalty instead of the sentinel distance.
@@ -450,14 +446,67 @@ class SabreLayoutPass(CircuitTranspilerPass):
                     extended_partners[logical_qubit_b] += (logical_qubit_a,)
                 extended_stale = False
 
-            # Candidate SWAPs are the coupling edges touching a front-gate endpoint.
-            candidate_edges: set[tuple[int, int]] = set()
-            for gate_idx in front:
-                logical_qubit_a, logical_qubit_b = two_qubit_pairs[gate_idx]
-                candidate_edges.update(incident_edges[position[logical_qubit_a]])
-                candidate_edges.update(incident_edges[position[logical_qubit_b]])
+            decay_scale *= self.decay_lambda
+            if decay_scale < _DECAY_RESCALE_THRESHOLD:
+                for dense_index in decayed_indices:
+                    decay[dense_index] *= decay_scale
+                decay_scale = 1.0
 
-            if not candidate_edges:
+            # Candidates are the coupling edges at front-gate endpoints, scored by the cost change of their qubits' gates.
+            best_edge: tuple[int, int] | None = None
+            best_delta = math.inf
+            for gate_idx in front:
+                for logical_on_a in two_qubit_pairs[gate_idx]:
+                    dense_a = position[logical_on_a]
+                    costs_from_a = distance_costs[dense_a]
+                    decay_a = decay[dense_a]
+                    partner_dense_a = position[front_partner[logical_on_a]]
+                    partner_decay_a = decay[partner_dense_a]
+                    front_cost_a = costs_from_a[partner_dense_a] * (1.0 + (decay_a + partner_decay_a) * decay_scale)
+                    extended_dense_a = [position[partner] for partner in extended_partners[logical_on_a]]
+                    for dense_b in swap_neighbors[dense_a]:
+                        logical_on_b = occupant[dense_b]
+                        partner_b = -1 if logical_on_b is None else front_partner[logical_on_b]
+                        # An edge joining two front endpoints is reached from both ends; score it from the lower one.
+                        if partner_b >= 0 and dense_b < dense_a:
+                            continue
+                        costs_from_b = distance_costs[dense_b]
+                        decay_b = decay[dense_b]
+                        # A gate between the two swapped qubits keeps its cost.
+                        front_delta = (
+                            0.0
+                            if partner_dense_a == dense_b
+                            else costs_from_b[partner_dense_a] * (1.0 + (decay_b + partner_decay_a) * decay_scale)
+                            - front_cost_a
+                        )
+                        extended_delta = 0.0
+                        for partner_dense in extended_dense_a:
+                            if partner_dense != dense_b:
+                                extended_delta += costs_from_b[partner_dense] - costs_from_a[partner_dense]
+                        if logical_on_b is not None:
+                            if partner_b >= 0 and partner_b != logical_on_a:
+                                partner_dense = position[partner_b]
+                                partner_decay = decay[partner_dense]
+                                front_delta += costs_from_a[partner_dense] * (
+                                    1.0 + (decay_a + partner_decay) * decay_scale
+                                ) - costs_from_b[partner_dense] * (1.0 + (decay_b + partner_decay) * decay_scale)
+                            for partner in extended_partners[logical_on_b]:
+                                partner_dense = position[partner]
+                                if partner_dense != dense_a:
+                                    extended_delta += costs_from_a[partner_dense] - costs_from_b[partner_dense]
+                        candidate_delta = front_delta + beta * extended_delta
+
+                        if candidate_delta < best_delta - tie_epsilon:
+                            best_delta = candidate_delta
+                            best_edge = (dense_a, dense_b)
+                        elif (
+                            candidate_delta <= best_delta + tie_epsilon
+                            # Tie-break randomly for diversification
+                            and random_generator.random() < tie_break_probability
+                        ):
+                            best_edge = (dense_a, dense_b)
+
+            if best_edge is None:
                 # Graph might be disconnected or trivial; fall back to a random swap over touched qubits.
                 touched_dense_indices = sorted(
                     {position[logical_qubit] for gate_idx in front for logical_qubit in two_qubit_pairs[gate_idx]}
@@ -466,61 +515,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
                     # Degenerate case: nothing to do; break to avoid an infinite loop.
                     break
                 sampled_a, sampled_b = random_generator.sample(touched_dense_indices, SabreLayoutPass._TWO_QUBIT_ARITY)
-                candidate_edges.add((min(sampled_a, sampled_b), max(sampled_a, sampled_b)))
-
-            decay_scale *= self.decay_lambda
-            if decay_scale < _DECAY_RESCALE_THRESHOLD:
-                for dense_index in decayed_indices:
-                    decay[dense_index] *= decay_scale
-                decay_scale = 1.0
-
-            # Score candidates by the cost change of their qubits' gates; a gate between the two keeps its cost.
-            best_edge = next(iter(candidate_edges))
-            best_delta = math.inf
-            for dense_a, dense_b in candidate_edges:
-                logical_on_a = occupant[dense_a]
-                logical_on_b = occupant[dense_b]
-                costs_from_a = distance_costs[dense_a]
-                costs_from_b = distance_costs[dense_b]
-                decay_a = decay[dense_a]
-                decay_b = decay[dense_b]
-                front_delta = 0.0
-                extended_delta = 0.0
-                if logical_on_a is not None:
-                    partner = front_partner[logical_on_a]
-                    if partner >= 0 and partner != logical_on_b:
-                        partner_dense = position[partner]
-                        partner_decay = decay[partner_dense]
-                        front_delta += costs_from_b[partner_dense] * (
-                            1.0 + (decay_b + partner_decay) * decay_scale
-                        ) - costs_from_a[partner_dense] * (1.0 + (decay_a + partner_decay) * decay_scale)
-                    for partner in extended_partners[logical_on_a]:
-                        if partner != logical_on_b:
-                            partner_dense = position[partner]
-                            extended_delta += costs_from_b[partner_dense] - costs_from_a[partner_dense]
-                if logical_on_b is not None:
-                    partner = front_partner[logical_on_b]
-                    if partner >= 0 and partner != logical_on_a:
-                        partner_dense = position[partner]
-                        partner_decay = decay[partner_dense]
-                        front_delta += costs_from_a[partner_dense] * (
-                            1.0 + (decay_a + partner_decay) * decay_scale
-                        ) - costs_from_b[partner_dense] * (1.0 + (decay_b + partner_decay) * decay_scale)
-                    for partner in extended_partners[logical_on_b]:
-                        if partner != logical_on_a:
-                            partner_dense = position[partner]
-                            extended_delta += costs_from_a[partner_dense] - costs_from_b[partner_dense]
-                candidate_delta = front_delta + beta * extended_delta
-
-                if candidate_delta < best_delta - tie_epsilon:
-                    best_delta = candidate_delta
-                    best_edge = (dense_a, dense_b)
-                elif (
-                    candidate_delta <= best_delta + tie_epsilon
-                    # Tie-break randomly for diversification
-                    and random_generator.random() < tie_break_probability
-                ):
-                    best_edge = (dense_a, dense_b)
+                best_edge = (sampled_a, sampled_b)
 
             chosen_a, chosen_b = best_edge
             apply_swap(chosen_a, chosen_b)
