@@ -2287,6 +2287,41 @@ static void _fast_walsh_hadamard_transform(std::vector<Complex>& a) {
     }
 }
 
+static std::vector<Complex> _normalized_pure_state(const QTensorCpp& state, const std::string& quantity) {
+    /*
+    Extract the normalized amplitude vector of a pure state, conjugating it if the QTensor is a bra.
+
+    Args:
+        state (const QTensorCpp&): The ket or bra to extract the amplitudes from.
+        quantity (const std::string&): The name of the quantity being computed, used in error messages.
+
+    Returns:
+        std::vector<Complex>: The 2^N amplitudes of the normalized ket.
+
+    Raises:
+        py::value_error: If the QTensor is not a ket or bra, or if it is the zero vector.
+    */
+    if (!state.is_ket() && !state.is_bra()) {
+        throw py::value_error(quantity + " is only defined for pure states; provide a ket or bra QTensor");
+    }
+    const DenseMatrix dense = state.to_dense();
+    const Eigen::Index dim = Eigen::Index(1) << state.get_nqubits();
+    std::vector<Complex> psi(static_cast<size_t>(dim));
+    double norm_sq = 0.0;
+    for (Eigen::Index i = 0; i < dim; ++i) {
+        psi[i] = state.is_ket() ? dense(i, 0) : std::conj(dense(0, i));
+        norm_sq += std::norm(psi[i]);
+    }
+    if (norm_sq == 0.0) {
+        throw py::value_error("Cannot compute " + quantity + " of a zero state");
+    }
+    const double inv_norm = 1.0 / std::sqrt(norm_sq);
+    for (Eigen::Index i = 0; i < dim; ++i) {
+        psi[i] *= inv_norm;
+    }
+    return psi;
+}
+
 double QTensorCpp::magic(double alpha) {
     /*
     Compute the magic (non-stabilizerness) of a pure state via the stabilizer Renyi entropy (SRE).
@@ -2306,38 +2341,9 @@ double QTensorCpp::magic(double alpha) {
     if (alpha <= 0) {
         throw py::value_error("The Renyi index alpha must be positive");
     }
-    if (!is_ket() && !is_bra()) {
-        throw py::value_error("Magic (SRE) is only defined for pure states; provide a ket or bra QTensor");
-    }
-
+    const std::vector<Complex> psi = _normalized_pure_state(*this, "Magic (SRE)");
     const int n = get_nqubits();
     const Eigen::Index dim = Eigen::Index(1) << n;
-
-    // Extract the amplitude vector
-    const DenseMatrix dense = to_dense();
-    std::vector<Complex> psi(static_cast<size_t>(dim));
-    if (is_ket()) {
-        for (Eigen::Index i = 0; i < dim; ++i) {
-            psi[i] = dense(i, 0);
-        }
-    } else {
-        for (Eigen::Index i = 0; i < dim; ++i) {
-            psi[i] = std::conj(dense(0, i));
-        }
-    }
-
-    // Normalize the state so the SRE is well defined.
-    double norm_sq = 0.0;
-    for (Eigen::Index i = 0; i < dim; ++i) {
-        norm_sq += std::norm(psi[i]);
-    }
-    if (norm_sq == 0.0) {
-        throw py::value_error("Cannot compute magic of a zero state");
-    }
-    const double inv_norm = 1.0 / std::sqrt(norm_sq);
-    for (Eigen::Index i = 0; i < dim; ++i) {
-        psi[i] *= inv_norm;
-    }
 
     const bool shannon = (alpha == 1.0);
     double accum = 0.0;
@@ -2379,6 +2385,99 @@ double QTensorCpp::magic(double alpha) {
         return -accum - static_cast<double>(n);
     }
     return (1.0 / (1.0 - alpha)) * std::log2(accum / static_cast<double>(dim));
+}
+
+static inline void _apply_majorana(const std::vector<Complex>& psi, const std::vector<std::uint8_t>& parity, int pos, bool is_y, Eigen::Index y, double& out_re, double& out_im) {
+    /*
+    Compute the amplitude (gamma |psi>)[y] of a Jordan-Wigner Majorana operator applied to a state.
+
+    The Majorana acts on the qubit stored at bit position pos as X (is_y false) or Y (is_y true), dressed by a
+    Z string on every qubit stored at a higher bit position, i.e. every lower-indexed qubit.
+    */
+    const Complex amp = psi[static_cast<size_t>(y ^ (Eigen::Index(1) << pos))];
+    const double sign = parity[static_cast<size_t>(y >> (pos + 1))] ? -1.0 : 1.0;
+    if (!is_y) {
+        out_re = sign * amp.real();
+        out_im = sign * amp.imag();
+    } else {
+        // Y|0> = i|1> and Y|1> = -i|0>, so the output amplitude picks up +i if bit pos of y is set, else -i.
+        const double phase = ((y >> pos) & 1) ? sign : -sign;
+        out_re = -phase * amp.imag();
+        out_im = phase * amp.real();
+    }
+}
+
+double QTensorCpp::fermionic_antiflatness(int k) {
+    /*
+    Compute the fermionic antiflatness (FAF) F_k = N - tr[(M^T M)^k] / 2 of a pure state, a measure of fermionic
+    non-Gaussianity, following Sierant, Stornati and Turkeshi, "Fermionic magic resources of quantum many-body
+    systems" (https://arxiv.org/abs/2506.00116).
+
+    The Majorana covariance matrix M_mn = -i/2 <[gamma_m, gamma_n]> = Im <gamma_m psi | gamma_n psi> is built
+    from the Jordan-Wigner Majoranas gamma_{2q} = Z_0...Z_{q-1} X_q and gamma_{2q+1} = Z_0...Z_{q-1} Y_q
+    (0-indexed) in O(N^2 2^N) time and O(2^N) memory.
+
+    Args:
+        k (int): The order k >= 1 of the antiflatness.
+
+    Returns:
+        double: The fermionic antiflatness F_k(|psi>), which lies in [0, N] and vanishes iff the state is Gaussian.
+
+    Raises:
+        py::value_error: If this QTensor is not a pure state (ket or bra), or if k is smaller than 1.
+    */
+    if (k < 1) {
+        throw py::value_error("The order k of the fermionic antiflatness must be at least 1");
+    }
+    const std::vector<Complex> psi = _normalized_pure_state(*this, "Fermionic antiflatness");
+    const int n = get_nqubits();
+    const Eigen::Index dim = Eigen::Index(1) << n;
+    const Eigen::Index nmaj = 2 * n;
+
+    // parity[x] is the parity of the popcount of x, used for the Jordan-Wigner Z strings.
+    std::vector<std::uint8_t> parity(static_cast<size_t>(dim), 0);
+    for (Eigen::Index x = 1; x < dim; ++x) {
+        parity[x] = parity[x >> 1] ^ static_cast<std::uint8_t>(x & 1);
+    }
+
+    std::vector<std::pair<Eigen::Index, Eigen::Index>> pairs;
+    pairs.reserve(static_cast<size_t>(nmaj * (nmaj - 1) / 2));
+    for (Eigen::Index a = 0; a < nmaj; ++a) {
+        for (Eigen::Index b = a + 1; b < nmaj; ++b) {
+            pairs.emplace_back(a, b);
+        }
+    }
+
+    Eigen::MatrixXd covariance = Eigen::MatrixXd::Zero(nmaj, nmaj);
+    const auto npairs = static_cast<std::int64_t>(pairs.size());
+#ifndef _WIN32
+#if defined(_OPENMP)
+#pragma omp parallel for schedule(static)
+#endif
+#endif
+    for (std::int64_t p = 0; p < npairs; ++p) {
+        const auto [a, b] = pairs[static_cast<size_t>(p)];
+        const int pos_a = n - 1 - static_cast<int>(a / 2);
+        const int pos_b = n - 1 - static_cast<int>(b / 2);
+        double imag_overlap = 0.0;
+        for (Eigen::Index y = 0; y < dim; ++y) {
+            double a_re, a_im, b_re, b_im;
+            _apply_majorana(psi, parity, pos_a, a % 2 == 1, y, a_re, a_im);
+            _apply_majorana(psi, parity, pos_b, b % 2 == 1, y, b_re, b_im);
+            imag_overlap += a_re * b_im - a_im * b_re;
+        }
+        covariance(a, b) = imag_overlap;
+        covariance(b, a) = -imag_overlap;
+    }
+
+    // M^T M is symmetric positive semidefinite, so tr[(M^T M)^k] is the sum of its eigenvalues to the power k.
+    const Eigen::MatrixXd gram = covariance.transpose() * covariance;
+    const Eigen::VectorXd eigenvalues = Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd>(gram, Eigen::EigenvaluesOnly).eigenvalues();
+    double trace_power = 0.0;
+    for (Eigen::Index i = 0; i < nmaj; ++i) {
+        trace_power += std::pow(std::max(eigenvalues(i), 0.0), k);
+    }
+    return static_cast<double>(n) - 0.5 * trace_power;
 }
 
 DenseMatrix QTensorCpp::as_dense() const {

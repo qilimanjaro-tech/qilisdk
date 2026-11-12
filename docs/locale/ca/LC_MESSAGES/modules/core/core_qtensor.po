@@ -300,6 +300,14 @@ msgstr ""
 "màgia (no-estabilitzabilitat) d'un estat pur mitjançant l'entropia de "
 "Rényi d'estabilitzador"
 
+#: ../../modules/core/core_qtensor.rst:138
+msgid ""
+":meth:`.fermionic_antiflatness(k)<qilisdk.core.qtensor.QTensor.fermionic_antiflatness>`: "
+"compute the fermionic antiflatness (non-Gaussianity) of a pure state"
+msgstr ""
+":meth:`.fermionic_antiflatness(k)<qilisdk.core.qtensor.QTensor.fermionic_antiflatness>`: "
+"calcula l'antiplanitud fermiònica (no-gaussianitat) d'un estat pur"
+
 #: ../../modules/core/core_qtensor.rst:136
 msgid ""
 ":meth:`.commutator(other)<qilisdk.core.qtensor.QTensor.commutator>`: "

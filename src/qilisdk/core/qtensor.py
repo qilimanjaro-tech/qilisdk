@@ -908,6 +908,44 @@ class QTensor:
         """
         return self._qtensor_cpp.magic(alpha)
 
+    def fermionic_antiflatness(self, k: int = 1) -> float:
+        r"""
+        Compute the fermionic antiflatness (FAF) of a pure state, a measure of fermionic non-Gaussianity.
+
+        Qubits are mapped to :math:`N` fermionic modes via the Jordan-Wigner transformation, giving the
+        :math:`2N` Majorana operators
+
+        .. math::
+
+            \gamma_{2q} = Z_0 \cdots Z_{q-1} X_q, \qquad \gamma_{2q+1} = Z_0 \cdots Z_{q-1} Y_q,
+
+        for :math:`q = 0, \dots, N-1`. From the real antisymmetric Majorana covariance matrix
+        :math:`M_{mn} = -\frac{i}{2}⟨\psi|[\gamma_m, \gamma_n]|\psi⟩`, the FAF of order :math:`k` is
+
+        .. math::
+
+            \mathcal{F}_k(|\psi⟩) = N - \frac{1}{2} \operatorname{tr}\!\left[(M^T M)^k\right].
+
+        It lies in :math:`[0, N]` and vanishes if and only if :math:`|\psi⟩` is a fermionic Gaussian state
+        (i.e. :math:`M^T M = \mathbb{1}`), so it is invariant under fermionic Gaussian (matchgate) unitaries,
+        while Haar-random states have :math:`\mathcal{F}_k \approx N`.
+
+        This follows Eq. (27) of `Sierant, Stornati and Turkeshi, "Fermionic magic resources of quantum
+        many-body systems" <https://arxiv.org/abs/2506.00116>`_. The covariance matrix is evaluated exactly in
+        :math:`O(N^2\,2^N)` time and :math:`O(2^N)` memory.
+
+        Args:
+            k (int, optional): The order :math:`k \geq 1` of the antiflatness. Defaults to 1.
+
+        Returns:
+            float: The fermionic antiflatness :math:`\mathcal{F}_k(|\psi⟩)`.
+
+        Raises:
+            ValueError: If the QTensor is not a pure state (ket or bra), or if ``k`` is smaller than 1.
+        """
+        logger.trace("[QTensor] QTensor.fermionic_antiflatness computing order {} FAF on {} qubits", k, self.nqubits)
+        return self._qtensor_cpp.fermionic_antiflatness(k)
+
     def commutator(self, other: QTensor) -> QTensor:
         """
         Compute the commutator [A, B] = AB - BA with another QTensor.
