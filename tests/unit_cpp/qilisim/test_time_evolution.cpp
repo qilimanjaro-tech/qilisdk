@@ -19,6 +19,10 @@
 #include "../../../src/qilisdk_cpp/backends/qilisim/utils/matrix_utils.h"
 #include "../../../src/qilisdk_cpp/backends/qilisim/utils/random.h"
 
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
+
 namespace {
 
 constexpr double kTol = 1e-6;
@@ -1371,5 +1375,29 @@ TEST_F(TimeEvolutionArnoldiMatrixFreeTest, DensityMatrixTraceOverflowThrows) {
     noise.add_jump_operator(huge_amp_damp_jump());
     EXPECT_THROW(run_time_evolution_mf(pure_plus_sparse(), hamiltonians, params, steps, noise, {}, config), std::invalid_argument);
 }
+
+#if defined(_OPENMP)
+TEST_F(TimeEvolutionTest, SmallStateRunsOnASingleThreadWhenAutomatic) {
+    config.set_num_threads(4);
+    config.set_auto_num_threads(true);
+    run_time_evolution(statevector_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_EQ(Eigen::nbThreads(), 1);
+
+    config.set_auto_num_threads(false);
+    run_time_evolution(statevector_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_EQ(Eigen::nbThreads(), 4);
+}
+
+TEST_F(TimeEvolutionMatrixFreeTest, SmallStateRunsOnASingleThreadWhenAutomatic) {
+    config.set_num_threads(4);
+    config.set_auto_num_threads(true);
+    run_time_evolution_mf(statevector_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_EQ(omp_get_max_threads(), 1);
+
+    config.set_auto_num_threads(false);
+    run_time_evolution_mf(statevector_zero_sparse(), hamiltonians, params, steps, empty_noise, {}, config);
+    EXPECT_EQ(omp_get_max_threads(), 4);
+}
+#endif
 
 // GCOV_EXCL_BR_STOP

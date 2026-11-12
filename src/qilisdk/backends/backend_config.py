@@ -286,9 +286,10 @@ class ExecutionConfig(BaseSimulatorConfig):
     """Configuration for execution-level controls (threading and randomness).
 
     Args:
-        num_threads (int): Number of CPU threads used for simulation. If
-            set to ``0``, all available cores are selected. Defaults to
-            ``0``.
+        num_threads (int | None): Number of CPU threads used for simulation. If
+            set to ``0``, all available cores are selected. If ``None``, all available
+            cores are selected except for small simulations, which run on a single thread
+            since they are slowed down by the threading overhead. Defaults to ``None``.
         seed (int | None): Random seed used by the simulator, in ``[0, 2**31 - 1]``. If ``None``,
             a random seed is generated. Defaults to ``None``. Each execution
             derives its own sub-seed from this root, so repeated executions on
@@ -299,12 +300,15 @@ class ExecutionConfig(BaseSimulatorConfig):
     """
 
     model_config = PydanticConfigDict(validate_default=True)
-    num_threads: int = Field(
-        default=0,
+    # 0 means "use all cores", None means "use all cores unless the simulation is small"
+    num_threads: int | None = Field(
+        default=None,
         ge=0,
         le=INT32_MAX,
-        description=("Number of CPU threads used for simulation. If set to 0, all available cores are selected."),
-    )  # 0 means "use all cores"
+        description=(
+            "Number of CPU threads used for simulation. If set to 0, all available cores are selected. If `None`, all available cores are selected except for small simulations, which run on a single thread."
+        ),
+    )
     seed: int | None = Field(
         default=None,
         ge=0,
@@ -340,7 +344,7 @@ class ExecutionConfig(BaseSimulatorConfig):
     def get_config(self) -> SolverConfigDict:
         """Return execution settings with resolved defaults."""
         d: dict[str, float | str] = {
-            "num_threads": self.num_threads,
+            "num_threads": self.num_threads if self.num_threads is not None else 0,
             "seed": int(self.seed) if self.seed is not None else 0,  # defensive
             "monte_carlo": self.monte_carlo is not None,
             "measurement_collapse": self.measurement_collapse,
@@ -355,8 +359,8 @@ class ExecutionConfig(BaseSimulatorConfig):
 
     @field_validator("num_threads", mode="after")
     @classmethod
-    def _validate_num_threads(cls, num_threads: int) -> int:
-        if num_threads <= 0:
+    def _validate_num_threads(cls, num_threads: int | None) -> int | None:
+        if num_threads == 0:
             resolved = psutil.cpu_count(logical=False) or 1
             logger.debug("[BackendConfig] num_threads=0 requested, resolved to {} physical cores", resolved)
             return resolved

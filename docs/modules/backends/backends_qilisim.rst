@@ -241,7 +241,7 @@ Execution and Monte Carlo
 :class:`~qilisdk.backends.backend_config.ExecutionConfig` controls threading, randomness, and
 optional Monte Carlo trajectory sampling for open-system simulations.
 
-- ``num_threads`` controls the number of threads used for parallelization, defaults to using all available cores.
+- ``num_threads`` controls the number of threads used for parallelization. By default all available cores are used, except for small simulations which run on a single thread since they are slowed down by the threading overhead. Set it to ``0`` to always use all available cores.
 - ``seed`` controls the random number generator seed, defaults to a random seed. Subsequent runs will increment the seed automatically.
 - ``monte_carlo=MonteCarloConfig(trajectories=N)`` enables Monte Carlo sampling with ``N`` trajectories, if omitted, Monte Carlo is disabled.
 - ``monte_carlo=MonteCarloConfig(max_expected_jumps_per_step=X)`` sets how many quantum jumps an analog evolution step may expect - the adaptive ``integrate_rk45_matrix_free`` method shortens its steps to stay below it (lower is more accurate but slower), whilst fixed-step methods instead warn when the schedule is too coarse for it, defaults to ``0.5``.

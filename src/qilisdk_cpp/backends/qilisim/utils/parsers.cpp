@@ -1481,8 +1481,11 @@ QiliSimConfig parse_solver_params(const py::dict& solver_params) {
     if (solver_params.contains("mps_truncation_cutoff")) {
         config.set_mps_truncation_cutoff(solver_params["mps_truncation_cutoff"].cast<double>());
     }
+    // No threads given means they are chosen automatically: all the physical cores, unless the simulation is small
     if (config.get_num_threads() <= 0) {
-        config.set_num_threads(1);
+        py::object num_cores = py::module_::import("psutil").attr("cpu_count")("logical"_a = false);
+        config.set_auto_num_threads(true);
+        config.set_num_threads(num_cores.is_none() ? 1 : std::max(num_cores.cast<int>(), 1));
     }
     config.validate();
     return config;
