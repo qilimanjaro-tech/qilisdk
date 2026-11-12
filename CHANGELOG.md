@@ -1,3 +1,283 @@
+# qilisdk 0.3.2 (2026-11-11)
+
+## Features
+
+- Noise models are now supported when doing Monte-Carlo in QiliSim. Usage:
+
+  ```python
+  from qilisdk.digital import Circuit, H, CNOT
+  from qilisdk.noise import NoiseModel, Depolarizing
+  from qilisdk.readout import Readout
+  from qilisdk.functionals import DigitalPropagation
+  from qilisdk.backends import QiliSim, ExecutionConfig, MonteCarloConfig, DigitalMethod
+
+  # Set up the circuit, here creating a Bell state
+  circuit = Circuit(nqubits=2)
+  circuit.add(H(0))
+  circuit.add(CNOT(0, 1))
+
+  # Simple noise model on all qubits
+  noise_model = NoiseModel()
+  noise_model.add(Depolarizing(probability=0.15))
+
+  # Set up the simulation
+  monte_carlo = MonteCarloConfig(trajectories=1000)
+  backend = QiliSim(
+      digital_simulation_method=DigitalMethod.statevector(),
+      noise_model=noise_model,
+      execution_config=ExecutionConfig(seed=5, num_threads=1, monte_carlo=monte_carlo),
+  )
+  readout = Readout().with_sampling(1000)
+
+  # Run it
+  result = backend.execute(DigitalPropagation(circuit=circuit), readout=readout)
+  print(result)
+  ```
+
+  For analog evolutions, `MonteCarloConfig` also takes `max_expected_jumps_per_step` (defaults to `0.5`), the number of quantum jumps per schedule step above which QiliSim warns. ([PR #355](https://github.com/qilimanjaro-tech/qilisdk/pull/355))
+- A new circuit simulation method has been added to QiliSim: a matrix-product-state (MPS) simulator. This represents a quantum state as a product of matrices, truncated at some bond dimension which restricts the amount of entanglement that can be represented, but allows for efficient simulation of low-entanglement circuits.
+
+  For example, the following 25 qubit trotterized annealing job takes around 3 seconds:
+
+  ```python
+  from qilisdk.digital import TrotterizedSchedule
+  from qilisdk.backends import QiliSim, ExecutionConfig, DigitalMethod
+  from qilisdk.digital import Circuit, H
+  from qilisdk.functionals import DigitalPropagation
+  from qilisdk.readout import Readout
+  from qilisdk.analog import Schedule, X, Z
+  import time
+
+  # General settings
+  nqubits = 25
+  nshots = 100
+  nsteps = 300
+  T = 300.0
+
+  # Define the annealing task
+  Hx = -sum(X(i) for i in range(nqubits))
+  Hz = sum(Z(i) * Z((i + 1) % nqubits) for i in range(nqubits))
+  schedule = Schedule.linear(Hx, Hz, T, T / nsteps)
+
+  # Convert it to a circuit
+  circuit = TrotterizedSchedule(schedule)
+  init_circuit = Circuit(circuit.nqubits)
+  for i in range(circuit.nqubits):
+      init_circuit.add(H(i))
+  circuit.prepend(init_circuit)
+
+  # Simulator settings
+  digital_method = DigitalMethod.mps(max_bond_dimension=20)
+  config = ExecutionConfig(seed=42, num_threads=8)
+
+  # Set everything up
+  func = DigitalPropagation(circuit)
+  readout = Readout().with_expectation([Hz])
+  backend = QiliSim(digital_simulation_method=digital_method, execution_config=config)
+
+  print("Running...")
+  t0 = time.time()
+  res = backend.execute(func, readout)
+  t1 = time.time()
+  val = res.get_expectation_values()[0]
+  print(f"Execution time for {nqubits} qubits, {nsteps} steps: {t1 - t0} seconds, val: {val}")
+  ``` ([PR #441](https://github.com/qilimanjaro-tech/qilisdk/pull/441))
+- Variational annealing can now return expectation values and samples mid-evolution, as per the other analog simulation methods. State tomography remains disabled.
+
+  ```python
+  from qilisdk.analog import Schedule, X, Z
+  from qilisdk.backends import AnalogMethod, QiliSim
+  from qilisdk.core import InitialState
+  from qilisdk.functionals import AnalogEvolution
+  from qilisdk.readout import Readout
+
+  schedule = Schedule.linear(-X(0), Z(0), 10.0, 0.1)
+  backend = QiliSim(analog_simulation_method=AnalogMethod.variational_annealing())
+  result = backend.execute(
+      AnalogEvolution(schedule=schedule, initial_state=InitialState.UNIFORM, store_intermediate_results=True),
+      readout=Readout().with_expectation(observables=[Z(0)]),
+  )
+  vals = [step[0].real for step in result.get_intermediate_expectation_values()]
+  print("Intermediate expectation values of Z(0):", vals)
+  ``` ([PR #485](https://github.com/qilimanjaro-tech/qilisdk/pull/485))
+- Support for non-Markovian noise has been added to QiliSDK/QiliSim. Markovian noise is the standard noise type that was supported before, stuff like `DepolarizingNoise` and `DephasingNoise`. These don't depend on the past state at all, at every instance they do something based only on the current state of the system. Meanwhile, non-Markovian noise has some memory, i.e. it depends on the history of the system. The way we do this in QiliSDK is via a new class and noise type: `EnvironmentNoise`. This works by allowing the simulation of an extra set of qubits, which itself is coupled to the main qubits and can experience it's own Markovian noise. For instance, one might consider a Two-Level System (i.e. qubit) that's attached to the main qubit set via some couplings, which can absorb/retain/return information. This environment is always traced out when you get the results, so although the evolution is still done using a Markovian master equation, the results you get can be non-Markovian. This is supported in both digital and analog simulation, digital by conversion to an analog evolution first.
+
+  Here's an example showing a circuit showing non-Markovian behaviour, specifically that for varying wait times (set by the gate duration of the I gate) you can see the way the expectation value of <X> fluctuates rather than simply decaying as would happen with pure Markovian dephasing noise:
+
+  ```python
+  import numpy as np
+
+  from qilisdk.analog import X, Z
+  from qilisdk.backends import QiliSim
+  from qilisdk.core import ket
+  from qilisdk.digital import Circuit, H, I
+  from qilisdk.functionals import DigitalPropagation
+  from qilisdk.noise import EnvironmentNoise, NoiseModel
+  from qilisdk.readout import Readout
+
+  # Create the circuit: put the qubit in the |+> state and wait
+  circuit = Circuit(nqubits=1)
+  circuit.add(H(0))
+  circuit.add(I(0))
+
+  # Consider different wait times
+  for idle_time in [np.pi / 8, np.pi / 4, np.pi / 2]:
+      # The noise model for this wait time
+      noise_model = NoiseModel()
+      noise_model.add(
+          EnvironmentNoise(
+              n_environment_qubits=1,
+              couplings=[(1.0, Z(0), Z(0))],
+              environment_state=(ket(0) + ket(1)).unit(),
+          )
+      )
+      noise_model.noise_config.set_gate_time(H, 1e-6)
+      noise_model.noise_config.set_gate_time(I, idle_time)
+
+      # Run the simulation
+      result = QiliSim(noise_model=noise_model).execute(
+          DigitalPropagation(circuit), readout=Readout().with_expectation(observables=[X(0)])
+      )
+      print(f"t = {idle_time:.3f}: <X> = {result.get_expectation_values()[0]:+.3f}")
+  ``` ([PR #535](https://github.com/qilimanjaro-tech/qilisdk/pull/535))
+- The performance of the variational annealing method has been improved, via better hashing, not using OpenMP for small workloads, using a smaller formulation depending on if we have less samples or less parameters, and a few other small tweaks. It now doesn't have such a big overhead for tiny qubit counts. For a fully-connected randomised Ising model annealing:
+
+  | Qubits | Before  | After   | Speedup |
+  |-------:|--------:|--------:|--------:|
+  | 1      | 0.102 s  | 0.0037 s  | 28×     |
+  | 2      | 0.103 s  | 0.0067 s  | 15×     |
+  | 4      | 0.103 s  | 0.013.6 s | 7.6×    |
+  | 32     | 2.37 s  | 0.31 s  | 7.7×    |
+  | 48     | 13.6 s  | 0.66 s  | 20×     | ([PR #537](https://github.com/qilimanjaro-tech/qilisdk/pull/537))
+- Since a lot of our efforts have been to improve simulation performance for 20+ qubits, the few-qubits case hadn't had many performance improvements. Now, for a 100-gate 10-qubit Clifford circuit, stabilizer states take 1.2 ms rather than 8.2 ms, whilst statevector simulation takes 0.95 ms rather than 6.5 ms. ([PR #552](https://github.com/qilimanjaro-tech/qilisdk/pull/552))
+- Added a new function to `QTensor`, `QTensor.permute()`. This allows someone to permute the qubit indices of a state or operator:
+
+  ```python
+  from qilisdk.core import QTensor
+
+  # start in |011>
+  state = QTensor.ket(0, 1, 1)
+
+  # i.e. make it so we instead have qubit 2, then qubit 0, then qubit 1
+  permuted = state.permute([2, 0, 1])
+
+  # we now have |101>
+  print(permuted == QTensor.ket(1, 0, 1))
+  ```
+
+  This functionality can now also be used in QTensor.tensor_product(), which now also accepts the list of indices of the provided QTensors to use when forming the overall system:
+
+  ```python
+  from qilisdk.core import QTensor
+
+  # a = |1>, b = |01>
+  a = QTensor.ket(1)
+  b = QTensor.ket(0, 1)
+
+  # form a (x) b, but assume a has qubit 1 and b has qubits 0 and 2
+  c = QTensor.tensor_product([a, b], qubits=[[1], [0, 2]])
+
+  # thus we have |011>
+  print(c == QTensor.ket(0, 1, 1))  # True
+  ``` ([PR #553](https://github.com/qilimanjaro-tech/qilisdk/pull/553))
+- Generic multi-controlled gates are now supported in QiliSim's matrix-free digital simulation method. Previously only X was supported with more than one control, now any single-qubit gate or SWAP can be used with any number of controls. ([PR #563](https://github.com/qilimanjaro-tech/qilisdk/pull/563))
+- `QTensor.expectation_value()` now takes a seed, which is passed down to the C++, so now when asking for a finite-shot expectation value the results can be made reproducible. ([PR #575](https://github.com/qilimanjaro-tech/qilisdk/pull/575))
+- The Stabilizer-state simulator in QiliSim now supports mid-circuit measurements:
+
+  ```python
+  from qilisdk.backends import DigitalMethod, QiliSim
+  from qilisdk.digital import Circuit, M, X
+  from qilisdk.functionals import DigitalPropagation
+  from qilisdk.readout import Readout
+
+  circuit = Circuit(nqubits=1)
+  circuit.add(X(0))
+  circuit.add(M(0))  # mid-circuit measurement: should give an intermediate result of '1'
+  circuit.add(X(0))
+  circuit.add(M(0))  # final measurement: should give '0'
+
+  backend = QiliSim(digital_simulation_method=DigitalMethod.stabilizer())
+  result = backend.execute(DigitalPropagation(circuit=circuit), readout=Readout().with_sampling(nshots=100))
+
+  print("intermediate:", [r.get_samples() for r in result.intermediate_results])
+  print("final:", result.get_samples())
+  ``` ([PR #576](https://github.com/qilimanjaro-tech/qilisdk/pull/576))
+- A seed can now be passed to QutipBackend or CudaqBackend, so now sampling is reproducible. For CudaqBackend this covers both the CUDA-Q sampler (with or without a noise model) and the readout assignment errors, which previously always used a fixed seed of 42. Usage is like:
+
+  ```python
+  from qilisdk.backends import QutipBackend
+
+  backend = QutipBackend(seed=1234)
+  ``` ([PR #590](https://github.com/qilimanjaro-tech/qilisdk/pull/590))
+- Added two new QTensor state constructors: `QTensor.random()` and `QTensor.w()`
+
+  `QTensor.random(nqubits)` generates a random statevector of nqubits, sampled uniformly over the Bloch sphere using the Haar measure (i.e. no clustering at the poles).
+
+  `QTensor.w()` generates the state given by the following equation:
+
+  |W⟩ = (|10…0⟩ + |01…0⟩ + … + |00…1⟩) / √n
+
+  i.e. the equal superposition of all n-qubit basis states with exactly one qubit in |1⟩. ([PR #601](https://github.com/qilimanjaro-tech/qilisdk/pull/601))
+
+## Bugfixes
+
+- `SamplingReadoutResult.probabilities` now correctly marginalizes as `SamplingReadoutResult.samples` does for circuits with partial measurements. Previously `.probabilities` would return the raw distribution without any post-processing, i.e. returning `{"00": 0.5, "11": 0.5}` rather than `{"0_": 0.5, "1_": 0.5}` for a Bell state with a single measurement on the first qubit. ([PR #395](https://github.com/qilimanjaro-tech/qilisdk/pull/395))
+- Lowered the limit on how many binary variables a single variable may be expanded into when building a QUBO, down from 2**32 to 32. ([PR #473](https://github.com/qilimanjaro-tech/qilisdk/pull/473))
+- A variety of improvements have been made to the various renderers, ensuring that titles and legends are always visible. The center circle of a QTensor plot can also now be properly changed, previously the color was hard-coded. ([PR #476](https://github.com/qilimanjaro-tech/qilisdk/pull/476))
+- A warning is no longer raised if you import a specific non-SCIP classical solver but don't have SCIP installed. ([PR #479](https://github.com/qilimanjaro-tech/qilisdk/pull/479))
+- Added some better error messages in case a user tries to add a X object to a circuit or tries to add an X gate to a Hamiltonian or Schedule. ([PR #480](https://github.com/qilimanjaro-tech/qilisdk/pull/480))
+- Variational annealing and the stabilizer digital method now return expectation values as floats instead of complex numbers, to be more consistent with the other simulation methods. ([PR #483](https://github.com/qilimanjaro-tech/qilisdk/pull/483))
+- The default constructor for Hamiltonians now correctly sorts by qubit index and combines like terms, so something like:
+
+  ```python
+  from qilisdk.analog import Hamiltonian, PauliX, PauliZ
+
+  a = Hamiltonian({(PauliX(1), PauliZ(0)): 1.0})
+  b = Hamiltonian({(PauliZ(0), PauliX(1)): 1.0})
+  print("a + b:", a + b)
+  ```
+
+  actually results in the correct object, which here is `2 Z(0) X(1)`, but previously would have been `X(1) Z(0) + Z(0) X(1)`. Note that this bug wouldn't have happened with the X and Z constructors (`from qilisdk.analog import X, Z`) which is how most people would construct a Hamiltonian. ([PR #525](https://github.com/qilimanjaro-tech/qilisdk/pull/525))
+- QiliSim now rejects bad methods, rather than defaulting to dense simulation.
+
+  Setting max_cache_size=0 now no longer raises an error on the C++ side, since that's how the user should disable gate caching. ([PR #526](https://github.com/qilimanjaro-tech/qilisdk/pull/526))
+- Fixed a bug in which analog simulations via the  CudaqBackend would have their final expectation values calculated for qubits in the reversed order, so a state like |01> would be treated like |10>. We now correctly reverse the order of qubits for analog evolution as we were already doing for digital. ([PR #530](https://github.com/qilimanjaro-tech/qilisdk/pull/530))
+- Fixed some init files missing some public names, so imports that work fine at runtime were rejected by type checkers. ([PR #538](https://github.com/qilimanjaro-tech/qilisdk/pull/538))
+- ScipyOptimizer now correctly works for methods "brute" and "basinhopping" when given bounds. Previously these bounds were silently ignored. All methods apart from "brute" now also allow you to store intermediate results now, too. ([PR #539](https://github.com/qilimanjaro-tech/qilisdk/pull/539))
+- The `MatplotlibScheduleRenderer` classes now actually use the matplotlib axes given to them, if provided. Previously they would just use the global axes instead. Also, the default title for the eigenvalue renderer is now set at the class level.
+
+  Note that both of these bugs were only reproducible if the user created a `MatplotlibScheduleRenderer` directly, rather than using `Schedule.draw()`, which is unlikely. ([PR #540](https://github.com/qilimanjaro-tech/qilisdk/pull/540))
+- Controlled gates with a multi-qubit target (specifically controlled SWAPs) are now correctly handled in the transpiler. Previously they would have been considered multi-controlled gates and rejected too early.
+
+  Also now we raise an error if trying to run them through CudaqBackend, which doesn't accept them. ([PR #556](https://github.com/qilimanjaro-tech/qilisdk/pull/556))
+- SABRE now correctly ignores multi-qubit measurements when considering topology, previously it considered them multi-qubit gates, i.e. that M(0, 1) needed qubits 0 and 1 to be adjacent in topology. ([PR #557](https://github.com/qilimanjaro-tech/qilisdk/pull/557))
+- The SABRE transpilation method can no longer loop forever, it has a release valve which triggers after a number of simulated swaps that fail to schedule any gate. ([PR #559](https://github.com/qilimanjaro-tech/qilisdk/pull/559))
+- `ObservableCostFunction` now handles qubit indices better in the case where you give it a Hamiltonian or Pauli. Previously if you gave it a Pauli it would convert it to a 2x2 QTensor and thus when you actually used it the index that you gave to the Pauli will be lost. Now Paulis and Hamiltonians keep their indices rather than converting to QTensor. We now use expect_val in both cost functions so everything is unified. ([PR #560](https://github.com/qilimanjaro-tech/qilisdk/pull/560))
+- The `BruteForceSolver` can now solve models containing a variable with `OneHot` or `DomainWall` encoding. Previously it iterated over all possible bitstrings (rather than just the ones valid for that encoding), so it would throw an error as soon as it tried to evaluate the encoding with an invalid bitstring. It now only enumerates bitstrings that are valid for the variable's encoding. ([PR #565](https://github.com/qilimanjaro-tech/qilisdk/pull/565))
+- The stabilizer simulation method now correctly ignores measurements during the execution, as previously it would raise a "gate not supported" error for measurements acting on multiple qubits, but would ignore single qubit measurements. Mid-circuit measurements are still not supported in this simulation method, so now we also throw a warning as in the other methods that don't support them. ([PR #568](https://github.com/qilimanjaro-tech/qilisdk/pull/568))
+- The OpenQASM exporters now only write gates defined in the target standard library and raise an `UnsupportedGateError` for anything else. Previously some controlled gates were written under invalid names such as `ccz`. Custom OpenQASM 3.0 gates applied to several qubits of one register, or to indexed qubits of larger registers, are also now imported correctly instead of raising an error. ([PR #571](https://github.com/qilimanjaro-tech/qilisdk/pull/571))
+- An error is now raised if an `ObservableCostFunction` is calculated from samples in which the observable contains X and Y terms. Since these can't be calculated (only things in the Z basis can be calculated from samples) we now raise an informative error letting the user know. ([PR #577](https://github.com/qilimanjaro-tech/qilisdk/pull/577))
+- Variational programs now ensure that parameters are always bounded, in case the chosen optimizer doesn't properly ensure this. ([PR #581](https://github.com/qilimanjaro-tech/qilisdk/pull/581))
+- The Lindbladian form of `PauliChannel` has been made more consistent with its Kraus operator form. Previously the two were out of sync, as the Lindblad form was only calculating rates up to first order. The conversion to Lindblad form also now raises errors/warnings for certain `PauliChannels` that don't have exact Lindblad forms (e.g. a `BitFlip` with probability 0.7). ([PR #585](https://github.com/qilimanjaro-tech/qilisdk/pull/585))
+- `ExperimentResult` now inherits from `Result` rather than `FunctionalResult`. `FunctionalResult` contains a variety of fields that `ExperimentResult` never initialized, so it had a bunch of inherited methods that would return empty objects or irrelevant results, like `ExperimentResult.has_samples()`. ([PR #586](https://github.com/qilimanjaro-tech/qilisdk/pull/586))
+- `_zyz_from_unitary` no longer modifies the array it is given in place, it now normalises a copy instead. ([PR #587](https://github.com/qilimanjaro-tech/qilisdk/pull/587))
+- `CustomLayoutPass` now supports every gate that the SABRE passes support, including H, X, S, U1, Controlled and Adjoint, previously it raised a `NotImplementedError` for any gate outside a small hardcoded list. ([PR #589](https://github.com/qilimanjaro-tech/qilisdk/pull/589))
+- QutipBackend now passes its noise model to the base Backend, so running a QuantumReservoir with a noise model correctly warns that the noise model is ignored. ([PR #590](https://github.com/qilimanjaro-tech/qilisdk/pull/590))
+- Adjoint/Exponential of controlled gates now pass the controls correctly. Previously something like `Adjoint(CNOT(0, 1))` only passed the target so it reported `nqubits == 1`. ([PR #591](https://github.com/qilimanjaro-tech/qilisdk/pull/591))
+- `ScipSolver` no longer fails with a `TypeError` when the objective has a negative or fractional power, such as `1 / x`. These objectives now go to SCIP's nonlinear objective path. ([PR #596](https://github.com/qilimanjaro-tech/qilisdk/pull/596))
+
+## Improved Documentation
+
+- Added a docs page describing the global QiliSDK settings. ([PR #498](https://github.com/qilimanjaro-tech/qilisdk/pull/498))
+- Added a utils section to the docs. ([PR #505](https://github.com/qilimanjaro-tech/qilisdk/pull/505))
+- Updated the `docs.sh` script to also check the code blocks found in function docstrings. In doing so, all of the wrong docstrings have also been fixed. The checker does the same as it does with the code block in the docs: copying them to a new python script, running it and ensuring that it runs successfully. This will help prevent older code examples in the docstrings from going out of sync with the rest of the code. ([PR #543](https://github.com/qilimanjaro-tech/qilisdk/pull/543))
+- Added a code of conduct and a `CONTRIBUTING.md` guide, which includes the policy on using AI tools in pull requests. ([PR #610](https://github.com/qilimanjaro-tech/qilisdk/pull/610))
+
+## Misc
+
+- [PR #570](https://github.com/qilimanjaro-tech/qilisdk/pull/570)
+
+
 # qilisdk 0.3.1 (2026-10-14)
 
 ## Features
