@@ -1770,6 +1770,74 @@ TEST(EntropyTest, Renyi_Alpha2_Succeeds) {
     EXPECT_NO_THROW(q.entropy_renyi(2.0));
 }
 
+TEST(EntanglementEntropyTest, Bell_IsLog2_EitherSide) {
+    QTensorCpp q = QTensorCpp::ghz(2);
+    EXPECT_NEAR(q.entanglement_entropy({0}, 1.0), std::log(2.0), 1e-10);
+    EXPECT_NEAR(q.entanglement_entropy({1}, 2.0), std::log(2.0), 1e-10);
+}
+
+TEST(EntanglementEntropyTest, GHZ3_LargerSubsystem_MatchesSmaller) {
+    QTensorCpp q = QTensorCpp::ghz(3);
+    EXPECT_NEAR(q.entanglement_entropy({0, 2}, 1.0), q.entanglement_entropy({1}, 1.0), 1e-10);
+    EXPECT_NEAR(q.entanglement_entropy({0, 2}, 1.0), std::log(2.0), 1e-10);
+}
+
+TEST(EntanglementEntropyTest, ProductState_IsZero) {
+    QTensorCpp q = QTensorCpp::ket({0, 1, 1});
+    EXPECT_NEAR(q.entanglement_entropy({1}, 1.0), 0.0, 1e-12);
+    EXPECT_NEAR(q.entanglement_entropy({0, 1}, 0.5), 0.0, 1e-12);
+}
+
+TEST(EntanglementEntropyTest, EmptyAndFullSubsystems_AreZero) {
+    QTensorCpp q = QTensorCpp::ghz(2);
+    EXPECT_NEAR(q.entanglement_entropy({}, 1.0), 0.0, 1e-12);
+    EXPECT_NEAR(q.entanglement_entropy({0, 1}, 1.0), 0.0, 1e-12);
+}
+
+TEST(EntanglementEntropyTest, Bra_MatchesKet) {
+    QTensorCpp ket = QTensorCpp::random(3, 11);
+    QTensorCpp bra = ket.adjoint();
+    EXPECT_NEAR(bra.entanglement_entropy({1}, 3.0), ket.entanglement_entropy({1}, 3.0), 1e-10);
+}
+
+TEST(EntanglementEntropyTest, DensityMatrix_MatchesKet) {
+    QTensorCpp ket = QTensorCpp::random(3, 5);
+    QTensorCpp rho = ket.matmul(ket.adjoint());
+    EXPECT_NEAR(rho.entanglement_entropy({0}, 1.0), ket.entanglement_entropy({0}, 1.0), 1e-8);
+    EXPECT_NEAR(rho.entanglement_entropy({0}, 2.0), ket.entanglement_entropy({0}, 2.0), 1e-8);
+}
+
+TEST(EntanglementEntropyTest, NonDensityOperator_Throws) {
+    QTensorCpp q(make_pauli_x());
+    EXPECT_THROW(q.entanglement_entropy({0}, 1.0), py::value_error);
+}
+
+TEST(EntanglementEntropyTest, InvalidQubit_Throws) {
+    QTensorCpp q = QTensorCpp::ghz(2);
+    EXPECT_THROW(q.entanglement_entropy({2}, 1.0), py::value_error);
+    EXPECT_THROW(q.entanglement_entropy({-1}, 1.0), py::value_error);
+}
+
+TEST(EntanglementEntropyTest, NonPositiveAlpha_Throws) {
+    QTensorCpp q = QTensorCpp::ghz(2);
+    EXPECT_THROW(q.entanglement_entropy({0}, 0.0), py::value_error);
+}
+
+TEST(EntanglementEntropyTest, ZeroState_Throws) {
+    SparseMatrix m(4, 1);
+    m.makeCompressed();
+    QTensorCpp q(m);
+    EXPECT_THROW(q.entanglement_entropy({0}, 1.0), py::value_error);
+}
+
+TEST(EntanglementEntropyTest, PythonVersion_ParsesIterable) {
+    py::gil_scoped_acquire gil;
+    QTensorCpp q = QTensorCpp::ghz(2);
+    EXPECT_NEAR(q.entanglement_entropy_python(py::make_tuple(0), 1.0), std::log(2.0), 1e-10);
+    EXPECT_THROW(q.entanglement_entropy_python(py::make_tuple(0, 0), 1.0), py::value_error);
+    EXPECT_THROW(q.entanglement_entropy_python(py::make_tuple("a"), 1.0), py::value_error);
+}
+
 static SparseMatrix make_t_plus() {
     constexpr double pi = 3.14159265358979323846;
     SparseMatrix m(2, 1);

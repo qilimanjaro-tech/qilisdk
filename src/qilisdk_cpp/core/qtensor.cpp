@@ -2267,6 +2267,120 @@ double QTensorCpp::entropy_renyi(double alpha) {
     return (1.0 / (1.0 - alpha)) * std::log(sum);
 }
 
+double QTensorCpp::entanglement_entropy_python(const py::object& qubits, double alpha) {
+    /*
+    Compute the entanglement entropy of a subsystem, taking the subsystem as a Python iterable of qubit indices.
+
+    Args:
+        qubits (py::object): An iterable of distinct integers giving the qubits of the subsystem.
+        alpha (double): The Renyi order, with alpha = 1 giving the von Neumann entropy.
+
+    Returns:
+        double: The entanglement entropy of the subsystem.
+
+    Raises:
+        py::value_error: If an item is not an integer or appears more than once.
+    */
+    std::set<int> subsystem;
+    for (const auto& item : qubits) {
+        if (!py::isinstance<py::int_>(item)) {
+            throw py::value_error("The subsystem must be an iterable of integer qubit indices");
+        }
+        if (!subsystem.insert(item.cast<int>()).second) {
+            throw py::value_error("Duplicate qubit index in subsystem: " + std::to_string(item.cast<int>()));
+        }
+    }
+    return entanglement_entropy(subsystem, alpha);
+}
+
+double QTensorCpp::entanglement_entropy(const std::set<int>& qubits, double alpha) {
+    /*
+    Compute the entanglement entropy S_alpha(rho_A) of the subsystem A given by qubits, where rho_A is the reduced
+    density matrix and S_alpha is the Renyi entropy (von Neumann for alpha = 1), using the natural logarithm.
+
+    For a ket or bra, the amplitudes are reshaped into the 2^|A| x 2^|B| matrix Psi and rho_A is replaced by the
+    smaller of Psi Psi^dagger and Psi^dagger Psi, which share their nonzero spectrum (the squared Schmidt
+    coefficients), avoiding the 4^N full density matrix. The spectrum is divided by its sum, so unnormalized states
+    are handled. Density matrices go through partial_trace instead.
+
+    Args:
+        qubits (std::set<int>): The qubits of the subsystem A.
+        alpha (double): The Renyi order alpha > 0, with alpha = 1 giving the von Neumann entropy.
+
+    Returns:
+        double: The entanglement entropy of the subsystem, clamped to be non-negative.
+
+    Raises:
+        py::value_error: If alpha is not positive, if a qubit index is out of range, if the QTensor is neither a
+            pure state nor a density matrix, or if it is the zero state.
+    */
+    if (alpha <= 0) {
+        throw py::value_error("The Renyi order alpha must be positive");
+    }
+    const int n = get_nqubits();
+    for (int q : qubits) {
+        if (q < 0 || q >= n) {
+            throw py::value_error("Subsystem contains invalid qubit index: " + std::to_string(q));
+        }
+    }
+
+    if (!is_ket() && !is_bra()) {
+        if (!is_density_matrix()) {
+            throw py::value_error("The entanglement entropy is only defined for kets, bras and density matrices");
+        }
+        QTensorCpp reduced = partial_trace(qubits);
+        const double entropy = (alpha == 1.0) ? reduced.entropy_von_neumann() : reduced.entropy_renyi(alpha);
+        return std::max(entropy, 0.0);
+    }
+
+    // Row index from the bits of the subsystem qubits, column index from the rest (qubit q is bit n - 1 - q).
+    const Eigen::Index dim = Eigen::Index(1) << n;
+    const Eigen::Index dim_a = Eigen::Index(1) << qubits.size();
+    const Eigen::Index dim_b = dim / dim_a;
+    const DenseMatrix dense = to_dense();
+    DenseMatrix psi_matrix(dim_a, dim_b);
+    for (Eigen::Index i = 0; i < dim; ++i) {
+        Eigen::Index row = 0;
+        Eigen::Index col = 0;
+        for (int q = 0; q < n; ++q) {
+            const Eigen::Index bit = (i >> (n - 1 - q)) & 1;
+            if (qubits.count(q)) {
+                row = (row << 1) | bit;
+            } else {
+                col = (col << 1) | bit;
+            }
+        }
+        psi_matrix(row, col) = is_ket() ? dense(i, 0) : dense(0, i);
+    }
+
+    const DenseMatrix gram = (dim_a <= dim_b) ? DenseMatrix(psi_matrix * psi_matrix.adjoint()) : DenseMatrix(psi_matrix.adjoint() * psi_matrix);
+    const Eigen::VectorXd eigenvalues = Eigen::SelfAdjointEigenSolver<DenseMatrix>(gram, Eigen::EigenvaluesOnly).eigenvalues();
+    double norm_sq = 0.0;
+    for (Eigen::Index i = 0; i < eigenvalues.size(); ++i) {
+        norm_sq += std::max(eigenvalues(i), 0.0);
+    }
+    if (norm_sq == 0.0) {
+        throw py::value_error("Cannot compute the entanglement entropy of a zero state");
+    }
+
+    // Eigenvalues below the solver's round-off are zeros of the Schmidt spectrum, which matters for alpha < 1.
+    const double cutoff = static_cast<double>(eigenvalues.size()) * std::numeric_limits<double>::epsilon();
+    double accum = 0.0;
+    for (Eigen::Index i = 0; i < eigenvalues.size(); ++i) {
+        const double p = eigenvalues(i) / norm_sq;
+        if (p <= cutoff) {
+            continue;
+        }
+        if (alpha == 1.0) {
+            accum -= p * std::log(p);
+        } else {
+            accum += std::pow(p, alpha);
+        }
+    }
+    const double entropy = (alpha == 1.0) ? accum : std::log(accum) / (1.0 - alpha);
+    return std::max(entropy, 0.0);
+}
+
 static void _fast_walsh_hadamard_transform(std::vector<Complex>& a) {
     /*
     Apply the unnormalized fast Walsh-Hadamard transform (H_2)^{tensor N} to a vector in place.

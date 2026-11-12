@@ -1100,6 +1100,90 @@ def test_qtensor_entropies():
         qdm.entropy_renyi(alpha=1)
 
 
+def _brute_force_entanglement_entropy(psi, nqubits, subsystem, alpha):
+    """Entropy of the reduced density matrix, tracing out the complement of the subsystem with numpy."""
+    tensor = psi.reshape([2] * nqubits)
+    rest = [q for q in range(nqubits) if q not in subsystem]
+    matrix = np.transpose(tensor, list(subsystem) + rest).reshape(2 ** len(subsystem), -1)
+    probs = np.clip(np.linalg.eigvalsh(matrix @ matrix.conj().T), 0, None)
+    probs = probs[probs > 1e-15]
+    if alpha == 1:
+        return float(-np.sum(probs * np.log(probs)))
+    return float(np.log(np.sum(probs**alpha)) / (1 - alpha))
+
+
+@pytest.mark.parametrize("alpha", [1.0, 0.5, 2.0, 3.0])
+@pytest.mark.parametrize(("nqubits", "subsystem"), [(2, [0]), (3, [1]), (3, [0, 2]), (4, [3, 0]), (5, [1, 2, 4])])
+def test_entanglement_entropy_matches_brute_force(nqubits, subsystem, alpha):
+    """entanglement_entropy() must agree with numpy for random states and arbitrary (unsorted) subsystems."""
+    rng = np.random.default_rng(nqubits * 100 + len(subsystem))
+    psi = rng.standard_normal(2**nqubits) + 1j * rng.standard_normal(2**nqubits)
+    psi /= np.linalg.norm(psi)
+    state = QTensor(psi.reshape(-1, 1))
+    expected = _brute_force_entanglement_entropy(psi, nqubits, subsystem, alpha)
+    assert state.entanglement_entropy(subsystem, alpha) == pytest.approx(expected, abs=1e-9)
+    # The density matrix path goes through entropy_renyi, whose round-off eigenvalues cost ~1e-8 at alpha < 1
+    assert state.to_density_matrix().entanglement_entropy(subsystem, alpha) == pytest.approx(expected, abs=1e-6)
+
+
+def test_entanglement_entropy_of_bell_state_is_log_2():
+    """Each half of a Bell pair is maximally mixed."""
+    bell = QTensor.ghz(2)
+    assert bell.entanglement_entropy([0]) == pytest.approx(np.log(2))
+    assert bell.entanglement_entropy({1}, alpha=2) == pytest.approx(np.log(2))
+
+
+def test_entanglement_entropy_is_symmetric_across_the_cut():
+    """A pure state has the same entropy on both sides of a bipartition."""
+    state = QTensor.random(5, seed=3)
+    assert state.entanglement_entropy([0, 3]) == pytest.approx(state.entanglement_entropy([1, 2, 4]), abs=1e-10)
+
+
+def test_entanglement_entropy_of_product_state_is_zero():
+    """Product states carry no entanglement across any cut."""
+    state = QTensor.ket(0, 1, 0, 1)
+    assert state.entanglement_entropy([1, 2]) == pytest.approx(0.0, abs=1e-12)
+    assert state.entanglement_entropy([]) == pytest.approx(0.0, abs=1e-12)
+
+
+def test_entanglement_entropy_of_mixed_state_matches_reduced_entropy():
+    """For a mixed state it is the entropy of the reduced density matrix."""
+    rho = QTensor(np.diag([0.5, 0.0, 0.0, 0.5]).astype(complex))
+    reduced = rho.partial_trace({1})
+    assert rho.entanglement_entropy([1]) == pytest.approx(reduced.entropy_von_neumann())
+    assert rho.entanglement_entropy([1], alpha=2) == pytest.approx(reduced.entropy_renyi(2))
+
+
+def test_entanglement_entropy_bra_and_unnormalized_match_ket():
+    """Bras and rescaled kets give the same entropy as the normalized ket."""
+    state = QTensor.random(4, seed=9)
+    scaled = QTensor(2.5 * state.dense())
+    expected = state.entanglement_entropy([0, 1])
+    assert state.adjoint().entanglement_entropy([0, 1]) == pytest.approx(expected, abs=1e-10)
+    assert scaled.entanglement_entropy([0, 1]) == pytest.approx(expected, abs=1e-10)
+
+
+def test_entanglement_entropy_rejects_invalid_qubits():
+    """Repeated, non-integer and out-of-range qubit indices are rejected."""
+    state = QTensor.ghz(3)
+    with pytest.raises(ValueError, match="Duplicate qubit index"):
+        state.entanglement_entropy([0, 0])
+    with pytest.raises(ValueError, match="integer qubit indices"):
+        state.entanglement_entropy(["0"])
+    with pytest.raises(ValueError, match="invalid qubit index"):
+        state.entanglement_entropy([3])
+
+
+def test_entanglement_entropy_rejects_bad_inputs():
+    """Non-positive orders and operators that are not density matrices are rejected."""
+    bell = QTensor.ghz(2)
+    with pytest.raises(ValueError, match="alpha must be positive"):
+        bell.entanglement_entropy([0], alpha=0)
+    operator = QTensor.identity(2)
+    with pytest.raises(ValueError, match="kets, bras and density matrices"):
+        operator.entanglement_entropy([0])
+
+
 def test_qtensor_commutators():
     q1 = QTensor(np.array([[0, 1], [1, 0]]))  # X
     q2 = QTensor(np.array([[0, -1j], [1j, 0]]))  # Y
