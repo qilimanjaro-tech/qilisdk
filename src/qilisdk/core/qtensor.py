@@ -873,6 +873,52 @@ class QTensor:
         )
         return self._qtensor_cpp.entropy_renyi(alpha)
 
+    def gap_ratio(self, tol: float = get_settings().atol) -> float:
+        r"""
+        Compute the mean level spacing ratio :math:`\langle r \rangle` of a Hermitian operator, such as a Hamiltonian.
+
+        With the distinct eigenvalues :math:`E_0 < E_1 < \dots` sorted in ascending order and the spacings
+        :math:`s_n = E_{n+1} - E_n`, the ratio of each pair of neighbouring spacings is
+
+        .. math::
+
+            r_n = \frac{\min(s_n, s_{n-1})}{\max(s_n, s_{n-1})} \in [0, 1],
+
+        and :math:`\langle r \rangle` is its mean over the entire spectrum. Unlike the spacing distribution itself, it
+        needs no unfolding of the spectrum. It is a standard probe of quantum chaos: integrable systems follow Poisson
+        statistics with :math:`\langle r \rangle = 2 \log 2 - 1 \approx 0.386`, while chaotic ones follow random matrix
+        statistics, with :math:`\langle r \rangle \approx 0.531` for real symmetric (GOE) and :math:`\approx 0.600`
+        for complex Hermitian (GUE) Hamiltonians. These values only hold within a single symmetry sector, so
+        symmetries should be resolved first.
+
+        Eigenvalues closer than ``tol`` to the previous distinct eigenvalue are merged into a single level, so exact
+        degeneracies are counted once rather than giving zero spacings.
+
+        Example:
+            .. code-block:: python
+
+                import numpy as np
+
+                from qilisdk.core.qtensor import QTensor
+
+                # A random complex Hermitian matrix follows GUE statistics
+                rng = np.random.default_rng(1)
+                a = rng.standard_normal((1024, 1024)) + 1j * rng.standard_normal((1024, 1024))
+                print(QTensor(a + a.conj().T).gap_ratio())  # ≈ 0.6
+
+        Args:
+            tol (float, optional): The tolerance for the Hermiticity check and below which two eigenvalues count as
+                degenerate. Defaults to the global setting.
+
+        Returns:
+            float: The mean level spacing ratio :math:`\langle r \rangle`.
+
+        Raises:
+            ValueError: If the QTensor is not a Hermitian operator, or if it has fewer than three distinct eigenvalues.
+        """
+        logger.trace("[QTensor] QTensor.gap_ratio computing mean level spacing ratio on {} qubits", self.nqubits)
+        return self._qtensor_cpp.gap_ratio(tol)
+
     def magic(self, alpha: float = 2.0) -> float:
         r"""
         Compute the magic (non-stabilizerness) of a pure state via the stabilizer Rényi entropy (SRE).
