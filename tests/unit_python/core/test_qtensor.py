@@ -1152,6 +1152,7 @@ def test_entanglement_entropy_of_mixed_state_matches_reduced_entropy():
     reduced = rho.partial_trace({1})
     assert rho.entanglement_entropy([1]) == pytest.approx(reduced.entropy_von_neumann())
     assert rho.entanglement_entropy([1], alpha=2) == pytest.approx(reduced.entropy_renyi(2))
+    assert rho.entanglement_entropy([]) == pytest.approx(0.0, abs=1e-12)
 
 
 def test_entanglement_entropy_bra_and_unnormalized_match_ket():

@@ -2328,6 +2328,10 @@ double QTensorCpp::entanglement_entropy(const std::set<int>& qubits, double alph
         if (!is_density_matrix()) {
             throw py::value_error("The entanglement entropy is only defined for kets, bras and density matrices");
         }
+        // The reduced state of no qubits is the 1x1 matrix [[1]], which has zero entropy.
+        if (qubits.empty()) {
+            return 0.0;
+        }
         QTensorCpp reduced = partial_trace(qubits);
         const double entropy = (alpha == 1.0) ? reduced.entropy_von_neumann() : reduced.entropy_renyi(alpha);
         return std::max(entropy, 0.0);

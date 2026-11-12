@@ -1792,6 +1792,9 @@ TEST(EntanglementEntropyTest, EmptyAndFullSubsystems_AreZero) {
     QTensorCpp q = QTensorCpp::ghz(2);
     EXPECT_NEAR(q.entanglement_entropy({}, 1.0), 0.0, 1e-12);
     EXPECT_NEAR(q.entanglement_entropy({0, 1}, 1.0), 0.0, 1e-12);
+    QTensorCpp rho = q.matmul(q.adjoint());
+    EXPECT_NEAR(rho.entanglement_entropy({}, 1.0), 0.0, 1e-12);
+    EXPECT_NEAR(rho.entanglement_entropy({}, 2.0), 0.0, 1e-12);
 }
 
 TEST(EntanglementEntropyTest, Bra_MatchesKet) {
