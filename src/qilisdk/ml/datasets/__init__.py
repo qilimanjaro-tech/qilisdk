@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Equation-based dataset generators for time-series and reservoir computing.
+"""Equation-based dataset generators for time-series, reservoir computing and classification.
 
 All datasets derive from :class:`Dataset` and expose a common
 :meth:`Dataset.generate` method returning a :class:`DatasetSample`. Data is
@@ -25,6 +25,7 @@ Example:
     ((2000, 1), (2000, 1))
 """
 
+from qilisdk.ml.datasets.circle import Circle
 from qilisdk.ml.datasets.dataset import Dataset, DatasetSample
 from qilisdk.ml.datasets.henon import HenonMap
 from qilisdk.ml.datasets.logistic_map import LogisticMap
@@ -35,6 +36,7 @@ from qilisdk.ml.datasets.santa_fe_laser import SantaFeLaser
 
 __all__ = [
     "NARMA",
+    "Circle",
     "Dataset",
     "DatasetSample",
     "HenonMap",

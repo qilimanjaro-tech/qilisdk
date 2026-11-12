@@ -35,6 +35,7 @@ Available generators
 - :class:`~qilisdk.ml.datasets.santa_fe_laser.SantaFeLaser` --- Santa Fe laser intensity (Lorenz--Haken equations).
 - :class:`~qilisdk.ml.datasets.henon.HenonMap` --- Hénon map.
 - :class:`~qilisdk.ml.datasets.logistic_map.LogisticMap` --- Logistic map.
+- :class:`~qilisdk.ml.datasets.circle.Circle` --- Circle classification.
 
 NARMA
 =====
@@ -169,3 +170,21 @@ shaped ``(npoints, 1)``.
 
     inputs, targets = LogisticMap(r=3.9, horizon=1).generate(2000)
     print(inputs.shape, targets.shape)
+
+Circle
+======
+
+The :class:`~qilisdk.ml.datasets.circle.Circle` dataset is a two-dimensional binary classification task. Points
+:math:`(x, y)` are sampled uniformly from the unit square and labelled ``1`` if they lie inside a circle of radius
+:math:`r` centred at :math:`(0.5, 0.5)`, and ``0`` otherwise. The default radius :math:`r = 1 / \sqrt{2\pi}` makes
+the circle cover half of the square, so the two classes are balanced. A ``margin`` leaves an empty band around the
+boundary, making the classes easier to separate. ``inputs`` are the points, shaped ``(npoints, 2)``, and ``targets``
+are the labels, shaped ``(npoints, 1)``. When drawn, the points are coloured by class.
+
+.. code-block:: python
+
+    from qilisdk.ml.datasets import Circle
+
+    dataset = Circle(margin=0.05, seed=0)
+    sample = dataset.generate(2000)
+    dataset.draw(sample)
