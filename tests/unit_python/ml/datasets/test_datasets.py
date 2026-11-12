@@ -555,6 +555,7 @@ def test_circle_draw_colours_points_by_class(tmp_path):
     path = tmp_path / "circle.png"
     Circle.draw(sample, filepath=str(path))
     assert path.exists()
+    plt.close("all")
 
 
 @pytest.mark.parametrize("data", ["sample", "inputs"])
@@ -565,8 +566,15 @@ def test_circle_draw_1d_and_raw_inputs(data, tmp_path):
     assert path.exists()
 
 
-def test_circle_draw_rejects_class_count_mismatch():
+def test_circle_draw_rejects_3d():
     sample = Circle(seed=0).generate(100)
-    with pytest.raises(ValueError, match="class labels"):
+    with pytest.raises(ValueError, match="3d"):
         Circle.draw(sample, style="3d")
+
+
+def test_renderer_rejects_class_count_mismatch():
+    sample = Circle(seed=0).generate(100)
+    renderer = MatplotlibDatasetRenderer(sample, "3d", classes=sample.targets)
+    with pytest.raises(ValueError, match="class labels"):
+        renderer.plot()
     plt.close("all")

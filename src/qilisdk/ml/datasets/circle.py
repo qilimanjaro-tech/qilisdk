@@ -14,11 +14,16 @@
 from __future__ import annotations
 
 import math
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
 from qilisdk.ml.datasets.dataset import Dataset, DatasetSample
+
+if TYPE_CHECKING:
+    from qilisdk.ml.datasets.dataset import FloatArray
+    from qilisdk.utils.visualization.dataset_renderers import Transform
+    from qilisdk.utils.visualization.style import DatasetStyle
 
 # Distance from the centre of the unit square to a corner, the largest radius a circle centred there can have.
 _HALF_DIAGONAL = math.sqrt(0.5)
@@ -49,6 +54,41 @@ class Circle(Dataset):
     _DRAW_COMPONENT_LABELS = ("x", "y")
     _DRAW_COLOR_BY_TARGET = True
     _DRAW_STYLE_DEFAULTS: ClassVar[dict[str, dict[str, Any]]] = {"2d": {"figsize": (6, 6)}}
+
+    @classmethod
+    def draw(
+        cls,
+        sample: DatasetSample | FloatArray,
+        style: str | None = None,
+        *,
+        config: DatasetStyle | None = None,
+        transform: Transform | None = None,
+        filepath: str | None = None,
+    ) -> None:
+        """
+        Render a generated :class:`DatasetSample`, or a raw array of points, with matplotlib.
+
+        Overrides :meth:`Dataset.draw`, except that the ``"3d"`` style is not
+        supported, since the points are two-dimensional.
+
+        Args:
+            sample (DatasetSample | FloatArray): A sample produced by
+                :meth:`generate`, whose points are coloured by class, or an array
+                of points to plot directly.
+            style (str | None): Plot mode, either ``"1d"`` or ``"2d"``. Defaults to ``"2d"``.
+            config (DatasetStyle | None): Visual style configuration. Defaults to
+                :class:`DatasetStyle`, merged over the dataset's per-mode defaults.
+            transform (Transform | None): Callable mapping the points to the
+                coordinates to plot, overriding the default view.
+            filepath (str | None): If given, the figure is saved to this path
+                (format inferred from the extension) instead of being shown.
+
+        Raises:
+            ValueError: If ``style`` is ``"3d"``.
+        """
+        if style == "3d":
+            raise ValueError("Circle does not support the '3d' style, use '1d' or '2d'.")
+        super().draw(sample, style, config=config, transform=transform, filepath=filepath)
 
     def __init__(
         self,

@@ -192,7 +192,7 @@ class Dataset(ABC):
         * ``"3d"`` -- a three-dimensional phase portrait (three coordinates).
 
         For classification datasets such as :class:`~qilisdk.ml.datasets.circle.Circle`,
-        the ``"2d"``/``"3d"`` scatter points of a full :class:`DatasetSample` are
+        the ``"2d"`` scatter points of a full :class:`DatasetSample` are
         coloured by class (its ``targets``) rather than by time.
 
         What each axis shows is decided by a *transform*: a callable mapping the
