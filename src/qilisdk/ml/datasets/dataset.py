@@ -133,6 +133,9 @@ class Dataset(ABC):
     # Per-mode transforms deciding what each axis shows
     _DRAW_TRANSFORMS: ClassVar[dict[str, Transform]] = {}
 
+    # Whether 2-D/3-D scatter points are coloured by class (the sample's targets) instead of by time
+    _DRAW_COLOR_BY_TARGET: ClassVar[bool] = False
+
     def __init__(self, *, seed: int | None = None) -> None:
         """Initialise the dataset.
 
@@ -188,6 +191,10 @@ class Dataset(ABC):
         * ``"2d"`` -- a phase portrait (two coordinates).
         * ``"3d"`` -- a three-dimensional phase portrait (three coordinates).
 
+        For classification datasets such as :class:`~qilisdk.ml.datasets.circle.Circle`,
+        the ``"2d"``/``"3d"`` scatter points of a full :class:`DatasetSample` are
+        coloured by class (its ``targets``) rather than by time.
+
         What each axis shows is decided by a *transform*: a callable mapping the
         full ``(n_points, n_components)`` series to the coordinates to plot. It may
         reshape, slice or delay-embed the data, not merely select columns. If none
@@ -237,6 +244,7 @@ class Dataset(ABC):
             labels=cls._DRAW_COMPONENT_LABELS,
             title=cls.__name__,
             transform=transform or cls._DRAW_TRANSFORMS.get(mode),
+            classes=sample.targets if cls._DRAW_COLOR_BY_TARGET and isinstance(sample, DatasetSample) else None,
         )
         renderer.plot()
         if filepath:

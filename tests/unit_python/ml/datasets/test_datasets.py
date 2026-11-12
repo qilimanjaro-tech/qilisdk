@@ -23,6 +23,7 @@ from matplotlib.colors import to_rgba
 
 from qilisdk.ml.datasets import (
     NARMA,
+    Circle,
     Dataset,
     DatasetSample,
     HenonMap,
@@ -491,3 +492,81 @@ def test_one_dimensional_transform_can_select_components(tmp_path):
     lines = plt.gcf().axes[0].lines
     assert len(lines) == 1
     assert np.allclose(lines[0].get_ydata(), inputs[:, 2])
+
+
+def test_circle_shapes_and_labels():
+    sample = Circle(seed=3).generate(1000)
+    assert sample.inputs.shape == (1000, 2)
+    assert sample.targets.shape == (1000, 1)
+    assert sample.inputs.dtype == np.float64
+    assert np.all((sample.inputs >= 0.0) & (sample.inputs <= 1.0))
+    assert set(np.unique(sample.targets)) == {0.0, 1.0}
+    inside = np.linalg.norm(sample.inputs - 0.5, axis=1) < Circle().radius
+    assert np.array_equal(sample.targets[:, 0], inside.astype(np.float64))
+
+
+def test_circle_default_radius_balances_classes():
+    targets = Circle(seed=0).generate(20000).targets
+    assert abs(targets.mean() - 0.5) < 0.02
+
+
+def test_circle_margin_leaves_band_empty():
+    dataset = Circle(radius=0.3, margin=0.1, seed=1)
+    inputs, _ = dataset.generate(2000)
+    distance = np.linalg.norm(inputs - 0.5, axis=1)
+    assert np.all(np.abs(distance - 0.3) >= 0.05)
+    assert dataset.radius == 0.3
+    assert dataset.margin == 0.1
+
+
+def test_circle_is_reproducible_with_seed():
+    a = Circle(seed=7).generate(100)
+    b = Circle(seed=7).generate(100)
+    c = Circle(seed=8).generate(100)
+    assert np.array_equal(a.inputs, b.inputs)
+    assert not np.array_equal(a.inputs, c.inputs)
+
+
+@pytest.mark.parametrize(
+    ("radius", "margin"),
+    [(0.0, 0.0), (-0.1, 0.0), (0.3, -0.1), (0.2, 0.4), (0.75, 0.0), (0.6, 0.3)],
+)
+def test_circle_invalid_configuration_raises(radius, margin):
+    with pytest.raises(ValueError, match=r"radius|margin"):
+        Circle(radius=radius, margin=margin)
+
+
+def test_circle_invalid_npoints_raises():
+    dataset = Circle()
+    with pytest.raises(ValueError, match="npoints"):
+        dataset.generate(0)
+
+
+def test_circle_draw_colours_points_by_class(tmp_path):
+    sample = Circle(seed=0).generate(200)
+    renderer = MatplotlibDatasetRenderer(sample, "2d", classes=sample.targets)
+    renderer.plot()
+    collections = renderer.ax.collections
+    assert len(collections) == 2
+    assert sum(len(c.get_offsets()) for c in collections) == 200
+    assert [t.get_text() for t in renderer.ax.get_legend().get_texts()] == ["class 0", "class 1"]
+    plt.close("all")
+
+    path = tmp_path / "circle.png"
+    Circle.draw(sample, filepath=str(path))
+    assert path.exists()
+
+
+@pytest.mark.parametrize("data", ["sample", "inputs"])
+def test_circle_draw_1d_and_raw_inputs(data, tmp_path):
+    sample = Circle(seed=0).generate(100)
+    path = tmp_path / "circle.png"
+    Circle.draw(sample if data == "sample" else sample.inputs, style="1d", filepath=str(path))
+    assert path.exists()
+
+
+def test_circle_draw_rejects_class_count_mismatch():
+    sample = Circle(seed=0).generate(100)
+    with pytest.raises(ValueError, match="class labels"):
+        Circle.draw(sample, style="3d")
+    plt.close("all")
