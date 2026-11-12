@@ -1100,6 +1100,44 @@ def test_qtensor_entropies():
         qdm.entropy_renyi(alpha=1)
 
 
+def test_gap_ratio_matches_known_spectra():
+    """Equal spacings give 1, doubling spacings give 1/2, and degenerate levels are merged."""
+    assert QTensor(np.diag([3.0, 0.0, 2.0, 1.0])).gap_ratio() == pytest.approx(1.0)
+    assert QTensor(np.diag([0.0, 1.0, 3.0, 7.0])).gap_ratio() == pytest.approx(0.5)
+    assert QTensor(np.diag([0.0, 1.0, 1.0 + 1e-14, 3.0])).gap_ratio() == pytest.approx(0.5)
+
+
+@pytest.mark.parametrize(
+    ("kind", "expected"),
+    [("poisson", 2 * np.log(2) - 1), ("goe", 0.5307), ("gue", 0.5996)],
+)
+def test_gap_ratio_matches_random_matrix_theory(kind, expected):
+    """Uncorrelated levels follow Poisson statistics, and random real or complex Hermitian matrices GOE or GUE."""
+    rng = np.random.default_rng(7)
+    dim = 1024
+    if kind == "poisson":
+        matrix = np.diag(rng.uniform(size=dim)).astype(complex)
+    else:
+        matrix = rng.standard_normal((dim, dim)).astype(complex)
+        if kind == "gue":
+            matrix += 1j * rng.standard_normal((dim, dim))
+        matrix += matrix.conj().T
+    assert QTensor(matrix).gap_ratio() == pytest.approx(expected, abs=0.02)
+
+
+def test_gap_ratio_rejects_bad_inputs():
+    """States, non-Hermitian operators and spectra with fewer than three distinct levels are rejected."""
+    state = QTensor.ghz(2)
+    with pytest.raises(ValueError, match="Hermitian operators"):
+        state.gap_ratio()
+    nilpotent = QTensor(np.array([[0, 1], [0, 0]]))
+    with pytest.raises(ValueError, match="Hermitian operators"):
+        nilpotent.gap_ratio()
+    identity = QTensor.identity(2)
+    with pytest.raises(ValueError, match="three distinct eigenvalues"):
+        identity.gap_ratio()
+
+
 def test_qtensor_commutators():
     q1 = QTensor(np.array([[0, 1], [1, 0]]))  # X
     q2 = QTensor(np.array([[0, -1j], [1j, 0]]))  # Y
