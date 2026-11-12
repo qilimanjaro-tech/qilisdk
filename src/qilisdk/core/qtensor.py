@@ -29,6 +29,8 @@ from qilisdk.utils.visualization.style import QTensorStyle
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from qilisdk.analog import Hamiltonian
     from qilisdk.core.types import Number
 
@@ -872,6 +874,55 @@ class QTensor:
             "[QTensor] QTensor.entropy_renyi computing Renyi entropy of order {} on {} qubits", alpha, self.nqubits
         )
         return self._qtensor_cpp.entropy_renyi(alpha)
+
+    def entanglement_entropy(self, qubits: Iterable[int], alpha: float = 1.0) -> float:
+        r"""
+        Compute the entanglement entropy of the subsystem made of the given qubits.
+
+        This is the entropy of the reduced density matrix :math:`\rho_A = \operatorname{tr}_B \rho` of the
+        subsystem :math:`A`, with :math:`B` the remaining qubits. For :math:`\alpha = 1` it is the von Neumann
+        entropy :math:`S(\rho_A) = -\operatorname{tr}(\rho_A \log \rho_A)`, and otherwise the Rényi entropy
+
+        .. math::
+
+            S_\alpha(\rho_A) = \frac{1}{1 - \alpha} \log \operatorname{tr}\!\left(\rho_A^\alpha\right),
+
+        both using the natural logarithm, as :meth:`entropy_von_neumann` and :meth:`entropy_renyi` do. For a
+        pure state it vanishes if and only if the state is a product across the cut, is symmetric under
+        swapping :math:`A` and :math:`B`, and is at most :math:`\min(|A|, |B|) \log 2`. For a mixed state it is
+        the entropy of the reduced state, which is no longer an entanglement measure on its own.
+
+        Kets and bras never build the full density matrix: their amplitudes are reshaped into a
+        :math:`2^{|A|} \times 2^{|B|}` matrix whose singular values are the Schmidt coefficients, so the cost is
+        :math:`O(2^N \min(2^{|A|}, 2^{|B|}))` time and :math:`O(2^N)` memory. They are normalized internally.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.core.qtensor import QTensor
+
+                bell = QTensor.ghz(2)
+                print(bell.entanglement_entropy([0]))  # log(2) ≈ 0.693
+                print(QTensor.zero(3).entanglement_entropy([0, 2]))  # 0.0
+
+        Args:
+            qubits (Iterable[int]): The distinct qubit indices making up the subsystem :math:`A`.
+            alpha (float, optional): The Rényi order :math:`\alpha > 0`. Defaults to 1, the von Neumann entropy.
+
+        Returns:
+            float: The entanglement entropy :math:`S_\alpha(\rho_A)`.
+
+        Raises:
+            ValueError: If a qubit index is repeated, not an integer or out of range, if ``alpha`` is not positive,
+                or if the QTensor is not a ket, bra or density matrix.
+        """
+        logger.trace(
+            "[QTensor] QTensor.entanglement_entropy computing order {} entropy of qubits {} on {} qubits",
+            alpha,
+            qubits,
+            self.nqubits,
+        )
+        return self._qtensor_cpp.entanglement_entropy_python(qubits, alpha)
 
     def magic(self, alpha: float = 2.0) -> float:
         r"""

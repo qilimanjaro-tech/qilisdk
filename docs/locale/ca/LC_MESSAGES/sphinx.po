@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-11-12 14:39+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -19,10 +19,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../_templates/versioning.html:8
+#: ../../_templates/versioning.html:12
 msgid "Releases"
 msgstr "Llançaments"
 
-#: ../../_templates/versioning.html:21
+#: ../../_templates/versioning.html:25
+msgid "older versions"
+msgstr "versions anteriors"
+
+#: ../../_templates/versioning.html:39
 msgid "Development"
 msgstr "Desenvolupament"
+
