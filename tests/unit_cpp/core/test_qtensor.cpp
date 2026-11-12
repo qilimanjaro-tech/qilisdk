@@ -1822,6 +1822,52 @@ TEST(MagicTest, ZeroState_Throws) {
     EXPECT_THROW(q.magic(2.0), py::value_error);
 }
 
+TEST(FermionicAntiflatnessTest, Ket0_IsGaussian_Zero) {
+    QTensorCpp q(make_ket0());
+    EXPECT_NEAR(q.fermionic_antiflatness(1), 0.0, 1e-10);
+    EXPECT_NEAR(q.fermionic_antiflatness(2), 0.0, 1e-10);
+}
+
+TEST(FermionicAntiflatnessTest, GHZ2_IsGaussian_Zero) {
+    QTensorCpp q = QTensorCpp::ghz(2);
+    EXPECT_NEAR(q.fermionic_antiflatness(2), 0.0, 1e-10);
+}
+
+TEST(FermionicAntiflatnessTest, GHZ3_IsMaximal) {
+    // (|000> + |111>)/sqrt(2) superposes opposite parities, so every two-point Majorana correlator vanishes.
+    QTensorCpp q = QTensorCpp::ghz(3);
+    EXPECT_NEAR(q.fermionic_antiflatness(1), 3.0, 1e-10);
+    EXPECT_NEAR(q.fermionic_antiflatness(4), 3.0, 1e-10);
+}
+
+TEST(FermionicAntiflatnessTest, TPlus_IsMaximal) {
+    QTensorCpp q(make_t_plus());
+    EXPECT_NEAR(q.fermionic_antiflatness(2), 1.0, 1e-10);
+}
+
+TEST(FermionicAntiflatnessTest, Bra_MatchesKet) {
+    QTensorCpp ket = QTensorCpp::ghz(3);
+    QTensorCpp bra = ket.adjoint();
+    EXPECT_NEAR(bra.fermionic_antiflatness(2), ket.fermionic_antiflatness(2), 1e-10);
+}
+
+TEST(FermionicAntiflatnessTest, Operator_Throws) {
+    QTensorCpp q(make_identity2());
+    EXPECT_THROW(q.fermionic_antiflatness(1), py::value_error);
+}
+
+TEST(FermionicAntiflatnessTest, OrderZero_Throws) {
+    QTensorCpp q(make_ket0());
+    EXPECT_THROW(q.fermionic_antiflatness(0), py::value_error);
+}
+
+TEST(FermionicAntiflatnessTest, ZeroState_Throws) {
+    SparseMatrix m(2, 1);
+    m.makeCompressed();
+    QTensorCpp q(m);
+    EXPECT_THROW(q.fermionic_antiflatness(1), py::value_error);
+}
+
 TEST(RankTest, Ket_Rank1) {
     QTensorCpp q(make_ket0());
     EXPECT_EQ(q.rank(), 1);

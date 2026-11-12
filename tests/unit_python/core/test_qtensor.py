@@ -1570,3 +1570,103 @@ def test_magic_rejects_non_positive_alpha(alpha):
     state = QTensor.zero(2)
     with pytest.raises(ValueError, match="alpha must be positive"):
         state.magic(alpha)
+
+
+def _majoranas(nqubits):
+    """Dense Jordan-Wigner Majorana operators, with qubit 0 as the leftmost tensor factor."""
+    out = []
+    for q in range(nqubits):
+        for local in ("X", "Y"):
+            op = np.array([[1]], dtype=complex)
+            for j in range(nqubits):
+                op = np.kron(op, _PAULIS["Z"] if j < q else _PAULIS[local] if j == q else _PAULIS["I"])
+            out.append(op)
+    return out
+
+
+def _brute_force_faf(psi, nqubits, k):
+    """Naive F_k = N - tr[(M^T M)^k] / 2 from the dense Majorana covariance matrix."""
+    gammas = _majoranas(nqubits)
+    cov = np.array([[(-0.5j * psi.conj() @ (gm @ gn - gn @ gm) @ psi).real for gn in gammas] for gm in gammas])
+    return nqubits - 0.5 * np.trace(np.linalg.matrix_power(cov.T @ cov, k))
+
+
+def _random_gaussian_unitary(nqubits, rng):
+    """exp(-iH) for a random quadratic Majorana Hamiltonian H = (i/4) sum h_ab gamma_a gamma_b."""
+    gammas = _majoranas(nqubits)
+    h = rng.standard_normal((2 * nqubits, 2 * nqubits))
+    h -= h.T
+    ham = sum(0.25j * h[a, b] * gammas[a] @ gammas[b] for a in range(2 * nqubits) for b in range(2 * nqubits))
+    return expm(-1j * ham)
+
+
+@pytest.mark.parametrize("nqubits", [1, 2, 3, 4])
+@pytest.mark.parametrize("k", [1, 2, 3])
+def test_fermionic_antiflatness_matches_brute_force(nqubits, k):
+    """fermionic_antiflatness() must agree with the dense covariance-matrix formula for random states."""
+    rng = np.random.default_rng(nqubits * 10 + k)
+    psi = rng.standard_normal(2**nqubits) + 1j * rng.standard_normal(2**nqubits)
+    psi /= np.linalg.norm(psi)
+    got = QTensor(psi.reshape(-1, 1)).fermionic_antiflatness(k)
+    assert got == pytest.approx(_brute_force_faf(psi, nqubits, k), abs=1e-9)
+
+
+@pytest.mark.parametrize("nqubits", [1, 2, 3, 4])
+def test_fermionic_antiflatness_of_gaussian_states_is_zero(nqubits):
+    """Computational basis states and their Gaussian evolutions are Gaussian, so their FAF vanishes."""
+    rng = np.random.default_rng(nqubits)
+    unitary = _random_gaussian_unitary(nqubits, rng)
+    for bits in [(0,) * nqubits, (1,) * nqubits, tuple(int(b) for b in rng.integers(0, 2, nqubits))]:
+        basis = QTensor.ket(*bits)
+        evolved = QTensor(unitary @ basis.dense())
+        for k in (1, 2):
+            assert basis.fermionic_antiflatness(k) == pytest.approx(0.0, abs=1e-10)
+            assert evolved.fermionic_antiflatness(k) == pytest.approx(0.0, abs=1e-10)
+
+
+def test_fermionic_antiflatness_is_invariant_under_gaussian_unitaries():
+    """FAF is unchanged by fermionic Gaussian (matchgate) unitaries."""
+    rng = np.random.default_rng(7)
+    psi = rng.standard_normal(8) + 1j * rng.standard_normal(8)
+    state = QTensor((psi / np.linalg.norm(psi)).reshape(-1, 1))
+    evolved = QTensor(_random_gaussian_unitary(3, rng) @ state.dense())
+    assert evolved.fermionic_antiflatness(2) == pytest.approx(state.fermionic_antiflatness(2), abs=1e-10)
+
+
+def test_fermionic_antiflatness_of_plus_state_is_maximal():
+    """|+> superposes both parities, so M = 0 and F_k = N = 1 for every k."""
+    plus = QTensor(np.array([[1.0], [1.0]]) / np.sqrt(2))
+    assert plus.fermionic_antiflatness(1) == pytest.approx(1.0)
+    assert plus.fermionic_antiflatness(3) == pytest.approx(1.0)
+
+
+def test_fermionic_antiflatness_matches_for_bra_and_ket():
+    """The FAF of a state is invariant under taking the adjoint (bra vs ket)."""
+    rng = np.random.default_rng(3)
+    psi = rng.standard_normal(4) + 1j * rng.standard_normal(4)
+    ket_state = QTensor(psi.reshape(-1, 1))
+    assert ket_state.adjoint().fermionic_antiflatness(2) == pytest.approx(ket_state.fermionic_antiflatness(2))
+
+
+def test_fermionic_antiflatness_is_normalization_invariant():
+    """Unnormalized input is normalized internally, so scaling does not change the FAF."""
+    rng = np.random.default_rng(5)
+    psi = rng.standard_normal(8) + 1j * rng.standard_normal(8)
+    unscaled = QTensor(psi.reshape(-1, 1))
+    scaled = QTensor(3.7 * psi.reshape(-1, 1))
+    assert unscaled.fermionic_antiflatness() == pytest.approx(scaled.fermionic_antiflatness(), abs=1e-10)
+
+
+def test_fermionic_antiflatness_rejects_operators():
+    """fermionic_antiflatness() is only defined for pure states."""
+    operator = QTensor.identity(2)
+    with pytest.raises(ValueError, match="pure states"):
+        operator.fermionic_antiflatness()
+
+
+@pytest.mark.parametrize("k", [0, -1])
+def test_fermionic_antiflatness_rejects_non_positive_order(k):
+    """The order k must be at least 1."""
+    state = QTensor.zero(2)
+    with pytest.raises(ValueError, match="must be at least 1"):
+        state.fermionic_antiflatness(k)
