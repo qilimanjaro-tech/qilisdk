@@ -17,7 +17,7 @@ from __future__ import annotations
 import math
 import random
 from collections import deque
-from typing import TYPE_CHECKING, Iterable
+from typing import TYPE_CHECKING
 
 from loguru import logger
 
@@ -25,6 +25,11 @@ from qilisdk.digital import Circuit, M
 from qilisdk.digital.topology import build_topology_graph
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
+
+# Cost of an interaction between disconnected physical qubits, used instead of the sentinel distance.
+_UNREACHABLE_PENALTY = 1e6
+# Lazily stored decay values are folded back into the scale once it drops below this.
+_DECAY_RESCALE_THRESHOLD = 1e-100
 
 if TYPE_CHECKING:
     from rustworkx import PyGraph
@@ -48,7 +53,11 @@ class SabreLayoutPass(CircuitTranspilerPass):
         * Extended look-ahead set of upcoming 2Q gates.
         * Cost = sum distances(front) + beta * sum distances(lookahead),
           with a light decay penalty on recently swapped physical qubits.
-    - Runs several randomized trials and keeps the best layout.
+    - Each trial starts from a random layout and refines it over several
+      rounds: routing the reversed circuit ends on a mapping tuned for the
+      start of the circuit, and routing the circuit forward from it scores that
+      mapping and seeds the next round. The candidate needing the fewest
+      simulated SWAPs across all trials and rounds wins.
 
     Parameters
     ----------
@@ -57,6 +66,10 @@ class SabreLayoutPass(CircuitTranspilerPass):
         ``PyGraph`` whose node indices represent *physical* qubits.
     num_trials : int
         Number of random initializations to try (keeps the best).
+    num_iterations : int
+        Backward-forward refinement rounds per trial. Each round routes the
+        reversed circuit and then the circuit itself, and scores the layout
+        it produces by the SWAPs the forward simulation needed.
     seed : int | None
         RNG seed for reproducibility (affects initial layout and tie breaks).
     lookahead_size : int
@@ -84,7 +97,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
     - Returns a *new* Circuit with all gates retargeted to physical qubits, unless
       ``apply_layout`` is ``False``.
     - Exposes `last_layout` (list[int]) mapping logical → physical.
-      Also `last_score` as a diagnostic (lower is better).
+      Also `last_score`, the number of SWAPs the forward simulation needed (lower is better).
 
     Notes
     -----
@@ -102,7 +115,8 @@ class SabreLayoutPass(CircuitTranspilerPass):
         self,
         topology: Topology,
         *,
-        num_trials: int = 8,
+        num_trials: int = 2,
+        num_iterations: int = 4,
         seed: int | None = None,
         lookahead_size: int = 10,
         beta: float = 0.5,
@@ -116,6 +130,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         Args:
             topology (Topology): Coupling map as an edge list or ``PyGraph``.
             num_trials (int): Number of randomized layout trials.
+            num_iterations (int): Backward-forward refinement rounds per trial.
             seed (int | None): RNG seed for reproducible trials.
             lookahead_size (int): Maximum number of gates in the look-ahead set.
             beta (float): Weight assigned to look-ahead cost.
@@ -129,6 +144,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         """
         self.topology: PyGraph[int, None] = build_topology_graph(topology)
         self.num_trials = max(1, int(num_trials))
+        self.num_iterations = max(1, int(num_iterations))
         self.seed = seed
         self.lookahead_size = int(lookahead_size)
         self.beta = float(beta)
@@ -196,25 +212,44 @@ class SabreLayoutPass(CircuitTranspilerPass):
                 return circuit
             return self._retarget_circuit(circuit, layout, max_physical_label_plus_one)
 
-        # Multi-trial SABRE simulation; keep the best layout according to final cost.
+        # Each trial refines its layout by routing the circuit backwards and forwards.
+        last_pair_index = len(two_qubit_pairs) - 1
+        reversed_pairs = two_qubit_pairs[::-1]
+        reversed_gate_indices_per_qubit = [
+            [last_pair_index - gate_idx for gate_idx in reversed(qubit_gate_indices)]
+            for qubit_gate_indices in gate_indices_per_qubit
+        ]
+
+        # Multi-trial SABRE: keep the layout whose forward simulation needs the fewest SWAPs.
         best_layout: list[int] | None = None
         best_score: float = math.inf
 
         for trial in range(self.num_trials):
-            initial_layout = self._random_initial_layout(random_generator, num_logical_qubits, physical_nodes)
-            layout, score = self._sabre_simulate_layout(
-                initial_layout,
-                distance_matrix,
-                two_qubit_pairs,
-                gate_indices_per_qubit,
-                random_generator,
-                physical_nodes,
-                physical_to_dense_index,
-            )
-            logger.trace("[SabreLayoutPass] Trial {} scored {}", trial, score)
-            if score < best_score:
-                best_layout = layout
-                best_score = score
+            layout = self._random_initial_layout(random_generator, num_logical_qubits, physical_nodes)
+            for iteration in range(self.num_iterations):
+                # Reverse routing tunes a layout for the circuit start; forward routing scores it and seeds the next round.
+                candidate_layout, _ = self._sabre_simulate_layout(
+                    layout,
+                    distance_matrix,
+                    reversed_pairs,
+                    reversed_gate_indices_per_qubit,
+                    random_generator,
+                    physical_nodes,
+                    physical_to_dense_index,
+                )
+                layout, score = self._sabre_simulate_layout(
+                    candidate_layout,
+                    distance_matrix,
+                    two_qubit_pairs,
+                    gate_indices_per_qubit,
+                    random_generator,
+                    physical_nodes,
+                    physical_to_dense_index,
+                )
+                logger.trace("[SabreLayoutPass] Trial {} iteration {} scored {}", trial, iteration, score)
+                if score < best_score:
+                    best_layout = candidate_layout
+                    best_score = score
 
         self.last_layout = best_layout
         self.last_score = best_score
@@ -250,13 +285,15 @@ class SabreLayoutPass(CircuitTranspilerPass):
         physical_nodes: list[int],
         physical_to_dense_index: dict[int, int],
     ) -> tuple[list[int], float]:
-        """Run one SABRE simulation trial and score the resulting layout.
+        """Run one SABRE routing simulation and count the SWAPs it needs.
 
         This is a layout-only variant: SWAPs are simulated on the mapping but
-        never inserted into the output circuit.
+        never inserted into the output circuit. A SWAP only moves two logical
+        qubits, so each candidate is scored by the cost change of the front and
+        look-ahead gates on those two qubits rather than by re-scoring every gate.
 
         Args:
-            layout (list[int]): Initial logical-to-physical mapping.
+            layout (list[int]): Initial logical-to-physical mapping. It is not modified.
             distance_matrix (list[list[int]]): All-pairs shortest-path distance matrix for physical qubits.
             two_qubit_pairs (list[tuple[int, int]]): Ordered 2-qubit interactions as logical-qubit pairs.
             gate_indices_per_qubit (list[list[int]]): For each logical qubit, indices of ``two_qubit_pairs`` touching it.
@@ -265,263 +302,236 @@ class SabreLayoutPass(CircuitTranspilerPass):
             physical_to_dense_index (dict[int, int]): Physical label to dense index mapping.
 
         Returns:
-            tuple[list[int], float]: Final mapping and heuristic score for this trial.
+            tuple[list[int], float]: Final logical-to-physical mapping and the number of simulated SWAPs.
         """
         num_logical_qubits = len(layout)
         num_physical_qubits = len(physical_nodes)
-        # inverse layout: physical -> logical (dense indices)
-        inverse_layout = self._invert_layout(layout, physical_to_dense_index)
+        unreachable_distance = SabreLayoutPass._UNREACHABLE_DISTANCE
+        tie_epsilon = SabreLayoutPass._TIE_EPSILON
+        tie_break_probability = SabreLayoutPass._TIE_BREAK_PROBABILITY
+        beta = self.beta
 
-        scheduled = [False] * len(two_qubit_pairs)
-        front_positions = [
-            0
-        ] * num_logical_qubits  # per-qubit pointer to the next 2Q gate index in gate_indices_per_qubit[logical_qubit]
-        decay = [0.0] * num_physical_qubits  # physical-qubit penalty stored with dense indexing
+        # Everything below works on dense physical indices. rustworkx lists neighbors in hash order, so sort them.
+        neighbors = [
+            sorted(physical_to_dense_index[int(neighbor)] for neighbor in self.topology.neighbors(node))
+            for node in physical_nodes
+        ]
+        swap_neighbors = [
+            [neighbor for neighbor in node_neighbors if neighbor != dense_index]
+            for dense_index, node_neighbors in enumerate(neighbors)
+        ]
+        # Disconnected pairs are scored with a large finite penalty instead of the sentinel distance.
+        if max(map(max, distance_matrix), default=0) >= unreachable_distance:
+            distance_costs = [
+                [_UNREACHABLE_PENALTY if distance >= unreachable_distance else distance for distance in row]
+                for row in distance_matrix
+            ]
+        else:
+            distance_costs = distance_matrix
 
-        # Sum of executed front distances (diagnostic score)
-        score_accum = 0.0
+        position = [physical_to_dense_index[physical_qubit] for physical_qubit in layout]
+        occupant: list[int | None] = [None] * num_physical_qubits
+        for logical_qubit, dense_index in enumerate(position):
+            occupant[dense_index] = logical_qubit
 
-        def advance_front_for(logical_qubit: int) -> None:
-            """Move ``front_positions[logical_qubit]`` to the first unscheduled interaction.
+        # cursor[q] points at the next unexecuted interaction of logical qubit q in gate_indices_per_qubit[q].
+        cursor = [0] * num_logical_qubits
+        front: set[int] = set()
+        # front_partner[q] is the other qubit of q's front gate, or -1 when q has none.
+        front_partner = [-1] * num_logical_qubits
+        ready_to_check: list[int] = []
 
-            Args:
-                logical_qubit (int): Logical qubit index whose front pointer is advanced.
-            """
+        def head(logical_qubit: int) -> int:
             qubit_gate_indices = gate_indices_per_qubit[logical_qubit]
-            cursor = front_positions[logical_qubit]
-            while cursor < len(qubit_gate_indices) and scheduled[qubit_gate_indices[cursor]]:
-                cursor += 1
-            front_positions[logical_qubit] = cursor
+            index = cursor[logical_qubit]
+            return qubit_gate_indices[index] if index < len(qubit_gate_indices) else -1
 
-        def front_set() -> set[int]:
-            """Build the current front layer of unscheduled interactions.
+        def enter_front(logical_qubit: int) -> None:
+            """Add the next gate of ``logical_qubit`` to the front once it is also next on its partner."""
+            gate_idx = head(logical_qubit)
+            if gate_idx < 0:
+                return
+            logical_qubit_a, logical_qubit_b = two_qubit_pairs[gate_idx]
+            partner = logical_qubit_b if logical_qubit == logical_qubit_a else logical_qubit_a
+            if head(partner) == gate_idx:
+                front.add(gate_idx)
+                front_partner[logical_qubit_a] = logical_qubit_b
+                front_partner[logical_qubit_b] = logical_qubit_a
+                ready_to_check.append(gate_idx)
 
-            A gate belongs to the front layer only when it is the next unscheduled
-            interaction on both of its logical qubits, so gates are never simulated
-            ahead of their predecessors.
+        def apply_swap(dense_a: int, dense_b: int) -> None:
+            logical_on_a, logical_on_b = occupant[dense_a], occupant[dense_b]
+            occupant[dense_a], occupant[dense_b] = logical_on_b, logical_on_a
+            for logical_qubit, new_dense_index in ((logical_on_a, dense_b), (logical_on_b, dense_a)):
+                if logical_qubit is not None:
+                    position[logical_qubit] = new_dense_index
+                    ready_to_check.append(head(logical_qubit))
 
-            Returns:
-                set[int]: Indices of unscheduled 2-qubit interactions with no unscheduled predecessors.
-            """
-            front_gate_indices: set[int] = set()
-            for logical_qubit in range(num_logical_qubits):
-                if front_positions[logical_qubit] < len(gate_indices_per_qubit[logical_qubit]):
-                    gate_idx = gate_indices_per_qubit[logical_qubit][front_positions[logical_qubit]]
-                    logical_qubit_a, logical_qubit_b = two_qubit_pairs[gate_idx]
-                    partner = logical_qubit_b if logical_qubit == logical_qubit_a else logical_qubit_a
-                    if gate_indices_per_qubit[partner][front_positions[partner]] == gate_idx:
-                        front_gate_indices.add(gate_idx)
-            return front_gate_indices
-
-        # Initialize pointers
         for logical_qubit in range(num_logical_qubits):
-            advance_front_for(logical_qubit)
+            enter_front(logical_qubit)
 
-        # Release valve: after this many swaps without scheduling a gate, force the closest front gate through
+        # The decay of dense qubit d is decay[d] * decay_scale, so relaxing every qubit is a single multiply.
+        decay = [0.0] * num_physical_qubits
+        decayed_indices: list[int] = []
+        decay_scale = 1.0
+
         release_valve_threshold = int(self.release_valve_factor * num_physical_qubits)
         swaps_since_progress = 0
+        swap_count = 0
+        no_partners: tuple[int, ...] = ()
+        extended_partners: list[tuple[int, ...]] = []
+        extended_stale = True
 
-        # Main loop: continue until all 2Q gates are scheduled
         remaining = len(two_qubit_pairs)
         while remaining:
-            # Try to greedily "apply" any executable front gates (whose mapped endpoints are adjacent).
-            progressed = True
-            while progressed:
-                progressed = False
-                front_gate_indices = list(front_set())
-                for gate_idx in front_gate_indices:
-                    logical_qubit_a, logical_qubit_b = two_qubit_pairs[gate_idx]
-                    physical_qubit_a, physical_qubit_b = layout[logical_qubit_a], layout[logical_qubit_b]
-                    if (
-                        distance_matrix[physical_to_dense_index[physical_qubit_a]][
-                            physical_to_dense_index[physical_qubit_b]
-                        ]
-                        == 1
-                    ):
-                        # "Execute" this 2Q gate in the simulation.
-                        scheduled[gate_idx] = True
-                        remaining -= 1
-                        progressed = True
-                        swaps_since_progress = 0
-                        decay = [0.0] * num_physical_qubits
-                        # Diagnostic score: adjacency cost is 1 by definition
-                        score_accum += 1.0
-                        # Advance fronts for both logical qubits involved
-                        advance_front_for(logical_qubit_a)
-                        advance_front_for(logical_qubit_b)
+            # Execute every front gate whose endpoints are adjacent; only gates whose qubits moved need checking.
+            while ready_to_check:
+                gate_idx = ready_to_check.pop()
+                if gate_idx not in front:
+                    continue
+                logical_qubit_a, logical_qubit_b = two_qubit_pairs[gate_idx]
+                if distance_matrix[position[logical_qubit_a]][position[logical_qubit_b]] != 1:
+                    continue
+                front.discard(gate_idx)
+                front_partner[logical_qubit_a] = front_partner[logical_qubit_b] = -1
+                remaining -= 1
+                cursor[logical_qubit_a] += 1
+                cursor[logical_qubit_b] += 1
+                enter_front(logical_qubit_a)
+                enter_front(logical_qubit_b)
+                swaps_since_progress = 0
+                for dense_index in decayed_indices:
+                    decay[dense_index] = 0.0
+                decayed_indices.clear()
+                decay_scale = 1.0
+                extended_stale = True
 
             if not remaining:
-                break  # done
-
-            front_gate_indices: list[int] = list(front_set())
+                break
 
             if swaps_since_progress >= release_valve_threshold:
                 # Greedy swaps are cycling: walk the closest front gate's qubits together along a shortest path.
                 current_distance, closest_gate_idx = min(
                     (
-                        distance_matrix[physical_to_dense_index[layout[two_qubit_pairs[gate_idx][0]]]][
-                            physical_to_dense_index[layout[two_qubit_pairs[gate_idx][1]]]
-                        ],
+                        distance_matrix[position[two_qubit_pairs[gate_idx][0]]][position[two_qubit_pairs[gate_idx][1]]],
                         gate_idx,
                     )
-                    for gate_idx in front_gate_indices
+                    for gate_idx in front
                 )
-                logical_qubit_a, logical_qubit_b = two_qubit_pairs[closest_gate_idx]
-                current_physical = layout[logical_qubit_a]
-                target_dense_index = physical_to_dense_index[layout[logical_qubit_b]]
-                if current_distance >= SabreLayoutPass._UNREACHABLE_DISTANCE:
+                if current_distance >= unreachable_distance:
                     # Disconnected topology: no swap sequence helps, so let SabreSwapPass report it.
                     break
+                logical_qubit_a, logical_qubit_b = two_qubit_pairs[closest_gate_idx]
+                current_dense = position[logical_qubit_a]
+                target_dense = position[logical_qubit_b]
                 while current_distance > 1:
-                    next_physical = next(
-                        int(neighbor)
-                        for neighbor in self.topology.neighbors(current_physical)
-                        if distance_matrix[physical_to_dense_index[int(neighbor)]][target_dense_index]
-                        == current_distance - 1
+                    next_dense = next(
+                        neighbor
+                        for neighbor in neighbors[current_dense]
+                        if distance_matrix[neighbor][target_dense] == current_distance - 1
                     )
-                    self._swap_mapping(
-                        layout,
-                        inverse_layout,
-                        physical_to_dense_index,
-                        current_physical,
-                        next_physical,
-                        inverse_layout[physical_to_dense_index[current_physical]],
-                        inverse_layout[physical_to_dense_index[next_physical]],
-                    )
-                    current_physical = next_physical
+                    apply_swap(current_dense, next_dense)
+                    swap_count += 1
+                    current_dense = next_dense
                     current_distance -= 1
+                ready_to_check.append(closest_gate_idx)
+                swaps_since_progress = 0
                 continue
 
-            # No front gate was executable: pick a simulated SWAP using SABRE heuristic.
-            # Build candidate physical edges from neighbors of endpoints of non-executable front gates.
-            candidate_edges: set[tuple[int, int]] = set()
-            touched_physical_nodes: set[int] = set()
-            for gate_idx in front_gate_indices:
-                logical_qubit_a, logical_qubit_b = two_qubit_pairs[gate_idx]
-                physical_qubit_a, physical_qubit_b = layout[logical_qubit_a], layout[logical_qubit_b]
-                touched_physical_nodes.add(physical_qubit_a)
-                touched_physical_nodes.add(physical_qubit_b)
-                for neighbor in self.topology.neighbors(physical_qubit_a):
-                    edge_start, edge_end = int(physical_qubit_a), int(neighbor)
-                    if edge_start != edge_end:
-                        candidate_edges.add((min(edge_start, edge_end), max(edge_start, edge_end)))
-                for neighbor in self.topology.neighbors(physical_qubit_b):
-                    edge_start, edge_end = int(physical_qubit_b), int(neighbor)
-                    if edge_start != edge_end:
-                        candidate_edges.add((min(edge_start, edge_end), max(edge_start, edge_end)))
+            if extended_stale:
+                extended_partners = [no_partners] * num_logical_qubits
+                for gate_idx in self._extended_set(gate_indices_per_qubit, cursor, self.lookahead_size):
+                    logical_qubit_a, logical_qubit_b = two_qubit_pairs[gate_idx]
+                    extended_partners[logical_qubit_a] += (logical_qubit_b,)
+                    extended_partners[logical_qubit_b] += (logical_qubit_a,)
+                extended_stale = False
 
-            if not candidate_edges:
-                # Graph might be disconnected or trivial; fall back to a random valid swap over touched qubits.
-                # This won't crash; it just gives the algorithm a way to keep moving.
-                candidate_physical_nodes = (
-                    sorted(touched_physical_nodes) if touched_physical_nodes else physical_nodes.copy()
-                )
-                if len(candidate_physical_nodes) >= SabreLayoutPass._TWO_QUBIT_ARITY:
-                    sampled_a, sampled_b = random_generator.sample(
-                        candidate_physical_nodes, SabreLayoutPass._TWO_QUBIT_ARITY
-                    )
-                    candidate_edges.add((min(sampled_a, sampled_b), max(sampled_a, sampled_b)))
-                else:
-                    # Degenerate case: nothing to do; break to avoid infinite loop.
-                    break
+            decay_scale *= self.decay_lambda
+            if decay_scale < _DECAY_RESCALE_THRESHOLD:
+                for dense_index in decayed_indices:
+                    decay[dense_index] *= decay_scale
+                decay_scale = 1.0
 
-            # Decay relaxation
-            for physical_dense_index in range(num_physical_qubits):
-                decay[physical_dense_index] *= self.decay_lambda
-
-            # Evaluate heuristic for each candidate swap
+            # Candidates are the coupling edges at front-gate endpoints, scored by the cost change of their qubits' gates.
             best_edge: tuple[int, int] | None = None
-            best_cost: float = math.inf
+            best_delta = math.inf
+            for gate_idx in front:
+                for logical_on_a in two_qubit_pairs[gate_idx]:
+                    dense_a = position[logical_on_a]
+                    costs_from_a = distance_costs[dense_a]
+                    decay_a = decay[dense_a]
+                    partner_dense_a = position[front_partner[logical_on_a]]
+                    partner_decay_a = decay[partner_dense_a]
+                    front_cost_a = costs_from_a[partner_dense_a] * (1.0 + (decay_a + partner_decay_a) * decay_scale)
+                    extended_dense_a = [position[partner] for partner in extended_partners[logical_on_a]]
+                    for dense_b in swap_neighbors[dense_a]:
+                        logical_on_b = occupant[dense_b]
+                        partner_b = -1 if logical_on_b is None else front_partner[logical_on_b]
+                        # An edge joining two front endpoints is reached from both ends; score it from the lower one.
+                        if partner_b >= 0 and dense_b < dense_a:
+                            continue
+                        costs_from_b = distance_costs[dense_b]
+                        decay_b = decay[dense_b]
+                        # A gate between the two swapped qubits keeps its cost.
+                        front_delta = (
+                            0.0
+                            if partner_dense_a == dense_b
+                            else costs_from_b[partner_dense_a] * (1.0 + (decay_b + partner_decay_a) * decay_scale)
+                            - front_cost_a
+                        )
+                        extended_delta = 0.0
+                        for partner_dense in extended_dense_a:
+                            if partner_dense != dense_b:
+                                extended_delta += costs_from_b[partner_dense] - costs_from_a[partner_dense]
+                        if logical_on_b is not None:
+                            if partner_b >= 0 and partner_b != logical_on_a:
+                                partner_dense = position[partner_b]
+                                partner_decay = decay[partner_dense]
+                                front_delta += costs_from_a[partner_dense] * (
+                                    1.0 + (decay_a + partner_decay) * decay_scale
+                                ) - costs_from_b[partner_dense] * (1.0 + (decay_b + partner_decay) * decay_scale)
+                            for partner in extended_partners[logical_on_b]:
+                                partner_dense = position[partner]
+                                if partner_dense != dense_a:
+                                    extended_delta += costs_from_a[partner_dense] - costs_from_b[partner_dense]
+                        candidate_delta = front_delta + beta * extended_delta
 
-            # Precompute lookahead set E (extended)
-            extended_gate_indices = self._extended_set(
-                two_qubit_pairs, gate_indices_per_qubit, front_positions, self.lookahead_size
-            )
+                        if candidate_delta < best_delta - tie_epsilon:
+                            best_delta = candidate_delta
+                            best_edge = (dense_a, dense_b)
+                        elif (
+                            candidate_delta <= best_delta + tie_epsilon
+                            # Tie-break randomly for diversification
+                            and random_generator.random() < tie_break_probability
+                        ):
+                            best_edge = (dense_a, dense_b)
 
-            for physical_a, physical_b in candidate_edges:
-                # Virtually swap logical assignments at physical nodes a and b
-                logical_on_a = inverse_layout[physical_to_dense_index[physical_a]]
-                logical_on_b = inverse_layout[physical_to_dense_index[physical_b]]
-                # Logical qubit may be "unassigned" if device > logical; ensure we handle that.
-                # If either side is None, this swap doesn't affect distances; we still allow it.
-                # Simulate new layout distances
-                # (temporarily mutate layout/inverse_layout, compute cost, then revert).
-                self._swap_mapping(
-                    layout,
-                    inverse_layout,
-                    physical_to_dense_index,
-                    physical_a,
-                    physical_b,
-                    logical_on_a,
-                    logical_on_b,
+            if best_edge is None:
+                # Graph might be disconnected or trivial; fall back to a random swap over touched qubits.
+                touched_dense_indices = sorted(
+                    {position[logical_qubit] for gate_idx in front for logical_qubit in two_qubit_pairs[gate_idx]}
                 )
+                if len(touched_dense_indices) < SabreLayoutPass._TWO_QUBIT_ARITY:
+                    # Degenerate case: nothing to do; break to avoid an infinite loop.
+                    break
+                sampled_a, sampled_b = random_generator.sample(touched_dense_indices, SabreLayoutPass._TWO_QUBIT_ARITY)
+                best_edge = (sampled_a, sampled_b)
 
-                front_cost = self._cost_front(
-                    front_gate_indices, layout, two_qubit_pairs, distance_matrix, decay, physical_to_dense_index
-                )
-                extended_cost = self._cost_front(
-                    extended_gate_indices,
-                    layout,
-                    two_qubit_pairs,
-                    distance_matrix,
-                    None,
-                    physical_to_dense_index,
-                )  # no decay on E
-                candidate_cost = front_cost + self.beta * extended_cost
+            chosen_a, chosen_b = best_edge
+            apply_swap(chosen_a, chosen_b)
+            for dense_index in best_edge:
+                if not decay[dense_index]:
+                    decayed_indices.append(dense_index)
+                decay[dense_index] += self.decay_delta / decay_scale
+            swap_count += 1
+            swaps_since_progress += 1
 
-                # Revert the swap
-                self._swap_mapping(
-                    layout,
-                    inverse_layout,
-                    physical_to_dense_index,
-                    physical_a,
-                    physical_b,
-                    logical_on_b,
-                    logical_on_a,
-                )
+        return [physical_nodes[dense_index] for dense_index in position], float(swap_count)
 
-                if candidate_cost < best_cost - SabreLayoutPass._TIE_EPSILON:
-                    best_cost = candidate_cost
-                    best_edge = (physical_a, physical_b)
-                elif (
-                    abs(candidate_cost - best_cost) <= SabreLayoutPass._TIE_EPSILON
-                    # Tie-break randomly for diversification
-                    and random_generator.random() < SabreLayoutPass._TIE_BREAK_PROBABILITY
-                ):
-                    best_edge = (physical_a, physical_b)
-
-            # Apply the chosen swap *to the mapping only* (layout-only SABRE).
-            if best_edge is not None:
-                chosen_physical_a, chosen_physical_b = best_edge
-                logical_on_a = inverse_layout[physical_to_dense_index[chosen_physical_a]]
-                logical_on_b = inverse_layout[physical_to_dense_index[chosen_physical_b]]
-                self._swap_mapping(
-                    layout,
-                    inverse_layout,
-                    physical_to_dense_index,
-                    chosen_physical_a,
-                    chosen_physical_b,
-                    logical_on_a,
-                    logical_on_b,
-                )
-                # Increase decay on touched physical qubits
-                decay[physical_to_dense_index[chosen_physical_a]] += self.decay_delta
-                decay[physical_to_dense_index[chosen_physical_b]] += self.decay_delta
-                swaps_since_progress += 1
-
-        # Final diagnostic cost: re-evaluate sum of distances for the entire 2Q list under final layout
-        final_distance_cost = self._cost_front(
-            set(range(len(two_qubit_pairs))), layout, two_qubit_pairs, distance_matrix, None, physical_to_dense_index
-        )
-        # Combine both measures mildly
-        blended_score = 0.5 * final_distance_cost + 0.5 * score_accum
-        return layout, float(blended_score)
-
-    # --------- helpers: front / extended set / costs ---------
+    # --------- helpers: extended set ---------
 
     @staticmethod
     def _extended_set(
-        two_qubit_pairs: list[tuple[int, int]],
         gate_indices_per_qubit: list[list[int]],
         front_positions: list[int],
         max_size: int,
@@ -529,7 +539,6 @@ class SabreLayoutPass(CircuitTranspilerPass):
         """Collect upcoming 2-qubit gates beyond the current front layer.
 
         Args:
-            two_qubit_pairs (list[tuple[int, int]]): Ordered 2-qubit interaction list.
             gate_indices_per_qubit (list[list[int]]): Per-logical-qubit interaction indices.
             front_positions (list[int]): Current front pointers into ``gate_indices_per_qubit``.
             max_size (int): Maximum number of indices to include.
@@ -538,68 +547,18 @@ class SabreLayoutPass(CircuitTranspilerPass):
             set[int]: Set of selected interaction indices for look-ahead.
         """
         extended_gate_indices: set[int] = set()
-        if max_size <= 0:
-            return extended_gate_indices
-
-        # Start from the qubits that currently participate in front gates
-        # (i.e., those qubits whose front_positions[logical_qubit] points to some gate).
-        frontier_qubits = [
-            logical_qubit
-            for logical_qubit in range(len(front_positions))
-            if front_positions[logical_qubit] < len(gate_indices_per_qubit[logical_qubit])
-        ]
-        # Scan forward a few steps on each such qubit
         budget = max_size
-        for logical_qubit in frontier_qubits:
-            cursor = front_positions[logical_qubit] + 1
-            while cursor < len(gate_indices_per_qubit[logical_qubit]) and budget > 0:
-                gate_idx = gate_indices_per_qubit[logical_qubit][cursor]
-                extended_gate_indices.add(gate_idx)
-                budget -= 1
-                cursor += 1
-                if budget == 0:
-                    break
-            if budget == 0:
+        # Scan forward a few steps past the front pointer of each qubit, stopping once the budget is spent.
+        for logical_qubit, qubit_gate_indices in enumerate(gate_indices_per_qubit):
+            if budget <= 0:
                 break
+            start = front_positions[logical_qubit] + 1
+            upcoming = qubit_gate_indices[start : start + budget]
+            extended_gate_indices.update(upcoming)
+            budget -= len(upcoming)
         return extended_gate_indices
 
-    @staticmethod
-    def _cost_front(
-        gate_indices: Iterable[int],
-        layout: list[int],
-        two_qubit_pairs: list[tuple[int, int]],
-        distance_matrix: list[list[int]],
-        decay: list[float] | None,
-        physical_to_dense_index: dict[int, int],
-    ) -> float:
-        """Evaluate distance-based heuristic cost for a set of 2-qubit gates.
-
-        Args:
-            gate_indices (Iterable[int]): Indices of interactions to evaluate.
-            layout (list[int]): Logical-to-physical mapping.
-            two_qubit_pairs (list[tuple[int, int]]): Logical interaction pairs.
-            distance_matrix (list[list[int]]): Physical shortest-path distance matrix.
-            decay (list[float] | None): Optional per-physical-node decay penalties.
-            physical_to_dense_index (dict[int, int]): Physical label to dense index mapping.
-
-        Returns:
-            float: Accumulated heuristic cost.
-        """
-        total_cost = 0.0
-        for gate_idx in gate_indices:
-            logical_qubit_a, logical_qubit_b = two_qubit_pairs[gate_idx]
-            physical_qubit_a, physical_qubit_b = layout[logical_qubit_a], layout[logical_qubit_b]
-            physical_index_a = physical_to_dense_index[physical_qubit_a]
-            physical_index_b = physical_to_dense_index[physical_qubit_b]
-            path_distance = distance_matrix[physical_index_a][physical_index_b]
-            if path_distance >= SabreLayoutPass._UNREACHABLE_DISTANCE:
-                # Disconnected: incur a large penalty to discourage this layout
-                path_distance = 1e6
-            if decay is not None:
-                total_cost += path_distance * (1.0 + decay[physical_index_a] + decay[physical_index_b])
-            else:
-                total_cost += path_distance
-        return total_cost
+    # --------- helpers: initial layout ---------
 
     @staticmethod
     def _random_initial_layout(
@@ -627,55 +586,6 @@ class SabreLayoutPass(CircuitTranspilerPass):
         return nodes[:num_logical_qubits]
 
     # --------- helpers: mapping & structure ---------
-
-    @staticmethod
-    def _invert_layout(layout: list[int], physical_to_dense_index: dict[int, int]) -> list[int | None]:
-        """Build inverse mapping from dense physical index to logical qubit.
-
-        Args:
-            layout (list[int]): Logical-to-physical mapping.
-            physical_to_dense_index (dict[int, int]): Physical label to dense index mapping.
-
-        Returns:
-            list[int | None]: Inverse mapping where missing assignments are represented by ``None``.
-        """
-        inverse_layout = [None] * len(physical_to_dense_index)
-        for logical_qubit, physical_qubit in enumerate(layout):
-            physical_dense_index = physical_to_dense_index.get(physical_qubit)
-            if physical_dense_index is not None:
-                inverse_layout[physical_dense_index] = logical_qubit
-        return inverse_layout
-
-    @staticmethod
-    def _swap_mapping(
-        layout: list[int],
-        inverse_layout: list[int | None],
-        physical_to_dense_index: dict[int, int],
-        physical_node_a: int,
-        physical_node_b: int,
-        logical_at_a: int | None,
-        logical_at_b: int | None,
-    ) -> None:
-        """Swap logical assignments between two physical nodes.
-
-        Args:
-            layout (list[int]): Logical-to-physical mapping to mutate.
-            inverse_layout (list[int | None]): Inverse dense-physical mapping to mutate.
-            physical_to_dense_index (dict[int, int]): Physical label to dense index mapping.
-            physical_node_a (int): First physical node label.
-            physical_node_b (int): Second physical node label.
-            logical_at_a (int | None): Logical qubit currently at ``physical_node_a``, if any.
-            logical_at_b (int | None): Logical qubit currently at ``physical_node_b``, if any.
-        """
-        # Update inverse first
-        dense_index_a = physical_to_dense_index[physical_node_a]
-        dense_index_b = physical_to_dense_index[physical_node_b]
-        inverse_layout[dense_index_a], inverse_layout[dense_index_b] = logical_at_b, logical_at_a
-        # Then forward mapping (only if logicals exist)
-        if logical_at_a is not None:
-            layout[logical_at_a] = physical_node_b
-        if logical_at_b is not None:
-            layout[logical_at_b] = physical_node_a
 
     @staticmethod
     def _two_qubit_structure(circuit: Circuit) -> tuple[list[int], list[tuple[int, int]], list[list[int]]]:

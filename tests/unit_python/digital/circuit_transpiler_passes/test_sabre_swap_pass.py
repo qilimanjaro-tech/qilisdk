@@ -13,8 +13,6 @@
 # limitations under the License.
 
 import builtins
-import math
-from unittest.mock import MagicMock
 
 import pytest
 from rustworkx import PyGraph
@@ -248,7 +246,7 @@ def test_run_raises_after_all_attempts(monkeypatch):
         swap_pass.run(circuit)
 
 
-def test_run_no_candidate_swaps_available(monkeypatch):
+def test_run_rejects_layout_placing_two_qubits_on_one_node(monkeypatch):
     graph = _empty_graph(2)  # no edges
     swap_pass = SabreSwapPass(graph, max_attempts=1)
     circuit = _two_qubit_circuit()
@@ -258,19 +256,7 @@ def test_run_no_candidate_swaps_available(monkeypatch):
 
     monkeypatch.setattr(SabreSwapPass, "_init_layout", fake_init_layout)
 
-    with pytest.raises(RuntimeError, match="No candidate swaps available; coupling graph likely degenerate"):
-        swap_pass.run(circuit)
-
-
-def test_run_no_swap_candidate_selected(monkeypatch):
-    swap_pass = SabreSwapPass(_chain_graph(3), max_attempts=1, initial_layout=[0, 2])
-    circuit = _two_qubit_circuit()
-
-    # Keep layout stable so distances never improve.
-    monkeypatch.setattr(SabreSwapPass, "_swap_mapping", lambda *args, **kwargs: None)
-    monkeypatch.setattr(SabreSwapPass, "_cost_set", lambda *args, **kwargs: math.inf)
-
-    with pytest.raises(RuntimeError, match="SABRE heuristic could not select a swap candidate"):
+    with pytest.raises(RuntimeError, match="not connected in the coupling graph"):
         swap_pass.run(circuit)
 
 
@@ -349,48 +335,58 @@ def test_sabre_swap_rejects_multi_qubit_gate_after_entering_main_routing_loop() 
         swap_pass.run(circuit)
 
 
-def test_sabre_swap_fallback_samples_candidate_edge_when_no_neighbors_exist(monkeypatch: pytest.MonkeyPatch) -> None:
-    class SampledCandidateUsed(RuntimeError):
-        pass
+def test_sabre_swap_rejects_gate_across_disconnected_components() -> None:
+    # Two separate lines: SWAPs never move a qubit between them, so routing must fail at once rather than loop.
+    swap_pass = SabreSwapPass([(0, 1), (1, 2), (3, 4), (4, 5)], seed=1)
+    circuit = Circuit(6)
+    circuit.add(CZ(0, 1))
+    circuit.add(CZ(0, 5))
 
-    graph = _empty_graph(2)
-    swap_pass = SabreSwapPass(graph, max_attempts=1)
-    circuit = _two_qubit_circuit()
-
-    fake_cost_set = MagicMock(side_effect=SampledCandidateUsed())
-    monkeypatch.setattr(
-        swap_pass,
-        "_cost_set",
-        fake_cost_set,
-    )
-
-    with pytest.raises(SampledCandidateUsed):
+    with pytest.raises(RuntimeError, match=r"logical qubits \(0, 5\).*not connected"):
         swap_pass.run(circuit)
 
 
-def test_front_set_skips_already_scheduled_entries() -> None:
-    front_gate_indices = SabreSwapPass._front_set([[0, 1], [0], [1]], [0, 0, 0], [True, False])
+def test_sabre_swap_routes_with_lookahead_gates_in_order() -> None:
+    # Later gates sit in the look-ahead set while earlier ones are routed, so they shape the SWAP choice.
+    logical_pairs = [(0, 4), (0, 3), (1, 4), (2, 0)]
+    circuit = Circuit(5)
+    for control, target in logical_pairs:
+        circuit.add(CZ(control, target))
+    swap_pass = SabreSwapPass(make_line_topology(5), initial_layout=[0, 1, 2, 3, 4], seed=0)
 
-    assert front_gate_indices == {1}
+    out = swap_pass.run(circuit)
+
+    # Replay the SWAPs to map every emitted CZ back to its logical qubits.
+    occupant = [0, 1, 2, 3, 4]
+    routed_pairs = []
+    for gate in out.gates:
+        physical_a, physical_b = gate.qubits
+        assert abs(physical_a - physical_b) == 1
+        if isinstance(gate, SWAP):
+            occupant[physical_a], occupant[physical_b] = occupant[physical_b], occupant[physical_a]
+        else:
+            routed_pairs.append((occupant[physical_a], occupant[physical_b]))
+    assert routed_pairs == logical_pairs
+    assert swap_pass.last_swap_count == 5
+
+
+def test_sabre_swap_rescales_decay_when_it_underflows() -> None:
+    # A tiny decay_lambda drives the lazy decay scale below the rescale threshold within two swaps.
+    swap_pass = SabreSwapPass(make_line_topology(5), initial_layout=[0, 1, 2, 3, 4], decay_lambda=1e-60, seed=0)
+    circuit = Circuit(5)
+    circuit.add(CZ(0, 4))
+
+    out = swap_pass.run(circuit)
+
+    assert swap_pass.last_swap_count == 3
+    assert [type(gate).__name__ for gate in out.gates] == ["SWAP", "SWAP", "SWAP", "CZ"]
+    assert abs(out.gates[-1].qubits[0] - out.gates[-1].qubits[1]) == 1
 
 
 def test_extended_set_stops_when_budget_is_exhausted() -> None:
     extended_gate_indices = SabreSwapPass._extended_set([[0, 1, 2], [0, 1]], [0, 0], 1)
 
     assert extended_gate_indices == {1}
-
-
-def test_cost_set_penalizes_unreachable_pairs_without_decay() -> None:
-    cost = SabreSwapPass._cost_set(
-        {0},
-        [0, 1],
-        [(0, 1)],
-        [[0, SabreSwapPass._UNREACHABLE_DISTANCE], [SabreSwapPass._UNREACHABLE_DISTANCE, 0]],
-        None,
-        {0: 0, 1: 1},
-    )
-
-    assert math.isclose(cost, 1e6)
 
 
 def test_init_layout_supports_active_only_hints() -> None:
