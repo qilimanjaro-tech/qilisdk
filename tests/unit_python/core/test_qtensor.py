@@ -1459,6 +1459,19 @@ def test_uniform_is_dense_ket():
     assert u.is_ket()
 
 
+@pytest.mark.parametrize("index", [(2, 0), (0, 2), (-1, 0), (0, -1), (2**31 - 1, 0)])
+def test_getitem_out_of_range_raises(index):
+    dense = QTensor(np.array([[1, 2], [3, 4]]))
+    sparse = QTensor(np.array([[1, 0], [0, 0]]))
+    assert dense._qtensor_cpp.storage_format() == "dense"
+    assert sparse._qtensor_cpp.storage_format() == "row_sparse"
+
+    with pytest.raises(IndexError):
+        dense[index]
+    with pytest.raises(IndexError):
+        sparse[index]
+
+
 def test_large_zero_ket_is_representable():
     k = zero(20)
     assert k.shape == (2**20, 1)
