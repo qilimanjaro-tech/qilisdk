@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 from collections.abc import Mapping
+from typing import Self
 
 from qilisdk.core import Model
 from qilisdk.core.result import Result
@@ -37,9 +39,11 @@ def _variable_bounds(variable: BaseVariable) -> tuple[float, float]:
 
 
 @yaml.register_class
-class ClassicalSolverResult(Result):
+class SolverResult(Result):
     """
-    The solution a :class:`ClassicalSolver` found for a model.
+    A solution to a :class:`~qilisdk.core.model.Model`, independent of how it was found.
+
+    Both the local classical solvers and SpeQtrum return this type for a solved model.
 
     Example:
         .. code-block:: python
@@ -62,7 +66,7 @@ class ClassicalSolverResult(Result):
         objective_label: str,
     ) -> None:
         """
-        Create a new classical solver result.
+        Create a new solver result.
 
         Args:
             results (Mapping[str, Number]): the model's objective and constraints, evaluated at
@@ -77,7 +81,7 @@ class ClassicalSolverResult(Result):
         self._objective_label = objective_label
 
     @classmethod
-    def from_model(cls, model: Model, sample: Mapping[BaseVariable, RealNumber]) -> "ClassicalSolverResult":
+    def from_model(cls, model: Model, sample: Mapping[BaseVariable, RealNumber]) -> Self:
         """
         Build a result by evaluating a model at the solution a solver found.
 
@@ -87,7 +91,7 @@ class ClassicalSolverResult(Result):
                 solution.
 
         Returns:
-            ClassicalSolverResult: the model evaluated at ``sample``, together with ``sample``.
+            Self: the model evaluated at ``sample``, together with ``sample``.
         """
         return cls(model.evaluate(sample), sample, model.objective.label)
 
@@ -125,12 +129,12 @@ class ClassicalSolverResult(Result):
 
     def __repr__(self) -> str:
         """Return a formatted string representation for debugging."""
-        return f"ClassicalSolverResult(objective={self.objective}, sample={self._sample}, results={self._results})"
+        return f"{type(self).__name__}(objective={self.objective}, sample={self._sample}, results={self._results})"
 
 
 class ClassicalSolver:
     """Base class for classical solvers."""
 
-    def solve(self, model: Model) -> ClassicalSolverResult:
+    def solve(self, model: Model) -> SolverResult:
         """Solve the given model."""
         raise NotImplementedError("ClassicalSolver is an abstract base class.")
