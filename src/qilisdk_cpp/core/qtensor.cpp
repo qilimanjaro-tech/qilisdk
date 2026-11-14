@@ -603,33 +603,42 @@ void QTensorCpp::compute_eigendecomposition() {
         return;
     }
     DenseMatrix dense_data = to_dense();
-    if (is_self_adjoint(default_atol)) {
-        Eigen::SelfAdjointEigenSolver<DenseMatrix> es(dense_data);
-        _eigenvectors.clear();
-        auto evecs = es.eigenvectors();
-        for (int i = 0; i < evecs.cols(); ++i) {
-            SparseMatrix vec = evecs.col(i).sparseView();
-            _eigenvectors.emplace_back(vec);
+    bool self_adjoint = is_self_adjoint(default_atol);
+
+    // Only the solver runs without the GIL, so that the caches are never written by two threads at once
+    std::vector<Complex> eigenvalues;
+    std::vector<SparseMatrix> eigenvectors;
+    {
+        std::optional<py::gil_scoped_release> release;
+        if (PyGILState_Check()) {
+            release.emplace();
         }
-        _eigenvalues.clear();
-        auto evals = es.eigenvalues();
-        for (int i = 0; i < evals.size(); ++i) {
-            _eigenvalues.push_back(evals[i]);
-        }
-    } else {
-        Eigen::ComplexEigenSolver<DenseMatrix> es(dense_data);
-        _eigenvectors.clear();
-        auto evecs = es.eigenvectors();
-        for (int i = 0; i < evecs.cols(); ++i) {
-            SparseMatrix vec = evecs.col(i).sparseView();
-            _eigenvectors.emplace_back(vec);
-        }
-        _eigenvalues.clear();
-        auto evs = es.eigenvalues();
-        for (int i = 0; i < evs.size(); ++i) {
-            _eigenvalues.push_back(evs[i]);
+        if (self_adjoint) {
+            Eigen::SelfAdjointEigenSolver<DenseMatrix> es(dense_data);
+            auto evecs = es.eigenvectors();
+            for (int i = 0; i < evecs.cols(); ++i) {
+                SparseMatrix vec = evecs.col(i).sparseView();
+                eigenvectors.emplace_back(vec);
+            }
+            auto evals = es.eigenvalues();
+            for (int i = 0; i < evals.size(); ++i) {
+                eigenvalues.push_back(evals[i]);
+            }
+        } else {
+            Eigen::ComplexEigenSolver<DenseMatrix> es(dense_data);
+            auto evecs = es.eigenvectors();
+            for (int i = 0; i < evecs.cols(); ++i) {
+                SparseMatrix vec = evecs.col(i).sparseView();
+                eigenvectors.emplace_back(vec);
+            }
+            auto evs = es.eigenvalues();
+            for (int i = 0; i < evs.size(); ++i) {
+                eigenvalues.push_back(evs[i]);
+            }
         }
     }
+    _eigenvalues = std::move(eigenvalues);
+    _eigenvectors = std::move(eigenvectors);
 }
 
 bool QTensorCpp::is_density_matrix(double atol) {
@@ -1600,18 +1609,18 @@ std::vector<SparseMatrix> QTensorCpp::get_eigenvectors() const {
 
 py::object QTensorCpp::get_eigenvectors_python() const {
     /*
-    Return the eigenvectors of this QTensor as a Python list of sparse matrices. If the
+    Return the eigenvectors of this QTensor as a Python list of QTensorCpp objects. If the
     eigenvectors have not been computed yet, an error is raised.
 
     Returns:
-        py::object: A Python list containing the eigenvectors of this QTensor as sparse matrices.
+        py::object: A Python list containing the eigenvectors of this QTensor as QTensorCpp objects.
 
     Raises:
         py::value_error: If the eigenvectors have not been computed yet.
     */
     py::list evecs;
     for (const auto& evec : get_eigenvectors()) {
-        evecs.append(to_spmatrix(evec));
+        evecs.append(py::cast(QTensorCpp(evec)));
     }
     return evecs;
 }
