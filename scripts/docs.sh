@@ -19,7 +19,8 @@ cd "$(dirname "$(dirname "$(realpath "$0")")")"
 
 # Rebuild in release mode for performance
 echo "Rebuilding C++ in release mode..."
-uv sync --all-groups --extra all-cu13 -Ccmake.build-type=Release --reinstall 2>&1
+python3 scripts/check_source_build_policy.py || exit 1
+uv sync --locked --no-build --no-cache --no-binary-package sphinx-multiversion --all-groups --extra all-cu13 -Ccmake.build-type=Release --reinstall 2>&1 || exit 1
 
 # Create a temporary directory for the docs test
 cd .tmp

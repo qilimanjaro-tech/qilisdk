@@ -17,7 +17,8 @@ mkdir -p coverage
 
 # Rebuild the C++ ensuring we build the test suite
 echo "Rebuilding C++ with tests enabled..."
-uv sync -v --all-groups --extra all-cu13 -Ccmake.build-type=Debug -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0 -Ccmake.define.tests=ON -Ccmake.define.coverage=ON --reinstall 2>&1
+python3 scripts/check_source_build_policy.py
+uv sync --locked --no-build --no-cache --no-binary-package sphinx-multiversion -v --all-groups --extra all-cu13 -Ccmake.build-type=Debug -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0 -Ccmake.define.tests=ON -Ccmake.define.coverage=ON --reinstall 2>&1
 
 # Run the C++ test suite
 echo "Running C++ tests with coverage..."

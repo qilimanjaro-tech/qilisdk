@@ -19,15 +19,21 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
-          enable-cache: true
+          version: "0.13.8"
+          enable-cache: false
           cache-dependency-glob: |
             **/pyproject.toml
             **/uv.lock
           python-version: "3.13"
 
+      - name: Check the reviewed documentation source
+        run: |
+          python scripts/check_source_build_policy.py
+          python -m unittest discover -s tests/unit_python -p test_source_build_policy.py
+
       - name: Install the requirements
         run: |
-          uv sync --frozen --group docs
+          uv sync --locked --no-build --no-cache --no-binary-package sphinx-multiversion --group docs
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
