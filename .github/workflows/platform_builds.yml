@@ -47,18 +47,24 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
-          enable-cache: true
+          version: "0.13.8"
+          enable-cache: false
           cache-dependency-glob: |
             **/pyproject.toml
             **/uv.lock
           python-version: ${{ matrix.python-version }}
+
+      - name: Check the reviewed documentation source
+        run: |
+          python scripts/check_source_build_policy.py
+          python -m unittest discover -s tests/unit_python -p test_source_build_policy.py
 
       # No extras, so this is also the only place we check that the core install
       # works on its own. Tests always install everything.
       - name: Install qilisdk
         shell: bash
         run: |
-          uv sync --frozen --reinstall
+          uv sync --locked --no-build --no-cache --reinstall
           if [ -d .venv/bin ]; then
             VENV_BIN="$PWD/.venv/bin"
           else
