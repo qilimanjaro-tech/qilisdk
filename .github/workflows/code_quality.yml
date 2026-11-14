@@ -34,6 +34,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
+          version: "0.13.7"
           enable-cache: true
           cache-dependency-glob: |
             **/pyproject.toml
@@ -53,6 +54,12 @@ jobs:
 
       - name: Format
         run: ruff format --diff --output-format=github .
+
+      - name: Test publishing tools without uploads
+        run: |
+          bash scripts/publishing.sh sync
+          PUBLISHING_REAL_PYTHON="$PWD/scripts/publishing/.venv/bin/python" \
+            python -m unittest discover -s tests/tooling -v
 
       - name: Cpp Linter
         uses: cpp-linter/cpp-linter-action@774040af57f011a5fc47911f08ff0c3059d1835a  # v2.24.0
