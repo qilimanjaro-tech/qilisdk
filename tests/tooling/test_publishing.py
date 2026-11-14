@@ -143,5 +143,14 @@ class DistributionValidationTests(unittest.TestCase):
             assert result.returncode == 0, result.stdout + result.stderr
             with zipfile.ZipFile(wheel, "w") as archive:
                 archive.writestr("example-1.0.dist-info/METADATA", "invalid\n")
-            result = subprocess.run([*command, str(wheel)], capture_output=True, text=True, check=False)
-            assert result.returncode != 0
+            with tarfile.open(sdist, "w:gz") as archive:
+                root_entry = tarfile.TarInfo("example-1.0")
+                root_entry.type = tarfile.DIRTYPE
+                archive.addfile(root_entry)
+                payload = b"invalid\n"
+                info = tarfile.TarInfo("example-1.0/PKG-INFO")
+                info.size = len(payload)
+                archive.addfile(info, io.BytesIO(payload))
+            for invalid in [wheel, sdist]:
+                result = subprocess.run([*command, str(invalid)], capture_output=True, text=True, check=False)
+                assert result.returncode != 0
