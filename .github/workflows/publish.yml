@@ -116,6 +116,11 @@ jobs:
       contents: read
       id-token: write
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          sparse-checkout: scripts
       - name: Download wheels
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
@@ -130,12 +135,15 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
+          version: "0.13.7"
           enable-cache: false
           python-version: "3.13"
+      - name: Prepare locked publishing tools
+        run: bash scripts/publishing.sh sync
       - name: List & validate distributions
         run: |
           ls -lh dist
-          uvx twine check dist/*
+          bash scripts/publishing.sh check dist/*
       - name: Publish to PyPI
         run: >-
           uv publish
@@ -157,20 +165,11 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
-          role-to-assume: arn:aws:iam::723412851021:role/GitHub_actions_role
-          aws-region: eu-west-1
-          role-session-name: GitHubActions-DevOps
-      - name: Assume deploy role in target account
-        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
-        with:
-          role-to-assume: arn:aws:iam::723412851021:role/Code-Artifact-Publish
-          aws-region: eu-west-1
-          role-session-name: GitHubActions-Deploy
-          role-chaining: true
-          role-skip-session-tagging: true
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          sparse-checkout: scripts
       - name: Download wheels
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
@@ -185,12 +184,31 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
         with:
+          version: "0.13.7"
           enable-cache: false
           python-version: "3.13"
+      - name: Prepare locked publishing tools
+        run: bash scripts/publishing.sh sync
       - name: List & validate distributions
         run: |
           ls -lh dist
-          uvx twine check dist/*
+          bash scripts/publishing.sh check dist/*
+      - name: Configure AWS Credentials (OIDC)
+        if: ${{ !inputs.dry_run }}
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::723412851021:role/GitHub_actions_role
+          aws-region: eu-west-1
+          role-session-name: GitHubActions-DevOps
+      - name: Assume deploy role in target account
+        if: ${{ !inputs.dry_run }}
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd  # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::723412851021:role/Code-Artifact-Publish
+          aws-region: eu-west-1
+          role-session-name: GitHubActions-Deploy
+          role-chaining: true
+          role-skip-session-tagging: true
       - name: Publish to CodeArtifact
         if: ${{ !inputs.dry_run }}
         run: |
@@ -207,7 +225,7 @@ jobs:
             --format pypi \
             --query repositoryEndpoint \
             --output text)
-          uvx twine upload dist/*
+          bash scripts/publishing.sh upload dist/*
 
   # Once an X.Y.Z release is on PyPI, start its qilisdk-X.Y.Z release line and
   # open the PR that moves main to the next dev version. Post releases are

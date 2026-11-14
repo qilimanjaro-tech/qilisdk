@@ -1,0 +1,4 @@
+# Update with uv 0.13.7, then review the full graph and hashes:
+# uv pip compile --no-config --universal --python-version 3.13 --generate-hashes --only-binary :all: \
+#   scripts/publishing/requirements.in -o scripts/publishing/requirements.txt
+twine==7.0.0
