@@ -15,7 +15,9 @@
 
 import copy
 import math
+import operator
 import re
+from fractions import Fraction
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -861,20 +863,20 @@ def test_qubo_transform_slack_penalization():
     q = QUBO(label="test")
     x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
 
+    # x > 1 is penalised as x >= 2, and x < 2 as x <= 1
     ct = GT(x, 1)
 
-    ub_slack = q._check_valid_constraint("c", (ct.lhs - ct.rhs).to_binary(), ComparisonOperation.GT)
+    ub_slack = q._check_valid_constraint("c", (ct.lhs - ct.rhs - 1).to_binary(), ComparisonOperation.GEQ)
     slack = Variable("c_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=Bitwise)
-    assert ub_slack == 2
+    assert ub_slack == 1
     q.add_constraint("c", ct, penalization="slack")
 
     c = q._constraints["c"].term.lhs - q._constraints["c"].term.rhs
     assert slack[0] in c
-    assert slack[1] in c
 
     ct = LT(x, 2)
 
-    ub_slack = q._check_valid_constraint("c2", (ct.lhs - ct.rhs).to_binary(), ComparisonOperation.GT)
+    ub_slack = q._check_valid_constraint("c2", (ct.lhs - ct.rhs + 1).to_binary(), ComparisonOperation.LEQ)
     slack = Variable("c2_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=Bitwise)
     assert ub_slack == 1
     q.add_constraint("c2", ct, penalization="slack")
@@ -897,7 +899,7 @@ def test_qubo_transform_gt_always_feasible():
     q = QUBO(label="test")
     x = Variable("x", Domain.POSITIVE_INTEGER, encoding=OneHot, bounds=(0, 2))
 
-    ct = GT(x, 0)
+    ct = GT(x, -1)
 
     q.add_constraint("c", ct, penalization="slack")
     assert len(q._constraints) == 1
@@ -1061,23 +1063,19 @@ def test_qubo_model_evaluation():
     v = Variable("v", Domain.POSITIVE_INTEGER, (0, 10), encoding=OneHot)
 
     m.set_objective(v * 2 + 3, sense=ObjectiveSense.MAXIMIZE)
+    # 2v < 15 is rescaled to v <= 7, whose slack takes 3 bits
     m.add_constraint("c", LT(v * 2, 15), lagrange_multiplier=20)
     variables = m.variables()
     values = dict.fromkeys(m.variables(), 0)
     values[v[5]] = 1
-    values[variables[0]] = 1
-    values[variables[1]] = 0
-    values[variables[2]] = 1
-    values[variables[3]] = 0
+    values[variables[0]] = 0
+    values[variables[1]] = 1
+    values[variables[2]] = 0
     results = m.evaluate(values)
     assert results["obj"] == -(5 * 2 + 3)
     assert results["c"] == 0
     values = dict.fromkeys(m.variables(), 0)
     values[v[7]] = 1
-    values[variables[0]] = 1
-    values[variables[1]] = 0
-    values[variables[2]] = 0
-    values[variables[3]] = 0
 
     results = m.evaluate(values)
     assert results["obj"] == -(7 * 2 + 3)
@@ -1792,7 +1790,7 @@ def test_check_variables_accepts_a_rejected_variable_once_its_bounds_are_tighten
 def test_add_constraint_rejects_a_slack_variable_that_expands_into_too_many_binary_variables():
     x = Variable("x", Domain.INTEGER, bounds=(0, 10**6))
     y = Variable("y", Domain.INTEGER, bounds=(0, 10**6))
-    con = GEQ(10**6 * x + 10**6 * y, 5)
+    con = GEQ(10**6 * x + (10**6 + 1) * y, 5)
     q = QUBO("q")
     with pytest.raises(ValueError, match=r"Variable c_slack expands into too many binary variables"):
         q.add_constraint("c", con)
@@ -1844,7 +1842,7 @@ def _min_penalty_by_value(x, comparison, penalization="slack"):
 
 
 _STRICT_INEQUALITY_XFAIL = pytest.mark.xfail(
-    reason="strict inequalities are transformed as non-strict ones: `x > 0` does not penalise x == 0",
+    reason="unbalanced penalization treats strict inequalities as non-strict: `x > 0` does not penalise x == 0",
     strict=True,
 )
 
@@ -1859,8 +1857,8 @@ _STRICT_INEQUALITY_XFAIL = pytest.mark.xfail(
         ("x <= -2", LEQ, -2, {-3, -2}),
         ("x == 1", EQ, 1, {1}),
         ("x == -2", EQ, -2, {-2}),
-        pytest.param("x > 0", GT, 0, {1, 2, 3}, marks=_STRICT_INEQUALITY_XFAIL),
-        pytest.param("x < 0", LT, 0, {-3, -2, -1}, marks=_STRICT_INEQUALITY_XFAIL),
+        ("x > 0", GT, 0, {1, 2, 3}),
+        ("x < 0", LT, 0, {-3, -2, -1}),
     ],
 )
 def test_slack_penalty_vanishes_exactly_on_the_feasible_set(name, operation, rhs, feasible):
@@ -1942,6 +1940,355 @@ def test_slack_penalty_matches_feasible_set_across_domains(domain, bounds, opera
             assert penalty == pytest.approx(0), f"feasible x={value} was penalised ({penalty})"
         else:
             assert penalty > 0, f"infeasible x={value} was not penalised"
+
+
+@pytest.mark.parametrize(
+    ("name", "operation", "coefficient", "rhs", "feasible"),
+    [
+        ("2.5x <= 4.9", LEQ, 2.5, 4.9, {-3, -2, -1, 0, 1}),
+        ("2.5x >= -4.9", GEQ, 2.5, -4.9, {-1, 0, 1, 2, 3}),
+        ("0.3x <= 0.1", LEQ, 0.1 + 0.2, 0.1, {-3, -2, -1, 0}),
+        ("2.5x == -5.0", EQ, 2.5, -5.0, {-2}),
+        ("0.3x == 0.6", EQ, 0.1 + 0.2, 0.6, {2}),
+        ("2.5x < 5.0", LT, 2.5, 5.0, {-3, -2, -1, 0, 1}),
+        ("2.5x > -2.5", GT, 2.5, -2.5, {0, 1, 2, 3}),
+    ],
+)
+def test_slack_penalty_vanishes_exactly_on_real_valued_feasible_set(name, operation, coefficient, rhs, feasible):
+    # Real coefficients are rescaled to integers before the penalty is built. With an integer slack on the raw
+    # coefficients, feasible values whose distance to the bound is not an integer would still be penalised.
+    x = Variable("x", Domain.INTEGER, bounds=(-3, 3), encoding=Bitwise)
+
+    penalties = _min_penalty_by_value(x, operation(coefficient * x, rhs))
+
+    for value, penalty in sorted(penalties.items()):
+        if value in feasible:
+            assert penalty == pytest.approx(0), f"{name}: feasible x={value} was penalised ({penalty})"
+        else:
+            assert penalty > 0, f"{name}: infeasible x={value} was not penalised"
+
+
+def _min_energy_by_items(qubo, *items):
+    """Lowest energy of ``qubo`` at each assignment of ``items``, minimising over every other variable."""
+    term = qubo.qubo_objective.term
+    # An item whose coefficient was rounded to zero no longer appears in the QUBO, but still takes both values
+    bins = list({*items, *term.variables()})
+    energies = {}
+    for i in range(2 ** len(bins)):
+        assignment = {v: (i >> k) & 1 for k, v in enumerate(bins)}
+        key = tuple(assignment[item] for item in items)
+        energies[key] = min(energies.get(key, np.inf), term.evaluate(assignment))
+    return energies
+
+
+def test_max_slack_bits_rounds_coefficients():
+    # Kept exact, 2.53a + 1.01b <= 3.1 becomes 253a + 101b <= 310 and needs a 9 bit slack. Within 4 bits it is scaled by
+    # 3 instead, becoming 8a + 3b <= 9 with the bound lowered by the 0.03 that 1.01 was rounded down, which needs 4 bits
+    # and still only excludes a = b = 1.
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", LEQ(2.53 * a + 1.01 * b, 3.1))
+
+    exact = m.to_qubo()
+    rounded = m.to_qubo(max_slack_bits=4)
+    penalties = _min_energy_by_items(rounded, a, b)
+
+    assert len(exact.variables()) == 2 + 9
+    assert len(rounded.variables()) == 2 + 4
+    assert penalties[1, 1] > 0
+    for key in [(0, 0), (0, 1), (1, 0)]:
+        assert penalties[key] == pytest.approx(0), f"feasible (a, b)={key} was penalised"
+
+
+@pytest.mark.parametrize(
+    ("constraint", "feasible"),
+    [
+        # Rounded to the nearest integer at scale 10 these would be 10a + 10b <= 21 and 10a + 10b >= 11, admitting an
+        # infeasible assignment
+        (lambda a, b: LEQ(1.04 * a + 1.04 * b, 2.07), {(0, 0), (0, 1), (1, 0)}),
+        (lambda a, b: GEQ(1.04 * a + 1.04 * b, 1.05), {(1, 1)}),
+    ],
+)
+def test_rounded_coefficients_never_admit_an_infeasible_assignment(constraint, feasible):
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", constraint(a, b))
+
+    penalties = _min_energy_by_items(m.to_qubo(max_slack_bits=5), a, b)
+
+    for key, penalty in penalties.items():
+        if key in feasible:
+            assert penalty == pytest.approx(0), f"feasible (a, b)={key} was penalised"
+        else:
+            assert penalty > 0, f"infeasible (a, b)={key} was not penalised"
+
+
+def test_slack_penalty_is_in_the_constraints_units():
+    # The Lagrange multiplier is calibrated in the constraint's own units, so rescaling the constraint to integers must
+    # not change its penalty: a tenth of the constraint costs a hundredth as much.
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    integer, real = Model("integer"), Model("real")
+    integer.set_objective(0 * a)
+    real.set_objective(0 * a)
+    integer.add_constraint("c", LEQ(2 * a + 3 * b, 4))
+    real.add_constraint("c", LEQ(0.2 * a + 0.3 * b, 0.4))
+
+    integer_penalties = _min_energy_by_items(integer.to_qubo(), a, b)
+    real_penalties = _min_energy_by_items(real.to_qubo(), a, b)
+
+    assert integer_penalties[1, 1] > 0
+    for key, penalty in integer_penalties.items():
+        assert real_penalties[key] == pytest.approx(penalty / 100), f"(a, b)={key}"
+
+
+def test_non_terminating_coefficients_keep_feasible_assignments_on_the_bound():
+    # a/3 + 2b/3 <= 2/3 has no exact decimal form, but scaled by the common denominator 3 it becomes a + 2b <= 2
+    # exactly, instead of being rounded to one that excludes b = 1 although it lies exactly on the bound.
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", LEQ(a / 3 + 2 * b / 3, 2 / 3))
+
+    penalties = _min_energy_by_items(m.to_qubo(), a, b)
+
+    assert penalties[0, 1] == pytest.approx(0)
+    assert penalties[1, 1] > 0
+
+
+@pytest.mark.parametrize("max_slack_bits", [12, 26])
+def test_many_slack_bits_do_not_take_fractions_for_integers(max_slack_bits):
+    # Scaled by a large power of ten, a relative tolerance alone would take a/3 for an integer and round each value to
+    # the nearest on its own, excluding b = 1 although it lies exactly on the bound
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", LEQ(a / 3 + 2 * b / 3, 2 / 3))
+
+    penalties = _min_energy_by_items(m.to_qubo(max_slack_bits=max_slack_bits), a, b)
+
+    assert penalties[0, 1] == pytest.approx(0)
+    assert penalties[1, 1] > 0
+
+
+def test_max_slack_bits_is_capped_at_float64_resolution():
+    # Within 60 bits, pi and e would be scaled until taken for integers and need a slack whose squared penalty float64
+    # cannot represent. Capped at 26 bits, the integer form stays within 2**26.
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", LEQ(np.pi * a + np.e * b, 5))
+
+    qubo = m.to_qubo(max_slack_bits=60)
+
+    assert len(qubo.variables()) <= 2 + 26
+
+
+def test_real_valued_coefficients_are_rounded_to_fit_twelve_slack_bits_by_default():
+    # 3.14159a + 2.71828b + c <= 4 has no exact form within 12 slack bits, so it is scaled by 500, the leading digit of
+    # the largest scale within the budget, and rounded to 1571a + 1359b + 500c <= 1999: an 11 bit slack, with the same
+    # feasible assignments
+    a, b, c = BinaryVariable("a"), BinaryVariable("b"), BinaryVariable("c")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", LEQ(np.pi * a + np.e * b + c, 4))
+
+    qubo = m.to_qubo()
+    penalties = _min_energy_by_items(qubo, a, b, c)
+
+    assert len(qubo.variables()) == 3 + 11
+    for key, penalty in penalties.items():
+        if np.pi * key[0] + np.e * key[1] + key[2] <= 4:
+            assert penalty == pytest.approx(0), f"feasible (a, b, c)={key} was penalised"
+        else:
+            assert penalty > 0, f"infeasible (a, b, c)={key} was not penalised"
+
+
+@pytest.mark.parametrize(
+    ("constraint", "max_slack_bits"),
+    [
+        (lambda a, b: LEQ(a / 3 + b / 3, 2 / 3), None),
+        # Rounded up to integers this would become a + b <= 0, excluding three feasible assignments
+        (lambda a, b: LEQ(0.7 * a + 0.2 * b, 0.9), 1),
+    ],
+)
+def test_constraint_that_never_binds_is_dropped_without_rounding(monkeypatch, constraint, max_slack_bits):
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", constraint(a, b))
+    warning = MagicMock()
+    monkeypatch.setattr(model_module.logger, "warning", warning)
+
+    qubo = m.to_qubo(max_slack_bits=max_slack_bits)
+
+    assert qubo.constraints == []
+    warning.assert_called_once()
+    assert "always feasible" in warning.call_args.args[0]
+
+
+def test_constant_constraint_is_not_reported_as_real_valued(monkeypatch):
+    h = Constant(-0.5)
+    warning = MagicMock()
+    monkeypatch.setattr(model_module.logger, "warning", warning)
+
+    result = QUBO._to_integer_constraint("c", h, ComparisonOperation.LEQ)
+
+    assert result == (h, 1, ComparisonOperation.LEQ)
+    warning.assert_not_called()
+
+
+@pytest.mark.parametrize("has_constraint", [True, False])
+def test_non_positive_max_slack_bits_is_rejected(has_constraint):
+    a = BinaryVariable("a")
+    m = Model("m")
+    m.set_objective(0 * a)
+    if has_constraint:
+        m.add_constraint("c", LEQ(0.5 * a, 0.25))
+
+    with pytest.raises(ValueError, match=r"max_slack_bits must be positive"):
+        m.to_qubo(max_slack_bits=0)
+
+
+def test_add_constraint_rejects_non_positive_max_slack_bits():
+    a = BinaryVariable("a")
+    con = LEQ(0.5 * a, 0.25)
+    q = QUBO("q")
+
+    with pytest.raises(ValueError, match=r"max_slack_bits must be positive"):
+        q.add_constraint("c", con, max_slack_bits=0)
+
+
+def test_tiny_real_valued_coefficients_are_not_taken_for_zero():
+    a = BinaryVariable("a")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", LEQ(1e-11 * a, 5e-12))
+
+    term = m.to_qubo().qubo_objective.term
+
+    assert term.evaluate({a: 0}) == pytest.approx(0)
+    assert term.evaluate({a: 1}) > 0
+
+
+def test_real_valued_knapsack_qubo_minimum_is_model_optimum():
+    # Overfilling by 0.1 used to cost less than the value it gained, while the feasible optimum was charged for the
+    # leftover capacity its integer slack could not fill.
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("knapsack")
+    m.set_objective(3 * a + 2 * b, sense=ObjectiveSense.MAXIMIZE)
+    m.add_constraint("capacity", LEQ(2.5 * a + 2.5 * b, 4.9))
+
+    energies = _min_energy_by_items(m.to_qubo(), a, b)
+
+    assert min(energies, key=energies.get) == (1, 0)
+
+
+def test_tiny_coefficient_is_not_rounded_to_zero():
+    # Rounded to zero, 1e-4 would have to raise the bound of a + 1e-4b <= 1 for every assignment, excluding a = 1
+    # entirely. Rounded up to one instead it becomes 100a + b <= 100, which keeps exactly the feasible assignments.
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", LEQ(a + 1e-4 * b, 1))
+
+    penalties = _min_energy_by_items(m.to_qubo(), a, b)
+
+    assert penalties[1, 1] > 0
+    for key in [(0, 0), (0, 1), (1, 0)]:
+        assert penalties[key] == pytest.approx(0), f"feasible (a, b)={key} was penalised"
+
+
+@pytest.mark.parametrize(
+    ("operation", "holds", "coefficients", "rhs", "max_slack_bits", "exact"),
+    [
+        # Exact within the default slack bits, so the integer form keeps exactly the same feasible assignments
+        (LEQ, operator.le, [2.5, 2.5, 1.25], 4.9, None, True),
+        (GEQ, operator.ge, [1.25, -0.75, 2.0], 1.5, None, True),
+        (LT, operator.lt, [0.01, 0.02, -0.03], 0.0, None, True),
+        (GT, operator.gt, [-1.5, 3.25, 0.125], 1.75, None, True),
+        # Rounding the small coefficients away and moving the bound past their error would exclude every assignment,
+        # so these are retried at the finest scale, where they are exact
+        (LEQ, operator.le, [100, 0.5, 100, -0.5], -0.5, None, True),
+        (GEQ, operator.ge, [-0.001, -0.001, -1, 0.001], 0.001, None, True),
+        (LT, operator.lt, [1, -0.001, -0.001], -0.001, None, True),
+        (GT, operator.gt, [0.001, 0.001, -1], 0.001, None, True),
+        # Rounded, which may exclude feasible assignments close to the bound, but never admits an infeasible one
+        (GEQ, operator.ge, [100, 0.5, -0.7], 99.6, None, True),
+        (LEQ, operator.le, [0.3, 0.3], 0.5, 1, False),
+        (LEQ, operator.le, [np.pi, np.e, -1 / 3], 2.5, None, False),
+        (LT, operator.lt, [0.123456, -0.654321, 0.5], 0.1, None, False),
+        (GT, operator.gt, [1000, -0.001, 0.37], 0.2, None, False),
+    ],
+)
+def test_slack_penalty_agrees_with_real_valued_feasible_set(
+    monkeypatch, operation, holds, coefficients, rhs, max_slack_bits, exact
+):
+    items = [BinaryVariable(f"x{i}") for i in range(len(coefficients))]
+    m = Model("m")
+    m.set_objective(0 * items[0])
+    m.add_constraint("c", operation(sum(c * x for c, x in zip(coefficients, items, strict=True)), rhs))
+    warning = MagicMock()
+    monkeypatch.setattr(model_module.logger, "warning", warning)
+
+    penalties = _min_energy_by_items(m.to_qubo(max_slack_bits=max_slack_bits), *items)
+
+    # Decided on the decimals as written, since float64 sums can land either side of a bound they lie on
+    feasible = {
+        key
+        for key in penalties
+        if holds(sum(Fraction(str(c)) * k for c, k in zip(coefficients, key, strict=True)), Fraction(str(rhs)))
+    }
+    for key, penalty in penalties.items():
+        if key not in feasible:
+            assert penalty > 0, f"infeasible {key} was not penalised"
+        elif exact:
+            assert penalty == pytest.approx(0, abs=1e-6), f"feasible {key} was penalised ({penalty})"
+    assert min(penalties[key] for key in feasible) == pytest.approx(0, abs=1e-6)
+    assert warning.called is not exact
+
+
+@pytest.mark.parametrize(
+    "constraint",
+    [
+        # Only a = b = 1 is feasible, lying exactly on the bound, which rounding at any scale moves past
+        lambda a, b: LEQ(-np.pi * a - np.e * b, -(np.pi + np.e)),
+        lambda a, b: GEQ(np.pi * a + np.e * b, np.pi + np.e),
+    ],
+)
+def test_constraint_that_no_scale_can_round_keeps_its_real_coefficients(constraint):
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", constraint(a, b))
+
+    penalties = _min_energy_by_items(m.to_qubo(), a, b)
+
+    assert penalties[1, 1] == pytest.approx(0)
+    for key in [(0, 0), (0, 1), (1, 0)]:
+        assert penalties[key] > 0, f"infeasible (a, b)={key} was not penalised"
+
+
+@pytest.mark.parametrize(
+    "constraint",
+    [
+        lambda a, b: LEQ(0.5 * a + 0.5 * b, -0.1),
+        lambda a, b: GEQ(0.5 * a + 0.5 * b, 1.1),
+        lambda a, b: LT(0.5 * a + 0.5 * b, 0),
+        lambda a, b: GT(0.5 * a + 0.5 * b, 1),
+        # Rounding 0.5 to 0 next to 100 also excludes every assignment, but so does the original constraint
+        lambda a, b: LEQ(100 * a + 0.5 * b, -0.1),
+    ],
+)
+def test_unsatisfiable_real_valued_constraint_is_rejected(constraint):
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    m = Model("m")
+    m.set_objective(0 * a)
+    m.add_constraint("c", constraint(a, b))
+
+    with pytest.raises(ValueError, match=r"unsatisfiable"):
+        m.to_qubo()
 
 
 # ---------------------------------------------------------------------------

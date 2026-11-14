@@ -77,6 +77,60 @@ To translate these into penalties, two strategies are supported:
 
     where :math:`a, b > 0` are parameters that control the penalty strength for violations above and below the bound, respectively.
 
+Real-valued Coefficients
+''''''''''''''''''''''''
+
+The slack formulas above assume integer coefficients. When an inequality has real-valued coefficients, it is first
+rescaled to an equivalent one with integer coefficients before its penalty is built:
+
+1. The constraint is multiplied by the smallest common denominator of its coefficients, such as :math:`10` for
+   :math:`2.5` or :math:`3` for :math:`1 / 3`.
+2. It is then divided by the greatest common divisor of its coefficients, rounding the bound down for :math:`\leq` and
+   up for :math:`\geq`. This keeps exactly the same binary assignments feasible.
+3. Since the integer form only takes integer values, a strict inequality becomes a non-strict one a unit further in:
+   :math:`h < 0` becomes :math:`h + 1 \leq 0`, and :math:`h > 0` becomes :math:`h - 1 \geq 0`.
+
+For example, :math:`2.5 a + 2.5 b \leq 4.9` becomes :math:`25 a + 25 b \leq 49`, and then :math:`a + b \leq 1`, which
+needs a single slack bit. With integer coefficients every feasible assignment has a slack value that makes its penalty
+exactly zero. The penalty is then scaled back by the square of the rescaling, :math:`(25 / 10)^2` here, so it is
+measured in the constraint's own units and a Lagrange multiplier calibrated for the original constraint keeps its
+meaning. Every violation is at least one step of :math:`2.5` from the rounded bound, so it costs at least
+:math:`6.25 \lambda`.
+
+The exact integer form is kept whenever its slack fits in 12 bits, so :math:`2.53 a + 1.01 b \leq 3.1`, which becomes
+:math:`253 a + 101 b \leq 310` with a 9 bit slack, is kept exactly. Coefficients such as :math:`\pi` or randomly
+generated weights have no exact form that small, so the constraint is instead scaled as far as the slack bits allow,
+truncated to its leading digit so that coefficients with few decimals stay exact, and its coefficients are rounded to
+the nearest integer. The bound is moved past the largest error this can make, so the rounded constraint never admits
+an assignment that the original rejects. A coefficient that tightens the constraint is rounded up to one rather
+than down to zero, so that a small one, such as :math:`10^{-4}` next to :math:`1`, does not move the bound for every
+assignment. The rounded constraint may exclude a few feasible assignments very close to the bound, and a warning is
+logged when coefficients are rounded. Inequalities that every assignment satisfies are dropped before any rounding.
+
+The ``max_slack_bits`` argument of :meth:`~qilisdk.core.model.Model.to_qubo` sets that budget instead: fewer bits
+give fewer slack variables, more give a constraint closer to the original. It is capped at 26 bits, so that the squared
+penalty stays exactly representable in float64. The scale never goes below one, so constraints whose coefficients are
+already integers are never rounded, even when their slack needs more bits than the budget. Equalities need no slack,
+so their squared penalty is used as it is.
+
+.. code-block:: python
+
+    from qilisdk.core import LEQ, BinaryVariable, Model, ObjectiveSense
+
+    a, b = BinaryVariable("a"), BinaryVariable("b")
+    model = Model("knapsack")
+    model.set_objective(3 * a + 2 * b, sense=ObjectiveSense.MAXIMIZE)
+    model.add_constraint("capacity", LEQ(2.53 * a + 1.01 * b, 3.1))
+
+    exact = model.to_qubo()  # 253a + 101b <= 310, with a 9 bit slack
+    rounded = model.to_qubo(max_slack_bits=4)  # 8a + 3b <= 9, with a 4 bit slack
+
+    print(len(exact.variables()), len(rounded.variables()))
+
+**Output**::
+
+    11 6
+
 
 
 
