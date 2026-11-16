@@ -66,6 +66,32 @@ You can also initialize a random circuit with a specified number of gates using 
     )
     circuit.draw()
 
+**Amplitude Amplification and Grover's Algorithm**
+
+The :meth:`~qilisdk.digital.circuit.Circuit.amplitude_amplification` method builds rounds of Grover-style amplitude amplification
+for a marked bitstring. Each round flips the phase of the marked state and then reflects about the equal superposition state.
+Character ``i`` of the bitstring is the value of qubit ``qubits[i]`` (by default, qubit ``i``) in the marked state.
+
+The circuit doesn't prepare the equal superposition itself, so to get Grover's search algorithm, apply a Hadamard gate to every qubit
+first and use about :math:`\lfloor \frac{\pi}{4}\sqrt{2^n} \rfloor` rounds:
+
+.. code-block:: python
+
+    import numpy as np
+    from qilisdk.digital import Circuit, H
+
+    n = 3
+    grover = Circuit(n)
+    grover.add([H(q) for q in range(n)])
+    grover += Circuit.amplitude_amplification("101", iterations=int(np.pi / 4 * np.sqrt(2**n)))
+
+To act on only some qubits of a larger circuit, pass ``qubits`` and ``nqubits``:
+
+.. code-block:: python
+
+    # Mark qubit 3 = 1 and qubit 1 = 0 in a 5-qubit circuit.
+    rounds = Circuit.amplitude_amplification("10", qubits=[3, 1], nqubits=5, iterations=2)
+
 Parameterized Circuits
 ^^^^^^^^^^^^^^^^^^^^^^
 

@@ -25,10 +25,10 @@ from qilisdk.analog import Y as analog_Y
 from qilisdk.analog.hamiltonian import PauliX
 from qilisdk.core import Parameter, QTensor
 from qilisdk.core.comparison import LEQ
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X, Y
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, X, Y, Z
 from qilisdk.digital.circuit import _apply_gate_left
 from qilisdk.digital.exceptions import GateHasNoMatrixError, NotAGateError, QubitOutOfRangeError
-from qilisdk.digital.gates import BasicGate, Gate
+from qilisdk.digital.gates import BasicGate, Controlled, Gate
 
 
 def test_circuit_initialization():
@@ -907,3 +907,126 @@ def test_gate_minus_analog_hamiltonian_raises_helpful_error():
     hamiltonian = analog_Y(0)
     with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
         _ = gate - hamiltonian
+
+
+def _amplitude_amplification_reference(bitstring: str) -> np.ndarray:
+    """Textbook Grover iterate (2|s><s| - I)(I - 2|w><w|) on len(bitstring) qubits, qubit 0 most significant."""
+    dim = 2 ** len(bitstring)
+    marked = np.zeros(dim)
+    marked[int(bitstring, 2)] = 1
+    uniform = np.full(dim, 1 / np.sqrt(dim))
+    oracle = np.eye(dim) - 2 * np.outer(marked, marked)
+    diffusion = 2 * np.outer(uniform, uniform) - np.eye(dim)
+    return diffusion @ oracle
+
+
+@pytest.mark.parametrize("bitstring", ["0", "1", "01", "10", "110", "0101"])
+def test_amplitude_amplification_matches_textbook_operator(bitstring):
+    circuit = Circuit.amplitude_amplification(bitstring)
+    assert circuit.nqubits == len(bitstring)
+    # The circuit implements the Grover iterate up to a global phase of -1.
+    np.testing.assert_allclose(circuit.to_matrix(), -_amplitude_amplification_reference(bitstring), atol=1e-10)
+
+
+def test_amplitude_amplification_iterations():
+    single = Circuit.amplitude_amplification("101")
+    triple = Circuit.amplitude_amplification("101", iterations=3)
+    assert len(triple.gates) == 3 * len(single.gates)
+    np.testing.assert_allclose(triple.to_matrix(), np.linalg.matrix_power(single.to_matrix(), 3), atol=1e-10)
+    assert Circuit.amplitude_amplification("101", iterations=0).gates == []
+
+
+@pytest.mark.parametrize("bitstring", ["00", "101", "0110", "11010"])
+def test_amplitude_amplification_builds_grover(bitstring):
+    n = len(bitstring)
+    grover = Circuit(n)
+    grover.add([H(q) for q in range(n)])
+    grover += Circuit.amplitude_amplification(bitstring, iterations=int(np.pi / 4 * np.sqrt(2**n)))
+
+    state = grover.to_matrix()[:, 0]
+    probabilities = np.abs(state) ** 2
+    assert int(np.argmax(probabilities)) == int(bitstring, 2)
+    assert probabilities[int(bitstring, 2)] > 0.9
+
+
+def test_amplitude_amplification_on_qubit_subset():
+    # Mark "10" on qubits (3, 1) of a 5-qubit circuit, i.e. qubit 3 = 1 and qubit 1 = 0.
+    circuit = Circuit.amplitude_amplification("10", qubits=[3, 1], nqubits=5)
+    assert circuit.nqubits == 5
+    assert all(set(gate.qubits) <= {1, 3} for gate in circuit.gates)
+
+    # Compare against the reference iterate on two qubits embedded at positions (3, 1).
+    reference = Circuit.amplitude_amplification("10", qubits=[0, 1])
+    mapping = {0: 3, 1: 1}
+    embedded = Circuit(5)
+    for gate in reference.gates:
+        if isinstance(gate, H):
+            embedded.add(H(mapping[gate.qubits[0]]))
+        elif isinstance(gate, X):
+            embedded.add(X(mapping[gate.qubits[0]]))
+        else:
+            embedded.add(CZ(*(mapping[q] for q in gate.qubits)))
+    np.testing.assert_allclose(circuit.to_matrix(), embedded.to_matrix(), atol=1e-10)
+
+
+def test_amplitude_amplification_default_nqubits_from_qubits():
+    circuit = Circuit.amplitude_amplification("11", qubits=[2, 4])
+    assert circuit.nqubits == 5
+
+
+def test_amplitude_amplification_uses_multi_controlled_z():
+    circuit = Circuit.amplitude_amplification("111")
+    controlled = [gate for gate in circuit.gates if isinstance(gate, Controlled)]
+    assert len(controlled) == 2
+    assert all(gate.control_qubits == (0, 1) and gate.target_qubits == (2,) for gate in controlled)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "error"),
+    [
+        ({"bitstring": ""}, ValueError),
+        ({"bitstring": "012"}, ValueError),
+        ({"bitstring": "01", "qubits": [0]}, ValueError),
+        ({"bitstring": "01", "qubits": [1, 1]}, ValueError),
+        ({"bitstring": "01", "qubits": [-1, 0]}, ValueError),
+        ({"bitstring": "01", "iterations": -1}, ValueError),
+        ({"bitstring": "01", "qubits": [0, 3], "nqubits": 3}, QubitOutOfRangeError),
+    ],
+)
+def test_amplitude_amplification_invalid_inputs(kwargs, error):
+    with pytest.raises(error):
+        Circuit.amplitude_amplification(**kwargs)
+
+
+@pytest.mark.parametrize(("bitstring", "phase_gate"), [("1", Z), ("10", CZ)])
+def test_amplitude_amplification_uses_native_phase_gate_for_few_qubits(bitstring, phase_gate):
+    circuit = Circuit.amplitude_amplification(bitstring)
+    phase_gates = [gate for gate in circuit.gates if isinstance(gate, phase_gate)]
+    assert len(phase_gates) == 2
+    assert not any(isinstance(gate, Controlled) and not isinstance(gate, CZ) for gate in circuit.gates)
+
+
+def test_amplitude_amplification_partial_bitstring_with_spectator_qubit():
+    # Search for "101_" in a 4-qubit register: qubit 3 is left out of the oracle and the diffusion.
+    n = 4
+    grover = Circuit(n)
+    grover.add([H(q) for q in range(n)])
+    grover += Circuit.amplitude_amplification("101", qubits=[0, 1, 2], nqubits=n, iterations=2)
+    assert all(3 not in gate.qubits for gate in grover.gates[n:])
+
+    probabilities = np.abs(grover.to_matrix()[:, 0]) ** 2
+    marked = [int("1010", 2), int("1011", 2)]
+    # Same success probability as a full 3-qubit search with 2 iterations, split evenly over the spectator.
+    three_qubit_search = Circuit(3)
+    three_qubit_search.add([H(q) for q in range(3)])
+    three_qubit_search += Circuit.amplitude_amplification("101", iterations=2)
+    expected = np.abs(three_qubit_search.to_matrix()[int("101", 2), 0]) ** 2
+    np.testing.assert_allclose(probabilities[marked], [expected / 2, expected / 2], atol=1e-10)
+    assert expected > 0.9
+
+
+def test_amplitude_amplification_accepts_any_qubit_sequence():
+    from_range = Circuit.amplitude_amplification("011", qubits=range(1, 4))
+    from_tuple = Circuit.amplitude_amplification("011", qubits=(1, 2, 3))
+    assert from_range == from_tuple
+    assert from_range.nqubits == 4

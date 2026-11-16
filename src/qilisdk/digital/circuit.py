@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import random
 from copy import deepcopy
-from typing import TYPE_CHECKING, Callable, Iterable
+from typing import TYPE_CHECKING, Callable, Iterable, Sequence
 
 import numpy as np
 from loguru import logger
@@ -29,7 +29,7 @@ from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import QubitOutOfRangeError
-from .gates import BasicGate, Gate, _reject_analog_object
+from .gates import CZ, BasicGate, Gate, H, X, Z, _reject_analog_object
 
 if TYPE_CHECKING:
     from qilisdk.core.types import RealNumber
@@ -511,6 +511,104 @@ class Circuit(Parameterizable):
             new_circuit.add(gate_class(*qubits, **params))  # ty:ignore[invalid-argument-type]
 
         return new_circuit
+
+    @classmethod
+    def amplitude_amplification(
+        cls,
+        bitstring: str,
+        qubits: Sequence[int] | None = None,
+        nqubits: int | None = None,
+        iterations: int = 1,
+    ) -> Self:
+        r"""
+        Build a circuit performing Grover-style amplitude amplification of a marked bitstring.
+
+        Each iteration applies an oracle that flips the phase of the computational basis state
+        :math:`|w\rangle` given by ``bitstring``, followed by the diffusion operator, which reflects about the
+        equal superposition state :math:`|s\rangle = H^{\otimes n}|0\rangle^{\otimes n}` of the selected qubits.
+        Character ``bitstring[i]`` is the value of qubit ``qubits[i]`` in the marked state.
+
+        The returned circuit does not prepare :math:`|s\rangle` itself, so Grover's algorithm is obtained by
+        applying a Hadamard gate to every qubit first, and using roughly :math:`\lfloor \frac{\pi}{4}\sqrt{2^n} \rfloor`
+        iterations:
+
+        .. code-block:: python
+
+            import numpy as np
+            from qilisdk.digital import Circuit, H
+
+            n = 3
+            grover = Circuit(n)
+            grover.add([H(q) for q in range(n)])
+            grover += Circuit.amplitude_amplification("101", iterations=int(np.pi / 4 * np.sqrt(2**n)))
+
+        Each iteration implements the textbook operator :math:`(2|s\rangle\langle s| - I)(I - 2|w\rangle\langle w|)`
+        up to a global phase of :math:`-1`.
+
+        Args:
+            bitstring (str): The marked state, as a string of ``"0"`` and ``"1"`` characters.
+            qubits (Sequence[int] | None): The qubits the amplification acts on, one per character of ``bitstring``.
+                Defaults to ``range(len(bitstring))``.
+            nqubits (int | None): The number of qubits of the returned circuit. Defaults to the smallest number
+                that contains every qubit in ``qubits``.
+            iterations (int): The number of oracle and diffusion rounds to apply. Defaults to 1.
+
+        Returns:
+            Circuit: A circuit applying ``iterations`` rounds of amplitude amplification.
+
+        Raises:
+            ValueError: If ``bitstring`` is empty or contains characters other than ``"0"`` and ``"1"``, if
+                ``qubits`` does not have one distinct, non-negative qubit per character of ``bitstring``, or if
+                ``iterations`` is negative.
+            QubitOutOfRangeError: If ``nqubits`` is too small to contain every qubit in ``qubits``.
+        """
+        logger.debug(
+            "[Circuit] Building amplitude amplification for bitstring {} on qubits {} with {} iterations",
+            bitstring,
+            qubits,
+            iterations,
+        )
+        if not bitstring or any(bit not in "01" for bit in bitstring):
+            raise ValueError(f"The bitstring must be a non-empty string of '0' and '1' characters, got {bitstring!r}.")
+        target_qubits = tuple(range(len(bitstring))) if qubits is None else tuple(qubits)
+        if len(target_qubits) != len(bitstring):
+            raise ValueError(
+                f"Expected one qubit per bitstring character ({len(bitstring)}), got {len(target_qubits)} qubits."
+            )
+        if len(set(target_qubits)) != len(target_qubits):
+            raise ValueError(f"Duplicate qubits found in {target_qubits}.")
+        if any(qubit < 0 for qubit in target_qubits):
+            raise ValueError(f"Qubit indices must be non-negative, got {target_qubits}.")
+        if iterations < 0:
+            raise ValueError(f"The number of iterations must be non-negative, got {iterations}.")
+
+        if nqubits is None:
+            nqubits = max(target_qubits) + 1
+        elif nqubits <= max(target_qubits):
+            raise QubitOutOfRangeError(f"A circuit with {nqubits} qubits cannot contain the qubits {target_qubits}.")
+
+        def phase_flip_all_ones() -> Gate:
+            # Flips the phase of the state where every target qubit is |1>.
+            if len(target_qubits) == 1:
+                return Z(target_qubits[0])
+            if len(target_qubits) == 2:  # ruff: ignore[magic-value-comparison]
+                return CZ(*target_qubits)
+            return Z(target_qubits[-1]).controlled(*target_qubits[:-1])
+
+        zero_qubits = [qubit for qubit, bit in zip(target_qubits, bitstring) if bit == "0"]
+        circuit = cls(nqubits)
+        for _ in range(iterations):
+            # Oracle: I - 2|w><w|
+            circuit.add([X(qubit) for qubit in zero_qubits])
+            circuit.add(phase_flip_all_ones())
+            circuit.add([X(qubit) for qubit in zero_qubits])
+            # Diffusion: H (I - 2|0><0|) H = -(2|s><s| - I)
+            circuit.add([H(qubit) for qubit in target_qubits])
+            circuit.add([X(qubit) for qubit in target_qubits])
+            circuit.add(phase_flip_all_ones())
+            circuit.add([X(qubit) for qubit in target_qubits])
+            circuit.add([H(qubit) for qubit in target_qubits])
+        return circuit
 
     def __repr__(self) -> str:
         logger.trace(
