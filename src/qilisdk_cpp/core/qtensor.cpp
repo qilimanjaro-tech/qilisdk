@@ -2639,44 +2639,25 @@ QTensorCpp QTensorCpp::reset_qubits(const std::set<int>& qubits) {
     if (!rest_qubits.empty()) {
         std::vector<Eigen::Triplet<Complex>> triplets;
         const SparseMatrix& rest_data = rest_state.get_data();
-        std::vector<int> rest_dims(rest_qubits.size(), 2);
-        std::vector<int> full_dims(nqubits, 2);
+        // Qubit 0 is the most significant bit, in both the reduced and the full space
+        const int n_rest = int(rest_qubits.size());
+        std::vector<int> full_shift;
+        full_shift.reserve(n_rest);
+        for (int q : rest_qubits) {
+            full_shift.push_back(nqubits - 1 - q);
+        }
         for (int k = 0; k < rest_data.outerSize(); ++k) {
             for (typename SparseMatrix::InnerIterator it(rest_data, k); it; ++it) {
                 int row = int(it.row());
                 int col = int(it.col());
                 Complex val = it.value();
 
-                // Convert row and col to multi-dimensional indices in the rest subsystem
-                std::vector<int> row_digits_rest(rest_qubits.size());
-                std::vector<int> col_digits_rest(rest_qubits.size());
-                int temp_row = row;
-                int temp_col = col;
-                for (size_t i = 0; i < rest_qubits.size(); ++i) {
-                    row_digits_rest[i] = temp_row % 2;
-                    col_digits_rest[i] = temp_col % 2;
-                    temp_row /= 2;
-                    temp_col /= 2;
-                }
-
-                // Build full multi-dimensional indices with zeros for the reset qubits
-                std::vector<int> row_digits_full(nqubits, 0);
-                std::vector<int> col_digits_full(nqubits, 0);
-                size_t rest_idx = 0;
-                for (int q = 0; q < nqubits; ++q) {
-                    if (rest_qubits.find(q) != rest_qubits.end()) {
-                        row_digits_full[q] = row_digits_rest[rest_idx];
-                        col_digits_full[q] = col_digits_rest[rest_idx];
-                        rest_idx++;
-                    }
-                }
-
-                // Convert back to flat indices in the full space
+                // Move each kept qubit's bit to its position in the full space, leaving reset qubits at 0
                 int out_row = 0;
                 int out_col = 0;
-                for (int q = 0; q < nqubits; ++q) {
-                    out_row |= (row_digits_full[q] << q);
-                    out_col |= (col_digits_full[q] << q);
+                for (int i = 0; i < n_rest; ++i) {
+                    out_row |= ((row >> (n_rest - 1 - i)) & 1) << full_shift[i];
+                    out_col |= ((col >> (n_rest - 1 - i)) & 1) << full_shift[i];
                 }
 
                 triplets.emplace_back(out_row, out_col, val);
