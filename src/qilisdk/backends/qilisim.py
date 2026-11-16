@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from loguru import logger
-from qilisim_module import QiliSimCpp  # ty:ignore[unresolved-import]
+from qilisim_module import QiliSimCpp  # ty:ignore[import-not-found]
 
 from qilisdk.settings import get_settings
 
