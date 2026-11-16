@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+import math
 import random
 from copy import deepcopy
 from typing import TYPE_CHECKING, Callable, Iterable
@@ -29,7 +30,7 @@ from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import QubitOutOfRangeError
-from .gates import BasicGate, Gate, _reject_analog_object
+from .gates import SWAP, U1, BasicGate, Gate, H, X, _reject_analog_object
 
 if TYPE_CHECKING:
     from qilisdk.core.types import RealNumber
@@ -63,6 +64,93 @@ def _apply_gate_left(operator: np.ndarray, gate: Gate, nqubits: int) -> np.ndarr
     perm = perm_output + list(range(nqubits, 2 * nqubits))
 
     return np.transpose(contracted, axes=perm).reshape(operator.shape)
+
+
+def _basis_transposition(state_a: int, state_b: int, control: int, qubits: tuple[int, ...]) -> list[Gate]:
+    """Gates swapping two basis states of ``qubits`` (``qubits[0]`` most significant), when ``control`` is |1>.
+
+    Every other basis state is left unchanged. Adjacent states along a Gray-code path from ``state_a`` to
+    ``state_b`` are swapped by fully controlled X gates, using ``(a c) = (a b)(b c)(a b)``.
+
+    Args:
+        state_a (int): The first basis state, as an integer.
+        state_b (int): The second basis state, as an integer. Must differ from ``state_a``.
+        control (int): The qubit controlling the swap.
+        qubits (tuple[int, ...]): The qubits holding the basis states.
+
+    Returns:
+        list[Gate]: The gates implementing the controlled swap.
+    """
+    nbits = len(qubits)
+    differing = [i for i in range(nbits) if (state_a ^ state_b) >> (nbits - 1 - i) & 1]
+    path = [state_a]
+    for i in differing:
+        path.append(path[-1] ^ (1 << (nbits - 1 - i)))
+
+    def adjacent_swap(state: int, bit: int) -> list[Gate]:
+        # X on qubits[bit], controlled on every other qubit matching ``state`` and on ``control``.
+        others = [i for i in range(nbits) if i != bit]
+        zeros = [X(qubits[i]) for i in others if not (state >> (nbits - 1 - i)) & 1]
+        flip = X(qubits[bit]).controlled(control, *(qubits[i] for i in others))
+        return [*zeros, flip, *zeros]
+
+    steps = [adjacent_swap(path[k], differing[k]) for k in range(len(differing))]
+    gates: list[Gate] = []
+    for step in [*steps, *reversed(steps[:-1])]:
+        gates.extend(step)
+    return gates
+
+
+def _controlled_modular_multiplication(
+    multiplier: int, modulus: int, control: int, qubits: tuple[int, ...]
+) -> list[Gate]:
+    """Gates mapping |x> to |multiplier * x mod modulus> on ``qubits`` for ``x < modulus``, when ``control`` is |1>.
+
+    Basis states with ``x >= modulus`` are left unchanged. ``multiplier`` must be coprime with ``modulus`` so the
+    map is a permutation, which is decomposed into basis-state transpositions.
+
+    Args:
+        multiplier (int): The number to multiply by, coprime with ``modulus``.
+        modulus (int): The modulus, at most ``2 ** len(qubits)``.
+        control (int): The qubit controlling the multiplication.
+        qubits (tuple[int, ...]): The qubits holding ``x``.
+
+    Returns:
+        list[Gate]: The gates implementing the controlled modular multiplication.
+    """
+    # label[x] is the basis state currently holding the amplitude that started in |x>.
+    label = list(range(modulus))
+    position = list(range(modulus))
+    gates: list[Gate] = []
+    for x in range(modulus):
+        current, target = label[x], (multiplier * x) % modulus
+        if current == target:
+            continue
+        gates.extend(_basis_transposition(current, target, control, qubits))
+        other = position[target]
+        label[x], label[other] = target, current
+        position[target], position[current] = x, other
+    return gates
+
+
+def _inverse_qft(qubits: tuple[int, ...]) -> list[Gate]:
+    """Gates for the inverse quantum Fourier transform on ``qubits`` (``qubits[0]`` most significant).
+
+    Inverts :math:`|j\\rangle \\mapsto 2^{-t/2} \\sum_k e^{2\\pi i jk/2^t}|k\\rangle`.
+
+    Args:
+        qubits (tuple[int, ...]): The qubits to transform.
+
+    Returns:
+        list[Gate]: The gates implementing the inverse quantum Fourier transform.
+    """
+    nbits = len(qubits)
+    gates: list[Gate] = [SWAP(qubits[i], qubits[nbits - 1 - i]) for i in range(nbits // 2)]
+    for i in reversed(range(nbits)):
+        for j in reversed(range(i + 1, nbits)):
+            gates.append(U1(qubits[i], phi=-2 * np.pi / 2 ** (j - i + 1)).controlled(qubits[j]))
+        gates.append(H(qubits[i]))
+    return gates
 
 
 @yaml.register_class
@@ -511,6 +599,94 @@ class Circuit(Parameterizable):
             new_circuit.add(gate_class(*qubits, **params))  # ty:ignore[invalid-argument-type]
 
         return new_circuit
+
+    @classmethod
+    def period_finding(cls, base: int, modulus: int, nprecision: int | None = None) -> Self:
+        r"""
+        Build the quantum order-finding circuit at the heart of Shor's factoring algorithm.
+
+        The circuit estimates the period :math:`r`, the smallest positive integer with
+        :math:`\text{base}^r \equiv 1 \pmod{\text{modulus}}`, using quantum phase estimation of the unitary
+        :math:`U|x\rangle = |\text{base} \cdot x \bmod \text{modulus}\rangle`.
+
+        Qubits ``0`` to ``nprecision - 1`` form the counting register, and the remaining
+        :math:`n = \lceil \log_2 \text{modulus} \rceil` qubits form the work register, prepared in :math:`|1\rangle`.
+        Measuring the counting register, read as an integer :math:`m` with qubit 0 as the most significant bit, gives
+        :math:`m / 2^{\text{nprecision}} \approx s / r` for a uniformly random :math:`s`. The period is then the
+        denominator of the continued fraction expansion of that ratio, for example:
+
+        .. code-block:: python
+
+            from fractions import Fraction
+
+            from qilisdk.backends import QiliSim
+            from qilisdk.digital import Circuit
+            from qilisdk.functionals import DigitalPropagation
+            from qilisdk.readout import Readout
+
+            base, modulus = 7, 15
+            circuit = Circuit.period_finding(base, modulus)
+            nprecision = circuit.nqubits - (modulus - 1).bit_length()
+
+            result = QiliSim().execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=100))
+            for bitstring in result.get_samples():
+                m = int(bitstring[:nprecision], 2)
+                print(Fraction(m, 2**nprecision).limit_denominator(modulus).denominator)
+
+        Some outcomes only give a divisor of :math:`r` (when :math:`s` shares a factor with :math:`r`), so in
+        practice a few samples are combined. For Shor's algorithm, an even period with
+        :math:`\text{base}^{r/2} \not\equiv -1` gives the factors :math:`\gcd(\text{base}^{r/2} \pm 1,
+        \text{modulus})`.
+
+        The modular multiplications are built exactly from multi-controlled X gates without ancilla qubits, which
+        is meant for small textbook examples rather than for large moduli.
+
+        Args:
+            base (int): The number whose period is found. Must satisfy ``1 <= base < modulus`` and be coprime with
+                ``modulus``.
+            modulus (int): The modulus, at least 2.
+            nprecision (int | None): The number of qubits in the counting register. Defaults to :math:`2n`, the usual
+                textbook choice. More qubits sharpen the peaks of the measured distribution.
+
+        Returns:
+            Circuit: A circuit on ``nprecision + n`` qubits, without measurements.
+
+        Raises:
+            ValueError: If ``modulus`` is smaller than 2, ``base`` is not in ``[1, modulus)`` or shares a factor
+                with ``modulus``, or ``nprecision`` is smaller than 1.
+        """
+        logger.debug(
+            "[Circuit] Building period finding for base {} modulo {} with {} counting qubits",
+            base,
+            modulus,
+            nprecision,
+        )
+        if modulus < 2:  # ruff: ignore[magic-value-comparison]
+            raise ValueError(f"The modulus must be at least 2, got {modulus}.")
+        if not 1 <= base < modulus:
+            raise ValueError(f"The base must satisfy 1 <= base < modulus ({modulus}), got {base}.")
+        if math.gcd(base, modulus) != 1:
+            raise ValueError(
+                f"The base {base} shares the factor {math.gcd(base, modulus)} with the modulus {modulus}, "
+                "so it has no period."
+            )
+        nwork = (modulus - 1).bit_length()
+        if nprecision is None:
+            nprecision = 2 * nwork
+        elif nprecision < 1:
+            raise ValueError(f"The number of counting qubits must be at least 1, got {nprecision}.")
+
+        counting = tuple(range(nprecision))
+        work = tuple(range(nprecision, nprecision + nwork))
+        circuit = cls(nprecision + nwork)
+        circuit.add(X(work[-1]))
+        circuit.add([H(qubit) for qubit in counting])
+        for i, control in enumerate(counting):
+            # Counting qubit i is worth 2^(nprecision - 1 - i), so it controls U^(2^(nprecision - 1 - i)).
+            multiplier = pow(base, 2 ** (nprecision - 1 - i), modulus)
+            circuit.add(_controlled_modular_multiplication(multiplier, modulus, control, work))
+        circuit.add(_inverse_qft(counting))
+        return circuit
 
     def __repr__(self) -> str:
         logger.trace(
