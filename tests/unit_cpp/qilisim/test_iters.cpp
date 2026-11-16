@@ -17,6 +17,8 @@
 #include <gtest/gtest.h>
 #include "../../../src/qilisdk_cpp/backends/qilisim/analog/iterations.h"
 #include "../../../src/qilisdk_cpp/backends/qilisim/utils/matrix_utils.h"
+#include "../../../src/qilisdk_cpp/libs/logging.h"
+#include "../../../src/qilisdk_cpp/libs/pybind.h"
 
 namespace {
 
@@ -969,6 +971,21 @@ TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, ZeroTimeStepReturnsInitial
     DenseMatrix psi_orig = psi;
     iter_rk4(psi, 0.0, 0.0, {}, {H_mf}, {{1.0}}, {}, true);
     EXPECT_TRUE(psi.isApprox(psi_orig, kTol));
+}
+
+TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, UnstableStepWarnsToLowerDt) {
+    // A step of 10 puts |E| * dt = 5 beyond the RK4 stability limit, so the norm grows before renormalization
+    py::list records;
+    logger.attr("remove")();
+    logger.attr("add")(py::cpp_function([records](py::object message) mutable { records.append(py::str(message)); }), py::arg("format") = "{message}", py::arg("level") = "WARNING");
+    qilisdk::refresh_log_level();
+    DenseMatrix psi(2, 1);
+    psi << 1.0 / std::sqrt(2.0), 1.0 / std::sqrt(2.0);
+    iter_rk4(psi, 0.0, 10.0, {}, {H_mf}, {{1.0}}, {}, true);
+    logger.attr("remove")();
+    qilisdk::refresh_log_level();
+    ASSERT_EQ(py::len(records), 1u);
+    EXPECT_NE(records[0].cast<std::string>().find("Lower the schedule dt"), std::string::npos);
 }
 
 TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, MatchesSparseOverloadForShortTime) {
