@@ -481,7 +481,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     // Scale the error by the tolerance
     double err_norm = std::sqrt(diff_frob_sq / rho_5_frob_sq) / tol;
 
-    // Without jumps the norm carries no information, so use the phase-invariant per-column infidelity, otherwise the global phase forces dt ~ 1/|E|
+    // Without jumps the norm carries no information, so use the phase-invariant per-column infidelity
     if (is_unitary_on_statevector && jump_drift == nullptr) {
         double infidelity_sum = 0.0;
 #if defined(_OPENMP)
