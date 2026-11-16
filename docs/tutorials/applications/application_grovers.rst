@@ -128,6 +128,25 @@ This gives us:
     
 This is the expected result since we were searching for the state "01".
 
+Using the Built-in Constructor
+--------------------------------
+
+When the oracle simply marks one bitstring, as above, you don't need to build the oracle and diffusion operator by hand.
+:meth:`~qilisdk.digital.circuit.Circuit.amplitude_amplification` builds both, repeated for the given number of iterations,
+so the whole algorithm reduces to:
+
+.. code-block:: python
+
+    import numpy as np
+    from qilisdk.digital import Circuit, H
+
+    n = 2
+    grover = Circuit(n)
+    grover.add([H(q) for q in range(n)])
+    grover += Circuit.amplitude_amplification("01", iterations=int(np.pi / 4 * np.sqrt(2**n)))
+
+This implements the same operation as the circuit built step by step above.
+
 Further Reading
 --------------------
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 12:09+0200\n"
+"POT-Creation-Date: 2026-11-16 16:39+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -39,9 +39,9 @@ msgid ""
 "first: :doc:`Quantum Basics </tutorials/introductions/intro_quantum>` and"
 " :doc:`Quantum Circuits </tutorials/introductions/intro_circuits>`."
 msgstr ""
-"Si encara no ho heu fet, pot ser útil consultar primer aquests tutorials: "
-":doc:`Quantum Basics </tutorials/introductions/intro_quantum>` i"
-" :doc:`Quantum Circuits </tutorials/introductions/intro_circuits>`."
+"Si encara no ho heu fet, pot ser útil consultar primer aquests tutorials:"
+" :doc:`Quantum Basics </tutorials/introductions/intro_quantum>` i "
+":doc:`Quantum Circuits </tutorials/introductions/intro_circuits>`."
 
 #: ../../tutorials/applications/application_grovers.rst:12
 msgid "The Problem"
@@ -104,17 +104,18 @@ msgid ""
 "1996 and is one of the most well-known quantum algorithms."
 msgstr ""
 "Clàssicament, hauríeu de comprovar cada element un per un, la qual cosa "
-"tardaria un temps :math:`O(N)` en el pitjor cas. L'algorisme de Grover us "
-"permet trobar l'element desitjat en un temps :math:`O(\\sqrt{N})`, la qual "
-"cosa és una millora significativa per a N gran. Va ser inventat per Lov "
-"Grover el 1996 i és un dels algorismes quàntics més coneguts."
+"tardaria un temps :math:`O(N)` en el pitjor cas. L'algorisme de Grover us"
+" permet trobar l'element desitjat en un temps :math:`O(\\sqrt{N})`, la "
+"qual cosa és una millora significativa per a N gran. Va ser inventat per "
+"Lov Grover el 1996 i és un dels algorismes quàntics més coneguts."
 
 #: ../../tutorials/applications/application_grovers.rst:36
 msgid ""
 "The algorithm is formed of two parts: the **oracle** and the **diffusion "
 "operator**."
 msgstr ""
-"L'algorisme consta de dues parts: l'**oracle** i l'**operador de difusió**."
+"L'algorisme consta de dues parts: l'**oracle** i l'**operador de "
+"difusió**."
 
 #: ../../tutorials/applications/application_grovers.rst:38
 msgid ""
@@ -123,9 +124,9 @@ msgid ""
 "that we want to evaluate. It can be represented as an operator :math:`O` "
 "such that:"
 msgstr ""
-"L'**oracle** és una operació quàntica que marca l'estat desitjat invertint "
-"la seva fase, en aquest cas corresponent a la funció :math:`f` que volem "
-"avaluar. Es pot representar com un operador :math:`O` tal que:"
+"L'**oracle** és una operació quàntica que marca l'estat desitjat "
+"invertint la seva fase, en aquest cas corresponent a la funció :math:`f` "
+"que volem avaluar. Es pot representar com un operador :math:`O` tal que:"
 
 #: ../../tutorials/applications/application_grovers.rst:41
 #, python-brace-format
@@ -151,8 +152,8 @@ msgid ""
 "where :math:`|\\psi\\rangle` is the equal superposition state and "
 ":math:`I` is the identity operator."
 msgstr ""
-"on :math:`|\\psi\\rangle` és l'estat de superposició uniforme i "
-":math:`I` és l'operador identitat."
+"on :math:`|\\psi\\rangle` és l'estat de superposició uniforme i :math:`I`"
+" és l'operador identitat."
 
 #: ../../tutorials/applications/application_grovers.rst:50
 #, python-brace-format
@@ -183,9 +184,9 @@ msgid ""
 msgstr ""
 "Com són en realitat aquests operadors? L'oracle depèn del problema "
 "específic que intenteu resoldre, però per a casos com la cerca d'una "
-"cadena de bits específica es pot implementar amb portes X i Z controlades. "
-"Per exemple, si volem cercar la cadena de bits \"01\" en un sistema de 2 "
-"qubits, podem implementar l'oracle de la manera següent:"
+"cadena de bits específica es pot implementar amb portes X i Z "
+"controlades. Per exemple, si volem cercar la cadena de bits \"01\" en un "
+"sistema de 2 qubits, podem implementar l'oracle de la manera següent:"
 
 #: ../../tutorials/applications/application_grovers.rst:70
 msgid ""
@@ -215,8 +216,8 @@ msgid ""
 "Our initial state is going to be the equal superposition state, which can"
 " be prepared by applying a Hadamard gate to each qubit:"
 msgstr ""
-"El nostre estat inicial serà l'estat de superposició uniforme, que es pot "
-"preparar aplicant una porta Hadamard a cada qubit:"
+"El nostre estat inicial serà l'estat de superposició uniforme, que es pot"
+" preparar aplicant una porta Hadamard a cada qubit:"
 
 #: ../../tutorials/applications/application_grovers.rst:100
 #, python-brace-format
@@ -226,8 +227,8 @@ msgid ""
 ":math:`\\text{floor}(\\frac{\\pi}{4} \\sqrt{4}) = 1`."
 msgstr ""
 "Ara podem combinar aquestes operacions per implementar l'algorisme de "
-"Grover. Només necessitem una repetició perquè tenim 4 elements en el nostre "
-"estat i :math:`\\text{floor}(\\frac{\\pi}{4} \\sqrt{4}) = 1`."
+"Grover. Només necessitem una repetició perquè tenim 4 elements en el "
+"nostre estat i :math:`\\text{floor}(\\frac{\\pi}{4} \\sqrt{4}) = 1`."
 
 #: ../../tutorials/applications/application_grovers.rst:111
 msgid "Simulating the result using QiliSim:"
@@ -242,10 +243,36 @@ msgid "This is the expected result since we were searching for the state \"01\".
 msgstr "Aquest és el resultat esperat ja que cercàvem l'estat \"01\"."
 
 #: ../../tutorials/applications/application_grovers.rst:132
+msgid "Using the Built-in Constructor"
+msgstr "Ús del constructor integrat"
+
+#: ../../tutorials/applications/application_grovers.rst:134
+msgid ""
+"When the oracle simply marks one bitstring, as above, you don't need to "
+"build the oracle and diffusion operator by hand. "
+":meth:`~qilisdk.digital.circuit.Circuit.amplitude_amplification` builds "
+"both, repeated for the given number of iterations, so the whole algorithm"
+" reduces to:"
+msgstr ""
+"Quan l'oracle simplement marca una cadena de bits, com a l'exemple "
+"anterior, no cal que construïu a mà l'oracle ni l'operador de difusió. "
+":meth:`~qilisdk.digital.circuit.Circuit.amplitude_amplification` "
+"construeix tots dos, repetits el nombre d'iteracions indicat, de manera "
+"que tot l'algorisme es redueix a:"
+
+#: ../../tutorials/applications/application_grovers.rst:148
+msgid ""
+"This implements the same operation as the circuit built step by step "
+"above."
+msgstr ""
+"Això implementa la mateixa operació que el circuit construït pas a pas "
+"més amunt."
+
+#: ../../tutorials/applications/application_grovers.rst:151
 msgid "Further Reading"
 msgstr "Lectura addicional"
 
-#: ../../tutorials/applications/application_grovers.rst:134
+#: ../../tutorials/applications/application_grovers.rst:153
 msgid "`Grover's Algorithm`_"
 msgstr "`Grover's Algorithm`_"
 
