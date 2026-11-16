@@ -304,7 +304,7 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
         // A stable RK4 step never grows a state vector's norm, so growth means dt is too large
         static std::atomic<bool> instability_warning_emitted{false};
         if (rho_cols == 1 && new_squared_norm > (1.0 + 1e-6) * old_squared_norm && !instability_warning_emitted.exchange(true)) {
-            qilisdk::log_warning("[QiliSim, C++] The schedule dt is too large for the fixed-step RK4 integrator to be stable on this Hamiltonian, so the results are wrong (typically the state ends in the wrong eigenstate). Lower the schedule dt, or use AnalogMethod.arnoldi() or AnalogMethod.adaptive_integrator(). It is only reported once per process.");
+            qilisdk::log_warning("[QiliSim, C++] The schedule dt is too large for the fixed-step RK4 integrator to be stable on this Hamiltonian, so the results might be wrong. Lower the schedule dt, or consider using a different simulation method.");
         }
         normalize_state(rho_t, true, rho_cols > 1);
     } else {
