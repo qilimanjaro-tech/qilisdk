@@ -1942,7 +1942,7 @@ class QUBO(Model):
             if isinstance(expr, Pow):
                 base = _parse_term(expr.base)
                 pow_acc: Number | Hamiltonian = 1.0
-                for _ in range(int(expr.exp.value)):  # ty:ignore[unresolved-attribute]
+                for _ in range(int(expr.exp.value)):  # ty:ignore[missing-attribute]
                     pow_acc *= base
                 return pow_acc
             raise ValueError(f"expression {expr} is not supported when building a Hamiltonian")

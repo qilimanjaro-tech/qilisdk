@@ -200,7 +200,7 @@ def _cpu_has_avx2() -> bool:
             return True
     if system == "Windows":
         try:
-            return bool(ctypes.windll.kernel32.IsProcessorFeaturePresent(_PF_AVX2))  # ty:ignore[unresolved-attribute]
+            return bool(ctypes.windll.kernel32.IsProcessorFeaturePresent(_PF_AVX2))  # ty:ignore[missing-attribute]
         except (AttributeError, OSError):
             return True
     if system == "Darwin":
