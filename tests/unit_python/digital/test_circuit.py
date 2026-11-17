@@ -1001,9 +1001,9 @@ def test_double_bracket_iteration_with_parameter_step_sizes():
 
 
 def test_double_bracket_iteration_warns_about_large_circuits(monkeypatch, caplog):  # ruff: ignore[redefined-while-unused]
-    monkeypatch.setattr("qilisdk.digital.circuit._DOUBLE_BRACKET_ROTATION_WARNING", 10)
+    monkeypatch.setattr("qilisdk.digital.circuit._DOUBLE_BRACKET_OPERATION_WARNING", 10)
     Circuit.double_bracket_iteration(analog_Z(0) + analog_X(0), [0.1, 0.1])
-    assert "Pauli rotations" in caplog.text
+    assert "operations" in caplog.text
 
 
 def test_double_bracket_iteration_rejects_negative_step_sizes():
@@ -1029,3 +1029,85 @@ def test_double_bracket_iteration_rejects_trivial_diagonal_operator():
     hamiltonian = analog_X(0) + 2.0
     with pytest.raises(ValueError, match="no terms other than the identity"):
         Circuit.double_bracket_iteration(hamiltonian, [0.1])
+
+
+def _double_bracket_reference_circuit():
+    """A small reference circuit with parameterized, self-inverse and adjoint gates."""
+    reference = Circuit(3)
+    reference.add([U3(0, theta=0.3, phi=-0.4, gamma=1.1), RY(1, theta=0.7), CNOT(0, 1), RX(2, theta=-0.5)])
+    reference.add([CNOT(1, 2), S(0).adjoint(), U3(2, theta=1.2, phi=0.1, gamma=-0.8)])
+    return reference
+
+
+def test_double_bracket_iteration_with_reference_matches_exact_recursion():
+    """The flow runs on V^dagger H V, and the circuit V U^dagger matches the exact recursion."""
+    # Commuting terms, so evolving under V^dagger H V has no Trotter error.
+    hamiltonian = analog_X(0) * analog_X(1) + 0.7 * analog_Y(0) * analog_Y(1) + 0.4 * analog_Z(0) * analog_Z(1)
+    hamiltonian += 0.3 * analog_X(2)
+    diagonal = -analog_Z(0) - 0.5 * analog_Z(1) - 0.3 * analog_Z(2)
+    reference = _double_bracket_reference_circuit()
+    step_sizes = [0.1, 0.05, 0.2]
+    circuit = Circuit.double_bracket_iteration(hamiltonian, step_sizes, diagonal=diagonal, reference=reference)
+
+    v = reference.to_matrix()
+    rotated = (v.conj().T @ hamiltonian.to_matrix() @ v).astype(complex)
+    d = diagonal.to_matrix().toarray()
+    u = np.eye(8, dtype=complex)
+    for step in step_sizes:
+        root = np.sqrt(step)
+        u = expm(-1j * root * d) @ u @ expm(1j * root * rotated) @ u.conj().T @ expm(1j * root * d) @ u
+        u = u @ expm(-1j * root * rotated)
+    np.testing.assert_allclose(circuit.to_matrix(), v @ u.conj().T, atol=1e-12)
+
+
+def test_double_bracket_iteration_cancels_reference_pairs():
+    """Each evolution under V^dagger H V brackets H with V and its inverse, and adjacent pairs cancel."""
+    hamiltonian = analog_X(0) * analog_X(1) + analog_Z(2)
+    diagonal = -analog_Z(0)
+    reference = _double_bracket_reference_circuit()
+    with_reference = Circuit.double_bracket_iteration(hamiltonian, [0.1], diagonal=diagonal, reference=reference)
+    without_reference = Circuit.double_bracket_iteration(hamiltonian, [0.1], diagonal=diagonal)
+    # Without cancellation one step adds five copies of V: two around each evolution under H, and one at the end.
+    assert len(with_reference.gates) < len(without_reference.gates) + 5 * len(reference.gates)
+
+
+def test_double_bracket_iteration_copies_the_reference():
+    hamiltonian = analog_X(0) * analog_X(1) + analog_Z(2)
+    diagonal = -analog_Z(0)
+    reference = _double_bracket_reference_circuit()
+    circuit = Circuit.double_bracket_iteration(hamiltonian, [0.1, 0.1], diagonal=diagonal, reference=reference)
+    before = circuit.to_matrix()
+    reference.set_parameter_values([0.0] * reference.nparameters)
+    np.testing.assert_allclose(circuit.to_matrix(), before, atol=1e-14)
+    circuit.set_parameters(circuit.get_parameters())
+    np.testing.assert_allclose(circuit.to_matrix(), before, atol=1e-14)
+
+
+def test_double_bracket_iteration_only_step_parameters_are_trainable():
+    hamiltonian = analog_X(0) * analog_X(1) + analog_Z(2)
+    diagonal = -analog_Z(0)
+    reference = _double_bracket_reference_circuit()
+    step = Parameter("step", 0.1)
+    circuit = Circuit.double_bracket_iteration(hamiltonian, [step, 0.2], diagonal=diagonal, reference=reference)
+    assert circuit.get_parameter_names(where=lambda parameter: parameter.is_trainable) == ["step"]
+
+
+def test_double_bracket_iteration_reference_requires_diagonal():
+    hamiltonian = analog_Z(0) + analog_X(0)
+    reference = _double_bracket_reference_circuit()
+    with pytest.raises(ValueError, match="A diagonal operator is required"):
+        Circuit.double_bracket_iteration(hamiltonian, [0.1], reference=reference)
+
+
+@pytest.mark.parametrize(
+    "gate",
+    [M(0), RX(0, theta=0.3).controlled(1), S(0).controlled(1)],
+    ids=["measurement", "parameterized-controlled", "controlled-s"],
+)
+def test_double_bracket_iteration_rejects_non_invertible_reference_gates(gate):
+    hamiltonian = analog_Z(0) + analog_X(0)
+    diagonal = -analog_Z(0)
+    reference = Circuit(2)
+    reference.add(gate)
+    with pytest.raises(ValueError, match="cannot be inverted"):
+        Circuit.double_bracket_iteration(hamiltonian, [0.1], diagonal=diagonal, reference=reference)
