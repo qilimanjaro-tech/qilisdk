@@ -15,13 +15,15 @@ from __future__ import annotations
 
 import random
 from copy import deepcopy
-from typing import TYPE_CHECKING, Callable, Iterable
+from typing import TYPE_CHECKING, Callable, Iterable, cast
 
 import numpy as np
 from loguru import logger
 from typing_extensions import Self
 
+from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core import Domain, Parameter, QTensor
+from qilisdk.core.expression import Expression
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
@@ -29,13 +31,24 @@ from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import QubitOutOfRangeError
-from .gates import BasicGate, Gate, _reject_analog_object
+from .gates import Adjoint, BasicGate, Gate, M, _reject_analog_object
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from typing_extensions import TypeAlias
+
+    from qilisdk.analog.hamiltonian import PauliOperator
     from qilisdk.core.types import RealNumber
+
+    # A Pauli rotation (term, angle), meaning exp(-i * angle * term), or a gate of a reference circuit.
+    _DoubleBracketOperation: TypeAlias = tuple[tuple[PauliOperator, ...], Expression] | Gate
 
 # Name used for this class in the error messages raised for analog objects.
 _REJECT_TARGET = "a Circuit"
+
+# Operation count above which double_bracket_iteration warns about circuit size.
+_DOUBLE_BRACKET_OPERATION_WARNING = 100_000
 
 
 def _complex_dtype() -> np.dtype:
@@ -63,6 +76,48 @@ def _apply_gate_left(operator: np.ndarray, gate: Gate, nqubits: int) -> np.ndarr
     perm = perm_output + list(range(nqubits, 2 * nqubits))
 
     return np.transpose(contracted, axes=perm).reshape(operator.shape)
+
+
+def _fixed_parameter(value: float) -> Parameter:
+    # Labelled by value, so equal angles share a label and setting it can never change a gate's angle.
+    return Parameter(f"fixed_{value}", value, Domain.REAL, (value, value), trainable=False)
+
+
+def _frozen_gate_and_inverse(gate: Gate) -> tuple[Gate, Gate]:
+    """
+    Copy a gate at its current parameter values and build its exact inverse.
+
+    A parameterized basic gate is rebuilt with fixed, non-trainable angles, so the copy no longer follows the
+    original's parameters. A gate that is its own inverse is reused, a basic gate is inverted with
+    :class:`~qilisdk.digital.gates.Adjoint`, and an adjoint is inverted by unwrapping it.
+
+    Args:
+        gate (Gate): The gate to copy and invert.
+
+    Returns:
+        tuple[Gate, Gate]: The copied gate and its inverse.
+
+    Raises:
+        ValueError: If the gate is a measurement, a parameterized gate that is not a basic gate, or a gate with no
+            inverse gate.
+    """
+    if isinstance(gate, M) or (gate.is_parameterized and not isinstance(gate, BasicGate)):
+        raise ValueError(f"The reference gate {gate.name} on qubits {gate.qubits} cannot be inverted.")
+    frozen = gate
+    if isinstance(gate, BasicGate) and gate.is_parameterized:
+        # Gate constructors take the qubit and then each angle by name, unlike BasicGate itself.
+        gate_type = cast("Callable[..., BasicGate]", type(gate))
+        frozen = gate_type(
+            *gate.target_qubits,
+            **{name: _fixed_parameter(getattr(gate, name)) for name in gate.PARAMETER_NAMES},
+        )
+    if np.allclose(frozen.matrix.dense(), frozen.matrix.dense().conj().T):
+        return frozen, frozen
+    if isinstance(frozen, BasicGate):
+        return frozen, frozen.adjoint()
+    if isinstance(frozen, Adjoint):
+        return frozen, frozen.basic_gate
+    raise ValueError(f"The reference gate {gate.name} on qubits {gate.qubits} cannot be inverted.")
 
 
 @yaml.register_class
@@ -511,6 +566,208 @@ class Circuit(Parameterizable):
             new_circuit.add(gate_class(*qubits, **params))  # ty:ignore[invalid-argument-type]
 
         return new_circuit
+
+    @classmethod
+    def double_bracket_iteration(
+        cls,
+        hamiltonian: Hamiltonian | QTensor,
+        step_sizes: Sequence[RealNumber | Parameter],
+        diagonal: Hamiltonian | None = None,
+        trotter_steps: int = 1,
+        reference: Circuit | None = None,
+    ) -> Self:
+        r"""
+        Build a circuit that approximately diagonalizes a Hamiltonian using double-bracket iterations.
+
+        A double-bracket iteration (Gluza, "Double-bracket quantum algorithms for diagonalization",
+        `arXiv:2206.11772 <https://arxiv.org/abs/2206.11772>`_) rotates :math:`H_0` towards a diagonal matrix by
+        repeating
+
+        .. math::
+
+            H_{k+1} = e^{s_k [D, H_k]} \, H_k \, e^{-s_k [D, H_k]},
+
+        where :math:`D` is a fixed diagonal operator and :math:`s_k` is the size of step :math:`k`. Writing
+        :math:`H_k = U_k H_0 U_k^\dagger`, each step is built from evolutions under :math:`H_0` and :math:`D` with
+        the group commutator
+
+        .. math::
+
+            U_{k+1} = e^{-i\sqrt{s_k}D} \, U_k \, e^{i\sqrt{s_k}H_0} \, U_k^\dagger \, e^{i\sqrt{s_k}D} \, U_k \,
+            e^{-i\sqrt{s_k}H_0}, \qquad U_0 = I,
+
+        which equals :math:`e^{s_k [D, H_k]} U_k` up to an error of order :math:`s_k^{3/2}`. Evolutions under
+        :math:`D` are exact, while evolutions under :math:`H_0` are Trotterized. Each step uses the previous circuit
+        three times, so the number of gates grows like :math:`3^k`, and only a few steps are practical.
+
+        The returned circuit is :math:`U_k^\dagger`, which maps computational basis states to approximate
+        eigenstates of :math:`H_0`. For small enough step sizes the flow pairs low eigenvalues of :math:`H_0` with
+        low diagonal entries of :math:`D`, so applying the circuit to the basis state that minimizes :math:`D`
+        approximates the ground state:
+
+        .. code-block:: python
+
+            from qilisdk.analog import X, Z
+            from qilisdk.digital import Circuit
+
+            # The diagonal part -Z(0) - Z(1) is lowest on |00>, so the circuit acts on the default initial state.
+            hamiltonian = -Z(0) - Z(1) + 0.5 * X(0) * X(1)
+            circuit = Circuit.double_bracket_iteration(hamiltonian, step_sizes=[0.1, 0.1])
+
+        A ``reference`` circuit :math:`V`, such as an optimized VQE ansatz, makes the iteration improve the state
+        :math:`V|0\ldots0\rangle` instead. The flow then runs on :math:`H_0' = V^\dagger H_0 V`, whose corner entry
+        :math:`\langle 0\ldots0|H_0'|0\ldots0\rangle` is the energy of the reference state, and the returned circuit
+        is :math:`V U_k^\dagger`. Evolutions under :math:`H_0'` use the exact identity
+        :math:`e^{-itV^\dagger H_0 V} = V^\dagger e^{-itH_0} V`, so they cost two copies of :math:`V` and a Trotter
+        step of :math:`H_0`, and :math:`H_0'` is never computed. Its diagonal part is not known either, so
+        ``diagonal`` must be given, and :math:`|0\ldots0\rangle` should minimize it, for example
+        :math:`D = -\sum_i Z_i`:
+
+        .. code-block:: python
+
+            from qilisdk.analog import Z
+            from qilisdk.digital import Circuit
+
+            # ansatz is a circuit whose parameters were optimized by a VQE for hamiltonian.
+            diagonal = -sum(Z(qubit) for qubit in range(ansatz.nqubits))
+            circuit = Circuit.double_bracket_iteration(hamiltonian, [0.01, 0.01], diagonal=diagonal, reference=ansatz)
+
+        Step sizes can be :class:`~qilisdk.core.variables.Parameter` objects, so they can be optimized with a
+        :class:`~qilisdk.functionals.variational_program.VariationalProgram`. Every other angle in the circuit is a
+        fixed, non-trainable parameter, so the step sizes are the only parameters an optimizer changes.
+
+        Args:
+            hamiltonian (Hamiltonian | QTensor): The Hamiltonian :math:`H_0` to diagonalize. A
+                :class:`~qilisdk.core.qtensor.QTensor` is converted with
+                :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor`.
+            step_sizes (Sequence[RealNumber | Parameter]): The non-negative step size :math:`s_k` of each iteration.
+                The number of iterations is ``len(step_sizes)``.
+            diagonal (Hamiltonian | None): The diagonal operator :math:`D`, made only of ``Z`` and identity terms.
+                Defaults to the diagonal part of ``hamiltonian``, its terms made only of ``Z`` and identities, and
+                is required when ``reference`` is given.
+            trotter_steps (int): The number of Trotter steps used for each evolution under :math:`H_0`.
+                Defaults to 1.
+            reference (Circuit | None): A circuit :math:`V` preparing the state to improve from
+                :math:`|0\ldots0\rangle`. It is copied at its current parameter values, so later changes to it do not
+                affect the returned circuit. Every gate must be a basic gate, or a gate without parameters that is its
+                own inverse or the adjoint of a basic gate, such as ``CNOT``. Defaults to None, which runs the flow on
+                :math:`H_0` itself.
+
+        Returns:
+            Circuit: The circuit :math:`U_k^\dagger`, or :math:`V U_k^\dagger` with a ``reference``, on enough qubits
+            for ``hamiltonian``, ``diagonal`` and ``reference``.
+
+        Raises:
+            ValueError: If a numeric step size is negative, if ``trotter_steps`` is less than 1, if ``diagonal``
+                contains ``X`` or ``Y`` operators or is missing when ``reference`` is given, if :math:`D` has no
+                terms other than the identity, or if ``reference`` contains a gate that cannot be inverted.
+        """
+        # Local import to avoid a circular import, as qilisdk.utils.trotterization imports qilisdk.digital.gates.
+        from qilisdk.utils.trotterization.trotterization import (  # ruff:ignore[import-outside-top-level]
+            _pauli_evolution,
+        )
+
+        logger.debug(
+            "[Circuit] Building double-bracket iteration with {} steps and {} Trotter steps",
+            len(step_sizes),
+            trotter_steps,
+        )
+        if isinstance(hamiltonian, QTensor):
+            hamiltonian = Hamiltonian.from_qtensor(hamiltonian)
+        if trotter_steps < 1:
+            raise ValueError(f"The number of Trotter steps must be at least 1, got {trotter_steps}.")
+        if any(step < 0 for step in step_sizes if not isinstance(step, Expression)):
+            raise ValueError(f"Step sizes must be non-negative, got {list(step_sizes)}.")
+        if diagonal is None and reference is not None:
+            raise ValueError("A diagonal operator is required with a reference circuit, as H' is never computed.")
+        if diagonal is None:
+            diagonal = Hamiltonian(
+                {
+                    term: coeff
+                    for term, coeff in hamiltonian.elements.items()
+                    if all(op.name in {"I", "Z"} for op in term)
+                }
+            )
+        if any(op.name not in {"I", "Z"} for term in diagonal.elements for op in term):
+            raise ValueError(f"The diagonal operator must contain only Z and identity terms, got {diagonal}.")
+        if reference is None:
+            reference = cls(0)
+
+        # Each rotation (term, angle) is exp(-i * angle * term); the identity terms only add a global phase.
+        hamiltonian_terms = [
+            (
+                term,
+                float(np.real(coeff if isinstance(coeff, (int, float, complex)) else coeff.evaluate({})))
+                / trotter_steps,
+            )
+            for part in hamiltonian.get_commuting_partitions()
+            for term, coeff in part.items()
+            if any(op.name != "I" for op in term)
+        ] * trotter_steps
+        diagonal_terms = [
+            (term, float(np.real(coeff)))
+            for term, coeff in diagonal.elements.items()
+            if any(op.name != "I" for op in term)
+        ]
+        if not diagonal_terms:
+            raise ValueError("The diagonal operator has no terms other than the identity, so the flow does nothing.")
+
+        # Copies of the reference gates at their current values, and their inverses keyed by id in both directions.
+        reference_gates: list[Gate] = []
+        gate_inverses: dict[int, Gate] = {}
+        for original_gate in reference.gates:
+            gate, inverse_gate = _frozen_gate_and_inverse(original_gate)
+            reference_gates.append(gate)
+            gate_inverses[id(gate)] = inverse_gate
+            gate_inverses[id(inverse_gate)] = gate
+        reference_inverse = [gate_inverses[id(gate)] for gate in reversed(reference_gates)]
+
+        def inverse(operations: list[_DoubleBracketOperation]) -> list[_DoubleBracketOperation]:
+            return [
+                gate_inverses[id(operation)] if isinstance(operation, Gate) else (operation[0], -operation[1])
+                for operation in reversed(operations)
+            ]
+
+        # The operations of U_k in time order, so the first one acts first.
+        operations: list[_DoubleBracketOperation] = []
+        # Numeric step sizes become fixed parameters, so every rotation angle is an expression.
+        for step in [step if isinstance(step, Expression) else _fixed_parameter(step) for step in step_sizes]:
+            root = step**0.5
+            hamiltonian_forward: list[_DoubleBracketOperation] = [
+                *reference_gates,
+                *((term, coeff * root) for term, coeff in hamiltonian_terms),
+                *reference_inverse,
+            ]
+            diagonal_forward: list[_DoubleBracketOperation] = [(term, coeff * root) for term, coeff in diagonal_terms]
+            operations_inverse = inverse(operations)
+            operations = (
+                hamiltonian_forward
+                + operations
+                + inverse(diagonal_forward)
+                + operations_inverse
+                + inverse(hamiltonian_forward)
+                + operations
+                + diagonal_forward
+            )
+
+        # Cancel each gate that directly follows its own inverse, such as the V V^dagger pairs between evolutions.
+        simplified: list[_DoubleBracketOperation] = []
+        for operation in [*inverse(operations), *reference_gates]:
+            # Rotations are not in gate_inverses, so get returns None for them and they are always kept.
+            if simplified and simplified[-1] is gate_inverses.get(id(operation)):
+                simplified.pop()
+                continue
+            simplified.append(operation)
+        if len(simplified) > _DOUBLE_BRACKET_OPERATION_WARNING:
+            logger.warning(
+                "[Circuit] The double-bracket iteration has {} operations, as the size grows like 3^steps",
+                len(simplified),
+            )
+
+        circuit = cls(max(hamiltonian.nqubits, diagonal.nqubits, reference.nqubits))
+        for operation in simplified:
+            circuit.add(operation if isinstance(operation, Gate) else list(_pauli_evolution(*operation, 1.0)))
+        return circuit
 
     def __repr__(self) -> str:
         logger.trace(

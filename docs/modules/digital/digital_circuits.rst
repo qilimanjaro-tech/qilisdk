@@ -66,6 +66,24 @@ You can also initialize a random circuit with a specified number of gates using 
     )
     circuit.draw()
 
+**Double-Bracket Iteration**
+
+The :meth:`~qilisdk.digital.circuit.Circuit.double_bracket_iteration` method builds a circuit 
+that approximately diagonalizes a Hamiltonian, following `arXiv:2206.11772 <https://arxiv.org/abs/2206.11772>`_. 
+Each step rotates the Hamiltonian towards a diagonal operator, which defaults to its own diagonal 
+part. The circuit maps computational basis states to approximate eigenstates, so applying it to 
+the basis state with the lowest diagonal energy approximates the ground state. The number of gates 
+grows like :math:`3^k` with the number of steps :math:`k`, so only a few small steps are practical. 
+Step sizes can also be parameters, so they can be optimized variationally.
+
+.. code-block:: python
+
+    from qilisdk.analog import X, Z
+    from qilisdk.digital import Circuit
+
+    hamiltonian = -Z(0) - Z(1) + 0.5 * X(0) * X(1)
+    circuit = Circuit.double_bracket_iteration(hamiltonian, step_sizes=[0.1, 0.1])
+
 Parameterized Circuits
 ^^^^^^^^^^^^^^^^^^^^^^
 
