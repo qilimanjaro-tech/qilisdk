@@ -18,6 +18,7 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 
 import qilisdk.utils.visualization.circuit_renderers
 from qilisdk.analog import X as analog_X
@@ -907,3 +908,87 @@ def test_gate_minus_analog_hamiltonian_raises_helpful_error():
     hamiltonian = analog_Y(0)
     with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
         _ = gate - hamiltonian
+
+
+def _assert_prepares(circuit: Circuit, target: np.ndarray) -> None:
+    """The circuit maps |0...0> to ``target`` up to a global phase."""
+    target = target / np.linalg.norm(target)
+    assert np.isclose(abs(np.vdot(target, circuit.to_matrix()[:, 0])), 1.0)
+
+
+@pytest.mark.parametrize("nqubits", [1, 2, 3, 4, 5])
+def test_from_state_prepares_random_state(nqubits):
+    state = QTensor.random(nqubits, seed=nqubits)
+    circuit = Circuit.from_state(state)
+    assert circuit.nqubits == nqubits
+    _assert_prepares(circuit, state.dense().ravel())
+
+
+@pytest.mark.parametrize("nqubits", [1, 2, 3, 4, 5])
+def test_from_state_uses_only_rotations_and_at_most_the_mottonen_cnot_count(nqubits):
+    circuit = Circuit.from_state(QTensor.random(nqubits, seed=7))
+    assert all(isinstance(gate, (RY, RZ, CNOT)) for gate in circuit.gates)
+    assert sum(isinstance(gate, CNOT) for gate in circuit.gates) <= max(0, 2 ** (nqubits + 1) - 4)
+
+
+def test_from_state_prepares_sparse_complex_states():
+    rng = np.random.default_rng(1)
+    for _ in range(200):
+        nqubits = int(rng.integers(1, 5))
+        dim = 1 << nqubits
+        amplitudes = rng.normal(size=dim) + 1j * rng.normal(size=dim)
+        amplitudes[rng.random(dim) < rng.random()] = 0
+        amplitudes[rng.integers(dim)] = 1j
+        _assert_prepares(Circuit.from_state(QTensor(amplitudes.reshape(-1, 1))), amplitudes)
+
+
+@pytest.mark.parametrize("bits", [(0,), (1,), (0, 0), (1, 0, 1), (1, 1, 0, 1)])
+def test_from_state_prepares_basis_state_without_entangling_gates(bits):
+    circuit = Circuit.from_state(QTensor.ket(*bits))
+    assert [gate.qubits for gate in circuit.gates] == [(q,) for q, bit in enumerate(bits) if bit]
+    assert all(isinstance(gate, RY) for gate in circuit.gates)
+    _assert_prepares(circuit, QTensor.ket(*bits).dense().ravel())
+
+
+def test_from_state_prepares_uniform_state_without_entangling_gates():
+    circuit = Circuit.from_state(QTensor.uniform(3))
+    assert len(circuit.gates) == 3
+    assert all(isinstance(gate, RY) for gate in circuit.gates)
+    _assert_prepares(circuit, QTensor.uniform(3).dense().ravel())
+
+
+@pytest.mark.parametrize("state", [QTensor.ghz(3), QTensor.w(3)])
+def test_from_state_real_amplitudes_need_no_phase_rotations(state):
+    circuit = Circuit.from_state(state)
+    assert not any(isinstance(gate, RZ) for gate in circuit.gates)
+    _assert_prepares(circuit, state.dense().ravel())
+
+
+def test_from_state_prepares_relative_phase():
+    amplitudes = np.array([1, 1j, -1, -1j]) / 2
+    circuit = Circuit.from_state(QTensor(amplitudes.reshape(-1, 1)))
+    _assert_prepares(circuit, amplitudes)
+
+
+def test_from_state_normalizes_with_warning(caplog):  # ruff: ignore[redefined-while-unused]
+    amplitudes = np.array([3.0, 4.0j])
+    circuit = Circuit.from_state(QTensor(amplitudes.reshape(-1, 1)))
+    assert "normalizing it" in caplog.text
+    _assert_prepares(circuit, amplitudes)
+
+
+def test_from_state_normalized_state_does_not_warn(caplog):  # ruff: ignore[redefined-while-unused]
+    Circuit.from_state(QTensor.ket(0, 1))
+    assert "normalizing it" not in caplog.text
+
+
+@pytest.mark.parametrize("state", [QTensor.bra(0, 1), QTensor.identity(1)])
+def test_from_state_rejects_non_kets(state):
+    with pytest.raises(ValueError, match="expects a ket"):
+        Circuit.from_state(state)
+
+
+def test_from_state_rejects_zero_vector():
+    zero = QTensor(np.zeros((4, 1)))
+    with pytest.raises(ValueError, match="zero vector"):
+        Circuit.from_state(zero)

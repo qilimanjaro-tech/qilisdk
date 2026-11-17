@@ -66,6 +66,21 @@ You can also initialize a random circuit with a specified number of gates using 
     )
     circuit.draw()
 
+**Preparing a State**
+
+The :meth:`~qilisdk.digital.circuit.Circuit.from_state` method builds a circuit that prepares a given ket, starting from the all-zero state:
+
+.. code-block:: python
+
+    from qilisdk.core import QTensor
+    from qilisdk.digital import Circuit
+
+    state = QTensor.random(3, seed=42)
+    circuit = Circuit.from_state(state)
+    circuit.draw()
+
+The circuit only uses ``RY``, ``RZ`` and ``CNOT`` gates, following the uniformly controlled rotation construction of `Möttönen et al. <https://arxiv.org/abs/quant-ph/0407010>`_. A general ``n``-qubit state needs at most ``2**(n+1) - 4`` CNOTs, while simpler states such as basis states, uniform superpositions or states with real amplitudes need fewer gates. The state is prepared up to a global phase, and an unnormalized ket is normalized with a warning.
+
 Parameterized Circuits
 ^^^^^^^^^^^^^^^^^^^^^^
 
