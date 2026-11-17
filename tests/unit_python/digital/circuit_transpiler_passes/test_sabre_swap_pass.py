@@ -383,6 +383,19 @@ def test_sabre_swap_rescales_decay_when_it_underflows() -> None:
     assert abs(out.gates[-1].qubits[0] - out.gates[-1].qubits[1]) == 1
 
 
+def test_sabre_swap_drops_decay_entries_that_rescale_to_zero() -> None:
+    # decay_lambda=0 rescales every swap and zeroes all decay, so the decayed list must not keep growing.
+    swap_pass = SabreSwapPass(make_line_topology(8), initial_layout=list(range(8)), decay_lambda=0.0, seed=0)
+    circuit = Circuit(8)
+    circuit.add(CZ(0, 7))
+    circuit.add(CZ(0, 7))
+
+    out = swap_pass.run(circuit)
+
+    assert swap_pass.last_swap_count == 6
+    assert all(abs(gate.qubits[0] - gate.qubits[1]) == 1 for gate in out.gates)
+
+
 def test_extended_set_stops_when_budget_is_exhausted() -> None:
     extended_gate_indices = SabreSwapPass._extended_set([[0, 1, 2], [0, 1]], [0, 0], 1)
 

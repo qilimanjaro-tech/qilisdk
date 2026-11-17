@@ -254,7 +254,7 @@ def test_layout_breaks_when_no_candidates(monkeypatch):
     circuit = _circuit_with_cz()
 
     # Force all logical qubits onto the same physical node so touched_phys contains a single entry.
-    monkeypatch.setattr(layout_pass, "_random_initial_layout", lambda rng, n_logical, phys_nodes: [0, 0, 0])
+    monkeypatch.setattr(layout_pass, "_random_initial_layout", lambda *_args: [0, 0, 0])
 
     layout_pass.run(circuit)
     assert layout_pass.last_layout is not None
@@ -301,7 +301,7 @@ def test_sabre_layout_simulation_breaks_on_degenerate_no_candidate_case() -> Non
     )
 
     assert final_layout == [0, 0]
-    assert math.isclose(score, 0.0)
+    assert math.isinf(score)
 
 
 def test_sabre_layout_simulation_uses_sampled_candidate_when_neighbors_are_unavailable(
@@ -408,7 +408,7 @@ def test_sabre_layout_release_valve_stops_on_disconnected_topology() -> None:
     )
 
     assert final_layout == [0, 2]
-    assert math.isclose(score, 0.0)
+    assert math.isinf(score)
 
 
 def test_sabre_layout_rescales_decay_when_it_underflows() -> None:
@@ -432,6 +432,64 @@ def test_sabre_layout_rescales_decay_when_it_underflows() -> None:
 
     assert abs(final_layout[0] - final_layout[1]) == 1
     assert math.isclose(score, 3.0)
+
+
+def test_sabre_layout_drops_decay_entries_that_rescale_to_zero() -> None:
+    # decay_lambda=0 rescales every swap and zeroes all decay, so the decayed list must not keep growing.
+    layout_pass = SabreLayoutPass(_line_graph(8), num_trials=1, seed=0, decay_lambda=0.0)
+    physical_nodes = list(range(8))
+    physical_to_dense_index = {node: node for node in physical_nodes}
+    distance_matrix = layout_pass._all_pairs_shortest_path_unweighted(
+        layout_pass.topology, physical_nodes, physical_to_dense_index
+    )
+
+    final_layout, score = layout_pass._sabre_simulate_layout(
+        [0, 7],
+        distance_matrix,
+        [(0, 1)],
+        [[0], [0]],
+        random.Random(0),
+        physical_nodes,
+        physical_to_dense_index,
+    )
+
+    assert abs(final_layout[0] - final_layout[1]) == 1
+    assert math.isclose(score, 6.0)
+
+
+@pytest.mark.parametrize("seed", range(10))
+def test_sabre_layout_prefers_routable_layout_on_disconnected_topology(seed: int) -> None:
+    # A split layout stops early with few SWAPs; it must still lose to a layout that keeps the triangle together.
+    topology = [(0, 1), (1, 2), (2, 3), (3, 4), (5, 6)]
+    circuit = Circuit(3)
+    for _ in range(50):
+        circuit.add(CNOT(0, 1))
+        circuit.add(CNOT(1, 2))
+        circuit.add(CNOT(0, 2))
+    layout_pass = SabreLayoutPass(topology, seed=seed, apply_layout=False)
+
+    layout_pass.run(circuit)
+
+    assert layout_pass.last_layout is not None
+    assert all(physical <= 4 for physical in layout_pass.last_layout)
+    assert math.isfinite(layout_pass.last_score)
+
+
+def test_sabre_layout_reports_infinite_score_when_no_layout_is_routable() -> None:
+    # A triangle cannot fit on two disjoint edges, so every extra trial fails too.
+    circuit = Circuit(3)
+    circuit.add(CNOT(0, 1))
+    circuit.add(CNOT(1, 2))
+    circuit.add(CNOT(0, 2))
+    layout_pass = SabreLayoutPass([(0, 1), (2, 3)], num_trials=1, seed=0, apply_layout=False)
+    simulate_spy = MagicMock(wraps=layout_pass._sabre_simulate_layout)
+    layout_pass._sabre_simulate_layout = simulate_spy
+
+    layout_pass.run(circuit)
+
+    assert layout_pass.last_layout is not None
+    assert math.isinf(layout_pass.last_score)
+    assert simulate_spy.call_count == 2 * 8 * layout_pass.num_iterations
 
 
 def test_sabre_layout_scores_disconnected_front_gates_with_finite_penalty() -> None:

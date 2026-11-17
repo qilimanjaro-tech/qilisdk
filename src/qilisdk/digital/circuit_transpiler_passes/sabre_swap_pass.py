@@ -359,8 +359,13 @@ class SabreSwapPass(CircuitTranspilerPass):
 
                 decay_scale *= self.decay_lambda
                 if decay_scale < _DECAY_RESCALE_THRESHOLD:
+                    # Drop entries that underflow to zero so a later swap can re-add them without duplicates.
+                    rescaled_indices = []
                     for dense_index in decayed_indices:
                         decay[dense_index] *= decay_scale
+                        if decay[dense_index]:
+                            rescaled_indices.append(dense_index)
+                    decayed_indices = rescaled_indices
                     decay_scale = 1.0
 
                 # Only a SWAP on one of the gate's endpoints can bring them closer, and one always does on a connected

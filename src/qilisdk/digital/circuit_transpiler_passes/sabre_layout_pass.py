@@ -19,6 +19,7 @@ import random
 from collections import deque
 from typing import TYPE_CHECKING
 
+import rustworkx as rx
 from loguru import logger
 
 from qilisdk.digital import Circuit, M
@@ -30,6 +31,8 @@ from .circuit_transpiler_pass import CircuitTranspilerPass
 _UNREACHABLE_PENALTY = 1e6
 # Lazily stored decay values are folded back into the scale once it drops below this.
 _DECAY_RESCALE_THRESHOLD = 1e-100
+# Total trials allowed when every trial so far produced a layout that cannot be routed.
+_MAX_TRIALS_WHEN_UNROUTABLE = 8
 
 if TYPE_CHECKING:
     from rustworkx import PyGraph
@@ -65,7 +68,10 @@ class SabreLayoutPass(CircuitTranspilerPass):
         Coupling map provided either as an edge list or as an undirected
         ``PyGraph`` whose node indices represent *physical* qubits.
     num_trials : int
-        Number of random initializations to try (keeps the best).
+        Number of random initializations to try (keeps the best). If every
+        trial leaves interacting qubits in disconnected parts of the topology,
+        more random starts are tried, up to 8 in total, since refinement only
+        moves qubits along edges and cannot fix such a split.
     num_iterations : int
         Backward-forward refinement rounds per trial. Each round routes the
         reversed circuit and then the circuit itself, and scores the layout
@@ -220,12 +226,28 @@ class SabreLayoutPass(CircuitTranspilerPass):
             for qubit_gate_indices in gate_indices_per_qubit
         ]
 
+        # On a disconnected topology, random starts keep each group of interacting qubits inside one component.
+        topology_components = [sorted(component) for component in rx.connected_components(self.topology)]
+        logical_groups: list[list[int]] | None = None
+        if len(topology_components) > 1:
+            interaction_graph: PyGraph[int, None] = rx.PyGraph()
+            interaction_graph.add_nodes_from(range(num_logical_qubits))
+            interaction_graph.add_edges_from_no_data(two_qubit_pairs)
+            logical_groups = sorted(
+                (sorted(group) for group in rx.connected_components(interaction_graph)), key=len, reverse=True
+            )
+
         # Multi-trial SABRE: keep the layout whose forward simulation needs the fewest SWAPs.
         best_layout: list[int] | None = None
         best_score: float = math.inf
 
-        for trial in range(self.num_trials):
-            layout = self._random_initial_layout(random_generator, num_logical_qubits, physical_nodes)
+        # Extra random starts are the only way out of a layout that splits interacting qubits across components.
+        max_trials = max(self.num_trials, _MAX_TRIALS_WHEN_UNROUTABLE)
+        trial = 0
+        while trial < self.num_trials or (math.isinf(best_score) and trial < max_trials):
+            layout = self._random_initial_layout(
+                random_generator, num_logical_qubits, physical_nodes, logical_groups, topology_components
+            )
             for iteration in range(self.num_iterations):
                 # Reverse routing tunes a layout for the circuit start; forward routing scores it and seeds the next round.
                 candidate_layout, _ = self._sabre_simulate_layout(
@@ -247,9 +269,10 @@ class SabreLayoutPass(CircuitTranspilerPass):
                     physical_to_dense_index,
                 )
                 logger.trace("[SabreLayoutPass] Trial {} iteration {} scored {}", trial, iteration, score)
-                if score < best_score:
+                if best_layout is None or score < best_score:
                     best_layout = candidate_layout
                     best_score = score
+            trial += 1
 
         self.last_layout = best_layout
         self.last_score = best_score
@@ -302,7 +325,8 @@ class SabreLayoutPass(CircuitTranspilerPass):
             physical_to_dense_index (dict[int, int]): Physical label to dense index mapping.
 
         Returns:
-            tuple[list[int], float]: Final logical-to-physical mapping and the number of simulated SWAPs.
+            tuple[list[int], float]: Final logical-to-physical mapping and the number of simulated SWAPs,
+            or ``inf`` when some gate spans disconnected qubits and cannot be routed.
         """
         num_logical_qubits = len(layout)
         num_physical_qubits = len(physical_nodes)
@@ -448,8 +472,13 @@ class SabreLayoutPass(CircuitTranspilerPass):
 
             decay_scale *= self.decay_lambda
             if decay_scale < _DECAY_RESCALE_THRESHOLD:
+                # Drop entries that underflow to zero so a later swap can re-add them without duplicates.
+                rescaled_indices = []
                 for dense_index in decayed_indices:
                     decay[dense_index] *= decay_scale
+                    if decay[dense_index]:
+                        rescaled_indices.append(dense_index)
+                decayed_indices = rescaled_indices
                 decay_scale = 1.0
 
             # Candidates are the coupling edges at front-gate endpoints, scored by the cost change of their qubits' gates.
@@ -526,7 +555,9 @@ class SabreLayoutPass(CircuitTranspilerPass):
             swap_count += 1
             swaps_since_progress += 1
 
-        return [physical_nodes[dense_index] for dense_index in position], float(swap_count)
+        # A layout that leaves gates unrouted must lose to any routable one, however few SWAPs it used.
+        score = math.inf if remaining else float(swap_count)
+        return [physical_nodes[dense_index] for dense_index in position], score
 
     # --------- helpers: extended set ---------
 
@@ -565,13 +596,25 @@ class SabreLayoutPass(CircuitTranspilerPass):
         random_generator: random.Random,
         num_logical_qubits: int,
         physical_nodes: list[int],
+        logical_groups: list[list[int]] | None = None,
+        topology_components: list[list[int]] | None = None,
     ) -> list[int]:
         """Sample a random injective logical-to-physical layout.
+
+        With ``logical_groups`` and ``topology_components``, each group of interacting
+        logical qubits (largest first) goes onto random free nodes of the first
+        component, in random order, with room for the whole group. SABRE refinement
+        only moves qubits along edges, so it can never repair a group split across
+        components. Groups that fit nowhere fill the remaining free nodes.
 
         Args:
             random_generator (random.Random): Random generator used for shuffling.
             num_logical_qubits (int): Number of logical qubits.
             physical_nodes (list[int]): Available physical node labels.
+            logical_groups (list[list[int]] | None): Connected components of the circuit's
+                interaction graph, largest first, or ``None`` for a plain random layout.
+            topology_components (list[list[int]] | None): Connected components of the
+                coupling graph as physical node labels. Required with ``logical_groups``.
 
         Returns:
             list[int]: Mapping ``layout[q_logical] = q_physical``.
@@ -581,9 +624,26 @@ class SabreLayoutPass(CircuitTranspilerPass):
         """
         if len(physical_nodes) < num_logical_qubits:
             raise ValueError(f"Coupling graph has only {len(physical_nodes)} nodes; need ≥ {num_logical_qubits}.")
-        nodes = physical_nodes.copy()  # copy so we can shuffle deterministically
-        random_generator.shuffle(nodes)
-        return nodes[:num_logical_qubits]
+        if logical_groups is None or topology_components is None:
+            nodes = physical_nodes.copy()  # copy so we can shuffle deterministically
+            random_generator.shuffle(nodes)
+            return nodes[:num_logical_qubits]
+
+        free_nodes = [random_generator.sample(component, len(component)) for component in topology_components]
+        random_generator.shuffle(free_nodes)
+        layout = [-1] * num_logical_qubits
+        unplaced: list[int] = []
+        for group in logical_groups:
+            target = next((component for component in free_nodes if len(component) >= len(group)), None)
+            if target is None:
+                unplaced.extend(group)
+                continue
+            for logical_qubit in group:
+                layout[logical_qubit] = target.pop()
+        leftover_nodes = [node for component in free_nodes for node in component]
+        for logical_qubit in unplaced:
+            layout[logical_qubit] = leftover_nodes.pop()
+        return layout
 
     # --------- helpers: mapping & structure ---------
 
