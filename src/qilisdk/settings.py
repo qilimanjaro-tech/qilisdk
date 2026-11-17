@@ -41,9 +41,9 @@ class Precision(str, Enum):
         """
         match self:
             case Precision.COMPLEX_64:
-                return np.complex64  # ty:ignore[invalid-return-type]
+                return np.complex64  # ty:ignore[invalid-explicit-return]
             case _:
-                return np.complex128  # ty:ignore[invalid-return-type]
+                return np.complex128  # ty:ignore[invalid-explicit-return]
 
 
 class QiliSDKSettings(BaseSettings):
