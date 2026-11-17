@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-14 11:41+0200\n"
+"POT-Creation-Date: 2026-11-17 13:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -66,11 +66,41 @@ msgstr ""
 "especificado de puertas usando el método "
 ":meth:`~qilisdk.digital.circuit.Circuit.random`:"
 
-#: ../../modules/digital/digital_circuits.rst:70
+#: ../../modules/digital/digital_circuits.rst:69
+msgid "**Double-Bracket Iteration**"
+msgstr "**Iteración de doble corchete**"
+
+#: ../../modules/digital/digital_circuits.rst:71
+msgid ""
+"The :meth:`~qilisdk.digital.circuit.Circuit.double_bracket_iteration` "
+"method builds a circuit that approximately diagonalizes a Hamiltonian, "
+"following `arXiv:2206.11772 <https://arxiv.org/abs/2206.11772>`_. Each "
+"step rotates the Hamiltonian towards a diagonal operator, which defaults "
+"to its own diagonal part. The circuit maps computational basis states to "
+"approximate eigenstates, so applying it to the basis state with the "
+"lowest diagonal energy approximates the ground state. The number of gates"
+" grows like :math:`3^k` with the number of steps :math:`k`, so only a few"
+" small steps are practical. Step sizes can also be parameters, so they "
+"can be optimized variationally."
+msgstr ""
+"El método "
+":meth:`~qilisdk.digital.circuit.Circuit.double_bracket_iteration` "
+"construye un circuito que diagonaliza aproximadamente un hamiltoniano, "
+"siguiendo `arXiv:2206.11772 <https://arxiv.org/abs/2206.11772>`_. Cada "
+"paso rota el hamiltoniano hacia un operador diagonal, que por defecto es "
+"su propia parte diagonal. El circuito transforma los estados de la base "
+"computacional en autoestados aproximados, de modo que aplicarlo al estado"
+" de la base con la menor energía diagonal aproxima el estado fundamental."
+" El número de puertas crece como :math:`3^k` con el número de pasos "
+":math:`k`, por lo que solo son prácticos unos pocos pasos pequeños. Los "
+"tamaños de paso también pueden ser parámetros, de modo que se pueden "
+"optimizar variacionalmente."
+
+#: ../../modules/digital/digital_circuits.rst:82
 msgid "Parameterized Circuits"
 msgstr "Circuitos parametrizados"
 
-#: ../../modules/digital/digital_circuits.rst:72
+#: ../../modules/digital/digital_circuits.rst:84
 msgid ""
 "Circuits can include parameterized gates. Adding them is similar to "
 "regular gates:"
@@ -78,30 +108,30 @@ msgstr ""
 "Los circuitos pueden incluir puertas parametrizadas. Su adición es "
 "similar a la de las puertas regulares:"
 
-#: ../../modules/digital/digital_circuits.rst:82
+#: ../../modules/digital/digital_circuits.rst:94
 msgid "You can retrieve the current parameter using:"
 msgstr "Se puede obtener el parámetro actual usando:"
 
-#: ../../modules/digital/digital_circuits.rst:89
-#: ../../modules/digital/digital_circuits.rst:103
+#: ../../modules/digital/digital_circuits.rst:101
+#: ../../modules/digital/digital_circuits.rst:115
 msgid "**Output:**"
 msgstr "**Salida:**"
 
-#: ../../modules/digital/digital_circuits.rst:96
+#: ../../modules/digital/digital_circuits.rst:108
 msgid "You can also retrieve a list containing only the current parameter values:"
 msgstr ""
 "También se puede obtener una lista que contenga solo los valores actuales"
 " de los parámetros:"
 
-#: ../../modules/digital/digital_circuits.rst:110
+#: ../../modules/digital/digital_circuits.rst:122
 msgid "To update parameters by their keys:"
 msgstr "Para actualizar parámetros por sus claves:"
 
-#: ../../modules/digital/digital_circuits.rst:116
+#: ../../modules/digital/digital_circuits.rst:128
 msgid "To update all parameters with new values:"
 msgstr "Para actualizar todos los parámetros con nuevos valores:"
 
-#: ../../modules/digital/digital_circuits.rst:124
+#: ../../modules/digital/digital_circuits.rst:136
 msgid ""
 "The order of parameters in the list passed to ``set_parameter_values`` "
 "must match the order in which the gates were added to the circuit."
@@ -109,11 +139,11 @@ msgstr ""
 "El orden de los parámetros en la lista pasada a ``set_parameter_values`` "
 "debe coincidir con el orden en que se añadieron las puertas al circuito."
 
-#: ../../modules/digital/digital_circuits.rst:127
+#: ../../modules/digital/digital_circuits.rst:139
 msgid "Visualization"
 msgstr "Visualización"
 
-#: ../../modules/digital/digital_circuits.rst:129
+#: ../../modules/digital/digital_circuits.rst:141
 msgid ""
 "Use :meth:`~qilisdk.digital.circuit.Circuit.draw` to render a circuit "
 "with Matplotlib. By default, the renderer applies the library's built-in "
@@ -131,19 +161,19 @@ msgstr ""
 "personalizado, que limita el estilo a la llamada específica sin modificar"
 " la configuración global de Matplotlib."
 
-#: ../../modules/digital/digital_circuits.rst:146
+#: ../../modules/digital/digital_circuits.rst:158
 msgid "**Output**"
 msgstr "**Salida**"
 
-#: ../../modules/digital/digital_circuits.rst:148
+#: ../../modules/digital/digital_circuits.rst:160
 msgid "Example digital circuit rendered with Circuit.draw"
 msgstr "Ejemplo de circuito digital renderizado con Circuit.draw"
 
-#: ../../modules/digital/digital_circuits.rst:152
+#: ../../modules/digital/digital_circuits.rst:164
 msgid "Example circuit produced by ``circuit.draw()``."
 msgstr "Circuito de ejemplo producido por ``circuit.draw()``."
 
-#: ../../modules/digital/digital_circuits.rst:154
+#: ../../modules/digital/digital_circuits.rst:166
 msgid ""
 "The plot can also be saved to a file by providing a filepath to the draw "
 "method:"
@@ -151,17 +181,17 @@ msgstr ""
 "El gráfico también se puede guardar en un archivo proporcionando una ruta"
 " de archivo al método draw:"
 
-#: ../../modules/digital/digital_circuits.rst:161
+#: ../../modules/digital/digital_circuits.rst:173
 msgid ""
 "By default, long circuits are wrapped onto multiple rows, to customize "
 "this behavior you can use the ``fold`` parameter in the "
 ":class:`~qilisdk.utils.visualization.style.CircuitStyle`:"
 msgstr ""
 "Por defecto, los circuitos largos se dividen en varias filas; para "
-"personalizar este comportamiento se puede usar el parámetro ``fold`` de la "
-":class:`~qilisdk.utils.visualization.style.CircuitStyle`:"
+"personalizar este comportamiento se puede usar el parámetro ``fold`` de "
+"la :class:`~qilisdk.utils.visualization.style.CircuitStyle`:"
 
-#: ../../modules/digital/digital_circuits.rst:176
+#: ../../modules/digital/digital_circuits.rst:188
 msgid ""
 "Custom styling with "
 ":class:`~qilisdk.utils.visualization.style.CircuitStyle`"
@@ -169,7 +199,7 @@ msgstr ""
 "Estilo personalizado con "
 ":class:`~qilisdk.utils.visualization.style.CircuitStyle`"
 
-#: ../../modules/digital/digital_circuits.rst:178
+#: ../../modules/digital/digital_circuits.rst:190
 msgid ""
 "Create a style object to control theme, fonts, spacing, DPI, labels, and "
 "more. Passing this object to "
@@ -187,7 +217,7 @@ msgstr ""
 " al máximo cambiando el parámetro **layout** a *\"normal\"* "
 "(predeterminado) o *\"compact\"* respectivamente."
 
-#: ../../modules/digital/digital_circuits.rst:222
+#: ../../modules/digital/digital_circuits.rst:234
 msgid ""
 "``CircuitStyle`` fields map directly to the renderer's layout and font "
 "configuration. In particular, you can switch fonts in two ways: (1) "
@@ -204,11 +234,11 @@ msgstr ""
 "``fontfamily=[...]`` para usar fuentes del sistema. Ambos enfoques solo "
 "afectan a la llamada de dibujo actual."
 
-#: ../../modules/digital/digital_circuits.rst:228
+#: ../../modules/digital/digital_circuits.rst:240
 msgid "Parameter Utilities"
 msgstr "Utilidades de parámetros"
 
-#: ../../modules/digital/digital_circuits.rst:230
+#: ../../modules/digital/digital_circuits.rst:242
 msgid ""
 "Circuits collect the symbolic parameters contributed by each gate. Beyond"
 " the quick examples above, you can query names, current values, and "
@@ -218,7 +248,7 @@ msgstr ""
 "puerta. Más allá de los ejemplos rápidos anteriores, se pueden consultar "
 "nombres, valores actuales y límites, o actualizarlos de forma selectiva:"
 
-#: ../../modules/digital/digital_circuits.rst:255
+#: ../../modules/digital/digital_circuits.rst:267
 msgid ""
 "These helpers make it straightforward to plug the circuit into classical "
 "optimization loops while keeping parameter metadata synchronized."
@@ -227,7 +257,7 @@ msgstr ""
 "optimización clásica manteniendo sincronizados los metadatos de los "
 "parámetros."
 
-#: ../../modules/digital/digital_circuits.rst:260
+#: ../../modules/digital/digital_circuits.rst:272
 msgid ""
 "Parameterized gates and circuits expose parameter information through "
 "``get_parameter_names``, ``get_parameters``, ``get_parameter_values``, "

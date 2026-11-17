@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+import math
 import random
 from copy import deepcopy
 from typing import TYPE_CHECKING, Callable, Iterable
@@ -21,7 +22,9 @@ import numpy as np
 from loguru import logger
 from typing_extensions import Self
 
+from qilisdk.analog.hamiltonian import Hamiltonian
 from qilisdk.core import Domain, Parameter, QTensor
+from qilisdk.core.expression import Expression
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
@@ -32,10 +35,16 @@ from .exceptions import QubitOutOfRangeError
 from .gates import BasicGate, Gate, _reject_analog_object
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from qilisdk.analog.hamiltonian import PauliOperator
     from qilisdk.core.types import RealNumber
 
 # Name used for this class in the error messages raised for analog objects.
 _REJECT_TARGET = "a Circuit"
+
+# Pauli rotation count above which double_bracket_iteration warns about circuit size.
+_DOUBLE_BRACKET_ROTATION_WARNING = 100_000
 
 
 def _complex_dtype() -> np.dtype:
@@ -511,6 +520,147 @@ class Circuit(Parameterizable):
             new_circuit.add(gate_class(*qubits, **params))  # ty:ignore[invalid-argument-type]
 
         return new_circuit
+
+    @classmethod
+    def double_bracket_iteration(
+        cls,
+        hamiltonian: Hamiltonian | QTensor,
+        step_sizes: Sequence[RealNumber | Parameter],
+        diagonal: Hamiltonian | None = None,
+        trotter_steps: int = 1,
+    ) -> Self:
+        r"""
+        Build a circuit that approximately diagonalizes a Hamiltonian using double-bracket iterations.
+
+        A double-bracket iteration (Gluza, "Double-bracket quantum algorithms for diagonalization",
+        `arXiv:2206.11772 <https://arxiv.org/abs/2206.11772>`_) rotates :math:`H_0` towards a diagonal matrix by
+        repeating
+
+        .. math::
+
+            H_{k+1} = e^{s_k [D, H_k]} \, H_k \, e^{-s_k [D, H_k]},
+
+        where :math:`D` is a fixed diagonal operator and :math:`s_k` is the size of step :math:`k`. Writing
+        :math:`H_k = U_k H_0 U_k^\dagger`, each step is built from evolutions under :math:`H_0` and :math:`D` with
+        the group commutator
+
+        .. math::
+
+            U_{k+1} = e^{-i\sqrt{s_k}D} \, U_k \, e^{i\sqrt{s_k}H_0} \, U_k^\dagger \, e^{i\sqrt{s_k}D} \, U_k \,
+            e^{-i\sqrt{s_k}H_0}, \qquad U_0 = I,
+
+        which equals :math:`e^{s_k [D, H_k]} U_k` up to an error of order :math:`s_k^{3/2}`. Evolutions under
+        :math:`D` are exact, while evolutions under :math:`H_0` are Trotterized. Each step uses the previous circuit
+        three times, so the number of gates grows like :math:`3^k`, and only a few steps are practical.
+
+        The returned circuit is :math:`U_k^\dagger`, which maps computational basis states to approximate
+        eigenstates of :math:`H_0`. For small enough step sizes the flow pairs low eigenvalues of :math:`H_0` with
+        low diagonal entries of :math:`D`, so applying the circuit to the basis state that minimizes :math:`D`
+        approximates the ground state:
+
+        .. code-block:: python
+
+            from qilisdk.analog import X, Z
+            from qilisdk.digital import Circuit
+
+            # The diagonal part -Z(0) - Z(1) is lowest on |00>, so the circuit acts on the default initial state.
+            hamiltonian = -Z(0) - Z(1) + 0.5 * X(0) * X(1)
+            circuit = Circuit.double_bracket_iteration(hamiltonian, step_sizes=[0.1, 0.1])
+
+        Step sizes can be :class:`~qilisdk.core.variables.Parameter` objects, so they can be optimized with a
+        :class:`~qilisdk.functionals.variational_program.VariationalProgram`.
+
+        Args:
+            hamiltonian (Hamiltonian | QTensor): The Hamiltonian :math:`H_0` to diagonalize. A
+                :class:`~qilisdk.core.qtensor.QTensor` is converted with
+                :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor`.
+            step_sizes (Sequence[RealNumber | Parameter]): The non-negative step size :math:`s_k` of each iteration.
+                The number of iterations is ``len(step_sizes)``.
+            diagonal (Hamiltonian | None): The diagonal operator :math:`D`, made only of ``Z`` and identity terms.
+                Defaults to the diagonal part of ``hamiltonian``, its terms made only of ``Z`` and identities.
+            trotter_steps (int): The number of Trotter steps used for each evolution under :math:`H_0`.
+                Defaults to 1.
+
+        Returns:
+            Circuit: The circuit :math:`U_k^\dagger` on enough qubits for both ``hamiltonian`` and ``diagonal``.
+
+        Raises:
+            ValueError: If a numeric step size is negative, if ``trotter_steps`` is less than 1, if ``diagonal``
+                contains ``X`` or ``Y`` operators, or if :math:`D` has no terms other than the identity.
+        """
+        # Local import to avoid a circular import, as qilisdk.utils.trotterization imports qilisdk.digital.gates.
+        from qilisdk.utils.trotterization.trotterization import (  # ruff:ignore[import-outside-top-level]
+            _pauli_evolution,
+        )
+
+        logger.debug(
+            "[Circuit] Building double-bracket iteration with {} steps and {} Trotter steps",
+            len(step_sizes),
+            trotter_steps,
+        )
+        if isinstance(hamiltonian, QTensor):
+            hamiltonian = Hamiltonian.from_qtensor(hamiltonian)
+        if trotter_steps < 1:
+            raise ValueError(f"The number of Trotter steps must be at least 1, got {trotter_steps}.")
+        if any(not isinstance(step, Expression) and step < 0 for step in step_sizes):
+            raise ValueError(f"Step sizes must be non-negative, got {list(step_sizes)}.")
+        if diagonal is None:
+            diagonal = Hamiltonian(
+                {
+                    term: coeff
+                    for term, coeff in hamiltonian.elements.items()
+                    if all(op.name in {"I", "Z"} for op in term)
+                }
+            )
+        elif any(op.name not in {"I", "Z"} for term in diagonal.elements for op in term):
+            raise ValueError(f"The diagonal operator must contain only Z and identity terms, got {diagonal}.")
+
+        # Each rotation (term, angle) is exp(-i * angle * term); the identity terms only add a global phase.
+        hamiltonian_terms = [
+            (term, float(np.real(coeff)) / trotter_steps)
+            for part in hamiltonian.get_commuting_partitions()
+            for term, coeff in part.items()
+            if any(op.name != "I" for op in term)
+        ] * trotter_steps
+        diagonal_terms = [
+            (term, float(np.real(coeff)))
+            for term, coeff in diagonal.elements.items()
+            if any(op.name != "I" for op in term)
+        ]
+        if not diagonal_terms:
+            raise ValueError("The diagonal operator has no terms other than the identity, so the flow does nothing.")
+
+        def inverse(
+            rotations: list[tuple[tuple[PauliOperator, ...], float | Expression]],
+        ) -> list[tuple[tuple[PauliOperator, ...], float | Expression]]:
+            return [(term, -angle) for term, angle in reversed(rotations)]
+
+        # The rotations of U_k in time order, so the first one acts first.
+        rotations: list[tuple[tuple[PauliOperator, ...], float | Expression]] = []
+        for step in step_sizes:
+            root = step**0.5 if isinstance(step, Expression) else math.sqrt(step)
+            hamiltonian_forward = [(term, coeff * root) for term, coeff in hamiltonian_terms]
+            diagonal_forward = [(term, coeff * root) for term, coeff in diagonal_terms]
+            rotations_inverse = inverse(rotations)
+            rotations = (
+                hamiltonian_forward
+                + rotations
+                + inverse(diagonal_forward)
+                + rotations_inverse
+                + inverse(hamiltonian_forward)
+                + rotations
+                + diagonal_forward
+            )
+        if len(rotations) > _DOUBLE_BRACKET_ROTATION_WARNING:
+            logger.warning(
+                "[Circuit] The double-bracket iteration has {} Pauli rotations, as the size grows like 3^steps",
+                len(rotations),
+            )
+
+        circuit = cls(max(hamiltonian.nqubits, diagonal.nqubits))
+        for term, angle in inverse(rotations):
+            circuit.add(list(_pauli_evolution(term, angle, 1.0)))
+        return circuit
 
     def __repr__(self) -> str:
         logger.trace(

@@ -14,14 +14,18 @@
 
 import math
 import random
+from itertools import pairwise
 from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
+from scipy.linalg import expm
 
 import qilisdk.utils.visualization.circuit_renderers
 from qilisdk.analog import X as analog_X
 from qilisdk.analog import Y as analog_Y
+from qilisdk.analog import Z as analog_Z
 from qilisdk.analog.hamiltonian import PauliX
 from qilisdk.core import Parameter, QTensor
 from qilisdk.core.comparison import LEQ
@@ -907,3 +911,121 @@ def test_gate_minus_analog_hamiltonian_raises_helpful_error():
     hamiltonian = analog_Y(0)
     with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
         _ = gate - hamiltonian
+
+
+def _double_bracket_reference(hamiltonian, diagonal, step_sizes):
+    """The adjoint of the group-commutator recursion, built with exact matrix exponentials."""
+    h = hamiltonian.to_matrix().toarray()
+    d = diagonal.to_matrix().toarray()
+    u = np.eye(h.shape[0], dtype=complex)
+    for step in step_sizes:
+        root = np.sqrt(step)
+        u = expm(-1j * root * d) @ u @ expm(1j * root * h) @ u.conj().T @ expm(1j * root * d) @ u @ expm(-1j * root * h)
+    return u.conj().T
+
+
+def test_double_bracket_iteration_matches_exact_recursion():
+    """With commuting Hamiltonian terms there is no Trotter error, so the circuit matches the exact recursion."""
+    hamiltonian = analog_X(0) * analog_X(1) + 0.7 * analog_Y(0) * analog_Y(1)
+    diagonal = analog_Z(0) + 0.5 * analog_Z(1)
+    step_sizes = [0.1, 0.2, 0.05]
+    circuit = Circuit.double_bracket_iteration(hamiltonian, step_sizes, diagonal=diagonal)
+    assert circuit.nqubits == 2
+    np.testing.assert_allclose(
+        circuit.to_matrix(), _double_bracket_reference(hamiltonian, diagonal, step_sizes), atol=1e-12
+    )
+
+
+def test_double_bracket_iteration_lowers_energy_and_off_diagonal_norm():
+    """Each small step lowers the energy of the prepared state and the off-diagonal norm of the rotated Hamiltonian."""
+    hamiltonian = (
+        -analog_Z(0) * analog_Z(1)
+        - analog_Z(1) * analog_Z(2)
+        - 0.3 * analog_Z(0)
+        + 0.6 * (analog_X(0) + analog_X(1) + analog_X(2))
+    )
+    matrix = hamiltonian.to_matrix().toarray()
+    reference_index = int(np.argmin(np.diag(matrix).real))
+    energies = []
+    off_diagonal_norms = []
+    for nsteps in range(4):
+        unitary = Circuit.double_bracket_iteration(hamiltonian, [0.03] * nsteps, trotter_steps=2).to_matrix()
+        state = unitary[:, reference_index]
+        rotated = unitary.conj().T @ matrix @ unitary
+        energies.append((state.conj() @ matrix @ state).real)
+        off_diagonal_norms.append(np.linalg.norm(rotated - np.diag(np.diag(rotated))))
+    assert all(later < earlier for earlier, later in pairwise(energies))
+    assert all(later < earlier for earlier, later in pairwise(off_diagonal_norms))
+    assert energies[-1] > np.linalg.eigvalsh(matrix)[0]
+
+
+def test_double_bracket_iteration_without_steps_is_empty():
+    circuit = Circuit.double_bracket_iteration(analog_Z(0) + analog_X(2), [])
+    assert circuit.nqubits == 3
+    assert circuit.gates == []
+
+
+def test_double_bracket_iteration_accepts_qtensor():
+    # Commuting terms, so the term order of the converted Hamiltonian does not change the Trotter product.
+    hamiltonian = analog_X(0) * analog_X(1) + 0.7 * analog_Y(0) * analog_Y(1)
+    diagonal = analog_Z(0) + 0.5 * analog_Z(1)
+    from_hamiltonian = Circuit.double_bracket_iteration(hamiltonian, [0.1, 0.2], diagonal=diagonal)
+    from_qtensor = Circuit.double_bracket_iteration(hamiltonian.to_qtensor(), [0.1, 0.2], diagonal=diagonal)
+    np.testing.assert_allclose(from_qtensor.to_matrix(), from_hamiltonian.to_matrix(), atol=1e-12)
+
+
+def test_double_bracket_iteration_ignores_identity_terms():
+    """Identity terms only add a global phase, so they are left out of the circuit."""
+    hamiltonian = analog_Z(0) + 0.5 * analog_X(0) * analog_X(1)
+    diagonal = analog_Z(0) - analog_Z(1)
+    plain = Circuit.double_bracket_iteration(hamiltonian, [0.1], diagonal=diagonal)
+    shifted = Circuit.double_bracket_iteration(hamiltonian + 2.0, [0.1], diagonal=diagonal + 3.0)
+    assert len(shifted.gates) == len(plain.gates)
+    np.testing.assert_allclose(shifted.to_matrix(), plain.to_matrix(), atol=1e-12)
+
+
+def test_double_bracket_iteration_with_parameter_step_sizes():
+    hamiltonian = analog_Z(0) + 0.5 * analog_X(0) * analog_X(1)
+    step = Parameter("step", 0.1)
+    parameterized = Circuit.double_bracket_iteration(hamiltonian, [step, 0.2])
+    assert "step" in parameterized.get_parameter_names()
+    numeric = Circuit.double_bracket_iteration(hamiltonian, [0.1, 0.2])
+    np.testing.assert_allclose(parameterized.to_matrix(), numeric.to_matrix(), atol=1e-12)
+
+    parameterized.set_parameters({"step": 0.3})
+    np.testing.assert_allclose(
+        parameterized.to_matrix(),
+        Circuit.double_bracket_iteration(hamiltonian, [0.3, 0.2]).to_matrix(),
+        atol=1e-12,
+    )
+
+
+def test_double_bracket_iteration_warns_about_large_circuits(monkeypatch, caplog):  # ruff: ignore[redefined-while-unused]
+    monkeypatch.setattr("qilisdk.digital.circuit._DOUBLE_BRACKET_ROTATION_WARNING", 10)
+    Circuit.double_bracket_iteration(analog_Z(0) + analog_X(0), [0.1, 0.1])
+    assert "Pauli rotations" in caplog.text
+
+
+def test_double_bracket_iteration_rejects_negative_step_sizes():
+    hamiltonian = analog_Z(0) + analog_X(0)
+    with pytest.raises(ValueError, match="Step sizes must be non-negative"):
+        Circuit.double_bracket_iteration(hamiltonian, [0.1, -0.2])
+
+
+def test_double_bracket_iteration_rejects_too_few_trotter_steps():
+    hamiltonian = analog_Z(0) + analog_X(0)
+    with pytest.raises(ValueError, match="Trotter steps must be at least 1"):
+        Circuit.double_bracket_iteration(hamiltonian, [0.1], trotter_steps=0)
+
+
+def test_double_bracket_iteration_rejects_non_diagonal_operator():
+    hamiltonian = analog_Z(0) + analog_X(0)
+    diagonal = analog_Z(0) + analog_X(1)
+    with pytest.raises(ValueError, match="only Z and identity terms"):
+        Circuit.double_bracket_iteration(hamiltonian, [0.1], diagonal=diagonal)
+
+
+def test_double_bracket_iteration_rejects_trivial_diagonal_operator():
+    hamiltonian = analog_X(0) + 2.0
+    with pytest.raises(ValueError, match="no terms other than the identity"):
+        Circuit.double_bracket_iteration(hamiltonian, [0.1])
