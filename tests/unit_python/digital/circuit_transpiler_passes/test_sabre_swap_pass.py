@@ -414,6 +414,28 @@ def test_init_layout_supports_prefix_hints_and_placeholder_fill() -> None:
     assert layout == [11, 10, 10]
 
 
+@pytest.mark.parametrize("seed", range(5))
+def test_unused_qubit_sharing_a_placeholder_does_not_absorb_swaps(seed: int) -> None:
+    # Unused logical qubit 0 gets placeholder physical 1, which active logical qubit 1 also occupies.
+    graph = PyGraph()
+    graph.add_nodes_from(range(4))
+    graph.remove_node(0)
+    graph.add_edges_from_no_data([(1, 2), (2, 3)])
+    circuit = Circuit(4)
+    circuit.add(CNOT(1, 3))
+    circuit.add(RX(1, theta=0.1))
+    swap_pass = SabreSwapPass(graph, seed=seed, max_attempts=1)
+
+    out = swap_pass.run(circuit)
+
+    assert swap_pass.last_swap_count == 1
+    final_layout = swap_pass.last_final_layout
+    assert [(type(gate).__name__, gate.qubits) for gate in out.gates[1:]] == [
+        ("CNOT", (final_layout[1], final_layout[3])),
+        ("RX", (final_layout[1],)),
+    ]
+
+
 def test_init_layout_rejects_unknown_active_physical_nodes() -> None:
     with pytest.raises(ValueError, match="not present in the coupling graph"):
         SabreSwapPass._init_layout(2, [0, 1], {0, 1}, [0, 99])

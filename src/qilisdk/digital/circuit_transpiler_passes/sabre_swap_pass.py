@@ -239,7 +239,7 @@ class SabreSwapPass(CircuitTranspilerPass):
                 routed_circuit.add(self._retarget_gate(gate, mapped_qubits))
             return routed_circuit, 0, layout[:]
 
-        inverse_layout = self._invert_layout(layout, physical_to_dense_index)
+        inverse_layout = self._invert_layout(layout, physical_to_dense_index, active_qubits)
         distance_matrix = self._all_pairs_shortest_path_unweighted(
             self.topology,
             physical_nodes,
@@ -547,20 +547,27 @@ class SabreSwapPass(CircuitTranspilerPass):
     def _invert_layout(
         layout: list[int],
         physical_to_dense_index: dict[int, int],
+        active_qubits: set[int],
     ) -> list[int | None]:
         """Build inverse mapping from dense physical indices to logical qubits.
+
+        Unused logical qubits may share a placeholder physical qubit with an active one. The
+        active qubit then owns that physical qubit, so a SWAP moves it rather than the placeholder.
 
         Args:
             layout (list[int]): Logical-to-physical mapping.
             physical_to_dense_index (dict[int, int]): Physical label to dense index mapping.
+            active_qubits (set[int]): Logical qubits that appear in at least one circuit operation.
 
         Returns:
             list[int | None]: Inverse map where each dense physical index stores the occupying logical qubit or ``None``.
         """
-        inverse_layout = [None] * len(physical_to_dense_index)
+        inverse_layout: list[int | None] = [None] * len(physical_to_dense_index)
         for logical_qubit, physical_qubit in enumerate(layout):
             physical_dense_index = physical_to_dense_index.get(physical_qubit)
-            if physical_dense_index is not None and inverse_layout[physical_dense_index] is None:
+            if physical_dense_index is not None and (
+                inverse_layout[physical_dense_index] is None or logical_qubit in active_qubits
+            ):
                 inverse_layout[physical_dense_index] = logical_qubit
         return inverse_layout
 
