@@ -16,6 +16,7 @@
 import itertools
 import math
 import random
+import sys
 from typing import Any
 
 import numpy as np
@@ -455,3 +456,114 @@ def test_swap_routing_picks_the_cheapest_swap_by_full_recomputation(topology_nam
         decay[chosen[1]] += swap_pass.decay_delta
         checked += 1
     assert checked == swap_pass.last_swap_count > 0
+
+
+class _LayoutScoringOracle(SabreLayoutPass):
+    """Re-scores every greedy SWAP of the layout simulation with the full SABRE cost.
+
+    The simulation reads ``decay_delta`` right after applying each greedy SWAP (release-valve SWAPs never read it),
+    so the getter inspects the simulation frame and checks that the chosen SWAP minimises the full cost: every
+    front gate with lazily scaled decay plus ``beta`` times every look-ahead gate.
+    """
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.checked_swaps = 0
+        super().__init__(*args, **kwargs)
+
+    @property
+    def decay_delta(self) -> float:
+        state = sys._getframe(1).f_locals
+        if state["dense_index"] == state["best_edge"][0]:
+            self._check_choice(state)
+        return self._decay_delta
+
+    @decay_delta.setter
+    def decay_delta(self, value: float) -> None:
+        self._decay_delta = value
+
+    def _check_choice(self, state: dict[str, Any]) -> None:
+        chosen = state["best_edge"]
+        pairs = state["two_qubit_pairs"]
+        costs = state["distance_costs"]
+        decay = state["decay"]
+        decay_scale = state["decay_scale"]
+        front = [pairs[gate_idx] for gate_idx in state["front"]]
+        extended = [
+            pairs[gate_idx]
+            for gate_idx in self._extended_set(state["gate_indices_per_qubit"], state["cursor"], self.lookahead_size)
+        ]
+
+        def swapped(position: list[int], edge: tuple[int, int]) -> list[int]:
+            return [edge[1] if p == edge[0] else edge[0] if p == edge[1] else p for p in position]
+
+        def full_cost(position: list[int]) -> float:
+            front_cost = sum(
+                costs[position[a]][position[b]] * (1.0 + (decay[position[a]] + decay[position[b]]) * decay_scale)
+                for a, b in front
+            )
+            return front_cost + self.beta * sum(costs[position[a]][position[b]] for a, b in extended)
+
+        # The chosen SWAP is already applied, so undo it to recover the positions it was scored from.
+        position = swapped(list(state["position"]), chosen)
+        candidates = {
+            (min(dense, neighbor), max(dense, neighbor))
+            for pair in front
+            for dense in (position[pair[0]], position[pair[1]])
+            for neighbor in state["swap_neighbors"][dense]
+        }
+        assert (min(chosen), max(chosen)) in candidates
+        best_cost = min(full_cost(swapped(position, edge)) for edge in candidates)
+        assert full_cost(swapped(position, chosen)) <= best_cost + 1e-9
+        self.checked_swaps += 1
+
+
+@pytest.mark.parametrize(
+    ("beta", "decay_delta", "decay_lambda"), [(0.5, 0.001, 0.99), (0.8, 0.3, 0.9), (0.0, 0.5, 0.5)]
+)
+@pytest.mark.parametrize("seed", range(4))
+@pytest.mark.parametrize("topology_name", ["grid4x4", "sparse_labels", "two_components"])
+def test_layout_simulation_picks_the_cheapest_swap_by_full_recomputation(
+    topology_name: str, seed: int, beta: float, decay_delta: float, decay_lambda: float
+) -> None:
+    edges = {
+        "grid4x4": _grid_edges(4, 4),
+        "sparse_labels": TOPOLOGIES["sparse_labels"],
+        # Random starts can split interacting qubits here, so unreachable pairs are scored with the finite penalty.
+        "two_components": [(0, 1), (1, 2), (2, 3), (3, 0), (4, 5), (5, 6)],
+    }[topology_name]
+    nqubits = len({node for edge in edges for node in edge})
+    circuit = _random_cz_circuit(nqubits, 30, seed)
+    layout_pass = _LayoutScoringOracle(
+        edges, seed=seed, num_trials=1, beta=beta, decay_delta=decay_delta, decay_lambda=decay_lambda
+    )
+
+    layout_pass.run(circuit)
+
+    assert layout_pass.checked_swaps > 0
+
+
+@pytest.mark.parametrize("apply_layout", [False, True])
+@pytest.mark.parametrize("seed", range(6))
+def test_layout_and_routing_preserve_circuit_action_on_disconnected_topology(seed: int, apply_layout: bool) -> None:
+    # Logical qubits {0, 3, 5} only interact with each other, as do {1, 2, 4, 6}; each group fits one component.
+    edges = [(0, 2), (2, 3), (5, 7), (7, 8), (8, 9), (9, 5)]
+    groups = [[0, 3, 5], [1, 2, 4, 6]]
+    rng = random.Random(seed)
+    circuit = Circuit(7)
+    for _ in range(25):
+        group = rng.choice(groups)
+        if rng.random() < 0.6:
+            circuit.add(rng.choice([CNOT, CZ])(*rng.sample(group, 2)))
+        else:
+            circuit.add(RY(rng.choice(group), theta=rng.uniform(-math.pi, math.pi)))
+    graph = build_topology_graph(edges)
+    layout_pass = SabreLayoutPass(graph, seed=seed, apply_layout=apply_layout)
+    transpiler = CircuitTranspiler([layout_pass, SabreSwapPass(graph, seed=seed)])
+
+    result = transpiler.transpile(circuit)
+
+    assert math.isfinite(layout_pass.last_score)
+    initial = dict(enumerate(layout_pass.last_layout))
+    final = {q: result.layout[initial[q]] for q in initial} if apply_layout else result.layout
+    _assert_gates_on_edges(result.circuit, edges)
+    _assert_same_action(circuit, result.circuit, initial, final, seed)
