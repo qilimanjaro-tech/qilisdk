@@ -25,7 +25,7 @@ from matplotlib.figure import Figure
 from matplotlib.patches import Arc, Circle, FancyArrow, FancyBboxPatch
 from matplotlib.text import Text
 
-from qilisdk.digital.gates import Controlled, Gate, M, X
+from qilisdk.digital.gates import Barrier, Controlled, Gate, M, X
 from qilisdk.utils.visualization.style import CircuitStyle
 
 if TYPE_CHECKING:
@@ -54,6 +54,7 @@ class MatplotlibCircuitRenderer:
         "gate": 3,
         "node": 3,
         "bridge": 2,
+        "barrier": 2,
         "connector": 4,
         "gate_label": 4,
     }
@@ -100,6 +101,10 @@ class MatplotlibCircuitRenderer:
                 self._draw_inline_measure(inline_qubits, layer=layer)
             for gate in self._layer_gate_mapping[layer].values():
                 if isinstance(gate, M):
+                    continue
+
+                if isinstance(gate, Barrier):
+                    self._draw_barrier(gate, layer=layer)
                     continue
 
                 if isinstance(gate, Controlled):
@@ -234,10 +239,16 @@ class MatplotlibCircuitRenderer:
         """
         self._deferred_qubits: set[int] = set()
         self._inline_measures: dict[int, list[int]] = {}
+        # Width of the content of every layer, which barriers are centred on
+        self._content_widths: list[float] = []
         widths: list[float] = []
         for layer in sorted(self._layer_gate_mapping):
             width = 0.0
+            has_barrier = False
             for gate in self._layer_gate_mapping[layer].values():
+                if isinstance(gate, Barrier):
+                    has_barrier = True
+                    continue
                 if isinstance(gate, M):
                     inline = [q for q in gate.target_qubits if self.last_idx.get(q) != layer]
                     self._deferred_qubits.update(q for q in gate.target_qubits if self.last_idx.get(q) == layer)
@@ -246,7 +257,9 @@ class MatplotlibCircuitRenderer:
                         width = max(width, self.style.min_gate_w)
                     continue
                 width = max(width, self._gate_width(gate))
-            widths.append(width + self.style.gate_margin * 2 if width else 0.0)
+            self._content_widths.append(width)
+            # A barrier is a line with no width, but its layer still needs its margins
+            widths.append(width + self.style.gate_margin * 2 if width or has_barrier else 0.0)
 
         # The deferred measurements share one extra column after the last layer
         self._measure_layer = len(widths)
@@ -684,6 +697,42 @@ class MatplotlibCircuitRenderer:
         for c in controls:
             self._draw_control_dot(c, x_center)
             self._draw_bridge(c, targets[0], x_center)
+
+    def _draw_barrier(self, gate: Barrier, layer: int) -> None:
+        """
+        Draw a barrier as a dashed vertical line across its qubits.
+
+        The line is broken wherever the barrier skips a qubit, so it never seems to
+        cover a wire it does not act on.
+
+        Args:
+            gate: The barrier to draw.
+            layer: Column index the barrier belongs to.
+        """
+        x = self._place(layer) + self._content_widths[layer] / 2
+        overhang = self.style.wire_sep * 0.4
+        qubits = sorted(gate.qubits)
+        runs: list[list[int]] = []
+        for q in qubits:
+            if runs and q == runs[-1][-1] + 1:
+                runs[-1].append(q)
+            else:
+                runs.append([q])
+        for run in runs:
+            y_top = self._ypos(run[0], n_qubits=self._wires, sep=self.style.wire_sep) + overhang
+            y_bottom = self._ypos(run[-1], n_qubits=self._wires, sep=self.style.wire_sep) - overhang
+            self._record(
+                self.axes.add_line(
+                    plt.Line2D(
+                        [x, x],
+                        [y_bottom, y_top],
+                        lw=1.25,
+                        ls=(0, (4, 3)),
+                        color=self.style.theme.on_background,
+                        zorder=self._Z["barrier"],
+                    )
+                )
+            )
 
     # Measurements --------------------------------------------------------
 

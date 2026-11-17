@@ -25,7 +25,7 @@ from qutip_qip.operations.gateclass import SingleQubitGate, is_qutip5
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 from qilisdk.backends.backend import Backend
 from qilisdk.core.qtensor import InitialState, QTensor, tensor_prod
-from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
+from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Barrier, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
@@ -168,8 +168,8 @@ class QutipBackend(Backend):
         except StopIteration:
             first_m = None  # No measurements at all
 
-        # If there's a measurement, check that nothing after it is a non-measurement
-        if first_m is not None and any(not isinstance(g, M) for g in gates[first_m + 1 :]):
+        # If there's a measurement, check that nothing after it but measurements and barriers
+        if first_m is not None and any(not isinstance(g, (M, Barrier)) for g in gates[first_m + 1 :]):
             raise ValueError(
                 "Mid-circuit measurements are not supported in the QutipBackend. "
                 "All measurements must be at the end of the circuit."
@@ -486,6 +486,9 @@ class QutipBackend(Backend):
         )
 
         for gate in circuit.gates:
+            # A barrier is only a drawing aid, with no effect on the state
+            if isinstance(gate, Barrier):
+                continue
             if isinstance(gate, Controlled):
                 self._handle_controlled(qutip_circuit, gate)
             elif isinstance(gate, Adjoint):

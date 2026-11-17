@@ -31,6 +31,7 @@ from qilisdk.digital.gates import (
     U2,
     U3,
     Adjoint,
+    Barrier,
     BasicGate,
     Controlled,
     Gate,
@@ -293,8 +294,13 @@ def to_qasm2(circuit: Circuit) -> str:
     # Process each gate.
     for gate in circuit.gates:
         logger.trace("[OpenQASM2] Exporting gate {} on qubits {}", gate.name, gate.qubits)
+        if isinstance(gate, Barrier):
+            if gate.qubits == tuple(range(circuit.nqubits)):
+                qasm_lines.append("barrier q;")
+            else:
+                qasm_lines.append(f"barrier {', '.join(f'q[{q}]' for q in gate.qubits)};")
         # Special conversion for measurement.
-        if isinstance(gate, M):
+        elif isinstance(gate, M):
             if len(gate.target_qubits) == circuit.nqubits:
                 qasm_lines.append("measure q -> c;")
             else:
@@ -340,6 +346,7 @@ def from_qasm2(qasm_str: str) -> Circuit:
         - Classical register declaration (e.g., "creg c[3];")
         - Gate instructions (one-qubit and two-qubit gates, plus the three-qubit "ccx" gate)
         - Measurement instructions (e.g., "measure q[0] -> c[0];")
+        - Barrier instructions (e.g., "barrier q[0], q[1];" or "barrier q;")
 
     The registers may be given any name, and any instruction that refers to a register that was never declared
     raises rather than being skipped. Several quantum registers are laid out one after another in the order they
@@ -423,6 +430,31 @@ def from_qasm2(qasm_str: str) -> Circuit:
             else:
                 measured = (offset + index,)
             circuit.add(M(*measured))
+            continue
+
+        # Process barriers, whose operands may be whole registers as well as single qubits.
+        if re.match(r"barrier\b", line):
+            # e.g., "barrier q[0], q[1];" or "barrier q;"
+            m = re.fullmatch(r"barrier\s+(.+?)\s*;", line)
+            if m is None:
+                raise ValueError(f"Invalid barrier instruction: {line}")
+            barrier_qubits: list[int] = []
+            for operand in m.group(1).split(","):
+                om = re.fullmatch(r"\s*(\w+)\s*(?:\[(\d+)\])?\s*", operand)
+                if om is None:
+                    raise ValueError(f"Invalid barrier operand '{operand.strip()}': {line}")
+                name = om.group(1)
+                if name not in qregs:
+                    raise ValueError(f"Undeclared quantum register '{name}' in barrier: {line}")
+                offset, size = qregs[name]
+                if om.group(2) is None:
+                    barrier_qubits.extend(range(offset, offset + size))
+                elif int(om.group(2)) >= size:
+                    raise ValueError(f"Qubit {om.group(2)} is out of range for quantum register '{name}': {line}")
+                else:
+                    barrier_qubits.append(offset + int(om.group(2)))
+            # A qubit listed twice, directly or through its register, is still only one qubit of the barrier
+            circuit.add(Barrier(*dict.fromkeys(barrier_qubits)))
             continue
 
         # Process gate instructions.

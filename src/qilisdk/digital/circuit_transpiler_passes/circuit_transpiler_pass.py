@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING
 
 from loguru import logger
 
-from qilisdk.digital import Adjoint, Circuit, Controlled, Exponential, M
+from qilisdk.digital import Adjoint, Barrier, Circuit, Controlled, Exponential, M
 from qilisdk.digital.gates import BasicGate, Modified
 
 if TYPE_CHECKING:
@@ -86,7 +86,7 @@ class CircuitTranspilerPass(ABC):
         Raises:
             NotImplementedError: If the gate type does not provide known internal storage for control or target qubits.
         """
-        if isinstance(gate, (BasicGate, M)):
+        if isinstance(gate, (BasicGate, Barrier, M)):
             gate._target_qubits = tuple(qubit_map[logical_qubit] for logical_qubit in gate.target_qubits)  # ruff: ignore[private-member-access]
             return
 
