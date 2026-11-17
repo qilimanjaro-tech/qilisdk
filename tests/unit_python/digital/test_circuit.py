@@ -28,7 +28,7 @@ from qilisdk.core.comparison import LEQ
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X, Y
 from qilisdk.digital.circuit import _apply_gate_left
 from qilisdk.digital.exceptions import GateHasNoMatrixError, NotAGateError, QubitOutOfRangeError
-from qilisdk.digital.gates import BasicGate, Gate
+from qilisdk.digital.gates import Adjoint, BasicGate, Gate
 
 
 def test_circuit_initialization():
@@ -195,6 +195,40 @@ def test_multiple_parameterized_gates():
     assert c.nparameters == 2
     # Check get_parameter_values => [0.1, 0.2]
     assert c.get_parameter_values() == [0.1, 0.2]
+
+
+def test_adjoint_gates_get_distinct_parameter_labels():
+    a = U3(0, theta=0.1, phi=0.2, gamma=0.3)
+    b = U3(1, theta=1.1, phi=1.2, gamma=1.3)
+    c = Circuit(2)
+    c.add([a.adjoint(), b.adjoint()])
+
+    assert c.get_parameters() == {
+        "U3†(0)_theta_0": 0.1,
+        "U3†(0)_phi_1": 0.2,
+        "U3†(0)_gamma_2": 0.3,
+        "U3†(1)_theta_3": 1.1,
+        "U3†(1)_phi_4": 1.2,
+        "U3†(1)_gamma_5": 1.3,
+    }
+
+    before = c.to_matrix()
+    c.set_parameter_values(c.get_parameter_values())
+    assert a.theta == 0.1
+    assert np.allclose(c.to_matrix(), before)
+
+
+def test_controlled_gates_get_distinct_parameter_labels():
+    c = Circuit(3)
+    c.add([RX(0, theta=0.1).controlled(2), RX(1, theta=0.9).controlled(2)])
+    assert c.get_parameters() == {"CRX(2,0)_theta_0": 0.1, "CRX(2,1)_theta_1": 0.9}
+
+
+def test_nested_modified_gates_get_distinct_parameter_labels():
+    c = Circuit(3)
+    c.add([Adjoint(RX(0, theta=0.1).controlled(2)), Adjoint(RX(1, theta=0.9).controlled(2))])
+    assert c.nparameters == 2
+    assert c.get_parameter_values() == [0.1, 0.9]
 
 
 def test_set_parameter_values_correct():
