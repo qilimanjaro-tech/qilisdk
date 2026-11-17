@@ -28,7 +28,7 @@ from qilisdk.core.comparison import LEQ
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X, Y
 from qilisdk.digital.circuit import _apply_gate_left
 from qilisdk.digital.exceptions import GateHasNoMatrixError, NotAGateError, QubitOutOfRangeError
-from qilisdk.digital.gates import Adjoint, BasicGate, Gate
+from qilisdk.digital.gates import Adjoint, BasicGate, Exponential, Gate
 
 
 def test_circuit_initialization():
@@ -227,8 +227,47 @@ def test_controlled_gates_get_distinct_parameter_labels():
 def test_nested_modified_gates_get_distinct_parameter_labels():
     c = Circuit(3)
     c.add([Adjoint(RX(0, theta=0.1).controlled(2)), Adjoint(RX(1, theta=0.9).controlled(2))])
-    assert c.nparameters == 2
-    assert c.get_parameter_values() == [0.1, 0.9]
+    assert c.get_parameters() == {"CRX†(2,0)_theta_0": 0.1, "CRX†(2,1)_theta_1": 0.9}
+
+
+def test_exponential_gates_get_distinct_parameter_labels():
+    c = Circuit(2)
+    c.add([Exponential(RX(0, theta=0.1)), Exponential(RX(1, theta=0.2))])
+    assert c.get_parameters() == {"e^RX(0)_theta_0": 0.1, "e^RX(1)_theta_1": 0.2}
+
+
+def test_inserted_modified_gates_get_distinct_parameter_labels():
+    c = Circuit(2)
+    c.add(RX(0, theta=0.1).adjoint())
+    c.insert(RX(1, theta=0.2).adjoint(), 0)
+    assert c.get_parameters() == {"RX†(0)_theta_0": 0.1, "RX†(1)_theta_1": 0.2}
+
+
+def test_set_parameters_on_modified_gate_label_only_updates_that_gate():
+    a = RX(0, theta=0.1)
+    b = RX(1, theta=0.9)
+    c = Circuit(3)
+    c.add([a.controlled(2), b.controlled(2)])
+
+    c.set_parameters({"CRX(2,0)_theta_0": 0.5})
+
+    assert a.theta == 0.5
+    assert b.theta == 0.9
+    assert c.get_parameters() == {"CRX(2,0)_theta_0": 0.5, "CRX(2,1)_theta_1": 0.9}
+
+
+def test_user_named_parameter_shared_across_modified_gates():
+    shared = Parameter("shared", 0.3)
+    a = RX(0, theta=shared)
+    b = RX(1, theta=shared)
+    c = Circuit(2)
+    c.add([a.adjoint(), b.adjoint()])
+
+    assert c.get_parameters() == {"shared": 0.3}
+
+    c.set_parameters({"shared": 0.7})
+    assert a.theta == 0.7
+    assert b.theta == 0.7
 
 
 def test_set_parameter_values_correct():
