@@ -96,8 +96,12 @@ def _uniformly_controlled_rotation(
         return [gate_class(0, **{gate_class.PARAMETER_NAMES[0]: float(angles[0])})]
     size = len(angles)
     gray = np.arange(size) ^ (np.arange(size) >> 1)
-    parity = np.array([[(int(g) & j).bit_count() & 1 for j in range(size)] for g in gray])
-    thetas = ((1 - 2 * parity) @ angles) / size
+    # thetas[i] = sum_j (-1)^popcount(gray[i] & j) angles[j] / size, i.e. a Gray-ordered fast Walsh-Hadamard transform.
+    coeffs = angles.astype(float)
+    for bit in range(target):
+        pairs = coeffs.reshape(-1, 2, 1 << bit)
+        coeffs = np.stack((pairs[:, 0] + pairs[:, 1], pairs[:, 0] - pairs[:, 1]), axis=1).ravel()
+    thetas = coeffs[gray] / size
     # CNOTs sharing a target commute and cancel in pairs, so only the net parity between rotations is emitted.
     gates: list[Gate] = []
     pending = 0
@@ -569,6 +573,12 @@ class Circuit(Parameterizable):
         ``n``-qubit state takes at most ``2**(n+1) - 4`` CNOTs; rotations with a zero angle are left out, along with
         the CNOTs they make redundant, so product states and states with real amplitudes need fewer gates.
 
+        The phase cascade runs from the last qubit to the first: ``diag(e^{i w0}, e^{i w1})`` on qubit ``k`` equals
+        ``RZ(w1 - w0)`` times a phase ``(w0 + w1) / 2`` that is left on qubits ``0..k-1``. Phases of zero amplitudes are
+        free, so a pair with a single nonzero amplitude of phase ``w`` can take any ``RZ`` angle ``d``, provided the
+        phase left behind is ``w + d / 2`` (or ``w - d / 2``); ``d`` is chosen to match another pair, which lets
+        rotations that would otherwise be controlled collapse into fewer gates.
+
         Example:
             .. code-block:: python
 
@@ -609,9 +619,7 @@ class Circuit(Parameterizable):
             angles = 2 * np.arctan2(branch_norms[:, 1], branch_norms[:, 0])
             circuit.add(_uniformly_controlled_rotation(RY, target, angles, branch_norms.sum(axis=1) >= atol, atol))
 
-        # diag(e^{i w0}, e^{i w1}) on qubit k equals RZ(w1 - w0) times a phase (w0 + w1) / 2 left on qubits 0..k-1.
-        # Phases of zero amplitudes are free, so a pair with one zero amplitude can take any RZ angle d, provided
-        # the phase left behind is w - d / 2 (or w + d / 2), with w the phase of its nonzero amplitude.
+        # Each qubit, last to first, absorbs the relative phase of its pairs and passes their mean phase upwards.
         phases = np.angle(amplitudes)
         weights = magnitudes >= atol
         phase_gates: list[Gate] = []

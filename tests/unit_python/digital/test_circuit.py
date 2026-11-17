@@ -27,7 +27,7 @@ from qilisdk.analog.hamiltonian import PauliX
 from qilisdk.core import Parameter, QTensor
 from qilisdk.core.comparison import LEQ
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X, Y
-from qilisdk.digital.circuit import _apply_gate_left
+from qilisdk.digital.circuit import _apply_gate_left, _uniformly_controlled_rotation
 from qilisdk.digital.exceptions import GateHasNoMatrixError, NotAGateError, QubitOutOfRangeError
 from qilisdk.digital.gates import BasicGate, Gate
 
@@ -992,3 +992,101 @@ def test_from_state_rejects_zero_vector():
     zero = QTensor(np.zeros((4, 1)))
     with pytest.raises(ValueError, match="zero vector"):
         Circuit.from_state(zero)
+
+
+def _uniformly_controlled_matrix(gate_class, angles):
+    """Block-diagonal matrix applying ``gate_class(angles[j])`` to the last qubit when the others are in state ``j``."""
+    blocks = [gate_class(0, **{gate_class.PARAMETER_NAMES[0]: float(angle)}).matrix.dense() for angle in angles]
+    size = 2 * len(blocks)
+    matrix = np.zeros((size, size), dtype=complex)
+    for j, block in enumerate(blocks):
+        matrix[2 * j : 2 * j + 2, 2 * j : 2 * j + 2] = block
+    return matrix
+
+
+@pytest.mark.parametrize("gate_class", [RY, RZ])
+@pytest.mark.parametrize("target", [1, 2, 3, 4])
+def test_uniformly_controlled_rotation_matches_block_diagonal(gate_class, target):
+    rng = np.random.default_rng(target)
+    angles = rng.uniform(-np.pi, np.pi, size=1 << target)
+    circuit = Circuit(target + 1)
+    circuit.add(_uniformly_controlled_rotation(gate_class, target, angles, np.ones(1 << target, dtype=bool), 1e-10))
+    assert np.allclose(circuit.to_matrix(), _uniformly_controlled_matrix(gate_class, angles))
+    assert sum(isinstance(gate, CNOT) for gate in circuit.gates) == 1 << target
+
+
+@pytest.mark.parametrize("target", [1, 2, 3])
+def test_uniformly_controlled_rotation_ignores_irrelevant_angles(target):
+    rng = np.random.default_rng(target)
+    angles = rng.uniform(-np.pi, np.pi, size=1 << target)
+    relevant = rng.random(1 << target) < 0.5
+    relevant[0] = True
+    circuit = Circuit(target + 1)
+    circuit.add(_uniformly_controlled_rotation(RY, target, angles, relevant, 1e-10))
+    blocks = np.repeat(relevant, 2)
+    expected = _uniformly_controlled_matrix(RY, angles)
+    assert np.allclose(circuit.to_matrix()[np.ix_(blocks, blocks)], expected[np.ix_(blocks, blocks)])
+
+
+def test_uniformly_controlled_rotation_with_equal_angles_is_a_single_rotation():
+    gates = _uniformly_controlled_rotation(RY, 3, np.full(8, 0.7), np.ones(8, dtype=bool), 1e-10)
+    assert len(gates) == 1
+    assert isinstance(gates[0], RY)
+    assert gates[0].qubits == (3,)
+    assert np.isclose(gates[0].theta, 0.7)
+
+
+def test_from_state_prepares_larger_random_state():
+    state = QTensor.random(8, seed=3)
+    _assert_prepares(Circuit.from_state(state), state.dense().ravel())
+
+
+def test_from_state_product_state_needs_no_entangling_gates():
+    rng = np.random.default_rng(5)
+    amplitudes = np.ones(1)
+    for _ in range(4):
+        single = rng.normal(size=2) + 1j * rng.normal(size=2)
+        amplitudes = np.kron(amplitudes, single / np.linalg.norm(single))
+    circuit = Circuit.from_state(QTensor(amplitudes.reshape(-1, 1)))
+    assert not any(isinstance(gate, CNOT) for gate in circuit.gates)
+    _assert_prepares(circuit, amplitudes)
+
+
+def test_from_state_ignores_global_phase():
+    state = QTensor.random(3, seed=11)
+    shifted = QTensor(np.exp(0.9j) * state.dense())
+    original_gates = Circuit.from_state(state).gates
+    shifted_gates = Circuit.from_state(shifted).gates
+    assert [(type(gate), gate.qubits) for gate in original_gates] == [
+        (type(gate), gate.qubits) for gate in shifted_gates
+    ]
+    assert np.allclose(
+        [value for gate in original_gates for value in gate.get_parameter_values()],
+        [value for gate in shifted_gates for value in gate.get_parameter_values()],
+    )
+
+
+def test_from_state_basis_state_with_phase_needs_no_phase_rotations():
+    amplitudes = np.zeros(8, dtype=complex)
+    amplitudes[5] = np.exp(1.3j)
+    circuit = Circuit.from_state(QTensor(amplitudes.reshape(-1, 1)))
+    assert all(isinstance(gate, RY) for gate in circuit.gates)
+    _assert_prepares(circuit, amplitudes)
+
+
+def test_from_state_drops_amplitudes_below_tolerance():
+    amplitudes = np.array([1, 0, 0, 1e-13j]) / np.sqrt(1 + 1e-26)
+    circuit = Circuit.from_state(QTensor(amplitudes.reshape(-1, 1)))
+    assert circuit.gates == []
+    _assert_prepares(circuit, amplitudes)
+
+
+def test_from_state_does_not_modify_input(caplog):  # ruff: ignore[redefined-while-unused]
+    state = QTensor(np.array([[3.0], [4.0]]))
+    Circuit.from_state(state)
+    assert np.allclose(state.dense().ravel(), [3.0, 4.0])
+
+
+def test_from_state_omits_negligible_rotations():
+    circuit = Circuit.from_state(QTensor.random(5, seed=2))
+    assert all(abs(gate.get_parameter_values()[0]) >= 1e-10 for gate in circuit.gates if not isinstance(gate, CNOT))
