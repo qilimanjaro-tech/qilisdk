@@ -21,7 +21,7 @@ from loguru import logger
 
 from qilisdk.core import Domain, Parameter, QTensor, tensor_prod
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.digital import Circuit, M
+from qilisdk.digital import Barrier, Circuit, M
 from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.yaml import yaml
 
@@ -122,7 +122,7 @@ class ReservoirLayer(Parameterizable):
             raise ValueError("Pre-Processing Circuit can't contain measurements")
         if pre_processing.nqubits > self._evolution_dynamics.nqubits:
             raise ValueError("Pre-Processing Circuit acts on more qubits than defined by the reservoir dynamics.")
-        if any(g.nqubits > 1 for g in pre_processing.gates):
+        if any(g.nqubits > 1 and not isinstance(g, Barrier) for g in pre_processing.gates):
             raise ValueError("Only single qubit gates are allowed in the pre-processing circuit.")
         self._input_encoding = Circuit(self._nqubits)
         self._input_encoding.add(pre_processing.gates)
@@ -143,7 +143,7 @@ class ReservoirLayer(Parameterizable):
             raise ValueError("Post-Processing Circuit can't contain measurements")
         if post_processing.nqubits > self._evolution_dynamics.nqubits:
             raise ValueError("Post-Processing Circuit acts on more qubits than defined by the reservoir dynamics.")
-        if any(g.nqubits > 1 for g in post_processing.gates):
+        if any(g.nqubits > 1 and not isinstance(g, Barrier) for g in post_processing.gates):
             raise ValueError("Only single qubit gates are allowed in the post-processing circuit.")
         self._output_encoding = Circuit(self._nqubits)
         self._output_encoding.add(post_processing.gates)

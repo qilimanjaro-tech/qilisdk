@@ -20,6 +20,15 @@ import qilisdk.utils.visualization.circuit_renderers
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.digital import CNOT, RX, Barrier, Circuit, H, M, X
 from qilisdk.digital.circuit_transpiler import CircuitTranspiler
+from qilisdk.digital.circuit_transpiler_passes import (
+    CancelIdentityPairsPass,
+    CustomLayoutPass,
+    DecomposeMultiControlledGatesPass,
+    DecomposeToCanonicalBasisPass,
+    FuseSingleQubitGatesPass,
+    SabreLayoutPass,
+    SabreSwapPass,
+)
 from qilisdk.digital.exceptions import GateHasNoMatrixError, QubitOutOfRangeError
 from qilisdk.functionals import DigitalPropagation
 from qilisdk.readout import Readout
@@ -63,9 +72,12 @@ def test_barrier_rejects_repeated_qubits():
 
 
 def test_barrier_equality():
-    assert Barrier(0, 1) == Barrier(0, 1)
-    assert Barrier(0, 1) != Barrier(0, 2)
-    assert hash(Barrier(0, 1)) == hash(Barrier(0, 1))
+    barrier = Barrier(0, 1)
+    same = Barrier(0, 1)
+    other = Barrier(0, 2)
+    assert barrier == same
+    assert barrier != other
+    assert hash(barrier) == hash(same)
 
 
 def test_barrier_yaml_roundtrip():
@@ -84,8 +96,21 @@ def test_barrier_without_qubits_spans_the_circuit():
 
 
 def test_barrier_out_of_range():
+    circuit = Circuit(2)
+    barrier = Barrier(0, 2)
     with pytest.raises(QubitOutOfRangeError):
-        Circuit(2).add(Barrier(0, 2))
+        circuit.add(barrier)
+
+
+def test_empty_barrier_can_be_reused_in_circuits_of_different_sizes():
+    barrier = Barrier()
+    small = Circuit(2)
+    large = Circuit(4)
+    small.add(barrier)
+    large.add(barrier)
+    assert small.gates[0].qubits == (0, 1)
+    assert large.gates[0].qubits == (0, 1, 2, 3)
+    assert barrier.qubits == ()
 
 
 def test_barriers_do_not_change_the_unitary():
@@ -178,6 +203,33 @@ def test_transpiling_without_barriers_keeps_the_input_circuit():
     assert CircuitTranspiler([]).transpile(circuit).circuit is circuit
 
 
+@pytest.mark.parametrize(
+    "transpiler_pass",
+    [
+        CancelIdentityPairsPass(),
+        DecomposeMultiControlledGatesPass(),
+        DecomposeToCanonicalBasisPass(),
+        FuseSingleQubitGatesPass(),
+        CustomLayoutPass(topology=[(0, 1), (1, 2)], layout={0: 0, 1: 1, 2: 2}),
+        SabreLayoutPass(topology=[(0, 1), (1, 2)]),
+        SabreSwapPass(topology=[(0, 1), (1, 2)]),
+    ],
+    ids=lambda transpiler_pass: type(transpiler_pass).__name__,
+)
+def test_transpiler_passes_run_alone_keep_barriers(transpiler_pass):
+    circuit = Circuit(3)
+    circuit.add([H(0), Barrier(), CNOT(0, 1), Barrier(0, 2), M(0, 1, 2)])
+    output = transpiler_pass.run(circuit)
+    assert sum(isinstance(gate, Barrier) for gate in output.gates) == 2
+
+
+def test_cancel_identity_pairs_pass_does_not_cancel_across_a_barrier():
+    circuit = Circuit(1)
+    circuit.add([X(0), Barrier(), X(0)])
+    output = CancelIdentityPairsPass().run(circuit)
+    assert [gate.name for gate in output.gates] == ["X", "Barrier", "X"]
+
+
 # --- Serialization ----------------------------------------------------------------------------------------------------
 
 
@@ -206,11 +258,17 @@ def test_barrier_from_qasm2_with_several_registers():
         ("barrier q[0] q[1];", "Invalid barrier operand"),
         ("barrier r[0];", "Undeclared quantum register"),
         ("barrier q[2];", "out of range"),
+        ("barrier q[0]", "Invalid barrier instruction"),
     ],
 )
 def test_from_qasm2_rejects_invalid_barriers(line, error):
     with pytest.raises(ValueError, match=error):
         from_qasm2(f"OPENQASM 2.0;\nqreg q[2];\n{line}\n")
+
+
+def test_barrier_from_qasm2_allows_whitespace_in_operands():
+    circuit = from_qasm2("OPENQASM 2.0;\nqreg q[3];\nbarrier  q [0] ,q[ 2 ] ;\n")
+    assert [gate.qubits for gate in circuit.gates] == [(0, 2)]
 
 
 def test_barrier_qasm3_roundtrip():

@@ -43,7 +43,7 @@ from qilisdk.digital import (
     Z,
 )
 from qilisdk.digital.exceptions import GateHasNoMatrixError
-from qilisdk.digital.gates import Adjoint, Controlled, M
+from qilisdk.digital.gates import Adjoint, Barrier, Controlled, M
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
 from .numeric_helpers import _EPS, _round_float, _wrap_angle
@@ -137,7 +137,7 @@ class CancelIdentityPairsPass(CircuitTranspilerPass):
       • `I` is dropped immediately.
       • For symmetric 2Q gates (CZ, SWAP) we normalize the qubit key to an unordered pair
         so CZ(a,b) cancels with CZ(b,a).
-      • Measurements (M) are barriers on their qubits.
+      • Measurements (M) and barriers block cancellation across them on their qubits.
     """
 
     # Self-inverse (involution) gate classes we recognize cheaply
@@ -168,8 +168,8 @@ class CancelIdentityPairsPass(CircuitTranspilerPass):
                     to_delete.add(idx)
                     continue
 
-                # Measurements are barriers; they just block
-                if isinstance(g, M):
+                # Measurements and barriers just block
+                if isinstance(g, (M, Barrier)):
                     self._block_overlapping(stack, g.qubits)
                     continue
 

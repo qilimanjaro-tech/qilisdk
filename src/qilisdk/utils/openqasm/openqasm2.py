@@ -435,12 +435,12 @@ def from_qasm2(qasm_str: str) -> Circuit:
         # Process barriers, whose operands may be whole registers as well as single qubits.
         if re.match(r"barrier\b", line):
             # e.g., "barrier q[0], q[1];" or "barrier q;"
-            m = re.fullmatch(r"barrier\s+(.+?)\s*;", line)
-            if m is None:
+            operands = line[len("barrier") :].strip()
+            if not operands.endswith(";") or not operands[:-1].strip():
                 raise ValueError(f"Invalid barrier instruction: {line}")
             barrier_qubits: list[int] = []
-            for operand in m.group(1).split(","):
-                om = re.fullmatch(r"\s*(\w+)\s*(?:\[(\d+)\])?\s*", operand)
+            for operand in operands[:-1].split(","):
+                om = re.fullmatch(r"(\w+)\s*(?:\[\s*(\d+)\s*\])?", operand.strip())
                 if om is None:
                     raise ValueError(f"Invalid barrier operand '{operand.strip()}': {line}")
                 name = om.group(1)

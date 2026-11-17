@@ -676,8 +676,13 @@ class Barrier(Gate):
     A visual separator between sections of a circuit, drawn as a vertical line across its qubits.
 
     A barrier has no effect on the state: simulators skip it and the transpiler removes it, so it
-    is purely a drawing aid for now. When created without any qubits, adding it to a circuit makes
-    it span every qubit of that circuit.
+    is purely a drawing aid for now. In particular, it does not stop :class:`~qilisdk.digital.circuit_transpiler.CircuitTranspiler`
+    from optimizing across it, so ``X(0), Barrier(), X(0)`` may still be cancelled to nothing. Individual
+    transpiler passes run on their own leave barriers in place and do not optimize across them.
+
+    When created without any qubits, adding it to a circuit stores a new barrier spanning every qubit of
+    that circuit, rather than the object passed in, so the same ``Barrier()`` can be added to circuits of
+    different sizes.
 
     Example:
         .. code-block:: python
