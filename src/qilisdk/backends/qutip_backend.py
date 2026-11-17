@@ -69,7 +69,7 @@ class QutipI(SingleQubitGate):
         self.name = "I"
         self.latex_str = r"I"
 
-    def get_compact_qobj(self):  # ruff: ignore[missing-return-type-undocumented-public-function, no-self-use]
+    def get_compact_qobj(self):  # ruff: ignore[missing-return-type-public-function, no-self-use]
         return qeye(2) if not is_qutip5 else qeye(2, dtype="dense")
 
 
