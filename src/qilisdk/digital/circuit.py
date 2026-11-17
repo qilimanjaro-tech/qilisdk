@@ -695,7 +695,11 @@ class Circuit(Parameterizable):
 
         # Each rotation (term, angle) is exp(-i * angle * term); the identity terms only add a global phase.
         hamiltonian_terms = [
-            (term, float(np.real(coeff)) / trotter_steps)
+            (
+                term,
+                float(np.real(coeff if isinstance(coeff, (int, float, complex)) else coeff.evaluate({})))
+                / trotter_steps,
+            )
             for part in hamiltonian.get_commuting_partitions()
             for term, coeff in part.items()
             if any(op.name != "I" for op in term)
