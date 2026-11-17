@@ -13,7 +13,6 @@
 # limitations under the License.
 from __future__ import annotations
 
-import math
 import random
 from copy import deepcopy
 from typing import TYPE_CHECKING, Callable, Iterable, cast
@@ -43,7 +42,7 @@ if TYPE_CHECKING:
     from qilisdk.core.types import RealNumber
 
     # A Pauli rotation (term, angle), meaning exp(-i * angle * term), or a gate of a reference circuit.
-    _DoubleBracketOperation: TypeAlias = tuple[tuple[PauliOperator, ...], float | Expression] | Gate
+    _DoubleBracketOperation: TypeAlias = tuple[tuple[PauliOperator, ...], Expression] | Gate
 
 # Name used for this class in the error messages raised for analog objects.
 _REJECT_TARGET = "a Circuit"
@@ -77,6 +76,48 @@ def _apply_gate_left(operator: np.ndarray, gate: Gate, nqubits: int) -> np.ndarr
     perm = perm_output + list(range(nqubits, 2 * nqubits))
 
     return np.transpose(contracted, axes=perm).reshape(operator.shape)
+
+
+def _fixed_parameter(value: float) -> Parameter:
+    # Labelled by value, so equal angles share a label and setting it can never change a gate's angle.
+    return Parameter(f"fixed_{value}", value, Domain.REAL, (value, value), trainable=False)
+
+
+def _frozen_gate_and_inverse(gate: Gate) -> tuple[Gate, Gate]:
+    """
+    Copy a gate at its current parameter values and build its exact inverse.
+
+    A parameterized basic gate is rebuilt with fixed, non-trainable angles, so the copy no longer follows the
+    original's parameters. A gate that is its own inverse is reused, a basic gate is inverted with
+    :class:`~qilisdk.digital.gates.Adjoint`, and an adjoint is inverted by unwrapping it.
+
+    Args:
+        gate (Gate): The gate to copy and invert.
+
+    Returns:
+        tuple[Gate, Gate]: The copied gate and its inverse.
+
+    Raises:
+        ValueError: If the gate is a measurement, a parameterized gate that is not a basic gate, or a gate with no
+            inverse gate.
+    """
+    if isinstance(gate, M) or (gate.is_parameterized and not isinstance(gate, BasicGate)):
+        raise ValueError(f"The reference gate {gate.name} on qubits {gate.qubits} cannot be inverted.")
+    frozen = gate
+    if isinstance(gate, BasicGate) and gate.is_parameterized:
+        # Gate constructors take the qubit and then each angle by name, unlike BasicGate itself.
+        gate_type = cast("Callable[..., BasicGate]", type(gate))
+        frozen = gate_type(
+            *gate.target_qubits,
+            **{name: _fixed_parameter(getattr(gate, name)) for name in gate.PARAMETER_NAMES},
+        )
+    if np.allclose(frozen.matrix.dense(), frozen.matrix.dense().conj().T):
+        return frozen, frozen
+    if isinstance(frozen, BasicGate):
+        return frozen, frozen.adjoint()
+    if isinstance(frozen, Adjoint):
+        return frozen, frozen.basic_gate
+    raise ValueError(f"The reference gate {gate.name} on qubits {gate.qubits} cannot be inverted.")
 
 
 @yaml.register_class
@@ -635,11 +676,11 @@ class Circuit(Parameterizable):
             hamiltonian = Hamiltonian.from_qtensor(hamiltonian)
         if trotter_steps < 1:
             raise ValueError(f"The number of Trotter steps must be at least 1, got {trotter_steps}.")
-        if any(not isinstance(step, Expression) and step < 0 for step in step_sizes):
+        if any(step < 0 for step in step_sizes if not isinstance(step, Expression)):
             raise ValueError(f"Step sizes must be non-negative, got {list(step_sizes)}.")
+        if diagonal is None and reference is not None:
+            raise ValueError("A diagonal operator is required with a reference circuit, as H' is never computed.")
         if diagonal is None:
-            if reference is not None:
-                raise ValueError("A diagonal operator is required with a reference circuit, as H' is never computed.")
             diagonal = Hamiltonian(
                 {
                     term: coeff
@@ -647,8 +688,10 @@ class Circuit(Parameterizable):
                     if all(op.name in {"I", "Z"} for op in term)
                 }
             )
-        elif any(op.name not in {"I", "Z"} for term in diagonal.elements for op in term):
+        if any(op.name not in {"I", "Z"} for term in diagonal.elements for op in term):
             raise ValueError(f"The diagonal operator must contain only Z and identity terms, got {diagonal}.")
+        if reference is None:
+            reference = cls(0)
 
         # Each rotation (term, angle) is exp(-i * angle * term); the identity terms only add a global phase.
         hamiltonian_terms = [
@@ -665,35 +708,11 @@ class Circuit(Parameterizable):
         if not diagonal_terms:
             raise ValueError("The diagonal operator has no terms other than the identity, so the flow does nothing.")
 
-        def fixed(value: float) -> Parameter:
-            return Parameter(f"fixed_{value}", value, Domain.REAL, (value, value), trainable=False)
-
         # Copies of the reference gates at their current values, and their inverses keyed by id in both directions.
         reference_gates: list[Gate] = []
         gate_inverses: dict[int, Gate] = {}
-        for original_gate in [] if reference is None else reference.gates:
-            if isinstance(original_gate, M) or (
-                original_gate.is_parameterized and not isinstance(original_gate, BasicGate)
-            ):
-                raise ValueError(
-                    f"The reference gate {original_gate.name} on qubits {original_gate.qubits} cannot be inverted."
-                )
-            gate = original_gate
-            if isinstance(original_gate, BasicGate) and original_gate.is_parameterized:
-                # Gate constructors take the qubit and then each angle by name, unlike BasicGate itself.
-                gate_type = cast("Callable[..., BasicGate]", type(original_gate))
-                gate = gate_type(
-                    *original_gate.target_qubits,
-                    **{name: fixed(getattr(original_gate, name)) for name in original_gate.PARAMETER_NAMES},
-                )
-            if np.allclose(gate.matrix.dense(), gate.matrix.dense().conj().T):
-                inverse_gate: Gate = gate
-            elif isinstance(gate, BasicGate):
-                inverse_gate = gate.adjoint()
-            elif isinstance(gate, Adjoint):
-                inverse_gate = gate.basic_gate
-            else:
-                raise ValueError(f"The reference gate {gate.name} on qubits {gate.qubits} cannot be inverted.")
+        for original_gate in reference.gates:
+            gate, inverse_gate = _frozen_gate_and_inverse(original_gate)
             reference_gates.append(gate)
             gate_inverses[id(gate)] = inverse_gate
             gate_inverses[id(inverse_gate)] = gate
@@ -707,8 +726,9 @@ class Circuit(Parameterizable):
 
         # The operations of U_k in time order, so the first one acts first.
         operations: list[_DoubleBracketOperation] = []
-        for step in step_sizes:
-            root = step**0.5 if isinstance(step, Expression) else math.sqrt(step)
+        # Numeric step sizes become fixed parameters, so every rotation angle is an expression.
+        for step in [step if isinstance(step, Expression) else _fixed_parameter(step) for step in step_sizes]:
+            root = step**0.5
             hamiltonian_forward: list[_DoubleBracketOperation] = [
                 *reference_gates,
                 *((term, coeff * root) for term, coeff in hamiltonian_terms),
@@ -729,23 +749,20 @@ class Circuit(Parameterizable):
         # Cancel each gate that directly follows its own inverse, such as the V V^dagger pairs between evolutions.
         simplified: list[_DoubleBracketOperation] = []
         for operation in [*inverse(operations), *reference_gates]:
-            if isinstance(operation, Gate) and simplified and simplified[-1] is gate_inverses[id(operation)]:
+            # Rotations are not in gate_inverses, so get returns None for them and they are always kept.
+            if simplified and simplified[-1] is gate_inverses.get(id(operation)):
                 simplified.pop()
-            else:
-                simplified.append(operation)
+                continue
+            simplified.append(operation)
         if len(simplified) > _DOUBLE_BRACKET_OPERATION_WARNING:
             logger.warning(
                 "[Circuit] The double-bracket iteration has {} operations, as the size grows like 3^steps",
                 len(simplified),
             )
 
-        circuit = cls(max(hamiltonian.nqubits, diagonal.nqubits, 0 if reference is None else reference.nqubits))
+        circuit = cls(max(hamiltonian.nqubits, diagonal.nqubits, reference.nqubits))
         for operation in simplified:
-            if isinstance(operation, Gate):
-                circuit.add(operation)
-            else:
-                term, angle = operation
-                circuit.add(list(_pauli_evolution(term, angle if isinstance(angle, Expression) else fixed(angle), 1.0)))
+            circuit.add(operation if isinstance(operation, Gate) else list(_pauli_evolution(*operation, 1.0)))
         return circuit
 
     def __repr__(self) -> str:
