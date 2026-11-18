@@ -1102,6 +1102,102 @@ class Hamiltonian(Parameterizable):
         return cls(elements)
 
     @classmethod
+    def fermi_hubbard(
+        cls,
+        nsites: int,
+        hopping: Coefficient = 1.0,
+        interaction: Coefficient = 1.0,
+        chemical_potential: Coefficient = 0.0,
+        periodic: bool = False,
+    ) -> Hamiltonian:
+        """
+        Build a 1D Fermi-Hubbard chain, mapped onto qubits with the Jordan-Wigner transformation.
+
+        .. math::
+
+            H = -\\sum_{i, \\sigma} t_i \\left( c^\\dagger_{i\\sigma} c_{i+1,\\sigma} + \\text{h.c.} \\right)
+                + \\sum_i U_i\\, n_{i\\uparrow} n_{i\\downarrow}
+                - \\sum_{i, \\sigma} \\mu_i\\, n_{i\\sigma}
+
+        The Hamiltonian acts on ``2 * nsites`` qubits: qubit ``i`` holds the spin-up mode of site
+        ``i`` and qubit ``nsites + i`` its spin-down mode. A mode is occupied when its qubit is in
+        :math:`|1\\rangle`, so :math:`n = (I - Z) / 2`, and the terms become
+
+        .. math::
+
+            -\\frac{t_i}{2} \\left( X_i X_{i+1} + Y_i Y_{i+1} \\right), \\qquad
+            \\frac{U_i}{4} \\left( I - Z_{i\\uparrow} - Z_{i\\downarrow} + Z_{i\\uparrow} Z_{i\\downarrow} \\right),
+            \\qquad \\frac{\\mu_i}{2} \\left( Z_{i\\sigma} - I \\right).
+
+        Keeping each spin species on a contiguous block of qubits means that open-chain hops act on
+        adjacent qubits and need no Jordan-Wigner string. The wrap-around hop of a periodic chain
+        carries the string of ``Z`` operators over the sites in between, which keeps the mapping exact.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Hamiltonian
+                from qilisdk.core import ket
+
+                # Two sites, so qubits 0 1 hold spin up and qubits 2 3 hold spin down.
+                H = Hamiltonian.fermi_hubbard(nsites=2, hopping=1.0, interaction=4.0)
+                # 2 - 0.5 X(0) X(1) - 0.5 Y(0) Y(1) - 0.5 X(2) X(3) - 0.5 Y(2) Y(3)
+                # + Z(0) Z(2) - Z(0) - Z(2) + Z(1) Z(3) - Z(1) - Z(3)
+
+                # One spin-up and one spin-down fermion, both on site 0.
+                state = ket(1, 0, 1, 0)
+
+        Args:
+            nsites (int): the number of lattice sites. The Hamiltonian acts on ``2 * nsites`` qubits.
+            hopping (Coefficient, optional): the hopping amplitude :math:`t` on every bond, or a list
+                holding the amplitude of each bond in turn, ordered along the chain and ending with
+                the wrap-around bond when ``periodic`` is set on 3 or more sites, since fewer sites
+                have no wrap-around bond. Both spin species share it. Defaults to 1.0.
+            interaction (Coefficient, optional): the on-site interaction :math:`U` on every site, or
+                a list holding the interaction of each site in turn. Defaults to 1.0.
+            chemical_potential (Coefficient, optional): the chemical potential :math:`\\mu` on every
+                site, or a list holding the potential of each site in turn. Both spin species share
+                it. Defaults to 0.0, which leaves it out entirely.
+            periodic (bool, optional): whether to close the chain into a ring by letting fermions
+                hop between the last site and the first. Ignored for fewer than 3 sites, where the
+                ring bond would duplicate the one bond the chain already has. Defaults to False.
+
+        Returns:
+            Hamiltonian: the Fermi-Hubbard Hamiltonian.
+
+        Raises:
+            ValueError: if ``nsites`` is not greater than zero.
+            ValueError: if a list of coefficients does not hold one value per term.
+            ValueError: if any coefficient is not real, which would make the Hamiltonian non-Hermitian.
+        """
+        if nsites <= 0:
+            raise ValueError(f"nsites must be greater than zero, got {nsites}.")
+        logger.debug("[Hamiltonian] Building Fermi-Hubbard chain over {} sites (periodic={})", nsites, periodic)
+        bonds = [(site, site + 1) for site in range(nsites - 1)]
+        if periodic and nsites >= _MIN_PERIODIC_EXTENT:
+            bonds.append((0, nsites - 1))
+        t = _parse_coefficients(hopping, len(bonds), "hopping")
+        u = _parse_coefficients(interaction, nsites, "interaction")
+        mu = _parse_coefficients(chemical_potential, nsites, "chemical_potential")
+        for name, values in (("hopping", t), ("interaction", u), ("chemical_potential", mu)):
+            if any(value.imag != 0 for value in values):
+                raise ValueError(f"{name} must be real, since complex values make the Hamiltonian non-Hermitian.")
+
+        elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
+        for offset in (0, nsites):
+            for (first, second), amplitude in zip(bonds, t, strict=True):
+                string = tuple(PauliZ(offset + site) for site in range(first + 1, second))
+                for pauli in (PauliX, PauliY):
+                    elements[pauli(offset + first), *string, pauli(offset + second)] += -amplitude / 2
+        for site in range(nsites):
+            up, down = site, nsites + site
+            elements[PauliZ(up), PauliZ(down)] += u[site] / 4
+            for qubit in (up, down):
+                elements[PauliZ(qubit),] += mu[site] / 2 - u[site] / 4
+            elements[PauliI(0),] += u[site] / 4 - mu[site]
+        return cls(elements)
+
+    @classmethod
     def from_qtensor(cls, tensor: QTensor, tol: float | None = None, prune: float | None = None) -> Hamiltonian:
         """
         Expand a qtensor (dense operator) on n qubits into a sum of Pauli strings,
