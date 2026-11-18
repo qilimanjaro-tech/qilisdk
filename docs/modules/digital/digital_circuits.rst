@@ -66,6 +66,21 @@ You can also initialize a random circuit with a specified number of gates using 
     )
     circuit.draw()
 
+**Period Finding and Shor's Algorithm**
+
+The :meth:`~qilisdk.digital.circuit.Circuit.period_finding` method builds the order-finding circuit used in Shor's
+algorithm, which estimates the period :math:`r` of :math:`a^x \bmod N`. The first ``nprecision`` qubits are the
+counting register, and measuring them gives an integer :math:`m` with :math:`m / 2^{\text{nprecision}} \approx s / r`:
+
+.. code-block:: python
+
+    from qilisdk.digital import Circuit
+
+    # Period of 7^x mod 15, with the default 2 * 4 = 8 counting qubits followed by 4 work qubits.
+    circuit = Circuit.period_finding(7, 15)
+
+See the :doc:`Shor's algorithm tutorial </tutorials/applications/application_shors>` for the full factoring example.
+
 Parameterized Circuits
 ^^^^^^^^^^^^^^^^^^^^^^
 

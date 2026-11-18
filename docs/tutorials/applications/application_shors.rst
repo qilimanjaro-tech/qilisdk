@@ -88,6 +88,42 @@ This will output a 50/50 mix of 0 and 2, which corresponds to the period :math:`
 4. Since :math:`r` is even, we compute the GCD of :math:`a^{r/2} - 1 = 2^1 - 1 = 1` and :math:`3`, which is 1, so we do not find a non-trivial factor.
 5. We would then repeat the process with a different random integer :math:`a`, but since there are no other choices, we conclude that the factors of 3 are 3 and 1.
 
+Using the Built-in Constructor
+--------------------------------
+
+For larger numbers, building the modular exponentiation by hand quickly becomes tedious.
+:meth:`~qilisdk.digital.circuit.Circuit.period_finding` builds the whole period finding circuit for a given
+:math:`a` and :math:`N`, so we can now factor 15. Choosing :math:`a = 7`:
+
+.. code-block:: python
+
+    import math
+    from fractions import Fraction
+
+    from qilisdk.backends import QiliSim
+    from qilisdk.digital import Circuit
+    from qilisdk.functionals import DigitalPropagation
+    from qilisdk.readout import Readout
+
+    a, N = 7, 15
+    circuit = Circuit.period_finding(a, N)
+    nprecision = circuit.nqubits - (N - 1).bit_length()
+
+    result = QiliSim().execute(DigitalPropagation(circuit), Readout().with_sampling(nshots=20))
+
+    # Each sample of the counting register gives m / 2^nprecision ~ s / r for a random s
+    r = 1
+    for bitstring in result.get_samples():
+        m = int(bitstring[:nprecision], 2)
+        r = math.lcm(r, Fraction(m, 2**nprecision).limit_denominator(N).denominator)
+    print(r)
+
+    if r % 2 == 0 and pow(a, r // 2, N) != N - 1:
+        print(math.gcd(pow(a, r // 2) - 1, N), math.gcd(pow(a, r // 2) + 1, N))
+
+Some samples only give a divisor of the period, which is why we combine them with the least common multiple.
+This prints the period :math:`r = 4`, followed by the factors 3 and 5.
+
 Further Reading
 --------------------
 

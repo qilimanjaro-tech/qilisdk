@@ -14,6 +14,7 @@
 
 import math
 import random
+from fractions import Fraction
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -26,7 +27,7 @@ from qilisdk.analog.hamiltonian import PauliX
 from qilisdk.core import Parameter, QTensor
 from qilisdk.core.comparison import LEQ
 from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X, Y
-from qilisdk.digital.circuit import _apply_gate_left
+from qilisdk.digital.circuit import _apply_gate_left, _controlled_modular_multiplication, _inverse_qft
 from qilisdk.digital.exceptions import GateHasNoMatrixError, NotAGateError, QubitOutOfRangeError
 from qilisdk.digital.gates import BasicGate, Gate
 
@@ -907,3 +908,99 @@ def test_gate_minus_analog_hamiltonian_raises_helpful_error():
     hamiltonian = analog_Y(0)
     with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
         _ = gate - hamiltonian
+
+
+def _statevector(circuit: Circuit) -> np.ndarray:
+    """Propagate |0...0> through ``circuit`` without building its full unitary."""
+    n = circuit.nqubits
+    state = np.zeros([2] * n, dtype=complex)
+    state[(0,) * n] = 1
+    for gate in circuit.gates:
+        k = gate.nqubits
+        matrix = gate.matrix.dense().reshape([2] * (2 * k))
+        state = np.tensordot(matrix, state, axes=(list(range(k, 2 * k)), list(gate.qubits)))
+        rest = [q for q in range(n) if q not in gate.qubits]
+        state = np.transpose(state, np.argsort([*gate.qubits, *rest]))
+    return state.reshape(-1)
+
+
+def _counting_probabilities(circuit: Circuit, modulus: int) -> tuple[np.ndarray, int]:
+    nwork = (modulus - 1).bit_length()
+    nprecision = circuit.nqubits - nwork
+    probabilities = (np.abs(_statevector(circuit)) ** 2).reshape(2**nprecision, 2**nwork).sum(axis=1)
+    return probabilities, nprecision
+
+
+@pytest.mark.parametrize("modulus", [3, 7, 15, 21])
+def test_controlled_modular_multiplication_is_exact_permutation(modulus):
+    nwork = (modulus - 1).bit_length()
+    dim = 2**nwork
+    for multiplier in range(1, modulus):
+        if math.gcd(multiplier, modulus) != 1:
+            continue
+        circuit = Circuit(nwork + 1)
+        circuit.add(_controlled_modular_multiplication(multiplier, modulus, 0, tuple(range(1, nwork + 1))))
+        expected = np.eye(2 * dim)
+        for x in range(modulus):
+            expected[:, dim + x] = 0
+            expected[dim + multiplier * x % modulus, dim + x] = 1
+        np.testing.assert_allclose(circuit.to_matrix(), expected, atol=1e-10)
+
+
+@pytest.mark.parametrize("nbits", [1, 2, 3, 4])
+def test_inverse_qft_matches_inverse_dft(nbits):
+    circuit = Circuit(nbits)
+    circuit.add(_inverse_qft(tuple(range(nbits))))
+    dim = 2**nbits
+    dft = np.exp(2j * np.pi * np.outer(range(dim), range(dim)) / dim) / np.sqrt(dim)
+    np.testing.assert_allclose(circuit.to_matrix(), dft.conj().T, atol=1e-10)
+
+
+@pytest.mark.parametrize(("base", "modulus", "nprecision"), [(7, 15, 3), (2, 15, 4), (4, 15, 2), (14, 15, 3)])
+def test_period_finding_exact_peaks_for_power_of_two_period(base, modulus, nprecision):
+    # When r divides 2^nprecision, the counting register is exactly uniform over multiples of 2^nprecision / r.
+    period = next(r for r in range(1, modulus) if pow(base, r, modulus) == 1)
+    circuit = Circuit.period_finding(base, modulus, nprecision=nprecision)
+    probabilities, _ = _counting_probabilities(circuit, modulus)
+    expected = np.zeros(2**nprecision)
+    expected[:: 2**nprecision // period] = 1 / period
+    np.testing.assert_allclose(probabilities, expected, atol=1e-10)
+
+
+@pytest.mark.parametrize(("base", "modulus"), [(2, 21), (4, 21), (3, 7)])
+def test_period_finding_recovers_period(base, modulus):
+    period = next(r for r in range(1, modulus) if pow(base, r, modulus) == 1)
+    circuit = Circuit.period_finding(base, modulus)
+    probabilities, nprecision = _counting_probabilities(circuit, modulus)
+
+    # Outcomes whose continued fraction gives exactly r have probability close to phi(r) / r.
+    denominators = [Fraction(m, 2**nprecision).limit_denominator(modulus).denominator for m in range(2**nprecision)]
+    hit = sum(p for p, d in zip(probabilities, denominators) if d == period)
+    coprime_fraction = sum(math.gcd(s, period) == 1 for s in range(period)) / period
+    assert hit > 0.8 * coprime_fraction
+    # And every likely outcome gives a divisor of r.
+    assert sum(p for p, d in zip(probabilities, denominators) if period % d == 0) > 0.9
+
+
+def test_period_finding_layout():
+    circuit = Circuit.period_finding(7, 15)
+    assert circuit.nqubits == 8 + 4
+    assert Circuit.period_finding(7, 15, nprecision=3).nqubits == 3 + 4
+    # The work register starts in |1> and holds base^x mod N, so it never touches the unused states >= N.
+    assert circuit.gates[0] == X(11)
+    assert all(not isinstance(gate, M) for gate in circuit.gates)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"base": 1, "modulus": 1}, "modulus must be at least 2"),
+        ({"base": 0, "modulus": 15}, "1 <= base < modulus"),
+        ({"base": 15, "modulus": 15}, "1 <= base < modulus"),
+        ({"base": 6, "modulus": 15}, "shares the factor 3"),
+        ({"base": 7, "modulus": 15, "nprecision": 0}, "at least 1"),
+    ],
+)
+def test_period_finding_invalid_inputs(kwargs, match):
+    with pytest.raises(ValueError, match=match):
+        Circuit.period_finding(**kwargs)
