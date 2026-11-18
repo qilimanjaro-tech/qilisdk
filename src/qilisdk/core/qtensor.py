@@ -1038,7 +1038,7 @@ class QTensor:
         # The C++ generator takes a 32-bit seed, so reduce larger or negative seeds into that range
         return self._qtensor_cpp.expectation_value_python(other, nshots, None if seed is None else seed % 2**32)
 
-    def otoc(self, W: QTensor | Hamiltonian, V: QTensor | Hamiltonian, state: QTensor | None = None) -> complex:
+    def otoc(self, w: QTensor | Hamiltonian, v: QTensor | Hamiltonian, state: QTensor | None = None) -> complex:
         """
         Compute the out-of-time-ordered correlator (OTOC) for the evolution described by this unitary.
 
@@ -1069,11 +1069,11 @@ class QTensor:
                 circuit.add(H(0))
                 circuit.add(CNOT(0, 1))
                 # W(t) = U† Z(1) U = X(0) Z(1) anticommutes with V = Z(0), so F = -1
-                F = circuit.to_qtensor().otoc(W=Z(1), V=Z(0))
+                F = circuit.to_qtensor().otoc(w=Z(1), v=Z(0))
 
         Args:
-            W (QTensor | Hamiltonian): The operator evolved in time. A Hamiltonian is expanded to this QTensor's qubits.
-            V (QTensor | Hamiltonian): The static probe operator. A Hamiltonian is expanded to this QTensor's qubits.
+            w (QTensor | Hamiltonian): The operator :math:`W` evolved in time. A Hamiltonian is expanded to this QTensor's qubits.
+            v (QTensor | Hamiltonian): The static probe operator :math:`V`. A Hamiltonian is expanded to this QTensor's qubits.
             state (QTensor | None): A ket or density matrix to evaluate the OTOC in. If None, the infinite-temperature
                 OTOC is returned.
 
@@ -1081,16 +1081,15 @@ class QTensor:
             complex: The OTOC value.
 
         Raises:
-            ValueError: If this QTensor is not a square operator, or if ``W``, ``V`` or ``state`` do not match its
+            ValueError: If this QTensor is not a square operator, or if ``w``, ``v`` or ``state`` do not match its
                 number of qubits.
         """
         if not self.is_operator():
             raise ValueError(f"The OTOC must be computed on a square evolution operator, got shape {self.shape}")
         logger.trace("[QTensor] QTensor.otoc computing OTOC on {} qubits", self.nqubits)
         unitary = np.asarray(self.dense(), dtype=np.complex128)
-        w = _otoc_operator(W, self.nqubits, "W")
-        w_t = unitary.conj().T @ w @ unitary
-        return _otoc_from_heisenberg(w_t, _otoc_operator(V, self.nqubits, "V"), _otoc_state(state, self.nqubits))
+        w_t = unitary.conj().T @ _otoc_operator(w, self.nqubits, "w") @ unitary
+        return _otoc_from_heisenberg(w_t, _otoc_operator(v, self.nqubits, "v"), _otoc_state(state, self.nqubits))
 
     def __getstate__(self) -> dict[str, csr_matrix]:
         """

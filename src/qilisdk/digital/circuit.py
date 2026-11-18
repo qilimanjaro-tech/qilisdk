@@ -336,7 +336,7 @@ class Circuit(Parameterizable):
         logger.trace("[Circuit] Converting circuit to QTensor.")
         return QTensor(self.to_matrix())
 
-    def otoc(self, W: QTensor | Hamiltonian, V: QTensor | Hamiltonian, state: QTensor | None = None) -> complex:
+    def otoc(self, w: QTensor | Hamiltonian, v: QTensor | Hamiltonian, state: QTensor | None = None) -> complex:
         """
         Compute the out-of-time-ordered correlator (OTOC) for the evolution implemented by this circuit.
 
@@ -358,11 +358,11 @@ class Circuit(Parameterizable):
                 circuit.add(H(0))
                 circuit.add(CNOT(0, 1))
                 # W(t) = U† Z(1) U = X(0) Z(1) anticommutes with V = Z(0), so F = -1
-                F = circuit.otoc(W=Z(1), V=Z(0))
+                F = circuit.otoc(w=Z(1), v=Z(0))
 
         Args:
-            W (QTensor | Hamiltonian): The operator evolved in time. A Hamiltonian is expanded to the circuit's qubits.
-            V (QTensor | Hamiltonian): The static probe operator. A Hamiltonian is expanded to the circuit's qubits.
+            w (QTensor | Hamiltonian): The operator :math:`W` evolved in time. A Hamiltonian is expanded to the circuit's qubits.
+            v (QTensor | Hamiltonian): The static probe operator :math:`V`. A Hamiltonian is expanded to the circuit's qubits.
             state (QTensor | None): A ket or density matrix to evaluate the OTOC in. If None, the infinite-temperature
                 OTOC is returned.
 
@@ -370,7 +370,7 @@ class Circuit(Parameterizable):
             complex: The OTOC value.
         """
         logger.trace("[Circuit] Computing OTOC on {} qubits.", self.nqubits)
-        return self.to_qtensor().otoc(W, V, state)
+        return self.to_qtensor().otoc(w, v, state)
 
     def __add__(self, other: Circuit | Gate) -> Circuit:
         """Return a new circuit with ``other`` composed at the end of this one.

@@ -1639,3 +1639,56 @@ def test_otoc_rejects_non_hermitian_hamiltonian():
     hamiltonian = 1j * Z(0) + X(0)
     with pytest.raises(ValueError, match="requires a Hermitian Hamiltonian"):
         hamiltonian.otoc(Z(0), X(0), 1.0)
+
+
+def test_otoc_single_qubit_rabi_matches_closed_form():
+    """Under H = X, Z(t) = cos(2t) Z + sin(2t) Y, so the infinite-temperature OTOC with V = Z is cos(4t)."""
+    times = np.linspace(0, 3, 13)
+    curve = X(0).otoc(Z(0), Z(0), times)
+    assert np.allclose(curve, np.cos(4 * times))
+
+
+def test_otoc_is_constant_when_w_commutes_with_the_hamiltonian():
+    """A classical Ising Hamiltonian commutes with Z(0), so W(t) = Z(0) always anticommutes with V = X(0)."""
+    hamiltonian = Z(0) * Z(1) + 0.7 * Z(1) * Z(2)
+    curve = hamiltonian.otoc(Z(0), X(0), np.linspace(0, 4, 9))
+    assert np.allclose(curve, -1.0)
+
+
+def test_otoc_accepts_non_hermitian_qtensor_operators():
+    """Random non-Hermitian operators make sure every dagger in the eigenbasis shortcut is in the right place."""
+    rng = np.random.default_rng(11)
+    nqubits = 2
+    dim = 2**nqubits
+    w = QTensor(rng.normal(size=(dim, dim)) + 1j * rng.normal(size=(dim, dim)))
+    v = QTensor(rng.normal(size=(dim, dim)) + 1j * rng.normal(size=(dim, dim)))
+    hamiltonian = Hamiltonian.transverse_field_ising(nqubits=nqubits, z_coefficient=0.6)
+    state = _otoc_states(nqubits)["density_matrix"]
+    times = np.array([0.0, 0.8, 2.1])
+
+    curve = hamiltonian.otoc(w, v, times, state)
+
+    expected = [(-1j * time * hamiltonian.to_qtensor()).expm().otoc(w, v, state) for time in times]
+    assert np.allclose(curve, expected)
+
+
+def test_otoc_identity_probe_gives_one_at_infinite_temperature():
+    """With V = I the correlator is tr(W(t)† W(t)) / 2^n = 1 for any unitary W."""
+    hamiltonian = Hamiltonian.transverse_field_ising(nqubits=3)
+    curve = hamiltonian.otoc(X(1), I(2), np.linspace(0, 2, 5))
+    assert np.allclose(curve, 1.0)
+
+
+def test_otoc_rejects_qtensor_operator_smaller_than_the_state():
+    """A larger state widens the evolution, so a fixed-size QTensor operator no longer fits."""
+    hamiltonian = Hamiltonian.transverse_field_ising(nqubits=2)
+    wrong_state = QTensor.ket(0, 0, 0)
+    with pytest.raises(ValueError, match="w must be a 8x8 operator on 3 qubits"):
+        hamiltonian.otoc(Z(0).to_qtensor(2), Z(1), 1.0, wrong_state)
+
+
+def test_otoc_rejects_qtensor_operator_on_wrong_number_of_qubits():
+    hamiltonian = Hamiltonian.transverse_field_ising(nqubits=3)
+    too_small = Z(0).to_qtensor(2)
+    with pytest.raises(ValueError, match="v must be a 8x8 operator on 3 qubits"):
+        hamiltonian.otoc(Z(0), too_small, 1.0)

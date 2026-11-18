@@ -930,3 +930,37 @@ def test_circuit_otoc_uses_current_parameter_values():
     circuit.set_parameter_values([np.pi / 2])
     # RY(pi/2) maps X to -Z, which anticommutes with X
     assert np.isclose(circuit.otoc(analog_X(0), analog_X(0)), -1.0)
+
+
+def test_circuit_otoc_density_matrix_state_matches_ket():
+    from qilisdk.analog import Z as analog_Z  # ruff: ignore[import-outside-top-level]
+
+    circuit = Circuit(2)
+    circuit.add(RX(0, theta=0.7))
+    circuit.add(CNOT(0, 1))
+    circuit.add(RY(1, theta=0.3))
+    ket_state = QTensor.ket(1, 0)
+    density_matrix = ket_state @ ket_state.adjoint()
+    assert np.isclose(
+        circuit.otoc(analog_Z(0), analog_X(1), ket_state), circuit.otoc(analog_Z(0), analog_X(1), density_matrix)
+    )
+
+
+def test_circuit_otoc_without_entangling_gates_never_scrambles():
+    """Single-qubit gates keep W on its own qubit, so it always commutes with a probe on another qubit."""
+    from qilisdk.analog import Z as analog_Z  # ruff: ignore[import-outside-top-level]
+
+    circuit = Circuit(3)
+    circuit.add(RX(0, theta=0.9))
+    circuit.add(RY(1, theta=1.4))
+    circuit.add(H(2))
+    assert np.isclose(circuit.otoc(analog_Z(0), analog_X(2)), 1.0)
+
+
+def test_circuit_otoc_rejects_operator_outside_the_circuit():
+    from qilisdk.analog import Z as analog_Z  # ruff: ignore[import-outside-top-level]
+
+    circuit = Circuit(2)
+    out_of_range = analog_Z(3)
+    with pytest.raises(ValueError, match="w acts on 4 qubits, but the evolution only has 2 qubits"):
+        circuit.otoc(out_of_range, analog_X(0))

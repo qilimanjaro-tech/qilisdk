@@ -1656,14 +1656,14 @@ def test_otoc_rejects_non_operator():
 def test_otoc_rejects_operator_of_wrong_size():
     unitary = QTensor.identity(2)
     too_small = QTensor.identity(1)
-    with pytest.raises(ValueError, match=r"W must be a 4x4 operator on 2 qubits"):
+    with pytest.raises(ValueError, match=r"w must be a 4x4 operator on 2 qubits"):
         unitary.otoc(too_small, Z(1))
 
 
 def test_otoc_rejects_hamiltonian_outside_the_evolution():
     unitary = QTensor.identity(2)
     out_of_range = Z(3)
-    with pytest.raises(ValueError, match=r"V acts on 4 qubits, but the evolution only has 2 qubits"):
+    with pytest.raises(ValueError, match=r"v acts on 4 qubits, but the evolution only has 2 qubits"):
         unitary.otoc(Z(0), out_of_range)
 
 
@@ -1672,3 +1672,44 @@ def test_otoc_rejects_bra_state():
     bra_state = QTensor.bra(0, 0)
     with pytest.raises(ValueError, match="ket or a density matrix on 2 qubits"):
         unitary.otoc(Z(0), Z(1), bra_state)
+
+
+@pytest.mark.parametrize("state_kind", ["infinite_temperature", "ket", "density_matrix"])
+def test_otoc_matches_definition_for_non_hermitian_operators(state_kind):
+    """Paulis are Hermitian, so random operators are needed to check where each dagger goes."""
+    nqubits = 2
+    dim = 2**nqubits
+    rng = np.random.default_rng(5)
+    unitary = _random_unitary(dim, seed=6)
+    w = rng.normal(size=(dim, dim)) + 1j * rng.normal(size=(dim, dim))
+    v = rng.normal(size=(dim, dim)) + 1j * rng.normal(size=(dim, dim))
+    psi = _random_ket(dim, seed=7)
+    rho = psi @ psi.conj().T
+    state = {"infinite_temperature": None, "ket": QTensor(psi), "density_matrix": QTensor(rho)}[state_kind]
+    reference_rho = np.eye(dim) / dim if state is None else rho
+
+    result = QTensor(unitary).otoc(QTensor(w), QTensor(v), state)
+
+    assert np.isclose(result, _otoc_reference(unitary, w, v, reference_rho))
+
+
+def test_otoc_ket_and_its_density_matrix_agree():
+    unitary = QTensor(_random_unitary(8, seed=8))
+    psi = _random_ket(8, seed=9)
+    from_ket = unitary.otoc(Z(0), X(1), QTensor(psi))
+    from_density_matrix = unitary.otoc(Z(0), X(1), QTensor(psi @ psi.conj().T))
+    assert np.isclose(from_ket, from_density_matrix)
+
+
+def test_otoc_swap_moves_w_onto_the_probe_qubit():
+    """SWAP maps Z(0) to Z(1), which anticommutes with X(1), so the OTOC flips from +1 to -1."""
+    swap = QTensor(np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex))
+    assert np.isclose(QTensor.identity(2).otoc(Z(0), X(1)), 1.0)
+    assert np.isclose(swap.otoc(Z(0), X(1)), -1.0)
+
+
+def test_otoc_rejects_qtensor_state_of_wrong_size():
+    unitary = QTensor.identity(2)
+    wrong_state = QTensor.ket(0, 0, 0)
+    with pytest.raises(ValueError, match="ket or a density matrix on 2 qubits"):
+        unitary.otoc(Z(0), Z(1), wrong_state)
