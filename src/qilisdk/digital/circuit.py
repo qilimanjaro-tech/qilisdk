@@ -32,6 +32,7 @@ from .exceptions import QubitOutOfRangeError
 from .gates import BasicGate, Gate, _reject_analog_object
 
 if TYPE_CHECKING:
+    from qilisdk.analog.hamiltonian import Hamiltonian
     from qilisdk.core.types import RealNumber
 
 # Name used for this class in the error messages raised for analog objects.
@@ -334,6 +335,42 @@ class Circuit(Parameterizable):
     def to_qtensor(self) -> QTensor:
         logger.trace("[Circuit] Converting circuit to QTensor.")
         return QTensor(self.to_matrix())
+
+    def otoc(self, w: QTensor | Hamiltonian, v: QTensor | Hamiltonian, state: QTensor | None = None) -> complex:
+        """
+        Compute the out-of-time-ordered correlator (OTOC) for the evolution implemented by this circuit.
+
+        With :math:`U` the circuit unitary and :math:`W(t) = U^\\dagger W U`, the OTOC is
+        :math:`F = \\langle W(t)^\\dagger V^\\dagger W(t) V \\rangle`, evaluated in ``state`` or at infinite
+        temperature when ``state`` is None. See :meth:`QTensor.otoc <qilisdk.core.qtensor.QTensor.otoc>` for the
+        definition and interpretation. To follow :math:`F` in time, call this on circuits of increasing depth.
+
+        The calculation is exact and builds the dense circuit unitary, so it is intended for small circuits. Parameterized
+        gates use their current parameter values.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Z
+                from qilisdk.digital import CNOT, H, Circuit
+
+                circuit = Circuit(2)
+                circuit.add(H(0))
+                circuit.add(CNOT(0, 1))
+                # W(t) = U† Z(1) U = X(0) Z(1) anticommutes with V = Z(0), so F = -1
+                F = circuit.otoc(w=Z(1), v=Z(0))
+
+        Args:
+            w (QTensor | Hamiltonian): The operator :math:`W` evolved in time. A Hamiltonian is expanded to the circuit's qubits.
+            v (QTensor | Hamiltonian): The static probe operator :math:`V`. A Hamiltonian is expanded to the circuit's qubits.
+            state (QTensor | None): A ket or density matrix to evaluate the OTOC in. If None, the infinite-temperature
+                OTOC is returned.
+
+        Returns:
+            complex: The OTOC value.
+        """
+        logger.trace("[Circuit] Computing OTOC on {} qubits.", self.nqubits)
+        return self.to_qtensor().otoc(w, v, state)
 
     def __add__(self, other: Circuit | Gate) -> Circuit:
         """Return a new circuit with ``other`` composed at the end of this one.
