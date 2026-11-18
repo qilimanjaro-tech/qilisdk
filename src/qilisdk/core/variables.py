@@ -29,16 +29,16 @@ import re
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, ClassVar, cast
 
+import expression_module as _cpp  # ty:ignore
 import numpy as np
 from loguru import logger
 
 from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, OutOfBoundsException
 from qilisdk.settings import get_settings
-from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
 
 from .comparison import Comparison, ComparisonOperation
-from .expression import _RANK_VARIABLE, Add, Constant, Expression
+from .expression import Add, Constant, Expression
 from .types import Number, QiliEnum, RealNumber
 
 if TYPE_CHECKING:
@@ -501,7 +501,7 @@ class BaseVariable(Expression, ABC):
         if lower_bound > upper_bound:
             raise InvalidBoundsError("lower bound can't be larger than the upper bound.")
         self._bounds = (lower_bound, upper_bound)
-        self._hash_cache: int | None = None
+        self._hash: int = _cpp.variable_hash(label)
 
     @property
     def bounds(self) -> tuple[float, float]:
@@ -582,11 +582,22 @@ class BaseVariable(Expression, ABC):
     def derivative(self, symbol: BaseVariable) -> Expression:
         return Constant(1) if self == symbol else Constant(0)
 
-    def _sort_key(self) -> tuple:
-        return (_RANK_VARIABLE, self._label)
+    # ---- identity ----
+    # A variable is identified by its label alone
+    def __hash__(self) -> int:
+        return self._hash
 
-    def _compute_hash(self) -> int:
-        return qili_hash(self._label)
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, BaseVariable) and other._label == self._label
+
+    def __getstate__(self) -> dict:
+        state = self.__dict__.copy()
+        state.pop("_hash", None)
+        return state
+
+    def __setstate__(self, state: dict) -> None:
+        self.__dict__.update(state)
+        self._hash = _cpp.variable_hash(self._label)
 
     def __repr__(self) -> str:
         return f"{self._label}"
@@ -956,11 +967,11 @@ class Parameter(BaseVariable):
             )
         self.set_bounds(lower_bound=bounds[0], upper_bound=bounds[1])
 
-    __hash__ = Expression.__hash__
+    __hash__ = BaseVariable.__hash__
 
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Expression):
-            return hash(self) == hash(other)
+            return BaseVariable.__eq__(self, other)
         if isinstance(other, (float, int)):
             return self.value == other
         return False

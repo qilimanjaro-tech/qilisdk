@@ -103,6 +103,23 @@ set_target_properties(qtensor_module PROPERTIES
     INSTALL_RPATH "${RPATH_ORIGIN}"
 )
 
+# Symbolic expressions
+pybind11_add_module(expression_module SHARED src/qilisdk_cpp/core/expression/expression_bindings.cpp)
+file(GLOB EXPRESSION_SOURCES src/qilisdk_cpp/core/expression/*.cpp)
+target_sources(expression_module PRIVATE ${EXPRESSION_SOURCES})
+target_link_libraries(expression_module PRIVATE qilisdk_libs)
+# No fused multiply-adds, so constant arithmetic rounds exactly like Python's
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(expression_module PRIVATE -ffp-contract=off)
+endif()
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(expression_module PRIVATE -fno-semantic-interposition)
+endif()
+set_target_properties(expression_module PROPERTIES
+    BUILD_RPATH "${RPATH_ORIGIN}"
+    INSTALL_RPATH "${RPATH_ORIGIN}"
+)
+
 # Check if we should compile with AVX2 + FMA support (x86-64-v3)
 check_cxx_compiler_flag("-march=x86-64-v3" QILISDK_HAS_X86_64_V3)
 set(QILISDK_USE_X86_64_V3 ${QILISDK_HAS_X86_64_V3})
@@ -129,7 +146,7 @@ set_target_properties(solvers_module PROPERTIES
 )
 
 # List of all modules to build
-set(MODULES_TO_BUILD qilisdk_libs qtensor_module qilisim_module solvers_module)
+set(MODULES_TO_BUILD qilisdk_libs qtensor_module qilisim_module solvers_module expression_module)
 
 # For each module
 foreach(module ${MODULES_TO_BUILD})
