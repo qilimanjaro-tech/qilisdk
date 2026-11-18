@@ -14,6 +14,7 @@
 
 import math
 import random
+from copy import deepcopy
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -25,10 +26,16 @@ from qilisdk.analog import Y as analog_Y
 from qilisdk.analog.hamiltonian import PauliX
 from qilisdk.core import Parameter, QTensor
 from qilisdk.core.comparison import LEQ
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X, Y
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.circuit import _apply_gate_left
-from qilisdk.digital.exceptions import GateHasNoMatrixError, NotAGateError, QubitOutOfRangeError
-from qilisdk.digital.gates import BasicGate, Gate
+from qilisdk.digital.exceptions import (
+    GateHasNoMatrixError,
+    NotAGateError,
+    QubitOutOfRangeError,
+    UnsupportedGateError,
+)
+from qilisdk.digital.gates import Adjoint, BasicGate, Controlled, Exponential, Gate
+from qilisdk.utils.serialization import deserialize, serialize
 
 
 def test_circuit_initialization():
@@ -907,3 +914,317 @@ def test_gate_minus_analog_hamiltonian_raises_helpful_error():
     hamiltonian = analog_Y(0)
     with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
         _ = gate - hamiltonian
+
+
+def _adjoint_test_circuit() -> Circuit:
+    circuit = Circuit(3)
+    circuit.add(
+        [
+            H(0),
+            RX(1, theta=Parameter("angle", 0.3)),
+            CNOT(0, 1),
+            T(2),
+            U3(2, theta=0.1, phi=0.2, gamma=0.3),
+            Controlled(0, basic_gate=RY(2, theta=0.4)),
+            Adjoint(S(1)),
+            Controlled(0, 1, basic_gate=X(2)),
+            CZ(1, 2),
+            RZ(0, phi=0.5),
+            SWAP(1, 2),
+        ]
+    )
+    return circuit
+
+
+def test_circuit_adjoint_is_inverse():
+    circuit = _adjoint_test_circuit()
+    adjoint = circuit.adjoint()
+    assert adjoint.nqubits == circuit.nqubits
+    np.testing.assert_allclose(adjoint.to_matrix(), circuit.to_matrix().conj().T, atol=1e-12)
+    np.testing.assert_allclose(adjoint.to_matrix() @ circuit.to_matrix(), np.eye(8), atol=1e-12)
+
+
+def test_circuit_adjoint_gate_structure():
+    adjoint = _adjoint_test_circuit().adjoint()
+    assert [gate.name for gate in adjoint.gates] == [
+        "SWAP",
+        "RZ†",
+        "CZ",
+        "CCX",
+        "S",
+        "CRY†",
+        "U3†",
+        "T†",
+        "CNOT",
+        "RX†",
+        "H",
+    ]
+    assert [gate.qubits for gate in adjoint.gates][:4] == [(1, 2), (0,), (1, 2), (0, 1, 2)]
+
+
+def test_circuit_adjoint_of_adjoint_is_original():
+    circuit = _adjoint_test_circuit()
+    assert circuit.adjoint().adjoint() == circuit
+
+
+def test_circuit_adjoint_of_empty_circuit():
+    adjoint = Circuit(2).adjoint()
+    assert adjoint.nqubits == 2
+    assert adjoint.gates == []
+
+
+def test_circuit_adjoint_of_exponential_gate_is_conjugate_transpose():
+    circuit = Circuit(2)
+    circuit.add([Exponential(RX(0, theta=0.7)), CNOT(0, 1)])
+    np.testing.assert_allclose(circuit.adjoint().to_matrix(), circuit.to_matrix().conj().T, atol=1e-12)
+
+
+def test_circuit_adjoint_is_independent_of_original():
+    circuit = _adjoint_test_circuit()
+    adjoint = circuit.adjoint()
+    adjoint.set_parameters({"angle": 1.2})
+    assert circuit.get_parameters()["angle"] == pytest.approx(0.3)
+    assert adjoint.get_parameters()["angle"] == pytest.approx(1.2)
+
+
+def test_circuit_adjoint_keeps_parameter_values_and_bounds():
+    circuit = Circuit(1)
+    circuit.add(RX(0, theta=Parameter("angle", 0.3, bounds=(0.0, 1.0))))
+    adjoint = circuit.adjoint()
+    assert adjoint.get_parameters() == {"angle": pytest.approx(0.3)}
+    assert adjoint.get_parameter_bounds() == {"angle": (0.0, 1.0)}
+
+
+def test_circuit_plus_adjoint_shares_named_parameters():
+    circuit = _adjoint_test_circuit()
+    combined = circuit + circuit.adjoint()
+    combined.set_parameters({"angle": 1.1})
+    np.testing.assert_allclose(combined.to_matrix(), np.eye(8), atol=1e-12)
+
+
+def test_circuit_adjoint_with_measurement_raises():
+    circuit = Circuit(1)
+    circuit.add([H(0), M(0)])
+    with pytest.raises(UnsupportedGateError, match="measurements"):
+        circuit.adjoint()
+
+
+def _assert_is_adjoint(adjoint: Circuit, circuit: Circuit) -> None:
+    np.testing.assert_allclose(adjoint.to_matrix(), circuit.to_matrix().conj().T, atol=1e-12)
+
+
+@pytest.mark.parametrize(
+    "gate",
+    [
+        I(0),
+        X(0),
+        Y(0),
+        Z(0),
+        H(0),
+        S(0),
+        T(0),
+        RX(0, theta=0.7),
+        RY(0, theta=-1.3),
+        RZ(0, phi=2.1),
+        U1(0, phi=0.4),
+        U2(0, phi=0.5, gamma=-0.6),
+        U3(0, theta=0.1, phi=0.2, gamma=0.3),
+        CNOT(0, 1),
+        CNOT(1, 0),
+        CZ(0, 1),
+        SWAP(0, 1),
+    ],
+    ids=lambda gate: gate.name,
+)
+def test_circuit_adjoint_of_single_gate(gate):
+    circuit = Circuit(2)
+    circuit.add(gate)
+    adjoint = circuit.adjoint()
+    assert len(adjoint.gates) == 1
+    assert adjoint.gates[0].qubits == gate.qubits
+    _assert_is_adjoint(adjoint, circuit)
+
+
+@pytest.mark.parametrize("gate", [I(0), X(0), Y(0), Z(0), H(0), SWAP(0, 1), CNOT(0, 1), CZ(1, 0)], ids=str)
+def test_circuit_adjoint_keeps_self_adjoint_gates_unwrapped(gate):
+    circuit = Circuit(2)
+    circuit.add(gate)
+    adjoint_gate = circuit.adjoint().gates[0]
+    assert type(adjoint_gate) is type(gate)
+    assert adjoint_gate == gate
+
+
+def test_circuit_adjoint_keeps_multi_controlled_self_adjoint_gates_unwrapped():
+    circuit = Circuit(4)
+    circuit.add(
+        [Controlled(0, 1, 2, basic_gate=X(3)), Controlled(0, basic_gate=SWAP(1, 2)), Controlled(3, basic_gate=H(0))]
+    )
+    adjoint = circuit.adjoint()
+    assert all(isinstance(gate, Controlled) for gate in adjoint.gates)
+    assert [gate.control_qubits for gate in adjoint.gates] == [(3,), (0,), (0, 1, 2)]
+    _assert_is_adjoint(adjoint, circuit)
+
+
+@pytest.mark.parametrize("gate", [S(1), T(1), RX(1, theta=0.3), U3(1, theta=0.1, phi=0.2, gamma=0.3)], ids=str)
+def test_circuit_adjoint_wraps_controlled_non_self_adjoint_gates(gate):
+    circuit = Circuit(3)
+    circuit.add([Controlled(0, basic_gate=gate), Controlled(2, 0, basic_gate=deepcopy(gate))])
+    adjoint = circuit.adjoint()
+    assert all(isinstance(g, Adjoint) and isinstance(g.basic_gate, Controlled) for g in adjoint.gates)
+    assert [g.control_qubits for g in adjoint.gates] == [(2, 0), (0,)]
+    _assert_is_adjoint(adjoint, circuit)
+
+
+def test_circuit_adjoint_unwraps_adjoint_gates():
+    circuit = Circuit(3)
+    circuit.add(
+        [
+            Adjoint(S(0)),
+            Adjoint(X(1)),
+            Adjoint(CNOT(0, 2)),  # ty:ignore[invalid-argument-type]
+            Adjoint(Controlled(0, basic_gate=T(1))),  # ty:ignore[invalid-argument-type]
+        ]
+    )
+    adjoint = circuit.adjoint()
+    assert [type(gate) for gate in adjoint.gates] == [Controlled, CNOT, X, S]
+    _assert_is_adjoint(adjoint, circuit)
+
+
+def test_circuit_adjoint_wraps_exponential_of_self_adjoint_gate():
+    circuit = Circuit(1)
+    circuit.add(Exponential(Y(0)))
+    adjoint = circuit.adjoint()
+    assert isinstance(adjoint.gates[0], Adjoint)
+    assert isinstance(adjoint.gates[0].basic_gate, Exponential)
+    _assert_is_adjoint(adjoint, circuit)
+
+
+@pytest.mark.parametrize("seed", range(5))
+def test_circuit_adjoint_of_random_circuit_is_inverse(seed):
+    circuit = Circuit.random(
+        nqubits=3,
+        single_qubit_gates={I, X, Y, Z, H, S, T, RX, RY, RZ, U1, U2, U3},
+        two_qubit_gates={CNOT, CZ, SWAP},  # ty:ignore[invalid-argument-type]
+        ngates=40,
+        seed=seed,
+    )
+    adjoint = circuit.adjoint()
+    assert len(adjoint.gates) == len(circuit.gates)
+    assert [gate.qubits for gate in adjoint.gates] == [gate.qubits for gate in reversed(circuit.gates)]
+    np.testing.assert_allclose(adjoint.to_matrix() @ circuit.to_matrix(), np.eye(8), atol=1e-10)
+    np.testing.assert_allclose(circuit.to_matrix() @ adjoint.to_matrix(), np.eye(8), atol=1e-10)
+
+
+def test_circuit_adjoint_keeps_qubit_count_with_idle_qubits():
+    circuit = Circuit(5)
+    circuit.add([S(4), CNOT(4, 1)])
+    adjoint = circuit.adjoint()
+    assert adjoint.nqubits == 5
+    assert [gate.qubits for gate in adjoint.gates] == [(4, 1), (4,)]
+    _assert_is_adjoint(adjoint, circuit)
+
+
+def test_circuit_adjoint_of_empty_circuit_with_zero_qubits():
+    adjoint = Circuit(0).adjoint()
+    assert adjoint.nqubits == 0
+    assert adjoint.gates == []
+
+
+def test_circuit_adjoint_does_not_modify_original():
+    circuit = _adjoint_test_circuit()
+    reference = circuit.copy()
+    original_gates = list(circuit.gates)
+    circuit.adjoint()
+    assert circuit == reference
+    assert all(a is b for a, b in zip(circuit.gates, original_gates, strict=True))
+    assert circuit.get_parameters() == reference.get_parameters()
+
+
+def test_circuit_adjoint_shares_no_gate_objects_with_original():
+    circuit = _adjoint_test_circuit()
+    adjoint = circuit.adjoint()
+    original_ids = {id(gate) for gate in circuit.gates}
+    for gate in adjoint.gates:
+        assert id(gate) not in original_ids
+        if isinstance(gate, Adjoint):
+            assert id(gate.basic_gate) not in original_ids
+
+
+def test_circuit_adjoint_is_unaffected_by_later_changes_to_original():
+    circuit = _adjoint_test_circuit()
+    adjoint = circuit.adjoint()
+    expected = adjoint.to_matrix()
+    circuit.add(T(0))
+    circuit.set_parameters({"angle": 2.0})
+    assert len(adjoint.gates) == 11
+    np.testing.assert_allclose(adjoint.to_matrix(), expected, atol=1e-12)
+
+
+def test_circuit_adjoint_keeps_shared_parameters_shared():
+    angle = Parameter("angle", 0.2)
+    circuit = Circuit(2)
+    circuit.add([RX(0, theta=angle), RY(1, theta=angle)])
+    adjoint = circuit.adjoint()
+    assert adjoint.get_parameters() == {"angle": pytest.approx(0.2)}
+    adjoint.set_parameters({"angle": 0.9})
+    assert [gate.get_parameter_values() for gate in adjoint.gates] == [[0.9], [0.9]]
+    circuit.set_parameters({"angle": 0.9})
+    _assert_is_adjoint(adjoint, circuit)
+
+
+def test_circuit_adjoint_matrix_follows_parameter_updates():
+    circuit = Circuit(2)
+    circuit.add([RX(0, theta=Parameter("a", 0.1)), Controlled(0, basic_gate=RZ(1, phi=Parameter("b", 0.2)))])
+    adjoint = circuit.adjoint()
+    adjoint.to_matrix()
+    adjoint.set_parameters({"a": 1.4, "b": -0.8})
+    circuit.set_parameters({"a": 1.4, "b": -0.8})
+    _assert_is_adjoint(adjoint, circuit)
+
+
+def test_circuit_adjoint_keeps_constraints():
+    left = Parameter("left", 0.1)
+    right = Parameter("right", 0.5)
+    circuit = Circuit(1)
+    circuit.add([RX(0, theta=left), RY(0, theta=right)])
+    circuit.add_parameter_constraint(LEQ(left, right))
+    adjoint = circuit.adjoint()
+    assert len(adjoint.get_constraints()) == 1
+    with pytest.raises(ValueError, match="breaks the parameter constraints"):
+        adjoint.set_parameters({"left": 0.9})
+    adjoint.set_parameters({"left": 0.4})
+    assert adjoint.get_parameters()["left"] == pytest.approx(0.4)
+    assert circuit.get_parameters()["left"] == pytest.approx(0.1)
+
+
+def test_circuit_adjoint_keeps_prefix():
+    circuit = Circuit(1)
+    circuit.add([RX(0, theta=Parameter("a", 0.1)), RY(0, theta=Parameter("b", 0.2))])
+    circuit.set_prefix("p_")
+    adjoint = circuit.adjoint()
+    assert adjoint.get_prefix() == "p_"
+    assert adjoint.get_parameters() == {"p_b": pytest.approx(0.2), "p_a": pytest.approx(0.1)}
+    adjoint.set_parameters({"p_a": 0.7})
+    assert adjoint.gates[1].get_parameter_values() == [0.7]
+
+
+def test_circuit_adjoint_with_measurement_in_middle_raises_and_leaves_original_intact():
+    circuit = Circuit(2)
+    circuit.add([H(0), M(1), S(0)])
+    reference = circuit.copy()
+    with pytest.raises(UnsupportedGateError):
+        circuit.adjoint()
+    assert circuit == reference
+
+
+def test_circuit_adjoint_of_adjoint_has_same_hash():
+    circuit = _adjoint_test_circuit()
+    assert hash(circuit.adjoint().adjoint()) == hash(circuit)
+
+
+def test_circuit_adjoint_serialization_roundtrip():
+    adjoint = _adjoint_test_circuit().adjoint()
+    restored = deserialize(serialize(adjoint), Circuit)
+    assert [gate.name for gate in restored.gates] == [gate.name for gate in adjoint.gates]
+    assert restored.get_parameters() == adjoint.get_parameters()
+    np.testing.assert_allclose(restored.to_matrix(), adjoint.to_matrix(), atol=1e-12)
