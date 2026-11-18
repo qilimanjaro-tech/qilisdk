@@ -22,7 +22,7 @@ from qilisdk.backends.backend import Backend
 from qilisdk.backends.backend_config import AnalogMethod
 from qilisdk.core import LT, InitialState, Parameter, ket
 from qilisdk.digital import Circuit
-from qilisdk.digital.gates import RZ, H
+from qilisdk.digital.gates import CNOT, RX, RY, RZ, H
 from qilisdk.functionals import (
     AnalogEvolution,
     DigitalPropagation,
@@ -33,7 +33,7 @@ from qilisdk.functionals import (
 )
 from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.noise import NoiseModel
-from qilisdk.readout import Readout, SamplingReadout, StateTomographyReadout
+from qilisdk.readout import ExpectationReadout, Readout, SamplingReadout, StateTomographyReadout
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult, StateTomographyReadoutResult
 
 
@@ -394,3 +394,34 @@ def test_variational_program_unsupported_result_type(monkeypatch):
 def test_backend_config_analog_method_direct():
     method = AnalogMethod.direct()
     assert method.evolution_method == "direct"
+
+
+def test_quantum_reservoir_with_circuit_dynamics():
+    class _DigitalOnlyBackend(Backend):
+        pass
+
+    dynamics = Circuit(2)
+    dynamics.add(RX(0, theta=ReservoirInput("x", 0.0)))
+    dynamics.add(CNOT(0, 1))
+    dynamics.add(RY(1, theta=0.7))
+    encoding = Circuit(2)
+    encoding.add(RY(1, theta=ReservoirInput("y", 0.0)))
+    layer = ReservoirLayer(evolution_dynamics=dynamics, input_encoding=encoding)
+    inputs = [{"x": 0.3, "y": 0.2}, {"x": 1.1, "y": -0.4}]
+    observables = [Z(0), Z(1)]
+
+    z_matrices = [np.kron(np.diag([1, -1]), np.eye(2)), np.kron(np.eye(2), np.diag([1, -1]))]
+    rho = ket(0, 0).to_density_matrix().dense()
+    expected = []
+    for layer_inputs in inputs:
+        layer.set_parameters(layer_inputs)
+        for step in layer:
+            unitary = step.to_qtensor().dense()
+            rho = unitary @ rho @ unitary.conj().T
+        expected.append([np.real(np.trace(z @ rho)) for z in z_matrices])
+
+    functional = QuantumReservoir(initial_state=ket(0, 0), reservoir_layer=layer, input_per_layer=inputs)
+    result = _DigitalOnlyBackend()._execute_quantum_reservoir(functional, [ExpectationReadout(observables=observables)])
+
+    actual = [*result.get_intermediate_expectation_values(), result.get_expectation_values()]
+    assert np.allclose(actual, expected, atol=1e-10)
