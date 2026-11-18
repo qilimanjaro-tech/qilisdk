@@ -1649,29 +1649,33 @@ def test_otoc_basis_state_average_equals_infinite_temperature():
 
 def test_otoc_rejects_non_operator():
     not_an_operator = QTensor.ket(0, 0)
+    w, v = Z(0), Z(1)
     with pytest.raises(ValueError, match="square evolution operator"):
-        not_an_operator.otoc(Z(0), Z(1))
+        not_an_operator.otoc(w, v)
 
 
 def test_otoc_rejects_operator_of_wrong_size():
     unitary = QTensor.identity(2)
     too_small = QTensor.identity(1)
+    v = Z(1)
     with pytest.raises(ValueError, match=r"w must be a 4x4 operator on 2 qubits"):
-        unitary.otoc(too_small, Z(1))
+        unitary.otoc(too_small, v)
 
 
 def test_otoc_rejects_hamiltonian_outside_the_evolution():
     unitary = QTensor.identity(2)
     out_of_range = Z(3)
+    w = Z(0)
     with pytest.raises(ValueError, match=r"v acts on 4 qubits, but the evolution only has 2 qubits"):
-        unitary.otoc(Z(0), out_of_range)
+        unitary.otoc(w, out_of_range)
 
 
 def test_otoc_rejects_bra_state():
     unitary = QTensor.identity(2)
     bra_state = QTensor.bra(0, 0)
+    w, v = Z(0), Z(1)
     with pytest.raises(ValueError, match="ket or a density matrix on 2 qubits"):
-        unitary.otoc(Z(0), Z(1), bra_state)
+        unitary.otoc(w, v, bra_state)
 
 
 @pytest.mark.parametrize("state_kind", ["infinite_temperature", "ket", "density_matrix"])
@@ -1711,5 +1715,6 @@ def test_otoc_swap_moves_w_onto_the_probe_qubit():
 def test_otoc_rejects_qtensor_state_of_wrong_size():
     unitary = QTensor.identity(2)
     wrong_state = QTensor.ket(0, 0, 0)
+    w, v = Z(0), Z(1)
     with pytest.raises(ValueError, match="ket or a density matrix on 2 qubits"):
-        unitary.otoc(Z(0), Z(1), wrong_state)
+        unitary.otoc(w, v, wrong_state)

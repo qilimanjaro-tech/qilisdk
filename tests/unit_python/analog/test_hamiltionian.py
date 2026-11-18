@@ -1637,8 +1637,9 @@ def test_otoc_expands_to_qubits_outside_the_hamiltonian():
 
 def test_otoc_rejects_non_hermitian_hamiltonian():
     hamiltonian = 1j * Z(0) + X(0)
+    w, v = Z(0), X(0)
     with pytest.raises(ValueError, match="requires a Hermitian Hamiltonian"):
-        hamiltonian.otoc(Z(0), X(0), 1.0)
+        hamiltonian.otoc(w, v, 1.0)
 
 
 def test_otoc_single_qubit_rabi_matches_closed_form():
@@ -1683,12 +1684,14 @@ def test_otoc_rejects_qtensor_operator_smaller_than_the_state():
     """A larger state widens the evolution, so a fixed-size QTensor operator no longer fits."""
     hamiltonian = Hamiltonian.transverse_field_ising(nqubits=2)
     wrong_state = QTensor.ket(0, 0, 0)
+    w, v = Z(0).to_qtensor(2), Z(1)
     with pytest.raises(ValueError, match="w must be a 8x8 operator on 3 qubits"):
-        hamiltonian.otoc(Z(0).to_qtensor(2), Z(1), 1.0, wrong_state)
+        hamiltonian.otoc(w, v, 1.0, wrong_state)
 
 
 def test_otoc_rejects_qtensor_operator_on_wrong_number_of_qubits():
     hamiltonian = Hamiltonian.transverse_field_ising(nqubits=3)
     too_small = Z(0).to_qtensor(2)
+    w = Z(0)
     with pytest.raises(ValueError, match="v must be a 8x8 operator on 3 qubits"):
-        hamiltonian.otoc(Z(0), too_small, 1.0)
+        hamiltonian.otoc(w, too_small, 1.0)

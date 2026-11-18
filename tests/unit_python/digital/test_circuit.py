@@ -962,5 +962,6 @@ def test_circuit_otoc_rejects_operator_outside_the_circuit():
 
     circuit = Circuit(2)
     out_of_range = analog_Z(3)
+    v = analog_X(0)
     with pytest.raises(ValueError, match="w acts on 4 qubits, but the evolution only has 2 qubits"):
-        circuit.otoc(out_of_range, analog_X(0))
+        circuit.otoc(out_of_range, v)
