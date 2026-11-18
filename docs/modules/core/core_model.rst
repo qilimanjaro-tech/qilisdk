@@ -208,7 +208,7 @@ These can be used as follows:
     result = solver.solve(model)
     print(result)
 
-Each of them returns a :class:`~qilisdk.utils.classical_solvers.base_solver.ClassicalSolverResult`, which
+Each of them returns a :class:`~qilisdk.utils.classical_solvers.base_solver.SolverResult`, which
 exposes the solution found:
 
 - ``result.objective`` - the value of the model's objective at the solution
