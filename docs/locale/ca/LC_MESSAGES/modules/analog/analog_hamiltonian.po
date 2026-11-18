@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-20 12:38+0200\n"
+"POT-Creation-Date: 2026-11-18 17:01+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -140,13 +140,30 @@ msgstr ""
 ":math:`\\sum_{i<j} \\left( J_x X_i X_j + J_y Y_i Y_j + J_z Z_i Z_j "
 "\\right) + \\sum_i h_z Z_i`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:46
-#: ../../modules/analog/analog_hamiltonian.rst:64
-#: ../../modules/analog/analog_hamiltonian.rst:135
+#: ../../modules/analog/analog_hamiltonian.rst:38
+msgid ":meth:`~qilisdk.analog.hamiltonian.Hamiltonian.fermi_hubbard`"
+msgstr ":meth:`~qilisdk.analog.hamiltonian.Hamiltonian.fermi_hubbard`"
+
+#: ../../modules/analog/analog_hamiltonian.rst:39
+#, python-brace-format
+msgid ""
+":math:`-t \\sum_{i, \\sigma} \\left( c^\\dagger_{i\\sigma} "
+"c_{i+1,\\sigma} + \\text{h.c.} \\right) + U \\sum_i n_{i\\uparrow} "
+"n_{i\\downarrow} - \\mu \\sum_{i, \\sigma} n_{i\\sigma}`, Jordan-Wigner "
+"mapped onto ``2 * nsites`` qubits"
+msgstr ""
+":math:`-t \\sum_{i, \\sigma} \\left( c^\\dagger_{i\\sigma} "
+"c_{i+1,\\sigma} + \\text{h.c.} \\right) + U \\sum_i n_{i\\uparrow} "
+"n_{i\\downarrow} - \\mu \\sum_{i, \\sigma} n_{i\\sigma}`, mapejat amb "
+"Jordan-Wigner sobre ``2 * nsites`` qubits"
+
+#: ../../modules/analog/analog_hamiltonian.rst:48
+#: ../../modules/analog/analog_hamiltonian.rst:66
+#: ../../modules/analog/analog_hamiltonian.rst:138
 msgid "**Output:**"
 msgstr "**Sortida:**"
 
-#: ../../modules/analog/analog_hamiltonian.rst:52
+#: ../../modules/analog/analog_hamiltonian.rst:54
 msgid ""
 "Every coefficient argument accepts either a single value, shared by every"
 " term it weights, or a list holding one value per term, so any of the "
@@ -161,43 +178,43 @@ msgstr ""
 "Els valors es prenen en l'ordre en què es generen els termes, que cada "
 "constructor documenta."
 
-#: ../../modules/analog/analog_hamiltonian.rst:71
+#: ../../modules/analog/analog_hamiltonian.rst:73
 msgid "List of Operations"
 msgstr "Llista d'operacions"
 
-#: ../../modules/analog/analog_hamiltonian.rst:73
+#: ../../modules/analog/analog_hamiltonian.rst:75
 msgid "**Arithmetic operations**:"
 msgstr "**Operacions aritmètiques**:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:75
+#: ../../modules/analog/analog_hamiltonian.rst:77
 msgid "Addition: ``H1 + H2``"
 msgstr "Suma: ``H1 + H2``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:76
+#: ../../modules/analog/analog_hamiltonian.rst:78
 msgid "Scalar multiplication: ``5 * H``"
 msgstr "Multiplicació escalar: ``5 * H``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:77
+#: ../../modules/analog/analog_hamiltonian.rst:79
 msgid "multiplication: ``H0 * H1``"
 msgstr "Multiplicació: ``H0 * H1``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:78
+#: ../../modules/analog/analog_hamiltonian.rst:80
 msgid "Subtraction: ``H1 - H2``"
 msgstr "Resta: ``H1 - H2``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:79
+#: ../../modules/analog/analog_hamiltonian.rst:81
 msgid "Division by scalar: ``H / 5``"
 msgstr "Divisió per escalar: ``H / 5``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:80
+#: ../../modules/analog/analog_hamiltonian.rst:82
 msgid "Negation: ``-H``"
 msgstr "Negació: ``-H``"
 
-#: ../../modules/analog/analog_hamiltonian.rst:82
+#: ../../modules/analog/analog_hamiltonian.rst:84
 msgid "**Extra Symbolic Operators**:"
 msgstr "**Operadors simbòlics addicionals**:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:84
+#: ../../modules/analog/analog_hamiltonian.rst:86
 msgid ""
 "commutator: "
 ":meth:`H1.commutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.commutator>`"
@@ -205,7 +222,7 @@ msgstr ""
 "commutador: "
 ":meth:`H1.commutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.commutator>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:85
+#: ../../modules/analog/analog_hamiltonian.rst:87
 msgid ""
 "anticommutator: "
 ":meth:`H1.anticommutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.anticommutator>`"
@@ -213,7 +230,7 @@ msgstr ""
 "anticommutador: "
 ":meth:`H1.anticommutator(H2)<qilisdk.analog.hamiltonian.Hamiltonian.anticommutator>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:86
+#: ../../modules/analog/analog_hamiltonian.rst:88
 msgid ""
 "vector_norm: "
 ":meth:`H.vector_norm()<qilisdk.analog.hamiltonian.Hamiltonian.vector_norm>`"
@@ -221,7 +238,7 @@ msgstr ""
 "norma_vectorial: "
 ":meth:`H.vector_norm()<qilisdk.analog.hamiltonian.Hamiltonian.vector_norm>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:87
+#: ../../modules/analog/analog_hamiltonian.rst:89
 msgid ""
 "frobenius_norm: "
 ":meth:`H.frobenius_norm()<qilisdk.analog.hamiltonian.Hamiltonian.frobenius_norm>`"
@@ -229,15 +246,15 @@ msgstr ""
 "norma_frobenius: "
 ":meth:`H.frobenius_norm()<qilisdk.analog.hamiltonian.Hamiltonian.frobenius_norm>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:88
+#: ../../modules/analog/analog_hamiltonian.rst:90
 msgid "trace: :meth:`H.trace()<qilisdk.analog.hamiltonian.Hamiltonian.trace>`"
 msgstr "traça: :meth:`H.trace()<qilisdk.analog.hamiltonian.Hamiltonian.trace>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:90
+#: ../../modules/analog/analog_hamiltonian.rst:92
 msgid "**Exporting Hamiltonians**:"
 msgstr "**Exportació de Hamiltonians**:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:92
+#: ../../modules/analog/analog_hamiltonian.rst:94
 msgid ""
 "to matrix: "
 ":meth:`H.to_matrix(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_matrix>`"
@@ -245,7 +262,7 @@ msgstr ""
 "a matriu: "
 ":meth:`H.to_matrix(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_matrix>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:93
+#: ../../modules/analog/analog_hamiltonian.rst:95
 msgid ""
 "to qtensor: "
 ":meth:`H.to_qtensor(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor>`"
@@ -253,11 +270,11 @@ msgstr ""
 "a qtensor: "
 ":meth:`H.to_qtensor(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.to_qtensor>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:95
+#: ../../modules/analog/analog_hamiltonian.rst:97
 msgid "**Importing Hamiltonians**:"
 msgstr "**Importació de Hamiltonians**:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:97
+#: ../../modules/analog/analog_hamiltonian.rst:99
 msgid ""
 "from qtensor: "
 ":meth:`Hamiltonian.from_qtensor(qtensor)<qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor>`"
@@ -265,7 +282,7 @@ msgstr ""
 "des de qtensor: "
 ":meth:`Hamiltonian.from_qtensor(qtensor)<qilisdk.analog.hamiltonian.Hamiltonian.from_qtensor>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:98
+#: ../../modules/analog/analog_hamiltonian.rst:100
 msgid ""
 "from string: "
 ":meth:`Hamiltonian.parse(hamiltonian_string)<qilisdk.analog.hamiltonian.Hamiltonian.parse>`"
@@ -273,11 +290,11 @@ msgstr ""
 "des de cadena: "
 ":meth:`Hamiltonian.parse(hamiltonian_string)<qilisdk.analog.hamiltonian.Hamiltonian.parse>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:100
+#: ../../modules/analog/analog_hamiltonian.rst:102
 msgid "**Common Hamiltonians**:"
 msgstr "**Hamiltonians habituals**:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:102
+#: ../../modules/analog/analog_hamiltonian.rst:104
 msgid ""
 "transverse field: "
 ":meth:`Hamiltonian.transverse_field(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.transverse_field>`"
@@ -285,7 +302,7 @@ msgstr ""
 "camp transversal: "
 ":meth:`Hamiltonian.transverse_field(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.transverse_field>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:103
+#: ../../modules/analog/analog_hamiltonian.rst:105
 msgid ""
 "longitudinal field: "
 ":meth:`Hamiltonian.longitudinal_field(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.longitudinal_field>`"
@@ -293,7 +310,7 @@ msgstr ""
 "camp longitudinal: "
 ":meth:`Hamiltonian.longitudinal_field(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.longitudinal_field>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:104
+#: ../../modules/analog/analog_hamiltonian.rst:106
 msgid ""
 "Ising: "
 ":meth:`Hamiltonian.ising(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.ising>`"
@@ -301,7 +318,7 @@ msgstr ""
 "Ising: "
 ":meth:`Hamiltonian.ising(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.ising>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:105
+#: ../../modules/analog/analog_hamiltonian.rst:107
 msgid ""
 "Ising chain: "
 ":meth:`Hamiltonian.ising_chain(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.ising_chain>`"
@@ -309,7 +326,7 @@ msgstr ""
 "cadena d'Ising: "
 ":meth:`Hamiltonian.ising_chain(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.ising_chain>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:106
+#: ../../modules/analog/analog_hamiltonian.rst:108
 msgid ""
 "Ising grid: :meth:`Hamiltonian.ising_grid(rows, "
 "columns)<qilisdk.analog.hamiltonian.Hamiltonian.ising_grid>`"
@@ -317,7 +334,7 @@ msgstr ""
 "xarxa d'Ising: :meth:`Hamiltonian.ising_grid(rows, "
 "columns)<qilisdk.analog.hamiltonian.Hamiltonian.ising_grid>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:107
+#: ../../modules/analog/analog_hamiltonian.rst:109
 msgid ""
 "transverse-field Ising: "
 ":meth:`Hamiltonian.transverse_field_ising(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.transverse_field_ising>`"
@@ -325,7 +342,7 @@ msgstr ""
 "Ising amb camp transversal: "
 ":meth:`Hamiltonian.transverse_field_ising(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.transverse_field_ising>`"
 
-#: ../../modules/analog/analog_hamiltonian.rst:108
+#: ../../modules/analog/analog_hamiltonian.rst:110
 msgid ""
 "Heisenberg: "
 ":meth:`Hamiltonian.heisenberg(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.heisenberg>`"
@@ -334,14 +351,22 @@ msgstr ""
 ":meth:`Hamiltonian.heisenberg(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.heisenberg>`"
 
 #: ../../modules/analog/analog_hamiltonian.rst:111
+msgid ""
+"Fermi-Hubbard: "
+":meth:`Hamiltonian.fermi_hubbard(nsites)<qilisdk.analog.hamiltonian.Hamiltonian.fermi_hubbard>`"
+msgstr ""
+"Fermi-Hubbard: "
+":meth:`Hamiltonian.fermi_hubbard(nsites)<qilisdk.analog.hamiltonian.Hamiltonian.fermi_hubbard>`"
+
+#: ../../modules/analog/analog_hamiltonian.rst:114
 msgid "Example: Ising Hamiltonian"
 msgstr "Exemple: Hamiltonià d'Ising"
 
-#: ../../modules/analog/analog_hamiltonian.rst:113
+#: ../../modules/analog/analog_hamiltonian.rst:116
 msgid "To define an Ising Hamiltonian of the form:"
 msgstr "Per definir un Hamiltonià d'Ising de la forma:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:115
+#: ../../modules/analog/analog_hamiltonian.rst:118
 msgid ""
 "H_{\\text{Ising}}  =  - \\sum_{\\langle i, j \\rangle} J_{ij} \\sigma^Z_i"
 " \\sigma^Z_j - \\sum_j h_j \\sigma^Z_j"
@@ -349,11 +374,11 @@ msgstr ""
 "H_{\\text{Ising}}  =  - \\sum_{\\langle i, j \\rangle} J_{ij} \\sigma^Z_i"
 " \\sigma^Z_j - \\sum_j h_j \\sigma^Z_j"
 
-#: ../../modules/analog/analog_hamiltonian.rst:119
+#: ../../modules/analog/analog_hamiltonian.rst:122
 msgid "you can use the Pauli ``Z`` operators from the library:"
 msgstr "podeu fer servir els operadors de Pauli ``Z`` de la biblioteca:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:141
+#: ../../modules/analog/analog_hamiltonian.rst:144
 msgid ""
 "The builtin :func:`sum` re-simplifies the growing Hamiltonian on every "
 "addition, which gets slow for large Hamiltonians. "
@@ -365,11 +390,11 @@ msgstr ""
 ":meth:`Hamiltonian.sum()<qilisdk.analog.hamiltonian.Hamiltonian.sum>` "
 "suma tots els termes en una sola passada:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:153
+#: ../../modules/analog/analog_hamiltonian.rst:156
 msgid "Visualizing"
 msgstr "Visualització"
 
-#: ../../modules/analog/analog_hamiltonian.rst:155
+#: ../../modules/analog/analog_hamiltonian.rst:158
 msgid ""
 ":meth:`H.draw()<qilisdk.analog.hamiltonian.Hamiltonian.draw>` renders a "
 "Hamiltonian as an interaction graph:"
@@ -377,7 +402,7 @@ msgstr ""
 ":meth:`H.draw()<qilisdk.analog.hamiltonian.Hamiltonian.draw>` dibuixa un "
 "Hamiltonià com un graf d'interaccions:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:157
+#: ../../modules/analog/analog_hamiltonian.rst:160
 msgid ""
 "Every qubit is a node, whose disc is split into one slice per local field"
 " acting on it, labelled with its Pauli type."
@@ -385,7 +410,7 @@ msgstr ""
 "Cada qubit és un node, el disc del qual es divideix en un sector per cada"
 " camp local que hi actua, etiquetat amb el seu tipus de Pauli."
 
-#: ../../modules/analog/analog_hamiltonian.rst:158
+#: ../../modules/analog/analog_hamiltonian.rst:161
 msgid ""
 "Every two-qubit term is an edge between the qubits it couples, drawn with"
 " a line style per coupling type (see the legend)."
@@ -394,7 +419,7 @@ msgstr ""
 "dibuixada amb un estil de línia per cada tipus d'acoblament (vegeu la "
 "llegenda)."
 
-#: ../../modules/analog/analog_hamiltonian.rst:159
+#: ../../modules/analog/analog_hamiltonian.rst:162
 msgid ""
 "Every term acting on three or more qubits is a star-shaped hyperedge "
 "joined at the centroid of the qubits involved."
@@ -402,7 +427,7 @@ msgstr ""
 "Cada terme que actua sobre tres o més qubits és una hiperaresta en forma "
 "d'estrella unida al centroide dels qubits implicats."
 
-#: ../../modules/analog/analog_hamiltonian.rst:160
+#: ../../modules/analog/analog_hamiltonian.rst:163
 msgid ""
 "Slice and edge colours encode the coefficient of the corresponding term, "
 "as described by the colour bar."
@@ -410,7 +435,7 @@ msgstr ""
 "Els colors dels sectors i de les arestes codifiquen el coeficient del "
 "terme corresponent, tal com descriu la barra de color."
 
-#: ../../modules/analog/analog_hamiltonian.rst:161
+#: ../../modules/analog/analog_hamiltonian.rst:164
 msgid ""
 "A constant (identity) term is annotated below the graph as an energy "
 "offset."
@@ -418,7 +443,7 @@ msgstr ""
 "Un terme constant (identitat) s'anota sota el graf com un desplaçament "
 "d'energia."
 
-#: ../../modules/analog/analog_hamiltonian.rst:173
+#: ../../modules/analog/analog_hamiltonian.rst:176
 msgid ""
 "The appearance is controlled with "
 ":class:`~qilisdk.utils.visualization.style.HamiltonianStyle`, which "
@@ -437,7 +462,7 @@ msgstr ""
 "acoblaments comparteixen una única escala de color, i quines anotacions "
 "es dibuixen:"
 
-#: ../../modules/analog/analog_hamiltonian.rst:196
+#: ../../modules/analog/analog_hamiltonian.rst:199
 msgid ""
 "To save the figure instead of showing it, pass a ``filepath`` (the format"
 " is inferred from the extension):"

@@ -1331,6 +1331,122 @@ def test_ising_grid_rejects_invalid_dimensions(kwargs: dict, match: str):
         Hamiltonian.ising_grid(**kwargs)
 
 
+@pytest.mark.parametrize(
+    ("built", "expected"),
+    [
+        # Two sites: qubits 0 1 hold spin up, qubits 2 3 hold spin down.
+        (
+            Hamiltonian.fermi_hubbard(nsites=2, hopping=1.0, interaction=4.0),
+            -0.5 * (X(0) * X(1) + Y(0) * Y(1) + X(2) * X(3) + Y(2) * Y(3))
+            + Z(0) * Z(2)
+            + Z(1) * Z(3)
+            - Z(0)
+            - Z(1)
+            - Z(2)
+            - Z(3)
+            + 2,
+        ),
+        # A single site has no bonds, leaving only the interaction.
+        (
+            Hamiltonian.fermi_hubbard(nsites=1, interaction=4.0),
+            Z(0) * Z(1) - Z(0) - Z(1) + 1,
+        ),
+        # The chemical potential shifts every mode by mu * n = mu * (I - Z) / 2.
+        (
+            Hamiltonian.fermi_hubbard(nsites=1, interaction=0.0, chemical_potential=2.0),
+            Z(0) + Z(1) - 2,
+        ),
+        # Per-bond hopping and per-site interaction, the same hopping on both spin species.
+        (
+            Hamiltonian.fermi_hubbard(nsites=3, hopping=[2.0, 4.0], interaction=[4.0, 0.0, 0.0]),
+            -(X(0) * X(1) + Y(0) * Y(1) + X(3) * X(4) + Y(3) * Y(4))
+            - 2 * (X(1) * X(2) + Y(1) * Y(2) + X(4) * X(5) + Y(4) * Y(5))
+            + Z(0) * Z(3)
+            - Z(0)
+            - Z(3)
+            + 1,
+        ),
+        # The wrap-around hop carries the Jordan-Wigner string over the sites in between.
+        (
+            Hamiltonian.fermi_hubbard(nsites=3, hopping=[0.0, 0.0, 2.0], interaction=0.0, periodic=True),
+            -(X(0) * Z(1) * X(2) + Y(0) * Z(1) * Y(2) + X(3) * Z(4) * X(5) + Y(3) * Z(4) * Y(5)),
+        ),
+        # Wrapping is skipped on two sites, where it would double the only bond.
+        (
+            Hamiltonian.fermi_hubbard(nsites=2, periodic=True),
+            Hamiltonian.fermi_hubbard(nsites=2),
+        ),
+    ],
+)
+def test_fermi_hubbard(built: Hamiltonian, expected: Hamiltonian):
+    assert built == expected
+
+
+@pytest.mark.parametrize("periodic", [False, True])
+@pytest.mark.parametrize("nsites", [1, 2, 3, 4])
+def test_fermi_hubbard_matches_fermionic_operators(nsites: int, periodic: bool):
+    # Build the model from explicit Jordan-Wigner fermion matrices, with |1> as the occupied state.
+    nqubits = 2 * nsites
+    annihilate = np.array([[0, 1], [0, 0]])
+
+    def c(mode: int) -> np.ndarray:
+        factors = [np.diag([1, -1])] * mode + [annihilate] + [np.eye(2)] * (nqubits - mode - 1)
+        result = np.ones((1, 1))
+        for factor in factors:
+            result = np.kron(result, factor)
+        return result
+
+    bonds = [(site, site + 1) for site in range(nsites - 1)]
+    if periodic and nsites >= 3:
+        bonds.append((0, nsites - 1))
+    rng = np.random.default_rng(nsites)
+    hopping = rng.normal(size=len(bonds)).tolist()
+    interaction = rng.normal(size=nsites).tolist()
+    chemical_potential = rng.normal(size=nsites).tolist()
+
+    expected = np.zeros((2**nqubits, 2**nqubits))
+    for (first, second), t in zip(bonds, hopping, strict=True):
+        for offset in (0, nsites):
+            hop = c(offset + first).T @ c(offset + second)
+            expected -= t * (hop + hop.T)
+    for site in range(nsites):
+        up = c(site).T @ c(site)
+        down = c(nsites + site).T @ c(nsites + site)
+        expected += interaction[site] * up @ down - chemical_potential[site] * (up + down)
+
+    H = Hamiltonian.fermi_hubbard(
+        nsites=nsites,
+        hopping=hopping,
+        interaction=interaction,
+        chemical_potential=chemical_potential,
+        periodic=periodic,
+    )
+
+    assert H.nqubits == nqubits
+    np.testing.assert_allclose(H.to_matrix().toarray(), expected, atol=1e-12)
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"nsites": 0}, "nsites must be greater than zero, got 0."),
+        ({"nsites": 3, "hopping": [1.0]}, "hopping must hold one coefficient per term, got 1 for 2 terms."),
+        (
+            {"nsites": 3, "hopping": [1.0, 2.0], "periodic": True},
+            "hopping must hold one coefficient per term, got 2 for 3 terms.",
+        ),
+        ({"nsites": 2, "interaction": [1.0]}, "interaction must hold one coefficient per term, got 1 for 2 terms."),
+        (
+            {"nsites": 2, "chemical_potential": [1.0]},
+            "chemical_potential must hold one coefficient per term, got 1 for 2 terms.",
+        ),
+    ],
+)
+def test_fermi_hubbard_rejects_invalid_arguments(kwargs: dict, match: str):
+    with pytest.raises(ValueError, match=re.escape(match)):
+        Hamiltonian.fermi_hubbard(**kwargs)
+
+
 ###############################################################################
 # Per-term coefficients, requested by passing a list instead of a single value
 ###############################################################################
