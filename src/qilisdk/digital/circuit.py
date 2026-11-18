@@ -28,14 +28,17 @@ from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
-from .exceptions import QubitOutOfRangeError
-from .gates import BasicGate, Gate, _reject_analog_object
+from .exceptions import QubitOutOfRangeError, UnsupportedGateError
+from .gates import SWAP, Adjoint, BasicGate, Controlled, Gate, H, I, M, X, Y, Z, _reject_analog_object
 
 if TYPE_CHECKING:
     from qilisdk.core.types import RealNumber
 
 # Name used for this class in the error messages raised for analog objects.
 _REJECT_TARGET = "a Circuit"
+
+# Gates that are their own adjoint, also when controlled.
+_SELF_ADJOINT_GATES = (I, X, Y, Z, H, SWAP)
 
 
 def _complex_dtype() -> np.dtype:
@@ -317,6 +320,46 @@ class Circuit(Parameterizable):
         """
         logger.trace("[Circuit] Copying circuit with {} gates.", len(self._gates))
         return deepcopy(self)
+
+    def adjoint(self) -> Circuit:
+        """Return the adjoint (conjugate transpose) of this circuit.
+
+        The gates of the returned circuit are those of this circuit in reverse order, each replaced by its
+        adjoint, so the returned circuit implements the inverse of this circuit's unitary. Gates that are their
+        own adjoint (``I``, ``X``, ``Y``, ``Z``, ``H``, ``SWAP`` and controlled versions of them, such as
+        ``CNOT`` and ``CZ``) are kept as they are, an :class:`Adjoint` gate is unwrapped into its underlying
+        gate, and every other gate is wrapped in an :class:`Adjoint` gate.
+
+        The returned circuit shares no state with this one, so setting its parameters never affects this
+        circuit. It keeps this circuit's parameter prefix and constraints. Parameters keep their values and,
+        when parameterized gates are wrapped in :class:`Adjoint`, they keep their meaning, so the adjoint of
+        ``RX(theta)`` is still parameterized by ``theta``.
+
+        Returns:
+            Circuit: A new circuit implementing the adjoint of this circuit.
+
+        Raises:
+            UnsupportedGateError: If the circuit contains a measurement, which has no adjoint.
+        """
+        logger.trace("[Circuit] Building adjoint of circuit with {} gates.", len(self._gates))
+        if any(isinstance(gate, M) for gate in self._gates):
+            raise UnsupportedGateError("Cannot take the adjoint of a circuit that contains measurements.")
+        circuit = self.copy()
+        adjoint_circuit = Circuit(self.nqubits)
+        for gate in reversed(circuit.gates):
+            if isinstance(gate, Adjoint):
+                adjoint_circuit.add(gate.basic_gate)
+            elif isinstance(gate, _SELF_ADJOINT_GATES) or (
+                isinstance(gate, Controlled) and isinstance(gate.basic_gate, _SELF_ADJOINT_GATES)
+            ):
+                adjoint_circuit.add(gate)
+            else:
+                adjoint_circuit.add(Adjoint(gate))  # ty:ignore[invalid-argument-type]
+        for constraint in circuit.get_constraints():
+            adjoint_circuit.add_parameter_constraint(constraint)
+        if circuit.get_prefix():
+            adjoint_circuit.set_prefix(circuit.get_prefix())
+        return adjoint_circuit
 
     def to_matrix(self) -> np.ndarray:
         """Return the full unitary matrix representation of the circuit.
