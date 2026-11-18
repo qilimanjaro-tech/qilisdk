@@ -38,6 +38,7 @@ from qilisdk._optionals import (
 
 if TYPE_CHECKING:
     import SpeQtrum
+    from packaging.specifiers import SpecifierSet
 
 
 def test_optional_stub_raises_on_call() -> None:
@@ -256,18 +257,23 @@ def test_satisfied_floor_resolves_the_symbol() -> None:
 
 
 def test_runtime_floors_match_the_versions_ci_tests() -> None:
-    """The floors enforced at runtime are the ones the backends group installs."""
+    """The floors enforced at runtime are the ones the backends group installs.
+
+    A distribution may appear in the backends group several times behind Python version
+    markers (e.g. a higher floor where older releases ship no wheels), so the runtime floor
+    only has to match one of them.
+    """
     pyproject = Path(__file__).parents[2] / "pyproject.toml"
     if not pyproject.exists():  # running against an installed wheel
         pytest.skip("pyproject.toml is not available")
 
     from qilisdk.backends import OPTIONAL_FEATURES  # ruff: ignore[import-outside-top-level]
 
+    tested: dict[str, list[SpecifierSet]] = {}
     with pyproject.open("rb") as file:
-        tested = {
-            Requirement(spec.split(";")[0]).name: Requirement(spec.split(";")[0]).specifier
-            for spec in tomllib.load(file)["dependency-groups"]["backends"]
-        }
+        for spec in tomllib.load(file)["dependency-groups"]["backends"]:
+            requirement = Requirement(spec)
+            tested.setdefault(requirement.name, []).append(requirement.specifier)
     enforced = {
         Requirement(dist).name: Requirement(dist).specifier
         for feature in OPTIONAL_FEATURES
@@ -278,7 +284,7 @@ def test_runtime_floors_match_the_versions_ci_tests() -> None:
     shared = tested.keys() & enforced.keys()
     assert shared, "the backends group and OPTIONAL_FEATURES name no distribution in common"
     for name in shared:
-        assert enforced[name] == tested[name], f"{name}: runtime requires {enforced[name]}, CI tests {tested[name]}"
+        assert enforced[name] in tested[name], f"{name}: runtime requires {enforced[name]}, CI tests {tested[name]}"
 
 
 def test_version_not_found(monkeypatch):
