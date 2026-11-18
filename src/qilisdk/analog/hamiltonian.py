@@ -1137,7 +1137,7 @@ class Hamiltonian(Parameterizable):
             .. code-block:: python
 
                 from qilisdk.analog import Hamiltonian
-                from qilisdk.core import basis_state
+                from qilisdk.core import ket
 
                 # Two sites, so qubits 0 1 hold spin up and qubits 2 3 hold spin down.
                 H = Hamiltonian.fermi_hubbard(nsites=2, hopping=1.0, interaction=4.0)
@@ -1145,14 +1145,14 @@ class Hamiltonian(Parameterizable):
                 # + Z(0) Z(2) - Z(0) - Z(2) + Z(1) Z(3) - Z(1) - Z(3)
 
                 # One spin-up and one spin-down fermion, both on site 0.
-                state = basis_state([1, 0, 1, 0])
+                state = ket(1, 0, 1, 0)
 
         Args:
             nsites (int): the number of lattice sites. The Hamiltonian acts on ``2 * nsites`` qubits.
             hopping (Coefficient, optional): the hopping amplitude :math:`t` on every bond, or a list
                 holding the amplitude of each bond in turn, ordered along the chain and ending with
-                the wrap-around bond when ``periodic`` is set. Both spin species share it. Defaults
-                to 1.0.
+                the wrap-around bond when ``periodic`` is set on 3 or more sites, since fewer sites
+                have no wrap-around bond. Both spin species share it. Defaults to 1.0.
             interaction (Coefficient, optional): the on-site interaction :math:`U` on every site, or
                 a list holding the interaction of each site in turn. Defaults to 1.0.
             chemical_potential (Coefficient, optional): the chemical potential :math:`\\mu` on every
@@ -1168,6 +1168,7 @@ class Hamiltonian(Parameterizable):
         Raises:
             ValueError: if ``nsites`` is not greater than zero.
             ValueError: if a list of coefficients does not hold one value per term.
+            ValueError: if any coefficient is not real, which would make the Hamiltonian non-Hermitian.
         """
         if nsites <= 0:
             raise ValueError(f"nsites must be greater than zero, got {nsites}.")
@@ -1178,6 +1179,9 @@ class Hamiltonian(Parameterizable):
         t = _parse_coefficients(hopping, len(bonds), "hopping")
         u = _parse_coefficients(interaction, nsites, "interaction")
         mu = _parse_coefficients(chemical_potential, nsites, "chemical_potential")
+        for name, values in (("hopping", t), ("interaction", u), ("chemical_potential", mu)):
+            if any(value.imag != 0 for value in values):
+                raise ValueError(f"{name} must be real, since complex values make the Hamiltonian non-Hermitian.")
 
         elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
         for offset in (0, nsites):

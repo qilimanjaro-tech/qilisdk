@@ -1440,6 +1440,9 @@ def test_fermi_hubbard_matches_fermionic_operators(nsites: int, periodic: bool):
             {"nsites": 2, "chemical_potential": [1.0]},
             "chemical_potential must hold one coefficient per term, got 1 for 2 terms.",
         ),
+        ({"nsites": 2, "hopping": 1j}, "hopping must be real"),
+        ({"nsites": 2, "interaction": [1.0, 1 + 1j]}, "interaction must be real"),
+        ({"nsites": 2, "chemical_potential": 2j}, "chemical_potential must be real"),
     ],
 )
 def test_fermi_hubbard_rejects_invalid_arguments(kwargs: dict, match: str):
