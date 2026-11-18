@@ -1585,3 +1585,57 @@ def test_multiplying_or_dividing_analog_by_digital_gate_raises_helpful_error(mak
     gate = digital_X(0)
     with pytest.raises(NotAHamiltonianError, match="did you mean to import X, Y, Z or I from qilisdk"):
         operation(analog, gate)
+
+
+# --- OTOC ---
+
+
+def _otoc_states(nqubits):
+    rng = np.random.default_rng(7)
+    psi = rng.normal(size=(2**nqubits, 1)) + 1j * rng.normal(size=(2**nqubits, 1))
+    psi /= np.linalg.norm(psi)
+    return {"infinite_temperature": None, "ket": QTensor(psi), "density_matrix": QTensor(psi @ psi.conj().T)}
+
+
+@pytest.mark.parametrize("state_kind", ["infinite_temperature", "ket", "density_matrix"])
+def test_otoc_matches_explicit_time_evolution(state_kind):
+    """The eigenbasis phase shortcut must agree with building U(t) = exp(-iHt) explicitly."""
+    hamiltonian = Hamiltonian.transverse_field_ising(nqubits=3, z_coefficient=0.3)
+    state = _otoc_states(3)[state_kind]
+    times = np.array([0.0, 0.4, 1.3])
+
+    curve = hamiltonian.otoc(Z(0), Z(2), times, state)
+
+    expected = [(-1j * time * hamiltonian.to_qtensor()).expm().otoc(Z(0), Z(2), state) for time in times]
+    assert np.allclose(curve, expected)
+
+
+def test_otoc_scalar_time_returns_complex():
+    hamiltonian = Hamiltonian.transverse_field_ising(nqubits=2)
+    value = hamiltonian.otoc(Z(0), Z(1), 0.5)
+    assert isinstance(value, complex)
+    assert np.isclose(value, hamiltonian.otoc(Z(0), Z(1), [0.5])[0])
+
+
+def test_otoc_preserves_time_array_shape():
+    hamiltonian = Hamiltonian.transverse_field_ising(nqubits=2)
+    assert hamiltonian.otoc(Z(0), Z(1), np.zeros((2, 3))).shape == (2, 3)
+
+
+def test_otoc_starts_at_one_and_decays_for_scrambling_dynamics():
+    hamiltonian = Hamiltonian.transverse_field_ising(nqubits=3)
+    curve = hamiltonian.otoc(Z(0), Z(2), np.linspace(0, 2, 5))
+    assert np.isclose(curve[0], 1.0)
+    assert curve[-1].real < 0.99
+
+
+def test_otoc_expands_to_qubits_outside_the_hamiltonian():
+    """V on a qubit the Hamiltonian never touches commutes with W(t) forever."""
+    hamiltonian = Hamiltonian.transverse_field_ising(nqubits=2)
+    assert np.allclose(hamiltonian.otoc(Z(0), X(2), np.linspace(0, 3, 4)), 1.0)
+
+
+def test_otoc_rejects_non_hermitian_hamiltonian():
+    hamiltonian = 1j * Z(0) + X(0)
+    with pytest.raises(ValueError, match="requires a Hermitian Hamiltonian"):
+        hamiltonian.otoc(Z(0), X(0), 1.0)

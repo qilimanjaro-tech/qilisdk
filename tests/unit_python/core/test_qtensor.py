@@ -1583,3 +1583,85 @@ def test_magic_rejects_non_positive_alpha(alpha):
     state = QTensor.zero(2)
     with pytest.raises(ValueError, match="alpha must be positive"):
         state.magic(alpha)
+
+
+# --- OTOC Tests ---
+
+
+def _otoc_reference(unitary, w, v, rho):
+    """Brute-force OTOC straight from the definition, tr(rho W(t)† V† W(t) V)."""
+    w_t = unitary.conj().T @ w @ unitary
+    return np.trace(rho @ w_t.conj().T @ v.conj().T @ w_t @ v)
+
+
+def _random_unitary(dim, seed):
+    rng = np.random.default_rng(seed)
+    return np.linalg.qr(rng.normal(size=(dim, dim)) + 1j * rng.normal(size=(dim, dim)))[0]
+
+
+def _random_ket(dim, seed):
+    rng = np.random.default_rng(seed)
+    psi = rng.normal(size=(dim, 1)) + 1j * rng.normal(size=(dim, 1))
+    return psi / np.linalg.norm(psi)
+
+
+@pytest.mark.parametrize("state_kind", ["infinite_temperature", "ket", "density_matrix"])
+def test_otoc_matches_definition(state_kind):
+    nqubits = 3
+    dim = 2**nqubits
+    unitary = _random_unitary(dim, seed=1)
+    psi = _random_ket(dim, seed=2)
+    rho = psi @ psi.conj().T
+    state = {"infinite_temperature": None, "ket": QTensor(psi), "density_matrix": QTensor(rho)}[state_kind]
+    reference_rho = np.eye(dim) / dim if state is None else rho
+
+    result = QTensor(unitary).otoc(Z(0), X(2), state)
+
+    expected = _otoc_reference(
+        unitary, Z(0).to_qtensor(nqubits).dense(), X(2).to_qtensor(nqubits).dense(), reference_rho
+    )
+    assert np.isclose(result, expected)
+
+
+def test_otoc_accepts_qtensor_operators():
+    unitary = QTensor(_random_unitary(4, seed=3))
+    w = Z(0).to_qtensor(2)
+    v = X(1).to_qtensor(2)
+    assert np.isclose(unitary.otoc(w, v), unitary.otoc(Z(0), X(1)))
+
+
+def test_otoc_is_one_for_identity_evolution_of_disjoint_paulis():
+    assert np.isclose(QTensor.identity(3).otoc(Z(0), X(2)), 1.0)
+
+
+def test_otoc_anticommuting_paulis_give_minus_one():
+    """With no evolution, Z and X on the same qubit anticommute, so ZXZX = -1."""
+    assert np.isclose(QTensor.identity(2).otoc(Z(0), X(0)), -1.0)
+
+
+def test_otoc_basis_state_average_equals_infinite_temperature():
+    nqubits = 2
+    unitary = QTensor(_random_unitary(2**nqubits, seed=4))
+    states = list(itertools.starmap(QTensor.ket, itertools.product([0, 1], repeat=nqubits)))
+    average = np.mean([unitary.otoc(Z(0), Z(1), state) for state in states])
+    assert np.isclose(average, unitary.otoc(Z(0), Z(1)))
+
+
+def test_otoc_rejects_non_operator():
+    not_an_operator = QTensor.ket(0, 0)
+    with pytest.raises(ValueError, match="square evolution operator"):
+        not_an_operator.otoc(Z(0), Z(1))
+
+
+def test_otoc_rejects_operator_of_wrong_size():
+    unitary = QTensor.identity(2)
+    too_small = QTensor.identity(1)
+    with pytest.raises(ValueError, match=r"W must be a 4x4 operator on 2 qubits"):
+        unitary.otoc(too_small, Z(1))
+
+
+def test_otoc_rejects_bra_state():
+    unitary = QTensor.identity(2)
+    bra_state = QTensor.bra(0, 0)
+    with pytest.raises(ValueError, match="ket or a density matrix on 2 qubits"):
+        unitary.otoc(Z(0), Z(1), bra_state)

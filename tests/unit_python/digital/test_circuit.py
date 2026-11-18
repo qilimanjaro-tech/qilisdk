@@ -907,3 +907,29 @@ def test_gate_minus_analog_hamiltonian_raises_helpful_error():
     hamiltonian = analog_Y(0)
     with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
         _ = gate - hamiltonian
+
+
+def test_circuit_otoc_matches_qtensor_otoc():
+    from qilisdk.analog import Z as analog_Z  # ruff: ignore[import-outside-top-level]
+
+    circuit = Circuit(3)
+    circuit.add(RX(0, theta=0.4))
+    circuit.add(CNOT(0, 1))
+    circuit.add(RY(1, theta=1.1))
+    circuit.add(CNOT(1, 2))
+    state = QTensor.ket(0, 1, 0)
+
+    assert np.isclose(circuit.otoc(analog_Z(0), analog_X(2)), circuit.to_qtensor().otoc(analog_Z(0), analog_X(2)))
+    assert np.isclose(
+        circuit.otoc(analog_Z(0), analog_X(2), state), circuit.to_qtensor().otoc(analog_Z(0), analog_X(2), state)
+    )
+
+
+def test_circuit_otoc_uses_current_parameter_values():
+    """Changing a parameter after construction must change the evolution the OTOC is computed for."""
+    circuit = Circuit(1)
+    circuit.add(RY(0, theta=Parameter("theta", 0.0)))
+    assert np.isclose(circuit.otoc(analog_X(0), analog_X(0)), 1.0)
+    circuit.set_parameter_values([np.pi / 2])
+    # RY(pi/2) maps X to -Z, which anticommutes with X
+    assert np.isclose(circuit.otoc(analog_X(0), analog_X(0)), -1.0)
