@@ -25,7 +25,7 @@ from qilisdk.analog import Y as analog_Y
 from qilisdk.analog.hamiltonian import PauliX
 from qilisdk.core import Parameter, QTensor
 from qilisdk.core.comparison import LEQ
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X, Y
+from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, X, Y
 from qilisdk.digital.circuit import _apply_gate_left
 from qilisdk.digital.exceptions import GateHasNoMatrixError, NotAGateError, QubitOutOfRangeError
 from qilisdk.digital.gates import BasicGate, Gate
@@ -909,20 +909,17 @@ def test_gate_minus_analog_hamiltonian_raises_helpful_error():
         _ = gate - hamiltonian
 
 
-def test_circuit_otoc_matches_qtensor_otoc():
+@pytest.mark.parametrize("state", [None, QTensor.ket(0, 1)])
+@pytest.mark.parametrize(("probe", "expected"), [("Z0", -1.0), ("X0", 1.0), ("Z1", 1.0)])
+def test_circuit_otoc_matches_heisenberg_picture_by_hand(probe, expected, state):
+    """H(0) then CNOT(0, 1) maps Z(1) to X(0) Z(1), so the OTOC is -1 against Z(0) and +1 against X(0) or Z(1)."""
     from qilisdk.analog import Z as analog_Z  # ruff: ignore[import-outside-top-level]
 
-    circuit = Circuit(3)
-    circuit.add(RX(0, theta=0.4))
+    circuit = Circuit(2)
+    circuit.add(H(0))
     circuit.add(CNOT(0, 1))
-    circuit.add(RY(1, theta=1.1))
-    circuit.add(CNOT(1, 2))
-    state = QTensor.ket(0, 1, 0)
-
-    assert np.isclose(circuit.otoc(analog_Z(0), analog_X(2)), circuit.to_qtensor().otoc(analog_Z(0), analog_X(2)))
-    assert np.isclose(
-        circuit.otoc(analog_Z(0), analog_X(2), state), circuit.to_qtensor().otoc(analog_Z(0), analog_X(2), state)
-    )
+    v = {"Z0": analog_Z(0), "X0": analog_X(0), "Z1": analog_Z(1)}[probe]
+    assert np.isclose(circuit.otoc(analog_Z(1), v, state), expected)
 
 
 def test_circuit_otoc_uses_current_parameter_values():

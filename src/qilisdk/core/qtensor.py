@@ -1154,6 +1154,8 @@ def _otoc_operator(operator: QTensor | Hamiltonian, nqubits: int, name: str) -> 
     Raises:
         ValueError: If the operator is not a square matrix on ``nqubits`` qubits.
     """
+    if not isinstance(operator, QTensor) and operator.nqubits > nqubits:
+        raise ValueError(f"{name} acts on {operator.nqubits} qubits, but the evolution only has {nqubits} qubits")
     tensor = operator if isinstance(operator, QTensor) else operator.to_qtensor(nqubits)
     dim = 2**nqubits
     if tensor.shape != (dim, dim):

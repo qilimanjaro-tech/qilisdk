@@ -1660,6 +1660,13 @@ def test_otoc_rejects_operator_of_wrong_size():
         unitary.otoc(too_small, Z(1))
 
 
+def test_otoc_rejects_hamiltonian_outside_the_evolution():
+    unitary = QTensor.identity(2)
+    out_of_range = Z(3)
+    with pytest.raises(ValueError, match=r"V acts on 4 qubits, but the evolution only has 2 qubits"):
+        unitary.otoc(Z(0), out_of_range)
+
+
 def test_otoc_rejects_bra_state():
     unitary = QTensor.identity(2)
     bra_state = QTensor.bra(0, 0)
