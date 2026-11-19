@@ -21,7 +21,7 @@
 
 namespace {
 
-void append_expanded_sets(std::vector<std::vector<SparseMatrix>>& out, const std::vector<std::vector<SparseMatrix>>& sets, const std::vector<int>& qubits, int nqubits, bool allow_full_register) {
+void append_expanded_sets(std::vector<const std::vector<SparseMatrix>*>& out, std::map<std::tuple<const std::vector<SparseMatrix>*, int, int>, std::vector<SparseMatrix>>& cache, const std::vector<std::vector<SparseMatrix>>& sets, const std::vector<int>& qubits, int nqubits, bool allow_full_register) {
     /*
     Expand each Kraus operator set onto the full register and append the results.
 
@@ -30,8 +30,12 @@ void append_expanded_sets(std::vector<std::vector<SparseMatrix>>& out, const std
     `allow_full_register` is true: for noise attached to a specific qubit, a whole-register set is
     ambiguous (it is not clear how many times it should be applied) and is rejected instead.
 
+    Expanded sets are stored in `cache` and reused, since building them is costly for big registers.
+
     Args:
-        out (std::vector<std::vector<SparseMatrix>>&): The list the expanded sets are appended to.
+        out (std::vector<const std::vector<SparseMatrix>*>&): The list the expanded sets are appended to.
+        cache (std::map<std::tuple<const std::vector<SparseMatrix>*, int, int>, std::vector<SparseMatrix>>&):
+            The expanded sets, keyed by source set, qubit and register size.
         sets (std::vector<std::vector<SparseMatrix>>): The Kraus operator sets to expand.
         qubits (std::vector<int>): The qubits the sets are attached to.
         nqubits (int): The total number of qubits.
@@ -47,7 +51,7 @@ void append_expanded_sets(std::vector<std::vector<SparseMatrix>>& out, const std
         }
         const int set_qubits = static_cast<int>(std::log2(set.front().rows()));
         if (set_qubits == nqubits && allow_full_register) {
-            out.push_back(set);
+            out.push_back(&set);
             continue;
         }
         if (set_qubits != 1) {
@@ -57,12 +61,14 @@ void append_expanded_sets(std::vector<std::vector<SparseMatrix>>& out, const std
             throw py::value_error("Kraus operators must act either on a single qubit or on the whole register.");
         }
         for (int qubit : qubits) {
-            std::vector<SparseMatrix> expanded;
-            expanded.reserve(set.size());
-            for (const auto& K : set) {
-                expanded.push_back(expand_operator(qubit, nqubits, K));
+            auto [it, inserted] = cache.try_emplace(std::make_tuple(&set, qubit, nqubits));
+            if (inserted) {
+                it->second.reserve(set.size());
+                for (const auto& K : set) {
+                    it->second.push_back(expand_operator(qubit, nqubits, K));
+                }
             }
-            out.push_back(std::move(expanded));
+            out.push_back(&it->second);
         }
     }
 }
@@ -131,6 +137,7 @@ void NoiseModelCpp::add_kraus_operators_global(const std::vector<SparseMatrix>& 
         Ks (std::vector<SparseMatrix>): The global Kraus operator matrices to add.
     */
     has_something = true;
+    cached_expanded_kraus_operators.clear();
     cached_kraus_operators_global.push_back(Ks);
 }
 
@@ -143,6 +150,7 @@ void NoiseModelCpp::add_kraus_operators_per_qubit(int qubit, const std::vector<S
         Ks (std::vector<SparseMatrix>): The Kraus operator matrices to add.
     */
     has_something = true;
+    cached_expanded_kraus_operators.clear();
     cached_kraus_operators_per_qubit[qubit].push_back(Ks);
 }
 
@@ -155,6 +163,7 @@ void NoiseModelCpp::add_kraus_operators_per_gate(const std::string& gate_name, c
         Ks (std::vector<SparseMatrix>): The Kraus operator matrices to add.
     */
     has_something = true;
+    cached_expanded_kraus_operators.clear();
     cached_kraus_operators_per_gate[gate_name].push_back(Ks);
 }
 
@@ -168,6 +177,7 @@ void NoiseModelCpp::add_kraus_operators_per_gate_qubit(const std::string& gate_n
         Ks (std::vector<SparseMatrix>): The Kraus operator matrices to add.
     */
     has_something = true;
+    cached_expanded_kraus_operators.clear();
     cached_kraus_operators_per_gate_qubit[std::make_pair(gate_name, qubit)].push_back(Ks);
 }
 
@@ -259,12 +269,13 @@ std::string NoiseModelCpp::make_gate_key(const std::string& base_name, int num_c
     return base_name + "_c" + std::to_string(num_controls);
 }
 
-std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operators(const std::string& gate_name, int num_controls, const std::vector<int>& gate_qubits, int nqubits) const {
+std::vector<const std::vector<SparseMatrix>*> NoiseModelCpp::get_relevant_kraus_operators(const std::string& gate_name, int num_controls, const std::vector<int>& gate_qubits, int nqubits) {
     /*
     Get all relevant Kraus operators for a given gate, expanded onto the full register.
 
     Global and per-gate noise is applied independently to every qubit the gate acts on, while
     per-qubit and per-gate-per-qubit noise is applied only to the qubit it was attached to.
+    Expanded sets are cached, so they are only built the first time they are needed.
 
     Args:
         gate_name (std::string): The base name of the gate.
@@ -274,22 +285,23 @@ std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operato
         nqubits (int): The total number of qubits.
 
     Returns:
-        std::vector<std::vector<SparseMatrix>>: The list of relevant Kraus operators.
+        std::vector<const std::vector<SparseMatrix>*>: The list of relevant Kraus operator sets,
+            pointing into the noise model and valid until another Kraus operator set is added.
     */
 
     // The list of operators to fill
-    std::vector<std::vector<SparseMatrix>> relevant_operators;
+    std::vector<const std::vector<SparseMatrix>*> relevant_operators;
 
     // Get the key for per-gate noise lookup
     const std::string gate_key = make_gate_key(gate_name, num_controls);
 
     // Add global Kraus operators, applied to each qubit the gate acts on
-    append_expanded_sets(relevant_operators, cached_kraus_operators_global, gate_qubits, nqubits, true);
+    append_expanded_sets(relevant_operators, cached_expanded_kraus_operators, cached_kraus_operators_global, gate_qubits, nqubits, true);
 
     // Add per-gate Kraus operators, applied to each qubit the gate acts on
     auto gate_it = cached_kraus_operators_per_gate.find(gate_key);
     if (gate_it != cached_kraus_operators_per_gate.end()) {
-        append_expanded_sets(relevant_operators, gate_it->second, gate_qubits, nqubits, true);
+        append_expanded_sets(relevant_operators, cached_expanded_kraus_operators, gate_it->second, gate_qubits, nqubits, true);
     }
 
     // For both types of per-qubit noise
@@ -297,13 +309,13 @@ std::vector<std::vector<SparseMatrix>> NoiseModelCpp::get_relevant_kraus_operato
         // Add per-qubit Kraus operators, applied only to the qubit they are attached to
         auto qubit_it = cached_kraus_operators_per_qubit.find(qubit);
         if (qubit_it != cached_kraus_operators_per_qubit.end()) {
-            append_expanded_sets(relevant_operators, qubit_it->second, {qubit}, nqubits, false);
+            append_expanded_sets(relevant_operators, cached_expanded_kraus_operators, qubit_it->second, {qubit}, nqubits, false);
         }
 
         // Add per-gate-per-qubit Kraus operators, applied only to the qubit they are attached to
         auto gate_qubit_it = cached_kraus_operators_per_gate_qubit.find(std::make_pair(gate_key, qubit));
         if (gate_qubit_it != cached_kraus_operators_per_gate_qubit.end()) {
-            append_expanded_sets(relevant_operators, gate_qubit_it->second, {qubit}, nqubits, false);
+            append_expanded_sets(relevant_operators, cached_expanded_kraus_operators, gate_qubit_it->second, {qubit}, nqubits, false);
         }
     }
 

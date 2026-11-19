@@ -56,17 +56,39 @@ TEST(NoiseModel, PerQubitNoiseStaysOnItsOwnQubit) {
     // A two-qubit gate on qubits {0, 1} must get the operator on qubit 0 alone, i.e. X (x) I.
     auto result = model.get_relevant_kraus_operators("SWAP", 0, {0, 1}, 2);
     ASSERT_EQ(result.size(), 1u);
-    ASSERT_EQ(result[0].size(), 1u);
+    ASSERT_EQ(result[0]->size(), 1u);
     SparseMatrix identity(2, 2);
     identity.setIdentity();
     SparseMatrix expected = Eigen::kroneckerProduct(X, identity).eval();
-    EXPECT_TRUE(result[0][0].isApprox(expected));
+    EXPECT_TRUE((*result[0])[0].isApprox(expected));
 
     // The noise is still found when its qubit is the control of the gate rather than a target.
     EXPECT_EQ(model.get_relevant_kraus_operators("X", 1, {0, 1}, 2).size(), 1u);
 
     // A gate that does not touch qubit 0 gets no noise at all.
     EXPECT_EQ(model.get_relevant_kraus_operators("X", 0, {1}, 2).size(), 0u);
+}
+
+TEST(NoiseModel, ExpandedKrausOperatorsAreCached) {
+    SparseMatrix X(2, 2);
+    X.insert(0, 1) = 1.0;
+    X.insert(1, 0) = 1.0;
+    X.makeCompressed();
+
+    NoiseModelCpp model;
+    model.add_kraus_operators_global({X});
+
+    // Different gates on the same qubits reuse the same expanded sets rather than rebuilding them.
+    auto h_result = model.get_relevant_kraus_operators("H", 0, {0, 1}, 2);
+    auto x_result = model.get_relevant_kraus_operators("X", 1, {0, 1}, 2);
+    ASSERT_EQ(h_result.size(), 2u);
+    ASSERT_EQ(x_result.size(), 2u);
+    EXPECT_EQ(h_result[0], x_result[0]);
+    EXPECT_EQ(h_result[1], x_result[1]);
+
+    // Adding another set invalidates the cache and the new set is picked up.
+    model.add_kraus_operators_global({X});
+    EXPECT_EQ(model.get_relevant_kraus_operators("H", 0, {0, 1}, 2).size(), 4u);
 }
 
 TEST(NoiseModel, MultiQubitKrausOperatorsMustSpanTheRegister) {
@@ -79,7 +101,7 @@ TEST(NoiseModel, MultiQubitKrausOperatorsMustSpanTheRegister) {
     // Spanning the whole register is fine and is applied once, as-is.
     auto result = model.get_relevant_kraus_operators("SWAP", 0, {0, 1}, 2);
     ASSERT_EQ(result.size(), 1u);
-    EXPECT_EQ(result[0][0].rows(), 4);
+    EXPECT_EQ((*result[0])[0].rows(), 4);
 
     // Acting on more than one qubit but less than the register is ambiguous.
     EXPECT_THROW(model.get_relevant_kraus_operators("SWAP", 0, {0, 1}, 3), py::value_error);

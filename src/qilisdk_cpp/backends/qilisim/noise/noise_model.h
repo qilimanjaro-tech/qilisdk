@@ -14,6 +14,7 @@
 #pragma once
 
 #include <map>
+#include <tuple>
 #include <vector>
 #include "../../../libs/eigen.h"
 
@@ -33,6 +34,11 @@ class NoiseModelCpp {
     std::map<int, std::vector<std::vector<SparseMatrix>>> cached_kraus_operators_per_qubit;
     std::map<std::string, std::vector<std::vector<SparseMatrix>>> cached_kraus_operators_per_gate;
     std::map<std::pair<std::string, int>, std::vector<std::vector<SparseMatrix>>> cached_kraus_operators_per_gate_qubit;
+
+    // Kraus operator sets expanded onto the full register, keyed by the source set, the qubit it is
+    // applied to and the register size, so each set is only expanded once per qubit. Keys point into
+    // the containers above, so this is cleared whenever a Kraus operator set is added.
+    std::map<std::tuple<const std::vector<SparseMatrix>*, int, int>, std::vector<SparseMatrix>> cached_expanded_kraus_operators;
 
     std::pair<double, double> readout_error_global = {0.0, 0.0};
     std::map<int, std::pair<double, double>> readout_error_per_qubit;
@@ -58,7 +64,7 @@ class NoiseModelCpp {
     const std::map<std::string, std::vector<std::vector<SparseMatrix>>>& get_kraus_operators_per_gate() const;
     const std::map<std::pair<std::string, int>, std::vector<std::vector<SparseMatrix>>>& get_kraus_operators_per_gate_qubit() const;
     std::pair<double, double> get_relevant_readout_error(int qubit) const;
-    std::vector<std::vector<SparseMatrix>> get_relevant_kraus_operators(const std::string& gate_name, int num_controls, const std::vector<int>& gate_qubits, int nqubits) const;
+    std::vector<const std::vector<SparseMatrix>*> get_relevant_kraus_operators(const std::string& gate_name, int num_controls, const std::vector<int>& gate_qubits, int nqubits);
     static std::string make_gate_key(const std::string& base_name, int num_controls);
 };
 
