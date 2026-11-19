@@ -16,7 +16,7 @@ import random
 import numpy as np
 import pytest
 
-from qilisdk.backends.backend_config import ExecutionConfig
+from qilisdk.backends.backend_config import DigitalMethod, ExecutionConfig
 
 pytest.importorskip("qilisim_module", reason="Noise integration tests require the 'qilisim_module' C++ extension")
 pytest.importorskip(
@@ -52,6 +52,9 @@ from qilisdk.readout import Readout
 
 backends = [QiliSim, CudaqBackend]
 args_per_backend = {QiliSim: {"execution_config": ExecutionConfig(seed=42, num_threads=1)}, CudaqBackend: {}}
+
+# The tensor network simulators hold a pure state, so they only take parameter perturbations and, for MPS, readout error
+tensor_network_methods = [DigitalMethod.mps(), DigitalMethod.bp()]
 
 
 @pytest.mark.parametrize("backend_class", backends)
@@ -712,3 +715,36 @@ def test_readout_error_qilisim_10(backend_class):
     res = backend.execute(functional, readout=Readout().with_sampling(nshots=shots))
 
     assert res.get_samples() == {"0": shots}
+
+
+@pytest.mark.parametrize("method", tensor_network_methods)
+def test_tensor_network_gate_parameter_perturbation(method):
+    circuit = Circuit(nqubits=2)
+    circuit.add(RX(0, theta=0.0))
+    circuit.add(CNOT(0, 1))
+
+    noise_model = NoiseModel()
+    noise_model.add(OffsetPerturbation(offset=np.pi), gate=RX, parameter="theta")
+
+    backend = QiliSim(noise_model=noise_model, digital_simulation_method=method, **args_per_backend[QiliSim])
+    result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_expectation([PauliZ(0), PauliZ(1)]))
+
+    np.testing.assert_allclose(np.real(result.get_expectation_values()), [-1.0, -1.0], atol=1e-10)
+    assert circuit.gates[0].get_parameters() == {"theta": 0.0}
+
+
+@pytest.mark.parametrize(("p01", "p10", "expected"), [(1.0, 0.0, "11"), (0.0, 1.0, "00")])
+def test_mps_readout_error(p01, p10, expected):
+    circuit = Circuit(nqubits=2)
+    circuit.add(X(0))
+    circuit.add(CNOT(0, 1))
+
+    noise_model = NoiseModel()
+    noise_model.add(ReadoutAssignment(p01=p01, p10=p10), qubits=[0, 1])
+
+    backend = QiliSim(
+        noise_model=noise_model, digital_simulation_method=DigitalMethod.mps(), **args_per_backend[QiliSim]
+    )
+    result = backend.execute(DigitalPropagation(circuit), readout=Readout().with_sampling(nshots=100))
+
+    assert result.get_samples() == {expected: 100}
