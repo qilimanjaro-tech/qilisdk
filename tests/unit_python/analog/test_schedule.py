@@ -918,10 +918,22 @@ def test_schedule_chained_linear_empty_raises():
         Schedule.chained_linear([], total_time=10)
 
 
+def test_calculate_eigenvalues_without_hamiltonians_raises():
+    sched = Schedule(total_time=10, hamiltonians={}, coefficients={})
+    with pytest.raises(ValueError, match=r"no Hamiltonians"):
+        sched.eig()
+
+
 def test_calculate_eigenvalues_with_too_many_qubits_runs_but_warns(monkeypatch):
     class DummyQTensor:
         def __init__(self, nqubits):
             self.nqubits = nqubits
+
+        def __rmul__(self, other):
+            return self
+
+        def __add__(self, other):
+            return self
 
         def eig(self):
             return np.array([0.0]), []
