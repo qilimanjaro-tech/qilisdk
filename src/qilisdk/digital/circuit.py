@@ -335,6 +335,29 @@ class Circuit(Parameterizable):
         logger.trace("[Circuit] Converting circuit to QTensor.")
         return QTensor(self.to_matrix())
 
+    def is_equivalent_to(self, other: Circuit, atol: float = 1e-9) -> bool:
+        """Return whether ``other`` implements the same unitary as this circuit, up to a global phase.
+
+        Only one global phase is allowed: two circuits whose unitaries differ by a relative phase between basis
+        states (for example ``Z`` and the identity) are not equivalent.
+
+        Args:
+            other (Circuit): The circuit to compare against.
+            atol (float): Absolute tolerance used when comparing matrix entries.
+
+        Returns:
+            bool: True if both circuits act on the same number of qubits and are equivalent up to a global phase.
+
+        Raises:
+            GateHasNoMatrixError: If either circuit contains a gate without a matrix (e.g., measurement).
+        """
+        if self.nqubits != other.nqubits:
+            return False
+        first, second = self.to_matrix(), other.to_matrix()
+        overlap = np.vdot(first, second)
+        phase = overlap / abs(overlap) if abs(overlap) > atol else 1.0
+        return np.allclose(second, phase * first, rtol=0, atol=atol)
+
     def __add__(self, other: Circuit | Gate) -> Circuit:
         """Return a new circuit with ``other`` composed at the end of this one.
 
