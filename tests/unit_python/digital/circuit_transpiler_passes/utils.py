@@ -80,7 +80,7 @@ def _equal_up_to_global_phase(first: np.ndarray, second: np.ndarray, atol: float
         return False
     overlap = np.vdot(first, second)
     phase = overlap / abs(overlap) if abs(overlap) > atol else 1.0
-    return np.allclose(second, phase * first, atol=atol)
+    return np.allclose(second, phase * first, rtol=0, atol=atol)
 
 
 def _apply_sequence_to_state(gates: list[Gate], state: np.ndarray, nqubits: int) -> np.ndarray:

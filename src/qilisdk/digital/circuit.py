@@ -356,7 +356,7 @@ class Circuit(Parameterizable):
         first, second = self.to_matrix(), other.to_matrix()
         overlap = np.vdot(first, second)
         phase = overlap / abs(overlap) if abs(overlap) > atol else 1.0
-        return np.allclose(second, phase * first, atol=atol)
+        return np.allclose(second, phase * first, rtol=0, atol=atol)
 
     def __add__(self, other: Circuit | Gate) -> Circuit:
         """Return a new circuit with ``other`` composed at the end of this one.
