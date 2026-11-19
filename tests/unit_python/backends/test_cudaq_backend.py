@@ -48,7 +48,28 @@ from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.circuit_transpiler_passes import DecomposeMultiControlledGatesPass
 from qilisdk.digital.exceptions import UnsupportedGateError
-from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGate, Controlled, H, I, M, S, T, X, Y, Z
+from qilisdk.digital.gates import (
+    CNOT,
+    RX,
+    RY,
+    RZ,
+    SWAP,
+    U1,
+    U2,
+    U3,
+    Adjoint,
+    Barrier,
+    BasicGate,
+    Controlled,
+    H,
+    I,
+    M,
+    S,
+    T,
+    X,
+    Y,
+    Z,
+)
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.functionals.functional_result import FunctionalResult
@@ -1053,6 +1074,13 @@ def test_tomography_for_methods_raises(monkeypatch, method):
     backend = CudaqBackend(sampling_method=method)
     with pytest.raises(ValueError, match="Only Sampling"):
         backend.execute(f, r)
+
+
+def test_cudaq_digital_propagation_ignores_barriers():
+    c = Circuit(2)
+    c.add([Barrier(), H(0), Barrier(0, 1), CNOT(0, 1), M(0, 1), Barrier()])
+    results = CudaqBackend().execute(DigitalPropagation(circuit=c), Readout().with_sampling(100))
+    assert set(results.get_samples()) <= {"00", "11"}
 
 
 def test_cudaq_digital_propagation_initial_state_one():

@@ -42,6 +42,7 @@ from qilisdk.digital.gates import (
     U2,
     U3,
     Adjoint,
+    Barrier,
     BasicGate,
     Controlled,
     Gate,
@@ -352,7 +353,8 @@ class CudaqBackend(Backend):
 
         # If an initial state is given, convert it to a circuit, since CUDA doesn't support any other initial state format
         circuit = self._circuit_from_initial_state(functional.initial_state, functional.circuit.nqubits)
-        circuit.append(functional.circuit)
+        # Barriers are only a drawing aid, with no effect on the state, so they are left out
+        circuit.add(gate for gate in functional.circuit.gates if not isinstance(gate, Barrier))
 
         # Apply parameter perturbations
         if self._noise_model:

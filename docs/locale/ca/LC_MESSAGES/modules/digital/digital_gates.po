@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-14 16:25+0300\n"
+"POT-Creation-Date: 2026-11-17 14:06+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -188,11 +188,21 @@ msgstr ""
 ":class:`M(*qubits: int)<qilisdk.digital.gates.M>` Mesura els qubits "
 "indicats en la base computacional."
 
-#: ../../modules/digital/digital_gates.rst:47
+#: ../../modules/digital/digital_gates.rst:45
+msgid ""
+":class:`Barrier(*qubits: int)<qilisdk.digital.gates.Barrier>` Draws a "
+"vertical line across the listed qubits, or across every qubit when none "
+"are given, to separate sections of a circuit when it is drawn."
+msgstr ""
+":class:`Barrier(*qubits: int)<qilisdk.digital.gates.Barrier>` Dibuixa una"
+" línia vertical a través dels qubits indicats, o de tots els qubits si no"
+" se n'indica cap, per separar seccions d'un circuit quan es dibuixa."
+
+#: ../../modules/digital/digital_gates.rst:50
 msgid "Controlled Gates"
 msgstr "Portes controlades"
 
-#: ../../modules/digital/digital_gates.rst:49
+#: ../../modules/digital/digital_gates.rst:52
 msgid ""
 "Any basic gate can be turned into a controlled gate using the "
 ":class:`~qilisdk.digital.gates.Controlled` class:"
@@ -200,7 +210,7 @@ msgstr ""
 "Qualsevol porta bàsica es pot convertir en una porta controlada "
 "utilitzant la classe :class:`~qilisdk.digital.gates.Controlled`:"
 
-#: ../../modules/digital/digital_gates.rst:58
+#: ../../modules/digital/digital_gates.rst:61
 msgid ""
 "Or alternatively, you can use the "
 ":meth:`.controlled()<qilisdk.digital.gates.BasicGate.controlled>` method "
@@ -210,11 +220,11 @@ msgstr ""
 ":meth:`.controlled()<qilisdk.digital.gates.BasicGate.controlled>` sobre "
 "qualsevol instància de porta:"
 
-#: ../../modules/digital/digital_gates.rst:69
+#: ../../modules/digital/digital_gates.rst:72
 msgid "Adjoint Gates"
 msgstr "Portes adjuntes"
 
-#: ../../modules/digital/digital_gates.rst:71
+#: ../../modules/digital/digital_gates.rst:74
 msgid ""
 "You can create the Hermitian conjugate (dagger) of a gate either using "
 "the :class:`~qilisdk.digital.gates.Adjoint` class or using the "
@@ -226,11 +236,11 @@ msgstr ""
 ":meth:`.adjoint()<qilisdk.digital.gates.BasicGate.adjoint>` sobre "
 "qualsevol instància de porta:"
 
-#: ../../modules/digital/digital_gates.rst:82
+#: ../../modules/digital/digital_gates.rst:85
 msgid "Exponential Gates"
 msgstr "Portes exponencials"
 
-#: ../../modules/digital/digital_gates.rst:84
+#: ../../modules/digital/digital_gates.rst:87
 msgid ""
 "To apply a gate as an exponential operator, use either the "
 ":class:`~qilisdk.digital.gates.Exponential` class or the "

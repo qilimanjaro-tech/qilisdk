@@ -18,7 +18,7 @@ import pytest
 
 from qilisdk.analog import Schedule, Z
 from qilisdk.core import Parameter, QTensor, ket
-from qilisdk.digital import CNOT, RX, RY, Circuit, M
+from qilisdk.digital import CNOT, RX, RY, Barrier, Circuit, M
 from qilisdk.functionals import FunctionalResult
 from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult
@@ -186,6 +186,15 @@ def test_reservoir_layer_validation_errors():
     bad_post_multi_qubit.add(CNOT(0, 1))
     with pytest.raises(ValueError, match="Only single qubit gates"):
         ReservoirLayer(evolution_dynamics=schedule, output_encoding=bad_post_multi_qubit)
+
+
+def test_reservoir_layer_allows_barriers_in_encodings():
+    schedule, _ = _schedule_with_parameter(nqubits=2)
+    encoding = Circuit(2)
+    encoding.add([RX(0, theta=0.1), Barrier(), RY(1, theta=0.2)])
+    layer = ReservoirLayer(evolution_dynamics=schedule, input_encoding=encoding, output_encoding=encoding)
+    assert any(isinstance(gate, Barrier) for gate in layer.input_encoding.gates)
+    assert any(isinstance(gate, Barrier) for gate in layer.output_encoding.gates)
 
 
 def test_quantum_reservoir_properties_and_qubit_validation():

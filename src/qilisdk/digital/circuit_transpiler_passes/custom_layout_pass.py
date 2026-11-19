@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 
 from loguru import logger
 
-from qilisdk.digital import SWAP, Circuit, M
+from qilisdk.digital import SWAP, Barrier, Circuit, M
 from qilisdk.digital.topology import build_topology_graph
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
@@ -174,7 +174,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
         for gate in circuit.gates:
             gate_qubits = gate.qubits
 
-            if len(gate_qubits) <= 1 or isinstance(gate, M):
+            if len(gate_qubits) <= 1 or isinstance(gate, (M, Barrier)):
                 mapped_qubits = tuple(logical_to_physical_layout[logical_qubit] for logical_qubit in gate_qubits)
                 output_circuit.add(self._retarget_gate(gate, mapped_qubits))
                 continue

@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Iterable
 
 from loguru import logger
 
-from qilisdk.digital import Circuit, M
+from qilisdk.digital import Barrier, Circuit, M
 from qilisdk.digital.topology import build_topology_graph
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
@@ -692,7 +692,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         two_qubit_pairs: list[tuple[int, int]] = []
         for gate_idx, gate in enumerate(circuit.gates):
             gate_qubits = gate.qubits
-            if len(gate_qubits) == SabreLayoutPass._TWO_QUBIT_ARITY and not isinstance(gate, M):
+            if len(gate_qubits) == SabreLayoutPass._TWO_QUBIT_ARITY and not isinstance(gate, (M, Barrier)):
                 two_qubit_gate_indices.append(gate_idx)
                 two_qubit_pairs.append((gate_qubits[0], gate_qubits[1]))
         gate_indices_per_qubit: list[list[int]] = [[] for _ in range(num_logical_qubits)]

@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Iterable
 
 from loguru import logger
 
-from qilisdk.digital import SWAP, Circuit, M
+from qilisdk.digital import SWAP, Barrier, Circuit, M
 from qilisdk.digital.topology import build_topology_graph
 
 from .circuit_transpiler_pass import CircuitTranspilerPass
@@ -281,7 +281,7 @@ class SabreSwapPass(CircuitTranspilerPass):
             gate_qubits = gate.qubits
 
             # 1Q (or measurement / any non-2Q) -> just map and emit
-            if len(gate_qubits) <= 1 or isinstance(gate, M):
+            if len(gate_qubits) <= 1 or isinstance(gate, (M, Barrier)):
                 mapped_qubits = tuple(layout[logical_qubit] for logical_qubit in gate_qubits)
                 routed_circuit.add(self._retarget_gate(gate, mapped_qubits))
                 continue
@@ -480,7 +480,7 @@ class SabreSwapPass(CircuitTranspilerPass):
         """
         for gate in circuit.gates:
             gate_qubits = gate.qubits
-            if len(gate_qubits) != SabreSwapPass._TWO_QUBIT_ARITY or isinstance(gate, M):
+            if len(gate_qubits) != SabreSwapPass._TWO_QUBIT_ARITY or isinstance(gate, (M, Barrier)):
                 continue
             if not self.topology.has_edge(layout[gate_qubits[0]], layout[gate_qubits[1]]):
                 return False
@@ -594,7 +594,7 @@ class SabreSwapPass(CircuitTranspilerPass):
         two_qubit_pairs: list[tuple[int, int]] = []
         for operation_index, gate in enumerate(circuit.gates):
             gate_qubits = gate.qubits
-            if len(gate_qubits) == SabreSwapPass._TWO_QUBIT_ARITY and not isinstance(gate, M):
+            if len(gate_qubits) == SabreSwapPass._TWO_QUBIT_ARITY and not isinstance(gate, (M, Barrier)):
                 two_qubit_operation_indices.append(operation_index)
                 two_qubit_pairs.append((gate_qubits[0], gate_qubits[1]))
         gate_indices_per_qubit: list[list[int]] = [[] for _ in range(num_logical_qubits)]
