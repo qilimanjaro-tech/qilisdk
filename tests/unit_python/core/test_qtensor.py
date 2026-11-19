@@ -1037,6 +1037,20 @@ def test_qtensor_w():
     np.testing.assert_allclose(QTensor.w(1).dense(), ket(1).dense(), atol=1e-8)
 
 
+def test_qtensor_diag():
+    op = QTensor.diag([0.0, 1.0, 3.0, 7.0])
+    assert op.shape == (4, 4)
+    assert op.nqubits == 2
+    np.testing.assert_allclose(op.dense(), np.diag([0.0, 1.0, 3.0, 7.0]), atol=1e-12)
+    np.testing.assert_allclose(QTensor.diag(np.array([1j, -2])).dense(), np.diag([1j, -2]), atol=1e-12)
+
+
+@pytest.mark.parametrize("values", [[], [1.0, 2.0, 3.0], [[1.0, 0.0], [0.0, 1.0]]])
+def test_qtensor_diag_invalid(values):
+    with pytest.raises(ValueError, match=r"one-dimensional|power of two"):
+        QTensor.diag(values)
+
+
 def test_qtensor_w_no_qubits():
     with pytest.raises(ValueError, match="at least one"):
         QTensor.w(0)

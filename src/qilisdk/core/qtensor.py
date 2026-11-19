@@ -674,6 +674,32 @@ class QTensor:
         return QTensor(QTensorCpp.identity(nqubits))
 
     @classmethod
+    def diag(cls, values: list[Number] | np.ndarray) -> QTensor:
+        """
+        Create a diagonal operator with the given values on its diagonal.
+
+        For example, ``QTensor.diag([a, b])`` gives the single-qubit operator ``[[a, 0], [0, b]]``.
+
+        Args:
+            values (list[Number] | np.ndarray): The diagonal entries. The number of entries must be a power of two.
+
+        Returns:
+            QTensor: A new QTensor representing the diagonal operator.
+
+        Raises:
+            ValueError: If ``values`` is not one-dimensional or its length is not a power of two.
+        """
+        diagonal = np.asarray(values, dtype=np.complex128)
+        if diagonal.ndim != 1:
+            raise ValueError(f"Diagonal values must be one-dimensional, but got shape {diagonal.shape}.")
+        dim = diagonal.shape[0]
+        if dim == 0 or (dim & (dim - 1)) != 0:
+            raise ValueError(f"Number of diagonal values must be a power of two, but got {dim}.")
+        logger.trace("[QTensor] QTensor.diag creating diagonal operator of dimension {}", dim)
+        indices = np.arange(dim)
+        return QTensor(csr_matrix((diagonal, (indices, indices)), shape=(dim, dim)))
+
+    @classmethod
     def ghz(cls, nqubits: int) -> QTensor:
         """
         Create a GHZ state for the specified number of qubits.
