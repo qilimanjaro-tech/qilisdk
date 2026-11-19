@@ -27,6 +27,7 @@ from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
+    from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir
     from qilisdk.backends.backend import Backend
     from qilisdk.core.comparison import Comparison
     from qilisdk.cost_functions.cost_function import CostFunction
@@ -64,7 +65,7 @@ class VariationalProgram(Algorithm):
 
     def __init__(
         self,
-        functional: PrimitiveFunctional,
+        functional: PrimitiveFunctional | QuantumReservoir,
         optimizer: Optimizer,
         cost_function: CostFunction,
         store_intermediate_results: bool = False,
@@ -72,7 +73,7 @@ class VariationalProgram(Algorithm):
     ) -> None:
         """
         Args:
-            functional (PrimitiveFunctional): Parameterized functional to optimize.
+            functional (PrimitiveFunctional | QuantumReservoir): Parameterized functional to optimize.
             optimizer (Optimizer): Optimization routine controlling parameter updates.
             cost_function (CostFunction): Metric used to evaluate functional executions.
             store_intermediate_results (bool): Persist intermediate executions
@@ -110,7 +111,7 @@ class VariationalProgram(Algorithm):
         )
 
     @property
-    def functional(self) -> PrimitiveFunctional:
+    def functional(self) -> PrimitiveFunctional | QuantumReservoir:
         """Parameterized functional that will be optimised."""
         return self._functional
 

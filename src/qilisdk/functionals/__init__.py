@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import importlib
+import warnings
+
 from .analog_evolution import AnalogEvolution
 from .digital_propagation import DigitalPropagation
 from .functional_result import FunctionalResult
@@ -21,3 +24,23 @@ __all__ = [
     "DigitalPropagation",
     "FunctionalResult",
 ]
+
+# Algorithms that used to live in this package, kept importable from here until they are removed
+_MOVED_TO_ALGORITHMS = {
+    "QuantumReservoir",
+    "ReservoirInput",
+    "ReservoirLayer",
+    "VariationalProgram",
+    "VariationalProgramResult",
+}
+
+
+def __getattr__(name: str) -> type:
+    if name not in _MOVED_TO_ALGORITHMS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    warnings.warn(
+        f"Importing {name} from qilisdk.functionals is deprecated, import it from qilisdk.algorithms instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return getattr(importlib.import_module("qilisdk.algorithms"), name)

@@ -25,7 +25,6 @@ from qilisdk.core import Domain, InitialState, Parameter, QTensor, reset_qubits,
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.digital import Circuit, M
 from qilisdk.functionals.analog_evolution import AnalogEvolution
-from qilisdk.functionals.functional import PrimitiveFunctional
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.readout import Readout
 from qilisdk.yaml import yaml
@@ -297,7 +296,7 @@ class ReservoirLayer(Parameterizable):
         )
 
 
-class QuantumReservoir(PrimitiveFunctional, Algorithm):
+class QuantumReservoir(Parameterizable, Algorithm):
     """Reservoir functional executed over a sequence of input layers.
 
     Each element in ``input_per_layer`` is applied to the underlying
@@ -424,9 +423,10 @@ class QuantumReservoir(PrimitiveFunctional, Algorithm):
             ValueError: If throughout the execution the state becomes invalid due to numerical instabilities.
         """
         logger.info("[QuantumReservoir] Executing Quantum Reservoir")
-        if backend._noise_model:  # ruff: ignore[private-member-access]
+        if backend.noise_model:
             logger.warning(
-                "[QuantumReservoir] Noise Models are not supported with Quantum Reservoirs, so they will be ignored."
+                "[QuantumReservoir] The noise model is only applied to the Schedule steps of a Quantum Reservoir, "
+                "its Circuit steps are simulated without noise."
             )
         readout_list = readout.to_list()
         state = self._initial_state
@@ -464,13 +464,7 @@ class QuantumReservoir(PrimitiveFunctional, Algorithm):
                     "Try improving simulation precision (e.g., smaller dt, more integrator substeps, or higher precision)."
                 ) from exc
 
-            inter_results.append(
-                backend._construct_results_list(  # ruff: ignore[private-member-access]
-                    state,
-                    readout_list,
-                    seed=backend._rng,  # ruff: ignore[private-member-access]
-                )
-            )
+            inter_results.append(backend.readout_state(state, readout_list))
 
             if self._reservoir_layer.qubits_to_reset:
                 logger.trace("[QuantumReservoir] Resetting qubits {}", self._reservoir_layer.qubits_to_reset)

@@ -21,6 +21,8 @@ import numpy as np
 from loguru import logger
 
 from qilisdk.algorithms.algorithm import Algorithm
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir
+from qilisdk.algorithms.variational_program import VariationalProgram
 from qilisdk.core.result import Result
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_propagation import DigitalPropagation
@@ -40,7 +42,6 @@ from qilisdk.readout import (
 from qilisdk.readout.readout_result import ReadoutCompositeResults
 
 if TYPE_CHECKING:
-    from qilisdk.algorithms.variational_program import VariationalProgram
     from qilisdk.algorithms.variational_program_result import VariationalProgramResult
     from qilisdk.core import QTensor
     from qilisdk.functionals.functional import Functional, PrimitiveFunctional
@@ -56,6 +57,8 @@ class Backend(ABC):
     public :meth:`execute` method dispatches to the appropriate handler based
     on the functional type, while an :class:`~qilisdk.algorithms.Algorithm`
     without a registered handler runs its own ``_execute`` on this backend.
+    A subclass can run an algorithm natively instead by defining
+    ``_execute_quantum_reservoir`` or ``_execute_variational_program``.
     """
 
     # Whether the backend can simulate non-Markovian noise
@@ -82,8 +85,20 @@ class Backend(ABC):
             ),
             AnalogEvolution: lambda f, readout: self._execute_analog_evolution(cast("AnalogEvolution", f), readout),
         }
+        # Algorithms run their own _execute unless the backend defines a native hook for them
+        for algorithm, hook in (
+            (QuantumReservoir, "_execute_quantum_reservoir"),
+            (VariationalProgram, "_execute_variational_program"),
+        ):
+            if hasattr(self, hook):
+                self._handlers[algorithm] = getattr(self, hook)
         self._noise_model = noise_model
         self._rng = np.random.default_rng(seed)
+
+    @property
+    def noise_model(self) -> NoiseModel | None:
+        """Noise model applied during execution, or ``None`` for noiseless simulation."""
+        return self._noise_model
 
     @overload
     def execute(
@@ -91,7 +106,13 @@ class Backend(ABC):
     ) -> VariationalProgramResult[FunctionalResult[S, E, T]]: ...
 
     @overload
+    def execute(self, functional: QuantumReservoir, readout: Readout[S, E, T]) -> FunctionalResult[S, E, T]: ...
+
+    @overload
     def execute(self, functional: PrimitiveFunctional, readout: Readout[S, E, T]) -> FunctionalResult[S, E, T]: ...
+
+    @overload
+    def execute(self, functional: Algorithm, readout: Readout[Any, Any, Any]) -> Result: ...
 
     def execute(self, functional: Functional, readout: Readout[Any, Any, Any]) -> Result:
         """Execute a quantum functional with the specified readout methods.
@@ -120,7 +141,7 @@ class Backend(ABC):
             ValueError: If the readout specification is empty.
         """
         logger.debug("[Backend] Dispatching {} to {}", type(functional).__qualname__, type(self).__qualname__)
-        handler = self._handlers.get(type(functional))
+        handler = next((h for cls, h in self._handlers.items() if isinstance(functional, cls)), None)
         if handler is None and not isinstance(functional, Algorithm):
             raise NotImplementedError(f"{type(self).__qualname__} does not support {type(functional).__qualname__}")
         if (
@@ -151,6 +172,18 @@ class Backend(ABC):
 
     def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
         raise NotImplementedError(f"{type(self).__qualname__} has no AnalogEvolution implementation")
+
+    def readout_state(self, state: QTensor, readout: list[ReadoutMethod]) -> ReadoutCompositeResults:
+        """Apply readout methods to a state, drawing any samples from this backend's random number generator.
+
+        Args:
+            state (QTensor): The state to read out.
+            readout (list[ReadoutMethod]): The readout methods to apply.
+
+        Returns:
+            ReadoutCompositeResults: The results of each readout method.
+        """
+        return self._construct_results_list(state, readout, seed=self._rng)
 
     def __repr__(self) -> str:
         """Return a developer-friendly string representation of the backend."""

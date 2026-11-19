@@ -644,7 +644,7 @@ class SpeQtrum:
     @overload
     def submit(
         self,
-        functional: PrimitiveFunctional,
+        functional: PrimitiveFunctional | QuantumReservoir,
         device: str,
         readout: Readout[S, E, T],
         job_name: str | None = None,

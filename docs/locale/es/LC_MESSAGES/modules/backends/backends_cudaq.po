@@ -123,8 +123,8 @@ msgstr ""
 " muestreo digital)."
 
 #: ../../modules/backends/backends_cudaq.rst:59
-msgid ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
-msgstr ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
+msgid ":class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`"
+msgstr ":class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`"
 
 #: ../../modules/backends/backends_cudaq.rst:60
 msgid "|p|"
@@ -147,8 +147,8 @@ msgstr ""
 " se ignora."
 
 #: ../../modules/backends/backends_cudaq.rst:62
-msgid ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
-msgstr ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+msgid ":class:`~qilisdk.algorithms.variational_program.VariationalProgram`"
+msgstr ":class:`~qilisdk.algorithms.variational_program.VariationalProgram`"
 
 #: ../../modules/backends/backends_cudaq.rst:64
 msgid "Reuses the digital/analog handlers above for each optimization step."
@@ -327,10 +327,10 @@ msgstr ""
 
 #: ../../modules/backends/backends_cudaq.rst:151
 msgid ""
-"For :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`, "
+"For :class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`, "
 "the fallback implementation drops the noise model (a warning is logged)."
 msgstr ""
-"Para :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`, "
+"Para :class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`, "
 "la implementación de fallback descarta el modelo de ruido (se emite un "
 "aviso en el log)."
 

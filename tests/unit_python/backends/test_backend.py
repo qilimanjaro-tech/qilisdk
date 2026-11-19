@@ -46,15 +46,46 @@ def test_backend_execute():
 
 
 def test_backend_execute_delegates_to_algorithm():
+    expected = FunctionalResult(
+        readout_results=ReadoutCompositeResults(state_tomography=StateTomographyReadoutResult(state=ket(0)))
+    )
+    calls = []
+
     class _EchoAlgorithm(Algorithm):
         def _execute(self, backend, readout):
-            return FunctionalResult(
-                readout_results=ReadoutCompositeResults(state_tomography=StateTomographyReadoutResult(state=ket(0)))
-            )
+            calls.append((backend, readout))
+            return expected
 
-    result = Backend().execute(_EchoAlgorithm(), Readout().with_state_tomography())
+    backend = Backend()
+    readout = Readout().with_state_tomography()
 
+    result = backend.execute(_EchoAlgorithm(), readout)
+
+    assert calls == [(backend, readout)]
+    assert result is expected
     assert result.execution_time is not None
+
+
+def test_backend_native_hook_runs_algorithm_and_its_subclasses():
+    class _NativeReservoirBackend(Backend):
+        def _execute_quantum_reservoir(self, functional, readout):
+            return expected
+
+    class _MyReservoir(QuantumReservoir):
+        pass
+
+    expected = FunctionalResult(
+        readout_results=ReadoutCompositeResults(state_tomography=StateTomographyReadoutResult(state=ket(0)))
+    )
+    reservoir = _MyReservoir(
+        initial_state=ket(0),
+        reservoir_layer=ReservoirLayer(evolution_dynamics=Circuit(1)),
+        input_per_layer=[{}],
+    )
+
+    result = _NativeReservoirBackend().execute(reservoir, Readout().with_state_tomography())
+
+    assert result is expected
 
 
 def test_backend_execute_empty_readout():

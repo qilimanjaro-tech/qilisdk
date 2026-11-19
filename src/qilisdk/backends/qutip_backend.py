@@ -95,7 +95,6 @@ class QutipBackend(Backend):
             seed (int | None): Seed for the random number generator used to draw
                 samples from the simulated state. Defaults to ``None``.
         """
-        self.noise_model = noise_model
         self.nsteps = nsteps
 
         super().__init__(noise_model=noise_model, seed=seed)
