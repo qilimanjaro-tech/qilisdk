@@ -25,7 +25,7 @@ from qilisdk.analog import Y as analog_Y
 from qilisdk.analog.hamiltonian import PauliX
 from qilisdk.core import Parameter, QTensor
 from qilisdk.core.comparison import LEQ
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X, Y
+from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, X, Y
 from qilisdk.digital.circuit import _apply_gate_left
 from qilisdk.digital.exceptions import GateHasNoMatrixError, NotAGateError, QubitOutOfRangeError
 from qilisdk.digital.gates import BasicGate, Gate
@@ -429,16 +429,17 @@ def test_random_circuit_single_qubit_one_gate():
 def test_circuit_bad_insert_append():
     c = Circuit(nqubits=2)
     x_gate = X(10)
+    larger = Circuit(nqubits=3)
     with pytest.raises(QubitOutOfRangeError):
         c.insert(x_gate, index=0)
-    with pytest.raises(QubitOutOfRangeError):
-        c.append(x_gate)
+    with pytest.raises(QubitOutOfRangeError, match="does not fit"):
+        c.append(larger)
 
 
 def test_circuit_bad_prepend():
     c = Circuit(nqubits=2)
     c_2 = Circuit(nqubits=3)
-    with pytest.raises(QubitOutOfRangeError, match="the prepended circuit contains"):
+    with pytest.raises(QubitOutOfRangeError, match="does not fit"):
         c.prepend(c_2)
 
 
@@ -907,3 +908,125 @@ def test_gate_minus_analog_hamiltonian_raises_helpful_error():
     hamiltonian = analog_Y(0)
     with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
         _ = gate - hamiltonian
+
+
+def test_append_smaller_circuit_keeps_qubits_by_default():
+    block = Circuit(2)
+    block.add([H(0), CNOT(0, 1)])
+    big = Circuit(5)
+
+    big.append(block)
+
+    assert big.gates == [H(0), CNOT(0, 1)]
+
+
+def test_append_and_prepend_place_smaller_circuit_on_chosen_qubits():
+    block = Circuit(2)
+    block.add([H(0), CNOT(0, 1)])
+    big = Circuit(10)
+    big.add(X(0))
+
+    big.append(block, qubits=[3, 7])
+    big.prepend(block, qubits=[7, 3])
+
+    assert big.gates == [H(7), CNOT(7, 3), X(0), H(3), CNOT(3, 7)]
+    assert block.gates == [H(0), CNOT(0, 1)]
+
+
+def test_append_with_qubits_copies_gates_and_keeps_parameters_shared():
+    angle = Parameter("angle", 0.1)
+    block = Circuit(2)
+    block.add([RX(0, theta=angle), RY(1, theta=angle)])
+    big = Circuit(4)
+
+    big.append(block, qubits=[2, 3])
+    big.prepend(block, qubits=[1, 0])
+    angle.set_value(0.5)
+
+    assert big.get_parameter_values() == [0.5]
+    assert [gate.get_parameter_values() for gate in big.gates] == [[0.5]] * 4
+    assert big.gates[0] is not block.gates[0]
+
+
+def test_append_with_qubits_outside_the_circuit_leaves_it_unchanged():
+    block = Circuit(2)
+    block.add([RX(0, theta=Parameter("angle", 0.1)), CNOT(0, 1)])
+    big = Circuit(4)
+    qubits = [1, 4]
+
+    with pytest.raises(QubitOutOfRangeError, match="Cannot place"):
+        big.append(block, qubits=qubits)
+
+    assert big.gates == []
+    assert big.get_parameter_names() == []
+
+
+def test_prepend_with_negative_qubits_leaves_circuit_unchanged():
+    block = Circuit(2)
+    block.add(CNOT(0, 1))
+    big = Circuit(4)
+    big.add(X(0))
+    qubits = [-1, 0]
+
+    with pytest.raises(QubitOutOfRangeError, match="Cannot place"):
+        big.prepend(block, qubits=qubits)
+
+    assert big.gates == [X(0)]
+
+
+@pytest.mark.parametrize("qubits", [[3], [3, 3], [3, 4, 5]])
+def test_append_rejects_bad_qubit_lists(qubits):
+    block = Circuit(2)
+    big = Circuit(10)
+    with pytest.raises(ValueError, match="distinct qubits"):
+        big.append(block, qubits=qubits)
+
+
+def test_append_rejects_qubits_outside_the_circuit():
+    block = Circuit(2)
+    block.add(CNOT(0, 1))
+    big = Circuit(4)
+    with pytest.raises(QubitOutOfRangeError):
+        big.append(block, qubits=[1, 4])
+
+
+def test_append_circuit_to_itself():
+    c = Circuit(1)
+    c.add(X(0))
+
+    c.append(c)
+
+    assert c.gates == [X(0), X(0)]
+
+
+def test_adding_circuits_of_different_sizes_is_rejected():
+    small = Circuit(2)
+    big = Circuit(3)
+    with pytest.raises(QubitOutOfRangeError, match="use append or prepend"):
+        _ = small + big
+    with pytest.raises(QubitOutOfRangeError, match="use append or prepend"):
+        _ = big + small
+
+
+def test_remap_qubits_returns_relabelled_copy():
+    circuit = Circuit(10)
+    circuit.add([H(0), CNOT(0, 9), M(9)])
+
+    remapped = circuit.remap_qubits({0: 9, 9: 0})
+
+    assert remapped.nqubits == 10
+    assert remapped.gates == [H(9), CNOT(9, 0), M(0)]
+    assert circuit.gates == [H(0), CNOT(0, 9), M(9)]
+
+
+def test_remap_qubits_rejects_colliding_mapping():
+    circuit = Circuit(3)
+    with pytest.raises(ValueError, match="same index"):
+        circuit.remap_qubits({0: 1})
+
+
+def test_remap_qubits_rejects_qubits_outside_the_circuit():
+    circuit = Circuit(3)
+    circuit.add(X(0))
+    with pytest.raises(QubitOutOfRangeError):
+        circuit.remap_qubits({0: 3, 3: 0})
