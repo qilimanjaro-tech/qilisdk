@@ -20,19 +20,13 @@ from typing import Any, Callable, Generic, TypeVar, cast, overload
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_serializer, field_validator
 
+from qilisdk.algorithms import QuantumReservoir, VariationalProgram, VariationalProgramResult
 from qilisdk.core.result import Result
 from qilisdk.experiments import (
     ExperimentFunctional,
     ExperimentResult,
 )
-from qilisdk.functionals import (
-    AnalogEvolution,
-    DigitalPropagation,
-    FunctionalResult,
-    QuantumReservoir,
-    VariationalProgram,
-    VariationalProgramResult,
-)
+from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.readout import Readout
 from qilisdk.utils.serialization import deserialize, serialize
 

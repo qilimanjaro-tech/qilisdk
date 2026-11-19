@@ -40,11 +40,11 @@ Configuration options:
 
 As with the :class:`~qilisdk.digital.ansatz.HardwareEfficientAnsatz`, this ansatz can then be used as per any QiliSDK circuit. 
 Or, to instead perform variational optimization over the parameters to minimize the 
-expectation value of the problem Hamiltonian, one can set up a :class:`~qilisdk.functionals.variational_program.VariationalProgram` (see :doc:`Functionals </modules/functionals/functionals>` for more details):
+expectation value of the problem Hamiltonian, one can set up a :class:`~qilisdk.algorithms.variational_program.VariationalProgram` (see :doc:`Functionals </modules/functionals/functionals>` for more details):
 
 .. code-block:: python 
 
-    from qilisdk.functionals.variational_program import VariationalProgram
+    from qilisdk.algorithms.variational_program import VariationalProgram
     from qilisdk.functionals import DigitalPropagation
     from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
     from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction

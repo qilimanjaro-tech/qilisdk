@@ -6,11 +6,9 @@ The :mod:`~qilisdk.functionals` module provides high-level quantum execution pro
 
 - :doc:`functionals_digital`: Propagates a digital quantum circuit through the backend.
 - :doc:`functionals_analog`: Simulates analog time evolution of one or more Hamiltonians according to a time-dependent schedule.
-- :doc:`functionals_reservoirs`: Runs a quantum reservoir pipeline (pre-processing, reservoir dynamics, post-processing) across multiple input layers.
 
-Moreover, it provides more complex functionals that are used to execute more complex algorithms:
-
-- :doc:`functionals_variational`: Builds a parameterized program to be optimized in a hybrid quantum-classical environment.
+Higher-level procedures built on top of these functionals, such as variational programs and quantum reservoirs, live in
+the :doc:`algorithms </modules/algorithms/algorithms>` module.
 
 Architecture Overview
 ---------------------
@@ -37,9 +35,6 @@ Result Objects
     expectation values (when using :meth:`~qilisdk.readout.readout_spec.Readout.with_expectation`).
     When ``store_intermediate_results=True``, intermediate results are available via
     ``intermediate_states``, ``intermediate_samples``, ``intermediate_probabilities``, and ``intermediate_expectation_values``.
-* :class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`
-    bundles the optimizer trajectory (optimal cost, parameters, intermediate steps) together with the functional result
-    obtained at convergence.
 
 These objects make post-processing workflows ergonomic. For example, after a digital propagation you can surface the
 most likely bitstrings:

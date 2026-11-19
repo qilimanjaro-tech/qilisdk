@@ -631,7 +631,7 @@ class ExecuteReservoirTest : public ::testing::Test {
 TEST_F(ExecuteReservoirTest, ReservoirRuns) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.analog.schedule import Schedule
 from qilisdk.analog.hamiltonian import Z
 from qilisdk.core.qtensor import QTensor
@@ -658,7 +658,7 @@ TEST_F(ExecuteReservoirTest, NonNormalizedDigitalStep_ForcesRenormalization) {
     // taken when state normalization is enabled).
     py::gil_scoped_acquire gil;
     py::exec(R"(
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.analog.schedule import Schedule
 from qilisdk.analog.hamiltonian import Z
 from qilisdk.core.qtensor import QTensor
@@ -685,7 +685,7 @@ _reservoir_exp = QuantumReservoir(
 TEST_F(ExecuteReservoirTest, ReservoirDigitalLayerMPSIsRejectedUpFront) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.analog.schedule import Schedule
 from qilisdk.analog.hamiltonian import Z
 from qilisdk.core.qtensor import ket
@@ -707,7 +707,7 @@ TEST_F(ExecuteReservoirTest, ReservoirRunsWithQubitReset) {
     // exercises the fast path that skips zero entries.
     py::gil_scoped_acquire gil;
     py::exec(R"(
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.analog.schedule import Schedule
 from qilisdk.analog.hamiltonian import Z
 from qilisdk.core.qtensor import QTensor
@@ -733,7 +733,7 @@ TEST_F(ExecuteReservoirTest, ReservoirMonteCarloWithReset) {
     // resets qubits per-trajectory, exercising the trajectory sampling/reset paths.
     py::gil_scoped_acquire gil;
     py::exec(R"(
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.analog.schedule import Schedule
 from qilisdk.analog.hamiltonian import Z
 from qilisdk.core.qtensor import QTensor
@@ -757,7 +757,7 @@ TEST_F(ExecuteReservoirTest, ReservoirResetWithCoherentState) {
     // loop exercises the branch that skips entries mixing the reset qubit.
     py::gil_scoped_acquire gil;
     py::exec(R"(
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.analog.schedule import Schedule
 from qilisdk.analog.hamiltonian import Z
 from qilisdk.core.qtensor import QTensor
@@ -777,7 +777,7 @@ TEST_F(ExecuteReservoirTest, ReservoirDigitalLayerStatevectorSampling) {
     // A reservoir with a digital (Circuit) step drives the statevector sampling path.
     py::gil_scoped_acquire gil;
     py::exec(R"(
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.analog.schedule import Schedule
 from qilisdk.analog.hamiltonian import Z
 from qilisdk.digital import Circuit, X
@@ -801,7 +801,7 @@ _reservoir_dig = QuantumReservoir(initial_state=_rho_dig, reservoir_layer=_layer
 TEST_F(ExecuteReservoirTest, ReservoirDigitalLayerMatrixFreeSampling) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.analog.schedule import Schedule
 from qilisdk.analog.hamiltonian import Z
 from qilisdk.digital import Circuit, X
@@ -825,7 +825,7 @@ _reservoir_mf = QuantumReservoir(initial_state=_rho_mf, reservoir_layer=_layer_m
 TEST_F(ExecuteReservoirTest, ReservoirDigitalLayerUnsupportedSamplingThrows) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.analog.schedule import Schedule
 from qilisdk.analog.hamiltonian import Z
 from qilisdk.digital import Circuit, X
@@ -849,7 +849,7 @@ TEST_F(ExecuteReservoirTest, ReservoirExplicitMatrixAnalogMethod) {
     // time_evolution path rather than the matrix-free one.
     py::gil_scoped_acquire gil;
     py::exec(R"(
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.analog.schedule import Schedule
 from qilisdk.analog.hamiltonian import Z
 from qilisdk.core.qtensor import QTensor
@@ -873,7 +873,7 @@ TEST_F(ExecuteReservoirTest, ReservoirUnsupportedAnalogMethodThrows) {
     // "Unknown time evolution method" error rather than silently doing nothing.
     py::gil_scoped_acquire gil;
     py::exec(R"(
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.analog.schedule import Schedule
 from qilisdk.analog.hamiltonian import Z
 from qilisdk.core.qtensor import QTensor
@@ -895,7 +895,7 @@ TEST_F(ExecuteReservoirTest, ReservoirAppliesScheduleParameterPerturbations) {
     // without changing the parameters.
     py::gil_scoped_acquire gil;
     py::exec(R"(
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.analog.schedule import Schedule
 from qilisdk.analog.hamiltonian import Z
 from qilisdk.core.qtensor import QTensor
@@ -1265,7 +1265,7 @@ _nm_params = {"evolution_method": "variational_exponential"}
 TEST_F(ExecuteNonMarkovianTest, Reservoir_ThrowsValueError) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 
 _nm_reservoir = QuantumReservoir(
     initial_state=ket(0).to_density_matrix(),

@@ -102,7 +102,7 @@ Then we construct a variational problem (combining a classical optimizer and a q
 
 .. code-block:: python
 
-    from qilisdk.functionals.variational_program import VariationalProgram
+    from qilisdk.algorithms.variational_program import VariationalProgram
     from qilisdk.functionals import DigitalPropagation
     from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
     from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction

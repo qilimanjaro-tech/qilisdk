@@ -66,6 +66,7 @@ Welcome to **QiliSDK**, a unified Python framework for developing, simulating, a
    modules/digital/digital
    modules/analog/analog
    modules/functionals/functionals
+   modules/algorithms/algorithms
    modules/readout/readout
    modules/backends/backends
    modules/cost_functions/cost_functions

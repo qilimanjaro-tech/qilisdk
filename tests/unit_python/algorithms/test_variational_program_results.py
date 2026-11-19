@@ -15,8 +15,9 @@
 
 import numpy as np
 
+from qilisdk.algorithms import VariationalProgramResult
 from qilisdk.core.qtensor import QTensor
-from qilisdk.functionals import FunctionalResult, VariationalProgramResult
+from qilisdk.functionals import FunctionalResult
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.readout.readout_result import ReadoutCompositeResults, StateTomographyReadoutResult
 

@@ -15,17 +15,9 @@
 from .analog_evolution import AnalogEvolution
 from .digital_propagation import DigitalPropagation
 from .functional_result import FunctionalResult
-from .quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
-from .variational_program import VariationalProgram
-from .variational_program_result import VariationalProgramResult
 
 __all__ = [
     "AnalogEvolution",
     "DigitalPropagation",
     "FunctionalResult",
-    "QuantumReservoir",
-    "ReservoirInput",
-    "ReservoirLayer",
-    "VariationalProgram",
-    "VariationalProgramResult",
 ]

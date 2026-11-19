@@ -19,16 +19,21 @@ from typing import TYPE_CHECKING, Iterator
 import numpy as np
 from loguru import logger
 
-from qilisdk.core import Domain, Parameter, QTensor, tensor_prod
+from qilisdk.algorithms.algorithm import Algorithm
+from qilisdk.analog import Schedule
+from qilisdk.core import Domain, InitialState, Parameter, QTensor, reset_qubits, tensor_prod
 from qilisdk.core.parameterizable import Parameterizable
 from qilisdk.digital import Circuit, M
+from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.functional import PrimitiveFunctional
+from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.readout import Readout
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
-    from qilisdk.analog import Schedule
-    from qilisdk.core.qtensor import InitialState
+    from qilisdk.backends.backend import Backend
     from qilisdk.core.types import RealNumber
+    from qilisdk.readout.readout_result import ReadoutCompositeResults
 
 
 @yaml.register_class
@@ -292,7 +297,7 @@ class ReservoirLayer(Parameterizable):
         )
 
 
-class QuantumReservoir(PrimitiveFunctional):
+class QuantumReservoir(PrimitiveFunctional, Algorithm):
     """Reservoir functional executed over a sequence of input layers.
 
     Each element in ``input_per_layer`` is applied to the underlying
@@ -400,3 +405,76 @@ class QuantumReservoir(PrimitiveFunctional):
             reservoir_layer=copy(self.reservoir_layer),
             input_per_layer=copy(self.input_per_layer),
         )
+
+    def _execute(self, backend: Backend, readout: Readout) -> FunctionalResult:
+        """Run every reservoir layer on ``backend``, reading out the state after each one.
+
+        Circuit steps are applied as unitaries, while schedule steps are executed on ``backend`` as an
+        :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`.
+
+        Args:
+            backend (Backend): The backend used to execute the analog steps of each layer.
+            readout (Readout): The readout applied to the state after each layer.
+
+        Returns:
+            FunctionalResult: The readout after the last layer, with the readouts of the previous layers as
+                intermediate results.
+
+        Raises:
+            ValueError: If throughout the execution the state becomes invalid due to numerical instabilities.
+        """
+        logger.info("[QuantumReservoir] Executing Quantum Reservoir")
+        if backend._noise_model:  # ruff: ignore[private-member-access]
+            logger.warning(
+                "[QuantumReservoir] Noise Models are not supported with Quantum Reservoirs, so they will be ignored."
+            )
+        readout_list = readout.to_list()
+        state = self._initial_state
+        if isinstance(state, InitialState):
+            state = state.as_qtensor(self._reservoir_layer.nqubits).to_density_matrix()
+        else:
+            state = state.to_density_matrix()
+        inter_results: list[ReadoutCompositeResults] = []
+        cache: dict[Circuit, tuple[tuple[float, ...], QTensor]] = {}
+        for layer_index, input_dict in enumerate(self._input_per_layer):
+            logger.debug("[QuantumReservoir] Reservoir layer {}/{}", layer_index + 1, len(self._input_per_layer))
+            self._reservoir_layer.set_parameters(input_dict)
+            for step in self._reservoir_layer:
+                if isinstance(step, Circuit):
+                    param_signature = tuple(step.get_parameter_values())
+                    cached = cache.get(step)
+                    if cached is None or cached[0] != param_signature:
+                        logger.trace("[QuantumReservoir] Reservoir circuit cache miss, computing unitary")
+                        U = step.to_qtensor()
+                        cache[step] = (param_signature, U)
+                    else:
+                        logger.trace("[QuantumReservoir] Reservoir circuit cache hit")
+                        U = cached[1]
+                    state = U @ state @ U.adjoint()
+                elif isinstance(step, Schedule):
+                    res = backend.execute(AnalogEvolution(step, state), Readout().with_state_tomography())
+                    state = res.get_state()
+
+            try:
+                state = state.to_density_matrix()
+            except ValueError as exc:
+                raise ValueError(
+                    "Reservoir Runtime Error: state repair failed before expectation value computation. "
+                    f"{exc} "
+                    "Try improving simulation precision (e.g., smaller dt, more integrator substeps, or higher precision)."
+                ) from exc
+
+            inter_results.append(
+                backend._construct_results_list(  # ruff: ignore[private-member-access]
+                    state,
+                    readout_list,
+                    seed=backend._rng,  # ruff: ignore[private-member-access]
+                )
+            )
+
+            if self._reservoir_layer.qubits_to_reset:
+                logger.trace("[QuantumReservoir] Resetting qubits {}", self._reservoir_layer.qubits_to_reset)
+                state = reset_qubits(state, self._reservoir_layer.qubits_to_reset)
+
+        logger.info("[QuantumReservoir] Quantum Reservoir finished")
+        return FunctionalResult(readout_results=inter_results[-1], intermediate_results=inter_results[:-1])

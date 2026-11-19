@@ -65,7 +65,7 @@ void initialize_all_pybind_types() {
     Schedule = py::module_::import("qilisdk.analog.schedule").attr("Schedule");
     DigitalPropagation = py::module_::import("qilisdk.functionals.digital_propagation").attr("DigitalPropagation");
     AnalogEvolution = py::module_::import("qilisdk.functionals.analog_evolution").attr("AnalogEvolution");
-    QuantumReservoir = py::module_::import("qilisdk.functionals.quantum_reservoirs").attr("QuantumReservoir");
+    QuantumReservoir = py::module_::import("qilisdk.algorithms.quantum_reservoirs").attr("QuantumReservoir");
     FunctionalResult = py::module_::import("qilisdk.functionals.functional_result").attr("FunctionalResult");
     ExpectationReadout = py::module_::import("qilisdk.readout.readout").attr("ExpectationReadout");
     ReadoutMethod = py::module_::import("qilisdk.readout.readout").attr("ReadoutMethod");

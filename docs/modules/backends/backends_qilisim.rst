@@ -63,10 +63,10 @@ QiliSim natively supports all primitive functionals through dedicated C++ routin
    * - :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`
      - |y|
      - Multiple integration schemes, configurable via :class:`~qilisdk.backends.backend_config.AnalogMethod`.
-   * - :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`
+   * - :class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`
      - |y|
      - Native C++ implementation; supports both Circuit and Schedule reservoir steps.
-   * - :class:`~qilisdk.functionals.variational_program.VariationalProgram`
+   * - :class:`~qilisdk.algorithms.variational_program.VariationalProgram`
      - |y|
      - Reuses the primitive functional handlers above for each optimization step.
 

@@ -25,15 +25,9 @@ import httpx
 from loguru import logger
 from pydantic import TypeAdapter, ValidationError
 
+from qilisdk.algorithms import QuantumReservoir, VariationalProgram, VariationalProgramResult
 from qilisdk.experiments import ExperimentFunctional
-from qilisdk.functionals import (
-    AnalogEvolution,
-    DigitalPropagation,
-    FunctionalResult,
-    QuantumReservoir,
-    VariationalProgram,
-    VariationalProgramResult,
-)
+from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.settings import get_settings
 
 from .keyring import delete_credentials, load_credentials, store_credentials
@@ -371,8 +365,8 @@ class SpeQtrum:
     Supported functional types for submission include
     :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`,
     :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`,
-    :class:`~qilisdk.functionals.variational_program.VariationalProgram`,
-    :class:`~qilisdk.functionals.quantum_reservoir.QuantumReservoir`, and
+    :class:`~qilisdk.algorithms.variational_program.VariationalProgram`,
+    :class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`, and
     various experiment types.
     """
 
@@ -684,7 +678,7 @@ class SpeQtrum:
 
         * :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`
         * :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`
-        * :class:`~qilisdk.functionals.variational_program.VariationalProgram`
+        * :class:`~qilisdk.algorithms.variational_program.VariationalProgram`
         * :class:`~qilisdk.experiments.experiment_functional.ExperimentFunctional`
             (e.g. those provided by the ``qili-experiments`` plugin library)
 

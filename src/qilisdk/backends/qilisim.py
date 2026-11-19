@@ -13,18 +13,19 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from loguru import logger
 from qilisim_module import QiliSimCpp  # ty:ignore[import-not-found]
 
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir
 from qilisdk.settings import get_settings
 
 from .backend import Backend
 from .backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, SolverConfigDict
 
 if TYPE_CHECKING:
-    from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir
+    from qilisdk.functionals import AnalogEvolution, DigitalPropagation
     from qilisdk.functionals.functional_result import FunctionalResult
     from qilisdk.noise.noise_model import NoiseModel
     from qilisdk.readout import ReadoutMethod
@@ -97,6 +98,10 @@ class QiliSim(Backend):
 
         # Initialize the backend and the class vars
         super().__init__(noise_model=noise_model)
+        # Run reservoirs natively in C++ rather than through QuantumReservoir's generic Python implementation
+        self._handlers[QuantumReservoir] = lambda f, readout: self._execute_quantum_reservoir(
+            cast("QuantumReservoir", f), readout
+        )
         self.qili_sim = QiliSimCpp()
 
         analog_simulation_method: AnalogMethod = analog_simulation_method or AnalogMethod.integrator()

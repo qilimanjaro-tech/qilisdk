@@ -18,6 +18,7 @@ import numpy as np
 import pytest
 from qutip import Qobj
 
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliX, PauliZ
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.qutip_backend import QutipBackend
@@ -26,7 +27,6 @@ from qilisdk.core.interpolator import Interpolation
 from qilisdk.core.qtensor import InitialState, QTensor, tensor_prod
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.noise import (
     AmplitudeDamping,
     Dephasing,
@@ -35,7 +35,7 @@ from qilisdk.noise import (
     LindbladGenerator,
     NoiseModel,
 )
-from qilisdk.readout import Readout, SamplingReadout
+from qilisdk.readout import Readout
 
 pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
 pytest.importorskip(
@@ -47,6 +47,7 @@ pytest.importorskip(
 
 from qutip_qip.circuit import CircuitSimulator
 
+from qilisdk.algorithms.variational_program import VariationalProgram
 from qilisdk.backends.qutip_backend import QutipI
 from qilisdk.core import bra
 from qilisdk.core.model import Constraint, Model, Objective
@@ -57,7 +58,6 @@ from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.functionals.digital_propagation import DigitalPropagation
-from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 
 
@@ -449,9 +449,7 @@ def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(mon
     )
 
     with pytest.raises(ValueError, match="Reservoir Runtime Error"):
-        backend._execute_quantum_reservoir(
-            functional, readout=[SamplingReadout(nshots=10)]
-        )  # internal method takes list
+        backend.execute(functional, Readout().with_sampling(nshots=10))
 
 
 def test_get_qutip_observable_qtensor(monkeypatch):

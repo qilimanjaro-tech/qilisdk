@@ -1,11 +1,11 @@
 Variational Programs
 ---------------------
 
-The :class:`~qilisdk.functionals.variational_program.VariationalProgram` functional gathers the pieces required for a
+The :class:`~qilisdk.algorithms.variational_program.VariationalProgram` functional gathers the pieces required for a
 variational quantum algorithm. It accepts a parameterized primitive functional, an optimizer, and a cost function. When
 you call :meth:`~qilisdk.backends.backend.Backend.execute` it evaluates the functional repeatedly with updated
 parameters, feeds the resulting :class:`~qilisdk.functionals.functional_result.FunctionalResult` into the supplied
-cost function, and finally returns a :class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`.
+cost function, and finally returns a :class:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult`.
 Parameter constraints (inequalities/equalities on parameters) are attached at this level via the ``parameter_constraints``
 argument; this is the place to enforce relations like ``theta >= phi`` or cross-parameter bounds across all QiliSDK
 functionals.
@@ -21,18 +21,18 @@ Only parameters marked as trainable are optimized during this loop.
 - **cost_function** (:class:`~qilisdk.cost_functions.cost_function.CostFunction`): Object that maps the functional results
   to a scalar cost; frequently constructed from a :class:`~qilisdk.core.model.Model`.
 - **store_intermediate_results** (bool, optional): When True, the optimizer keeps the intermediate steps, which are
-  exposed through :attr:`~qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results`.
+  exposed through :attr:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult.intermediate_results`.
 - **parameter_constraints** (list[:class:`~qilisdk.core.comparison.Comparison`], optional): Constraints on functional
   parameters (e.g., ``theta >= 0.5``) evaluated before each optimizer update. This is the supported entry point for
   enforcing parameter relations in QiliSDK.
 
 **Returns**
 
-- :class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`: Retrieve
-  :attr:`optimal_cost <qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_cost>`,
-  :attr:`optimal_parameters <qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_parameters>`,
+- :class:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult`: Retrieve
+  :attr:`optimal_cost <qilisdk.algorithms.variational_program_result.VariationalProgramResult.optimal_cost>`,
+  :attr:`optimal_parameters <qilisdk.algorithms.variational_program_result.VariationalProgramResult.optimal_parameters>`,
   and the final functional output packaged in
-  :attr:`optimal_execution_results <qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_execution_results>`.
+  :attr:`optimal_execution_results <qilisdk.algorithms.variational_program_result.VariationalProgramResult.optimal_execution_results>`.
 
 **Usage Example (Using QiliSim Backend)**
 
@@ -47,7 +47,7 @@ Only parameters marked as trainable are optimized during this loop.
     from qilisdk.cost_functions.model_cost_function import ModelCostFunction
     from qilisdk.digital import CNOT, U3, HardwareEfficientAnsatz
     from qilisdk.functionals import DigitalPropagation
-    from qilisdk.functionals.variational_program import VariationalProgram
+    from qilisdk.algorithms.variational_program import VariationalProgram
     from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
     from qilisdk.readout import Readout
 
@@ -109,7 +109,8 @@ This example optimizes a variational schedule under some parameter constraints.
 
     from qilisdk.core.comparison import LT, GreaterThan
     from qilisdk.cost_functions.observable_cost_function import ObservableCostFunction
-    from qilisdk.functionals import VariationalProgram, AnalogEvolution
+    from qilisdk.algorithms import VariationalProgram
+    from qilisdk.functionals import AnalogEvolution
     from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
     from qilisdk.analog import *
     from qilisdk.analog.schedule import Interpolation

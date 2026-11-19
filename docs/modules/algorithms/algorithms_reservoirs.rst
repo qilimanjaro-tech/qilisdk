@@ -1,23 +1,23 @@
 Quantum Reservoirs
 ------------------
 
-The :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` functional executes a reservoir pipeline over a
+The :class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir` functional executes a reservoir pipeline over a
 sequence of inputs. Each layer applies an optional pre-processing circuit, a reservoir dynamics block, and an optional
 post-processing circuit, followed by measurements of one or more observables. The dynamics block can be either analog
 (a :class:`~qilisdk.analog.schedule.Schedule`) or digital (a :class:`~qilisdk.digital.circuit.Circuit`), so analog and
 digital reservoirs can be benchmarked against each other with the same code. The optional ``qubits_to_reset`` list can be used to reset selected qubits between layers.
 
-The reservoir inputs are represented using :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` parameters.
+The reservoir inputs are represented using :class:`~qilisdk.algorithms.quantum_reservoirs.ReservoirInput` parameters.
 These behave like standard :class:`~qilisdk.core.variables.Parameter` objects but are marked as non-trainable so they can
 be driven by input data sequences rather than optimization loops.
 
 **Parameters**
 
 - **initial_state** (:class:`~qilisdk.core.qtensor.QTensor`): Initial state of the reservoir.
-- **reservoir_layer** (:class:`~qilisdk.functionals.quantum_reservoirs.ReservoirLayer`): Defines pre/post-processing,
+- **reservoir_layer** (:class:`~qilisdk.algorithms.quantum_reservoirs.ReservoirLayer`): Defines pre/post-processing,
   reservoir dynamics, observables, and reset policy.
 - **input_per_layer** (List[Dict[str, float]]): Input values to apply at each layer, keyed by input parameter names
-  (typically the labels of :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`).
+  (typically the labels of :class:`~qilisdk.algorithms.quantum_reservoirs.ReservoirInput`).
 
 **Returns**
 
@@ -34,7 +34,7 @@ Usage Example
     from qilisdk.backends import CudaqBackend
     from qilisdk.core import ket
     from qilisdk.digital import Circuit, U2
-    from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+    from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
     from qilisdk.analog import Schedule, X, Z
     from qilisdk.readout import Readout
 
@@ -72,7 +72,7 @@ Encoding Input Data
 ======================
 
 You can inject classical data into a reservoir layer in multiple places. The only requirement is that the keys in
-``input_per_layer`` match the labels of the :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` objects you
+``input_per_layer`` match the labels of the :class:`~qilisdk.algorithms.quantum_reservoirs.ReservoirInput` objects you
 place in the layer.
 
 1. Encode with input and output circuits
@@ -83,7 +83,7 @@ place in the layer.
     from qilisdk.analog import Schedule, X, Z
     from qilisdk.core import ket
     from qilisdk.digital import Circuit, RX, RY
-    from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+    from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 
     theta_in = ReservoirInput("theta_in", 0.0)
     phi_out = ReservoirInput("phi_out", 0.0)
@@ -120,7 +120,7 @@ place in the layer.
 
     from qilisdk.analog import Schedule, X, Z
     from qilisdk.core import ket
-    from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+    from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 
     gain = ReservoirInput("gain", 0.2)
     detuning = ReservoirInput("detuning", -0.1)
@@ -152,7 +152,7 @@ place in the layer.
 
     from qilisdk.analog import Schedule, X, Z
     from qilisdk.core import ket
-    from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+    from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 
     drive_amp = ReservoirInput("drive_amp", 1.0)
     duration = ReservoirInput("duration", 1.0)
@@ -188,7 +188,7 @@ Digital Reservoir Dynamics
 To drive the reservoir with a gate-based circuit instead of an analog schedule, pass a
 :class:`~qilisdk.digital.circuit.Circuit` as ``evolution_dynamics``. Unlike the input and output encodings, the dynamics
 circuit may contain multi-qubit gates, but it can't contain measurements. Input data can be injected directly into the
-gate parameters with :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`.
+gate parameters with :class:`~qilisdk.algorithms.quantum_reservoirs.ReservoirInput`.
 
 .. code-block:: python
 
@@ -196,7 +196,7 @@ gate parameters with :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirIn
     from qilisdk.backends import QiliSim
     from qilisdk.core import ket
     from qilisdk.digital import CNOT, RX, RY, Circuit
-    from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+    from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
     from qilisdk.readout import Readout
 
     dynamics = Circuit(3)

@@ -15,22 +15,29 @@ from __future__ import annotations
 
 import functools
 import operator
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 
+from qilisdk.algorithms.algorithm import Algorithm
+from qilisdk.algorithms.variational_program_result import VariationalProgramResult
 from qilisdk.core.variables import BaseVariable, Parameter
-from qilisdk.functionals.functional import Functional, PrimitiveFunctional
+from qilisdk.optimizers.optimizer_result import OptimizerResult
+from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
 
 if TYPE_CHECKING:
+    from qilisdk.backends.backend import Backend
     from qilisdk.core.comparison import Comparison
     from qilisdk.cost_functions.cost_function import CostFunction
+    from qilisdk.functionals.functional import PrimitiveFunctional
+    from qilisdk.functionals.functional_result import FunctionalResult
     from qilisdk.optimizers.optimizer import Optimizer
+    from qilisdk.readout import Readout
 
 
 @yaml.register_class
-class VariationalProgram(Functional):
+class VariationalProgram(Algorithm):
     """
     Bundle a parameterized functional, optimizer, and cost function into a variational loop.
 
@@ -41,7 +48,8 @@ class VariationalProgram(Functional):
             from qilisdk.backends import QiliSim
             from qilisdk.cost_functions import ObservableCostFunction
             from qilisdk.digital import QAOA
-            from qilisdk.functionals import DigitalPropagation, VariationalProgram
+            from qilisdk.algorithms import VariationalProgram
+            from qilisdk.functionals import DigitalPropagation
             from qilisdk.optimizers import SciPyOptimizer
             from qilisdk.readout import Readout
 
@@ -178,3 +186,85 @@ class VariationalProgram(Functional):
         """
         const_list = self._check_constraints(parameters)
         return sum((100 if not con else 0) for con in const_list)
+
+    def _execute(self, backend: Backend, readout: Readout) -> VariationalProgramResult[FunctionalResult[Any, Any, Any]]:
+        """Optimize the trainable parameters of the wrapped functional by executing it on ``backend``.
+
+        Args:
+            backend (Backend): The backend used to execute the wrapped functional at each optimizer step.
+            readout (Readout): The readout used for every execution of the wrapped functional.
+
+        Returns:
+            VariationalProgramResult: The optimizer summary and the functional result at the optimal parameters.
+
+        Raises:
+            ValueError: If the wrapped functional has no trainable parameters, the cost function returns an
+                unsupported type, or the optimal parameters violate the parameter constraints.
+        """
+        logger.info("[VariationalProgram] Executing Variational Program")
+
+        def evaluate_sample(parameters: list[float]) -> float:
+            logger.trace("[VariationalProgram] Evaluating cost sample at {} parameters", len(parameters))
+            param_names = self._functional.get_parameter_names(where=lambda param: param.is_trainable)
+            param_bounds = self._functional.get_parameter_bounds()
+            new_param_dict = {}
+            for i, param in enumerate(parameters):
+                name = param_names[i]
+                lower_bound, upper_bound = param_bounds[name]
+                if lower_bound != upper_bound:
+                    # Ensure we clamp the parameter within its bounds, since some methods might ignore bounds
+                    new_param_dict[name] = min(max(param, lower_bound), upper_bound)
+            err = self.check_parameter_constraints(new_param_dict)
+            if err > 0:
+                return err
+            self._functional.set_parameters(new_param_dict)
+            results = backend.execute(self._functional, readout)
+            final_results = self._cost_function.compute_cost(results)
+            if isinstance(final_results, float):
+                return final_results
+            if isinstance(final_results, complex) and abs(final_results.imag) < get_settings().atol:
+                return final_results.real
+            raise ValueError(f"Unsupported result type {type(final_results)}.")
+
+        if len(self._functional.get_parameters(where=lambda param: param.is_trainable)) == 0:
+            raise ValueError("Functional provided does not contain trainable parameters.")
+
+        logger.debug("[VariationalProgram] Starting optimization with {}", type(self._optimizer).__name__)
+        optimizer_result = self._optimizer.optimize(
+            cost_function=evaluate_sample,
+            init_parameters=list(self._functional.get_parameters(where=lambda param: param.is_trainable).values()),
+            bounds=list(self._functional.get_parameter_bounds(where=lambda param: param.is_trainable).values()),
+            store_intermediate_results=self._store_intermediate_results,
+        )
+
+        param_bounds = self._functional.get_parameter_bounds(where=lambda param: param.is_trainable)
+        optimal_parameter_dict = {}
+        for name, param in zip(param_bounds, optimizer_result.optimal_parameters, strict=False):
+            lower_bound, upper_bound = param_bounds[name]
+            optimal_parameter_dict[name] = min(max(param, lower_bound), upper_bound)
+            if optimal_parameter_dict[name] != param:
+                logger.warning(
+                    "[VariationalProgram] Optimal value {} for parameter '{}' is outside its bounds {}, clamping to {}. "
+                    "The chosen optimizer method may not honour bounds.",
+                    param,
+                    name,
+                    (lower_bound, upper_bound),
+                    optimal_parameter_dict[name],
+                )
+        err = self.check_parameter_constraints(optimal_parameter_dict)
+        if err > 0:
+            raise ValueError(
+                "Optimizer Failed at finding an optimal solution. Check the parameter constraints or try with a different optimization method."
+            )
+        self._functional.set_parameters(optimal_parameter_dict)
+        optimal_results = backend.execute(self._functional, readout)
+
+        # Report the clamped parameters, since those are the ones the functional was left with
+        optimizer_result = OptimizerResult(
+            optimal_cost=optimizer_result.optimal_cost,
+            optimal_parameters=list(optimal_parameter_dict.values()),
+            intermediate_results=optimizer_result.intermediate_results,
+        )
+
+        logger.info("[VariationalProgram] Variational Program finished")
+        return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)

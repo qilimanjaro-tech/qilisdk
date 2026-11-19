@@ -56,10 +56,10 @@ Functional support
    * - :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`
      - |y|
      - Driven by ``cudaq.evolve`` on the ``dynamics`` target (always GPU-accelerated when available, independent of the digital sampling method).
-   * - :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`
+   * - :class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`
      - |p|
      - The CudaqBackend does not natively implement :meth:`Backend._execute_quantum_reservoir <qilisdk.backends.backend.Backend._execute_quantum_reservoir>`. Circuit steps inside the reservoir layer fall back to dense ``QTensor`` unitary multiplication on CPU; ``Schedule`` steps still use CUDA-Q's ``evolve``. Any attached noise model is ignored.
-   * - :class:`~qilisdk.functionals.variational_program.VariationalProgram`
+   * - :class:`~qilisdk.algorithms.variational_program.VariationalProgram`
      - |y|
      - Reuses the digital/analog handlers above for each optimization step.
 
@@ -148,7 +148,7 @@ A :class:`~qilisdk.noise.NoiseModel` can be passed to ``CudaqBackend(noise_model
   :class:`~qilisdk.readout.SamplingReadout` is supported.
 - For :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`, Lindblad-compatible noise
   channels become CUDA-Q jump operators and Hamiltonian deltas fed to ``cudaq.evolve``.
-- For :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`, the fallback
+- For :class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`, the fallback
   implementation drops the noise model (a warning is logged).
 
 Example: a depolarising channel applied to every gate of a digital circuit:
