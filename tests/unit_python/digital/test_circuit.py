@@ -907,3 +907,48 @@ def test_gate_minus_analog_hamiltonian_raises_helpful_error():
     hamiltonian = analog_Y(0)
     with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
         _ = gate - hamiltonian
+
+
+def _single_gate_circuit(nqubits: int, gate: Gate) -> Circuit:
+    circuit = Circuit(nqubits)
+    circuit.add(gate)
+    return circuit
+
+
+def test_is_equivalent_to_allows_global_phase():
+    # RZ(phi) equals U1(phi) up to the global phase e^{-i phi / 2}.
+    rz = _single_gate_circuit(1, RZ(0, phi=0.7))
+    u1 = _single_gate_circuit(1, U1(0, phi=0.7))
+
+    assert rz.is_equivalent_to(u1)
+    assert u1.is_equivalent_to(rz)
+
+
+def test_is_equivalent_to_rejects_relative_phase():
+    # S is diagonal with unit-modulus entries, so a check that allowed any diagonal phase would accept it.
+    s = _single_gate_circuit(1, S(0))
+    empty = Circuit(1)
+
+    assert not s.is_equivalent_to(empty)
+
+
+def test_is_equivalent_to_rejects_different_unitaries():
+    x = _single_gate_circuit(1, X(0))
+    y_circuit = _single_gate_circuit(1, Y(0))
+
+    assert not x.is_equivalent_to(y_circuit)
+
+
+def test_is_equivalent_to_rejects_different_qubit_counts_without_layout():
+    small = Circuit(1)
+    large = Circuit(2)
+
+    assert not small.is_equivalent_to(large)
+
+
+def test_is_equivalent_to_raises_for_measurement():
+    measured = _single_gate_circuit(1, M(0))
+    empty = Circuit(1)
+
+    with pytest.raises(GateHasNoMatrixError):
+        measured.is_equivalent_to(empty)

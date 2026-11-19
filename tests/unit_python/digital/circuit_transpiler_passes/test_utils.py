@@ -21,12 +21,11 @@ from qilisdk.digital.gates import Gate
 from .utils import (
     _apply_gate_to_state,
     _bits_to_int,
+    _equal_up_to_global_phase,
     _expand_gate_to_order,
     _int_to_bits,
     _sequence_matrix,
     _sequences_equivalent,
-    _unitaries_equivalent,
-    _vectors_equal_up_to_phase,
 )
 
 
@@ -167,7 +166,7 @@ def test_sequence_matrix_composition():
 
 
 # ---------------------------
-# Unitary equivalence
+# Global phase equivalence
 # ---------------------------
 
 
@@ -175,8 +174,8 @@ def test_unitaries_equivalent_up_to_phase():
     U = np.eye(2, dtype=complex)
     V = np.exp(1j * 0.123) * np.eye(2, dtype=complex)
 
-    assert _unitaries_equivalent(U, V)
-    assert _unitaries_equivalent(V, U)
+    assert _equal_up_to_global_phase(U, V)
+    assert _equal_up_to_global_phase(V, U)
 
 
 def test_unitaries_non_equivalent():
@@ -185,34 +184,22 @@ def test_unitaries_non_equivalent():
         dtype=complex,
     )
     I = np.eye(2, dtype=complex)
-    assert not _unitaries_equivalent(H, I)
-    assert not _unitaries_equivalent(I, H)
+    assert not _equal_up_to_global_phase(H, I)
+    assert not _equal_up_to_global_phase(I, H)
 
 
-# ---------------------------
-# Vector phase equivalence
-# ---------------------------
+def test_unitaries_with_relative_phase_are_not_equivalent():
+    Z = np.diag([1, -1]).astype(complex)
+    I = np.eye(2, dtype=complex)
+
+    assert not _equal_up_to_global_phase(Z, I)
 
 
-def test_vectors_equal_up_to_global_phase():
-    v = np.array([1, 1j], dtype=complex)
-    w = np.exp(1j * 0.7) * v
+def test_arrays_with_different_shapes_are_not_equal():
+    first = np.eye(2, dtype=complex)
+    second = np.eye(4, dtype=complex)
 
-    assert _vectors_equal_up_to_phase(v, w)
-
-
-def test_vectors_not_equal():
-    v = np.array([1, 0], dtype=complex)
-    w = np.array([0, 1], dtype=complex)
-
-    assert not _vectors_equal_up_to_phase(v, w)
-
-
-def test_zero_vectors_equal():
-    v = np.array([0, 0], dtype=complex)
-    w = np.array([0, 0], dtype=complex)
-
-    assert _vectors_equal_up_to_phase(v, w)
+    assert not _equal_up_to_global_phase(first, second)
 
 
 # ---------------------------
@@ -263,3 +250,22 @@ def test_sequences_not_equivalent_large_with_basis_states():
     gates_b = [FakeGate(base_matrix=Y, qubits=(i,)) for i in range(nqubits)]
 
     assert not _sequences_equivalent(gates_a, gates_b, nqubits=nqubits)
+
+
+def test_sequences_with_relative_phase_are_not_equivalent_on_basis_states():
+    Z = np.diag([1, -1]).astype(complex)
+
+    gates_a = [FakeGate(base_matrix=Z, qubits=(0,))]
+    gates_b = []
+
+    # Each basis state alone matches up to its own phase, so only a shared phase catches the difference.
+    assert not _sequences_equivalent(gates_a, gates_b, nqubits=1, basis_states=[(0,), (1,)])
+
+
+def test_sequences_equivalent_on_basis_states_allows_global_phase():
+    X = np.array([[0, 1], [1, 0]], dtype=complex)
+
+    gates_a = [FakeGate(base_matrix=X, qubits=(0,))]
+    gates_b = [FakeGate(base_matrix=np.exp(1j * 0.4) * X, qubits=(0,))]
+
+    assert _sequences_equivalent(gates_a, gates_b, nqubits=1, basis_states=[(0,), (1,)])

@@ -75,12 +75,12 @@ def _sequence_matrix(gates: list[Gate], nqubits: int) -> np.ndarray:
     return aggregate
 
 
-def _unitaries_equivalent(first: np.ndarray, second: np.ndarray, atol: float = 1e-9) -> bool:
-    diff = first.conj().T @ second
-    if not np.allclose(diff, np.diag(np.diag(diff)), atol=atol):
+def _equal_up_to_global_phase(first: np.ndarray, second: np.ndarray, atol: float = 1e-9) -> bool:
+    if first.shape != second.shape:
         return False
-    diag = np.diag(diff)
-    return np.allclose(np.abs(diag), np.ones_like(diag), atol=atol)
+    overlap = np.vdot(first, second)
+    phase = overlap / abs(overlap) if abs(overlap) > atol else 1.0
+    return np.allclose(second, phase * first, atol=atol)
 
 
 def _apply_sequence_to_state(gates: list[Gate], state: np.ndarray, nqubits: int) -> np.ndarray:
@@ -89,20 +89,12 @@ def _apply_sequence_to_state(gates: list[Gate], state: np.ndarray, nqubits: int)
     return state
 
 
-def _vectors_equal_up_to_phase(vec_a: np.ndarray, vec_b: np.ndarray, atol: float = 1e-9) -> bool:
-    idx = np.argmax(np.abs(vec_a) > atol)
-    if np.abs(vec_a[idx]) <= atol:
-        return np.allclose(vec_a, vec_b, atol=atol)
-    phase = vec_b[idx] / vec_a[idx]
-    return np.allclose(vec_b, phase * vec_a, atol=atol)
-
-
 def _sequences_equivalent(
     gates_a: list[Gate], gates_b: list[Gate], nqubits: int, basis_states: list[tuple[int, ...]] | None = None
 ) -> bool:
     dim = 1 << nqubits
     if dim <= 256 and basis_states is None:
-        return _unitaries_equivalent(_sequence_matrix(gates_a, nqubits), _sequence_matrix(gates_b, nqubits))
+        return _equal_up_to_global_phase(_sequence_matrix(gates_a, nqubits), _sequence_matrix(gates_b, nqubits))
 
     if basis_states is None:
         rng = np.random.default_rng(0)
@@ -119,9 +111,7 @@ def _sequences_equivalent(
             vec[idx] = 1.0
             basis_vectors.append(vec)
 
-    for vec in basis_vectors:
-        out_a = _apply_sequence_to_state(gates_a, vec.copy(), nqubits)
-        out_b = _apply_sequence_to_state(gates_b, vec.copy(), nqubits)
-        if not _vectors_equal_up_to_phase(out_a, out_b):
-            return False
-    return True
+    # Stack the outputs so a single global phase must match every input, not one phase per input.
+    outputs_a = np.stack([_apply_sequence_to_state(gates_a, vec.copy(), nqubits) for vec in basis_vectors])
+    outputs_b = np.stack([_apply_sequence_to_state(gates_b, vec.copy(), nqubits) for vec in basis_vectors])
+    return _equal_up_to_global_phase(outputs_a, outputs_b)
