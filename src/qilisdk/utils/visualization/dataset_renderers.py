@@ -82,6 +82,7 @@ class MatplotlibDatasetRenderer:
         labels: tuple[str, ...] | None = None,
         title: str | None = None,
         transform: Transform | None = None,
+        classes: NDArray[np.floating[Any]] | None = None,
         ax: plt.Axes | None = None,
     ) -> None:
         """
@@ -94,6 +95,7 @@ class MatplotlibDatasetRenderer:
             labels (tuple[str, ...] | None): Optional labels for the components of the series. Defaults to ``None`` (use dataset defaults).
             title (str | None): Optional title for the plot. Defaults to ``None`` (use dataset defaults).
             transform (Transform | None): Optional callable mapping the full series to the coordinates to plot. Defaults to ``None`` (use dataset defaults).
+            classes (NDArray[np.floating[Any]] | None): Optional class label per point, used to colour ``"2d"``/``"3d"`` scatter plots by class instead of by time. Defaults to ``None`` (colour by time).
             ax (plt.Axes | None): Optional Matplotlib Axes to draw on. Defaults to ``None`` (create a new figure and axes).
 
         Raises:
@@ -107,6 +109,7 @@ class MatplotlibDatasetRenderer:
         self.labels = labels
         self.title = title
         self.transform = transform
+        self.classes = None if classes is None else np.asarray(classes).reshape(-1)
         self.series = self._as_matrix(sample)
         self.ax = ax or self._make_axes(self.mode, self.style)
 
@@ -369,8 +372,8 @@ class MatplotlibDatasetRenderer:
         self._ylabel = style.ylabel or channels[1][0]
         if self.mode == "3d":
             self._zlabel = style.zlabel or channels[2][0]
-        self._draw_coords(tuple(values for _, values in channels))
         self._show_legend = False
+        self._draw_coords(tuple(values for _, values in channels))
 
     def _draw_coords(self, coords: tuple[NDArray[np.float64], ...]) -> None:
         """
@@ -378,9 +381,21 @@ class MatplotlibDatasetRenderer:
 
         Args:
             coords (tuple[NDArray[np.float64], ...]): The coordinate arrays to plot, one per axis.
+
+        Raises:
+            ValueError: If class labels are given but do not match the number of plotted points.
         """
         style = self.style
         n = len(coords[0])
+        if self.classes is not None:
+            if len(self.classes) != n:
+                raise ValueError(f"got {len(self.classes)} class labels for {n} plotted points.")
+            labels = np.unique(self.classes)
+            for label, color in zip(labels, self._gradient_colors(len(labels)), strict=True):
+                mask = self.classes == label
+                self.ax.scatter(*(c[mask] for c in coords), color=color, s=style.point_size, label=f"class {label:g}")
+            self._show_legend = True
+            return
         if style.trajectory_style == "line" or not style.color_by_time:
             color = self.style.theme.primary
             line_style = dict(style.line_style)
