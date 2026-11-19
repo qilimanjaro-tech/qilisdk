@@ -664,7 +664,7 @@ class Model:
         label: str = "Random Knapsack",
         seed: int = 1,
         lagrange_multiplier: float = 100,
-        integer: bool = True,
+        integer: bool = False,
     ) -> Model:
         """
         Factory method to generate a random knapsack model.
@@ -673,7 +673,7 @@ class Model:
         the knapsack is set to ``capacity_ratio`` times the total weight of all items, so that the
         instance is neither trivially feasible nor infeasible.
 
-        With ``integer`` (the default), values and weights are integers drawn from the inclusive ranges and the
+        With ``integer`` set, values and weights are integers drawn from the inclusive ranges and the
         capacity is rounded down to an integer. Integer coefficients suit the QUBO conversion better, since the slack
         variables of the weight constraint can then represent its gap exactly.
 
@@ -686,7 +686,7 @@ class Model:
             seed (int, optional): the seed for the random number generator. Defaults to 1.
             lagrange_multiplier (float, optional): penalty scale for the weight constraint when converting to QUBO. Defaults to 100.
             integer (bool, optional): whether to generate integer values, weights and capacity rather than real
-                ones. Defaults to True.
+                ones. Defaults to False.
 
         Returns:
             Model: a model of a random knapsack problem with the given parameters.
@@ -721,7 +721,7 @@ class Model:
         return cls.knapsack(
             values=values,
             weights=weights,
-            max_weight=math.floor(max_weight) if integer else max_weight,
+            max_weight=math.floor(round(max_weight, 9)) if integer else max_weight,
             label=label,
             lagrange_multiplier=lagrange_multiplier,
         )

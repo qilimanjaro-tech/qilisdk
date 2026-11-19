@@ -595,7 +595,7 @@ def test_random_factories_labels(factory, kwargs, expected_label):
 
 
 def test_model_random_knapsack_structure():
-    m = Model.random_knapsack(num_items=5, value_range=(1, 2), weight_range=(3, 4), capacity_ratio=0.5, integer=False)
+    m = Model.random_knapsack(num_items=5, value_range=(1, 2), weight_range=(3, 4), capacity_ratio=0.5)
     assert m.objective.sense == ObjectiveSense.MAXIMIZE
     assert len(m.variables()) == 5
     assert [c.label for c in m.constraints] == ["weight"]
@@ -605,7 +605,9 @@ def test_model_random_knapsack_structure():
 
 
 def test_model_random_knapsack_integer_coefficients():
-    m = Model.random_knapsack(num_items=6, value_range=(1.5, 3.5), weight_range=(3, 4), capacity_ratio=0.3)
+    m = Model.random_knapsack(
+        num_items=6, value_range=(1.5, 3.5), weight_range=(3, 4), capacity_ratio=0.3, integer=True
+    )
     coefficients = [
         *m.objective.term.as_coefficients_dict().values(),
         *m.constraints[0].lhs.as_coefficients_dict().values(),
@@ -627,8 +629,16 @@ def test_model_random_knapsack_integer_coefficients():
         (Model.random_knapsack, {"num_items": 3, "value_range": (5, 1)}, r"value_range must be"),
         (Model.random_knapsack, {"num_items": 3, "weight_range": (5, 1)}, r"weight_range must be"),
         (Model.random_knapsack, {"num_items": 3, "capacity_ratio": -0.1}, r"capacity_ratio must be non-negative"),
-        (Model.random_knapsack, {"num_items": 3, "value_range": (1.2, 1.8)}, r"value_range must contain an integer"),
-        (Model.random_knapsack, {"num_items": 3, "weight_range": (1.2, 1.8)}, r"weight_range must contain an integer"),
+        (
+            Model.random_knapsack,
+            {"num_items": 3, "value_range": (1.2, 1.8), "integer": True},
+            r"value_range must contain an integer",
+        ),
+        (
+            Model.random_knapsack,
+            {"num_items": 3, "weight_range": (1.2, 1.8), "integer": True},
+            r"weight_range must contain an integer",
+        ),
         (Model.random_max_cut, {"num_nodes": 1}, r"at least two nodes"),
         (Model.random_max_cut, {"num_nodes": 4, "edge_probability": 1.5}, r"edge_probability must be between"),
         (Model.random_max_cut, {"num_nodes": 4, "weight_range": (2, 1)}, r"weight_range must be"),

@@ -135,7 +135,7 @@ Each of these (except factoring) also has a random counterpart,
 useful for generating problems for testing and benchmarking:
 
  - :func:`Model.random_ising(num_variables, edge_probability, coefficient_range, label, seed)<qilisdk.core.model.Model.random_ising>` - Constructs a random Ising model, fully connected by default.
- - :func:`Model.random_knapsack(num_items, value_range, weight_range, capacity_ratio, label, seed, lagrange_multiplier, integer)<qilisdk.core.model.Model.random_knapsack>` - Constructs a knapsack problem with random values and weights, integer by default.
+ - :func:`Model.random_knapsack(num_items, value_range, weight_range, capacity_ratio, label, seed, lagrange_multiplier, integer)<qilisdk.core.model.Model.random_knapsack>` - Constructs a knapsack problem with random values and weights, optionally integer.
  - :func:`Model.random_max_cut(num_nodes, edge_probability, weight_range, label, seed)<qilisdk.core.model.Model.random_max_cut>` - Constructs a max cut problem on a random connected graph.
  - :func:`Model.random_graph_coloring(num_nodes, num_colors, edge_probability, label, seed, lagrange_multiplier)<qilisdk.core.model.Model.random_graph_coloring>` - Constructs a graph coloring problem on a random connected graph.
  - :func:`Model.random_travelling_salesman(num_cities, edge_probability, distance_range, label, seed, lagrange_multiplier)<qilisdk.core.model.Model.random_travelling_salesman>` - Constructs a travelling salesman problem with random distances, on a complete graph by default.
