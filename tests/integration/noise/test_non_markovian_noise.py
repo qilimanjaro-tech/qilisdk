@@ -17,6 +17,7 @@ from itertools import pairwise
 import numpy as np
 import pytest
 
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.analog import I as PauliI
 from qilisdk.analog import Schedule
 from qilisdk.analog import X as PauliX
@@ -28,7 +29,6 @@ from qilisdk.core import QTensor, ket
 from qilisdk.core.interpolator import Interpolation
 from qilisdk.digital import CNOT, CZ, RX, RY, SWAP, Circuit, H, I, M, X
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.noise import (
     AmplitudeDamping,
     BitFlip,

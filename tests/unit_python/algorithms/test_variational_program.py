@@ -16,8 +16,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from qilisdk.algorithms.variational_program import VariationalProgram
 from qilisdk.core import LT, Domain, Parameter, Variable
-from qilisdk.functionals.variational_program import VariationalProgram
 
 
 def test_variational_init():

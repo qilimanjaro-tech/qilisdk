@@ -2,7 +2,7 @@ Intermediate Results
 --------------------
 
 When a functional is constructed with ``store_intermediate_results=True`` (currently supported by
-:class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` and :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`), or via 
+:class:`~qilisdk.functionals.analog_evolution.AnalogEvolution` and :class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`), or via 
 mid-circuit measurements in a :class:`~qilisdk.digital.circuit.Circuit`,
 the backend stores a readout result for every time step.  The same readout methods apply at each step.
 

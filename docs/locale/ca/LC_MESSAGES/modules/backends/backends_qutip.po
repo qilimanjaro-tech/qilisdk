@@ -109,8 +109,8 @@ msgstr ""
 "l'integrador ODE."
 
 #: ../../modules/backends/backends_qutip.rst:75
-msgid ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
-msgstr ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
+msgid ":class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`"
+msgstr ":class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`"
 
 #: ../../modules/backends/backends_qutip.rst:76
 msgid "|p|"
@@ -118,23 +118,22 @@ msgstr "|p|"
 
 #: ../../modules/backends/backends_qutip.rst:77
 msgid ""
-"The QutipBackend does not natively implement "
-":meth:`Backend._execute_quantum_reservoir "
-"<qilisdk.backends.backend.Backend._execute_quantum_reservoir>`. Circuit "
-"steps in the reservoir layer fall back to dense ``QTensor`` unitary "
-"multiplication on CPU; ``Schedule`` steps still use QuTiP's "
-":func:`mesolve`."
+"The QutipBackend has no native reservoir implementation, so the generic "
+"implementation of "
+":class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir` is used. "
+"Circuit steps in the reservoir layer fall back to dense ``QTensor`` unitary "
+"multiplication on CPU; ``Schedule`` steps still use QuTiP's :func:`mesolve`."
 msgstr ""
-"QutipBackend no implementa de manera nativa "
-":meth:`Backend._execute_quantum_reservoir "
-"<qilisdk.backends.backend.Backend._execute_quantum_reservoir>`. Els "
-"passos ``Circuit`` de la capa del reservori recauen en una multiplicació "
-"unitària ``QTensor`` densa a CPU; els passos ``Schedule`` segueixen "
-"utilitzant :func:`mesolve` de QuTiP."
+"QutipBackend no té una implementació nativa del reservori, de manera que "
+"s'utilitza la implementació genèrica de "
+":class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`. Els passos"
+" ``Circuit`` de la capa del reservori recauen en una multiplicació unitària "
+"``QTensor`` densa a CPU; els passos ``Schedule`` segueixen utilitzant "
+":func:`mesolve` de QuTiP."
 
 #: ../../modules/backends/backends_qutip.rst:78
-msgid ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
-msgstr ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+msgid ":class:`~qilisdk.algorithms.variational_program.VariationalProgram`"
+msgstr ":class:`~qilisdk.algorithms.variational_program.VariationalProgram`"
 
 #: ../../modules/backends/backends_qutip.rst:80
 msgid "Reuses the digital/analog handlers above for each optimization step."

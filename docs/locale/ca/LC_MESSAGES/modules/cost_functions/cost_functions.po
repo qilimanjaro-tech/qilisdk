@@ -53,11 +53,11 @@ msgstr "Cost Functions"
 
 #~ msgid ""
 #~ "score intermediate iterations inside a "
-#~ ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+#~ ":class:`~qilisdk.algorithms.variational_program.VariationalProgram`"
 #~ msgstr ""
 #~ "puntuar les iteracions intermèdies dins "
 #~ "d'un "
-#~ ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+#~ ":class:`~qilisdk.algorithms.variational_program.VariationalProgram`"
 
 #~ msgid ""
 #~ "post-process "

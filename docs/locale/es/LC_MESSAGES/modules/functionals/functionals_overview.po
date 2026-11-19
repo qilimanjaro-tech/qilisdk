@@ -155,8 +155,8 @@ msgstr ""
 "``intermediate_probabilities`` e ``intermediate_expectation_values``."
 
 #: ../../modules/functionals/functionals_overview.rst:40
-msgid ":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`"
-msgstr ":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`"
+msgid ":class:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult`"
+msgstr ":class:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult`"
 
 #: ../../modules/functionals/functionals_overview.rst:41
 msgid ""

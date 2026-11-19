@@ -72,10 +72,10 @@ Functional support
    * - :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`
      - |y|
      - Master-equation integration via QuTiP's :func:`qutip.mesolve`. ``nsteps`` (default ``10_000``) caps the internal ODE substeps.
-   * - :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`
+   * - :class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`
      - |p|
-     - The QutipBackend does not natively implement :meth:`Backend._execute_quantum_reservoir <qilisdk.backends.backend.Backend._execute_quantum_reservoir>`. Circuit steps in the reservoir layer fall back to dense ``QTensor`` unitary multiplication on CPU; ``Schedule`` steps still use QuTiP's :func:`mesolve`.
-   * - :class:`~qilisdk.functionals.variational_program.VariationalProgram`
+     - The QutipBackend has no native reservoir implementation, so the generic implementation of :class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir` is used. Circuit steps in the reservoir layer fall back to dense ``QTensor`` unitary multiplication on CPU; ``Schedule`` steps still use QuTiP's :func:`mesolve`.
+   * - :class:`~qilisdk.algorithms.variational_program.VariationalProgram`
      - |y|
      - Reuses the digital/analog handlers above for each optimization step.
 

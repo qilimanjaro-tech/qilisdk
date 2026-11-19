@@ -17,23 +17,17 @@ from unittest.mock import MagicMock
 import numpy as np
 import pytest
 
+from qilisdk.algorithms import Algorithm, QuantumReservoir, ReservoirInput, ReservoirLayer
+from qilisdk.algorithms.variational_program import VariationalProgram
 from qilisdk.analog import Schedule, Z
 from qilisdk.backends.backend import Backend
 from qilisdk.backends.backend_config import AnalogMethod
 from qilisdk.core import LT, InitialState, Parameter, ket
 from qilisdk.digital import Circuit
 from qilisdk.digital.gates import CNOT, RX, RY, RZ, H
-from qilisdk.functionals import (
-    AnalogEvolution,
-    DigitalPropagation,
-    FunctionalResult,
-    QuantumReservoir,
-    ReservoirInput,
-    ReservoirLayer,
-)
-from qilisdk.functionals.variational_program import VariationalProgram
+from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.noise import NoiseModel
-from qilisdk.readout import ExpectationReadout, Readout, SamplingReadout, StateTomographyReadout
+from qilisdk.readout import Readout
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult, StateTomographyReadoutResult
 
 
@@ -49,6 +43,49 @@ def test_backend_execute():
 
     with pytest.raises(NotImplementedError, match="has no DigitalPropagation"):
         backend.execute(functional, readout)
+
+
+def test_backend_execute_delegates_to_algorithm():
+    expected = FunctionalResult(
+        readout_results=ReadoutCompositeResults(state_tomography=StateTomographyReadoutResult(state=ket(0)))
+    )
+    calls = []
+
+    class _EchoAlgorithm(Algorithm):
+        def _execute(self, backend, readout):
+            calls.append((backend, readout))
+            return expected
+
+    backend = Backend()
+    readout = Readout().with_state_tomography()
+
+    result = backend.execute(_EchoAlgorithm(), readout)
+
+    assert calls == [(backend, readout)]
+    assert result is expected
+    assert result.execution_time is not None
+
+
+def test_backend_native_hook_runs_algorithm_and_its_subclasses():
+    class _NativeReservoirBackend(Backend):
+        def _execute_quantum_reservoir(self, functional, readout):
+            return expected
+
+    class _MyReservoir(QuantumReservoir):
+        pass
+
+    expected = FunctionalResult(
+        readout_results=ReadoutCompositeResults(state_tomography=StateTomographyReadoutResult(state=ket(0)))
+    )
+    reservoir = _MyReservoir(
+        initial_state=ket(0),
+        reservoir_layer=ReservoirLayer(evolution_dynamics=Circuit(1)),
+        input_per_layer=[{}],
+    )
+
+    result = _NativeReservoirBackend().execute(reservoir, Readout().with_state_tomography())
+
+    assert result is expected
 
 
 def test_backend_execute_empty_readout():
@@ -109,7 +146,7 @@ def test_backend_variational_program(monkeypatch):
     param = Parameter("phi", 0.0, bounds=(0.0, np.pi))
     circ.add(RZ(0, phi=param))
     func = DigitalPropagation(circuit=circ)
-    readout = [SamplingReadout(nshots=100)]
+    readout = Readout().with_sampling(nshots=100)
     var_prog = VariationalProgram(functional=func, optimizer=MockOptimizer(), cost_function=MockCostFunction())
 
     monkeypatch.setattr(
@@ -118,7 +155,7 @@ def test_backend_variational_program(monkeypatch):
         lambda f, ro: _make_mock_result(f),
     )
 
-    res = backend._execute_variational_program(functional=var_prog, readout=readout)
+    res = backend.execute(var_prog, readout)
     assert np.isclose(res.optimal_parameters[0], 0.5)
 
 
@@ -129,7 +166,7 @@ def test_variational_program_clamps_out_of_bounds_parameters(monkeypatch):
     param = Parameter("phi", 0.5, bounds=(0.0, 1.0))
     circ.add(RZ(0, phi=param))
     func = DigitalPropagation(circuit=circ)
-    readout = [SamplingReadout(nshots=100)]
+    readout = Readout().with_sampling(nshots=100)
 
     class OutOfBoundsOptimizer:
         def optimize(self, cost_function, bounds, init_parameters, store_intermediate_results=False):
@@ -147,7 +184,7 @@ def test_variational_program_clamps_out_of_bounds_parameters(monkeypatch):
         lambda f, ro: _make_mock_result(f),
     )
 
-    result = backend._execute_variational_program(functional=var_prog, readout=readout)
+    result = backend.execute(var_prog, readout)
     assert np.isclose(param.value, 1.0)
     assert np.allclose(result.optimal_parameters, [1.0])
 
@@ -158,11 +195,11 @@ def test_non_parameterized_functional():
     circ = Circuit(1)
     circ.add(H(0))
     func = DigitalPropagation(circuit=circ)
-    readout = [SamplingReadout(nshots=10)]
+    readout = Readout().with_sampling(nshots=10)
     var_prog = VariationalProgram(functional=func, optimizer=MagicMock(), cost_function=MagicMock())
 
     with pytest.raises(ValueError, match=r"Functional provided does not contain trainable parameters."):
-        backend._execute_variational_program(functional=var_prog, readout=readout)
+        backend.execute(var_prog, readout)
 
 
 def test_variational_program_parameter_constraints(monkeypatch):
@@ -174,7 +211,7 @@ def test_variational_program_parameter_constraints(monkeypatch):
     circ.add(RZ(0, phi=param))
     circ._parameter_constraints.append(LT(term, 0))
     func = DigitalPropagation(circuit=circ)
-    readout = [SamplingReadout(nshots=100)]
+    readout = Readout().with_sampling(nshots=100)
     var_prog = VariationalProgram(
         functional=func, optimizer=MockOptimizer(has_parameter_constraints=True), cost_function=MockCostFunction()
     )
@@ -186,7 +223,7 @@ def test_variational_program_parameter_constraints(monkeypatch):
     )
 
     with pytest.raises(ValueError, match="Optimizer Failed at finding"):
-        backend._execute_variational_program(functional=var_prog, readout=readout)
+        backend.execute(var_prog, readout)
 
 
 def test_quantum_reservoir_invalidates_circuit_cache_on_parameter_updates(monkeypatch):
@@ -234,8 +271,7 @@ def test_quantum_reservoir_invalidates_circuit_cache_on_parameter_updates(monkey
 
     monkeypatch.setattr(Circuit, "to_qtensor", _counting_to_qtensor)
 
-    readout = [StateTomographyReadout()]
-    backend._execute_quantum_reservoir(functional, readout)
+    backend.execute(functional, Readout().with_state_tomography())
 
     assert to_qtensor_calls == 2
     assert signatures == [(0.1,), (0.2,)]
@@ -283,7 +319,7 @@ def test_quantum_reservoir_with_noise_model_warns(monkeypatch):
         input_per_layer=[{}],
     )
 
-    result = backend._execute_quantum_reservoir(functional, [StateTomographyReadout()])
+    result = backend.execute(functional, Readout().with_state_tomography())
     assert result is not None
 
 
@@ -305,7 +341,7 @@ def test_quantum_reservoir_accepts_initial_state_enum():
         reservoir_layer=reservoir_layer,
         input_per_layer=[{}],
     )
-    result = backend._execute_quantum_reservoir(functional, [StateTomographyReadout()])
+    result = backend.execute(functional, Readout().with_state_tomography())
     assert result is not None
 
 
@@ -337,7 +373,7 @@ def test_quantum_reservoir_uses_circuit_cache(monkeypatch):
         return original(self)
 
     monkeypatch.setattr(Circuit, "to_qtensor", counting_to_qtensor)
-    result = backend._execute_quantum_reservoir(functional, [StateTomographyReadout()])
+    result = backend.execute(functional, Readout().with_state_tomography())
     # First call computes, second should use cache
     assert to_qtensor_count[0] == 1
     assert result is not None
@@ -360,7 +396,7 @@ def test_quantum_reservoir_with_qubit_reset(monkeypatch):
         input_per_layer=[{}, {}],
     )
 
-    result = backend._execute_quantum_reservoir(functional, [StateTomographyReadout()])
+    result = backend.execute(functional, Readout().with_state_tomography())
     assert result is not None
 
 
@@ -374,7 +410,7 @@ def test_variational_program_unsupported_result_type(monkeypatch):
     param = Parameter("phi", 0.5, bounds=(0.0, np.pi))
     circ.add(RZ(0, phi=param))
     func = DigitalPropagation(circuit=circ)
-    readout = [SamplingReadout(nshots=100)]
+    readout = Readout().with_sampling(nshots=100)
 
     class _SingleCallOptimizer:
         has_parameter_constraints = False
@@ -388,7 +424,7 @@ def test_variational_program_unsupported_result_type(monkeypatch):
     monkeypatch.setattr(backend, "_execute_digital_propagation", lambda f, ro: _make_mock_result(f))
 
     with pytest.raises(ValueError, match="Unsupported result type"):
-        backend._execute_variational_program(functional=var_prog, readout=readout)
+        backend.execute(var_prog, readout)
 
 
 def test_backend_config_analog_method_direct():
@@ -421,7 +457,7 @@ def test_quantum_reservoir_with_circuit_dynamics():
         expected.append([np.real(np.trace(z @ rho)) for z in z_matrices])
 
     functional = QuantumReservoir(initial_state=ket(0, 0), reservoir_layer=layer, input_per_layer=inputs)
-    result = _DigitalOnlyBackend()._execute_quantum_reservoir(functional, [ExpectationReadout(observables=observables)])
+    result = _DigitalOnlyBackend().execute(functional, Readout().with_expectation(observables=observables))
 
     actual = [*result.get_intermediate_expectation_values(), result.get_expectation_values()]
     assert np.allclose(actual, expected, atol=1e-10)

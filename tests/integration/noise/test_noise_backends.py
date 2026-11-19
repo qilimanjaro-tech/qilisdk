@@ -25,6 +25,7 @@ pytest.importorskip(
     exc_type=ImportError,
 )
 
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.analog import Schedule
 from qilisdk.analog import X as PauliX
 from qilisdk.analog import Y as PauliY
@@ -36,7 +37,6 @@ from qilisdk.core.qtensor import QTensor, tensor_prod
 from qilisdk.digital.circuit import Circuit
 from qilisdk.digital.gates import CNOT, CZ, RX, SWAP, Controlled, H, I, X, Z
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.noise import (
     AmplitudeDamping,
     BitFlip,

@@ -8,7 +8,7 @@ an abstract optimization model.
 
 Cost functions are used to:
 
-- score intermediate iterations inside a :class:`~qilisdk.functionals.variational_program.VariationalProgram`
+- score intermediate iterations inside a :class:`~qilisdk.algorithms.variational_program.VariationalProgram`
 - post-process :class:`~qilisdk.functionals.functional_result.FunctionalResult` samples into meaningful costs
 - translate :class:`~qilisdk.functionals.functional_result.FunctionalResult` states into expectation values
 
@@ -40,7 +40,8 @@ object, and feeds it into the configured cost function to obtain the scalar that
 
     from qilisdk.backends import QiliSim
     from qilisdk.cost_functions import ModelCostFunction
-    from qilisdk.functionals import VariationalProgram, DigitalPropagation
+    from qilisdk.algorithms import VariationalProgram
+    from qilisdk.functionals import DigitalPropagation
     from qilisdk.readout import Readout
     from qilisdk.optimizers import SciPyOptimizer
     from qilisdk.digital import Circuit, RX
