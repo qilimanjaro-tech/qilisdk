@@ -29,7 +29,7 @@ from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import QubitOutOfRangeError
-from .gates import BasicGate, Gate, _reject_analog_object
+from .gates import CNOT, RY, RZ, BasicGate, Gate, _reject_analog_object
 
 if TYPE_CHECKING:
     from qilisdk.core.types import RealNumber
@@ -63,6 +63,56 @@ def _apply_gate_left(operator: np.ndarray, gate: Gate, nqubits: int) -> np.ndarr
     perm = perm_output + list(range(nqubits, 2 * nqubits))
 
     return np.transpose(contracted, axes=perm).reshape(operator.shape)
+
+
+def _uniformly_controlled_rotation(
+    gate_class: type[RY | RZ], target: int, angles: np.ndarray, relevant: np.ndarray, atol: float
+) -> list[Gate]:
+    """Decompose a rotation on ``target`` uniformly controlled by qubits ``0..target-1`` into rotations and CNOTs.
+
+    Uses the Gray-code construction of Möttönen et al. (quant-ph/0407010): the ``2**k`` rotation angles
+    ``angles[j]``, one per computational basis state ``j`` of the ``k = target`` control qubits (qubit 0 being the
+    most significant bit of ``j``), become ``2**k`` single-qubit rotations interleaved with ``2**k`` CNOTs. Rotations
+    whose angle is below ``atol`` are omitted, together with any CNOTs that then cancel out. Angles that are not
+    ``relevant`` (because they act on a zero-amplitude branch) are free, so they are set equal to a relevant one, which
+    turns a rotation that only depends on the controls through irrelevant branches into a single uncontrolled one.
+
+    Args:
+        gate_class (type[RY | RZ]): The rotation gate, which must anticommute with X so a CNOT flips its angle.
+        target (int): The target qubit, controlled by every qubit with a smaller index.
+        angles (np.ndarray): The ``2**target`` rotation angles, indexed by the state of the control qubits.
+        relevant (np.ndarray): Boolean mask of the angles that affect the result; the others may take any value.
+        atol (float): Angles with an absolute value below this are treated as zero.
+
+    Returns:
+        list[Gate]: The gates implementing the uniformly controlled rotation.
+    """
+    if not relevant.any():
+        return []
+    angles = np.where(relevant, angles, angles[relevant][0])
+    if np.all(np.abs(angles) < atol):
+        return []
+    if target == 0:
+        return [gate_class(0, **{gate_class.PARAMETER_NAMES[0]: float(angles[0])})]
+    size = len(angles)
+    gray = np.arange(size) ^ (np.arange(size) >> 1)
+    # thetas[i] = sum_j (-1)^popcount(gray[i] & j) angles[j] / size, i.e. a Gray-ordered fast Walsh-Hadamard transform.
+    coeffs = angles.astype(float)
+    for bit in range(target):
+        pairs = coeffs.reshape(-1, 2, 1 << bit)
+        coeffs = np.stack((pairs[:, 0] + pairs[:, 1], pairs[:, 0] - pairs[:, 1]), axis=1).ravel()
+    thetas = coeffs[gray] / size
+    # CNOTs sharing a target commute and cancel in pairs, so only the net parity between rotations is emitted.
+    gates: list[Gate] = []
+    pending = 0
+    for i, theta in enumerate(thetas):
+        if abs(theta) >= atol:
+            gates.extend(CNOT(target - 1 - bit, target) for bit in range(target) if pending >> bit & 1)
+            gates.append(gate_class(target, **{gate_class.PARAMETER_NAMES[0]: float(theta)}))
+            pending = 0
+        pending ^= int(gray[i] ^ gray[(i + 1) % size])
+    gates.extend(CNOT(target - 1 - bit, target) for bit in range(target) if pending >> bit & 1)
+    return gates
 
 
 @yaml.register_class
@@ -511,6 +561,79 @@ class Circuit(Parameterizable):
             new_circuit.add(gate_class(*qubits, **params))  # ty:ignore[invalid-argument-type]
 
         return new_circuit
+
+    @classmethod
+    def from_state(cls, state: QTensor) -> Self:
+        """Build a circuit that prepares ``state`` from the all-zero state ``|0...0>``.
+
+        The circuit uses only :class:`RY`, :class:`RZ` and :class:`CNOT` gates, following the uniformly controlled
+        rotation construction of Möttönen et al., "Transformation of quantum states using uniformly controlled
+        rotations" (quant-ph/0407010). First a cascade of ``RY`` rotations sets the amplitude magnitudes, qubit by
+        qubit from qubit 0, then a cascade of ``RZ`` rotations sets their relative phases. Preparing a generic
+        ``n``-qubit state takes at most ``2**(n+1) - 4`` CNOTs; rotations with a zero angle are left out, along with
+        the CNOTs they make redundant, so product states and states with real amplitudes need fewer gates.
+
+        The phase cascade runs from the last qubit to the first: ``diag(e^{i w0}, e^{i w1})`` on qubit ``k`` equals
+        ``RZ(w1 - w0)`` times a phase ``(w0 + w1) / 2`` that is left on qubits ``0..k-1``. Phases of zero amplitudes are
+        free, so a pair with a single nonzero amplitude of phase ``w`` can take any ``RZ`` angle ``d``, provided the
+        phase left behind is ``w + d / 2`` (or ``w - d / 2``); ``d`` is chosen to match another pair, which lets
+        rotations that would otherwise be controlled collapse into fewer gates.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.core import QTensor
+                from qilisdk.digital import Circuit
+
+                state = QTensor.random(3, seed=42)
+                circuit = Circuit.from_state(state)
+
+        Args:
+            state (QTensor): The ket to prepare. An unnormalized ket is normalized, with a warning.
+
+        Returns:
+            Circuit: A circuit whose action on ``|0...0>`` is ``state`` up to a global phase.
+
+        Raises:
+            ValueError: If ``state`` is not a ket, or is the zero vector.
+        """
+        if not state.is_ket():
+            raise ValueError(f"Circuit.from_state expects a ket, but got a QTensor of shape {state.shape}.")
+        amplitudes = state.dense().ravel()
+        norm = float(np.linalg.norm(amplitudes))
+        atol = get_settings().atol
+        if norm < atol:
+            raise ValueError("Cannot prepare the zero vector, as it is not a valid quantum state.")
+        if abs(norm - 1.0) > atol:
+            logger.warning("[Circuit] The state given to Circuit.from_state has norm {}, normalizing it.", norm)
+            amplitudes /= norm
+        nqubits = state.nqubits
+        logger.debug("[Circuit] Building a state preparation circuit for {} qubits", nqubits)
+
+        circuit = cls(nqubits)
+        # Qubit k is rotated by RY(2 atan2(|b=1|, |b=0|)), controlled by the state of qubits 0..k-1.
+        magnitudes = np.abs(amplitudes)
+        for target in range(nqubits):
+            branches = magnitudes.reshape(1 << target, 2, -1)
+            branch_norms = np.linalg.norm(branches, axis=2)
+            angles = 2 * np.arctan2(branch_norms[:, 1], branch_norms[:, 0])
+            circuit.add(_uniformly_controlled_rotation(RY, target, angles, branch_norms.sum(axis=1) >= atol, atol))
+
+        # Each qubit, last to first, absorbs the relative phase of its pairs and passes their mean phase upwards.
+        phases = np.angle(amplitudes)
+        weights = magnitudes >= atol
+        phase_gates: list[Gate] = []
+        for target in reversed(range(nqubits)):
+            pair_phases = phases.reshape(-1, 2)
+            pair_weights = weights.reshape(-1, 2)
+            both = pair_weights.all(axis=1)
+            diffs = pair_phases[:, 1] - pair_phases[:, 0]
+            diffs = np.where(both, diffs, diffs[both][0] if both.any() else 0.0)
+            phase_gates = _uniformly_controlled_rotation(RZ, target, diffs, both, atol) + phase_gates
+            phases = np.where(pair_weights[:, 0], pair_phases[:, 0] + diffs / 2, pair_phases[:, 1] - diffs / 2)
+            weights = pair_weights.any(axis=1)
+        circuit.add(phase_gates)
+        return circuit
 
     def __repr__(self) -> str:
         logger.trace(
