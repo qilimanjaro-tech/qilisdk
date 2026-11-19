@@ -80,8 +80,8 @@ def _reject_analog_object(obj: object, target: str) -> None:
         )
 
 
-def _remap_gates(gates: Sequence[TGate], mapping: dict[int, int]) -> list[TGate]:
-    """Return independent copies of ``gates`` acting on remapped qubits.
+def _remap_gates(gates: Sequence[TGate], mapping: dict[int, int], share_parameters: bool = False) -> list[TGate]:
+    """Return copies of ``gates`` acting on remapped qubits.
 
     The gates are copied together, so a parameter shared between several of them stays shared between the copies.
 
@@ -89,6 +89,8 @@ def _remap_gates(gates: Sequence[TGate], mapping: dict[int, int]) -> list[TGate]
         gates (Sequence[Gate]): The gates to copy.
         mapping (dict[int, int]): Maps current qubit indices to new ones. Qubits missing from the mapping keep
             their index.
+        share_parameters (bool, optional): Whether the copies use the same ``Parameter`` objects as ``gates``
+            rather than copies of them. Defaults to False.
 
     Returns:
         list[Gate]: The remapped copies, in the same order as ``gates``.
@@ -99,6 +101,12 @@ def _remap_gates(gates: Sequence[TGate], mapping: dict[int, int]) -> list[TGate]
     # A gate's matrix does not depend on which qubits it acts on, so share any cached matrix rather than copying it.
     wrapped = [g for gate in gates for g in ((gate, gate.basic_gate) if isinstance(gate, Modified) else (gate,))]
     memo: dict[int, Any] = {id(matrix): matrix for g in wrapped if (matrix := g.__dict__.get("matrix")) is not None}
+    if share_parameters:
+        memo.update(
+            (id(parameter), parameter)
+            for g in wrapped
+            for _, parameter in g._iter_parameter_items()  # ruff: ignore[private-member-access]
+        )
     remapped = deepcopy(list(gates), memo)
     for gate in remapped:
         gate._remap_qubits_inplace(mapping)  # ruff: ignore[private-member-access]

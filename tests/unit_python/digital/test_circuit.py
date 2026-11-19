@@ -933,19 +933,45 @@ def test_append_and_prepend_place_smaller_circuit_on_chosen_qubits():
     assert block.gates == [H(0), CNOT(0, 1)]
 
 
-def test_append_with_qubits_copies_gates_and_keeps_shared_parameters_shared():
+def test_append_with_qubits_copies_gates_and_keeps_parameters_shared():
     angle = Parameter("angle", 0.1)
     block = Circuit(2)
     block.add([RX(0, theta=angle), RY(1, theta=angle)])
     big = Circuit(4)
 
     big.append(block, qubits=[2, 3])
-    big.set_parameters({"angle": 0.5})
+    big.prepend(block, qubits=[1, 0])
+    angle.set_value(0.5)
 
     assert big.get_parameter_values() == [0.5]
-    assert big.gates[0].get_parameter_values() == big.gates[1].get_parameter_values() == [0.5]
-    assert block.get_parameter_values() == [0.1]
+    assert [gate.get_parameter_values() for gate in big.gates] == [[0.5]] * 4
     assert big.gates[0] is not block.gates[0]
+
+
+def test_append_with_qubits_outside_the_circuit_leaves_it_unchanged():
+    block = Circuit(2)
+    block.add([RX(0, theta=Parameter("angle", 0.1)), CNOT(0, 1)])
+    big = Circuit(4)
+    qubits = [1, 4]
+
+    with pytest.raises(QubitOutOfRangeError, match="Cannot place"):
+        big.append(block, qubits=qubits)
+
+    assert big.gates == []
+    assert big.get_parameter_names() == []
+
+
+def test_prepend_with_negative_qubits_leaves_circuit_unchanged():
+    block = Circuit(2)
+    block.add(CNOT(0, 1))
+    big = Circuit(4)
+    big.add(X(0))
+    qubits = [-1, 0]
+
+    with pytest.raises(QubitOutOfRangeError, match="Cannot place"):
+        big.prepend(block, qubits=qubits)
+
+    assert big.gates == [X(0)]
 
 
 @pytest.mark.parametrize("qubits", [[3], [3, 3], [3, 4, 5]])

@@ -282,7 +282,8 @@ class Circuit(Parameterizable):
 
         Raises:
             ValueError: If ``qubits`` does not hold one distinct qubit per qubit of ``circuit``.
-            QubitOutOfRangeError: If ``circuit`` acts on more qubits than this circuit.
+            QubitOutOfRangeError: If ``circuit`` acts on more qubits than this circuit, or ``qubits`` holds a qubit
+                outside this circuit.
         """
         if qubits is None:
             if circuit.nqubits > self.nqubits:
@@ -293,7 +294,11 @@ class Circuit(Parameterizable):
             return list(circuit.gates)
         if len(qubits) != circuit.nqubits or len(set(qubits)) != len(qubits):
             raise ValueError(f"Expected {circuit.nqubits} distinct qubits to place the circuit on, got {qubits}.")
-        return _remap_gates(circuit.gates, dict(enumerate(qubits)))
+        if any(qubit < 0 or qubit >= self.nqubits for qubit in qubits):
+            raise QubitOutOfRangeError(
+                f"Cannot place a circuit on qubits {qubits} of a circuit with {self.nqubits} qubits."
+            )
+        return _remap_gates(circuit.gates, dict(enumerate(qubits)), share_parameters=True)
 
     def append(self, circuit: Circuit, qubits: Sequence[int] | None = None) -> None:
         """Append the gates of another circuit at the end of the current circuit.
@@ -311,11 +316,13 @@ class Circuit(Parameterizable):
             circuit (Circuit): The circuit to be appended. It may act on fewer qubits than the current circuit.
             qubits (Sequence[int] | None, optional): The qubits of the current circuit that the qubits of ``circuit``
                 are placed on, so qubit ``i`` of ``circuit`` becomes qubit ``qubits[i]``. The gates are then copied
-                rather than shared with ``circuit``. Defaults to None, which keeps every gate on its own qubits.
+                rather than shared with ``circuit``, but they keep using the same ``Parameter`` objects. Defaults to
+                None, which keeps every gate on its own qubits.
 
         Raises:
             ValueError: If ``qubits`` does not hold one distinct qubit per qubit of ``circuit``.
-            QubitOutOfRangeError: If the appended gates act on qubits outside the current circuit.
+            QubitOutOfRangeError: If the appended gates act on qubits outside the current circuit. The current circuit
+                is left unchanged.
         """
         logger.trace("[Circuit] Appending circuit: {} on qubits: {}", circuit, qubits)
         self.add(self._gates_to_compose(circuit, qubits))
@@ -327,11 +334,13 @@ class Circuit(Parameterizable):
             circuit (Circuit): The circuit to be prepended. It may act on fewer qubits than the current circuit.
             qubits (Sequence[int] | None, optional): The qubits of the current circuit that the qubits of ``circuit``
                 are placed on, so qubit ``i`` of ``circuit`` becomes qubit ``qubits[i]``. The gates are then copied
-                rather than shared with ``circuit``. Defaults to None, which keeps every gate on its own qubits.
+                rather than shared with ``circuit``, but they keep using the same ``Parameter`` objects. Defaults to
+                None, which keeps every gate on its own qubits.
 
         Raises:
             ValueError: If ``qubits`` does not hold one distinct qubit per qubit of ``circuit``.
-            QubitOutOfRangeError: If the prepended gates act on qubits outside the current circuit.
+            QubitOutOfRangeError: If the prepended gates act on qubits outside the current circuit. The current
+                circuit is left unchanged.
         """
         logger.trace("[Circuit] Prepending circuit: {} on qubits: {}", circuit, qubits)
         self.insert(self._gates_to_compose(circuit, qubits), 0)
