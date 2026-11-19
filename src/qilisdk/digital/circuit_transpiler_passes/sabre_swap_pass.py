@@ -233,7 +233,7 @@ class SabreSwapPass(CircuitTranspilerPass):
             routed_circuit = Circuit(output_num_qubits)
             for gate in circuit.gates:
                 mapped_qubits = tuple(layout[logical_qubit] for logical_qubit in gate.qubits)
-                routed_circuit.add(self._retarget_gate(gate, mapped_qubits))
+                routed_circuit.add(gate.remap_qubits(dict(zip(gate.qubits, mapped_qubits, strict=True))))
             return routed_circuit, 0, layout[:]
 
         inverse_layout = self._invert_layout(layout, physical_to_dense_index)
@@ -283,7 +283,7 @@ class SabreSwapPass(CircuitTranspilerPass):
             # 1Q (or measurement / any non-2Q) -> just map and emit
             if len(gate_qubits) <= 1 or isinstance(gate, M):
                 mapped_qubits = tuple(layout[logical_qubit] for logical_qubit in gate_qubits)
-                routed_circuit.add(self._retarget_gate(gate, mapped_qubits))
+                routed_circuit.add(gate.remap_qubits(dict(zip(gate.qubits, mapped_qubits, strict=True))))
                 continue
 
             # We currently support only 2Q routing (SWAP, CNOT, CZ, single-control Controlled)
@@ -458,7 +458,7 @@ class SabreSwapPass(CircuitTranspilerPass):
 
             # Now adjacent: emit the mapped 2Q gate
             mapped_qubits = (layout[logical_qubit_a], layout[logical_qubit_b])
-            routed_circuit.add(self._retarget_gate(gate, mapped_qubits))
+            routed_circuit.add(gate.remap_qubits(dict(zip(gate.qubits, mapped_qubits, strict=True))))
             scheduled[two_qubit_index] = True
             # Advance front pointers for the logical qubits touched
             advance_front_for(logical_qubit_a)

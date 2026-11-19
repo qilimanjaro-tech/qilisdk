@@ -176,7 +176,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
 
             if len(gate_qubits) <= 1 or isinstance(gate, M):
                 mapped_qubits = tuple(logical_to_physical_layout[logical_qubit] for logical_qubit in gate_qubits)
-                output_circuit.add(self._retarget_gate(gate, mapped_qubits))
+                output_circuit.add(gate.remap_qubits(dict(zip(gate.qubits, mapped_qubits, strict=True))))
                 continue
 
             if len(gate_qubits) != CustomLayoutPass._TWO_QUBIT_ARITY:
@@ -195,7 +195,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
                     logical_to_physical_layout[logical_qubit_a],
                     logical_to_physical_layout[logical_qubit_b],
                 )
-                output_circuit.add(self._retarget_gate(gate, mapped_qubits))
+                output_circuit.add(gate.remap_qubits(dict(zip(gate.qubits, mapped_qubits, strict=True))))
                 continue
 
             routing_path = self._shortest_path(
@@ -236,7 +236,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
                 raise RuntimeError(
                     "Failed to route gate after inserting swaps; resulting qubits are still non-adjacent."
                 )
-            output_circuit.add(self._retarget_gate(gate, mapped_qubits))
+            output_circuit.add(gate.remap_qubits(dict(zip(gate.qubits, mapped_qubits, strict=True))))
 
             # Restore the original mapping so later 1Q gates remain on the requested qubits.
             for physical_node_a, physical_node_b in reversed(applied_swap_edges):
