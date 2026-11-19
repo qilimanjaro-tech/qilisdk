@@ -595,13 +595,26 @@ def test_random_factories_labels(factory, kwargs, expected_label):
 
 
 def test_model_random_knapsack_structure():
-    m = Model.random_knapsack(num_items=5, value_range=(1, 2), weight_range=(3, 4), capacity_ratio=0.5)
+    m = Model.random_knapsack(num_items=5, value_range=(1, 2), weight_range=(3, 4), capacity_ratio=0.5, integer=False)
     assert m.objective.sense == ObjectiveSense.MAXIMIZE
     assert len(m.variables()) == 5
     assert [c.label for c in m.constraints] == ["weight"]
     # capacity is half the total weight, which lies within [5 * 3, 5 * 4] / 2
     capacity = m.constraints[0].rhs.evaluate({})
     assert 7.5 <= capacity <= 10
+
+
+def test_model_random_knapsack_integer_coefficients():
+    m = Model.random_knapsack(num_items=6, value_range=(1.5, 3.5), weight_range=(3, 4), capacity_ratio=0.3)
+    coefficients = [
+        *m.objective.term.as_coefficients_dict().values(),
+        *m.constraints[0].lhs.as_coefficients_dict().values(),
+    ]
+    # value_range (1.5, 3.5) contains only the integers 2 and 3
+    assert all(float(c).is_integer() for c in coefficients)
+    capacity = m.constraints[0].rhs.evaluate({})
+    assert float(capacity).is_integer()
+    assert 5 <= capacity <= 7
 
 
 @pytest.mark.parametrize(
@@ -614,6 +627,8 @@ def test_model_random_knapsack_structure():
         (Model.random_knapsack, {"num_items": 3, "value_range": (5, 1)}, r"value_range must be"),
         (Model.random_knapsack, {"num_items": 3, "weight_range": (5, 1)}, r"weight_range must be"),
         (Model.random_knapsack, {"num_items": 3, "capacity_ratio": -0.1}, r"capacity_ratio must be non-negative"),
+        (Model.random_knapsack, {"num_items": 3, "value_range": (1.2, 1.8)}, r"value_range must contain an integer"),
+        (Model.random_knapsack, {"num_items": 3, "weight_range": (1.2, 1.8)}, r"weight_range must contain an integer"),
         (Model.random_max_cut, {"num_nodes": 1}, r"at least two nodes"),
         (Model.random_max_cut, {"num_nodes": 4, "edge_probability": 1.5}, r"edge_probability must be between"),
         (Model.random_max_cut, {"num_nodes": 4, "weight_range": (2, 1)}, r"weight_range must be"),

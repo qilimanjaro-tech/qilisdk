@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import copy
 import itertools
+import math
 from typing import TYPE_CHECKING, Literal, Mapping, Type, cast
 
 import numpy as np
@@ -663,6 +664,7 @@ class Model:
         label: str = "Random Knapsack",
         seed: int = 1,
         lagrange_multiplier: float = 100,
+        integer: bool = True,
     ) -> Model:
         """
         Factory method to generate a random knapsack model.
@@ -670,6 +672,10 @@ class Model:
         Values and weights are drawn uniformly at random from the given ranges, and the capacity of
         the knapsack is set to ``capacity_ratio`` times the total weight of all items, so that the
         instance is neither trivially feasible nor infeasible.
+
+        With ``integer`` (the default), values and weights are integers drawn from the inclusive ranges and the
+        capacity is rounded down to an integer. Integer coefficients suit the QUBO conversion better, since the slack
+        variables of the weight constraint can then represent its gap exactly.
 
         Args:
             num_items (int): the number of items to generate.
@@ -679,6 +685,8 @@ class Model:
             label (str, optional): the model label. Defaults to "Random Knapsack".
             seed (int, optional): the seed for the random number generator. Defaults to 1.
             lagrange_multiplier (float, optional): penalty scale for the weight constraint when converting to QUBO. Defaults to 100.
+            integer (bool, optional): whether to generate integer values, weights and capacity rather than real
+                ones. Defaults to True.
 
         Returns:
             Model: a model of a random knapsack problem with the given parameters.
@@ -686,6 +694,7 @@ class Model:
         Raises:
             ValueError: if the number of items is not greater than zero.
             ValueError: if a range is not a well-ordered ``(low, high)`` pair.
+            ValueError: if ``integer`` is set and a range contains no integer.
             ValueError: if ``capacity_ratio`` is negative.
         """
         _validate_positive_count(num_items, "num_items")
@@ -694,13 +703,25 @@ class Model:
         if capacity_ratio < 0:
             raise ValueError(f"capacity_ratio must be non-negative, got {capacity_ratio}.")
 
+        if integer:
+            for bounds, name in ((value_range, "value_range"), (weight_range, "weight_range")):
+                if math.ceil(bounds[0]) > math.floor(bounds[1]):
+                    raise ValueError(f"{name} must contain an integer when integer is True, got {bounds}.")
+
         generator = np.random.default_rng(seed)
-        values = [float(generator.uniform(low=value_range[0], high=value_range[1])) for _ in range(num_items)]
-        weights = [float(generator.uniform(low=weight_range[0], high=weight_range[1])) for _ in range(num_items)]
+
+        def sample(low: float, high: float) -> float:
+            if integer:
+                return int(generator.integers(math.ceil(low), math.floor(high), endpoint=True))
+            return float(generator.uniform(low=low, high=high))
+
+        values = [sample(*value_range) for _ in range(num_items)]
+        weights = [sample(*weight_range) for _ in range(num_items)]
+        max_weight = capacity_ratio * sum(weights)
         return cls.knapsack(
             values=values,
             weights=weights,
-            max_weight=capacity_ratio * sum(weights),
+            max_weight=math.floor(max_weight) if integer else max_weight,
             label=label,
             lagrange_multiplier=lagrange_multiplier,
         )
