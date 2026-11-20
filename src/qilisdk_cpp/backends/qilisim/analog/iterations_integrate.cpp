@@ -458,7 +458,7 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
     lindblad_rhs(k7, rho_5, construct_current_hamiltonian(t_7, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
     form_stage(rho_4, {{c41, &k1}, {c43, &k3}, {c44, &k4}, {c45, &k5}, {c46, &k6}, {c47, &k7}});
 
-    // Both the error and the divergence check use the relative Frobenius distance ||rho4-rho5||_F / ||rho5||_F, which
+    // The divergence check and, with jumps or density matrices, the error use the relative Frobenius distance ||rho4-rho5||_F / ||rho5||_F, which
     // for state vectors also controls the norm that Monte Carlo trajectories read as their survival probability
     const Complex* r4_ptr = rho_4.data();
     Complex* r5_ptr = rho_5.data();
@@ -480,6 +480,19 @@ double iter_rk45(DenseMatrix& rho_t, double t, double& dt, const std::vector<dou
 
     // Scale the error by the tolerance
     double err_norm = std::sqrt(diff_frob_sq / rho_5_frob_sq) / tol;
+
+    // Without jumps the norm carries no information, so use the phase-invariant per-column infidelity
+    if (is_unitary_on_statevector && jump_drift == nullptr) {
+        double infidelity_sum = 0.0;
+#if defined(_OPENMP)
+#pragma omp parallel for reduction(+ : infidelity_sum) schedule(static)
+#endif
+        for (long j = 0; j < rho_cols; ++j) {
+            const double overlap_sq = std::norm(rho_4.col(j).dot(rho_5.col(j)));
+            infidelity_sum += std::abs(1.0 - overlap_sq / (rho_4.col(j).squaredNorm() * rho_5.col(j).squaredNorm()));
+        }
+        err_norm = std::sqrt(infidelity_sum / static_cast<double>(rho_cols)) / tol;
+    }
 
     // Normalize the 5th order solution, and the last stage that seeds the next step with it
     if (normalize && is_unitary_on_statevector) {
