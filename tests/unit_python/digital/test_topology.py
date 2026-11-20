@@ -11,12 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import get_args
+
 import pytest
 from rustworkx import PyGraph, is_connected
 
 from qilisdk.digital import CNOT, Circuit, CircuitTranspiler, H, TopologyPreset
 from qilisdk.digital.circuit_transpiler_passes import CustomLayoutPass, SabreLayoutPass, SabreSwapPass
 from qilisdk.digital.topology import build_topology_graph
+from qilisdk.digital.types import Topology, TopologyLike
 
 
 def test_line() -> None:
@@ -142,3 +145,8 @@ def test_default_transpiler_routes_onto_grid() -> None:
     for gate in result.circuit.gates:
         if len(gate.qubits) == 2:
             assert topology.graph.has_edge(*gate.qubits)
+
+
+def test_topology_type_aliases() -> None:
+    assert get_args(Topology) == (list[tuple[int, int]], PyGraph[int, None])
+    assert get_args(TopologyLike) == (TopologyPreset, *get_args(Topology))
