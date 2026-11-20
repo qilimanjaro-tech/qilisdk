@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import random
+from collections import Counter
 from copy import deepcopy
 from typing import TYPE_CHECKING, Callable, Iterable
 
@@ -110,6 +111,43 @@ class Circuit(Parameterizable):
             list[Gate]: A list of gates that have been added to the circuit.
         """
         return self._gates
+
+    @property
+    def ngates(self) -> int:
+        """
+        Retrieve the total number of gates in the circuit. A multi-qubit measurement ``M(0, 1)`` counts as one gate.
+
+        Returns:
+            int: The number of gates in the circuit.
+        """
+        return len(self._gates)
+
+    @property
+    def depth(self) -> int:
+        """
+        Retrieve the depth of the circuit, i.e. the number of layers of gates when every gate is scheduled as early as
+        possible. A gate occupies a layer on every qubit it acts on, so a multi-qubit measurement ``M(0, 1)`` counts
+        as a single layer spanning qubits 0 and 1.
+
+        Returns:
+            int: The circuit depth, ``0`` for an empty circuit.
+        """
+        qubit_layers = [0] * self._nqubits
+        for gate in self._gates:
+            layer = max((qubit_layers[q] for q in gate.qubits), default=0) + 1
+            for q in gate.qubits:
+                qubit_layers[q] = layer
+        return max(qubit_layers, default=0)
+
+    @property
+    def gate_counts(self) -> dict[str, int]:
+        """
+        Retrieve the number of gates in the circuit grouped by gate name, e.g. ``{"X": 10, "CNOT": 5}``.
+
+        Returns:
+            dict[str, int]: A mapping from gate name to occurrence count, in order of first appearance.
+        """
+        return dict(Counter(gate.name for gate in self._gates))
 
     def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
         """Set the parameter values by their label. No need to provide the full list of parameters.
