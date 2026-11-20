@@ -13,23 +13,24 @@
 # limitations under the License.
 from __future__ import annotations
 
+from itertools import combinations
 from typing import TYPE_CHECKING, TypeGuard
 
 from loguru import logger
-from rustworkx import PyGraph
+from rustworkx import PyGraph, generators
 
 if TYPE_CHECKING:
-    from .types import Topology
+    from .types import TopologyLike
 
 
 _TOPOLOGY_TUPLE_ARITY = 2
 
 
-def _is_topology_graph(topology: list[tuple[int, int]] | PyGraph[int, None]) -> TypeGuard[PyGraph[int, None]]:
+def _is_topology_graph(topology: TopologyLike) -> TypeGuard[PyGraph[int, None]]:
     return isinstance(topology, PyGraph) and all(isinstance(node, int) for node in topology.nodes())
 
 
-def _is_topology_list(topology: list[tuple[int, int]] | PyGraph[int, None]) -> TypeGuard[list[tuple[int, int]]]:
+def _is_topology_list(topology: TopologyLike) -> TypeGuard[list[tuple[int, int]]]:
     return isinstance(topology, list) and all(
         isinstance(element, tuple)
         and len(element) == _TOPOLOGY_TUPLE_ARITY
@@ -39,19 +40,21 @@ def _is_topology_list(topology: list[tuple[int, int]] | PyGraph[int, None]) -> T
     )
 
 
-def build_topology_graph(topology: Topology) -> PyGraph[int, None]:
+def build_topology_graph(topology: TopologyLike) -> PyGraph[int, None]:
     """Return a topology as a ``rustworkx.PyGraph``.
 
     Args:
-        topology (Topology): Coupling map provided either as a list of
-            connected physical-qubit pairs or as an existing ``PyGraph``.
+        topology (TopologyLike): Coupling map provided as a :class:`Topology`, a list of
+            connected physical-qubit pairs or an existing ``PyGraph``.
 
     Raises:
-        ValueError:
+        ValueError: If the edge list is empty or ``topology`` has an unsupported format.
 
     Returns:
         PyGraph[int, None]: Coupling map in ``PyGraph`` form.
     """
+    if isinstance(topology, Topology):
+        return topology.graph
     if _is_topology_graph(topology):
         logger.debug("[Topology] Using provided PyGraph with {} nodes", len(topology.node_indices()))
         return topology
@@ -84,3 +87,190 @@ def build_topology_graph(topology: Topology) -> PyGraph[int, None]:
         )
         return graph
     raise ValueError("topology has incorrect format.")
+
+
+def _require_at_least(name: str, value: int, minimum: int) -> None:
+    if value < minimum:
+        raise ValueError(f"{name} must be at least {minimum}, got {value}.")
+
+
+class Topology:
+    """Hardware coupling map: physical qubits and the pairs that support two-qubit gates.
+
+    Build one with the named constructors for common device layouts, or wrap an
+    existing coupling map with :meth:`from_coupling_map`. Physical qubits are
+    labelled by integers, and every constructor labels them ``0 .. nqubits - 1``.
+
+    Anywhere a topology is accepted (``CircuitTranspiler.default``, ``SabreLayoutPass``,
+    ``SabreSwapPass``, ``CustomLayoutPass``) a :class:`Topology`, a list of qubit pairs
+    or a ``rustworkx.PyGraph`` can be passed interchangeably.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.digital import Topology
+
+            Topology.line(8)
+            Topology.ring(8)
+            Topology.grid(rows=4, cols=5)
+            Topology.all_to_all(6)
+            Topology.heavy_hex(distance=3)
+            Topology.from_coupling_map([(0, 1), (1, 2)])
+    """
+
+    def __init__(self, coupling_map: TopologyLike) -> None:
+        """Wrap a coupling map.
+
+        Args:
+            coupling_map (TopologyLike): Another :class:`Topology`, a list of connected
+                physical-qubit pairs, or a ``rustworkx.PyGraph`` whose node payloads are ints.
+
+        Raises:
+            ValueError: If the edge list is empty or the coupling map has an unsupported format.
+        """
+        self._graph: PyGraph[int, None] = build_topology_graph(coupling_map)
+
+    @classmethod
+    def from_coupling_map(cls, coupling_map: TopologyLike) -> Topology:
+        """Build a topology from an explicit coupling map.
+
+        Args:
+            coupling_map (TopologyLike): A list of connected physical-qubit pairs, a
+                ``rustworkx.PyGraph`` or another :class:`Topology`.
+
+        Returns:
+            Topology: The wrapped coupling map.
+        """
+        return cls(coupling_map)
+
+    @classmethod
+    def line(cls, nqubits: int) -> Topology:
+        """Build a linear chain ``0 - 1 - ... - (nqubits - 1)``.
+
+        Args:
+            nqubits (int): Number of qubits, at least 2.
+
+        Returns:
+            Topology: The line topology.
+
+        Raises:
+            ValueError: If ``nqubits`` is smaller than 2.
+        """
+        _require_at_least("nqubits", nqubits, 2)
+        return cls([(qubit, qubit + 1) for qubit in range(nqubits - 1)])
+
+    @classmethod
+    def ring(cls, nqubits: int) -> Topology:
+        """Build a closed chain, i.e. a line whose last qubit is coupled back to qubit 0.
+
+        Args:
+            nqubits (int): Number of qubits, at least 3.
+
+        Returns:
+            Topology: The ring topology.
+
+        Raises:
+            ValueError: If ``nqubits`` is smaller than 3.
+        """
+        _require_at_least("nqubits", nqubits, 3)
+        return cls([(qubit, (qubit + 1) % nqubits) for qubit in range(nqubits)])
+
+    @classmethod
+    def grid(cls, rows: int, cols: int) -> Topology:
+        """Build a square lattice with nearest-neighbour couplings.
+
+        Qubits are labelled row-major, so qubit ``r * cols + c`` sits at row ``r`` and column ``c``.
+
+        Args:
+            rows (int): Number of rows, at least 1.
+            cols (int): Number of columns, at least 1.
+
+        Returns:
+            Topology: The grid topology.
+
+        Raises:
+            ValueError: If either dimension is smaller than 1 or the grid has fewer than 2 qubits.
+        """
+        _require_at_least("rows", rows, 1)
+        _require_at_least("cols", cols, 1)
+        _require_at_least("rows * cols", rows * cols, 2)
+        edges = [(r * cols + c, r * cols + c + 1) for r in range(rows) for c in range(cols - 1)]
+        edges += [(r * cols + c, (r + 1) * cols + c) for r in range(rows - 1) for c in range(cols)]
+        return cls(edges)
+
+    @classmethod
+    def all_to_all(cls, nqubits: int) -> Topology:
+        """Build a fully connected topology where every pair of qubits is coupled.
+
+        Args:
+            nqubits (int): Number of qubits, at least 2.
+
+        Returns:
+            Topology: The all-to-all topology.
+
+        Raises:
+            ValueError: If ``nqubits`` is smaller than 2.
+        """
+        _require_at_least("nqubits", nqubits, 2)
+        return cls(list(combinations(range(nqubits), 2)))
+
+    @classmethod
+    def heavy_hex(cls, distance: int) -> Topology:
+        """Build an IBM-style heavy-hex lattice for a code of the given distance.
+
+        The lattice has ``(5 * distance**2 - 2 * distance - 1) / 2`` qubits, e.g. 19 for
+        ``distance=3`` and 57 for ``distance=5``. The qubit labelling follows
+        ``rustworkx.generators.heavy_hex_graph``.
+
+        Args:
+            distance (int): Code distance, an odd integer of at least 3.
+
+        Returns:
+            Topology: The heavy-hex topology.
+
+        Raises:
+            ValueError: If ``distance`` is smaller than 3 or even.
+        """
+        _require_at_least("distance", distance, 3)
+        if distance % 2 == 0:
+            raise ValueError(f"distance must be odd, got {distance}.")
+        return cls(list(generators.heavy_hex_graph(distance).edge_list()))
+
+    @property
+    def graph(self) -> PyGraph[int, None]:
+        """The coupling map as a ``rustworkx.PyGraph`` whose node indices are the physical qubit labels."""
+        return self._graph
+
+    @property
+    def nqubits(self) -> int:
+        """Number of physical qubits in the topology."""
+        return self._graph.num_nodes()
+
+    @property
+    def qubits(self) -> list[int]:
+        """Physical qubit labels in ascending order."""
+        return sorted(self._graph.node_indices())
+
+    @property
+    def edges(self) -> list[tuple[int, int]]:
+        """Coupled qubit pairs as sorted ``(low, high)`` tuples in ascending order, without duplicates."""
+        return sorted({(min(a, b), max(a, b)) for a, b in self._graph.edge_list()})
+
+    def neighbors(self, qubit: int) -> list[int]:
+        """Return the qubits coupled to ``qubit``.
+
+        Args:
+            qubit (int): Physical qubit label.
+
+        Returns:
+            list[int]: Neighbouring qubit labels in ascending order.
+
+        Raises:
+            ValueError: If ``qubit`` is not part of the topology.
+        """
+        if not self._graph.has_node(qubit):
+            raise ValueError(f"Qubit {qubit} is not part of the topology.")
+        return sorted(self._graph.neighbors(qubit))
+
+    def __repr__(self) -> str:
+        return f"Topology(nqubits={self.nqubits}, edges={self.edges})"

@@ -39,6 +39,10 @@ from .gates import (
     Z,
 )
 
+# isort: split
+from .circuit_transpiler import CircuitTranspiler
+from .topology import Topology
+
 __all__ = [
     "CNOT",
     "CZ",
@@ -53,6 +57,7 @@ __all__ = [
     "Adjoint",
     "BasicGate",
     "Circuit",
+    "CircuitTranspiler",
     "Controlled",
     "Exponential",
     "Gate",
@@ -62,6 +67,7 @@ __all__ = [
     "M",
     "S",
     "T",
+    "Topology",
     "TrotterizedSchedule",
     "X",
     "Y",

@@ -27,7 +27,7 @@ from .circuit_transpiler_pass import CircuitTranspilerPass
 if TYPE_CHECKING:
     from rustworkx import PyGraph
 
-    from qilisdk.digital.types import LayoutMap, Topology
+    from qilisdk.digital.types import LayoutMap, TopologyLike
 
 
 class CustomLayoutPass(CircuitTranspilerPass):
@@ -38,7 +38,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
 
     Parameters
     ----------
-    topology : Topology
+    topology : TopologyLike
         Coupling map provided either as an edge list or as an undirected
         ``PyGraph`` whose node indices represent *physical* qubits.
     mapping : LayoutMap
@@ -78,11 +78,11 @@ class CustomLayoutPass(CircuitTranspilerPass):
 
     _TWO_QUBIT_ARITY = 2
 
-    def __init__(self, topology: Topology, layout: LayoutMap) -> None:
+    def __init__(self, topology: TopologyLike, layout: LayoutMap) -> None:
         """Initialize the pass with a fixed logical-to-physical layout.
 
         Args:
-            topology (Topology): Coupling map as an edge list or ``PyGraph``.
+            topology (TopologyLike): Coupling map as a ``Topology``, edge list or ``PyGraph``.
             layout (LayoutMap): User-specified layout ``logical -> physical``.
         """
         self.topology: PyGraph[int, None] = build_topology_graph(topology)
