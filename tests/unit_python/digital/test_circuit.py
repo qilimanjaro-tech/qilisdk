@@ -25,7 +25,7 @@ from qilisdk.analog import Y as analog_Y
 from qilisdk.analog.hamiltonian import PauliX
 from qilisdk.core import Parameter, QTensor
 from qilisdk.core.comparison import LEQ
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X, Y
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, Circuit, Controlled, H, M, S, X, Y
 from qilisdk.digital.circuit import _apply_gate_left
 from qilisdk.digital.exceptions import GateHasNoMatrixError, NotAGateError, QubitOutOfRangeError
 from qilisdk.digital.gates import BasicGate, Gate
@@ -907,3 +907,119 @@ def test_gate_minus_analog_hamiltonian_raises_helpful_error():
     hamiltonian = analog_Y(0)
     with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
         _ = gate - hamiltonian
+
+
+def test_circuit_metrics_empty():
+    c = Circuit(nqubits=3)
+    assert c.depth == 0
+    assert c.gate_counts == {}
+    assert c.ngates == 0
+
+
+def test_circuit_depth():
+    c = Circuit(nqubits=3)
+    c.add([H(0), H(1), H(2)])
+    assert c.depth == 1
+    c.add([CNOT(0, 1), X(2)])
+    assert c.depth == 2
+    c.add(CZ(1, 2))
+    assert c.depth == 3
+    c.add(X(0))
+    assert c.depth == 3
+    c.add(M(0, 1, 2))
+    assert c.depth == 4
+
+
+def test_circuit_depth_untouched_qubits():
+    c = Circuit(nqubits=4)
+    c.add([X(1), Y(1), S(1)])
+    assert c.depth == 3
+
+
+def test_circuit_gate_counts():
+    c = Circuit(nqubits=3)
+    c.add([X(0), CNOT(0, 1), X(1), RX(2, theta=0.1), CNOT(1, 2), X(2), M(0, 1, 2)])
+    assert c.gate_counts == {"X": 3, "CNOT": 2, "RX": 1, "M": 1}
+    assert list(c.gate_counts) == ["X", "CNOT", "RX", "M"]
+
+
+def test_circuit_ngates():
+    c = Circuit(nqubits=3)
+    c.add([X(0), CNOT(0, 1), CZ(1, 2), M(0, 1, 2)])
+    assert c.ngates == 4
+
+
+def test_circuit_depth_parallel_gates_share_a_layer():
+    c = Circuit(nqubits=4)
+    c.add([CNOT(0, 1), CZ(2, 3)])
+    assert c.depth == 1
+    c.add([SWAP(1, 2), X(0), X(3)])
+    assert c.depth == 2
+
+
+def test_circuit_depth_gates_after_measurement():
+    c = Circuit(nqubits=3)
+    c.add([M(0, 1), X(2), X(0)])
+    assert c.depth == 2
+    c.add(X(1))
+    assert c.depth == 2
+
+
+def test_circuit_depth_multi_controlled_gate_spans_all_qubits():
+    c = Circuit(nqubits=4)
+    c.add([X(0), X(0), X(0), Controlled(0, 1, basic_gate=X(3)), X(2)])
+    assert c.depth == 4
+
+
+def test_circuit_gate_counts_modified_gates():
+    c = Circuit(nqubits=3)
+    c.add([Controlled(0, 1, basic_gate=X(2)), Adjoint(S(0)), Adjoint(S(1)), CZ(0, 1)])
+    assert c.gate_counts == {"CCX": 1, "S†": 2, "CZ": 1}
+
+
+def test_circuit_gate_counts_returns_independent_dict():
+    c = Circuit(nqubits=1)
+    c.add(X(0))
+    counts = c.gate_counts
+    counts["X"] = 100
+    counts["Y"] = 1
+    assert c.gate_counts == {"X": 1}
+
+
+def test_circuit_metrics_follow_insert_append_and_prepend():
+    c = Circuit(nqubits=2)
+    c.add(X(0))
+    c.insert(H(1), index=0)
+    assert c.ngates == 2
+    assert c.depth == 1
+
+    other = Circuit(nqubits=2)
+    other.add(CNOT(0, 1))
+    c.append(other)
+    c.prepend(other)
+    assert c.ngates == 4
+    assert c.depth == 3
+    assert c.gate_counts == {"CNOT": 2, "H": 1, "X": 1}
+
+
+def test_circuit_metrics_of_sum_and_copy():
+    a = Circuit(nqubits=2)
+    a.add([H(0), CNOT(0, 1)])
+    b = a + X(1)
+    assert b.ngates == 3
+    assert b.depth == 3
+    assert a.ngates == 2
+
+    copied = a.copy()
+    copied.add(Y(0))
+    assert copied.ngates == 3
+    assert a.ngates == 2
+    assert a.depth == 2
+
+
+@pytest.mark.parametrize("seed", range(5))
+def test_circuit_metrics_consistent_on_random_circuits(seed):
+    c = Circuit.random(nqubits=4, single_qubit_gates={X, H, RX}, two_qubit_gates={CNOT, CZ}, ngates=30, seed=seed)
+    assert c.ngates == 30
+    assert sum(c.gate_counts.values()) == c.ngates
+    assert 1 <= c.depth <= c.ngates
