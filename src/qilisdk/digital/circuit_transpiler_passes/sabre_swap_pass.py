@@ -91,7 +91,7 @@ class SabreSwapPass(CircuitTranspilerPass):
         """Configure SABRE swap routing behavior.
 
         Args:
-            topology (TopologyLike): Coupling map as a ``Topology``, edge list or ``PyGraph``.
+            topology (TopologyLike): Coupling map as a ``TopologyPreset``, edge list or ``PyGraph``.
             initial_layout (list[int] | None): Optional initial logical-to-physical mapping; uses identity-style mapping when omitted.
             seed (int | None): Base seed for stochastic swap scoring and retry attempts.
             lookahead_size (int): Number of future two-qubit gates used in the extended SABRE cost.

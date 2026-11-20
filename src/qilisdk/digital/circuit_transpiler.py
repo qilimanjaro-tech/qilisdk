@@ -137,7 +137,7 @@ class CircuitTranspiler:
             two_qubit_basis (TwoQubitGateBasis): Target two-qubit entangling gate
                 used by canonical decomposition.
             topology (TopologyLike | None): Optional hardware coupling map. It can
-                be provided as a ``Topology`` (e.g. ``Topology.grid(4, 5)``),
+                be provided as a ``TopologyPreset`` (e.g. ``TopologyPreset.grid(4, 5)``),
                 a list of connected physical-qubit pairs or a ``rustworkx``
                 ``PyGraph`` whose node indices are physical qubits.
             qubit_mapping (LayoutMap | None): Optional logical-to-physical

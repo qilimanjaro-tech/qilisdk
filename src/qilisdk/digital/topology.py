@@ -44,7 +44,7 @@ def build_topology_graph(topology: TopologyLike) -> PyGraph[int, None]:
     """Return a topology as a ``rustworkx.PyGraph``.
 
     Args:
-        topology (TopologyLike): Coupling map provided as a :class:`Topology`, a list of
+        topology (TopologyLike): Coupling map provided as a :class:`TopologyPreset`, a list of
             connected physical-qubit pairs or an existing ``PyGraph``.
 
     Raises:
@@ -53,7 +53,7 @@ def build_topology_graph(topology: TopologyLike) -> PyGraph[int, None]:
     Returns:
         PyGraph[int, None]: Coupling map in ``PyGraph`` form.
     """
-    if isinstance(topology, Topology):
+    if isinstance(topology, TopologyPreset):
         return topology.graph
     if _is_topology_graph(topology):
         logger.debug("[Topology] Using provided PyGraph with {} nodes", len(topology.node_indices()))
@@ -94,7 +94,7 @@ def _require_at_least(name: str, value: int, minimum: int) -> None:
         raise ValueError(f"{name} must be at least {minimum}, got {value}.")
 
 
-class Topology:
+class TopologyPreset:
     """Hardware coupling map: physical qubits and the pairs that support two-qubit gates.
 
     Build one with the named constructors for common device layouts, or wrap an
@@ -102,27 +102,27 @@ class Topology:
     labelled by integers, and every constructor labels them ``0 .. nqubits - 1``.
 
     Anywhere a topology is accepted (``CircuitTranspiler.default``, ``SabreLayoutPass``,
-    ``SabreSwapPass``, ``CustomLayoutPass``) a :class:`Topology`, a list of qubit pairs
+    ``SabreSwapPass``, ``CustomLayoutPass``) a :class:`TopologyPreset`, a list of qubit pairs
     or a ``rustworkx.PyGraph`` can be passed interchangeably.
 
     Example:
         .. code-block:: python
 
-            from qilisdk.digital import Topology
+            from qilisdk.digital import TopologyPreset
 
-            Topology.line(8)
-            Topology.ring(8)
-            Topology.grid(rows=4, cols=5)
-            Topology.all_to_all(6)
-            Topology.heavy_hex(distance=3)
-            Topology.from_coupling_map([(0, 1), (1, 2)])
+            TopologyPreset.line(8)
+            TopologyPreset.ring(8)
+            TopologyPreset.grid(rows=4, cols=5)
+            TopologyPreset.all_to_all(6)
+            TopologyPreset.heavy_hex(distance=3)
+            TopologyPreset.from_coupling_map([(0, 1), (1, 2)])
     """
 
     def __init__(self, coupling_map: TopologyLike) -> None:
         """Wrap a coupling map.
 
         Args:
-            coupling_map (TopologyLike): Another :class:`Topology`, a list of connected
+            coupling_map (TopologyLike): Another :class:`TopologyPreset`, a list of connected
                 physical-qubit pairs, or a ``rustworkx.PyGraph`` whose node payloads are ints.
 
         Raises:
@@ -131,27 +131,27 @@ class Topology:
         self._graph: PyGraph[int, None] = build_topology_graph(coupling_map)
 
     @classmethod
-    def from_coupling_map(cls, coupling_map: TopologyLike) -> Topology:
+    def from_coupling_map(cls, coupling_map: TopologyLike) -> TopologyPreset:
         """Build a topology from an explicit coupling map.
 
         Args:
             coupling_map (TopologyLike): A list of connected physical-qubit pairs, a
-                ``rustworkx.PyGraph`` or another :class:`Topology`.
+                ``rustworkx.PyGraph`` or another :class:`TopologyPreset`.
 
         Returns:
-            Topology: The wrapped coupling map.
+            TopologyPreset: The wrapped coupling map.
         """
         return cls(coupling_map)
 
     @classmethod
-    def line(cls, nqubits: int) -> Topology:
+    def line(cls, nqubits: int) -> TopologyPreset:
         """Build a linear chain ``0 - 1 - ... - (nqubits - 1)``.
 
         Args:
             nqubits (int): Number of qubits, at least 2.
 
         Returns:
-            Topology: The line topology.
+            TopologyPreset: The line topology.
 
         Raises:
             ValueError: If ``nqubits`` is smaller than 2.
@@ -160,14 +160,14 @@ class Topology:
         return cls([(qubit, qubit + 1) for qubit in range(nqubits - 1)])
 
     @classmethod
-    def ring(cls, nqubits: int) -> Topology:
+    def ring(cls, nqubits: int) -> TopologyPreset:
         """Build a closed chain, i.e. a line whose last qubit is coupled back to qubit 0.
 
         Args:
             nqubits (int): Number of qubits, at least 3.
 
         Returns:
-            Topology: The ring topology.
+            TopologyPreset: The ring topology.
 
         Raises:
             ValueError: If ``nqubits`` is smaller than 3.
@@ -176,7 +176,7 @@ class Topology:
         return cls([(qubit, (qubit + 1) % nqubits) for qubit in range(nqubits)])
 
     @classmethod
-    def grid(cls, rows: int, cols: int) -> Topology:
+    def grid(cls, rows: int, cols: int) -> TopologyPreset:
         """Build a square lattice with nearest-neighbour couplings.
 
         Qubits are labelled row-major, so qubit ``r * cols + c`` sits at row ``r`` and column ``c``.
@@ -186,7 +186,7 @@ class Topology:
             cols (int): Number of columns, at least 1.
 
         Returns:
-            Topology: The grid topology.
+            TopologyPreset: The grid topology.
 
         Raises:
             ValueError: If either dimension is smaller than 1 or the grid has fewer than 2 qubits.
@@ -199,14 +199,14 @@ class Topology:
         return cls(edges)
 
     @classmethod
-    def all_to_all(cls, nqubits: int) -> Topology:
+    def all_to_all(cls, nqubits: int) -> TopologyPreset:
         """Build a fully connected topology where every pair of qubits is coupled.
 
         Args:
             nqubits (int): Number of qubits, at least 2.
 
         Returns:
-            Topology: The all-to-all topology.
+            TopologyPreset: The all-to-all topology.
 
         Raises:
             ValueError: If ``nqubits`` is smaller than 2.
@@ -215,7 +215,7 @@ class Topology:
         return cls(list(combinations(range(nqubits), 2)))
 
     @classmethod
-    def heavy_hex(cls, distance: int) -> Topology:
+    def heavy_hex(cls, distance: int) -> TopologyPreset:
         """Build an IBM-style heavy-hex lattice for a code of the given distance.
 
         The lattice has ``(5 * distance**2 - 2 * distance - 1) / 2`` qubits, e.g. 19 for
@@ -226,7 +226,7 @@ class Topology:
             distance (int): Code distance, an odd integer of at least 3.
 
         Returns:
-            Topology: The heavy-hex topology.
+            TopologyPreset: The heavy-hex topology.
 
         Raises:
             ValueError: If ``distance`` is smaller than 3 or even.
@@ -273,4 +273,4 @@ class Topology:
         return sorted(self._graph.neighbors(qubit))
 
     def __repr__(self) -> str:
-        return f"Topology(nqubits={self.nqubits}, edges={self.edges})"
+        return f"TopologyPreset(nqubits={self.nqubits}, edges={self.edges})"

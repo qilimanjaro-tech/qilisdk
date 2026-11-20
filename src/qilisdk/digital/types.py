@@ -17,7 +17,8 @@ from typing import TypeAlias
 
 from rustworkx import PyGraph
 
-from .topology import Topology
+from .topology import TopologyPreset
 
 LayoutMap: TypeAlias = dict[int, int]
-TopologyLike: TypeAlias = Topology | list[tuple[int, int]] | PyGraph[int, None]
+Topology: TypeAlias = list[tuple[int, int]] | PyGraph[int, None]
+TopologyLike: TypeAlias = TopologyPreset | Topology

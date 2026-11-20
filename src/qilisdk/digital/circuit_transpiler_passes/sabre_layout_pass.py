@@ -114,7 +114,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         """Initialize a SABRE layout pass.
 
         Args:
-            topology (TopologyLike): Coupling map as a ``Topology``, edge list or ``PyGraph``.
+            topology (TopologyLike): Coupling map as a ``TopologyPreset``, edge list or ``PyGraph``.
             num_trials (int): Number of randomized layout trials.
             seed (int | None): RNG seed for reproducible trials.
             lookahead_size (int): Maximum number of gates in the look-ahead set.

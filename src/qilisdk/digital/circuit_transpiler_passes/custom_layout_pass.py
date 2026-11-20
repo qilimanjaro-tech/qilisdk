@@ -82,7 +82,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
         """Initialize the pass with a fixed logical-to-physical layout.
 
         Args:
-            topology (TopologyLike): Coupling map as a ``Topology``, edge list or ``PyGraph``.
+            topology (TopologyLike): Coupling map as a ``TopologyPreset``, edge list or ``PyGraph``.
             layout (LayoutMap): User-specified layout ``logical -> physical``.
         """
         self.topology: PyGraph[int, None] = build_topology_graph(topology)

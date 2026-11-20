@@ -41,7 +41,7 @@ from .gates import (
 
 # isort: split
 from .circuit_transpiler import CircuitTranspiler
-from .topology import Topology
+from .topology import TopologyPreset
 
 __all__ = [
     "CNOT",
@@ -67,7 +67,7 @@ __all__ = [
     "M",
     "S",
     "T",
-    "Topology",
+    "TopologyPreset",
     "TrotterizedSchedule",
     "X",
     "Y",
