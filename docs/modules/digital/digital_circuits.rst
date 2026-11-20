@@ -66,6 +66,26 @@ You can also initialize a random circuit with a specified number of gates using 
     )
     circuit.draw()
 
+Circuit Metrics
+^^^^^^^^^^^^^^^
+
+Circuits expose a few properties to summarize their size and structure:
+
+- :attr:`~qilisdk.digital.circuit.Circuit.ngates`: the total number of gates.
+- :attr:`~qilisdk.digital.circuit.Circuit.gate_counts`: the number of gates grouped by gate name.
+- :attr:`~qilisdk.digital.circuit.Circuit.depth`: the number of layers when every gate is scheduled as early as possible.
+
+.. code-block:: python
+
+    from qilisdk.digital import Circuit, H, CNOT
+
+    circuit = Circuit(3)
+    circuit.add([H(0), H(1), CNOT(0, 1), CNOT(1, 2)])
+
+    print(circuit.ngates)       # 4
+    print(circuit.gate_counts)  # {'H': 2, 'CNOT': 2}
+    print(circuit.depth)        # 3
+
 Parameterized Circuits
 ^^^^^^^^^^^^^^^^^^^^^^
 
