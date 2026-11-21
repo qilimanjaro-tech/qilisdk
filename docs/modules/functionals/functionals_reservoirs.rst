@@ -2,9 +2,10 @@ Quantum Reservoirs
 ------------------
 
 The :class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir` functional executes a reservoir pipeline over a
-sequence of inputs. Each layer applies an optional pre-processing circuit, an analog reservoir dynamics block
-(:class:`~qilisdk.analog.schedule.Schedule`), and an optional post-processing circuit, followed by measurements of one
-or more observables. The optional ``qubits_to_reset`` list can be used to reset selected qubits between layers.
+sequence of inputs. Each layer applies an optional pre-processing circuit, a reservoir dynamics block, and an optional
+post-processing circuit, followed by measurements of one or more observables. The dynamics block can be either analog
+(a :class:`~qilisdk.analog.schedule.Schedule`) or digital (a :class:`~qilisdk.digital.circuit.Circuit`), so analog and
+digital reservoirs can be benchmarked against each other with the same code. The optional ``qubits_to_reset`` list can be used to reset selected qubits between layers.
 
 The reservoir inputs are represented using :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput` parameters.
 These behave like standard :class:`~qilisdk.core.variables.Parameter` objects but are marked as non-trainable so they can
@@ -180,3 +181,37 @@ place in the layer.
         ],
     )
 
+
+Digital Reservoir Dynamics
+==========================
+
+To drive the reservoir with a gate-based circuit instead of an analog schedule, pass a
+:class:`~qilisdk.digital.circuit.Circuit` as ``evolution_dynamics``. Unlike the input and output encodings, the dynamics
+circuit may contain multi-qubit gates, but it can't contain measurements. Input data can be injected directly into the
+gate parameters with :class:`~qilisdk.functionals.quantum_reservoirs.ReservoirInput`.
+
+.. code-block:: python
+
+    from qilisdk.analog import Z
+    from qilisdk.backends import QiliSim
+    from qilisdk.core import ket
+    from qilisdk.digital import CNOT, RX, RY, Circuit
+    from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+    from qilisdk.readout import Readout
+
+    dynamics = Circuit(3)
+    dynamics.add(RX(0, theta=ReservoirInput("x", 0.0)))
+    dynamics.add(CNOT(0, 1))
+    dynamics.add(RY(1, theta=0.7))
+    dynamics.add(CNOT(1, 2))
+
+    layer = ReservoirLayer(evolution_dynamics=dynamics, qubits_to_reset=[0])
+
+    reservoir = QuantumReservoir(
+        initial_state=ket(0, 0, 0),
+        reservoir_layer=layer,
+        input_per_layer=[{"x": 0.1}, {"x": 0.9}, {"x": -0.4}],
+    )
+
+    results = QiliSim().execute(reservoir, Readout().with_expectation(observables=[Z(1), Z(2)]))
+    print(results.get_intermediate_expectation_values(), results.get_expectation_values())
