@@ -1709,20 +1709,32 @@ TEST(ParseSolverParams, EmptyDictReturnsDefaults) {
     });
 }
 
-TEST(ParseSolverParams, NumThreadsZeroClampedToOne) {
+TEST(ParseSolverParams, NumThreadsZeroChosenAutomaticallyUpToThePhysicalCores) {
     py::gil_scoped_acquire gil;
     py::dict params;
     params["num_threads"] = py::int_(0);
     auto config = parse_solver_params(params);
-    EXPECT_EQ(config.get_num_threads(), 1);
+    py::object num_cores = py::module_::import("psutil").attr("cpu_count")("logical"_a = false);
+    EXPECT_TRUE(config.get_auto_num_threads());
+    EXPECT_EQ(config.get_num_threads(), num_cores.is_none() ? 1 : num_cores.cast<int>());
 }
 
-TEST(ParseSolverParams, NegativeNumThreadsClampedToOne) {
+TEST(ParseSolverParams, NegativeNumThreadsChosenAutomatically) {
     py::gil_scoped_acquire gil;
     py::dict params;
     params["num_threads"] = py::int_(-4);
     auto config = parse_solver_params(params);
-    EXPECT_EQ(config.get_num_threads(), 1);
+    EXPECT_TRUE(config.get_auto_num_threads());
+    EXPECT_GE(config.get_num_threads(), 1);
+}
+
+TEST(ParseSolverParams, PositiveNumThreadsNotChosenAutomatically) {
+    py::gil_scoped_acquire gil;
+    py::dict params;
+    params["num_threads"] = py::int_(3);
+    auto config = parse_solver_params(params);
+    EXPECT_FALSE(config.get_auto_num_threads());
+    EXPECT_EQ(config.get_num_threads(), 3);
 }
 
 TEST(ParseSolverParams, AllFieldsParsedCorrectly) {

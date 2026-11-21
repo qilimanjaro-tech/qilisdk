@@ -31,6 +31,10 @@
 
 #include <pybind11/embed.h>
 
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
+
 namespace {
 
 using cx = std::complex<double>;
@@ -1489,5 +1493,59 @@ TEST_F(SamplingTest, MPS_QubitCountMismatchThrows) {
     std::vector<py::object> intermediate_results;
     EXPECT_THROW(sampling_mps(gates, 3, initial, noNoise, final_state, intermediate_results, cfg, readout), py::value_error);
 }
+
+#if defined(_OPENMP)
+class SamplingThreadsTest : public SamplingTest {
+   protected:
+    void SetUp() override {
+        cfg.set_num_threads(4);
+        cfg.set_auto_num_threads(true);
+    }
+    // A density matrix that is not pure, so it is not converted back to a statevector
+    DenseMatrix mixedState(int n_qubits) {
+        long dim = 1L << n_qubits;
+        return DenseMatrix::Identity(dim, dim) / double(dim);
+    }
+};
+
+TEST_F(SamplingThreadsTest, SmallStatevectorRunsOnASingleThread) {
+    DenseMatrix state = zeroState(2);
+    std::vector<py::object> intermediate_results;
+    sampling({makeX(0)}, 2, noNoise, state, intermediate_results, cfg, readout);
+    EXPECT_EQ(omp_get_max_threads(), 1);
+}
+
+TEST_F(SamplingThreadsTest, SmallStatevectorMatrixFreeRunsOnASingleThread) {
+    DenseMatrix state = zeroState(2);
+    std::vector<py::object> intermediate_results;
+    sampling_matrix_free({makeX(0)}, 2, noNoise, state, intermediate_results, cfg, readout);
+    EXPECT_EQ(omp_get_max_threads(), 1);
+}
+
+TEST_F(SamplingThreadsTest, ExplicitThreadsAreKeptForSmallStatevectors) {
+    cfg.set_auto_num_threads(false);
+    DenseMatrix state = zeroState(2);
+    std::vector<py::object> intermediate_results;
+    sampling({makeX(0)}, 2, noNoise, state, intermediate_results, cfg, readout);
+    EXPECT_EQ(omp_get_max_threads(), 4);
+}
+
+TEST_F(SamplingThreadsTest, DensityMatrixCountsAsTwiceTheQubits) {
+    // A 6-qubit density matrix has as many elements as a 12-qubit statevector
+    DenseMatrix state = mixedState(6);
+    std::vector<py::object> intermediate_results;
+    sampling({makeX(0)}, 6, noNoise, state, intermediate_results, cfg, readout);
+    EXPECT_EQ(omp_get_max_threads(), 4);
+}
+
+TEST_F(SamplingThreadsTest, MonteCarloTrajectoriesAreNotLimited) {
+    cfg.set_monte_carlo(true);
+    cfg.set_num_monte_carlo_trajectories(10);
+    DenseMatrix state = mixedState(2);
+    std::vector<py::object> intermediate_results;
+    sampling({makeX(0)}, 2, noNoise, state, intermediate_results, cfg, readout);
+    EXPECT_EQ(omp_get_max_threads(), 4);
+}
+#endif
 
 // GCOV_EXCL_BR_STOP
