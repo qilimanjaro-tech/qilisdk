@@ -179,7 +179,7 @@ conflicts = [
 ]
 
 [tool.uv.sources]
-sphinx-multiversion = { git = "https://github.com/sphinx-contrib/multiversion", branch = "main"}
+sphinx-multiversion = { git = "https://github.com/sphinx-contrib/multiversion", rev = "cd4c0db66473f04d7e037188f5f13444574b4b0e" }
 
 [build-system]
 requires = ["scikit-build-core", "pybind11>=2.13,<4"]
