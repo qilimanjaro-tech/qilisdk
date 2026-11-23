@@ -391,7 +391,7 @@ class CudaqBackend(Backend):
                 noise_model=cuda_noise_model,
             )
             cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, circuit.nqubits, rng=self._rng)
-            if og_param is not None and og_param:
+            if og_param is not None:
                 functional.set_parameters(og_param)
             logger.info("[CudaqBackend] Sampling finished, {} distinct bitstrings", len(cudaq_result))
             sampling_readout = next((ro for ro in readout if isinstance(ro, SamplingReadout)), None)
@@ -412,7 +412,7 @@ class CudaqBackend(Backend):
         if all(ro.is_sampling_readout() for ro in readout):
             sampling_readout = next(ro for ro in readout if isinstance(ro, SamplingReadout))
             cudaq_result = cudaq.sample(kernel, shots_count=sampling_readout.nshots)
-            if og_param is not None and og_param:
+            if og_param is not None:
                 functional.set_parameters(og_param)
             logger.info("[CudaqBackend] Sampling finished, {} distinct bitstrings", len(cudaq_result))
             return FunctionalResult(
@@ -529,7 +529,7 @@ class CudaqBackend(Backend):
             final_state = final_state.reshape(-1, 1)
         final_state = QTensor(final_state)
 
-        if og_params is not None and og_params:
+        if og_params is not None:
             functional.set_parameters(og_params)
 
         intermediate_states = []

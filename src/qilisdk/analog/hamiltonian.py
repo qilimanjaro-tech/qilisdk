@@ -574,7 +574,7 @@ class Hamiltonian(Parameterizable):
 
         renderer = MatplotlibHamiltonianRenderer(self, style=style or HamiltonianStyle())
         renderer.plot()
-        if filepath is not None and filepath:
+        if filepath is not None:
             renderer.save(filepath)
         else:
             renderer.show()

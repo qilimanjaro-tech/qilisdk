@@ -231,7 +231,7 @@ class MatplotlibDatasetRenderer:
         Returns:
             str: The label for the component, e.g. ``"x(t)"``, ``"x(t + 5)"``, or a dataset-provided label.
         """
-        base = self.labels[0] if self.labels is not None and self.labels else "x"
+        base = self.labels[0] if self.labels is not None and len(self.labels) > 0 else "x"
         if embedded:
             if index == 0:
                 return f"{base}(t)"

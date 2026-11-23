@@ -686,7 +686,7 @@ class Schedule(Parameterizable):
         style = style or ScheduleStyle(title="Schedule Coefficient")
         renderer = MatplotlibScheduleRenderer(self, style=style)
         renderer.plot()
-        if filepath is not None and filepath:
+        if filepath is not None:
             renderer.save(filepath)
         else:
             renderer.show()
@@ -722,7 +722,7 @@ class Schedule(Parameterizable):
         )
 
         # If we try to show overlaps but haven't given intermediate states, raise an error
-        if show_overlaps and (intermediate_states is None or not intermediate_states):
+        if show_overlaps and (intermediate_states is None or len(intermediate_states) == 0):
             logger.warning(
                 "[Schedule] Overlaps can't be shown without intermediate states. Setting show_overlaps to False."
             )
@@ -732,7 +732,7 @@ class Schedule(Parameterizable):
             self, levels=levels, style=style, intermediate_states=intermediate_states, show_overlaps=show_overlaps
         )
         renderer.plot()
-        if filepath is not None and filepath:
+        if filepath is not None:
             renderer.save(filepath)
         else:
             renderer.show()

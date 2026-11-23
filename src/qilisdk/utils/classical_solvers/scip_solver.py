@@ -172,7 +172,7 @@ class ScipSolver(ClassicalSolver):
         # Pass settings to SCIP
         if not verbose:
             scip_model.hideOutput()
-        if params is not None and params:
+        if params is not None:
             scip_model.setParams(params)
 
         # Solve the model

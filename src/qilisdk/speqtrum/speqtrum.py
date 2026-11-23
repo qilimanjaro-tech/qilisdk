@@ -161,7 +161,7 @@ def _request_extensions(*, context: str | None = None, skip_ensure_ok: bool = Fa
         are set.
     """
     extensions: dict[str, Any] = {}
-    if context is not None and context:
+    if context is not None:
         extensions[_CONTEXT_EXTENSION] = context
     if skip_ensure_ok:
         extensions[_SKIP_ENSURE_OK_EXTENSION] = True
@@ -242,7 +242,7 @@ def _summarize_error_payload(response: httpx.Response) -> str:
             body_text = ""
     payload = _safe_json_loads(body_text, context=f"{context} error body") if body_text else None
     detail = _stringify_payload(payload)
-    if detail is not None and detail:
+    if detail is not None:
         return detail
     if body_text.strip():
         return body_text.strip()
@@ -442,7 +442,7 @@ class SpeQtrum:
             settings.speqtrum_apikey.get_secret_value() if settings.speqtrum_apikey is not None else None
         )
 
-        if username is None or not username or apikey is None or not apikey:
+        if username in {None, ""} or apikey in {None, ""}:
             logger.error("[SpeQtrum] Login called without credentials.")
             return False
 
@@ -753,7 +753,7 @@ class SpeQtrum:
             "job_type": JobType.DIGITAL,
             "meta": {},
         }
-        if job_name is not None and job_name:
+        if job_name is not None:
             json["name"] = job_name
         logger.debug("[SpeQtrum] Executing DigitalPropagation on device {}", device)
         with self._create_client() as client:
@@ -794,7 +794,7 @@ class SpeQtrum:
             "job_type": JobType.PULSE,
             "meta": {},
         }
-        if job_name is not None and job_name:
+        if job_name is not None:
             json["name"] = job_name
         logger.debug("[SpeQtrum] Executing {} on device {}", experiment_name, device)
         with self._create_client() as client:
@@ -833,7 +833,7 @@ class SpeQtrum:
             "job_type": JobType.ANALOG,
             "meta": {},
         }
-        if job_name is not None and job_name:
+        if job_name is not None:
             json["name"] = job_name
         logger.debug("[SpeQtrum] Executing AnalogEvolution on device {}", device)
         with self._create_client() as client:
@@ -872,7 +872,7 @@ class SpeQtrum:
             "job_type": JobType.QUANTUM_RESERVOIR,
             "meta": {},
         }
-        if job_name is not None and job_name:
+        if job_name is not None:
             json["name"] = job_name
         logger.debug("[SpeQtrum] Executing QuantumReservoir on device {}", device)
         with self._create_client() as client:
@@ -919,7 +919,7 @@ class SpeQtrum:
             "job_type": JobType.VARIATIONAL,
             "meta": {},
         }
-        if job_name is not None and job_name:
+        if job_name is not None:
             json["name"] = job_name
         logger.debug("[SpeQtrum] Executing variational program on device {}", device)
         with self._create_client() as client:

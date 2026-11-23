@@ -214,7 +214,7 @@ class Backend(ABC):
 
             inter_results.append(Backend._construct_results_list(state, readout, seed=self._rng))
 
-            if functional.reservoir_layer.qubits_to_reset is not None and functional.reservoir_layer.qubits_to_reset:
+            if functional.reservoir_layer.qubits_to_reset is not None:
                 logger.trace("[Backend] Resetting qubits {}", functional.reservoir_layer.qubits_to_reset)
                 state = reset_qubits(state, functional.reservoir_layer.qubits_to_reset)
 

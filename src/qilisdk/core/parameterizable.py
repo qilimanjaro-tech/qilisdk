@@ -77,7 +77,7 @@ class Parameterizable(ABC):
             other (Parameterizable): Object to pull the parameter from.
             new_label (str | None, optional): Optional label to use in this object.
         """
-        if new_label is not None and new_label:
+        if new_label is not None:
             self._parameters[self._prefix + new_label] = other._parameters[parameter_label]
         else:
             self._parameters[self._prefix + parameter_label] = other._parameters[parameter_label]

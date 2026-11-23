@@ -262,7 +262,7 @@ class Interpolator(Parameterizable):
         Returns:
             list[float]: Evaluated time points.
         """
-        if self._fixed_tlist is not None and self._fixed_tlist:
+        if self._fixed_tlist is not None:
             return self._fixed_tlist
         self._fixed_tlist = [self._get_value(k) for k in self.tlist]
         return self._fixed_tlist
@@ -275,7 +275,7 @@ class Interpolator(Parameterizable):
         Returns:
             float: Largest time value in ``fixed_tlist``.
         """
-        if self._total_time is None or not self._total_time:
+        if self._total_time is None:
             self._total_time = max(self.fixed_tlist)
         return self._total_time
 

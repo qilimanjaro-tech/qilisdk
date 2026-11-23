@@ -467,7 +467,7 @@ class OpenQasmParser:
                     replacement_map[arg_name_in_body] = self._evaluate_expression(actual_arg)
             for func_statement in func_def["body"]:
                 res = self._process_statement(self._recursive_replace(func_statement, replacement_map))
-                if res is not None and res:
+                if res:
                     return self._parse_return_val(res)
             return 0
 
@@ -889,7 +889,7 @@ class OpenQasmParser:
 
     def _handle_statement_branching_statement(
         self, statement: BranchingStatement, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
-    ) -> complex | bool | int | float | str | None:
+    ) -> complex | bool | int | float | str:
         # Check the condition
         condition_value = self._evaluate_expression(statement.condition)
 
@@ -899,21 +899,21 @@ class OpenQasmParser:
                 res = self._process_statement(
                     branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                 )
-                if res is not None and res:
+                if res:
                     return self._parse_return_val(res)
         else:
             for branched_statement in statement.else_block:
                 res = self._process_statement(
                     branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                 )
-                if res is not None and res:
+                if res:
                     return self._parse_return_val(res)
 
         return ""
 
     def _handle_statement_switch_statement(
         self, statement: SwitchStatement, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
-    ) -> complex | bool | int | float | str | None:
+    ) -> complex | bool | int | float | str:
         # Get the value of the target expression
         target_val = self._evaluate_expression(statement.target)
         found_case = False
@@ -927,7 +927,7 @@ class OpenQasmParser:
                     res = self._process_statement(
                         case_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                     )
-                    if res is not None and res:
+                    if res:
                         return self._parse_return_val(res)
                 break
 
@@ -937,14 +937,14 @@ class OpenQasmParser:
                 res = self._process_statement(
                     default_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                 )
-                if res is not None and res:
+                if res:
                     return self._parse_return_val(res)
 
         return ""
 
     def _handle_statement_for_in_loop(
         self, statement: ForInLoop, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
-    ) -> complex | bool | int | float | str | None:
+    ) -> complex | bool | int | float | str:
         # The new variable to declare for the loop variable
         loop_var_name = statement.identifier.name
         loop_var_type = statement.type
@@ -989,7 +989,7 @@ class OpenQasmParser:
         }
 
         # Loop through the values and process the body with the loop variable set to the current value
-        res = None
+        res = ""
         if not isinstance(loop_range, (list, range)):
             raise ValueError(f"Loop statement is not iterable: {statement}")
         for i in loop_range:
@@ -998,13 +998,13 @@ class OpenQasmParser:
                 res = self._process_statement(
                     loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                 )
-                if res is not None and res:
+                if res:
                     break
             if res == "break":
                 break
             if res == "continue":
                 continue
-            if res is not None and res:
+            if res:
                 return self._parse_return_val(res)
 
         # Remove the loop variable from the var list after the loop is done
@@ -1014,20 +1014,20 @@ class OpenQasmParser:
 
     def _handle_statement_while_loop(
         self, statement: WhileLoop, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
-    ) -> complex | bool | int | float | str | None:
-        res = None
+    ) -> complex | bool | int | float | str:
+        res = ""
         while self._evaluate_expression(statement.while_condition):
             for loop_statement in statement.block:
                 res = self._process_statement(
                     loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                 )
-                if res is not None and res:
+                if res:
                     break
             if res == "break":
                 break
             if res == "continue":
                 continue
-            if res is not None and res:
+            if res:
                 return self._parse_return_val(res)
 
         return ""
@@ -1041,7 +1041,7 @@ class OpenQasmParser:
 
     def _process_statement(
         self, statement: object, extra_modifiers: list[str] = [], extra_qubits: list[int] = []
-    ) -> str | int | float | complex | bool | None:
+    ) -> str | int | float | complex | bool:
         # Initializing a qubit
         if isinstance(statement, QubitDeclaration):
             self._handle_statement_qubit_declaration(statement)

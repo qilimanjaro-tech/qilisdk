@@ -424,7 +424,7 @@ class Circuit(Parameterizable):
 
         renderer = MatplotlibCircuitRenderer(self, style=style)
         renderer.plot()
-        if filepath is not None and filepath:
+        if filepath is not None:
             renderer.save(filepath)
 
     @classmethod

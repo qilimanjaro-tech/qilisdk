@@ -228,7 +228,7 @@ class ExperimentResult(Result):
 
         fig.tight_layout()
 
-        if save_to is not None and save_to:
+        if save_to is not None:
             self._save_figure(fig, save_to)
 
         plt.show()
@@ -297,7 +297,7 @@ class ExperimentResult(Result):
 
         fig.tight_layout()
 
-        if save_to is not None and save_to:
+        if save_to is not None:
             self._save_figure(fig, save_to)
 
         plt.show()
