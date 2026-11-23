@@ -385,7 +385,7 @@ class CudaqBackend(Backend):
             cuda_noise_model = self._noise_model_to_cudaq(self._noise_model, transpiled_circuit)
             cudaq_result = cudaq.sample(
                 kernel,
-                shots_count=readout[0].nshots,  # ty:ignore[unresolved-attribute]
+                shots_count=readout[0].nshots,  # ty:ignore[missing-attribute]
                 noise_model=cuda_noise_model,
             )
             cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, circuit.nqubits, rng=self._rng)
@@ -1538,19 +1538,19 @@ class CudaqBackend(Backend):
 
     @staticmethod
     def _handle_PauliX(operator: PauliX) -> ElementaryOperator:
-        return spin.x(target=operator.qubit)  # ty:ignore[unresolved-attribute]
+        return spin.x(target=operator.qubit)  # ty:ignore[missing-attribute]
 
     @staticmethod
     def _handle_PauliY(operator: PauliY) -> ElementaryOperator:
-        return spin.y(target=operator.qubit)  # ty:ignore[unresolved-attribute]
+        return spin.y(target=operator.qubit)  # ty:ignore[missing-attribute]
 
     @staticmethod
     def _handle_PauliZ(operator: PauliZ) -> ElementaryOperator:
-        return spin.z(target=operator.qubit)  # ty:ignore[unresolved-attribute]
+        return spin.z(target=operator.qubit)  # ty:ignore[missing-attribute]
 
     @staticmethod
     def _handle_PauliI(operator: PauliI) -> ElementaryOperator:
-        return spin.i(target=operator.qubit)  # ty:ignore[unresolved-attribute]
+        return spin.i(target=operator.qubit)  # ty:ignore[missing-attribute]
 
 
 # Superseded names, still resolvable so existing code keeps working.
