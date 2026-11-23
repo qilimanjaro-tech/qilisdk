@@ -2662,77 +2662,23 @@ QTensorCpp QTensorCpp::reset_qubits(const std::set<int>& qubits) {
         }
     }
 
-    // Determine which qubits to keep and which to trace out
-    std::set<int> rest_qubits;
-    int nqubits = get_nqubits();
-    for (int q = 0; q < nqubits; ++q) {
-        if (qubits.find(q) == qubits.end()) {
-            rest_qubits.insert(q);
-        }
+    // Qubit 0 is the most significant bit, so qubit q is bit nqubits - 1 - q of a basis index
+    const int nqubits = get_nqubits();
+    int mask = 0;
+    for (int q : qubits) {
+        mask |= 1 << (nqubits - 1 - q);
     }
 
-    // Perform the partial trace over the qubits to be reset
-    QTensorCpp rest_state = partial_trace(rest_qubits);
-    int out_dim = 1 << nqubits;
-
-    // Now we need to embed the rest_state back into the full space of nqubits, filling in zeros for the reset qubits
-    if (!rest_qubits.empty()) {
-        std::vector<Eigen::Triplet<Complex>> triplets;
-        const SparseMatrix& rest_data = rest_state.get_data();
-        std::vector<int> rest_dims(rest_qubits.size(), 2);
-        std::vector<int> full_dims(nqubits, 2);
-        for (int k = 0; k < rest_data.outerSize(); ++k) {
-            for (typename SparseMatrix::InnerIterator it(rest_data, k); it; ++it) {
-                int row = int(it.row());
-                int col = int(it.col());
-                Complex val = it.value();
-
-                // Convert row and col to multi-dimensional indices in the rest subsystem
-                std::vector<int> row_digits_rest(rest_qubits.size());
-                std::vector<int> col_digits_rest(rest_qubits.size());
-                int temp_row = row;
-                int temp_col = col;
-                for (size_t i = 0; i < rest_qubits.size(); ++i) {
-                    row_digits_rest[i] = temp_row % 2;
-                    col_digits_rest[i] = temp_col % 2;
-                    temp_row /= 2;
-                    temp_col /= 2;
-                }
-
-                // Build full multi-dimensional indices with zeros for the reset qubits
-                std::vector<int> row_digits_full(nqubits, 0);
-                std::vector<int> col_digits_full(nqubits, 0);
-                size_t rest_idx = 0;
-                for (int q = 0; q < nqubits; ++q) {
-                    if (rest_qubits.find(q) != rest_qubits.end()) {
-                        row_digits_full[q] = row_digits_rest[rest_idx];
-                        col_digits_full[q] = col_digits_rest[rest_idx];
-                        rest_idx++;
-                    }
-                }
-
-                // Convert back to flat indices in the full space
-                int out_row = 0;
-                int out_col = 0;
-                for (int q = 0; q < nqubits; ++q) {
-                    out_row |= (row_digits_full[q] << q);
-                    out_col |= (col_digits_full[q] << q);
-                }
-
-                triplets.emplace_back(out_row, out_col, val);
-            }
+    // Tracing out the reset qubits keeps entries that agree on them, which then move to the block where they are 0
+    std::vector<Eigen::Triplet<Complex>> triplets;
+    triplets.reserve(nnz());
+    for_each_nonzero([&](int row, int col, Complex val) {
+        if (((row ^ col) & mask) == 0) {
+            triplets.emplace_back(row & ~mask, col & ~mask, val);
         }
-
-        // Construct the final sparse matrix in the full space
-        SparseMatrix result(out_dim, out_dim);
-        result.setFromTriplets(triplets.begin(), triplets.end());
-        return QTensorCpp(result);
-    }
-
-    // If all qubits are reset, we just return a state with a single entry of 1 at the (0, 0) position
-    SparseMatrix result(out_dim, out_dim);
-    result.insert(0, 0) = 1.0;
-    result.makeCompressed();
+    });
+    SparseMatrix result(rows(), cols());
+    result.setFromTriplets(triplets.begin(), triplets.end());
     return QTensorCpp(result);
 }
 
