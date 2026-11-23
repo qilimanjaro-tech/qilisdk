@@ -25,7 +25,7 @@ from qilisdk.analog import Y as analog_Y
 from qilisdk.analog.hamiltonian import PauliX
 from qilisdk.core import Parameter, QTensor
 from qilisdk.core.comparison import LEQ
-from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, Circuit, Controlled, H, M, S, X, Y
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Circuit, Controlled, H, M, S, X, Y
 from qilisdk.digital.circuit import _apply_gate_left
 from qilisdk.digital.exceptions import GateHasNoMatrixError, NotAGateError, QubitOutOfRangeError
 from qilisdk.digital.gates import Adjoint, BasicGate, Exponential, Gate
