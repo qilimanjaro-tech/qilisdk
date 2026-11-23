@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 class SciPyOptimizer(Optimizer):
     def __init__(
         self,
-        method: str | Callable | None = None,
+        method: str | Callable[..., Any] | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
         """Create a new Gradient Based optimizer instance.
@@ -122,7 +122,7 @@ class SciPyOptimizer(Optimizer):
         def value_callback(parameters: list[float], cost: float, *_: object) -> None:
             store_intermediate_result(parameters, cost)
 
-        callback: Callable | None = None
+        callback: Callable[..., None] | None = None
         if store_intermediate_results and self.method in {"basinhopping", "dual_annealing"}:
             callback = value_callback
         elif store_intermediate_results:

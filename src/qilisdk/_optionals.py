@@ -86,7 +86,7 @@ class ImportedFeature:
     """
 
     name: str
-    symbols: dict[str, Any | Callable]
+    symbols: dict[str, Any | Callable[..., Any]]
 
 
 class _OptionalDependencyStub:
@@ -261,7 +261,7 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
 
     # All good: import real symbols
     logger.debug("[Optionals] Optional feature {} resolved, importing symbols", feature.name)
-    symbols: dict[str, Any | Callable] = {}
+    symbols: dict[str, Any | Callable[..., Any]] = {}
     for symbol in feature.symbols:
         try:
             module = importlib.import_module(symbol.path)

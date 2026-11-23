@@ -152,15 +152,17 @@ class Backend(ABC):
 
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
-    ) -> FunctionalResult:
+    ) -> FunctionalResult[Any, Any, Any]:
         raise NotImplementedError(f"{type(self).__qualname__} has no DigitalPropagation implementation")
 
-    def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
+    def _execute_analog_evolution(
+        self, functional: AnalogEvolution, readout: list[ReadoutMethod]
+    ) -> FunctionalResult[Any, Any, Any]:
         raise NotImplementedError(f"{type(self).__qualname__} has no AnalogEvolution implementation")
 
     def _execute_quantum_reservoir(
         self, functional: QuantumReservoir, readout: list[ReadoutMethod]
-    ) -> FunctionalResult:
+    ) -> FunctionalResult[Any, Any, Any]:
         """Execute a quantum reservoir computing functional.
 
         Returns:
@@ -177,7 +179,7 @@ class Backend(ABC):
             state = state.as_qtensor(functional.reservoir_layer.nqubits).to_density_matrix()
         else:
             state = state.to_density_matrix()
-        inter_results: list[ReadoutCompositeResults] = []
+        inter_results: list[ReadoutCompositeResults[Any, Any, Any]] = []
         cache: dict[Circuit, tuple[tuple[float, ...], QTensor]] = {}
         for layer_index, input_dict in enumerate(functional.input_per_layer):
             logger.debug("[Backend] Reservoir layer {}/{}", layer_index + 1, len(functional.input_per_layer))
@@ -302,7 +304,7 @@ class Backend(ABC):
         readout: list[ReadoutMethod],
         seed: int | np.random.Generator | None = None,
         qubits_to_measure: list[int] | None = None,
-    ) -> ReadoutCompositeResults:
+    ) -> ReadoutCompositeResults[Any, Any, Any]:
         sampling_result: SamplingReadoutResult | None = None
         expectation_result: ExpectationReadoutResult | None = None
         state_tomography_result: StateTomographyReadoutResult | None = None
@@ -339,7 +341,7 @@ class Backend(ABC):
         )
 
 
-def _readout_list_to_spec(readout: list[ReadoutMethod]) -> Readout:
+def _readout_list_to_spec(readout: list[ReadoutMethod]) -> Readout[Any, Any, Any]:
     """Convert a flat readout list back to a :class:`Readout`.
 
     Used internally when the variational program handler needs to reconstruct a spec from the list received from the dispatcher.
@@ -347,7 +349,7 @@ def _readout_list_to_spec(readout: list[ReadoutMethod]) -> Readout:
     Returns:
         Readout: the constructed Readout.
     """
-    spec: Readout = Readout()
+    spec: Readout[Any, Any, Any] = Readout()
     for ro in readout:
         if isinstance(ro, SamplingReadout):
             spec = spec.with_sampling(nshots=ro.nshots)

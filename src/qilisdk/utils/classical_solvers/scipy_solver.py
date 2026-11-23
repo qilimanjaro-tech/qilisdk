@@ -59,7 +59,7 @@ class ScipySolver(ClassicalSolver):
 
     def __init__(
         self,
-        method: str | Callable | None = None,
+        method: str | Callable[..., Any] | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
         """Create a new SciPy based classical solver instance.

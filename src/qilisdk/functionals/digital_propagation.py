@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, ClassVar, Iterator
+from typing import Any, Callable, ClassVar, Iterator
 
 from loguru import logger
 
@@ -51,7 +51,7 @@ class DigitalPropagation(PrimitiveFunctional):
             counts = result.sampling.samples  # dict[str, int]
     """
 
-    result_type: ClassVar[type[FunctionalResult]] = FunctionalResult  # ty:ignore[incompatible-mutable-override]
+    result_type: ClassVar[type[FunctionalResult[Any, Any, Any]]] = FunctionalResult  # ty:ignore[incompatible-mutable-override]
 
     def __init__(
         self,

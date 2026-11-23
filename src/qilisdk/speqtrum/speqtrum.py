@@ -62,7 +62,7 @@ if TYPE_CHECKING:
     from qilisdk.readout import E, Readout, S, T
 
 
-TFunctionalResult = TypeVar("TFunctionalResult", bound=FunctionalResult)
+TFunctionalResult = TypeVar("TFunctionalResult", bound=FunctionalResult[Any, Any, Any])
 JSONValue: TypeAlias = dict[str, "JSONValue"] | list["JSONValue"] | str | int | float | bool | None
 
 _SKIP_ENSURE_OK_EXTENSION = "qilisdk.skip_ensure_ok"
@@ -392,7 +392,7 @@ class SpeQtrum:
         logger.info("[SpeQtrum] SpeQtrum client initialised for user '{}'", self.username)
 
     @classmethod
-    def _get_headers(cls) -> dict:
+    def _get_headers(cls) -> dict[str, str]:
         """Return default HTTP headers including the SDK ``User-Agent``.
 
         Returns:
@@ -667,7 +667,7 @@ class SpeQtrum:
 
     @overload
     def submit(
-        self, functional: ExperimentFunctional, device: str, job_name: str | None = None
+        self, functional: ExperimentFunctional[ExperimentResult], device: str, job_name: str | None = None
     ) -> JobHandle[ExperimentResult]: ...
 
     def submit(
@@ -676,7 +676,7 @@ class SpeQtrum:
         device: str,
         readout: Readout[S, E, T] | None = None,  # type: ignore[type-arg]
         job_name: str | None = None,
-    ) -> JobHandle:
+    ) -> JobHandle[Any]:
         """
         Submit a quantum functional for execution on the selected device.
 
@@ -729,7 +729,7 @@ class SpeQtrum:
 
     def _submit_digital_propagation(
         self, functional: DigitalPropagation, device: str, readout: Readout[S, E, T], job_name: str | None = None
-    ) -> JobHandle[FunctionalResult]:
+    ) -> JobHandle[FunctionalResult[Any, Any, Any]]:
         """Submit a ``DigitalPropagation`` functional to the SpeQtrum API.
 
         Args:
@@ -765,7 +765,7 @@ class SpeQtrum:
         return JobHandle.functional(job.id)
 
     def _submit_experiment(
-        self, experiment: ExperimentFunctional, device: str, job_name: str | None = None
+        self, experiment: ExperimentFunctional[ExperimentResult], device: str, job_name: str | None = None
     ) -> JobHandle[ExperimentResult]:
         """Submit any experiment functional to the SpeQtrum API (generic path).
 
@@ -809,7 +809,7 @@ class SpeQtrum:
 
     def _submit_analog_evolution(
         self, functional: AnalogEvolution, device: str, readout: Readout[S, E, T], job_name: str | None = None
-    ) -> JobHandle[FunctionalResult]:
+    ) -> JobHandle[FunctionalResult[Any, Any, Any]]:
         """Submit an ``AnalogEvolution`` functional to the SpeQtrum API.
 
         Args:
@@ -848,7 +848,7 @@ class SpeQtrum:
 
     def _submit_quantum_reservoir_functional(
         self, functional: QuantumReservoir, device: str, readout: Readout[S, E, T], job_name: str | None = None
-    ) -> JobHandle[FunctionalResult]:
+    ) -> JobHandle[FunctionalResult[Any, Any, Any]]:
         """Submit a ``QuantumReservoir`` functional to the SpeQtrum API.
 
         Args:

@@ -13,7 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger
 from qilisim_module import QiliSimCpp  # ty:ignore[import-not-found]
@@ -153,7 +153,7 @@ class QiliSim(Backend):
         self,
         functional: DigitalPropagation,
         readout: list[ReadoutMethod],
-    ) -> FunctionalResult:
+    ) -> FunctionalResult[Any, Any, Any]:
         """Execute a digital-circuit propagation functional and return measurement results.
 
         Args:
@@ -179,7 +179,9 @@ class QiliSim(Backend):
         logger.info("[QiliSim] Digital Propagation finished")
         return result
 
-    def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
+    def _execute_analog_evolution(
+        self, functional: AnalogEvolution, readout: list[ReadoutMethod]
+    ) -> FunctionalResult[Any, Any, Any]:
         """Compute analog time evolution for the provided schedule and initial state.
 
         Args:
@@ -204,7 +206,7 @@ class QiliSim(Backend):
 
     def _execute_quantum_reservoir(
         self, functional: QuantumReservoir, readout: list[ReadoutMethod]
-    ) -> FunctionalResult:
+    ) -> FunctionalResult[Any, Any, Any]:
         """Execute a quantum reservoir computing functional via the C++ backend.
 
         Args:

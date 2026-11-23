@@ -25,7 +25,7 @@ from matplotlib.figure import Figure
 from matplotlib.patches import Arc, Circle, FancyArrow, FancyBboxPatch
 from matplotlib.text import Text
 
-from qilisdk.digital.gates import Controlled, Gate, M, X
+from qilisdk.digital.gates import BasicGate, Controlled, Gate, M, X
 from qilisdk.utils.visualization.style import CircuitStyle
 
 if TYPE_CHECKING:
@@ -642,7 +642,7 @@ class MatplotlibCircuitRenderer:
         self._draw_bridge(t_sorted[0], t_sorted[1], x_anchor)
         return x_anchor
 
-    def _draw_controlled_gate(self, gate: Controlled, layer: int) -> None:
+    def _draw_controlled_gate(self, gate: Controlled[BasicGate], layer: int) -> None:
         """
         Draw a controlled gate (controls + targets).
 

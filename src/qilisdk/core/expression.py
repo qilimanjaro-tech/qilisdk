@@ -32,7 +32,7 @@ is order-independent for ``+`` and ``*`` (``x + y == y + x``). Semantic rewrites
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
@@ -285,7 +285,7 @@ class Expression(ABC):
         """Symbolic derivative with respect to ``symbol``."""
 
     @abstractmethod
-    def _sort_key(self) -> tuple:
+    def _sort_key(self) -> tuple[Any, ...]:
         """A total-order key used to order operands deterministically and define equality.
 
         The first element is always the node's kind rank (``_RANK_CONSTANT``, ``_RANK_VARIABLE``,
@@ -402,12 +402,12 @@ class Expression(ABC):
         """
         return isinstance(item, Expression) and item in self.free_symbols()
 
-    def __getstate__(self) -> dict:
+    def __getstate__(self) -> dict[str, Any]:
         state = self.__dict__.copy()
         state.pop("_hash_cache", None)
         return state
 
-    def __setstate__(self, state: dict) -> None:
+    def __setstate__(self, state: dict[str, Any]) -> None:
         self.__dict__.update(state)
         self._hash_cache = None
 
@@ -507,7 +507,7 @@ class Constant(Expression):
     def monomial_factors(self) -> list[tuple[Expression, int]]:  # ruff: ignore[no-self-use]
         return []
 
-    def _sort_key(self) -> tuple:
+    def _sort_key(self) -> tuple[Any, ...]:
         value = self._value
         if isinstance(value, complex):
             return (_RANK_CONSTANT, float(value.real), float(value.imag))
@@ -618,7 +618,7 @@ class Add(Expression):
             coefficients[base] = coeff
         return coefficients
 
-    def _sort_key(self) -> tuple:
+    def _sort_key(self) -> tuple[Any, ...]:
         return (_RANK_ADD, tuple(term._sort_key() for term in self._args))  # ruff: ignore[private-member-access]
 
     def _compute_hash(self) -> int:
@@ -743,7 +743,7 @@ class Mul(Expression):
             factors.extend(factor.monomial_factors())
         return factors
 
-    def _sort_key(self) -> tuple:
+    def _sort_key(self) -> tuple[Any, ...]:
         return (_RANK_MUL, tuple(factor._sort_key() for factor in self._args))  # ruff: ignore[private-member-access]
 
     def _compute_hash(self) -> int:
@@ -851,7 +851,7 @@ class Pow(Expression):
             return [(self._base, exponent)]
         raise NonPolynomialError(f"Expression {self!r} is not a monomial with an integer power.")
 
-    def _sort_key(self) -> tuple:
+    def _sort_key(self) -> tuple[Any, ...]:
         return (_RANK_POW, self._base._sort_key(), self._exp._sort_key())  # ruff: ignore[private-member-access]
 
     def _compute_hash(self) -> int:
@@ -937,7 +937,7 @@ class Function(Expression, ABC):
     def to_binary(self) -> Expression:
         return type(self)(self._arg.to_binary())
 
-    def _sort_key(self) -> tuple:
+    def _sort_key(self) -> tuple[Any, ...]:
         return (_RANK_FUNCTION, self.NAME, self._arg._sort_key())  # ruff: ignore[private-member-access]
 
     def _compute_hash(self) -> int:

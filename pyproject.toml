@@ -219,6 +219,9 @@ repair-wheel-command = "delvewheel repair -w {dest_dir} --no-dll qilisim_module*
 include = ["src"]
 exclude = ["tests"]
 
+[tool.ty.rules]
+missing-type-argument = "error"
+
 [tool.ruff]
 line-length = 120
 output-format = "concise"

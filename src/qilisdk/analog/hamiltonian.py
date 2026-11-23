@@ -18,7 +18,7 @@ import re
 from abc import ABC
 from collections import defaultdict
 from itertools import combinations, pairwise, product
-from typing import TYPE_CHECKING, Callable, ClassVar, TypeAlias
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, TypeAlias
 
 import numpy as np
 from loguru import logger
@@ -169,12 +169,12 @@ class PauliOperator(ABC):
             self._hash_cache = qili_hash(self._NAME, self._qubit)
         return self._hash_cache
 
-    def __getstate__(self) -> dict:
+    def __getstate__(self) -> dict[str, Any]:
         state = self.__dict__.copy()
         state.pop("_hash_cache", None)
         return state
 
-    def __setstate__(self, state: dict) -> None:
+    def __setstate__(self, state: dict[str, Any]) -> None:
         self.__dict__.update(state)
         self._hash_cache = None
 

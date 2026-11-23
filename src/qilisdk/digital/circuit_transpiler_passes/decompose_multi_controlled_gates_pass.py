@@ -90,7 +90,7 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
         return [gate]
 
 
-def _decompose(gate: Controlled) -> list[Gate]:
+def _decompose(gate: Controlled[BasicGate]) -> list[Gate]:
     """Recursively decompose a multi-controlled single-qubit gate.
 
     Args:

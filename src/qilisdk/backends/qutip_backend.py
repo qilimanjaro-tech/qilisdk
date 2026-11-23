@@ -13,7 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Type, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Callable, Type, TypeVar, cast
 
 import numpy as np
 import qutip_qip.operations as QutipGates
@@ -119,7 +119,7 @@ class QutipBackend(Backend):
 
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
-    ) -> FunctionalResult:
+    ) -> FunctionalResult[Any, Any, Any]:
         """Execute a digital-circuit propagation functional using QuTiP.
 
         Translates the circuit gates into QuTiP operations, runs the
@@ -194,7 +194,9 @@ class QutipBackend(Backend):
             )
         )
 
-    def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
+    def _execute_analog_evolution(
+        self, functional: AnalogEvolution, readout: list[ReadoutMethod]
+    ) -> FunctionalResult[Any, Any, Any]:
         """Compute the time evolution of an initial state under the given schedule.
 
         Uses QuTiP's ``mesolve`` to integrate the master equation over the
@@ -259,7 +261,7 @@ class QutipBackend(Backend):
 
         qutip_obs: list[Qobj] = []
 
-        jump_ops: list = []
+        jump_ops: list[Any] = []
         if self.noise_model is not None:
             jump_ops, hamiltonian_deltas = self._noise_model_to_qutip_cops(
                 self.noise_model, functional.schedule.nqubits, steps, functional.schedule.dt
@@ -299,7 +301,7 @@ class QutipBackend(Backend):
 
     def _noise_model_to_qutip_cops(
         self, noise_model: NoiseModel, nqubits: int, steps: list[float], dt: float
-    ) -> tuple[list, list[Qobj]]:
+    ) -> tuple[list[Any], list[Qobj]]:
         """Convert a noise model into QuTiP collapse operators for ``mesolve``.
 
         Args:
@@ -316,7 +318,7 @@ class QutipBackend(Backend):
                 collapse operators and ``hamiltonian_deltas`` are constant
                 coherent Hamiltonian corrections to add to the Hamiltonian.
         """
-        jump_ops: list = []
+        jump_ops: list[Any] = []
         hamiltonian_deltas: list[Qobj] = []
 
         # Global noise
@@ -358,7 +360,7 @@ class QutipBackend(Backend):
         generator: LindbladGenerator,
         nqubits: int,
         steps: list[float],
-        jump_ops: list,
+        jump_ops: list[Any],
         hamiltonian_deltas: list[Qobj],
         qubits: list[int] | None,
     ) -> None:
@@ -501,7 +503,7 @@ class QutipBackend(Backend):
                 handler(qutip_circuit, gate, *qubits)
         return qutip_circuit
 
-    def _handle_controlled(self, circuit: QubitCircuit, gate: Controlled) -> None:  # ruff: ignore[no-self-use]
+    def _handle_controlled(self, circuit: QubitCircuit, gate: Controlled[BasicGate]) -> None:  # ruff: ignore[no-self-use]
         """Handle a controlled gate operation by registering a custom QuTiP gate.
 
         For non-native controlled gates the block-matrix is constructed
@@ -532,7 +534,7 @@ class QutipBackend(Backend):
                 circuit.user_gates[gate_name] = qutip_controlled_gate
             circuit.add_gate(gate_name, targets=[*gate.control_qubits, *gate.target_qubits])
 
-    def _handle_adjoint(self, circuit: QubitCircuit, gate: Adjoint) -> None:  # ruff: ignore[no-self-use]
+    def _handle_adjoint(self, circuit: QubitCircuit, gate: Adjoint[BasicGate]) -> None:  # ruff: ignore[no-self-use]
         """Handle an adjoint (inverse) gate operation.
 
         Registers a custom QuTiP gate whose unitary is the adjoint of the

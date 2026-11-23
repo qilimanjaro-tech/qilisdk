@@ -111,7 +111,7 @@ class DigitalPropagationPayload(SpeQtrumModel):
     """Payload model wrapping a ``DigitalPropagation`` and its readout methods for API submission."""
 
     digital_propagation: DigitalPropagation = Field(...)
-    readout: Readout = Field(...)
+    readout: Readout[Any, Any, Any] = Field(...)
 
     @field_serializer("digital_propagation")
     def _serialize_sampling(self, digital_propagation: DigitalPropagation, _info):
@@ -124,7 +124,7 @@ class DigitalPropagationPayload(SpeQtrumModel):
         return v
 
     @field_serializer("readout")
-    def _serialize_readout(self, readout: Readout, _info):
+    def _serialize_readout(self, readout: Readout[Any, Any, Any], _info):
         return serialize(readout)
 
     @field_validator("readout", mode="before")
@@ -138,7 +138,7 @@ class AnalogEvolutionPayload(SpeQtrumModel):
     """Payload model wrapping an ``AnalogEvolution`` and its readout methods for API submission."""
 
     analog_evolution: AnalogEvolution = Field(...)
-    readout: Readout = Field(...)
+    readout: Readout[Any, Any, Any] = Field(...)
 
     @field_serializer("analog_evolution")
     def _serialize_time_evolution(self, analog_evolution: AnalogEvolution, _info):
@@ -151,7 +151,7 @@ class AnalogEvolutionPayload(SpeQtrumModel):
         return v
 
     @field_serializer("readout")
-    def _serialize_readout(self, readout: Readout, _info):
+    def _serialize_readout(self, readout: Readout[Any, Any, Any], _info):
         return serialize(readout)
 
     @field_validator("readout", mode="before")
@@ -165,7 +165,7 @@ class QuantumReservoirPayload(SpeQtrumModel):
     """Payload model wrapping a ``QuantumReservoir`` and its readout methods for API submission."""
 
     quantum_reservoir: QuantumReservoir = Field(...)
-    readout: Readout = Field(...)
+    readout: Readout[Any, Any, Any] = Field(...)
 
     @field_serializer("quantum_reservoir")
     def _serialize_time_evolution(self, quantum_reservoir: QuantumReservoir, _info):
@@ -178,7 +178,7 @@ class QuantumReservoirPayload(SpeQtrumModel):
         return v
 
     @field_serializer("readout")
-    def _serialize_readout(self, readout: Readout, _info):
+    def _serialize_readout(self, readout: Readout[Any, Any, Any], _info):
         return serialize(readout)
 
     @field_validator("readout", mode="before")
@@ -192,7 +192,7 @@ class VariationalProgramPayload(SpeQtrumModel):
     """Payload model wrapping a ``VariationalProgram`` and its readout methods for API submission."""
 
     variational_program: VariationalProgram = Field(...)
-    readout: Readout = Field(...)
+    readout: Readout[Any, Any, Any] = Field(...)
 
     @field_serializer("variational_program")
     def _serialize_variational_program(self, variational_program: VariationalProgram, _info):
@@ -205,7 +205,7 @@ class VariationalProgramPayload(SpeQtrumModel):
         return v
 
     @field_serializer("readout")
-    def _serialize_readout(self, readout: Readout, _info):
+    def _serialize_readout(self, readout: Readout[Any, Any, Any], _info):
         return serialize(readout)
 
     @field_validator("readout", mode="before")
@@ -222,10 +222,10 @@ class ExperimentPayload(SpeQtrumModel):
     speqtrum never needs to import a concrete experiment class.
     """
 
-    experiment: ExperimentFunctional = Field(...)
+    experiment: ExperimentFunctional[ExperimentResult] = Field(...)
 
     @field_serializer("experiment")
-    def _serialize_experiment(self, experiment: ExperimentFunctional, _info):
+    def _serialize_experiment(self, experiment: ExperimentFunctional[ExperimentResult], _info):
         return serialize(experiment)
 
     @field_validator("experiment", mode="before")
@@ -259,12 +259,12 @@ class ExecuteResult(SpeQtrumModel):
     """
 
     type: ExecuteType = Field(...)
-    functional_result: FunctionalResult | None = None
-    variational_program_result: VariationalProgramResult | None = None
+    functional_result: FunctionalResult[Any, Any, Any] | None = None
+    variational_program_result: VariationalProgramResult[FunctionalResult[Any, Any, Any]] | None = None
     experiment_result: ExperimentResult | None = None
 
     @field_serializer("functional_result")
-    def _serialize_sampling_result(self, functional_result: FunctionalResult, _info):
+    def _serialize_sampling_result(self, functional_result: FunctionalResult[Any, Any, Any], _info):
         return serialize(functional_result) if functional_result is not None else None
 
     @field_validator("functional_result", mode="before")
@@ -274,7 +274,9 @@ class ExecuteResult(SpeQtrumModel):
         return v
 
     @field_serializer("variational_program_result")
-    def _serialize_variational_program_result(self, variational_program_result: VariationalProgramResult, _info):
+    def _serialize_variational_program_result(
+        self, variational_program_result: VariationalProgramResult[FunctionalResult[Any, Any, Any]], _info
+    ):
         return serialize(variational_program_result) if variational_program_result is not None else None
 
     @field_validator("variational_program_result", mode="before")
@@ -295,7 +297,7 @@ class ExecuteResult(SpeQtrumModel):
 
 
 TFunctionalResult_co = TypeVar("TFunctionalResult_co", bound=Result, covariant=True)
-TVariationalInnerResult = TypeVar("TVariationalInnerResult", bound=FunctionalResult)
+TVariationalInnerResult = TypeVar("TVariationalInnerResult", bound=FunctionalResult[Any, Any, Any])
 TExperimentResult = TypeVar("TExperimentResult", bound=ExperimentResult)
 
 
@@ -304,7 +306,7 @@ ResultExtractor = Callable[[ExecuteResult], TFunctionalResult_co]
 
 
 # these helpers live outside the models so they can be referenced by default values
-def _require_functional_result(result: ExecuteResult) -> FunctionalResult:
+def _require_functional_result(result: ExecuteResult) -> FunctionalResult[Any, Any, Any]:
     """Extract and return the ``FunctionalResult`` from *result*.
 
     Args:
@@ -321,7 +323,9 @@ def _require_functional_result(result: ExecuteResult) -> FunctionalResult:
     return result.functional_result
 
 
-def _require_variational_program_result(result: ExecuteResult) -> VariationalProgramResult:
+def _require_variational_program_result(
+    result: ExecuteResult,
+) -> VariationalProgramResult[FunctionalResult[Any, Any, Any]]:
     """Extract and return the ``VariationalProgramResult`` from *result*.
 
     Args:
@@ -419,7 +423,9 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
     extractor: ResultExtractor[TFunctionalResult_co] = Field(repr=False, exclude=True)
 
     @classmethod
-    def functional(cls: type[JobHandle[FunctionalResult]], job_id: int) -> JobHandle[FunctionalResult]:
+    def functional(
+        cls: type[JobHandle[FunctionalResult[Any, Any, Any]]], job_id: int
+    ) -> JobHandle[FunctionalResult[Any, Any, Any]]:
         """Create a handle for a ``DigitalPropagation`` or ``AnalogEvolution`` job.
 
         Args:
@@ -433,7 +439,9 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
 
     @overload
     @classmethod
-    def variational_program(cls, job_id: int) -> JobHandle[VariationalProgramResult]: ...
+    def variational_program(
+        cls, job_id: int
+    ) -> JobHandle[VariationalProgramResult[FunctionalResult[Any, Any, Any]]]: ...
 
     @overload
     @classmethod
@@ -464,7 +472,7 @@ class JobHandle(SpeQtrumModel, Generic[TFunctionalResult_co]):
                 execute_type=ExecuteType.VARIATIONAL_PROGRAM,
                 extractor=_require_variational_program_result,
             )
-            return cast("JobHandle[VariationalProgramResult]", handle)
+            return cast("JobHandle[VariationalProgramResult[FunctionalResult[Any, Any, Any]]]", handle)
 
         extractor = _require_variational_program_result_typed(result_type)
         handle = cls(id=job_id, execute_type=ExecuteType.VARIATIONAL_PROGRAM, extractor=extractor)

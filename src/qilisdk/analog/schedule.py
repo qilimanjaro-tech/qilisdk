@@ -310,7 +310,7 @@ class Schedule(Parameterizable):
             return cls.linear(hamiltonians[0], hamiltonians[1], total_time, dt)
         segment_time = total_time / (num_hams - 1)
         hamiltonians_dict = {f"h{i}": ham for i, ham in enumerate(hamiltonians)}
-        coefficients_dict: dict = {}
+        coefficients_dict: CoeffDict = {}
         for i in range(num_hams):
             start = (i - 1) * segment_time
             peak = i * segment_time

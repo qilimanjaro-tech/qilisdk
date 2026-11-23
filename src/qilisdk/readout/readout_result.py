@@ -494,7 +494,7 @@ class _HasSampling(Protocol):
     sampling: SamplingReadoutResult
 
 
-def has_sampling(obj: ReadoutCompositeResults) -> TypeGuard[_HasSampling]:
+def has_sampling(obj: ReadoutCompositeResults[Any, Any, Any]) -> TypeGuard[_HasSampling]:
     """Return ``True`` if the composite contains a sampling result."""
     return obj.sampling is not None
 
@@ -503,7 +503,7 @@ class _HasExpectation(Protocol):
     expectation_values: ExpectationReadoutResult
 
 
-def has_expectation_values(obj: ReadoutCompositeResults) -> TypeGuard[_HasExpectation]:
+def has_expectation_values(obj: ReadoutCompositeResults[Any, Any, Any]) -> TypeGuard[_HasExpectation]:
     """Return ``True`` if the composite contains an expectation-value result."""
     return obj.expectation_values is not None
 
@@ -512,7 +512,7 @@ class _HasStateTomography(Protocol):
     state_tomography: StateTomographyReadoutResult
 
 
-def has_state_tomography(obj: ReadoutCompositeResults) -> TypeGuard[_HasStateTomography]:
+def has_state_tomography(obj: ReadoutCompositeResults[Any, Any, Any]) -> TypeGuard[_HasStateTomography]:
     """Return ``True`` if the composite contains a state-tomography result."""
     return obj.state_tomography is not None
 
@@ -543,7 +543,7 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
     state_tomography: T = None  # type: ignore[assignment]  # ty:ignore[invalid-assignment]
 
     @classmethod
-    def from_list(cls, results: list) -> ReadoutCompositeResults:
+    def from_list(cls, results: list[Any]) -> ReadoutCompositeResults[Any, Any, Any]:
         """Construct a :class:`ReadoutCompositeResults` from a flat list of readout results.
 
         Each element is matched by type to the appropriate field.
@@ -569,7 +569,7 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
         return cls(sampling=sampling, expectation_values=expectation_values, state_tomography=state_tomography)
 
     @classmethod
-    def from_dict(cls, data: dict) -> ReadoutCompositeResults:
+    def from_dict(cls, data: dict[str, Any]) -> ReadoutCompositeResults[Any, Any, Any]:
         """Construct a :class:`ReadoutCompositeResults` from a plain dictionary.
 
         Args:

@@ -94,7 +94,7 @@ def np_scalar_constructor(constructor, node):
     return dtype.type(mapping["value"])
 
 
-def defaultdict_representer(representer, data: defaultdict):
+def defaultdict_representer(representer, data: defaultdict[object, object]):
     """
     Represent a defaultdict by serializing its default_factory
     (as module+qualname) plus its items dict.
@@ -208,7 +208,7 @@ def complex_constructor(constructor, node):
     return complex(mapping["real"], mapping["imag"])
 
 
-def tuple_representer(representer, data: tuple):
+def tuple_representer(representer, data: tuple[object, ...]):
     """
     Representer for built-in Python tuple.
     """

@@ -23,7 +23,7 @@ relation type that :class:`~qilisdk.core.model.Constraint` is built from. Build 
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
@@ -281,10 +281,10 @@ class Comparison:
         rhs = _assert_comparable(self._rhs.evaluate(var_values))
         return self._apply_comparison_operation(lhs, rhs)
 
-    def __getstate__(self) -> dict:
+    def __getstate__(self) -> dict[str, Any]:
         return {"_lhs": self._lhs, "_rhs": self._rhs, "_operation": self._operation}
 
-    def __setstate__(self, state: dict) -> None:
+    def __setstate__(self, state: dict[str, Any]) -> None:
         self.__dict__.update(state)
 
     def __copy__(self) -> Comparison:

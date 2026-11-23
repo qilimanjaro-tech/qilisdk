@@ -27,7 +27,7 @@ from __future__ import annotations
 import copy
 import re
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import numpy as np
 from loguru import logger
@@ -582,7 +582,7 @@ class BaseVariable(Expression, ABC):
     def derivative(self, symbol: BaseVariable) -> Expression:
         return Constant(1) if self == symbol else Constant(0)
 
-    def _sort_key(self) -> tuple:
+    def _sort_key(self) -> tuple[Any, ...]:
         return (_RANK_VARIABLE, self._label)
 
     def _compute_hash(self) -> int:

@@ -14,7 +14,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
@@ -31,7 +31,7 @@ class CostFunction(ABC):
     """
 
     @abstractmethod
-    def compute_cost(self, results: FunctionalResult) -> Number:  # type: ignore[type-arg]
+    def compute_cost(self, results: FunctionalResult[Any, Any, Any]) -> Number:
         """Compute a scalar cost from functional execution results.
 
         Args:

@@ -17,7 +17,7 @@ import warnings
 from collections.abc import Callable
 from copy import copy
 from enum import Enum
-from typing import TYPE_CHECKING, Type, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, Type, TypeAlias, TypeVar
 
 import cudaq
 import numpy as np
@@ -310,7 +310,7 @@ class CudaqBackend(Backend):
 
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
-    ) -> FunctionalResult:
+    ) -> FunctionalResult[Any, Any, Any]:
         """Execute a digital-circuit propagation functional using the CUDA backend.
 
         Translates the circuit into a CUDA-Q kernel, applies noise if a
@@ -446,7 +446,9 @@ class CudaqBackend(Backend):
             )
         )
 
-    def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
+    def _execute_analog_evolution(
+        self, functional: AnalogEvolution, readout: list[ReadoutMethod]
+    ) -> FunctionalResult[Any, Any, Any]:
         """Compute analog time evolution using the CUDA-Q dynamics target.
 
         Translates the schedule Hamiltonians to CUDA-Q operator sums,
@@ -1062,7 +1064,7 @@ class CudaqBackend(Backend):
 
     def _add_global_noise_dynamics(
         self,
-        ops_numpy: list,
+        ops_numpy: list[np.ndarray],
         jump_operators: list[OperatorSum],
         hamiltonian_deltas: list[OperatorSum],
         lindblad_generator: LindbladGenerator,
@@ -1130,7 +1132,7 @@ class CudaqBackend(Backend):
 
     def _add_per_qubit_noise_dynamics(
         self,
-        ops_numpy: list,
+        ops_numpy: list[np.ndarray],
         jump_operators: list[OperatorSum],
         hamiltonian_deltas: list[OperatorSum],
         lindblad_generator: LindbladGenerator,
@@ -1188,7 +1190,7 @@ class CudaqBackend(Backend):
 
     def _noise_model_to_cudaq_dynamics(
         self, noise_model: NoiseModel, nqubits: int, dt: float
-    ) -> tuple[list[OperatorSum], list]:
+    ) -> tuple[list[OperatorSum], list[OperatorSum]]:
         """Convert a noise model to CUDA-Q dynamics jump operators and Hamiltonian corrections.
 
         Processes global and per-qubit Lindblad noise channels, producing
@@ -1353,7 +1355,11 @@ class CudaqBackend(Backend):
         return State.from_data(cudaq_to_standard(cuda_state_data).astype(cuda_state_data.dtype))
 
     def _handle_controlled(
-        self, kernel: cudaq.Kernel, gate: Controlled, control_qubit: cudaq.QuakeValue, target_qubit: cudaq.QuakeValue
+        self,
+        kernel: cudaq.Kernel,
+        gate: Controlled[BasicGate],
+        control_qubit: cudaq.QuakeValue,
+        target_qubit: cudaq.QuakeValue,
     ) -> None:
         """
         Handle a controlled gate operation.
@@ -1386,7 +1392,7 @@ class CudaqBackend(Backend):
         handler(target_kernel, gate.basic_gate, qubit)
         kernel.control(target_kernel, control_qubit, target_qubit)
 
-    def _handle_adjoint(self, kernel: cudaq.Kernel, gate: Adjoint, qubits: cudaq.QuakeValue) -> None:
+    def _handle_adjoint(self, kernel: cudaq.Kernel, gate: Adjoint[BasicGate], qubits: cudaq.QuakeValue) -> None:
         """
         Handle an adjoint (inverse) gate operation.
 
