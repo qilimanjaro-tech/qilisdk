@@ -32,9 +32,10 @@ is order-independent for ``+`` and ``*`` (``x + y == y + x``). Semantic rewrites
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import numpy as np
+from typing_extensions import override
 
 from qilisdk.core.exceptions import NonPolynomialError, NotSupportedOperation
 from qilisdk.settings import get_settings
@@ -175,7 +176,7 @@ def _safe_pow(base: Number, exponent: Number) -> Number:
     """
     if abs(base) < _TOL and isinstance(exponent, RealNumber) and exponent < 0:
         raise ValueError(_DIVISION_MESSAGE)
-    return base**exponent
+    return cast("Number", base**exponent)
 
 
 def _collect_mul_factors(raw: tuple[Expression, ...]) -> tuple[Number, dict[Expression, Expression]]:
@@ -385,12 +386,14 @@ class Expression(ABC):
         return [self]
 
     # ---- identity ----
+    @override
     def __hash__(self) -> int:
         cached = self._hash_cache
         if cached is None:
             cached = self._hash_cache = self._compute_hash()
         return cached
 
+    @override
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Expression) and hash(self) == hash(other)
 
@@ -402,6 +405,7 @@ class Expression(ABC):
         """
         return isinstance(item, Expression) and item in self.free_symbols()
 
+    @override
     def __getstate__(self) -> dict[str, Any]:
         state = self.__dict__.copy()
         state.pop("_hash_cache", None)
@@ -476,7 +480,7 @@ class Constant(Expression):
         if type(value) is int or type(value) is float:
             self._value: Number = value
         else:
-            raw: Number = value.item() if isinstance(value, np.generic) else value
+            raw: Number = cast("Number", value.item()) if isinstance(value, np.generic) else value
             self._value = _float_if_real(int(raw) if isinstance(raw, bool) else raw)
         self._hash_cache: int | None = None
 
@@ -485,37 +489,47 @@ class Constant(Expression):
         """The numeric literal. Read-only: nodes are immutable so the cached hash stays valid."""
         return self._value
 
+    @override
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
         return _finalize(self._value)
 
-    def free_symbols(self) -> set[BaseVariable]:  # ruff: ignore[no-self-use]
+    @override
+    def free_symbols(self) -> set[BaseVariable]:
         return set()
 
     @property
+    @override
     def degree(self) -> int:
         return 0
 
-    def derivative(self, symbol: BaseVariable) -> Expression:  # ruff: ignore[no-self-use]
+    @override
+    def derivative(self, symbol: BaseVariable) -> Expression:
         return Constant(0)
 
+    @override
     def get_constant(self) -> Number:
         return self._value
 
-    def as_coefficients_dict(self) -> dict[Expression, Number]:  # ruff: ignore[no-self-use]
+    @override
+    def as_coefficients_dict(self) -> dict[Expression, Number]:
         return {}
 
-    def monomial_factors(self) -> list[tuple[Expression, int]]:  # ruff: ignore[no-self-use]
+    @override
+    def monomial_factors(self) -> list[tuple[Expression, int]]:
         return []
 
+    @override
     def _sort_key(self) -> tuple[Any, ...]:
         value = self._value
         if isinstance(value, complex):
             return (_RANK_CONSTANT, float(value.real), float(value.imag))
         return (_RANK_CONSTANT, float(value), 0.0)
 
+    @override
     def _compute_hash(self) -> int:
         return qili_hash("Constant", self._value)
 
+    @override
     def __repr__(self) -> str:
         return repr(_float_if_real(self._value))
 
@@ -569,13 +583,14 @@ class Add(Expression):
         terms.sort(key=lambda term: term._sort_key())  # ruff: ignore[private-member-access]
         return cls(tuple(terms))
 
+    @override
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
-        env = env if env is not None else {}
         total: Number = 0
         for term in self._args:
             total += term.evaluate(env)
         return _finalize(total)
 
+    @override
     def free_symbols(self) -> set[BaseVariable]:
         symbols: set[BaseVariable] = set()
         for term in self._args:
@@ -583,32 +598,40 @@ class Add(Expression):
         return symbols
 
     @property
+    @override
     def degree(self) -> int:
         return max((term.degree for term in self._args), default=0)
 
+    @override
     def derivative(self, symbol: BaseVariable) -> Expression:
         return Add.build(tuple(term.derivative(symbol) for term in self._args))
 
+    @override
     def expand(self) -> Expression:
         return Add.build(tuple(term.expand() for term in self._args))
 
+    @override
     def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
         if self in mapping:
             return super().substitute(mapping)
         return Add.build(tuple(term.substitute(mapping) for term in self._args))
 
+    @override
     def to_binary(self) -> Expression:
         return Add.build(tuple(term.to_binary() for term in self._args))
 
+    @override
     def get_constant(self) -> Number:
         for term in self._args:
             if isinstance(term, Constant):
                 return term.value
         return 0
 
+    @override
     def to_list(self) -> list[Expression]:
         return list(self._args)
 
+    @override
     def as_coefficients_dict(self) -> dict[Expression, Number]:
         coefficients: dict[Expression, Number] = {}
         for term in self._args:
@@ -618,12 +641,15 @@ class Add(Expression):
             coefficients[base] = coeff
         return coefficients
 
+    @override
     def _sort_key(self) -> tuple[Any, ...]:
         return (_RANK_ADD, tuple(term._sort_key() for term in self._args))  # ruff: ignore[private-member-access]
 
+    @override
     def _compute_hash(self) -> int:
         return qili_hash("Add", self._args)
 
+    @override
     def __repr__(self) -> str:
         out = repr(self._args[0])
         for term in self._args[1:]:
@@ -683,13 +709,14 @@ class Mul(Expression):
             return rest[0]
         return Mul(rest)
 
+    @override
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
-        env = env if env is not None else {}
         total: Number = 1
         for factor in self._args:
             total *= factor.evaluate(env)
         return _finalize(total)
 
+    @override
     def free_symbols(self) -> set[BaseVariable]:
         symbols: set[BaseVariable] = set()
         for factor in self._args:
@@ -697,9 +724,11 @@ class Mul(Expression):
         return symbols
 
     @property
+    @override
     def degree(self) -> int:
         return sum(factor.degree for factor in self._args)
 
+    @override
     def derivative(self, symbol: BaseVariable) -> Expression:
         terms: list[Expression] = []
         for index in range(len(self._args)):
@@ -707,6 +736,7 @@ class Mul(Expression):
             terms.append(Mul.build(factors))
         return Add.build(tuple(terms))
 
+    @override
     def expand(self) -> Expression:
         # Expand each of the factors
         factors = [factor.expand() for factor in self._args]
@@ -721,20 +751,25 @@ class Mul(Expression):
             result = _mul_expand(result, factor)
         return result
 
+    @override
     def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
         if self in mapping:
             return super().substitute(mapping)
         return Mul.build(tuple(factor.substitute(mapping) for factor in self._args))
 
+    @override
     def to_binary(self) -> Expression:
         return Mul.build(tuple(factor.to_binary() for factor in self._args))
 
+    @override
     def to_list(self) -> list[Expression]:
         return list(self._args)
 
+    @override
     def as_coefficients_dict(self) -> dict[Expression, Number]:
         return {self.monomial(): self.coefficient()}
 
+    @override
     def monomial_factors(self) -> list[tuple[Expression, int]]:
         factors: list[tuple[Expression, int]] = []
         for factor in self._args:
@@ -743,12 +778,15 @@ class Mul(Expression):
             factors.extend(factor.monomial_factors())
         return factors
 
+    @override
     def _sort_key(self) -> tuple[Any, ...]:
         return (_RANK_MUL, tuple(factor._sort_key() for factor in self._args))  # ruff: ignore[private-member-access]
 
+    @override
     def _compute_hash(self) -> int:
         return qili_hash("Mul", self._args)
 
+    @override
     def __repr__(self) -> str:
         args = self._args
         # A coefficient of exactly -1 reads better as a leading minus than as "-1 * x".
@@ -799,20 +837,23 @@ class Pow(Expression):
             return Constant(1)
         return cls(base, exp)
 
+    @override
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
-        env = env if env is not None else {}
         return _finalize(_safe_pow(self._base.evaluate(env), self._exp.evaluate(env)))
 
+    @override
     def free_symbols(self) -> set[BaseVariable]:
         return self._base.free_symbols() | self._exp.free_symbols()
 
     @property
+    @override
     def degree(self) -> int:
         exponent = _int_exponent(self._exp)
         if exponent is not None and exponent >= 0:
             return self._base.degree * exponent
         raise NonPolynomialError(f"Expression {self!r} is not a polynomial; its degree is undefined.")
 
+    @override
     def derivative(self, symbol: BaseVariable) -> Expression:
         base, exp = self._base, self._exp
         if symbol not in exp.free_symbols():
@@ -827,6 +868,7 @@ class Pow(Expression):
         )
         return Mul.build((self, chain))
 
+    @override
     def expand(self) -> Expression:
         base = self._base.expand()
         exponent = _int_exponent(self._exp)
@@ -837,26 +879,32 @@ class Pow(Expression):
             return result
         return Pow.build(base, self._exp)
 
+    @override
     def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
         if self in mapping:
             return super().substitute(mapping)
         return Pow.build(self._base.substitute(mapping), self._exp.substitute(mapping))
 
+    @override
     def to_binary(self) -> Expression:
         return Pow.build(self._base.to_binary(), self._exp.to_binary())
 
+    @override
     def monomial_factors(self) -> list[tuple[Expression, int]]:
         exponent = _int_exponent(self._exp)
         if exponent is not None and exponent > 0:
             return [(self._base, exponent)]
         raise NonPolynomialError(f"Expression {self!r} is not a monomial with an integer power.")
 
+    @override
     def _sort_key(self) -> tuple[Any, ...]:
         return (_RANK_POW, self._base._sort_key(), self._exp._sort_key())  # ruff: ignore[private-member-access]
 
+    @override
     def _compute_hash(self) -> int:
         return qili_hash("Pow", self._base, self._exp)
 
+    @override
     def __repr__(self) -> str:
         # ``**`` is right-associative in Python, so a Pow base needs parentheses too: without them
         # ``(x**2)**0.5`` would print as ``x**2**0.5``, which reads back as ``x**(2**0.5)``.
@@ -908,38 +956,46 @@ class Function(Expression, ABC):
     def _outer_derivative(self, operand: Expression) -> Expression:
         """The outer derivative ``f'(operand)`` as an expression (chain rule applied by :meth:`derivative`)."""
 
+    @override
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> Number:
-        env = env if env is not None else {}
         return _finalize(self._numeric(_assert_real(self._arg.evaluate(env))))
 
+    @override
     def free_symbols(self) -> set[BaseVariable]:
         return self._arg.free_symbols()
 
     @property
+    @override
     def degree(self) -> int:
         if self._arg.free_symbols():
             raise NonPolynomialError(f"Expression {self!r} is not a polynomial; its degree is undefined.")
         return 0
 
+    @override
     def derivative(self, symbol: BaseVariable) -> Expression:
         if symbol not in self.free_symbols():
             return Constant(0)
         return Mul.build((self._outer_derivative(self._arg), self._arg.derivative(symbol)))
 
+    @override
     def expand(self) -> Expression:
         return type(self)(self._arg.expand())
 
+    @override
     def substitute(self, mapping: Mapping[Expression, Expression | Number]) -> Expression:
         if self in mapping:
             return super().substitute(mapping)
         return type(self)(self._arg.substitute(mapping))
 
+    @override
     def to_binary(self) -> Expression:
         return type(self)(self._arg.to_binary())
 
+    @override
     def _sort_key(self) -> tuple[Any, ...]:
         return (_RANK_FUNCTION, self.NAME, self._arg._sort_key())  # ruff: ignore[private-member-access]
 
+    @override
     def _compute_hash(self) -> int:
         return qili_hash(self.NAME, self._arg)
 
@@ -950,6 +1006,7 @@ class Function(Expression, ABC):
     def __copy__(self) -> Expression:
         return type(self)(self._arg)
 
+    @override
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self._arg!r})"
 
@@ -970,10 +1027,12 @@ class Sin(Function):
     NAME = "sin"
 
     @staticmethod
+    @override
     def _numeric(value: RealNumber) -> Number:
         return float(np.sin(value))
 
-    def _outer_derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
+    @override
+    def _outer_derivative(self, operand: Expression) -> Expression:
         return Cos(operand)
 
 
@@ -984,10 +1043,12 @@ class Cos(Function):
     NAME = "cos"
 
     @staticmethod
+    @override
     def _numeric(value: RealNumber) -> Number:
         return float(np.cos(value))
 
-    def _outer_derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
+    @override
+    def _outer_derivative(self, operand: Expression) -> Expression:
         return -Sin(operand)
 
 
@@ -998,10 +1059,12 @@ class Exp(Function):
     NAME = "exp"
 
     @staticmethod
+    @override
     def _numeric(value: RealNumber) -> Number:
         return float(np.exp(value))
 
-    def _outer_derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
+    @override
+    def _outer_derivative(self, operand: Expression) -> Expression:
         return Exp(operand)
 
 
@@ -1012,10 +1075,12 @@ class Log(Function):
     NAME = "log"
 
     @staticmethod
+    @override
     def _numeric(value: RealNumber) -> Number:
         return float(np.log(value))
 
-    def _outer_derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
+    @override
+    def _outer_derivative(self, operand: Expression) -> Expression:
         return Pow.build(operand, Constant(-1))
 
 
@@ -1026,12 +1091,14 @@ class Tan(Function):
     NAME = "tan"
 
     @staticmethod
+    @override
     def _numeric(value: RealNumber) -> Number:
         if abs(np.cos(value)) < _TOL:
             raise ValueError("Tangent is not defined for values where cosine is zero.")
         return float(np.tan(value))
 
-    def _outer_derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
+    @override
+    def _outer_derivative(self, operand: Expression) -> Expression:
         return Pow.build(Cos(operand), Constant(-2))
 
 
@@ -1042,10 +1109,12 @@ class Sqrt(Function):
     NAME = "sqrt"
 
     @staticmethod
+    @override
     def _numeric(value: RealNumber) -> Number:
         return float(np.sqrt(value))
 
-    def _outer_derivative(self, operand: Expression) -> Expression:  # ruff: ignore[no-self-use]
+    @override
+    def _outer_derivative(self, operand: Expression) -> Expression:
         return Constant(0.5) * Pow.build(operand, Constant(-0.5))
 
 
@@ -1060,9 +1129,11 @@ class Abs(Function):
     NAME = "abs"
 
     @staticmethod
+    @override
     def _numeric(value: RealNumber) -> Number:
         return float(abs(value))
 
+    @override
     def _outer_derivative(self, operand: Expression) -> Expression:
         raise NotSupportedOperation(f"The derivative of {type(self).__name__} is not supported.")
 

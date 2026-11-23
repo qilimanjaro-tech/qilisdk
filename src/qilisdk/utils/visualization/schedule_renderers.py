@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Any, cast
 import matplotlib.pyplot as plt
 from loguru import logger
 from matplotlib.figure import Figure
+from typing_extensions import override
 
 from qilisdk.analog.hamiltonian import Hamiltonian
 
@@ -219,7 +220,7 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
     def _calculate_expectation_values(self) -> list[float]:
         actual_expectation_values = []
         tlist = self.schedule.tlist
-        if self.intermediate_states:
+        if self.intermediate_states is not None and self.intermediate_states:
             if len(self.intermediate_states) < len(tlist):
                 raise ValueError(
                     f"Length of intermediate_states must match length of schedule tlist. Got {len(self.intermediate_states) if self.intermediate_states else 0} states and {len(tlist)} time points."
@@ -271,6 +272,7 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
 
         return grouped_overlaps
 
+    @override
     def plot(self, ax: plt.Axes | None = None) -> None:
         """
         Plot the schedule coefficients for each Hamiltonian over time.
@@ -317,7 +319,11 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
 
         # only show the id for the first one
         for idx, evs in enumerate(full_eigenvalues):
-            label = "Eigenvalues" if idx == 0 and self.intermediate_states else None
+            label = (
+                "Eigenvalues"
+                if idx == 0 and self.intermediate_states is not None and self.intermediate_states
+                else None
+            )
             self.ax.plot(
                 times,
                 evs,
@@ -326,7 +332,7 @@ class MatplotlibEigenvalueRenderer(MatplotlibScheduleRenderer):
                 color=color,
             )
 
-        if self.intermediate_states and actual_expectation_values:
+        if self.intermediate_states is not None and self.intermediate_states and actual_expectation_values:
             self.ax.plot(
                 times,
                 actual_expectation_values,

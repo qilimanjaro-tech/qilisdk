@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import numpy as np
 from loguru import logger
+from typing_extensions import override
 
 from .parameter_perturbation import ParameterPerturbation
 
@@ -65,10 +66,12 @@ class GaussianPerturbation(ParameterPerturbation):
         """
         return self._std
 
+    @override
     def perturb(self, value: float) -> float:
         delta = self._rng.normal(self._mean, self._std)
         logger.debug("[GaussianPerturbation] Perturbing value {} by Gaussian offset {}", value, delta)
         return value + delta
 
+    @override
     def __repr__(self) -> str:
         return f"{type(self).__qualname__}(mean={self._mean}, std={self._std})"

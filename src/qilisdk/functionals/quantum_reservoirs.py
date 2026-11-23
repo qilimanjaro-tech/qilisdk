@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Iterator
 
 import numpy as np
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.core import Domain, Parameter, QTensor, tensor_prod
 from qilisdk.core.parameterizable import Parameterizable
@@ -221,6 +222,7 @@ class ReservoirLayer(Parameterizable):
         """Backward-compatible alias for :attr:`evolution_dynamics`."""
         return self._evolution_dynamics
 
+    @override
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
         """Yield the encoding circuits and dynamics as parameterizable children.
 
@@ -234,6 +236,7 @@ class ReservoirLayer(Parameterizable):
         if self._output_encoding:
             yield self._output_encoding
 
+    @override
     def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
         known_labels = set(self.get_parameter_names())
         unknown_labels = [p for p in parameters if p not in known_labels]
@@ -251,6 +254,7 @@ class ReservoirLayer(Parameterizable):
             param_labels = self._output_encoding.get_parameter_names()
             self._output_encoding.set_parameters({p: v for p, v in parameters.items() if p in param_labels})
 
+    @override
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         if self._input_encoding:
             param_labels = self._input_encoding.get_parameter_names()
@@ -367,6 +371,7 @@ class QuantumReservoir(PrimitiveFunctional):
         """Input-driven (non-trainable) parameter names expected per layer."""
         return self._reservoir_layer.input_parameter_names
 
+    @override
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
         """Yield the reservoir layer as the sole parameterizable child.
 

@@ -14,7 +14,7 @@
 import math
 from copy import copy
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from loguru import logger
 from numpy import e, pi
@@ -467,7 +467,7 @@ class OpenQasmParser:
                     replacement_map[arg_name_in_body] = self._evaluate_expression(actual_arg)
             for func_statement in func_def["body"]:
                 res = self._process_statement(self._recursive_replace(func_statement, replacement_map))
-                if res:
+                if res is not None and res:
                     return self._parse_return_val(res)
             return 0
 
@@ -590,7 +590,7 @@ class OpenQasmParser:
                 indices = self._flatten(indices)
 
                 # If only given one index, get at that location
-                qubits_to_return = []
+                qubits_to_return: list[int] = []
                 for index in indices:
                     if index < end - start + 1:
                         qubits_to_return.append(start + index)
@@ -899,14 +899,14 @@ class OpenQasmParser:
                 res = self._process_statement(
                     branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                 )
-                if res:
+                if res is not None and res:
                     return self._parse_return_val(res)
         else:
             for branched_statement in statement.else_block:
                 res = self._process_statement(
                     branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                 )
-                if res:
+                if res is not None and res:
                     return self._parse_return_val(res)
 
         return ""
@@ -927,7 +927,7 @@ class OpenQasmParser:
                     res = self._process_statement(
                         case_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                     )
-                    if res:
+                    if res is not None and res:
                         return self._parse_return_val(res)
                 break
 
@@ -937,7 +937,7 @@ class OpenQasmParser:
                 res = self._process_statement(
                     default_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                 )
-                if res:
+                if res is not None and res:
                     return self._parse_return_val(res)
 
         return ""
@@ -998,13 +998,13 @@ class OpenQasmParser:
                 res = self._process_statement(
                     loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                 )
-                if res:
+                if res is not None and res:
                     break
             if res == "break":
                 break
             if res == "continue":
                 continue
-            if res:
+            if res is not None and res:
                 return self._parse_return_val(res)
 
         # Remove the loop variable from the var list after the loop is done
@@ -1021,13 +1021,13 @@ class OpenQasmParser:
                 res = self._process_statement(
                     loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                 )
-                if res:
+                if res is not None and res:
                     break
             if res == "break":
                 break
             if res == "continue":
                 continue
-            if res:
+            if res is not None and res:
                 return self._parse_return_val(res)
 
         return ""
@@ -1252,7 +1252,7 @@ class OpenQasmParser:
                     control_qubits += base_gate.control_qubits[:num_own_controls]
                 else:
                     modifiers.append("inv @")
-                base_gate = base_gate.basic_gate
+                base_gate = cast("Gate", base_gate.basic_gate)
             qasm_gate_name = _OPENQASM3_NAMES.get(type(base_gate))
             if qasm_gate_name is None:
                 raise UnsupportedGateError(f"Cannot express the {gate.name} gate in OpenQASM 3.0.")

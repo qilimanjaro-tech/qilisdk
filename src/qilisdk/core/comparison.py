@@ -25,6 +25,8 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING, Any
 
+from typing_extensions import override
+
 from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.yaml import yaml
 
@@ -281,6 +283,7 @@ class Comparison:
         rhs = _assert_comparable(self._rhs.evaluate(var_values))
         return self._apply_comparison_operation(lhs, rhs)
 
+    @override
     def __getstate__(self) -> dict[str, Any]:
         return {"_lhs": self._lhs, "_rhs": self._rhs, "_operation": self._operation}
 
@@ -290,6 +293,7 @@ class Comparison:
     def __copy__(self) -> Comparison:
         return Comparison(rhs=copy.copy(self.rhs), lhs=copy.copy(self.lhs), operation=self.operation)
 
+    @override
     def __repr__(self) -> str:
         return f"{str(self.lhs).strip()} {self.operation.value} {str(self.rhs).strip()}"
 
@@ -301,9 +305,11 @@ class Comparison:
             "Use a method like .evaluate() to obtain a Boolean value."
         )
 
+    @override
     def __hash__(self) -> int:
         return qili_hash(self._lhs, self.operation.value, self._rhs)
 
+    @override
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Comparison):
             return False

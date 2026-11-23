@@ -20,6 +20,7 @@ from typing import Any, Callable, NoReturn
 
 from loguru import logger
 from packaging.requirements import Requirement
+from typing_extensions import override
 
 
 class OptionalDependencyError(ImportError):
@@ -137,6 +138,7 @@ class _OptionalDependencyStub:
             unmet=self._unmet,
         )
 
+    @override
     def __repr__(self) -> str:
         return f"<missing optional dependency: {self._symbol_name} (feature {self._feature_name!r})>"
 

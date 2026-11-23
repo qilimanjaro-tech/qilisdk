@@ -15,11 +15,11 @@ from __future__ import annotations
 
 import random
 from copy import deepcopy
-from typing import TYPE_CHECKING, Callable, Iterable
+from typing import TYPE_CHECKING, Callable, Iterable, cast
 
 import numpy as np
 from loguru import logger
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from qilisdk.core import Domain, Parameter, QTensor
 from qilisdk.core.parameterizable import Parameterizable
@@ -92,6 +92,7 @@ class Circuit(Parameterizable):
         return self._nqubits
 
     @property
+    @override
     def nparameters(self) -> int:
         """
         Retrieve the total number of parameters required by all parameterized gates in the circuit.
@@ -111,6 +112,7 @@ class Circuit(Parameterizable):
         """
         return self._gates
 
+    @override
     def set_parameters(self, parameters: dict[str, RealNumber]) -> None:
         """Set the parameter values by their label. No need to provide the full list of parameters.
 
@@ -131,6 +133,7 @@ class Circuit(Parameterizable):
             for link in self._parameters_link[label]:
                 link[1].set_parameters({link[0]: param})
 
+    @override
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         logger.trace("[Circuit] Setting parameter bounds: {}", ranges)
         for label, bound in ranges.items():
@@ -141,6 +144,7 @@ class Circuit(Parameterizable):
             for link in self._parameters_link[label]:
                 link[1].set_parameter_bounds({link[0]: bound})
 
+    @override
     def set_prefix(
         self,
         prefix: str,
@@ -177,7 +181,7 @@ class Circuit(Parameterizable):
             # so look through them to the wrapped gate to recognise its default parameter names.
             inner_gate: Gate = gate
             while isinstance(inner_gate, Modified):
-                inner_gate = inner_gate.basic_gate
+                inner_gate = cast("Gate", inner_gate.basic_gate)
             for label in gate.get_parameter_names():
                 _parameter_name = self._query_parameter_original_name(gate, label)
                 if label == _parameter_name and label in inner_gate.PARAMETER_NAMES:
@@ -382,6 +386,7 @@ class Circuit(Parameterizable):
         new_circuit.append(self)
         return new_circuit
 
+    @override
     def __eq__(self, other: object) -> bool:
         logger.trace("[Circuit] Checking equality of circuit with {}.", other)
         if not isinstance(other, Circuit):
@@ -392,6 +397,7 @@ class Circuit(Parameterizable):
             return False
         return all(g1 == g2 for g1, g2 in zip(self.gates, other.gates))
 
+    @override
     def __hash__(self) -> int:
         h = qili_hash((self.nqubits, tuple(self.gates)))
         logger.trace("[Circuit] Hashing circuit: {}", h)
@@ -418,7 +424,7 @@ class Circuit(Parameterizable):
 
         renderer = MatplotlibCircuitRenderer(self, style=style)
         renderer.plot()
-        if filepath:
+        if filepath is not None and filepath:
             renderer.save(filepath)
 
     @classmethod
@@ -517,6 +523,7 @@ class Circuit(Parameterizable):
 
         return new_circuit
 
+    @override
     def __repr__(self) -> str:
         logger.trace(
             "[Circuit] Generating string representation of circuit with {} qubits and {} gates",

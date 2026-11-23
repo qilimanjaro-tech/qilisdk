@@ -381,6 +381,13 @@ def test_unit_normalizes():
     assert np.isclose(normalized.norm(), 1)
 
 
+@pytest.mark.parametrize("order", [1, 2])
+def test_normalized_integer_order(order):
+    """An integer order is accepted, as it is by norm()."""
+    qket = 3 * ket(0, 1)
+    assert np.isclose(qket.normalized(order).norm(order), 1)
+
+
 def test_unit_zero_norm():
     """Normalization of a zero-norm QTensor should raise a ValueError."""
     zero_vector = np.zeros((2, 1))

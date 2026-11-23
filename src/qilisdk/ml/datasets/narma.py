@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import numpy as np
+from typing_extensions import override
 
 from qilisdk.ml.datasets.dataset import Dataset, DatasetSample
 
@@ -90,6 +91,7 @@ class NARMA(Dataset):
         """
         return self._order
 
+    @override
     def generate(self, npoints: int) -> DatasetSample:
         """Generate a NARMA input/output stream.
 

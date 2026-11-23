@@ -139,6 +139,7 @@ def about() -> str:
 
     # Check for clang
     has_clang = False
+    clang_command = ""
     try:
         clang_command = (
             subprocess.check_output(["ls /usr/bin/clang-[0-9]*"], shell=True, stderr=subprocess.STDOUT).decode().strip()  # ruff: ignore[subprocess-popen-with-shell-equals-true, start-process-with-partial-path]

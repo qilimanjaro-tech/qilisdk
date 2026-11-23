@@ -14,6 +14,7 @@
 from typing import Any, Callable, ClassVar, Iterator
 
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.core import Parameter
 from qilisdk.core.parameterizable import Parameterizable
@@ -69,6 +70,7 @@ class DigitalPropagation(PrimitiveFunctional):
         self.circuit = circuit
         logger.debug("[DigitalPropagation] Created DigitalPropagation over circuit with {} qubits", circuit.nqubits)
 
+    @override
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
         """Yield the circuit as the sole parameterizable child.
 
@@ -77,9 +79,11 @@ class DigitalPropagation(PrimitiveFunctional):
         """
         yield self.circuit
 
+    @override
     def __repr__(self) -> str:
         return f"DigitalPropagation(circuit={self.circuit}, initial_state={self.initial_state})"
 
+    @override
     def set_parameter_values(
         self,
         values: list[float],
@@ -95,6 +99,7 @@ class DigitalPropagation(PrimitiveFunctional):
         logger.trace("[DigitalPropagation] Setting {} parameter values on DigitalPropagation", len(values))
         self.circuit.set_parameter_values(values=values, where=where)
 
+    @override
     def set_parameters(self, parameters: dict[str, int | float]) -> None:
         """
         Assign parameter values by name and clear caches.
@@ -104,6 +109,7 @@ class DigitalPropagation(PrimitiveFunctional):
         """
         self.circuit.set_parameters(parameters)
 
+    @override
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         """
         Update parameter bounds and clear caches.

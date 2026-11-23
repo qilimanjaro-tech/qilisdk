@@ -20,13 +20,14 @@ from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 from loguru import logger
-from qtensor_module import QTensorCpp  # ty:ignore
 from scipy.sparse import csr_matrix, sparray, spmatrix
+from typing_extensions import override
 
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
 from qilisdk.utils.visualization.style import QTensorStyle
 from qilisdk.yaml import yaml
+from qtensor_module import QTensorCpp
 
 if TYPE_CHECKING:
     from qilisdk.analog import Hamiltonian
@@ -98,7 +99,7 @@ class QTensor:
             density = ket * ket.adjoint()
     """
 
-    def __init__(self, other: np.ndarray | sparray | spmatrix | list[list[Number]]) -> None:
+    def __init__(self, other: QTensorCpp | np.ndarray | sparray | spmatrix | list[list[Number]]) -> None:
         """
         Args:
             other (np.ndarray | sparray | spmatrix | list[list[Number]]): Dense or sparse matrix defining the quantum object. Expected
@@ -433,7 +434,8 @@ class QTensor:
             QTensor: A new QTensor that is the normalized version of this object.
         """
         logger.trace("[QTensor] QTensor.normalized normalizing with norm order {} on {} qubits", order, self.nqubits)
-        return QTensor(self._qtensor_cpp.normalized(order))
+        norm_type = f"l{order}" if isinstance(order, int) else order
+        return QTensor(self._qtensor_cpp.normalized(norm_type))
 
     def expm(self) -> QTensor:
         """
@@ -538,9 +540,11 @@ class QTensor:
         logger.trace("[QTensor] QTensor.__rmul__ multiplying on {} qubits", self.nqubits)
         return self.__mul__(other)
 
+    @override
     def __repr__(self) -> str:
         return self._qtensor_cpp.as_string()
 
+    @override
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, QTensor):
             return NotImplemented
@@ -552,6 +556,7 @@ class QTensor:
             return QTensor(self._qtensor_cpp.div(other))
         return NotImplemented
 
+    @override
     def __hash__(self) -> int:
         return qili_hash(self.data, self.shape, self.nqubits)
 
@@ -1038,6 +1043,7 @@ class QTensor:
         # The C++ generator takes a 32-bit seed, so reduce larger or negative seeds into that range
         return self._qtensor_cpp.expectation_value_python(other, nshots, None if seed is None else seed % 2**32)
 
+    @override
     def __getstate__(self) -> dict[str, csr_matrix]:
         """
         Get the state of the QTensor for pickling.
@@ -1080,7 +1086,7 @@ class QTensor:
 
         renderer = MatplotlibQTensorRenderer(self, style=style)
         renderer.plot()
-        if filepath:
+        if filepath is not None and filepath:
             renderer.save(filepath)
         renderer.show()
 

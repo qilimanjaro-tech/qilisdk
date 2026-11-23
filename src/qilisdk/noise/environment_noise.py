@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import TypeAlias, cast
 
 import numpy as np
+from typing_extensions import override
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliOperator
 from qilisdk.core import QTensor, ket
@@ -242,10 +243,12 @@ class EnvironmentNoise(Noise):
         return LindbladGenerator(jump_operators=jump_operators, rates=rates)
 
     @classmethod
+    @override
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
         # Couplings name system qubits explicitly and the environment evolves continuously, not per gate
         return frozenset({AttachmentScope.GLOBAL})
 
+    @override
     def __repr__(self) -> str:
         return (
             f"{type(self).__qualname__}(n_environment_qubits={self._n_environment_qubits}, couplings={self._couplings})"

@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, TypeGuard
 
 from loguru import logger
 from rustworkx import PyGraph, generators
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from .types import TopologyLike
@@ -272,5 +273,6 @@ class TopologyPreset:
             raise ValueError(f"Qubit {qubit} is not part of the topology.")
         return sorted(self._graph.neighbors(qubit))
 
+    @override
     def __repr__(self) -> str:
         return f"TopologyPreset(nqubits={self.nqubits}, edges={self.edges})"

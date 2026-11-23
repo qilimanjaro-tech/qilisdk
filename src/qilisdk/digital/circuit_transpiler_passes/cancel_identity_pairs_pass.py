@@ -22,6 +22,7 @@ from typing import Any, ClassVar, TypeGuard
 
 import numpy as np
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.digital import (
     CNOT,
@@ -144,6 +145,7 @@ class CancelIdentityPairsPass(CircuitTranspilerPass):
     _INVOLUTION_TYPES: ClassVar[tuple[type[Gate], ...]] = (H, X, Y, Z, CNOT, CZ, SWAP)
     _SYMMETRIC_TWO_QUBIT_ARITY: ClassVar[int] = 2
 
+    @override
     def run(self, circuit: Circuit) -> Circuit:
         """Cancel inverse gate pairs until no more cancellations are possible.
 

@@ -24,6 +24,7 @@ from loguru import logger
 from pydantic import BaseModel
 from ruamel.yaml import YAML
 from scipy import sparse
+from typing_extensions import override
 
 
 def csr_representer(representer, data: sparse.csr_matrix):
@@ -277,6 +278,7 @@ class QiliYAML(YAML):
         logger.debug("[Yaml] Initializing QiliYAML handler")
         super().__init__(**kwargs)
 
+    @override
     def register_class(self, cls=None, *, shared: bool = False):
         """
         Register a class with the YAML handler, assigning it a unique tag.

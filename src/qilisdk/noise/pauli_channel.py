@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import numpy as np
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.core import QTensor
 
@@ -79,6 +80,7 @@ class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasA
         """
         return self._pZ
 
+    @override
     def as_kraus(self) -> KrausChannel:
         logger.debug(
             "[PauliChannel] Building Kraus representation with pX={}, pY={}, pZ={}", self._pX, self._pY, self._pZ
@@ -95,6 +97,7 @@ class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasA
             operators.append(np.sqrt(self._pZ) * _sigma_z())
         return KrausChannel([QTensor(operator) for operator in operators])
 
+    @override
     def as_lindblad_from_duration(self, *, duration: float) -> LindbladGenerator:
         """Return the Lindblad generator whose evolution over ``duration`` reproduces this channel exactly.
 
@@ -150,6 +153,7 @@ class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasA
         return LindbladGenerator(operators, kept_rates)
 
     @classmethod
+    @override
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
         return frozenset(
             {
@@ -160,5 +164,6 @@ class PauliChannel(Noise, SupportsStaticKraus, SupportsTimeDerivedLindblad, HasA
             }
         )
 
+    @override
     def __repr__(self) -> str:
         return f"{type(self).__qualname__}(pX={self._pX}, pY={self._pY}, pZ={self._pZ})"

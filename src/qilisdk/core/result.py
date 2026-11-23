@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from abc import ABC
+from typing import cast
 
 
 class Result(ABC):
@@ -27,7 +28,7 @@ class Result(ABC):
         backend to run the simulation. ``None`` when the result was not produced through
         ``execute`` (e.g. constructed manually or deserialised from an older result).
         """
-        return getattr(self, "_execution_time", None)
+        return cast("float | None", getattr(self, "_execution_time", None))
 
     @execution_time.setter
     def execution_time(self, value: float | None) -> None:

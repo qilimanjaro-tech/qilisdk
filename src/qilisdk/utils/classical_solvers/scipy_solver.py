@@ -14,6 +14,8 @@
 
 from typing import Any, Callable
 
+from typing_extensions import override
+
 from qilisdk.core import Model
 from qilisdk.core.variables import BaseVariable, BinaryVariable, Domain, RealNumber, SpinVariable, Variable
 from qilisdk.optimizers import SciPyOptimizer
@@ -76,6 +78,7 @@ class ScipySolver(ClassicalSolver):
         self.method = method
         self.extra_arguments = kwargs
 
+    @override
     def solve(self, model: Model) -> ClassicalSolverResult:
         """Solve the given model by minimizing its objective with SciPy.
 

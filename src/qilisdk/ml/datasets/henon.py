@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import numpy as np
+from typing_extensions import override
 
 from qilisdk.ml.datasets.dataset import Dataset, DatasetSample, build_prediction_sample
 
@@ -64,6 +65,7 @@ class HenonMap(Dataset):
         self._washout = washout
         self._horizon = horizon
 
+    @override
     def generate(self, npoints: int) -> DatasetSample:
         """
         Iterate the Hénon map and build a prediction sample.

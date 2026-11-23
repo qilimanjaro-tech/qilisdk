@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Literal, Mapping, Type, cast
 
 import numpy as np
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.settings import get_settings
 from qilisdk.yaml import yaml
@@ -244,9 +245,11 @@ class Constraint:
     def __copy__(self) -> Constraint:
         return Constraint(label=self.label, term=copy.copy(self.term))
 
+    @override
     def __repr__(self) -> str:
         return f"{self.label}: {self.term}"
 
+    @override
     def __str__(self) -> str:
         return f"{self.label}: {self.term}"
 
@@ -323,9 +326,11 @@ class Objective:
         """
         return self._term.variables()
 
+    @override
     def __repr__(self) -> str:
         return f"{self.label}: {self.term}"
 
+    @override
     def __str__(self) -> str:
         return f"{self.label}: {self.term}"
 
@@ -453,6 +458,7 @@ class Model:
                 )
                 self._lagrange_multipliers[lb_encoding_name] = lagrange_multiplier
 
+    @override
     def __str__(self) -> str:
         output = f"Model name: {self.label} \n"
         if self.objective is not None:
@@ -478,6 +484,7 @@ class Model:
                 output += f"\t {key} : {value} \n"
         return output
 
+    @override
     def __repr__(self) -> str:
         return self.label
 
@@ -1418,6 +1425,7 @@ class QUBO(Model):
         self.__qubo_objective_needs_refresh = False
         return self.__qubo_objective
 
+    @override
     def __repr__(self) -> str:
         return self.label
 
@@ -1600,6 +1608,7 @@ class QUBO(Model):
                 return (out) ** 2
         return None
 
+    @override
     def add_constraint(
         self,
         label: str,
@@ -1696,6 +1705,7 @@ class QUBO(Model):
             self.lagrange_multipliers[label] = lagrange_multiplier
             self._constraints[label] = Constraint(label, term=c)
 
+    @override
     def set_objective(
         self, term: Expression, label: str = "obj", sense: ObjectiveSense = ObjectiveSense.MINIMIZE
     ) -> None:
@@ -1729,6 +1739,7 @@ class QUBO(Model):
         self._objective = Objective(label=label, term=term, sense=sense)
         self.__qubo_objective_needs_refresh = True
 
+    @override
     def set_lagrange_multiplier(self, constraint_label: str, lagrange_multiplier: float) -> None:
         super().set_lagrange_multiplier(constraint_label, lagrange_multiplier)
         self.__qubo_objective_needs_refresh = True
@@ -1827,6 +1838,7 @@ class QUBO(Model):
                 sense=ObjectiveSense.MINIMIZE,
             )
 
+    @override
     def evaluate(self, sample: Mapping[BaseVariable, RealNumber | list[int]]) -> dict[str, Number]:
         """Evaluates the objective and the constraints of the model given a set of values for the variables.
 
@@ -1973,6 +1985,7 @@ class QUBO(Model):
 
         return ham
 
+    @override
     def to_qubo(
         self,
         lagrange_multiplier_dict: dict[str, float] | None = None,
@@ -1993,6 +2006,7 @@ class QUBO(Model):
         )
         return copy.copy(self)
 
+    @override
     def __copy__(self) -> QUBO:
         out = QUBO(label=self.label)
         obj = copy.copy(self.objective)

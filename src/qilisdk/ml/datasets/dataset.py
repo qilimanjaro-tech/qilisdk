@@ -239,7 +239,7 @@ class Dataset(ABC):
             transform=transform or cls._DRAW_TRANSFORMS.get(mode),
         )
         renderer.plot()
-        if filepath:
+        if filepath is not None and filepath:
             renderer.save(filepath)
         else:
             renderer.show()

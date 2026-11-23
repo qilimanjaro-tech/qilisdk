@@ -14,6 +14,8 @@
 
 from collections.abc import Mapping
 
+from typing_extensions import override
+
 from qilisdk.core import Model
 from qilisdk.core.result import Result
 from qilisdk.core.variables import BaseVariable, Number, RealNumber
@@ -123,6 +125,7 @@ class ClassicalSolverResult(Result):
         """
         return {label: value for label, value in self._results.items() if label != self._objective_label}
 
+    @override
     def __repr__(self) -> str:
         """Return a formatted string representation for debugging."""
         return f"ClassicalSolverResult(objective={self.objective}, sample={self._sample}, results={self._results})"

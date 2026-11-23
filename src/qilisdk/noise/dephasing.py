@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import numpy as np
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.core import QTensor
 
@@ -51,6 +52,7 @@ class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsStaticLindblad, HasAllo
         """
         return self._t_phi
 
+    @override
     def as_lindblad(self) -> LindbladGenerator:
         logger.debug("[Dephasing] Building Lindblad representation with t_phi={}", self._t_phi)
         gamma = 1.0 / self._t_phi
@@ -58,6 +60,7 @@ class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsStaticLindblad, HasAllo
         L = QTensor(_sigma_z())
         return LindbladGenerator(jump_operators=[L], rates=[rate])
 
+    @override
     def as_kraus_from_duration(self, *, duration: float) -> KrausChannel:
         if duration < 0:
             raise ValueError("duration must be >= 0.")
@@ -68,8 +71,10 @@ class Dephasing(Noise, SupportsTimeDerivedKraus, SupportsStaticLindblad, HasAllo
         return KrausChannel([QTensor(K0), QTensor(K1)])
 
     @classmethod
+    @override
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
         return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})
 
+    @override
     def __repr__(self) -> str:
         return f"{type(self).__qualname__}(t_phi={self._t_phi})"

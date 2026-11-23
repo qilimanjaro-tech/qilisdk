@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from loguru import logger
 from matplotlib.figure import Figure
+from typing_extensions import override
 
 from qilisdk.core.result import Result
 from qilisdk.yaml import yaml
@@ -42,6 +43,7 @@ class Dimension:
         self.labels = labels
         self.values = values
 
+    @override
     def __repr__(self) -> str:
         return f"Dimension(labels={self.labels}, values={self.values})"
 
@@ -226,7 +228,7 @@ class ExperimentResult(Result):
 
         fig.tight_layout()
 
-        if save_to:
+        if save_to is not None and save_to:
             self._save_figure(fig, save_to)
 
         plt.show()
@@ -295,7 +297,7 @@ class ExperimentResult(Result):
 
         fig.tight_layout()
 
-        if save_to:
+        if save_to is not None and save_to:
             self._save_figure(fig, save_to)
 
         plt.show()
@@ -368,5 +370,6 @@ class ExperimentResult(Result):
         else:
             raise NotImplementedError("3D and higher dimension plots are not supported yet.")
 
+    @override
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(qubit={self.qubit}, averages={self.averages}, data={self.data}, dims={self.dims})"

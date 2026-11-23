@@ -18,11 +18,12 @@ import re
 from abc import ABC
 from collections import defaultdict
 from itertools import combinations, pairwise, product
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, TypeAlias
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, TypeAlias, cast
 
 import numpy as np
 from loguru import logger
 from scipy.sparse import csr_matrix, kron, spmatrix
+from typing_extensions import override
 
 from qilisdk.core.expression import Expression
 from qilisdk.core.parameterizable import Parameterizable
@@ -156,6 +157,7 @@ class PauliOperator(ABC):
         """
         return Hamiltonian({(self,): 1})
 
+    @override
     def __hash__(self) -> int:
         """Return the stable hash of this operator.
 
@@ -169,6 +171,7 @@ class PauliOperator(ABC):
             self._hash_cache = qili_hash(self._NAME, self._qubit)
         return self._hash_cache
 
+    @override
     def __getstate__(self) -> dict[str, Any]:
         state = self.__dict__.copy()
         state.pop("_hash_cache", None)
@@ -178,6 +181,7 @@ class PauliOperator(ABC):
         self.__dict__.update(state)
         self._hash_cache = None
 
+    @override
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Hamiltonian):
             return other == self
@@ -185,9 +189,11 @@ class PauliOperator(ABC):
             return False
         return (self._NAME == other._NAME) and (self._qubit == other._qubit)
 
+    @override
     def __repr__(self) -> str:
         return f"{self.name}({self.qubit})"
 
+    @override
     def __str__(self) -> str:
         return f"{self.name}({self.qubit})"
 
@@ -384,7 +390,7 @@ class Hamiltonian(Parameterizable):
         """
         super().__init__()
         self._elements: dict[tuple[PauliOperator, ...], complex | Expression | Parameter] = defaultdict(complex)
-        if elements:
+        if elements is not None:
             for key, val in elements.items():
                 if isinstance(val, Expression):
                     if not val.is_parameterized():
@@ -476,7 +482,7 @@ class Hamiltonian(Parameterizable):
             else:
                 single = identity_single
 
-            result = single if result is None else kron(result, single, format="csr")
+            result = single if result is None else cast("csr_matrix", kron(result, single, format="csr"))
 
         # Added for type safety, but should never occur
         return result if result is not None else csr_matrix((2**total_qubits, 2**total_qubits), dtype=_complex_dtype())
@@ -493,7 +499,7 @@ class Hamiltonian(Parameterizable):
         result = csr_matrix((dim, dim), dtype=_complex_dtype())
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term)
-        return result
+        return cast("spmatrix", result)
 
     def to_qtensor(self, total_nqubits: int | None = None) -> QTensor:
         """Return the Hamiltonian as a ``QTensor`` built from the sparse matrix representation.
@@ -568,7 +574,7 @@ class Hamiltonian(Parameterizable):
 
         renderer = MatplotlibHamiltonianRenderer(self, style=style or HamiltonianStyle())
         renderer.plot()
-        if filepath:
+        if filepath is not None and filepath:
             renderer.save(filepath)
         else:
             renderer.show()
@@ -579,6 +585,7 @@ class Hamiltonian(Parameterizable):
 
     # ------- Equality & hashing --------
 
+    @override
     def __eq__(self, other: object) -> bool:
         if other == Hamiltonian.ZERO:
             return bool(
@@ -597,9 +604,11 @@ class Hamiltonian(Parameterizable):
             return False
         return dict(self._elements) == dict(other._elements)
 
+    @override
     def __ne__(self, other: object) -> bool:
         return not self.__eq__(other)
 
+    @override
     def __hash__(self) -> int:
         return qili_hash(self._elements)
 
@@ -617,9 +626,11 @@ class Hamiltonian(Parameterizable):
 
     # ------- String representation --------
 
+    @override
     def __repr__(self) -> str:
         return str(self)
 
+    @override
     def __str__(self) -> str:
         # Return "0" if there are no terms
         if not self._elements:
@@ -1358,7 +1369,7 @@ class Hamiltonian(Parameterizable):
         s = 0
         for coeff, _ in self:
             s += np.conj(coeff) * coeff
-        return np.real(np.sqrt(s))
+        return cast("float", np.real(np.sqrt(s)))
 
     def frobenius_norm(self) -> float:
         """
@@ -1369,7 +1380,7 @@ class Hamiltonian(Parameterizable):
         s = 0
         for coeff, _ in self:
             s += np.conj(coeff) * coeff
-        return np.real(np.sqrt(s) * np.sqrt(2**n))
+        return cast("float", np.real(np.sqrt(s) * np.sqrt(2**n)))
 
     def trace(self) -> Number:
         """
@@ -1377,7 +1388,7 @@ class Hamiltonian(Parameterizable):
             float: the trace of the hamiltonian.
         """
         n = self.nqubits
-        d = 2**n
+        d = cast("int", 2**n)
         t = self._elements.get((PauliI(0),), 0)
         if isinstance(t, Expression):
             return t.evaluate({}) * d

@@ -14,6 +14,7 @@
 from typing import Any, Callable, ClassVar, Iterator
 
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core import Parameter
@@ -89,6 +90,7 @@ class AnalogEvolution(PrimitiveFunctional):
         """
         return self._initial_state
 
+    @override
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
         """Yield the schedule as the sole parameterizable child.
 
@@ -97,6 +99,7 @@ class AnalogEvolution(PrimitiveFunctional):
         """
         yield self.schedule
 
+    @override
     def set_parameter_values(
         self,
         values: list[float],
@@ -112,6 +115,7 @@ class AnalogEvolution(PrimitiveFunctional):
         logger.trace("[AnalogEvolution] Setting {} parameter values on AnalogEvolution", len(values))
         self.schedule.set_parameter_values(values=values, where=where)
 
+    @override
     def set_parameters(self, parameters: dict[str, int | float]) -> None:
         """
         Assign parameter values by name and clear caches.
@@ -121,6 +125,7 @@ class AnalogEvolution(PrimitiveFunctional):
         """
         self.schedule.set_parameters(parameters)
 
+    @override
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         """
         Update parameter bounds and clear caches.
@@ -130,6 +135,7 @@ class AnalogEvolution(PrimitiveFunctional):
         """
         self.schedule.set_parameter_bounds(ranges)
 
+    @override
     def __repr__(self) -> str:
         lines = [
             f"{type(self).__qualname__}(",

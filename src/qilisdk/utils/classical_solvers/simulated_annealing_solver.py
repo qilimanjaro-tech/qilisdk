@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from solvers_module import solve_with_simulated_annealing  # ty:ignore[import-not-found]
+from typing_extensions import override
 
 from qilisdk.core import Model
 
@@ -63,6 +64,7 @@ class SimulatedAnnealingSolver(ClassicalSolver):
         self.seed = seed
         self.num_threads = num_threads
 
+    @override
     def solve(self, model: Model) -> ClassicalSolverResult:
         """Solve the given QUBO by annealing it in C++.
 

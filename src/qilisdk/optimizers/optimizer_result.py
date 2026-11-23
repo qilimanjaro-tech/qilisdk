@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.core.result import Result
 from qilisdk.yaml import yaml
@@ -43,6 +44,7 @@ class OptimizerIntermediateResult(Result):
         """Return the optimal parameters as a list of floats."""
         return list(self._parameters)
 
+    @override
     def __repr__(self) -> str:
         """Return a formatted string representation for debugging."""
         return f"OptimizerIntermediateResult(cost={self._cost}, parameters={self._parameters})"
@@ -99,6 +101,7 @@ class OptimizerResult(Result):
         """
         return list(self._intermediate_results)
 
+    @override
     def __repr__(self) -> str:
         """Return a formatted string representation for debugging."""
         return (

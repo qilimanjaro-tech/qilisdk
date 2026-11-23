@@ -17,13 +17,14 @@ import warnings
 from collections.abc import Callable
 from copy import copy
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Type, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, Type, TypeAlias, TypeVar, cast
 
 import cudaq
 import numpy as np
 from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, SpinOperatorTerm, State, evolve, operators, spin
 from cudaq import Schedule as CudaSchedule
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
@@ -308,6 +309,7 @@ class CudaqBackend(Backend):
             logger.warning("QTensor initial states are not natively supported by the CUDA backend, ignoring.")
         return circuit
 
+    @override
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
     ) -> FunctionalResult[Any, Any, Any]:
@@ -389,7 +391,7 @@ class CudaqBackend(Backend):
                 noise_model=cuda_noise_model,
             )
             cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, circuit.nqubits, rng=self._rng)
-            if og_param:
+            if og_param is not None and og_param:
                 functional.set_parameters(og_param)
             logger.info("[CudaqBackend] Sampling finished, {} distinct bitstrings", len(cudaq_result))
             sampling_readout = next((ro for ro in readout if isinstance(ro, SamplingReadout)), None)
@@ -410,7 +412,7 @@ class CudaqBackend(Backend):
         if all(ro.is_sampling_readout() for ro in readout):
             sampling_readout = next(ro for ro in readout if isinstance(ro, SamplingReadout))
             cudaq_result = cudaq.sample(kernel, shots_count=sampling_readout.nshots)
-            if og_param:
+            if og_param is not None and og_param:
                 functional.set_parameters(og_param)
             logger.info("[CudaqBackend] Sampling finished, {} distinct bitstrings", len(cudaq_result))
             return FunctionalResult(
@@ -446,6 +448,7 @@ class CudaqBackend(Backend):
             )
         )
 
+    @override
     def _execute_analog_evolution(
         self, functional: AnalogEvolution, readout: list[ReadoutMethod]
     ) -> FunctionalResult[Any, Any, Any]:
@@ -526,7 +529,7 @@ class CudaqBackend(Backend):
             final_state = final_state.reshape(-1, 1)
         final_state = QTensor(final_state)
 
-        if og_params:
+        if og_params is not None and og_params:
             functional.set_parameters(og_params)
 
         intermediate_states = []
@@ -1582,4 +1585,4 @@ def __getattr__(name: str) -> type[CudaqBackend | CudaqSamplingMethod]:
     if replacement is None:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
     warnings.warn(f"{name} is deprecated, use {replacement} instead.", DeprecationWarning, stacklevel=2)
-    return globals()[replacement]
+    return cast("type[CudaqBackend | CudaqSamplingMethod]", globals()[replacement])

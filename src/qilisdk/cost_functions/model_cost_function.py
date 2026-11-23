@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.core.model import QUBO, Model
 from qilisdk.core.qtensor import expect_val, ket
@@ -26,6 +27,7 @@ from qilisdk.settings import get_settings
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
     from qilisdk.functionals.functional_result import FunctionalResult  # type: ignore[type-arg]
+    from qilisdk.readout import SamplingReadoutResult
 
 
 class ModelCostFunction(CostFunction):
@@ -69,6 +71,7 @@ class ModelCostFunction(CostFunction):
         """
         return self._model
 
+    @override
     def compute_cost(self, results: FunctionalResult[Any, Any, Any]) -> Number:
         """Compute the cost from a ``FunctionalResult``.
 
@@ -167,7 +170,7 @@ class ModelCostFunction(CostFunction):
             return total_cost.real
         return total_cost
 
-    def _compute_from_samples(self, results: FunctionalResult[Any, Any, Any]) -> Number:
+    def _compute_from_samples(self, results: FunctionalResult[SamplingReadoutResult, Any, Any]) -> Number:
         """Compute the cost from sampled probability distributions.
 
         Each bitstring sample is mapped to the model's variables and the
@@ -202,6 +205,7 @@ class ModelCostFunction(CostFunction):
             return total_cost.real
         return total_cost
 
+    @override
     def __repr__(self) -> str:
         """Return a string representation of this cost function.
 

@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Callable, cast, overload
 
 import numpy as np
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.analog import Schedule
 from qilisdk.core import InitialState, reset_qubits
@@ -200,7 +201,7 @@ class Backend(ABC):
                     res = self._execute_analog_evolution(
                         AnalogEvolution(step, state), readout=[StateTomographyReadout()]
                     )
-                    state: QTensor = res.get_state()
+                    state: QTensor = cast("QTensor", res.get_state())
 
             try:
                 state: QTensor = state.to_density_matrix()
@@ -213,7 +214,7 @@ class Backend(ABC):
 
             inter_results.append(Backend._construct_results_list(state, readout, seed=self._rng))
 
-            if functional.reservoir_layer.qubits_to_reset:
+            if functional.reservoir_layer.qubits_to_reset is not None and functional.reservoir_layer.qubits_to_reset:
                 logger.trace("[Backend] Resetting qubits {}", functional.reservoir_layer.qubits_to_reset)
                 state = reset_qubits(state, functional.reservoir_layer.qubits_to_reset)
 
@@ -293,6 +294,7 @@ class Backend(ABC):
         logger.info("[Backend] Variational Program finished")
         return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)
 
+    @override
     def __repr__(self) -> str:
         """Return a developer-friendly string representation of the backend."""
         return f"{type(self).__qualname__}()"

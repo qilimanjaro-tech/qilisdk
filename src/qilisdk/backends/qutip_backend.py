@@ -21,6 +21,7 @@ from loguru import logger
 from qutip import Qobj, mesolve, qeye, tensor
 from qutip_qip.circuit import CircuitSimulator, QubitCircuit
 from qutip_qip.operations.gateclass import SingleQubitGate, is_qutip5
+from typing_extensions import override
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator
 from qilisdk.backends.backend import Backend
@@ -69,7 +70,8 @@ class QutipI(SingleQubitGate):
         self.name = "I"
         self.latex_str = r"I"
 
-    def get_compact_qobj(self):  # ruff: ignore[missing-return-type-public-function, no-self-use]
+    @override
+    def get_compact_qobj(self):  # ruff: ignore[missing-return-type-public-function]
         return qeye(2) if not is_qutip5 else qeye(2, dtype="dense")
 
 
@@ -117,6 +119,7 @@ class QutipBackend(Backend):
         }  # ty:ignore[invalid-assignment]
         logger.info("[QutipBackend] QutipBackend initialised")
 
+    @override
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
     ) -> FunctionalResult[Any, Any, Any]:
@@ -194,6 +197,7 @@ class QutipBackend(Backend):
             )
         )
 
+    @override
     def _execute_analog_evolution(
         self, functional: AnalogEvolution, readout: list[ReadoutMethod]
     ) -> FunctionalResult[Any, Any, Any]:

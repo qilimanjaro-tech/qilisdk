@@ -15,6 +15,8 @@ from __future__ import annotations
 
 from abc import ABC
 
+from typing_extensions import override
+
 from .protocols import AttachmentScope, HasAllowedScopes
 
 
@@ -22,6 +24,7 @@ class NoiseABC(ABC, HasAllowedScopes):
     """Base class for all noise and perturbation types."""
 
     @classmethod
+    @override
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
         """Return the attachment scopes supported by this noise type.
 

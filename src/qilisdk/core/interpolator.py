@@ -18,11 +18,11 @@ from bisect import bisect_right
 from collections.abc import Callable
 from copy import copy
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Mapping
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 from loguru import logger
-from typing_extensions import TypeAlias
+from typing_extensions import TypeAlias, override
 
 from qilisdk.core.comparison import LEQ
 from qilisdk.core.expression import Expression
@@ -262,7 +262,7 @@ class Interpolator(Parameterizable):
         Returns:
             list[float]: Evaluated time points.
         """
-        if self._fixed_tlist:
+        if self._fixed_tlist is not None and self._fixed_tlist:
             return self._fixed_tlist
         self._fixed_tlist = [self._get_value(k) for k in self.tlist]
         return self._fixed_tlist
@@ -275,7 +275,7 @@ class Interpolator(Parameterizable):
         Returns:
             float: Largest time value in ``fixed_tlist``.
         """
-        if not self._total_time:
+        if self._total_time is None or not self._total_time:
             self._total_time = max(self.fixed_tlist)
         return self._total_time
 
@@ -379,7 +379,7 @@ class Interpolator(Parameterizable):
                 value.set_value(t)
             return float(value.evaluate())
         if isinstance(value, Expression):
-            ctx: Mapping[BaseVariable, list[int] | int | float] = {self._current_time: t} if t is not None else {}
+            ctx: dict[BaseVariable, list[int] | int | float] = {self._current_time: t} if t is not None else {}
             aux = value.evaluate(ctx)
 
             return aux.real if isinstance(aux, complex) else float(aux)
@@ -439,6 +439,7 @@ class Interpolator(Parameterizable):
         self._time_dict[time / self._time_scale] = coeff
         self.delete_cache()
 
+    @override
     def set_parameter_values(
         self,
         values: list[float],
@@ -455,6 +456,7 @@ class Interpolator(Parameterizable):
         self.delete_cache()
         super().set_parameter_values(values=values, where=where)
 
+    @override
     def set_parameters(self, parameters: dict[str, int | float]) -> None:
         """
         Assign parameter values by name and clear caches.
@@ -466,6 +468,7 @@ class Interpolator(Parameterizable):
         self.delete_cache()
         super().set_parameters(parameters)
 
+    @override
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         """
         Update parameter bounds and clear caches.
@@ -488,7 +491,7 @@ class Interpolator(Parameterizable):
             float: Evaluated coefficient.
         """
         logger.trace("[Interpolator] Evaluating coefficient at t={}", time_step)
-        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
+        time_step = cast("float", time_step.item()) if isinstance(time_step, np.generic) else self._get_value(time_step)
         val = self.get_coefficient_expression(time_step=time_step)
 
         if self._max_time is not None:
@@ -511,7 +514,7 @@ class Interpolator(Parameterizable):
         Raises:
             ValueError: If the interpolation mode is unsupported or evaluation fails.
         """
-        time_step = time_step.item() if isinstance(time_step, np.generic) else self._get_value(time_step)
+        time_step = cast("float", time_step.item()) if isinstance(time_step, np.generic) else self._get_value(time_step)
 
         # generate the tlist
         self._tlist = self._generate_tlist()
