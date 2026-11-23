@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import numpy as np
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.core import QTensor
 
@@ -47,12 +48,14 @@ class AmplitudeDamping(Noise, SupportsTimeDerivedKraus, SupportsStaticLindblad):
         """
         return self._t1
 
+    @override
     def as_lindblad(self) -> LindbladGenerator:
         logger.debug("[AmplitudeDamping] Building Lindblad representation with t1={}", self._t1)
         gamma = 1.0 / self._t1
         L = np.sqrt(gamma) * _sigma_minus()
         return LindbladGenerator([QTensor(L)])
 
+    @override
     def as_kraus_from_duration(self, *, duration: float) -> KrausChannel:
         if duration < 0:
             raise ValueError("duration must be >= 0.")
@@ -63,6 +66,7 @@ class AmplitudeDamping(Noise, SupportsTimeDerivedKraus, SupportsStaticLindblad):
         return KrausChannel(operators=[QTensor(K0), QTensor(K1)])
 
     @classmethod
+    @override
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
         return frozenset(
             {
@@ -73,5 +77,6 @@ class AmplitudeDamping(Noise, SupportsTimeDerivedKraus, SupportsStaticLindblad):
             }
         )
 
+    @override
     def __repr__(self) -> str:
         return f"{type(self).__qualname__}(t1={self._t1})"

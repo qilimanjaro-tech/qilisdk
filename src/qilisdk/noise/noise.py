@@ -13,11 +13,14 @@
 # limitations under the License.
 from __future__ import annotations
 
+from typing_extensions import override
+
 from .noise_abc import NoiseABC
 
 
 class Noise(NoiseABC):
     """Base class for state noise sources that can be attached to a model."""
 
+    @override
     def __repr__(self) -> str:
         return f"{type(self).__qualname__}()"

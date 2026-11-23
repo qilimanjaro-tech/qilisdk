@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Any, Generic, Never, Protocol, Self, TypeGuard
 
 import numpy as np
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.core import QTensor, expect_val
 from qilisdk.core.result import Result
@@ -239,7 +240,7 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
         nqubits_total = nqubits if nqubits is not None else nqubits_samples
         if not all(len(bitstring) == nqubits_samples for bitstring in bitstrings):
             raise ValueError("Not all bitstring keys have the same length.")
-        if qubits_to_measure and len(qubits_to_measure) > nqubits_samples:
+        if qubits_to_measure is not None and len(qubits_to_measure) > nqubits_samples:
             raise ValueError("Can't filter samples for more qubits than are present in the bitstrings.")
         if nqubits_total != nqubits_samples and qubits_to_measure is None:
             raise ValueError(
@@ -322,6 +323,7 @@ class SamplingReadoutResult(ReadoutResult[SamplingReadout]):
             n = len(self._probabilities)
         return heapq.nlargest(n, self._probabilities.items(), key=operator.itemgetter(1))
 
+    @override
     def __repr__(self) -> str:
         return f"Sampling Results: (\n\tnshots={sum(self.samples.values())},\n\tsamples={pformat(self.samples)}\n)\n\n"
 
@@ -387,10 +389,11 @@ class ExpectationReadoutResult(ReadoutResult[ExpectationReadout]):
         """list[Number]: Expectation values, one per observable, in the same order as specified in the readout."""
         return self._expectation_values
 
+    @override
     def __repr__(self) -> str:
         return (
             "Expectation Value Results: (\n"
-            + (f"\tnshots = {self._nshots},\n" if self._nshots and self._nshots > 0 else "")
+            + (f"\tnshots = {self._nshots},\n" if self._nshots is not None and self._nshots > 0 else "")
             + f"\texpectation_values={pformat(self._expectation_values)},\n"
             + ")\n\n"
         )
@@ -460,6 +463,7 @@ class StateTomographyReadoutResult(ReadoutResult[StateTomographyReadout]):
             n = len(probs)
         return heapq.nlargest(n, probs.items(), key=operator.itemgetter(1))
 
+    @override
     def __repr__(self) -> str:
         return "State Tomography Results: (\n" + (f"\tfinal_state={pformat(self.state)}\n") + ")\n\n"
 
@@ -494,7 +498,7 @@ class _HasSampling(Protocol):
     sampling: SamplingReadoutResult
 
 
-def has_sampling(obj: ReadoutCompositeResults) -> TypeGuard[_HasSampling]:
+def has_sampling(obj: ReadoutCompositeResults[Any, Any, Any]) -> TypeGuard[_HasSampling]:
     """Return ``True`` if the composite contains a sampling result."""
     return obj.sampling is not None
 
@@ -503,7 +507,7 @@ class _HasExpectation(Protocol):
     expectation_values: ExpectationReadoutResult
 
 
-def has_expectation_values(obj: ReadoutCompositeResults) -> TypeGuard[_HasExpectation]:
+def has_expectation_values(obj: ReadoutCompositeResults[Any, Any, Any]) -> TypeGuard[_HasExpectation]:
     """Return ``True`` if the composite contains an expectation-value result."""
     return obj.expectation_values is not None
 
@@ -512,7 +516,7 @@ class _HasStateTomography(Protocol):
     state_tomography: StateTomographyReadoutResult
 
 
-def has_state_tomography(obj: ReadoutCompositeResults) -> TypeGuard[_HasStateTomography]:
+def has_state_tomography(obj: ReadoutCompositeResults[Any, Any, Any]) -> TypeGuard[_HasStateTomography]:
     """Return ``True`` if the composite contains a state-tomography result."""
     return obj.state_tomography is not None
 
@@ -543,7 +547,7 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
     state_tomography: T = None  # type: ignore[assignment]  # ty:ignore[invalid-assignment]
 
     @classmethod
-    def from_list(cls, results: list) -> ReadoutCompositeResults:
+    def from_list(cls, results: list[Any]) -> ReadoutCompositeResults[Any, Any, Any]:
         """Construct a :class:`ReadoutCompositeResults` from a flat list of readout results.
 
         Each element is matched by type to the appropriate field.
@@ -569,7 +573,7 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
         return cls(sampling=sampling, expectation_values=expectation_values, state_tomography=state_tomography)
 
     @classmethod
-    def from_dict(cls, data: dict) -> ReadoutCompositeResults:
+    def from_dict(cls, data: dict[str, Any]) -> ReadoutCompositeResults[Any, Any, Any]:
         """Construct a :class:`ReadoutCompositeResults` from a plain dictionary.
 
         Args:
@@ -671,6 +675,7 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
             return self.state_tomography.state
         raise ValueError("Can't find the state because no StateTomographyReadoutResult is present in this composite.")
 
+    @override
     def __repr__(self) -> str:
         out = ""
         if self.sampling:

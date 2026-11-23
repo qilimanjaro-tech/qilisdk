@@ -20,6 +20,7 @@ from collections import deque
 from typing import TYPE_CHECKING, Iterable
 
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.digital import Circuit, M
 from qilisdk.digital.topology import build_topology_graph
@@ -142,6 +143,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
 
     # --------- public API ---------
 
+    @override
     def run(self, circuit: Circuit) -> Circuit:
         """Compute a layout and return a retargeted copy of the circuit.
 
@@ -639,7 +641,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         Returns:
             list[int | None]: Inverse mapping where missing assignments are represented by ``None``.
         """
-        inverse_layout = [None] * len(physical_to_dense_index)
+        inverse_layout: list[int | None] = [None] * len(physical_to_dense_index)
         for logical_qubit, physical_qubit in enumerate(layout):
             physical_dense_index = physical_to_dense_index.get(physical_qubit)
             if physical_dense_index is not None:

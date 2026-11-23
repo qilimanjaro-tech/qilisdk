@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Any, Callable, Generator, TypeAlias, TypeVar, 
 import httpx
 from loguru import logger
 from pydantic import TypeAdapter, ValidationError
+from typing_extensions import override
 
 from qilisdk.experiments import ExperimentFunctional
 from qilisdk.functionals import (
@@ -62,7 +63,7 @@ if TYPE_CHECKING:
     from qilisdk.readout import E, Readout, S, T
 
 
-TFunctionalResult = TypeVar("TFunctionalResult", bound=FunctionalResult)
+TFunctionalResult = TypeVar("TFunctionalResult", bound=FunctionalResult[Any, Any, Any])
 JSONValue: TypeAlias = dict[str, "JSONValue"] | list["JSONValue"] | str | int | float | bool | None
 
 _SKIP_ENSURE_OK_EXTENSION = "qilisdk.skip_ensure_ok"
@@ -160,7 +161,7 @@ def _request_extensions(*, context: str | None = None, skip_ensure_ok: bool = Fa
         are set.
     """
     extensions: dict[str, Any] = {}
-    if context:
+    if context is not None and context:
         extensions[_CONTEXT_EXTENSION] = context
     if skip_ensure_ok:
         extensions[_SKIP_ENSURE_OK_EXTENSION] = True
@@ -241,7 +242,7 @@ def _summarize_error_payload(response: httpx.Response) -> str:
             body_text = ""
     payload = _safe_json_loads(body_text, context=f"{context} error body") if body_text else None
     detail = _stringify_payload(payload)
-    if detail:
+    if detail is not None and detail:
         return detail
     if body_text.strip():
         return body_text.strip()
@@ -301,6 +302,7 @@ class _BearerAuth(httpx.Auth):
         """
         self._client = client
 
+    @override
     def auth_flow(self, request: httpx.Request) -> Generator[httpx.Request, httpx.Response, None]:
         """Yield authenticated requests, refreshing the token on ``401``.
 
@@ -392,7 +394,7 @@ class SpeQtrum:
         logger.info("[SpeQtrum] SpeQtrum client initialised for user '{}'", self.username)
 
     @classmethod
-    def _get_headers(cls) -> dict:
+    def _get_headers(cls) -> dict[str, str]:
         """Return default HTTP headers including the SDK ``User-Agent``.
 
         Returns:
@@ -440,7 +442,7 @@ class SpeQtrum:
             settings.speqtrum_apikey.get_secret_value() if settings.speqtrum_apikey is not None else None
         )
 
-        if not username or not apikey:
+        if username is None or not username or apikey is None or not apikey:
             logger.error("[SpeQtrum] Login called without credentials.")
             return False
 
@@ -667,7 +669,7 @@ class SpeQtrum:
 
     @overload
     def submit(
-        self, functional: ExperimentFunctional, device: str, job_name: str | None = None
+        self, functional: ExperimentFunctional[ExperimentResult], device: str, job_name: str | None = None
     ) -> JobHandle[ExperimentResult]: ...
 
     def submit(
@@ -676,7 +678,7 @@ class SpeQtrum:
         device: str,
         readout: Readout[S, E, T] | None = None,  # type: ignore[type-arg]
         job_name: str | None = None,
-    ) -> JobHandle:
+    ) -> JobHandle[Any]:
         """
         Submit a quantum functional for execution on the selected device.
 
@@ -729,7 +731,7 @@ class SpeQtrum:
 
     def _submit_digital_propagation(
         self, functional: DigitalPropagation, device: str, readout: Readout[S, E, T], job_name: str | None = None
-    ) -> JobHandle[FunctionalResult]:
+    ) -> JobHandle[FunctionalResult[Any, Any, Any]]:
         """Submit a ``DigitalPropagation`` functional to the SpeQtrum API.
 
         Args:
@@ -751,7 +753,7 @@ class SpeQtrum:
             "job_type": JobType.DIGITAL,
             "meta": {},
         }
-        if job_name:
+        if job_name is not None and job_name:
             json["name"] = job_name
         logger.debug("[SpeQtrum] Executing DigitalPropagation on device {}", device)
         with self._create_client() as client:
@@ -765,7 +767,7 @@ class SpeQtrum:
         return JobHandle.functional(job.id)
 
     def _submit_experiment(
-        self, experiment: ExperimentFunctional, device: str, job_name: str | None = None
+        self, experiment: ExperimentFunctional[ExperimentResult], device: str, job_name: str | None = None
     ) -> JobHandle[ExperimentResult]:
         """Submit any experiment functional to the SpeQtrum API (generic path).
 
@@ -792,7 +794,7 @@ class SpeQtrum:
             "job_type": JobType.PULSE,
             "meta": {},
         }
-        if job_name:
+        if job_name is not None and job_name:
             json["name"] = job_name
         logger.debug("[SpeQtrum] Executing {} on device {}", experiment_name, device)
         with self._create_client() as client:
@@ -809,7 +811,7 @@ class SpeQtrum:
 
     def _submit_analog_evolution(
         self, functional: AnalogEvolution, device: str, readout: Readout[S, E, T], job_name: str | None = None
-    ) -> JobHandle[FunctionalResult]:
+    ) -> JobHandle[FunctionalResult[Any, Any, Any]]:
         """Submit an ``AnalogEvolution`` functional to the SpeQtrum API.
 
         Args:
@@ -831,7 +833,7 @@ class SpeQtrum:
             "job_type": JobType.ANALOG,
             "meta": {},
         }
-        if job_name:
+        if job_name is not None and job_name:
             json["name"] = job_name
         logger.debug("[SpeQtrum] Executing AnalogEvolution on device {}", device)
         with self._create_client() as client:
@@ -848,7 +850,7 @@ class SpeQtrum:
 
     def _submit_quantum_reservoir_functional(
         self, functional: QuantumReservoir, device: str, readout: Readout[S, E, T], job_name: str | None = None
-    ) -> JobHandle[FunctionalResult]:
+    ) -> JobHandle[FunctionalResult[Any, Any, Any]]:
         """Submit a ``QuantumReservoir`` functional to the SpeQtrum API.
 
         Args:
@@ -870,7 +872,7 @@ class SpeQtrum:
             "job_type": JobType.QUANTUM_RESERVOIR,
             "meta": {},
         }
-        if job_name:
+        if job_name is not None and job_name:
             json["name"] = job_name
         logger.debug("[SpeQtrum] Executing QuantumReservoir on device {}", device)
         with self._create_client() as client:
@@ -917,7 +919,7 @@ class SpeQtrum:
             "job_type": JobType.VARIATIONAL,
             "meta": {},
         }
-        if job_name:
+        if job_name is not None and job_name:
             json["name"] = job_name
         logger.debug("[SpeQtrum] Executing variational program on device {}", device)
         with self._create_client() as client:
@@ -930,8 +932,11 @@ class SpeQtrum:
         logger.info("[SpeQtrum] Variational program job submitted: {}", job.id)
         if job.message is not None:
             logger.warning("{}", job.message)
-        return JobHandle.variational_program(job.id)
+        return cast(
+            "JobHandle[VariationalProgramResult[FunctionalResult[S, E, T]]]", JobHandle.variational_program(job.id)
+        )
 
+    @override
     def __repr__(self) -> str:
         """Return a string representation of the client.
 

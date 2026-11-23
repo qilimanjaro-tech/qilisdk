@@ -25,7 +25,7 @@ from matplotlib.figure import Figure
 from matplotlib.patches import Arc, Circle, FancyArrow, FancyBboxPatch
 from matplotlib.text import Text
 
-from qilisdk.digital.gates import Controlled, Gate, M, X
+from qilisdk.digital.gates import BasicGate, Controlled, Gate, M, X
 from qilisdk.utils.visualization.style import CircuitStyle
 
 if TYPE_CHECKING:
@@ -96,7 +96,7 @@ class MatplotlibCircuitRenderer:
         for layer in sorted(self._layer_gate_mapping):
             self._row = self._layer_row[layer]
             inline_qubits = self._inline_measures.get(layer)
-            if inline_qubits:
+            if inline_qubits is not None and inline_qubits:
                 self._draw_inline_measure(inline_qubits, layer=layer)
             for gate in self._layer_gate_mapping[layer].values():
                 if isinstance(gate, M):
@@ -261,7 +261,11 @@ class MatplotlibCircuitRenderer:
         self._row_artists: list[list[Artist]] = [[] for _ in self._row_widths]
         self._row_shown = [True for _ in self._row_widths]
 
-        self._title_band = self._text_size(self.style.title)[1] + self.style.padding if self.style.title else 0.0
+        self._title_band = (
+            self._text_size(self.style.title)[1] + self.style.padding
+            if self.style.title is not None and self.style.title
+            else 0.0
+        )
 
     def _assign_rows(self, widths: list[float]) -> None:
         """
@@ -642,7 +646,7 @@ class MatplotlibCircuitRenderer:
         self._draw_bridge(t_sorted[0], t_sorted[1], x_anchor)
         return x_anchor
 
-    def _draw_controlled_gate(self, gate: Controlled, layer: int) -> None:
+    def _draw_controlled_gate(self, gate: Controlled[BasicGate], layer: int) -> None:
         """
         Draw a controlled gate (controls + targets).
 
@@ -923,7 +927,7 @@ class MatplotlibCircuitRenderer:
         fig = self.axes.figure
         fig.set_facecolor(self.style.theme.background)
 
-        if self.style.title:
+        if self.style.title is not None and self.style.title:
             self.axes.set_title(
                 self.style.title,
                 pad=self.style.padding * 72,

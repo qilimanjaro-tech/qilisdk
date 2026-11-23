@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import cast
+
 from loguru import logger
 from openfermion import QubitOperator
 
@@ -47,4 +49,4 @@ def qilisdk_to_openfermion(hamiltonian: Hamiltonian) -> QubitOperator:
 
         of_ham += QubitOperator(of_term, coeff)
 
-    return of_ham
+    return cast("QubitOperator", of_ham)

@@ -172,7 +172,7 @@ class HamiltonianStyle(Style):
     """All visual parameters controlling the appearance of a Hamiltonian interaction graph."""
 
     # Figure
-    figsize: Optional[tuple] = Field(default=(7, 6), description=_FIGSIZE_DESCRIPTION)
+    figsize: Optional[tuple[float, float]] = Field(default=(7, 6), description=_FIGSIZE_DESCRIPTION)
     tight_layout: bool = Field(default=True, description=_TIGHT_LAYOUT_DESCRIPTION)
     title_fontsize: int = Field(default=16, description=_TITLE_FONTSIZE_DESCRIPTION)
 
@@ -261,7 +261,7 @@ class ScheduleStyle(Style):
     """
 
     # Figure and axes
-    figsize: Optional[tuple] = Field(default=(8, 5), description=_FIGSIZE_DESCRIPTION)
+    figsize: Optional[tuple[float, float]] = Field(default=(8, 5), description=_FIGSIZE_DESCRIPTION)
     grid: bool = Field(default=True, description="Whether to show grid lines on the plot.")
     grid_style: dict[str, Any] = Field(
         default_factory=lambda: {"linestyle": "--", "color": "#e0e0e0", "alpha": 0.7},
@@ -318,7 +318,7 @@ class DatasetStyle(Style):
     """
 
     # Figure and axes
-    figsize: Optional[tuple] = Field(default=(8, 5), description=_FIGSIZE_DESCRIPTION)
+    figsize: Optional[tuple[float, float]] = Field(default=(8, 5), description=_FIGSIZE_DESCRIPTION)
     grid: bool = Field(default=True, description="Whether to show grid lines on the plot.")
     grid_style: dict[str, Any] = Field(
         default_factory=lambda: {"linestyle": "--", "color": "#e0e0e0", "alpha": 0.7},

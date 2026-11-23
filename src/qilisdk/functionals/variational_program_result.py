@@ -15,6 +15,7 @@ from pprint import pformat
 from typing import Any, Generic, TypeVar
 
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.core.result import Result
 from qilisdk.functionals.functional_result import FunctionalResult
@@ -64,6 +65,7 @@ class VariationalProgramResult(Result, Generic[TFunctionalResult_co]):
         """Sequence of intermediate optimiser snapshots recorded during the run."""
         return self._optimizer_result.intermediate_results
 
+    @override
     def __repr__(self) -> str:
         class_name = self.__class__.__name__
         execution_time = f"  Execution Time={self.execution_time:.6g} s,\n" if self.execution_time is not None else ""

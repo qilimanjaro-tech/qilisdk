@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Callable, Self, Union, cast
 
 import numpy as np
 from loguru import logger
+from typing_extensions import override
 
 from .noise import Noise
 from .protocols import AttachmentScope
@@ -52,6 +53,7 @@ class KrausChannel(Noise):
         return self
 
     @classmethod
+    @override
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
         """
         Return the allowed attachment scopes for this noise representation.
@@ -68,6 +70,7 @@ class KrausChannel(Noise):
             }
         )
 
+    @override
     def __repr__(self) -> str:
         return f"KrausChannel(operators={self._operators})"
 
@@ -188,6 +191,7 @@ class LindbladGenerator(Noise):
         return self
 
     @classmethod
+    @override
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
         """
         Return the allowed attachment scopes for this noise representation.
@@ -197,5 +201,6 @@ class LindbladGenerator(Noise):
         """
         return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})
 
+    @override
     def __repr__(self) -> str:
         return f"LindbladGenerator(jump_operators={self._jump_operators}, rates={self._rates}, hamiltonian={self._hamiltonian})"

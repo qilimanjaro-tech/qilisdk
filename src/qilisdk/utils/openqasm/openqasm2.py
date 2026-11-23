@@ -15,6 +15,7 @@ import ast
 import math
 import re
 from pathlib import Path
+from typing import cast
 
 from loguru import logger
 
@@ -134,7 +135,7 @@ def _evaluate_qasm2_ast_binary(node: ast.BinOp, original_expr: str) -> float:
     if isinstance(node.op, ast.Div):
         return left / right
     if isinstance(node.op, ast.Pow):
-        return left**right
+        return cast("float", left**right)
     raise ValueError(f"Unsupported operator in parameter expression: {original_expr}")
 
 
@@ -191,7 +192,7 @@ def _parse_qasm2_gate_line(line: str) -> tuple[str, str | None, str] | None:
     name_match = re.match(r"^(\w+)", body)
     if name_match is None:
         return None
-    gate_name = name_match.group(1)
+    gate_name = cast("str", name_match.group(1))
 
     # Anything other than a parameter list or a separator after the name means the name itself is malformed.
     separator = body[name_match.end() : name_match.end() + 1]
@@ -445,7 +446,7 @@ def from_qasm2(qasm_str: str) -> Circuit:
 
             # Parse parameters, if any.
             parameters = []
-            if params_str:
+            if params_str is not None:
                 parameters = [_evaluate_qasm2_expression(p) for p in params_str.split(",") if p.strip()]
 
             # The Toffoli gate is the only supported gate acting on more than two qubits.

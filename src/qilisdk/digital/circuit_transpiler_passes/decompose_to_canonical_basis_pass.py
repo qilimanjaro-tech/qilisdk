@@ -19,6 +19,7 @@ from enum import Enum
 from typing import TypeGuard
 
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.digital import Circuit
 from qilisdk.digital.gates import (
@@ -458,6 +459,7 @@ class DecomposeToCanonicalBasisPass(CircuitTranspilerPass):
         """
         return self._two_qubit_basis
 
+    @override
     def run(self, circuit: Circuit) -> Circuit:
         """Rewrite a circuit into the canonical digital basis.
 

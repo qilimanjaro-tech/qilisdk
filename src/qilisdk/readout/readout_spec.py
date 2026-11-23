@@ -17,6 +17,7 @@ from copy import copy
 from typing import TYPE_CHECKING, Generic, Literal, cast
 
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.yaml import yaml
 
@@ -185,6 +186,7 @@ class Readout(Generic[S, E, T]):
         """
         return [ro for ro in (self._sampling, self._expectation, self._state_tomography) if ro is not None]
 
+    @override
     def __repr__(self) -> str:
         parts: list[str] = []
         if self._sampling is not None:

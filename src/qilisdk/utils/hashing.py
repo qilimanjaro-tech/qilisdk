@@ -152,19 +152,19 @@ def _encode_object(value: object) -> bytes:
         )
 
     if kind == "mapping":
-        value = cast("Mapping", value)
+        value = cast("Mapping[object, object]", value)
         encoded_items = [_encode_object(key) + _encode_object(item) for key, item in value.items()]
         encoded_items.sort()
         return b"mapping:" + b"".join(_length_prefix(item) + item for item in encoded_items)
 
     if kind == "set":
-        value = cast("AbstractSet", value)
+        value = cast("AbstractSet[object]", value)
         encoded_items = [_encode_object(item) for item in value]
         encoded_items.sort()
         return b"set:" + b"".join(_length_prefix(item) + item for item in encoded_items)
 
     if kind == "sequence":
-        value = cast("Sequence", value)
+        value = cast("Sequence[object]", value)
         encoded_items = [_encode_object(item) for item in value]
         return b"sequence:" + b"".join(_length_prefix(item) + item for item in encoded_items)
 

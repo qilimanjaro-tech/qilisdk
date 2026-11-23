@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, TypeAlias
+from typing import Any, TypeAlias, cast
 
 from pyscipopt import Expr
 from pyscipopt import Model as ScipModel
 from pyscipopt.recipes.nonlinear import set_nonlinear_objective
 from pyscipopt.scip import GenExpr
+from typing_extensions import override
 
 from qilisdk.core import Model
 from qilisdk.core.comparison import ComparisonOperation
@@ -63,7 +64,7 @@ def _expression_to_scip_expr(expression: Expression, var_exprs: dict[BaseVariabl
     if isinstance(expression, Pow):
         if not isinstance(expression.exp, Constant):
             raise ValueError(f"The symbolic exponent in {expression} is not supported by the SCIP solver.")
-        return _expression_to_scip_expr(expression.base, var_exprs) ** _assert_real(expression.exp.value)
+        return cast("Expr", _expression_to_scip_expr(expression.base, var_exprs) ** _assert_real(expression.exp.value))
     raise ValueError(f"The expression {expression} is not supported by the SCIP solver.")
 
 
@@ -100,7 +101,8 @@ class ScipSolver(ClassicalSolver):
             result = ScipSolver().solve(model)
     """
 
-    def solve(  # ruff: ignore[no-self-use]
+    @override
+    def solve(
         self,
         model: Model,
         verbose: bool = False,
@@ -170,7 +172,7 @@ class ScipSolver(ClassicalSolver):
         # Pass settings to SCIP
         if not verbose:
             scip_model.hideOutput()
-        if params:
+        if params is not None and params:
             scip_model.setParams(params)
 
         # Solve the model

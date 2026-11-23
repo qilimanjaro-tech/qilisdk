@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from loguru import logger
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from qilisdk.digital import Gate
@@ -80,5 +81,6 @@ class NoiseConfig:
         self._default_gate_time = time
         logger.debug("[NoiseConfig] Set default gate time to {}", time)
 
+    @override
     def __repr__(self) -> str:
         return f"{type(self).__qualname__}(default_gate_time={self._default_gate_time}, gate_times={self._gate_times})"

@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Callable, cast, overload
 
 import numpy as np
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.analog import Schedule
 from qilisdk.core import InitialState, reset_qubits
@@ -152,15 +153,17 @@ class Backend(ABC):
 
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
-    ) -> FunctionalResult:
+    ) -> FunctionalResult[Any, Any, Any]:
         raise NotImplementedError(f"{type(self).__qualname__} has no DigitalPropagation implementation")
 
-    def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
+    def _execute_analog_evolution(
+        self, functional: AnalogEvolution, readout: list[ReadoutMethod]
+    ) -> FunctionalResult[Any, Any, Any]:
         raise NotImplementedError(f"{type(self).__qualname__} has no AnalogEvolution implementation")
 
     def _execute_quantum_reservoir(
         self, functional: QuantumReservoir, readout: list[ReadoutMethod]
-    ) -> FunctionalResult:
+    ) -> FunctionalResult[Any, Any, Any]:
         """Execute a quantum reservoir computing functional.
 
         Returns:
@@ -177,7 +180,7 @@ class Backend(ABC):
             state = state.as_qtensor(functional.reservoir_layer.nqubits).to_density_matrix()
         else:
             state = state.to_density_matrix()
-        inter_results: list[ReadoutCompositeResults] = []
+        inter_results: list[ReadoutCompositeResults[Any, Any, Any]] = []
         cache: dict[Circuit, tuple[tuple[float, ...], QTensor]] = {}
         for layer_index, input_dict in enumerate(functional.input_per_layer):
             logger.debug("[Backend] Reservoir layer {}/{}", layer_index + 1, len(functional.input_per_layer))
@@ -198,7 +201,7 @@ class Backend(ABC):
                     res = self._execute_analog_evolution(
                         AnalogEvolution(step, state), readout=[StateTomographyReadout()]
                     )
-                    state: QTensor = res.get_state()
+                    state: QTensor = cast("QTensor", res.get_state())
 
             try:
                 state: QTensor = state.to_density_matrix()
@@ -211,7 +214,7 @@ class Backend(ABC):
 
             inter_results.append(Backend._construct_results_list(state, readout, seed=self._rng))
 
-            if functional.reservoir_layer.qubits_to_reset:
+            if functional.reservoir_layer.qubits_to_reset is not None and functional.reservoir_layer.qubits_to_reset:
                 logger.trace("[Backend] Resetting qubits {}", functional.reservoir_layer.qubits_to_reset)
                 state = reset_qubits(state, functional.reservoir_layer.qubits_to_reset)
 
@@ -291,6 +294,7 @@ class Backend(ABC):
         logger.info("[Backend] Variational Program finished")
         return VariationalProgramResult(optimizer_result=optimizer_result, result=optimal_results)
 
+    @override
     def __repr__(self) -> str:
         """Return a developer-friendly string representation of the backend."""
         return f"{type(self).__qualname__}()"
@@ -302,7 +306,7 @@ class Backend(ABC):
         readout: list[ReadoutMethod],
         seed: int | np.random.Generator | None = None,
         qubits_to_measure: list[int] | None = None,
-    ) -> ReadoutCompositeResults:
+    ) -> ReadoutCompositeResults[Any, Any, Any]:
         sampling_result: SamplingReadoutResult | None = None
         expectation_result: ExpectationReadoutResult | None = None
         state_tomography_result: StateTomographyReadoutResult | None = None
@@ -339,7 +343,7 @@ class Backend(ABC):
         )
 
 
-def _readout_list_to_spec(readout: list[ReadoutMethod]) -> Readout:
+def _readout_list_to_spec(readout: list[ReadoutMethod]) -> Readout[Any, Any, Any]:
     """Convert a flat readout list back to a :class:`Readout`.
 
     Used internally when the variational program handler needs to reconstruct a spec from the list received from the dispatcher.
@@ -347,7 +351,7 @@ def _readout_list_to_spec(readout: list[ReadoutMethod]) -> Readout:
     Returns:
         Readout: the constructed Readout.
     """
-    spec: Readout = Readout()
+    spec: Readout[Any, Any, Any] = Readout()
     for ro in readout:
         if isinstance(ro, SamplingReadout):
             spec = spec.with_sampling(nshots=ro.nshots)

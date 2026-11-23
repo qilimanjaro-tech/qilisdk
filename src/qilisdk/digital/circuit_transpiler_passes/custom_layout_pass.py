@@ -18,6 +18,7 @@ from collections import deque
 from typing import TYPE_CHECKING
 
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.digital import SWAP, Circuit, M
 from qilisdk.digital.topology import build_topology_graph
@@ -91,6 +92,7 @@ class CustomLayoutPass(CircuitTranspilerPass):
         self.last_layout: list[int] | None = None
         self.last_swap_count: int | None = None
 
+    @override
     def run(self, circuit: Circuit) -> Circuit:
         """Retarget a circuit using the user layout, inserting temporary SWAPs when needed.
 

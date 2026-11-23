@@ -14,7 +14,7 @@
 import math
 from copy import copy
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from loguru import logger
 from numpy import e, pi
@@ -205,7 +205,7 @@ class OpenQasmParser:
         self.gates_to_add = []
         self.nqubits = 0
 
-    def _recursive_replace(self, statement: object, replacement_map: dict) -> object:
+    def _recursive_replace(self, statement: object, replacement_map: dict[str, Any]) -> object:
         new_statement = copy(statement)
 
         # If the statement is in the replacement map, replace it
@@ -284,8 +284,8 @@ class OpenQasmParser:
 
     @staticmethod
     def _handle_standard_functions(
-        func_name: str, args_evalled: list
-    ) -> list | str | int | float | complex | bool | None:
+        func_name: str, args_evalled: list[Any]
+    ) -> list[Any] | str | int | float | complex | bool | None:
         # With two int arguments
         if (
             len(args_evalled) >= 2  # ruff: ignore[magic-value-comparison]
@@ -343,7 +343,7 @@ class OpenQasmParser:
     @staticmethod
     def _try_generic_operators(
         lhs: complex, rhs: complex, op: BinaryOperator
-    ) -> list | str | int | float | complex | bool | None:
+    ) -> list[Any] | str | int | float | complex | bool | None:
         if op == BinaryOperator["+"]:
             return lhs + rhs
         if op == BinaryOperator["-"]:
@@ -367,7 +367,7 @@ class OpenQasmParser:
     @staticmethod
     def _try_non_complex_operators(
         lhs: float, rhs: float, op: BinaryOperator
-    ) -> list | str | int | float | complex | bool | None:
+    ) -> list[Any] | str | int | float | complex | bool | None:
         if op == BinaryOperator[">"]:
             return lhs > rhs
         if op == BinaryOperator[">="]:
@@ -379,7 +379,9 @@ class OpenQasmParser:
         return None
 
     @staticmethod
-    def _try_int_operators(lhs: int, rhs: int, op: BinaryOperator) -> list | str | int | float | complex | bool | None:
+    def _try_int_operators(
+        lhs: int, rhs: int, op: BinaryOperator
+    ) -> list[Any] | str | int | float | complex | bool | None:
         if op == BinaryOperator["<<"]:
             return lhs << rhs
         if op == BinaryOperator[">>"]:
@@ -394,7 +396,7 @@ class OpenQasmParser:
 
     def _handle_expression_lhs_rhs(
         self, lhs: object, rhs: object, op: BinaryOperator
-    ) -> list | str | int | float | complex | bool:
+    ) -> list[Any] | str | int | float | complex | bool:
         if not (isinstance(lhs, (int, float, complex)) and isinstance(rhs, (int, float, complex))):
             raise ValueError(f"Unsupported operands for operator {op}: {lhs} and {rhs}")  # pragma: no cover
 
@@ -414,7 +416,7 @@ class OpenQasmParser:
 
         raise ValueError(f"Unsupported operator: {op}")  # pragma: no cover
 
-    def _handle_expression_with_op(self, expr: object) -> list | str | int | float | complex | bool:
+    def _handle_expression_with_op(self, expr: object) -> list[Any] | str | int | float | complex | bool:
         if hasattr(expr, "op"):
             if hasattr(expr, "lhs") and hasattr(expr, "rhs"):
                 lhs = self._evaluate_expression(expr.lhs)
@@ -431,7 +433,7 @@ class OpenQasmParser:
         raise ValueError("Expression does not have an operator")  # pragma: no cover
 
     @staticmethod
-    def _handle_cast(expr: Cast, value_to_cast: object) -> list | str | int | float | complex | bool:
+    def _handle_cast(expr: Cast, value_to_cast: object) -> list[Any] | str | int | float | complex | bool:
         if isinstance(expr.type, (UintType, IntType, BitType)) and isinstance(value_to_cast, (int, float)):
             return int(value_to_cast) % (2**32)
         if isinstance(expr.type, (FloatType, AngleType, DurationType, StretchType)) and isinstance(
@@ -444,7 +446,7 @@ class OpenQasmParser:
             return bool(value_to_cast)
         raise ValueError(f"Unsupported cast type: {expr.type}")  # pragma: no cover
 
-    def _handle_expression_function_call(self, expr: FunctionCall) -> list | str | int | float | complex | bool:
+    def _handle_expression_function_call(self, expr: FunctionCall) -> list[Any] | str | int | float | complex | bool:
         func_name = expr.name.name
         args_evalled = [self._evaluate_expression(arg) for arg in expr.arguments]
 
@@ -465,14 +467,14 @@ class OpenQasmParser:
                     replacement_map[arg_name_in_body] = self._evaluate_expression(actual_arg)
             for func_statement in func_def["body"]:
                 res = self._process_statement(self._recursive_replace(func_statement, replacement_map))
-                if res:
+                if res is not None and res:
                     return self._parse_return_val(res)
             return 0
 
         raise ValueError(f"Unsupported function: {func_name}")
 
     @staticmethod
-    def _get_value_with_unit(expr: object) -> list | str | int | float | complex | bool | None:
+    def _get_value_with_unit(expr: object) -> list[Any] | str | int | float | complex | bool | None:
         if hasattr(expr, "value") and expr.value is not None and isinstance(expr.value, (int, float, complex)):
             value_with_unit = expr.value
             if hasattr(expr, "unit") and expr.unit is not None:
@@ -487,7 +489,9 @@ class OpenQasmParser:
             return value_with_unit
         return None
 
-    def _handle_expression_index_expression(self, expr: IndexExpression) -> list | str | int | float | complex | bool:
+    def _handle_expression_index_expression(
+        self, expr: IndexExpression
+    ) -> list[Any] | str | int | float | complex | bool:
         if not isinstance(expr.index, list) or not hasattr(expr.collection, "name") or expr.collection.name is None:
             raise ValueError(f"Invalid index expression: {expr}")  # pragma: no cover
         var_name = expr.collection.name
@@ -500,7 +504,7 @@ class OpenQasmParser:
             return value
         raise ValueError(f"Undefined variable for index expression: {var_name}")  # pragma: no cover
 
-    def _evaluate_expression(self, expr: object) -> list | str | int | float | complex | bool:
+    def _evaluate_expression(self, expr: object) -> list[Any] | str | int | float | complex | bool:
         # If it's a list, evaluate each element
         if isinstance(expr, list):
             return [self._evaluate_expression(element) for element in expr]
@@ -556,7 +560,7 @@ class OpenQasmParser:
 
         raise ValueError(f"Unsupported expression: {expr}")  # pragma: no cover
 
-    def _flatten(self, lst: list) -> list:
+    def _flatten(self, lst: list[Any]) -> list[Any]:
         flat_list = []
         for item in lst:
             if isinstance(item, list):
@@ -586,7 +590,7 @@ class OpenQasmParser:
                 indices = self._flatten(indices)
 
                 # If only given one index, get at that location
-                qubits_to_return = []
+                qubits_to_return: list[int] = []
                 for index in indices:
                     if index < end - start + 1:
                         qubits_to_return.append(start + index)
@@ -639,7 +643,7 @@ class OpenQasmParser:
         raise ValueError(f"Unsupported gate: {gate_name}")  # pragma: no cover
 
     def _to_qilisdk_gate(
-        self, gate_name: str, qubits: list, arguments: list[float] = [], modifiers: list[str] = []
+        self, gate_name: str, qubits: list[int], arguments: list[float] = [], modifiers: list[str] = []
     ) -> list[Gate]:
         # Process the gate info
         gate_name = gate_name.lower()
@@ -869,7 +873,7 @@ class OpenQasmParser:
         if gate_name in self.custom_gate_definitions:
             gate_def = self.custom_gate_definitions[gate_name]
             # Arguments and qubits are substituted positionally, keeping any index the call site gives a qubit
-            replacement_map: dict = dict(zip(gate_def["args"], arguments))
+            replacement_map: dict[str, Any] = dict(zip(gate_def["args"], arguments))
             replacement_map.update(zip(gate_def["qubits"], statement.qubits[num_controls:]))
             control_qubits = qubits[:num_controls]
             for gate_statement in gate_def["body"]:
@@ -895,14 +899,14 @@ class OpenQasmParser:
                 res = self._process_statement(
                     branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                 )
-                if res:
+                if res is not None and res:
                     return self._parse_return_val(res)
         else:
             for branched_statement in statement.else_block:
                 res = self._process_statement(
                     branched_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                 )
-                if res:
+                if res is not None and res:
                     return self._parse_return_val(res)
 
         return ""
@@ -923,7 +927,7 @@ class OpenQasmParser:
                     res = self._process_statement(
                         case_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                     )
-                    if res:
+                    if res is not None and res:
                         return self._parse_return_val(res)
                 break
 
@@ -933,7 +937,7 @@ class OpenQasmParser:
                 res = self._process_statement(
                     default_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                 )
-                if res:
+                if res is not None and res:
                     return self._parse_return_val(res)
 
         return ""
@@ -994,13 +998,13 @@ class OpenQasmParser:
                 res = self._process_statement(
                     loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                 )
-                if res:
+                if res is not None and res:
                     break
             if res == "break":
                 break
             if res == "continue":
                 continue
-            if res:
+            if res is not None and res:
                 return self._parse_return_val(res)
 
         # Remove the loop variable from the var list after the loop is done
@@ -1017,13 +1021,13 @@ class OpenQasmParser:
                 res = self._process_statement(
                     loop_statement, extra_modifiers=extra_modifiers, extra_qubits=extra_qubits
                 )
-                if res:
+                if res is not None and res:
                     break
             if res == "break":
                 break
             if res == "continue":
                 continue
-            if res:
+            if res is not None and res:
                 return self._parse_return_val(res)
 
         return ""
@@ -1248,7 +1252,7 @@ class OpenQasmParser:
                     control_qubits += base_gate.control_qubits[:num_own_controls]
                 else:
                     modifiers.append("inv @")
-                base_gate = base_gate.basic_gate
+                base_gate = cast("Gate", base_gate.basic_gate)
             qasm_gate_name = _OPENQASM3_NAMES.get(type(base_gate))
             if qasm_gate_name is None:
                 raise UnsupportedGateError(f"Cannot express the {gate.name} gate in OpenQASM 3.0.")

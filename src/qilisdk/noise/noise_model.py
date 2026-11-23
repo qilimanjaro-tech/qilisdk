@@ -18,6 +18,7 @@ from collections import defaultdict
 from typing import TypeAlias, TypeVar, overload
 
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.digital import Gate
 
@@ -288,6 +289,7 @@ class NoiseModel:
             parameter,
         )
 
+    @override
     def __repr__(self) -> str:
         SO_SONARQUBE_DOESNT_COMPLAIN = "  },"
         lines = [

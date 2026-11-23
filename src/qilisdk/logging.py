@@ -19,12 +19,13 @@ from __future__ import annotations
 import logging
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from loguru import logger
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 from ruamel.yaml import YAML
+from typing_extensions import override
 
 from qilisdk.settings import get_settings
 
@@ -97,7 +98,8 @@ class InterceptHandler(logging.Handler):
     Redirect stdlib 'logging' records to Loguru, optionally filtering by name_prefix.
     """
 
-    def emit(self, record: logging.LogRecord) -> None:  # ruff: ignore[no-self-use]
+    @override
+    def emit(self, record: logging.LogRecord) -> None:
         try:
             level = logger.level(record.levelname).name
         except ValueError:
@@ -178,9 +180,9 @@ def configure_logging(level: str | None = None, filename: str | Path | None = No
 
         # Remember the first sink's presentation (read from the dumped params, before any override)
         if not seen_first_sink:
-            base_format = params.get("format")
-            base_filter = params.get("filter")
-            base_level = params.get("level", base_level)
+            base_format = cast("str | None", params.get("format"))
+            base_filter = cast("str | dict[str, str] | None", params.get("filter"))
+            base_level = cast("str", params.get("level", base_level))
             seen_first_sink = True
 
         # Skip console sinks when console output is disabled.

@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import numpy as np
+from typing_extensions import override
 
 from qilisdk.ml.datasets.dataset import Dataset, DatasetSample, FloatArray, build_prediction_sample, rk4_step
 
@@ -126,6 +127,7 @@ class Lorenz(Dataset):
         self._washout = washout
         self._horizon = horizon
 
+    @override
     def generate(self, npoints: int) -> DatasetSample:
         """
         Integrate the Lorenz system and build a prediction sample.

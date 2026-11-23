@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 import numpy as np
 from loguru import logger
 from scipy.linalg import expm
-from typing_extensions import Self
+from typing_extensions import Self, override
 
 from qilisdk.core.expression import Expression
 from qilisdk.core.parameterizable import Parameterizable
@@ -153,6 +153,7 @@ class Gate(Parameterizable, ABC):
         return len(self.qubits)
 
     @property
+    @override
     def nparameters(self) -> int:
         """
         Retrieve the number of parameters for the gate.
@@ -172,6 +173,7 @@ class Gate(Parameterizable, ABC):
         """
         return self.nparameters != 0
 
+    @override
     def get_parameters(
         self,
         where: Callable[[Parameter], bool] | None = None,
@@ -187,6 +189,7 @@ class Gate(Parameterizable, ABC):
         """
         return super().get_parameters(where=where)
 
+    @override
     def get_parameter_names(
         self,
         where: Callable[[Parameter], bool] | None = None,
@@ -202,6 +205,7 @@ class Gate(Parameterizable, ABC):
         """
         return super().get_parameter_names(where=where)
 
+    @override
     def get_parameter_values(
         self,
         where: Callable[[Parameter], bool] | None = None,
@@ -217,6 +221,7 @@ class Gate(Parameterizable, ABC):
         """
         return super().get_parameter_values(where=where)
 
+    @override
     def set_parameters(self, parameters: dict[str, float]) -> None:
         """
         Set the parameters for the gate using a dictionary mapping names to values.
@@ -235,6 +240,7 @@ class Gate(Parameterizable, ABC):
             raise InvalidParameterNameError
         super().set_parameters(parameters=parameters)
 
+    @override
     def set_parameter_values(
         self,
         values: list[float],
@@ -258,6 +264,7 @@ class Gate(Parameterizable, ABC):
             raise ParametersNotEqualError
         super().set_parameter_values(values=values, where=where)
 
+    @override
     def get_parameter_bounds(
         self,
         where: Callable[[Parameter], bool] | None = None,
@@ -265,6 +272,7 @@ class Gate(Parameterizable, ABC):
         """Return parameter bounds, optionally filtered by predicate."""
         return super().get_parameter_bounds(where=where)
 
+    @override
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         if not self.is_parameterized:
             raise GateNotParameterizedError
@@ -300,6 +308,7 @@ class Gate(Parameterizable, ABC):
 
     __rsub__ = __sub__
 
+    @override
     def __repr__(self) -> str:
         qubits_str = f"{self.qubits[0]}" if self.nqubits == 1 else str(self.qubits).replace("(", "").replace(")", "")
         if self.is_parameterized:
@@ -307,6 +316,7 @@ class Gate(Parameterizable, ABC):
             return f"{self.name}({qubits_str}, {param_str})"
         return f"{self.name}({qubits_str})"
 
+    @override
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Gate):
             return NotImplemented
@@ -316,6 +326,7 @@ class Gate(Parameterizable, ABC):
             and np.allclose(self.get_parameter_values(), other.get_parameter_values(), atol=get_settings().atol)
         )
 
+    @override
     def __hash__(self) -> int:
         atol = get_settings().atol
         ndecimals = int(-np.log10(atol))
@@ -371,20 +382,24 @@ class BasicGate(Gate):
                     raise InvalidParameterNameError
 
     @cached_property
+    @override
     def matrix(self) -> QTensor:
         return self._generate_matrix()
 
     @property
+    @override
     def target_qubits(self) -> tuple[int, ...]:
         return self._target_qubits
 
     def _invalidate_matrix(self) -> None:
         self.__dict__.pop("matrix", None)
 
+    @override
     def set_parameters(self, parameters: dict[str, float]) -> None:
         super().set_parameters(parameters=parameters)
         self._invalidate_matrix()
 
+    @override
     def set_parameter_values(
         self,
         values: list[float],
@@ -393,6 +408,7 @@ class BasicGate(Gate):
         super().set_parameter_values(values=values, where=where)
         self._invalidate_matrix()
 
+    @override
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         super().set_parameter_bounds(ranges=ranges)
         self._invalidate_matrix()
@@ -460,33 +476,40 @@ class Modified(Gate, Generic[TBasicGate]):
         return self._basic_gate
 
     @cached_property
+    @override
     def matrix(self) -> QTensor:
         return self._generate_matrix()
 
     @property
+    @override
     def target_qubits(self) -> tuple[int, ...]:
         return self._basic_gate.target_qubits
 
     @property
+    @override
     def nparameters(self) -> int:
         return self._basic_gate.nparameters
 
     @property
+    @override
     def is_parameterized(self) -> bool:
         return self._basic_gate.is_parameterized
 
+    @override
     def get_parameters(
         self,
         where: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, float]:
         return self._basic_gate.get_parameters(where=where)
 
+    @override
     def get_parameter_names(
         self,
         where: Callable[[Parameter], bool] | None = None,
     ) -> list[str]:
         return self._basic_gate.get_parameter_names(where=where)
 
+    @override
     def get_parameter_values(
         self,
         where: Callable[[Parameter], bool] | None = None,
@@ -496,10 +519,12 @@ class Modified(Gate, Generic[TBasicGate]):
     def _invalidate_matrix(self) -> None:
         self.__dict__.pop("matrix", None)
 
+    @override
     def set_parameters(self, parameters: dict[str, float]) -> None:
         self._basic_gate.set_parameters(parameters=parameters)
         self._invalidate_matrix()
 
+    @override
     def set_parameter_values(
         self,
         values: list[float],
@@ -508,12 +533,14 @@ class Modified(Gate, Generic[TBasicGate]):
         self._basic_gate.set_parameter_values(values=values, where=where)
         self._invalidate_matrix()
 
+    @override
     def get_parameter_bounds(
         self,
         where: Callable[[Parameter], bool] | None = None,
     ) -> dict[str, tuple[float, float]]:
         return self._basic_gate.get_parameter_bounds(where=where)
 
+    @override
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         self._basic_gate.set_parameter_bounds(ranges)
 
@@ -549,8 +576,9 @@ class Controlled(Modified[TBasicGate]):
         if len(control_qubits) == 0:
             raise ValueError("At least one control qubit must be specified.")
 
-        self._control_qubits = control_qubits + inner_gate.control_qubits
+        self._control_qubits: tuple[int, ...] = control_qubits + inner_gate.control_qubits
 
+    @override
     def _generate_matrix(self) -> QTensor:
         logger.trace("[Gates] Generating Controlled matrix for {} on {} qubits", self.name, self.nqubits)
         i_full = np.eye(1 << self.nqubits, dtype=_complex_dtype())
@@ -565,10 +593,12 @@ class Controlled(Modified[TBasicGate]):
         return QTensor(controlled)
 
     @property
+    @override
     def control_qubits(self) -> tuple[int, ...]:
         return self._control_qubits
 
     @property
+    @override
     def name(self) -> str:
         return "C" * len(self.control_qubits) + self.basic_gate.name
 
@@ -583,15 +613,18 @@ class Adjoint(Modified[TBasicGate]):
         super().__init__(basic_gate=basic_gate)
         logger.trace("[Gates] Constructing Adjoint of {}", type(basic_gate).__name__)
 
+    @override
     def _generate_matrix(self) -> QTensor:
         logger.trace("[Gates] Generating Adjoint matrix for {}", self.name)
         return self.basic_gate.matrix.dagger()
 
     @property
+    @override
     def control_qubits(self) -> tuple[int, ...]:
         return self.basic_gate.control_qubits
 
     @property
+    @override
     def name(self) -> str:
         """
         Get the name of the adjoint gate.
@@ -617,16 +650,19 @@ class Exponential(Modified[TBasicGate]):
         super().__init__(basic_gate=basic_gate)
         logger.trace("[Gates] Constructing Exponential of {}", type(basic_gate).__name__)
 
+    @override
     def _generate_matrix(self) -> QTensor:
         logger.trace("[Gates] Generating Exponential matrix for {}", self.name)
         return QTensor(expm(self.basic_gate.matrix.dense()))
 
     @property
+    @override
     def target_qubits(self) -> tuple[int, ...]:
         # The exponential of a controlled gate is not itself controlled, so every qubit is a target
         return self.basic_gate.qubits
 
     @property
+    @override
     def name(self) -> str:
         """
         Get the name of the exponential gate.
@@ -658,14 +694,17 @@ class M(Gate):
         super().__init__()
 
     @property
+    @override
     def name(self) -> str:
         return "M"
 
     @property
+    @override
     def matrix(self) -> QTensor:
         raise GateHasNoMatrixError
 
     @property
+    @override
     def target_qubits(self) -> tuple[int, ...]:
         return self._target_qubits
 
@@ -694,10 +733,12 @@ class I(BasicGate):
         super().__init__(target_qubits=(qubit,))
 
     @property
+    @override
     def name(self) -> str:
         return "I"
 
-    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+    @override
+    def _generate_matrix(self) -> QTensor:
         return QTensor(np.array([[1, 0], [0, 1]], dtype=_complex_dtype()))
 
 
@@ -726,10 +767,12 @@ class X(BasicGate):
         super().__init__(target_qubits=(qubit,))
 
     @property
+    @override
     def name(self) -> str:
         return "X"
 
-    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+    @override
+    def _generate_matrix(self) -> QTensor:
         return QTensor(np.array([[0, 1], [1, 0]], dtype=_complex_dtype()))
 
 
@@ -758,10 +801,12 @@ class Y(BasicGate):
         super().__init__(target_qubits=(qubit,))
 
     @property
+    @override
     def name(self) -> str:
         return "Y"
 
-    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+    @override
+    def _generate_matrix(self) -> QTensor:
         return QTensor(np.array([[0, -1j], [1j, 0]], dtype=_complex_dtype()))
 
 
@@ -790,10 +835,12 @@ class Z(BasicGate):
         super().__init__(target_qubits=(qubit,))
 
     @property
+    @override
     def name(self) -> str:
         return "Z"
 
-    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+    @override
+    def _generate_matrix(self) -> QTensor:
         return QTensor(np.array([[1, 0], [0, -1]], dtype=_complex_dtype()))
 
 
@@ -822,10 +869,12 @@ class H(BasicGate):
         super().__init__(target_qubits=(qubit,))
 
     @property
+    @override
     def name(self) -> str:
         return "H"
 
-    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+    @override
+    def _generate_matrix(self) -> QTensor:
         return QTensor((1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]], dtype=_complex_dtype()))
 
 
@@ -854,10 +903,12 @@ class S(BasicGate):
         super().__init__(target_qubits=(qubit,))
 
     @property
+    @override
     def name(self) -> str:
         return "S"
 
-    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+    @override
+    def _generate_matrix(self) -> QTensor:
         return QTensor(np.array([[1, 0], [0, 1j]], dtype=_complex_dtype()))
 
 
@@ -886,10 +937,12 @@ class T(BasicGate):
         super().__init__(target_qubits=(qubit,))
 
     @property
+    @override
     def name(self) -> str:
         return "T"
 
-    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+    @override
+    def _generate_matrix(self) -> QTensor:
         return QTensor(np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=_complex_dtype()))
 
 
@@ -969,6 +1022,7 @@ class RX(BasicGate):
         )
 
     @property
+    @override
     def name(self) -> str:
         return "RX"
 
@@ -981,6 +1035,7 @@ class RX(BasicGate):
             return val
         return self.get_parameters()["theta"]
 
+    @override
     def _generate_matrix(self) -> QTensor:
         theta = self.theta
         cos_half = np.cos(theta / 2)
@@ -1031,6 +1086,7 @@ class RY(BasicGate):
         )
 
     @property
+    @override
     def name(self) -> str:
         return "RY"
 
@@ -1043,6 +1099,7 @@ class RY(BasicGate):
             return val
         return self.get_parameters()["theta"]
 
+    @override
     def _generate_matrix(self) -> QTensor:
         theta = self.theta
         cos_half = np.cos(theta / 2)
@@ -1101,6 +1158,7 @@ class RZ(BasicGate):
         )
 
     @property
+    @override
     def name(self) -> str:
         return "RZ"
 
@@ -1113,6 +1171,7 @@ class RZ(BasicGate):
             return val
         return self.get_parameters()["phi"]
 
+    @override
     def _generate_matrix(self) -> QTensor:
         phi = self.phi
         return QTensor(np.array([[np.exp(-0.5j * phi), 0.0], [0.0, np.exp(0.5j * phi)]], dtype=_complex_dtype()))
@@ -1164,6 +1223,7 @@ class U1(BasicGate):
         )
 
     @property
+    @override
     def name(self) -> str:
         return "U1"
 
@@ -1176,6 +1236,7 @@ class U1(BasicGate):
             return val
         return self.get_parameters()["phi"]
 
+    @override
     def _generate_matrix(self) -> QTensor:
         phi = self.phi
         return QTensor(np.array([[1, 0], [0, np.exp(1j * phi)]], dtype=_complex_dtype()))
@@ -1233,6 +1294,7 @@ class U2(BasicGate):
         )
 
     @property
+    @override
     def name(self) -> str:
         return "U2"
 
@@ -1254,6 +1316,7 @@ class U2(BasicGate):
             return val
         return self.get_parameters()["gamma"]
 
+    @override
     def _generate_matrix(self) -> QTensor:
         phi = self.phi
         gamma = self.gamma
@@ -1332,6 +1395,7 @@ class U3(BasicGate):
         )
 
     @property
+    @override
     def name(self) -> str:
         return "U3"
 
@@ -1362,6 +1426,7 @@ class U3(BasicGate):
             return val
         return self.get_parameters()["gamma"]
 
+    @override
     def _generate_matrix(self) -> QTensor:
         theta = self.theta
         phi = self.phi
@@ -1399,6 +1464,7 @@ class CNOT(Controlled[X]):
         super().__init__(control, basic_gate=X(target))
 
     @property
+    @override
     def name(self) -> str:
         return "CNOT"
 
@@ -1453,8 +1519,10 @@ class SWAP(BasicGate):
         super().__init__(target_qubits=(qubit_a, qubit_b))
 
     @property
+    @override
     def name(self) -> str:
         return "SWAP"
 
-    def _generate_matrix(self) -> QTensor:  # ruff: ignore[no-self-use]
+    @override
+    def _generate_matrix(self) -> QTensor:
         return QTensor(np.array([[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=_complex_dtype()))

@@ -19,6 +19,7 @@ from typing import TYPE_CHECKING, Any, Callable
 import numpy as np
 from loguru import logger
 from scipy import optimize as scipy_optimize
+from typing_extensions import override
 
 from qilisdk.yaml import yaml
 
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
 class SciPyOptimizer(Optimizer):
     def __init__(
         self,
-        method: str | Callable | None = None,
+        method: str | Callable[..., Any] | None = None,
         **kwargs: dict[str, Any],
     ) -> None:
         """Create a new Gradient Based optimizer instance.
@@ -80,6 +81,7 @@ class SciPyOptimizer(Optimizer):
         self.extra_arguments = kwargs
         logger.debug("[SciPyOptimizer] Created optimizer with method {}", method)
 
+    @override
     def optimize(
         self,
         cost_function: Callable[[list[float]], float],
@@ -122,7 +124,7 @@ class SciPyOptimizer(Optimizer):
         def value_callback(parameters: list[float], cost: float, *_: object) -> None:
             store_intermediate_result(parameters, cost)
 
-        callback: Callable | None = None
+        callback: Callable[..., None] | None = None
         if store_intermediate_results and self.method in {"basinhopping", "dual_annealing"}:
             callback = value_callback
         elif store_intermediate_results:
@@ -195,6 +197,7 @@ class SciPyOptimizer(Optimizer):
             intermediate_results=intermediate_results,
         )
 
+    @override
     def __repr__(self) -> str:
         extra_args_str = ", ".join(f"{key}={value!r}" for key, value in self.extra_arguments.items())
         return f"SciPyOptimizer(method={self.method!r}, {extra_args_str})"

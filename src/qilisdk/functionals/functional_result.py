@@ -16,6 +16,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Generic, overload
 
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.core.result import Result
 from qilisdk.readout.readout_result import (
@@ -363,6 +364,7 @@ class FunctionalResult(Result, Generic[S, E, T]):
             return self._intermediate_results[index]
         return self._readout_results
 
+    @override
     def __repr__(self) -> str:
         LIMIT = 10
         out = ""

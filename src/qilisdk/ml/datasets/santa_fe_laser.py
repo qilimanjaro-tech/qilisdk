@@ -13,6 +13,8 @@
 # limitations under the License.
 from __future__ import annotations
 
+from typing_extensions import override
+
 from qilisdk.ml.datasets.dataset import Dataset, DatasetSample, build_prediction_sample
 from qilisdk.ml.datasets.lorenz import integrate_lorenz
 
@@ -85,6 +87,7 @@ class SantaFeLaser(Dataset):
         self._washout = washout
         self._horizon = horizon
 
+    @override
     def generate(self, npoints: int) -> DatasetSample:
         """
         Integrate the laser equations and build an intensity prediction sample.

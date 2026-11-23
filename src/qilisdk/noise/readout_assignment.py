@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 from loguru import logger
+from typing_extensions import override
 
 from .noise import Noise
 from .protocols import AttachmentScope, HasAllowedScopes
@@ -54,6 +55,7 @@ class ReadoutAssignment(Noise, HasAllowedScopes):
         return self._p10
 
     @classmethod
+    @override
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
         """Return the attachment scopes supported by this perturbation type.
 
@@ -62,5 +64,6 @@ class ReadoutAssignment(Noise, HasAllowedScopes):
         """
         return frozenset({AttachmentScope.GLOBAL, AttachmentScope.PER_QUBIT})
 
+    @override
     def __repr__(self) -> str:
         return f"{type(self).__qualname__}(p01={self._p01}, p10={self._p10})"

@@ -48,7 +48,7 @@ def _nvidia_lib_dirs() -> list[str]:
             spec = importlib.util.find_spec(component)
         except (ImportError, ValueError):
             spec = None
-        if spec is None or not spec.submodule_search_locations:
+        if spec is None or spec.submodule_search_locations is None:
             continue
         for location in spec.submodule_search_locations:
             lib_dir = pathlib.Path(location) / "lib"

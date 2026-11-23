@@ -15,10 +15,11 @@ from __future__ import annotations
 
 import math
 from copy import copy
-from typing import TYPE_CHECKING, Callable, Iterator, Mapping, overload
+from typing import TYPE_CHECKING, Callable, Iterator, overload
 
 from loguru import logger
 from numpy import linspace
+from typing_extensions import override
 
 from qilisdk.analog.hamiltonian import Hamiltonian, _reject_digital_object
 from qilisdk.core.expression import Cos, Expression
@@ -310,7 +311,7 @@ class Schedule(Parameterizable):
             return cls.linear(hamiltonians[0], hamiltonians[1], total_time, dt)
         segment_time = total_time / (num_hams - 1)
         hamiltonians_dict = {f"h{i}": ham for i, ham in enumerate(hamiltonians)}
-        coefficients_dict: dict = {}
+        coefficients_dict: CoeffDict = {}
         for i in range(num_hams):
             start = (i - 1) * segment_time
             peak = i * segment_time
@@ -436,6 +437,7 @@ class Schedule(Parameterizable):
             return 0
         return max(self._hamiltonians.values(), key=lambda v: v.nqubits).nqubits
 
+    @override
     def _iter_parameter_children(self) -> Iterator[Parameterizable]:
         """Expose hamiltonians and interpolators to the shared parameter interface.
 
@@ -457,7 +459,7 @@ class Schedule(Parameterizable):
                 value.set_value(t)
             return float(value.evaluate())
         if isinstance(value, Expression):
-            ctx: Mapping[BaseVariable, list[int] | int | float] = {self._current_time: t} if t is not None else {}
+            ctx: dict[BaseVariable, list[int] | int | float] = {self._current_time: t} if t is not None else {}
             aux = value.evaluate(ctx)
 
             return aux.real if isinstance(aux, complex) else float(aux)
@@ -684,7 +686,7 @@ class Schedule(Parameterizable):
         style = style or ScheduleStyle(title="Schedule Coefficient")
         renderer = MatplotlibScheduleRenderer(self, style=style)
         renderer.plot()
-        if filepath:
+        if filepath is not None and filepath:
             renderer.save(filepath)
         else:
             renderer.show()
@@ -720,7 +722,7 @@ class Schedule(Parameterizable):
         )
 
         # If we try to show overlaps but haven't given intermediate states, raise an error
-        if show_overlaps and not intermediate_states:
+        if show_overlaps and (intermediate_states is None or not intermediate_states):
             logger.warning(
                 "[Schedule] Overlaps can't be shown without intermediate states. Setting show_overlaps to False."
             )
@@ -730,7 +732,7 @@ class Schedule(Parameterizable):
             self, levels=levels, style=style, intermediate_states=intermediate_states, show_overlaps=show_overlaps
         )
         renderer.plot()
-        if filepath:
+        if filepath is not None and filepath:
             renderer.save(filepath)
         else:
             renderer.show()
@@ -771,6 +773,7 @@ class Schedule(Parameterizable):
 
         return full_eigenvalues, full_eigenstates
 
+    @override
     def __repr__(self) -> str:
         lines = [
             f"{type(self).__qualname__}(",
@@ -787,6 +790,7 @@ class Schedule(Parameterizable):
         ]
         return "\n".join(lines)
 
+    @override
     def set_parameter_values(
         self,
         values: list[float],
@@ -806,6 +810,7 @@ class Schedule(Parameterizable):
             coeff.delete_cache()
         super().set_parameter_values(values, where)
 
+    @override
     def set_parameters(self, parameters: dict[str, int | float]) -> None:
         """
         Assign parameter values by name and clear caches.
@@ -817,6 +822,7 @@ class Schedule(Parameterizable):
             coeff.delete_cache()
         super().set_parameters(parameters)
 
+    @override
     def set_parameter_bounds(self, ranges: dict[str, tuple[float, float]]) -> None:
         """
         Update parameter bounds and clear caches.

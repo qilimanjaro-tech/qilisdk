@@ -27,10 +27,11 @@ from __future__ import annotations
 import copy
 import re
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import numpy as np
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.core.exceptions import EvaluationError, InvalidBoundsError, OutOfBoundsException
 from qilisdk.settings import get_settings
@@ -215,6 +216,7 @@ class Bitwise(Encoding):
         return list(reversed([int(b) for b in format(x, f"0{N}b")]))
 
     @staticmethod
+    @override
     def encode(var: Variable, precision: float = 1e-2) -> Expression:
         bounds = var.bounds
         if var.domain is Domain.REAL:
@@ -231,6 +233,7 @@ class Bitwise(Encoding):
         return term * var.precision if var.domain is Domain.REAL else term
 
     @staticmethod
+    @override
     def evaluate(var: Variable, value: list[int] | int, precision: float = 1e-2) -> float:
         term = Bitwise.encode(var, precision)
         binary_var = sorted(term.variables(), key=lambda x: _extract_number(x.label))
@@ -253,11 +256,13 @@ class Bitwise(Encoding):
         return out
 
     @staticmethod
+    @override
     def encoding_constraint(var: Variable, precision: float = 1e-2) -> Comparison | None:
         # Every binary string is a valid Bitwise encoding, so no constraint is needed.
         return None
 
     @staticmethod
+    @override
     def num_binary_equivalent(var: Variable, precision: float = 1e-2) -> int:
         bounds = var.bounds
         if var.domain is Domain.REAL:
@@ -272,6 +277,7 @@ class Bitwise(Encoding):
         return n_binary + 1
 
     @staticmethod
+    @override
     def check_valid(value: list[int] | int) -> tuple[bool, int]:
         return True, 0
 
@@ -306,6 +312,7 @@ class OneHot(Encoding):
         return 0
 
     @staticmethod
+    @override
     def encode(var: Variable, precision: float = 1e-2) -> Expression:
         bounds = var.bounds
         if var.domain is Domain.REAL:
@@ -320,6 +327,7 @@ class OneHot(Encoding):
         return term * var.precision if var.domain is Domain.REAL else term
 
     @staticmethod
+    @override
     def evaluate(var: Variable, value: list[int] | int, precision: float = 1e-2) -> float:
         term = OneHot.encode(var, precision)
         binary_var = sorted(term.variables(), key=lambda x: _extract_number(x.label))
@@ -350,6 +358,7 @@ class OneHot(Encoding):
         return out
 
     @staticmethod
+    @override
     def encoding_constraint(var: Variable, precision: float = 1e-2) -> Comparison:
         n_binary = OneHot.num_binary_equivalent(var, precision)
 
@@ -357,6 +366,7 @@ class OneHot(Encoding):
         return Comparison(lhs=sum(binary_vars, Constant(0)), rhs=1, operation=ComparisonOperation.EQ)
 
     @staticmethod
+    @override
     def num_binary_equivalent(var: Variable, precision: float = 1e-2) -> int:
         bounds = var.bounds
         if var.domain is Domain.REAL:
@@ -367,6 +377,7 @@ class OneHot(Encoding):
         return n_binary
 
     @staticmethod
+    @override
     def check_valid(value: list[int] | int) -> tuple[bool, int]:
         binary_list = OneHot._one_hot_encode(value, value) if isinstance(value, int) else value
         num_ones = binary_list.count(1)
@@ -394,6 +405,7 @@ class DomainWall(Encoding):
         return [1] * x + [0] * (N - x)
 
     @staticmethod
+    @override
     def encode(var: Variable, precision: float = 1e-2) -> Expression:
         bounds = var.bounds
         if var.domain is Domain.REAL:
@@ -411,6 +423,7 @@ class DomainWall(Encoding):
         return term * var.precision if var.domain is Domain.REAL else term
 
     @staticmethod
+    @override
     def evaluate(var: Variable, value: list[int] | int, precision: float = 1e-2) -> float:
         term = DomainWall.encode(var, precision)
         binary_var = sorted(term.variables(), key=lambda x: _extract_number(x.label))
@@ -435,6 +448,7 @@ class DomainWall(Encoding):
         return out
 
     @staticmethod
+    @override
     def encoding_constraint(var: Variable, precision: float = 1e-2) -> Comparison:
         n_binary = DomainWall.num_binary_equivalent(var, precision)
 
@@ -446,6 +460,7 @@ class DomainWall(Encoding):
         )
 
     @staticmethod
+    @override
     def num_binary_equivalent(var: Variable, precision: float = 1e-2) -> int:
         bounds = var.bounds
         if var.domain is Domain.REAL:
@@ -456,6 +471,7 @@ class DomainWall(Encoding):
         return n_binary
 
     @staticmethod
+    @override
     def check_valid(value: list[int] | int) -> tuple[bool, int]:
         binary_list = DomainWall._domain_wall_encode(value, value) if isinstance(value, int) else value
         value = sum(binary_list[i + 1] * (1 - binary_list[i]) for i in range(len(binary_list) - 1))
@@ -572,25 +588,32 @@ class BaseVariable(Expression, ABC):
         self.set_bounds(bounds[0], bounds[1])
 
     # ---- Expression interface ----
+    @override
     def free_symbols(self) -> set[BaseVariable]:
         return {self}
 
     @property
+    @override
     def degree(self) -> int:
         return 1
 
+    @override
     def derivative(self, symbol: BaseVariable) -> Expression:
         return Constant(1) if self == symbol else Constant(0)
 
-    def _sort_key(self) -> tuple:
+    @override
+    def _sort_key(self) -> tuple[Any, ...]:
         return (_RANK_VARIABLE, self._label)
 
+    @override
     def _compute_hash(self) -> int:
         return qili_hash(self._label)
 
+    @override
     def __repr__(self) -> str:
         return f"{self._label}"
 
+    @override
     def __str__(self) -> str:
         return f"{self._label}"
 
@@ -612,12 +635,13 @@ class BinaryVariable(BaseVariable):
 
     is_idempotent_under_mul: ClassVar[bool] = True
 
-    def num_binary_equivalent(self) -> int:  # ruff: ignore[no-self-use]
+    @override
+    def num_binary_equivalent(self) -> int:
         return 1
 
+    @override
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> RealNumber:
-        env = env if env is not None else {}
-        if self not in env:
+        if env is None or self not in env:
             raise EvaluationError(f"No value was provided to evaluate the binary variable {self}.")
         value = env[self]
         if isinstance(value, (int, float)):
@@ -632,6 +656,7 @@ class BinaryVariable(BaseVariable):
             raise EvaluationError("Evaluating a Binary variable with a binary list of more than one item.")
         return value[0]
 
+    @override
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         raise NotImplementedError
 
@@ -654,9 +679,11 @@ class SpinVariable(BaseVariable):
     def __init__(self, label: str) -> None:
         super().__init__(label=label, domain=Domain.SPIN, bounds=(-1, 1))
 
-    def num_binary_equivalent(self) -> int:  # ruff: ignore[no-self-use]
+    @override
+    def num_binary_equivalent(self) -> int:
         return 1
 
+    @override
     def to_binary(self) -> Expression:
         """Encode the spin as ``2 * b - 1`` over a binary variable named like any other encoding.
 
@@ -668,12 +695,13 @@ class SpinVariable(BaseVariable):
         """
         return 2 * BinaryVariable(f"{self.label}(0)") - 1
 
+    @override
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         raise NotImplementedError
 
+    @override
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> RealNumber:
-        env = env if env is not None else {}
-        if self not in env:
+        if env is None or self not in env:
             raise EvaluationError(f"No value was provided to evaluate the spin variable {self}.")
         value = env[self]
         if isinstance(value, Number):
@@ -774,6 +802,7 @@ class Variable(BaseVariable):
         self._precision = precision
         self._invalidate_encoding()
 
+    @override
     def set_bounds(self, lower_bound: float | None, upper_bound: float | None) -> None:
         super().set_bounds(lower_bound, upper_bound)
         self._invalidate_encoding()
@@ -792,6 +821,7 @@ class Variable(BaseVariable):
             self.to_binary()
         return self._bin_vars[item]
 
+    @override
     def update_variable(
         self,
         domain: Domain,
@@ -802,9 +832,9 @@ class Variable(BaseVariable):
         self._invalidate_encoding()
         return super().update_variable(domain, bounds)
 
+    @override
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> RealNumber:
-        env = env if env is not None else {}
-        if self not in env:
+        if env is None or self not in env:
             raise EvaluationError(f"No value was provided to evaluate the variable {self}.")
         value = env[self]
         if isinstance(value, (int, float)):
@@ -817,6 +847,7 @@ class Variable(BaseVariable):
             raise EvaluationError(f"Evaluating variable {self} with an unsupported value {value!r}.")
         return self.encoding.evaluate(self, value, self._precision)
 
+    @override
     def to_binary(self) -> Expression:
         if self._expression is None:
             expression = self.encoding.encode(self, precision=self._precision)
@@ -825,6 +856,7 @@ class Variable(BaseVariable):
             self._bin_vars = sorted(self._bin_vars, key=lambda x: _extract_number(x.label))
         return self._expression
 
+    @override
     def num_binary_equivalent(self) -> int:
         """Number of binary variables needed to encode the continuous variable.
 
@@ -904,7 +936,8 @@ class Parameter(BaseVariable):
         self.check_value(value)
         self._value = cast("RealNumber", value.item()) if isinstance(value, np.generic) else value
 
-    def num_binary_equivalent(self) -> int:  # ruff: ignore[no-self-use]
+    @override
+    def num_binary_equivalent(self) -> int:
         """A parameter has no binary representation.
 
         Returns:
@@ -912,6 +945,7 @@ class Parameter(BaseVariable):
         """
         return 0
 
+    @override
     def evaluate(self, env: Mapping[BaseVariable, Number | list[int]] | None = None) -> RealNumber:
         """Evaluate the parameter, using the value from ``env`` if present else its stored value.
 
@@ -921,8 +955,7 @@ class Parameter(BaseVariable):
         Returns:
             RealNumber: the parameter's value.
         """
-        env = env if env is not None else {}
-        if self in env:
+        if env is not None and self in env:
             value = env[self]
             if not isinstance(value, RealNumber):
                 raise NotImplementedError("Evaluating the value of a parameter with a list is not supported.")
@@ -930,10 +963,12 @@ class Parameter(BaseVariable):
             return value
         return self.value
 
+    @override
     def to_binary(self) -> Expression:
         """Return the constant representation of the parameter."""
         return Constant(self.value)
 
+    @override
     def set_bounds(self, lower_bound: float | None, upper_bound: float | None) -> None:
         upper_bound = upper_bound if upper_bound is not None else self.domain.max()
         lower_bound = lower_bound if lower_bound is not None else self.domain.min()
@@ -943,6 +978,7 @@ class Parameter(BaseVariable):
             )
         super().set_bounds(lower_bound, upper_bound)
 
+    @override
     def update_variable(self, domain: Domain, bounds: tuple[float | None, float | None] = (None, None)) -> None:
         if len(bounds) != 2:  # ruff: ignore[magic-value-comparison]
             raise ValueError(
@@ -958,6 +994,7 @@ class Parameter(BaseVariable):
 
     __hash__ = Expression.__hash__
 
+    @override
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Expression):
             return hash(self) == hash(other)

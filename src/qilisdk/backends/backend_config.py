@@ -21,6 +21,7 @@ import psutil
 from loguru import logger
 from pydantic import BaseModel, Field, field_validator
 from pydantic import ConfigDict as PydanticConfigDict
+from typing_extensions import override
 
 # ----------------------------
 # Base config interface
@@ -92,6 +93,7 @@ class MonteCarloConfig(BaseSimulatorConfig):
         description="How finely analog evolutions resolve quantum jumps in time: lower is more accurate but slower, higher is faster but less accurate.",
     )
 
+    @override
     def get_config(self) -> SolverConfigDict:
         """Return Monte Carlo settings in backend-compatible key names."""
         return {
@@ -165,6 +167,7 @@ class AnalogMethod(BaseSimulatorConfig):
         description="Order of the polynomial expansion used in the variational ansatz when `evolution_method='variational_exponential'`.",
     )
 
+    @override
     def get_config(self) -> SolverConfigDict:
         """Return a complete analog solver configuration for the C++ backend."""
         d: SolverConfigDict = {
@@ -337,6 +340,7 @@ class ExecutionConfig(BaseSimulatorConfig):
         ),
     )
 
+    @override
     def get_config(self) -> SolverConfigDict:
         """Return execution settings with resolved defaults."""
         d: dict[str, float | str] = {
@@ -357,7 +361,7 @@ class ExecutionConfig(BaseSimulatorConfig):
     @classmethod
     def _validate_num_threads(cls, num_threads: int) -> int:
         if num_threads <= 0:
-            resolved = psutil.cpu_count(logical=False) or 1
+            resolved = int(psutil.cpu_count(logical=False) or 1)
             logger.debug("[BackendConfig] num_threads=0 requested, resolved to {} physical cores", resolved)
             return resolved
         return num_threads
@@ -461,6 +465,7 @@ class DigitalMethod(BaseSimulatorConfig):
         description="Singular values smaller than this fraction of the largest are discarded when using the MPS digital simulation method.",
     )
 
+    @override
     def get_config(self) -> SolverConfigDict:
         """Return digital simulation settings in backend-compatible key names."""
         d: SolverConfigDict = {

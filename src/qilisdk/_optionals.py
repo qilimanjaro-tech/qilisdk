@@ -20,6 +20,7 @@ from typing import Any, Callable, NoReturn
 
 from loguru import logger
 from packaging.requirements import Requirement
+from typing_extensions import override
 
 
 class OptionalDependencyError(ImportError):
@@ -86,7 +87,7 @@ class ImportedFeature:
     """
 
     name: str
-    symbols: dict[str, Any | Callable]
+    symbols: dict[str, Any | Callable[..., Any]]
 
 
 class _OptionalDependencyStub:
@@ -137,6 +138,7 @@ class _OptionalDependencyStub:
             unmet=self._unmet,
         )
 
+    @override
     def __repr__(self) -> str:
         return f"<missing optional dependency: {self._symbol_name} (feature {self._feature_name!r})>"
 
@@ -261,7 +263,7 @@ def import_optional_dependencies(feature: OptionalFeature) -> ImportedFeature:
 
     # All good: import real symbols
     logger.debug("[Optionals] Optional feature {} resolved, importing symbols", feature.name)
-    symbols: dict[str, Any | Callable] = {}
+    symbols: dict[str, Any | Callable[..., Any]] = {}
     for symbol in feature.symbols:
         try:
             module = importlib.import_module(symbol.path)

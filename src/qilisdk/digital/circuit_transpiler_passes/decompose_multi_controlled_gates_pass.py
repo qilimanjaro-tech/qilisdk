@@ -16,6 +16,7 @@ import math
 from typing import TypeGuard
 
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.digital import RX, RY, RZ, U1, U2, U3, Circuit, Gate, H, I, S, T, X, Y, Z
 from qilisdk.digital.gates import BasicGate, Controlled
@@ -45,6 +46,7 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
     from sqrt(U), its adjoint, and multi-controlled Pauli-X gates.
     """
 
+    @override
     def run(self, circuit: Circuit) -> Circuit:
         """Rewrite the circuit while decomposing multi-controlled gates.
 
@@ -90,7 +92,7 @@ class DecomposeMultiControlledGatesPass(CircuitTranspilerPass):
         return [gate]
 
 
-def _decompose(gate: Controlled) -> list[Gate]:
+def _decompose(gate: Controlled[BasicGate]) -> list[Gate]:
     """Recursively decompose a multi-controlled single-qubit gate.
 
     Args:

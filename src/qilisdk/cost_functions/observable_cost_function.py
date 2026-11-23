@@ -13,10 +13,11 @@
 # limitations under the License.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliZ
 from qilisdk.core.qtensor import QTensor, expect_val, ket
@@ -26,6 +27,7 @@ from qilisdk.settings import get_settings
 if TYPE_CHECKING:
     from qilisdk.core.types import Number
     from qilisdk.functionals.functional_result import FunctionalResult  # type: ignore[type-arg]
+    from qilisdk.readout import SamplingReadoutResult
 
 
 class ObservableCostFunction(CostFunction):
@@ -106,7 +108,8 @@ class ObservableCostFunction(CostFunction):
             return self._observable.expand(nqubits)
         return self._observable
 
-    def compute_cost(self, results: FunctionalResult) -> Number:
+    @override
+    def compute_cost(self, results: FunctionalResult[Any, Any, Any]) -> Number:
         """Compute the cost from a ``FunctionalResult``.
 
         Uses the final state if available (exact expectation value via
@@ -130,7 +133,7 @@ class ObservableCostFunction(CostFunction):
             return self._compute_from_samples(results)
         raise ValueError("ObservableCostFunction requires either a StateTomography or Sampling readout in the results.")
 
-    def _compute_from_state(self, results: FunctionalResult) -> Number:
+    def _compute_from_state(self, results: FunctionalResult[Any, Any, Any]) -> Number:
         """Compute the exact expectation value from the final quantum state.
 
         Args:
@@ -148,7 +151,7 @@ class ObservableCostFunction(CostFunction):
             return total_cost.real
         return total_cost
 
-    def _compute_from_samples(self, results: FunctionalResult) -> Number:
+    def _compute_from_samples(self, results: FunctionalResult[SamplingReadoutResult, Any, Any]) -> Number:
         """Estimate the expectation value from sampled probability distributions.
 
         Each bitstring sample is converted to a computational-basis ket and the
@@ -199,6 +202,7 @@ class ObservableCostFunction(CostFunction):
             return total_cost.real
         return total_cost
 
+    @override
     def __repr__(self) -> str:
         """Return a string representation of this cost function.
 

@@ -16,6 +16,8 @@ from __future__ import annotations
 
 from abc import abstractmethod
 
+from typing_extensions import override
+
 from .noise_abc import NoiseABC
 from .protocols import AttachmentScope, HasAllowedScopes
 
@@ -36,6 +38,7 @@ class ParameterPerturbation(NoiseABC, HasAllowedScopes):
         ...
 
     @classmethod
+    @override
     def allowed_scopes(cls) -> frozenset[AttachmentScope]:
         """Return the attachment scopes supported by this perturbation type.
 

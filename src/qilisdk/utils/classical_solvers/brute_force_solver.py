@@ -15,6 +15,7 @@
 import itertools
 
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.core import Model
 from qilisdk.core.variables import BinaryVariable, SpinVariable, Variable
@@ -35,7 +36,8 @@ class BruteForceSolver(ClassicalSolver):
             result = BruteForceSolver().solve(model)
     """
 
-    def solve(self, model: Model) -> ClassicalSolverResult:  # ruff: ignore[no-self-use]
+    @override
+    def solve(self, model: Model) -> ClassicalSolverResult:
         """Solve the given model by brute-force enumeration of all variable assignments.
 
         Binary variables are assigned values from {0, 1} and spin variables values from {-1, 1}.

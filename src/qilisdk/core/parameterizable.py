@@ -77,7 +77,7 @@ class Parameterizable(ABC):
             other (Parameterizable): Object to pull the parameter from.
             new_label (str | None, optional): Optional label to use in this object.
         """
-        if new_label:
+        if new_label is not None and new_label:
             self._parameters[self._prefix + new_label] = other._parameters[parameter_label]
         else:
             self._parameters[self._prefix + parameter_label] = other._parameters[parameter_label]
@@ -315,7 +315,7 @@ class Parameterizable(ABC):
         Returns:
             list[Comparison]: Comparison terms defined locally and by child parameterizable objects.
         """
-        constraints = list((self._parameter_constraints or []))
+        constraints: list[Comparison] = [] if self._parameter_constraints is None else list(self._parameter_constraints)
         for child in self._iter_parameter_children():
             constraints.extend(child.get_constraints())
         return constraints

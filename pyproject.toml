@@ -219,6 +219,24 @@ repair-wheel-command = "delvewheel repair -w {dest_dir} --no-dll qilisim_module*
 include = ["src"]
 exclude = ["tests"]
 
+[tool.ty.rules]
+blanket-ignore-comment = "error"
+disjoint-cast = "error"
+division-by-zero = "error"
+dynamic-function-decorator-return = "error"
+missing-override-decorator = "error"
+missing-type-argument = "error"
+possibly-missing-attribute = "error"
+possibly-missing-import = "error"
+possibly-unresolved-reference = "error"
+truthiness-test-of-none-union = "error"
+unsound-assignment = "error"
+unsound-return = "error"
+unsound-yield = "error"
+
+[tool.ty.terminal]
+error-on-warning = true
+
 [tool.ruff]
 line-length = 120
 output-format = "concise"

@@ -18,6 +18,7 @@ import math
 
 import numpy as np
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.digital import Circuit
 from qilisdk.digital.circuit_transpiler_passes.decompose_to_canonical_basis_pass import SingleQubitGateBasis
@@ -88,6 +89,7 @@ class FuseSingleQubitGatesPass(CircuitTranspilerPass):
             return None
         return unitary
 
+    @override
     def run(self, circuit: Circuit) -> Circuit:
         """Fuse adjacent one-qubit unitary sequences into canonical single gates.
 

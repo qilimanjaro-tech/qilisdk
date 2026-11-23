@@ -17,13 +17,14 @@ import warnings
 from collections.abc import Callable
 from copy import copy
 from enum import Enum
-from typing import TYPE_CHECKING, Type, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, Type, TypeAlias, TypeVar, cast
 
 import cudaq
 import numpy as np
 from cudaq import ElementaryOperator, OperatorSum, ScalarOperator, SpinOperatorTerm, State, evolve, operators, spin
 from cudaq import Schedule as CudaSchedule
 from loguru import logger
+from typing_extensions import override
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliOperator, PauliX, PauliY, PauliZ
 from qilisdk.backends.backend import Backend
@@ -308,9 +309,10 @@ class CudaqBackend(Backend):
             logger.warning("QTensor initial states are not natively supported by the CUDA backend, ignoring.")
         return circuit
 
+    @override
     def _execute_digital_propagation(
         self, functional: DigitalPropagation, readout: list[ReadoutMethod]
-    ) -> FunctionalResult:
+    ) -> FunctionalResult[Any, Any, Any]:
         """Execute a digital-circuit propagation functional using the CUDA backend.
 
         Translates the circuit into a CUDA-Q kernel, applies noise if a
@@ -389,7 +391,7 @@ class CudaqBackend(Backend):
                 noise_model=cuda_noise_model,
             )
             cudaq_result = self._handle_readout_errors(cudaq_result, self._noise_model, circuit.nqubits, rng=self._rng)
-            if og_param:
+            if og_param is not None and og_param:
                 functional.set_parameters(og_param)
             logger.info("[CudaqBackend] Sampling finished, {} distinct bitstrings", len(cudaq_result))
             sampling_readout = next((ro for ro in readout if isinstance(ro, SamplingReadout)), None)
@@ -410,7 +412,7 @@ class CudaqBackend(Backend):
         if all(ro.is_sampling_readout() for ro in readout):
             sampling_readout = next(ro for ro in readout if isinstance(ro, SamplingReadout))
             cudaq_result = cudaq.sample(kernel, shots_count=sampling_readout.nshots)
-            if og_param:
+            if og_param is not None and og_param:
                 functional.set_parameters(og_param)
             logger.info("[CudaqBackend] Sampling finished, {} distinct bitstrings", len(cudaq_result))
             return FunctionalResult(
@@ -446,7 +448,10 @@ class CudaqBackend(Backend):
             )
         )
 
-    def _execute_analog_evolution(self, functional: AnalogEvolution, readout: list[ReadoutMethod]) -> FunctionalResult:
+    @override
+    def _execute_analog_evolution(
+        self, functional: AnalogEvolution, readout: list[ReadoutMethod]
+    ) -> FunctionalResult[Any, Any, Any]:
         """Compute analog time evolution using the CUDA-Q dynamics target.
 
         Translates the schedule Hamiltonians to CUDA-Q operator sums,
@@ -524,7 +529,7 @@ class CudaqBackend(Backend):
             final_state = final_state.reshape(-1, 1)
         final_state = QTensor(final_state)
 
-        if og_params:
+        if og_params is not None and og_params:
             functional.set_parameters(og_params)
 
         intermediate_states = []
@@ -1062,7 +1067,7 @@ class CudaqBackend(Backend):
 
     def _add_global_noise_dynamics(
         self,
-        ops_numpy: list,
+        ops_numpy: list[np.ndarray],
         jump_operators: list[OperatorSum],
         hamiltonian_deltas: list[OperatorSum],
         lindblad_generator: LindbladGenerator,
@@ -1130,7 +1135,7 @@ class CudaqBackend(Backend):
 
     def _add_per_qubit_noise_dynamics(
         self,
-        ops_numpy: list,
+        ops_numpy: list[np.ndarray],
         jump_operators: list[OperatorSum],
         hamiltonian_deltas: list[OperatorSum],
         lindblad_generator: LindbladGenerator,
@@ -1188,7 +1193,7 @@ class CudaqBackend(Backend):
 
     def _noise_model_to_cudaq_dynamics(
         self, noise_model: NoiseModel, nqubits: int, dt: float
-    ) -> tuple[list[OperatorSum], list]:
+    ) -> tuple[list[OperatorSum], list[OperatorSum]]:
         """Convert a noise model to CUDA-Q dynamics jump operators and Hamiltonian corrections.
 
         Processes global and per-qubit Lindblad noise channels, producing
@@ -1353,7 +1358,11 @@ class CudaqBackend(Backend):
         return State.from_data(cudaq_to_standard(cuda_state_data).astype(cuda_state_data.dtype))
 
     def _handle_controlled(
-        self, kernel: cudaq.Kernel, gate: Controlled, control_qubit: cudaq.QuakeValue, target_qubit: cudaq.QuakeValue
+        self,
+        kernel: cudaq.Kernel,
+        gate: Controlled[BasicGate],
+        control_qubit: cudaq.QuakeValue,
+        target_qubit: cudaq.QuakeValue,
     ) -> None:
         """
         Handle a controlled gate operation.
@@ -1386,7 +1395,7 @@ class CudaqBackend(Backend):
         handler(target_kernel, gate.basic_gate, qubit)
         kernel.control(target_kernel, control_qubit, target_qubit)
 
-    def _handle_adjoint(self, kernel: cudaq.Kernel, gate: Adjoint, qubits: cudaq.QuakeValue) -> None:
+    def _handle_adjoint(self, kernel: cudaq.Kernel, gate: Adjoint[BasicGate], qubits: cudaq.QuakeValue) -> None:
         """
         Handle an adjoint (inverse) gate operation.
 
@@ -1576,4 +1585,4 @@ def __getattr__(name: str) -> type[CudaqBackend | CudaqSamplingMethod]:
     if replacement is None:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
     warnings.warn(f"{name} is deprecated, use {replacement} instead.", DeprecationWarning, stacklevel=2)
-    return globals()[replacement]
+    return cast("type[CudaqBackend | CudaqSamplingMethod]", globals()[replacement])

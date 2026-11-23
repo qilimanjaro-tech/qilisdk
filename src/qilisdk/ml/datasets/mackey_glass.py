@@ -14,9 +14,10 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import numpy as np
+from typing_extensions import override
 
 from qilisdk.ml.datasets.dataset import Dataset, DatasetSample, build_prediction_sample, rk4_step
 
@@ -90,6 +91,7 @@ class MackeyGlass(Dataset):
         return None
 
     @classmethod
+    @override
     def draw(
         cls,
         sample: DatasetSample | FloatArray,
@@ -183,6 +185,7 @@ class MackeyGlass(Dataset):
         self._washout = washout
         self._horizon = horizon
 
+    @override
     def generate(self, npoints: int) -> DatasetSample:
         """
         Integrate the Mackey--Glass equation and build a prediction sample.
@@ -212,7 +215,7 @@ class MackeyGlass(Dataset):
         beta, gamma, n, dt = self._beta, self._gamma, self._n, self._dt
 
         def deriv(x: float, x_delayed: float) -> float:
-            return beta * x_delayed / (1.0 + x_delayed**n) - gamma * x
+            return beta * x_delayed / (1.0 + cast("float", x_delayed**n)) - gamma * x
 
         traj = np.empty(tau_steps + n_steps + 1, dtype=np.float64)
         traj[: tau_steps + 1] = self._x0

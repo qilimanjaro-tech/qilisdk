@@ -24,6 +24,7 @@ from loguru import logger
 from pydantic import BaseModel
 from ruamel.yaml import YAML
 from scipy import sparse
+from typing_extensions import override
 
 
 def csr_representer(representer, data: sparse.csr_matrix):
@@ -94,7 +95,7 @@ def np_scalar_constructor(constructor, node):
     return dtype.type(mapping["value"])
 
 
-def defaultdict_representer(representer, data: defaultdict):
+def defaultdict_representer(representer, data: defaultdict[object, object]):
     """
     Represent a defaultdict by serializing its default_factory
     (as module+qualname) plus its items dict.
@@ -208,7 +209,7 @@ def complex_constructor(constructor, node):
     return complex(mapping["real"], mapping["imag"])
 
 
-def tuple_representer(representer, data: tuple):
+def tuple_representer(representer, data: tuple[object, ...]):
     """
     Representer for built-in Python tuple.
     """
@@ -277,6 +278,7 @@ class QiliYAML(YAML):
         logger.debug("[Yaml] Initializing QiliYAML handler")
         super().__init__(**kwargs)
 
+    @override
     def register_class(self, cls=None, *, shared: bool = False):
         """
         Register a class with the YAML handler, assigning it a unique tag.

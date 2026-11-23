@@ -231,12 +231,12 @@ class MatplotlibDatasetRenderer:
         Returns:
             str: The label for the component, e.g. ``"x(t)"``, ``"x(t + 5)"``, or a dataset-provided label.
         """
-        base = self.labels[0] if self.labels else "x"
+        base = self.labels[0] if self.labels is not None and self.labels else "x"
         if embedded:
             if index == 0:
                 return f"{base}(t)"
             return f"{base}(t + {index * lag})"
-        if self.labels and index < len(self.labels):
+        if self.labels is not None and index < len(self.labels):
             return self.labels[index]
         return f"x{index}"
 
@@ -328,7 +328,7 @@ class MatplotlibDatasetRenderer:
                 label, values = item
             else:
                 values = cast("NDArray[np.float64]", item)
-                label = self.labels[i] if self.labels and i < len(self.labels) else f"x{i}"
+                label = self.labels[i] if self.labels is not None and i < len(self.labels) else f"x{i}"
             channels.append((label, np.asarray(values, dtype=np.float64)))
         return channels
 
