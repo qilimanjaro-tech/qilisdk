@@ -372,9 +372,9 @@ def _normalize_single_qubit_gate(gate: Gate, basis: SingleQubitGateBasis) -> lis
             return [gate]
         if isinstance(gate, U3):
             return [
-                RZ(qubit, phi=_wrap_angle(gate.phi)),
-                RY(qubit, theta=_wrap_angle(gate.theta)),
                 RZ(qubit, phi=_wrap_angle(gate.gamma)),
+                RY(qubit, theta=_wrap_angle(gate.theta)),
+                RZ(qubit, phi=_wrap_angle(gate.phi)),
             ]
         return _normalize_single_qubit_gate(_as_basis_1q(gate), basis)
 

@@ -76,11 +76,14 @@ def _sequence_matrix(gates: list[Gate], nqubits: int) -> np.ndarray:
 
 
 def _unitaries_equivalent(first: np.ndarray, second: np.ndarray, atol: float = 1e-9) -> bool:
-    diff = first.conj().T @ second
-    if not np.allclose(diff, np.diag(np.diag(diff)), atol=atol):
+    """Return whether ``second`` equals ``first`` up to a single global phase (relative phases are rejected)."""
+    if first.shape != second.shape:
         return False
-    diag = np.diag(diff)
-    return np.allclose(np.abs(diag), np.ones_like(diag), atol=atol)
+    overlap = np.vdot(first, second)
+    if np.isclose(abs(overlap), 0.0, atol=atol):
+        return np.allclose(first, second, atol=atol)
+    phase = overlap / abs(overlap)
+    return np.allclose(second, phase * first, atol=atol)
 
 
 def _apply_sequence_to_state(gates: list[Gate], state: np.ndarray, nqubits: int) -> np.ndarray:

@@ -189,6 +189,13 @@ def test_unitaries_non_equivalent():
     assert not _unitaries_equivalent(I, H)
 
 
+def test_unitaries_with_relative_phase_are_not_equivalent():
+    I = np.eye(2, dtype=complex)
+    Z = np.diag([1.0, -1.0]).astype(complex)
+    assert not _unitaries_equivalent(I, Z)
+    assert not _unitaries_equivalent(I, np.eye(4, dtype=complex))
+
+
 # ---------------------------
 # Vector phase equivalence
 # ---------------------------
