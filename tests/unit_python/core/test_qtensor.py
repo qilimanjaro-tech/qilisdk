@@ -696,6 +696,25 @@ def test_reset_qubits_preserves_rest_qubits_coherence_and_order():
     np.testing.assert_allclose(reset_state.dense(), expected.dense(), atol=1e-8)
 
 
+@pytest.mark.parametrize("nqubits", [3, 4])
+def test_reset_qubits_clears_only_the_requested_bits(nqubits: int):
+    for to_reset in [{0}, {nqubits - 1}, {0, 1}, {1, nqubits - 1}]:
+        mask = sum(1 << (nqubits - 1 - q) for q in to_reset)
+        for basis in range(2**nqubits):
+            bits = [(basis >> (nqubits - 1 - q)) & 1 for q in range(nqubits)]
+            reset_state = reset_qubits(ket(*bits).to_density_matrix(), sorted(to_reset))
+            expected = np.zeros((2**nqubits, 2**nqubits))
+            expected[basis & ~mask, basis & ~mask] = 1
+            np.testing.assert_allclose(reset_state.dense(), expected, atol=1e-8)
+
+
+def test_reset_qubits_preserves_coherence_of_outer_qubits():
+    state = ((ket(1, 1, 0) + ket(1, 0, 1)) * (1 / np.sqrt(2))).to_density_matrix()
+    reset_state = reset_qubits(state, [0])
+    expected = ((ket(0, 1, 0) + ket(0, 0, 1)) * (1 / np.sqrt(2))).to_density_matrix()
+    np.testing.assert_allclose(reset_state.dense(), expected.dense(), atol=1e-8)
+
+
 def test_reset_qubits_invalid_indices_raise():
     state = ket(1, 0).to_density_matrix()
     with pytest.raises(ValueError, match="Invalid qubit indices"):
@@ -1457,6 +1476,19 @@ def test_uniform_is_dense_ket():
     u = QTensor.uniform(3)
     assert u._qtensor_cpp.storage_format() == "dense"
     assert u.is_ket()
+
+
+@pytest.mark.parametrize("index", [(2, 0), (0, 2), (-1, 0), (0, -1), (2**31 - 1, 0)])
+def test_getitem_out_of_range_raises(index):
+    dense = QTensor(np.array([[1, 2], [3, 4]]))
+    sparse = QTensor(np.array([[1, 0], [0, 0]]))
+    assert dense._qtensor_cpp.storage_format() == "dense"
+    assert sparse._qtensor_cpp.storage_format() == "row_sparse"
+
+    with pytest.raises(IndexError):
+        dense[index]
+    with pytest.raises(IndexError):
+        sparse[index]
 
 
 def test_large_zero_ket_is_representable():
