@@ -529,6 +529,23 @@ def test_execute_quantum_reservoir_qutip():
     assert len(result) >= 2
 
 
+@pytest.mark.parametrize("qubit_to_reset", [0, 1, 2])
+@pytest.mark.parametrize("backend", backends)
+def test_execute_quantum_reservoir_resets_requested_qubit(backend, qubit_to_reset):
+    # |110> is an eigenstate of the Hamiltonian, so only the reset can change <Z>
+    layer = ReservoirLayer(
+        evolution_dynamics=Schedule(hamiltonians={"h": pauli_z(0) + pauli_z(1) + pauli_z(2)}, total_time=0.1, dt=0.05),
+        qubits_to_reset=[qubit_to_reset],
+    )
+    functional = QuantumReservoir(initial_state=ket(1, 1, 0), reservoir_layer=layer, input_per_layer=[{}, {}])
+    expected = [-1.0, -1.0, 1.0]
+    expected[qubit_to_reset] = 1.0
+
+    result = backend.execute(functional, Readout().with_expectation(observables=[pauli_z(q) for q in range(3)]))
+
+    assert result.get_expectation_values() == pytest.approx(expected, abs=1e-6)
+
+
 @pytest.mark.parametrize("backend", backends)
 def test_cnot_on_one(backend):
     circuit = Circuit(nqubits=2)
