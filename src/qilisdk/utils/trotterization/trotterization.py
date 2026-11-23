@@ -58,7 +58,10 @@ def _pauli_evolution(
             yield H(q)
         elif name == "Y":
             gate_val = pi / 2
-            yield RX(q, theta=Parameter("fixed_" + str(gate_val), gate_val, Domain.REAL, (gate_val, gate_val)))
+            yield RX(
+                q,
+                theta=Parameter("fixed_" + str(gate_val), gate_val, Domain.REAL, (gate_val, gate_val), trainable=False),
+            )
 
     # Apply CNOT ladder
     for i in range(len(qubit_indices) - 1):
@@ -84,7 +87,10 @@ def _pauli_evolution(
             yield H(q)
         elif name == "Y":
             gate_val = -pi / 2
-            yield RX(q, theta=Parameter("fixed_" + str(gate_val), gate_val, Domain.REAL, (gate_val, gate_val)))
+            yield RX(
+                q,
+                theta=Parameter("fixed_" + str(gate_val), gate_val, Domain.REAL, (gate_val, gate_val), trainable=False),
+            )
 
 
 def trotter_evolution(
