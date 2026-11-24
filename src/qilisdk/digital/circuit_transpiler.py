@@ -35,7 +35,7 @@ from .topology import build_topology_graph
 if TYPE_CHECKING:
     from qilisdk.digital import Circuit
 
-    from .types import LayoutMap, Topology
+    from .types import LayoutMap, TopologyLike
 
 
 class TranspilerPassResult:
@@ -130,7 +130,7 @@ class CircuitTranspiler:
         cls,
         single_qubit_basis: SingleQubitGateBasis = SingleQubitGateBasis.U3,
         two_qubit_basis: TwoQubitGateBasis = TwoQubitGateBasis.CNOT,
-        topology: Topology | None = None,
+        topology: TopologyLike | None = None,
         qubit_mapping: LayoutMap | None = None,
     ) -> Self:
         """Build the default transpiler pipeline.
@@ -147,10 +147,10 @@ class CircuitTranspiler:
                 used by canonical decomposition and final single-qubit fusion.
             two_qubit_basis (TwoQubitGateBasis): Target two-qubit entangling gate
                 used by canonical decomposition.
-            topology (Topology | None): Optional hardware coupling map. It can
-                be provided either as a list of connected physical-qubit pairs
-                or as a ``rustworkx`` ``PyGraph`` whose node indices are
-                physical qubits.
+            topology (TopologyLike | None): Optional hardware coupling map. It can
+                be provided as a ``TopologyPreset`` (e.g. ``TopologyPreset.grid(4, 5)``),
+                a list of connected physical-qubit pairs or a ``rustworkx``
+                ``PyGraph`` whose node indices are physical qubits.
             qubit_mapping (LayoutMap | None): Optional logical-to-physical
                 qubit assignment. This argument is only used when ``topology`` is
                 provided. If omitted, the pipeline uses ``SabreLayoutPass`` and
