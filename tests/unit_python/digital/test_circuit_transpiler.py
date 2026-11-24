@@ -162,6 +162,33 @@ def test_circuit_transpiler_transpile_does_not_expose_initial_layout() -> None:
     assert transpilation_result.layout == {}
 
 
+def test_circuit_transpiler_transpile_reports_initial_layout() -> None:
+    circuit = Circuit(2)
+
+    transpilation_result = CircuitTranspiler(pipeline=[_RecordLayoutPass()]).transpile(circuit)
+
+    assert transpilation_result.initial_layout == {0: 1, 1: 0}
+
+
+def test_circuit_transpiler_initial_layout_is_none_without_layout_pass() -> None:
+    transpilation_result = CircuitTranspiler.default().transpile(Circuit(2))
+
+    assert transpilation_result.initial_layout is None
+
+
+def test_sabre_swap_alone_records_its_initial_layout() -> None:
+    circuit = Circuit(3)
+    circuit.add([CNOT(0, 2), CNOT(1, 2), CNOT(0, 1)])
+    topology = build_topology_graph([(0, 1), (1, 2)])
+
+    transpilation_result = CircuitTranspiler(pipeline=[SabreSwapPass(topology, seed=0)]).transpile(circuit)
+
+    assert transpilation_result.initial_layout is not None
+    assert transpilation_result.circuit.is_equivalent_to(
+        circuit, layout=transpilation_result.initial_layout, final_layout=transpilation_result.layout
+    )
+
+
 def test_circuit_transpiler_default_does_not_apply_the_layout_twice() -> None:
     transpiler = CircuitTranspiler.default(topology=[(0, 1), (1, 2)])
 
@@ -202,6 +229,7 @@ def test_circuit_transpiler_result_returns_defensive_copies() -> None:
         intermediate_results=[pass_result],
         layout={0: 2},
         metrics={"swap_count": 3},
+        initial_layout={0: 1},
     )
 
     intermediate_results = transpilation_result.intermediate_results
@@ -212,9 +240,13 @@ def test_circuit_transpiler_result_returns_defensive_copies() -> None:
     assert layout is not None
     layout[0] = 1
     metrics["swap_count"] = 0
+    initial_layout = transpilation_result.initial_layout
+    assert initial_layout is not None
+    initial_layout[0] = 0
 
     assert len(transpilation_result.intermediate_results) == 1
     assert transpilation_result.layout == {0: 2}
+    assert transpilation_result.initial_layout == {0: 1}
     assert transpilation_result.metrics == {"swap_count": 3}
 
 

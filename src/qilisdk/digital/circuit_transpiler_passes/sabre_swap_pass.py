@@ -114,6 +114,7 @@ class SabreSwapPass(CircuitTranspilerPass):
         # Diagnostics
         self.last_swap_count: int | None = None
         self.last_final_layout: list[int] | None = None
+        self.last_initial_layout: list[int] | None = None
 
     # ----------------------- public API -----------------------
 
@@ -179,6 +180,9 @@ class SabreSwapPass(CircuitTranspilerPass):
                     logical_qubit: final_layout[logical_qubit] for logical_qubit in range(len(final_layout))
                 }
                 self.context.final_layout = final_layout_map
+                if not self.context.initial_layout and self.last_initial_layout is not None:
+                    # No layout pass ran before routing, so the router's own starting mapping is the initial layout.
+                    self.context.initial_layout = list(self.last_initial_layout)
                 self.context.layout_applied = True
                 self.context.metrics["swap_count"] = self.last_swap_count
 
@@ -222,6 +226,8 @@ class SabreSwapPass(CircuitTranspilerPass):
 
         active_qubits = {int(qubit) for gate in circuit.gates for qubit in gate.qubits}
         layout = self._init_layout(num_logical_qubits, physical_nodes, active_qubits, layout_hint)
+        # Routing mutates ``layout`` in place, so keep the starting mapping for callers.
+        self.last_initial_layout = layout[:]
 
         if self._is_layout_routable(circuit, layout):
             logger.debug("[SabreSwapPass] Initial layout is already routable, no swaps needed")

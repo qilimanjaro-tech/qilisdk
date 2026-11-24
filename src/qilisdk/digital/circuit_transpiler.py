@@ -65,6 +65,7 @@ class CircuitTranspilerResult:
         intermediate_results: list[TranspilerPassResult] | None = None,
         layout: LayoutMap | None = None,
         metrics: dict[str, Any] | None = None,
+        initial_layout: LayoutMap | None = None,
     ) -> None:
         self._circuit: Circuit = circuit
         self._intermediate_results: list[TranspilerPassResult] = (
@@ -72,6 +73,7 @@ class CircuitTranspilerResult:
         )
         self._layout: LayoutMap | None = dict(layout) if layout is not None else None
         self._metrics: dict[str, Any] = dict(metrics) if metrics is not None else {}
+        self._initial_layout: LayoutMap | None = dict(initial_layout) if initial_layout is not None else None
 
     @property
     def circuit(self) -> Circuit:
@@ -87,6 +89,15 @@ class CircuitTranspilerResult:
     def layout(self) -> LayoutMap | None:
         """Final user-facing logical-to-physical mapping captured after the pipeline finishes."""
         return dict(self._layout) if self._layout is not None else None
+
+    @property
+    def initial_layout(self) -> LayoutMap | None:
+        """Logical-to-physical mapping at the start of the transpiled circuit, before any routing SWAPs.
+
+        Together with :attr:`layout`, this lets ``result.circuit.is_equivalent_to(original, layout=result.initial_layout,
+        final_layout=result.layout)`` check a routed circuit against its logical original.
+        """
+        return dict(self._initial_layout) if self._initial_layout is not None else None
 
     @property
     def metrics(self) -> dict[str, Any]:
@@ -220,6 +231,7 @@ class CircuitTranspiler:
             intermediate_results=pass_results,
             layout=self._context.final_layout,
             metrics=self._context.metrics,
+            initial_layout=(dict(enumerate(self._context.initial_layout)) if self._context.initial_layout else None),
         )
 
     def _attach_context_to_pipeline(self) -> None:

@@ -66,6 +66,34 @@ You can also initialize a random circuit with a specified number of gates using 
     )
     circuit.draw()
 
+**Checking Circuit Equivalence**
+
+Use :meth:`~qilisdk.digital.circuit.Circuit.is_equivalent_to` to check whether two circuits implement the same unitary, up to a global phase:
+
+.. code-block:: python
+
+    from qilisdk.digital import RZ, U1, Circuit
+
+    a = Circuit(1)
+    a.add(RZ(0, phi=0.5))
+    b = Circuit(1)
+    b.add(U1(0, phi=0.5))
+    a.is_equivalent_to(b)  # True: RZ and U1 differ only by a global phase
+
+One can also compare versus a transpiled circuit with remapped qubits by passing the appropriate ``layout`` and ``final_layout``:
+
+.. code-block:: python
+
+    from qilisdk.digital import CNOT, H, RZ, Circuit
+    from qilisdk.digital.circuit_transpiler import CircuitTranspiler
+
+    circuit = Circuit(3)
+    circuit.add([H(0), CNOT(0, 2), RZ(2, phi=0.3), CNOT(2, 1)])
+    result = CircuitTranspiler.default(topology=[(0, 1), (1, 2)]).transpile(circuit)
+    result.circuit.is_equivalent_to(
+        circuit, layout=result.initial_layout, final_layout=result.layout
+    )  # True
+
 Parameterized Circuits
 ^^^^^^^^^^^^^^^^^^^^^^
 
