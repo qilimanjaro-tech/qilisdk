@@ -948,6 +948,39 @@ def test_append_with_qubits_copies_gates_and_keeps_parameters_shared():
     assert big.gates[0] is not block.gates[0]
 
 
+@pytest.mark.parametrize("placements", [[None, None], [[0, 1], [2, 3]]])
+def test_placing_a_block_twice_gives_independent_unnamed_parameters(placements):
+    block = Circuit(2)
+    block.add([RX(0, theta=0.1), CNOT(0, 1)])
+    big = Circuit(4)
+
+    big.append(block, qubits=placements[0])
+    big.prepend(block, qubits=placements[1])
+    big.set_parameter_values([0.5, 0.9])
+
+    assert big.get_parameter_values() == [0.5, 0.9]
+    assert [gate.get_parameter_values() for gate in big.gates if gate.is_parameterized] == [[0.9], [0.5]]
+    assert block.get_parameter_values() == [0.1]
+    assert all(gate is not block_gate for gate in big.gates for block_gate in block.gates)
+
+
+@pytest.mark.parametrize("qubits", [None, [1, 0]])
+def test_placing_a_block_twice_keeps_named_parameters_shared(qubits):
+    angle = Parameter("angle", 0.1)
+    block = Circuit(2)
+    block.add([RX(0, theta=angle), RZ(1, phi=0.2)])
+    big = Circuit(2)
+
+    big.append(block, qubits=qubits)
+    big.append(block, qubits=qubits)
+    big.set_parameters({"angle": 0.7})
+
+    assert big.get_parameter_names().count("angle") == 1
+    assert big.nparameters == 3
+    assert angle.value == 0.7
+    assert block.get_parameter_values() == [0.7, 0.2]
+
+
 def test_append_with_qubits_outside_the_circuit_leaves_it_unchanged():
     block = Circuit(2)
     block.add([RX(0, theta=Parameter("angle", 0.1)), CNOT(0, 1)])

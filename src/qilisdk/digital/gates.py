@@ -89,8 +89,9 @@ def _remap_gates(gates: Sequence[TGate], mapping: dict[int, int], share_paramete
         gates (Sequence[Gate]): The gates to copy.
         mapping (dict[int, int]): Maps current qubit indices to new ones. Qubits missing from the mapping keep
             their index.
-        share_parameters (bool, optional): Whether the copies use the same ``Parameter`` objects as ``gates``
-            rather than copies of them. Defaults to False.
+        share_parameters (bool, optional): Whether the copies use the same ``Parameter`` objects as ``gates`` for
+            the parameters the user named, rather than copies of them. Parameters made from plain numbers, whose label
+            is the gate's own parameter name, are always copied. Defaults to False.
 
     Returns:
         list[Gate]: The remapped copies, in the same order as ``gates``.
@@ -105,7 +106,8 @@ def _remap_gates(gates: Sequence[TGate], mapping: dict[int, int], share_paramete
         memo.update(
             (id(parameter), parameter)
             for g in wrapped
-            for _, parameter in g._iter_parameter_items()  # ruff: ignore[private-member-access]
+            for label, parameter in g._iter_parameter_items()  # ruff: ignore[private-member-access]
+            if parameter.label != label
         )
     remapped = deepcopy(list(gates), memo)
     for gate in remapped:

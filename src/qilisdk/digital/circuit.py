@@ -290,8 +290,7 @@ class Circuit(Parameterizable):
                 raise QubitOutOfRangeError(
                     f"a circuit with {circuit.nqubits} qubits does not fit in a circuit with {self.nqubits} qubits."
                 )
-            # Copy the list so that appending a circuit to itself does not loop forever.
-            return list(circuit.gates)
+            return _remap_gates(circuit.gates, {}, share_parameters=True)
         if len(qubits) != circuit.nqubits or len(set(qubits)) != len(qubits):
             raise ValueError(f"Expected {circuit.nqubits} distinct qubits to place the circuit on, got {qubits}.")
         if any(qubit < 0 or qubit >= self.nqubits for qubit in qubits):
@@ -314,10 +313,12 @@ class Circuit(Parameterizable):
 
         Args:
             circuit (Circuit): The circuit to be appended. It may act on fewer qubits than the current circuit.
+                Its gates are always copied. Parameters given as plain numbers are copied with them, so each placement
+                can be set separately, while ``Parameter`` objects the user created are not copied, so every placement
+                shares them with ``circuit``.
             qubits (Sequence[int] | None, optional): The qubits of the current circuit that the qubits of ``circuit``
-                are placed on, so qubit ``i`` of ``circuit`` becomes qubit ``qubits[i]``. The gates are then copied
-                rather than shared with ``circuit``, but they keep using the same ``Parameter`` objects. Defaults to
-                None, which keeps every gate on its own qubits.
+                are placed on, so qubit ``i`` of ``circuit`` becomes qubit ``qubits[i]``. Defaults to None, which keeps
+                every gate on its own qubits.
 
         Raises:
             ValueError: If ``qubits`` does not hold one distinct qubit per qubit of ``circuit``.
@@ -332,10 +333,12 @@ class Circuit(Parameterizable):
 
         Args:
             circuit (Circuit): The circuit to be prepended. It may act on fewer qubits than the current circuit.
+                Its gates are always copied. Parameters given as plain numbers are copied with them, so each placement
+                can be set separately, while ``Parameter`` objects the user created are not copied, so every placement
+                shares them with ``circuit``.
             qubits (Sequence[int] | None, optional): The qubits of the current circuit that the qubits of ``circuit``
-                are placed on, so qubit ``i`` of ``circuit`` becomes qubit ``qubits[i]``. The gates are then copied
-                rather than shared with ``circuit``, but they keep using the same ``Parameter`` objects. Defaults to
-                None, which keeps every gate on its own qubits.
+                are placed on, so qubit ``i`` of ``circuit`` becomes qubit ``qubits[i]``. Defaults to None, which keeps
+                every gate on its own qubits.
 
         Raises:
             ValueError: If ``qubits`` does not hold one distinct qubit per qubit of ``circuit``.
