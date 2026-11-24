@@ -55,6 +55,8 @@ from qilisdk.digital.gates import (
     Z,
 )
 
+from .utils import _unitaries_equivalent
+
 
 class DummyBasicGate(BasicGate):
     def __init__(self, target_qubits: Iterable[int], matrix: np.ndarray) -> None:
@@ -147,6 +149,17 @@ def test_cz_in_basis_returns_native_cz_when_requested() -> None:
 def test_normalize_single_qubit_gate_rejects_unknown_basis() -> None:
     with pytest.raises(TypeError, match="Unsupported single-qubit basis"):
         _normalize_single_qubit_gate(H(0), object())  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "gate",
+    [U3(0, theta=0.3, phi=0.7, gamma=-1.1), U2(0, phi=0.4, gamma=1.2), H(0)],
+)
+def test_normalize_single_qubit_gate_rxryrz_preserves_unitary_up_to_phase(gate: Gate) -> None:
+    rewritten = _normalize_single_qubit_gate(gate, SingleQubitGateBasis.RxRyRz)
+
+    assert [g.name for g in rewritten] == ["RZ", "RY", "RZ"]
+    assert _unitaries_equivalent(_matrix_of_gates([gate]), _matrix_of_gates(rewritten))
 
 
 @pytest.mark.parametrize(

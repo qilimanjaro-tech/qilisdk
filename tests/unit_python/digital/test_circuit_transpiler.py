@@ -16,7 +16,7 @@
 import pytest
 from rustworkx import PyGraph
 
-from qilisdk.digital import CNOT, Circuit, X
+from qilisdk.digital import CNOT, Circuit, H, X
 from qilisdk.digital.circuit_transpiler import (
     CircuitTranspiler,
     CircuitTranspilerResult,
@@ -92,6 +92,15 @@ def test_circuit_transpiler_default_pipeline_passes_single_qubit_basis_to_fuse_p
 
     assert fuse_passes
     assert all(pass_instance.single_qubit_basis == SingleQubitGateBasis.RxRyRz for pass_instance in fuse_passes)
+
+
+def test_circuit_transpiler_rxryrz_basis_preserves_hadamard() -> None:
+    circuit = Circuit(1)
+    circuit.add(H(0))
+
+    transpiled = CircuitTranspiler.default(single_qubit_basis=SingleQubitGateBasis.RxRyRz).transpile(circuit).circuit
+
+    assert _sequences_equivalent(circuit.gates, transpiled.gates, circuit.nqubits)
 
 
 def test_circuit_transpiler_accepts_custom_pipeline() -> None:
