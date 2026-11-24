@@ -964,6 +964,22 @@ def test_from_state_real_amplitudes_need_no_phase_rotations(state):
     _assert_prepares(circuit, state.dense().ravel())
 
 
+@pytest.mark.parametrize("global_phase", [1.0, 1j, np.exp(0.3j)])
+def test_from_state_signed_real_states_need_no_phase_rotations(global_phase):
+    rng = np.random.default_rng(3)
+    for _ in range(100):
+        nqubits = int(rng.integers(1, 7))
+        dim = 1 << nqubits
+        amplitudes = rng.normal(size=dim)
+        amplitudes[rng.random(dim) < rng.random()] = 0
+        amplitudes[rng.integers(dim)] = -1
+        amplitudes = global_phase * amplitudes
+        circuit = Circuit.from_state(QTensor(amplitudes.reshape(-1, 1)))
+        assert all(isinstance(gate, (RY, CNOT)) for gate in circuit.gates)
+        assert sum(isinstance(gate, CNOT) for gate in circuit.gates) <= max(0, 2**nqubits - 2)
+        _assert_prepares(circuit, amplitudes)
+
+
 def test_from_state_prepares_relative_phase():
     amplitudes = np.array([1, 1j, -1, -1j]) / 2
     circuit = Circuit.from_state(QTensor(amplitudes.reshape(-1, 1)))

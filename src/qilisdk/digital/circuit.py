@@ -571,7 +571,9 @@ class Circuit(Parameterizable):
         rotations" (quant-ph/0407010). First a cascade of ``RY`` rotations sets the amplitude magnitudes, qubit by
         qubit from qubit 0, then a cascade of ``RZ`` rotations sets their relative phases. Preparing a generic
         ``n``-qubit state takes at most ``2**(n+1) - 4`` CNOTs; rotations with a zero angle are left out, along with
-        the CNOTs they make redundant, so product states and states with real amplitudes need fewer gates.
+        the CNOTs they make redundant, so product states need fewer gates. A state whose amplitudes are real up to a
+        global phase needs no ``RZ`` cascade at all, as the signs are set by the last qubit's ``RY`` rotations, which
+        halves the CNOT count to at most ``2**n - 2``.
 
         The phase cascade runs from the last qubit to the first: ``diag(e^{i w0}, e^{i w1})`` on qubit ``k`` equals
         ``RZ(w1 - w0)`` times a phase ``(w0 + w1) / 2`` that is left on qubits ``0..k-1``. Phases of zero amplitudes are
@@ -611,13 +613,22 @@ class Circuit(Parameterizable):
         logger.debug("[Circuit] Building a state preparation circuit for {} qubits", nqubits)
 
         circuit = cls(nqubits)
-        # Qubit k is rotated by RY(2 atan2(|b=1|, |b=0|)), controlled by the state of qubits 0..k-1.
+        # Removing the global phase of the largest amplitude lets states that are real up to a phase skip the RZ cascade.
         magnitudes = np.abs(amplitudes)
+        amplitudes *= np.exp(-1j * np.angle(amplitudes[np.argmax(magnitudes)]))
+        is_real = bool(np.all(np.abs(amplitudes.imag) < atol))
+        # Qubit k is rotated by RY(2 atan2(|b=1|, |b=0|)), controlled by the state of qubits 0..k-1.
         for target in range(nqubits):
             branches = magnitudes.reshape(1 << target, 2, -1)
             branch_norms = np.linalg.norm(branches, axis=2)
+            # A real state keeps its signs in the last qubit's rotation, so it needs no phase cascade.
+            if is_real and target == nqubits - 1:
+                branch_norms = amplitudes.real.reshape(-1, 2)
             angles = 2 * np.arctan2(branch_norms[:, 1], branch_norms[:, 0])
-            circuit.add(_uniformly_controlled_rotation(RY, target, angles, branch_norms.sum(axis=1) >= atol, atol))
+            relevant = np.abs(branch_norms).sum(axis=1) >= atol
+            circuit.add(_uniformly_controlled_rotation(RY, target, angles, relevant, atol))
+        if is_real:
+            return circuit
 
         # Each qubit, last to first, absorbs the relative phase of its pairs and passes their mean phase upwards.
         phases = np.angle(amplitudes)
@@ -627,7 +638,8 @@ class Circuit(Parameterizable):
             pair_phases = phases.reshape(-1, 2)
             pair_weights = weights.reshape(-1, 2)
             both = pair_weights.all(axis=1)
-            diffs = pair_phases[:, 1] - pair_phases[:, 0]
+            # Wrapping into (-pi, pi] keeps differences that agree modulo 2 pi equal, so the RZ stays uncontrolled.
+            diffs = np.angle(np.exp(1j * (pair_phases[:, 1] - pair_phases[:, 0])))
             diffs = np.where(both, diffs, diffs[both][0] if both.any() else 0.0)
             phase_gates = _uniformly_controlled_rotation(RZ, target, diffs, both, atol) + phase_gates
             phases = np.where(pair_weights[:, 0], pair_phases[:, 0] + diffs / 2, pair_phases[:, 1] - diffs / 2)
