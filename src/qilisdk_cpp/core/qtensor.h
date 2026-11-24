@@ -173,6 +173,7 @@ class QTensorCpp {
     double entropy_von_neumann();
     double entropy_renyi(double alpha);
     double magic(double alpha = 2.0);
+    double fermionic_antiflatness(int k = 1);
     double fidelity(const QTensorCpp& other);
     double fidelity_python(const py::object& other);
     double purity();

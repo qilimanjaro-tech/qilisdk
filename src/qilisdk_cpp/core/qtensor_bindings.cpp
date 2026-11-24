@@ -69,6 +69,7 @@ PYBIND11_MODULE(qtensor_module, m) {
         .def("entropy_von_neumann", &QTensorCpp::entropy_von_neumann)
         .def("entropy_renyi", &QTensorCpp::entropy_renyi)
         .def("magic", &QTensorCpp::magic)
+        .def("fermionic_antiflatness", &QTensorCpp::fermionic_antiflatness)
         .def("fidelity_python", &QTensorCpp::fidelity_python)
         .def("purity", &QTensorCpp::purity)
         .def("div", &QTensorCpp::div)

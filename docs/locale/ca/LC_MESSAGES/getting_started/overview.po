@@ -1,0 +1,105 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-12 13:59+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../getting_started/overview.rst:2
+msgid "Overview"
+msgstr "Visió general"
+
+#: ../../getting_started/overview.rst:4
+msgid ""
+"Welcome to **QiliSDK**, a unified Python framework for developing and "
+"running a variety of quantum algorithms (digital, analog and hybrid) "
+"across a variety of backends (CPU, GPU, and QPU)."
+msgstr ""
+"Benvingut a **QiliSDK**, un framework unificat de Python per desenvolupar"
+" i executar una varietat d'algorismes quàntics (digitals, analògics i "
+"híbrids) en una varietat de backends (CPU, GPU i QPU)."
+
+#: ../../getting_started/overview.rst:8
+msgid ""
+"QiliSDK is split into several modules, which is easiest to visualize via "
+"the following diagram:"
+msgstr ""
+"QiliSDK es divideix en diversos mòduls, cosa que és més fàcil de "
+"visualitzar mitjançant el diagrama següent:"
+
+#: ../../getting_started/overview.rst:14
+msgid ""
+"First, users define the things from the top row: their Circuit and Gates "
+"(for digital jobs) or their Hamiltonian and Schedule (for analog jobs). "
+"Both of these can be combined with the things from the Core module, like "
+"QTensors, Variables and Expressions to create Parameterized Circuits and "
+"Hamiltonians. A Readout should also be specified: whether the user wants "
+"samples, expectations values, or even a full statevector."
+msgstr ""
+"Primer, els usuaris defineixen els elements de la fila superior: el seu "
+"Circuit i les seves Gates (per a treballs digitals) o el seu Hamiltonian "
+"i el seu Schedule (per a treballs analògics). Tots dos es poden combinar "
+"amb els elements del mòdul Core, com ara QTensors, Variables i "
+"Expressions, per crear circuits i hamiltonians parametritzats. També s'ha"
+" d'especificar un Readout: si l'usuari vol mostres, valors esperats o "
+"fins i tot un vector d'estat complet."
+
+#: ../../getting_started/overview.rst:20
+msgid "Then, the user defines the job using one of our Functionals:"
+msgstr ""
+"Després, l'usuari defineix el treball fent servir un dels nostres "
+"Functionals:"
+
+#: ../../getting_started/overview.rst:21
+msgid "DigitalPropagation for circuit simulation"
+msgstr "DigitalPropagation per a la simulació de circuits"
+
+#: ../../getting_started/overview.rst:22
+msgid "AnalogEvolution for analog simulation"
+msgstr "AnalogEvolution per a la simulació analògica"
+
+#: ../../getting_started/overview.rst:23
+msgid "QuantumReservoirs for quantum reservoir computing"
+msgstr "QuantumReservoirs per a la computació quàntica de reservoris"
+
+#: ../../getting_started/overview.rst:24
+msgid ""
+"VariationalProgram, which can be combined with any of the above to create"
+" a variational workflow"
+msgstr ""
+"VariationalProgram, que es pot combinar amb qualsevol dels anteriors per "
+"crear un flux de treball variacional"
+
+#: ../../getting_started/overview.rst:26
+msgid ""
+"Finally, the user chooses the Backend to run the job on, which can be for"
+" CPU (QiliSim), GPU (QiliSim or CudaqBackend), or QPU (SpeQtrum)."
+msgstr ""
+"Finalment, l'usuari tria el Backend on executar el treball, que pot ser "
+"per a CPU (QiliSim), GPU (QiliSim o CudaqBackend) o QPU (SpeQtrum)."
+
+#: ../../getting_started/overview.rst:29
+msgid ""
+"To get started, first check out the :doc:`/getting_started/installation` "
+"guide to install QiliSDK, then the :doc:`/getting_started/quickstart` "
+"guide to jump straight in to some examples."
+msgstr ""
+"Per començar, consulteu primer la guia "
+":doc:`/getting_started/installation` per instal·lar QiliSDK i després la "
+"guia :doc:`/getting_started/quickstart` per passar directament a alguns "
+"exemples."
+
