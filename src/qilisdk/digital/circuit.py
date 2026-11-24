@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import random
 from copy import deepcopy
-from typing import TYPE_CHECKING, Callable, Iterable
+from typing import TYPE_CHECKING, Callable, Iterable, Sequence
 
 import numpy as np
 from loguru import logger
@@ -29,7 +29,7 @@ from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import QubitOutOfRangeError
-from .gates import BasicGate, Gate, Modified, _reject_analog_object
+from .gates import BasicGate, Gate, Modified, _reject_analog_object, _remap_gates
 
 if TYPE_CHECKING:
     from qilisdk.core.types import RealNumber
@@ -274,41 +274,112 @@ class Circuit(Parameterizable):
         for offset, gate in enumerate(gates):
             self._insert(gate, start + offset)
 
-    def append(self, circuit: Circuit) -> None:
-        """Append circuit elements at the end of the current circuit.
+    def _gates_to_compose(self, circuit: Circuit, qubits: Sequence[int] | None) -> list[Gate]:
+        """Return the gates of ``circuit`` placed on ``qubits`` of this circuit, for appending or prepending.
 
         Args:
-            circuit (Circuit): The circuit to be appended.
+            circuit (Circuit): The circuit to compose with this one.
+            qubits (Sequence[int] | None): The qubits of this circuit that the qubits of ``circuit`` are placed on,
+                in order. Defaults to None, which places them on the first ``circuit.nqubits`` qubits.
+
+        Returns:
+            list[Gate]: The gates to add to this circuit.
 
         Raises:
-            QubitOutOfRangeError: If the appended circuit acts on more qubits than the current circuit.
+            ValueError: If ``qubits`` does not hold one distinct qubit per qubit of ``circuit``.
+            QubitOutOfRangeError: If ``circuit`` acts on more qubits than this circuit, or ``qubits`` holds a qubit
+                outside this circuit.
         """
-        logger.trace("[Circuit] Appending circuit: {}", circuit)
-        if circuit.nqubits != self.nqubits:
+        if qubits is None:
+            if circuit.nqubits > self.nqubits:
+                raise QubitOutOfRangeError(
+                    f"a circuit with {circuit.nqubits} qubits does not fit in a circuit with {self.nqubits} qubits."
+                )
+            return _remap_gates(circuit.gates, {}, share_parameters=True)
+        if len(qubits) != circuit.nqubits or len(set(qubits)) != len(qubits):
+            raise ValueError(f"Expected {circuit.nqubits} distinct qubits to place the circuit on, got {qubits}.")
+        if any(qubit < 0 or qubit >= self.nqubits for qubit in qubits):
             raise QubitOutOfRangeError(
-                "the appended circuit contains different number of qubits than the current circuit."
+                f"Cannot place a circuit on qubits {qubits} of a circuit with {self.nqubits} qubits."
             )
+        return _remap_gates(circuit.gates, dict(enumerate(qubits)), share_parameters=True)
 
-        for g in circuit.gates:
-            self.add(g)
+    def append(self, circuit: Circuit, qubits: Sequence[int] | None = None) -> None:
+        """Append the gates of another circuit at the end of the current circuit.
 
-    def prepend(self, circuit: Circuit) -> None:
-        """Prepend circuit elements to the beginning of the current circuit.
+        Example:
+            .. code-block:: python
+
+                block = Circuit(2)
+                block.add([H(0), CNOT(0, 1)])
+
+                big = Circuit(10)
+                big.append(block, qubits=[3, 7])  # adds H(3) and CNOT(3, 7)
 
         Args:
-            circuit (Circuit): The circuit to be prepended.
+            circuit (Circuit): The circuit to be appended. It may act on fewer qubits than the current circuit.
+                Its gates are always copied. Parameters given as plain numbers are copied with them, so each placement
+                can be set separately, while ``Parameter`` objects the user created are not copied, so every placement
+                shares them with ``circuit``.
+            qubits (Sequence[int] | None, optional): The qubits of the current circuit that the qubits of ``circuit``
+                are placed on, so qubit ``i`` of ``circuit`` becomes qubit ``qubits[i]``. Defaults to None, which keeps
+                every gate on its own qubits.
 
         Raises:
-            QubitOutOfRangeError: If the circuit to be prepended acts on more qubits than the current circuit.
+            ValueError: If ``qubits`` does not hold one distinct qubit per qubit of ``circuit``.
+            QubitOutOfRangeError: If the appended gates act on qubits outside the current circuit. The current circuit
+                is left unchanged.
         """
-        logger.trace("[Circuit] Prepending circuit: {}", circuit)
-        if circuit.nqubits != self.nqubits:
-            raise QubitOutOfRangeError(
-                "the prepended circuit contains different number of qubits than the current circuit."
-            )
+        logger.trace("[Circuit] Appending circuit: {} on qubits: {}", circuit, qubits)
+        self.add(self._gates_to_compose(circuit, qubits))
 
-        for i, g in enumerate(circuit.gates):
-            self.insert(g, i)
+    def prepend(self, circuit: Circuit, qubits: Sequence[int] | None = None) -> None:
+        """Prepend the gates of another circuit to the beginning of the current circuit.
+
+        Args:
+            circuit (Circuit): The circuit to be prepended. It may act on fewer qubits than the current circuit.
+                Its gates are always copied. Parameters given as plain numbers are copied with them, so each placement
+                can be set separately, while ``Parameter`` objects the user created are not copied, so every placement
+                shares them with ``circuit``.
+            qubits (Sequence[int] | None, optional): The qubits of the current circuit that the qubits of ``circuit``
+                are placed on, so qubit ``i`` of ``circuit`` becomes qubit ``qubits[i]``. Defaults to None, which keeps
+                every gate on its own qubits.
+
+        Raises:
+            ValueError: If ``qubits`` does not hold one distinct qubit per qubit of ``circuit``.
+            QubitOutOfRangeError: If the prepended gates act on qubits outside the current circuit. The current
+                circuit is left unchanged.
+        """
+        logger.trace("[Circuit] Prepending circuit: {} on qubits: {}", circuit, qubits)
+        self.insert(self._gates_to_compose(circuit, qubits), 0)
+
+    def remap_qubits(self, mapping: dict[int, int]) -> Circuit:
+        """Return a copy of this circuit with its qubits relabelled.
+
+        Example:
+            .. code-block:: python
+
+                swapped = circuit.remap_qubits({0: 9, 9: 0})  # exchange the roles of qubits 0 and 9
+
+        Args:
+            mapping (dict[int, int]): Maps current qubit indices to new ones. Qubits missing from the mapping keep
+                their index.
+
+        Returns:
+            Circuit: A new circuit with the same number of qubits, holding remapped copies of this circuit's gates.
+                Parameters shared between gates of this circuit stay shared in the copy.
+
+        Raises:
+            ValueError: If the mapping sends two qubits to the same index.
+            QubitOutOfRangeError: If the mapping sends a qubit outside the circuit.
+        """
+        logger.trace("[Circuit] Remapping qubits with: {}", mapping)
+        new_indices = [mapping.get(qubit, qubit) for qubit in range(self.nqubits)]
+        if len(set(new_indices)) != self.nqubits:
+            raise ValueError(f"The mapping {mapping} sends two qubits to the same index.")
+        remapped = Circuit(self.nqubits)
+        remapped.add(_remap_gates(self.gates, mapping))
+        return remapped
 
     def copy(self) -> Self:
         """Return an independent deep copy of this circuit.
@@ -348,11 +419,19 @@ class Circuit(Parameterizable):
 
         Returns:
             Circuit: A new circuit holding this circuit's gates followed by ``other``'s.
+
+        Raises:
+            QubitOutOfRangeError: If ``other`` is a circuit with a different number of qubits.
         """
         logger.trace("[Circuit] Adding {} to circuit.", other)
         _reject_analog_object(other, _REJECT_TARGET)
         if not isinstance(other, (Circuit, Gate)):
             return NotImplemented
+        if isinstance(other, Circuit) and other.nqubits != self.nqubits:
+            raise QubitOutOfRangeError(
+                f"Cannot add circuits with {self.nqubits} and {other.nqubits} qubits, "
+                "use append or prepend to place a smaller circuit on chosen qubits."
+            )
         new_circuit = Circuit(self.nqubits)
         new_circuit.append(self)
         if isinstance(other, Gate):

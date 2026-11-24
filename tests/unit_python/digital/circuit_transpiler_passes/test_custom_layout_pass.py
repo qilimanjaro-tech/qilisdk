@@ -19,16 +19,10 @@ from qilisdk.digital import (
     CNOT,
     CZ,
     RX,
-    RY,
-    RZ,
-    SWAP,
     U1,
-    U3,
     Adjoint,
     Circuit,
     Controlled,
-    Exponential,
-    Gate,
     H,
     M,
     S,
@@ -269,55 +263,6 @@ def test_custom_layout_raises_for_multi_qubit_gate():
 
     with pytest.raises(NotImplementedError, match="FakeGate"):
         layout_pass.run(circuit)
-
-
-@pytest.mark.parametrize(
-    ("gate", "mapped_qubits", "expected_type"),
-    [
-        (RY(0, theta=0.2), (2,), RY),
-        (RZ(0, phi=0.3), (1,), RZ),
-        (U3(0, theta=0.4, phi=0.5, gamma=0.6), (2,), U3),
-        (SWAP(0, 1), (2, 0), SWAP),
-        (M(0), (1,), M),
-        (Controlled(0, basic_gate=RX(1, theta=0.4)), (2, 0), Controlled),
-        (Adjoint(S(0)), (1,), Adjoint),
-        (Exponential(X(0)), (2,), Exponential),
-    ],
-)
-def test_custom_layout_retarget_gate_supports_all_gate_kinds(gate: Gate, mapped_qubits, expected_type) -> None:
-    retargeted = CustomLayoutPass._retarget_gate(gate, mapped_qubits)
-
-    assert isinstance(retargeted, expected_type)
-    assert retargeted.qubits == mapped_qubits
-
-
-def test_custom_layout_retarget_gate_shares_cached_matrix() -> None:
-    gate = Adjoint(RX(0, theta=0.4))
-    gate.matrix  # populate the cached matrix
-
-    retargeted = CustomLayoutPass._retarget_gate(gate, (1,))
-
-    assert retargeted.matrix is gate.matrix
-    assert retargeted.basic_gate.matrix is gate.basic_gate.matrix
-    assert retargeted.basic_gate is not gate.basic_gate
-
-
-def test_custom_layout_retarget_gate_rejects_unsupported_type() -> None:
-    class UnsupportedGate(Gate):
-        @property
-        def name(self) -> str:
-            return "Unsupported"
-
-        @property
-        def matrix(self):
-            return None
-
-        @property
-        def target_qubits(self) -> tuple[int, ...]:
-            return (0, 1, 2)
-
-    with pytest.raises(NotImplementedError, match="UnsupportedGate"):
-        CustomLayoutPass._retarget_gate(UnsupportedGate(), (0, 1, 2))
 
 
 def test_custom_layout_shortest_path_handles_identical_endpoints() -> None:

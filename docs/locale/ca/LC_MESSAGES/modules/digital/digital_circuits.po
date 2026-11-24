@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-09-14 11:41+0200\n"
+"POT-Creation-Date: 2026-11-19 16:15+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -54,10 +54,29 @@ msgstr ""
 "aquests comportaments:"
 
 #: ../../modules/digital/digital_circuits.rst:53
+msgid ""
+"A smaller circuit can be written once and placed on any qubits of a "
+"larger one by passing ``qubits`` to "
+":meth:`~qilisdk.digital.circuit.Circuit.append` or "
+":meth:`~qilisdk.digital.circuit.Circuit.prepend`, where qubit ``i`` of "
+"the smaller circuit lands on ``qubits[i]``. The ``+`` operator only "
+"combines circuits of the same size. Single gates and whole circuits can "
+"also be relabelled with ``remap_qubits``, which returns a copy:"
+msgstr ""
+"Un circuit més petit es pot escriure una sola vegada i col·locar sobre "
+"qualsevol qubit d'un de més gran passant ``qubits`` a "
+":meth:`~qilisdk.digital.circuit.Circuit.append` o "
+":meth:`~qilisdk.digital.circuit.Circuit.prepend`, de manera que el qubit "
+"``i`` del circuit petit passa a ser ``qubits[i]``. L'operador ``+`` "
+"només combina circuits de la mateixa mida. Tant les portes individuals "
+"com els circuits sencers es poden reetiquetar amb ``remap_qubits``, que "
+"retorna una còpia:"
+
+#: ../../modules/digital/digital_circuits.rst:70
 msgid "**Generating Random Circuits**"
 msgstr "**Generació de circuits aleatoris**"
 
-#: ../../modules/digital/digital_circuits.rst:55
+#: ../../modules/digital/digital_circuits.rst:72
 msgid ""
 "You can also initialize a random circuit with a specified number of gates"
 " using the :meth:`~qilisdk.digital.circuit.Circuit.random` method:"
@@ -66,11 +85,11 @@ msgstr ""
 " portes utilitzant el mètode "
 ":meth:`~qilisdk.digital.circuit.Circuit.random`:"
 
-#: ../../modules/digital/digital_circuits.rst:70
+#: ../../modules/digital/digital_circuits.rst:87
 msgid "Parameterized Circuits"
 msgstr "Circuits parametritzats"
 
-#: ../../modules/digital/digital_circuits.rst:72
+#: ../../modules/digital/digital_circuits.rst:89
 msgid ""
 "Circuits can include parameterized gates. Adding them is similar to "
 "regular gates:"
@@ -78,30 +97,30 @@ msgstr ""
 "Els circuits poden incloure portes parametritzades. Afegir-les és similar"
 " a les portes regulars:"
 
-#: ../../modules/digital/digital_circuits.rst:82
+#: ../../modules/digital/digital_circuits.rst:99
 msgid "You can retrieve the current parameter using:"
 msgstr "Podeu recuperar el paràmetre actual utilitzant:"
 
-#: ../../modules/digital/digital_circuits.rst:89
-#: ../../modules/digital/digital_circuits.rst:103
+#: ../../modules/digital/digital_circuits.rst:106
+#: ../../modules/digital/digital_circuits.rst:120
 msgid "**Output:**"
 msgstr "**Sortida:**"
 
-#: ../../modules/digital/digital_circuits.rst:96
+#: ../../modules/digital/digital_circuits.rst:113
 msgid "You can also retrieve a list containing only the current parameter values:"
 msgstr ""
 "També podeu recuperar una llista que contingui només els valors actuals "
 "dels paràmetres:"
 
-#: ../../modules/digital/digital_circuits.rst:110
+#: ../../modules/digital/digital_circuits.rst:127
 msgid "To update parameters by their keys:"
 msgstr "Per actualitzar els paràmetres per les seves claus:"
 
-#: ../../modules/digital/digital_circuits.rst:116
+#: ../../modules/digital/digital_circuits.rst:133
 msgid "To update all parameters with new values:"
 msgstr "Per actualitzar tots els paràmetres amb nous valors:"
 
-#: ../../modules/digital/digital_circuits.rst:124
+#: ../../modules/digital/digital_circuits.rst:141
 msgid ""
 "The order of parameters in the list passed to ``set_parameter_values`` "
 "must match the order in which the gates were added to the circuit."
@@ -109,11 +128,11 @@ msgstr ""
 "L'ordre dels paràmetres a la llista passada a ``set_parameter_values`` ha"
 " de coincidir amb l'ordre en què les portes van ser afegides al circuit."
 
-#: ../../modules/digital/digital_circuits.rst:127
+#: ../../modules/digital/digital_circuits.rst:144
 msgid "Visualization"
 msgstr "Visualització"
 
-#: ../../modules/digital/digital_circuits.rst:129
+#: ../../modules/digital/digital_circuits.rst:146
 msgid ""
 "Use :meth:`~qilisdk.digital.circuit.Circuit.draw` to render a circuit "
 "with Matplotlib. By default, the renderer applies the library's built-in "
@@ -131,19 +150,19 @@ msgstr ""
 "que limita l'estil a la crida específica sense modificar la configuració "
 "global de Matplotlib."
 
-#: ../../modules/digital/digital_circuits.rst:146
+#: ../../modules/digital/digital_circuits.rst:163
 msgid "**Output**"
 msgstr "**Sortida**"
 
-#: ../../modules/digital/digital_circuits.rst:148
+#: ../../modules/digital/digital_circuits.rst:165
 msgid "Example digital circuit rendered with Circuit.draw"
 msgstr "Exemple de circuit digital renderitzat amb Circuit.draw"
 
-#: ../../modules/digital/digital_circuits.rst:152
+#: ../../modules/digital/digital_circuits.rst:169
 msgid "Example circuit produced by ``circuit.draw()``."
 msgstr "Exemple de circuit produït per ``circuit.draw()``."
 
-#: ../../modules/digital/digital_circuits.rst:154
+#: ../../modules/digital/digital_circuits.rst:171
 msgid ""
 "The plot can also be saved to a file by providing a filepath to the draw "
 "method:"
@@ -151,7 +170,7 @@ msgstr ""
 "El gràfic també es pot desar en un fitxer proporcionant un camí de fitxer"
 " al mètode draw:"
 
-#: ../../modules/digital/digital_circuits.rst:161
+#: ../../modules/digital/digital_circuits.rst:178
 msgid ""
 "By default, long circuits are wrapped onto multiple rows, to customize "
 "this behavior you can use the ``fold`` parameter in the "
@@ -161,7 +180,7 @@ msgstr ""
 "personalitzar aquest comportament es pot fer servir el paràmetre ``fold`` "
 "de la :class:`~qilisdk.utils.visualization.style.CircuitStyle`:"
 
-#: ../../modules/digital/digital_circuits.rst:176
+#: ../../modules/digital/digital_circuits.rst:193
 msgid ""
 "Custom styling with "
 ":class:`~qilisdk.utils.visualization.style.CircuitStyle`"
@@ -169,7 +188,7 @@ msgstr ""
 "Estil personalitzat amb "
 ":class:`~qilisdk.utils.visualization.style.CircuitStyle`"
 
-#: ../../modules/digital/digital_circuits.rst:178
+#: ../../modules/digital/digital_circuits.rst:195
 msgid ""
 "Create a style object to control theme, fonts, spacing, DPI, labels, and "
 "more. Passing this object to "
@@ -187,7 +206,7 @@ msgstr ""
 "les capes tant com sigui possible canviant el paràmetre **layout** a "
 "*\"normal\"* (predeterminat) o *\"compact\"* respectivament."
 
-#: ../../modules/digital/digital_circuits.rst:222
+#: ../../modules/digital/digital_circuits.rst:239
 msgid ""
 "``CircuitStyle`` fields map directly to the renderer's layout and font "
 "configuration. In particular, you can switch fonts in two ways: (1) "
@@ -204,11 +223,11 @@ msgstr ""
 "resoltes pel sistema. Ambdós enfocaments afecten únicament la crida de "
 "dibuix actual."
 
-#: ../../modules/digital/digital_circuits.rst:228
+#: ../../modules/digital/digital_circuits.rst:245
 msgid "Parameter Utilities"
 msgstr "Utilitats de paràmetres"
 
-#: ../../modules/digital/digital_circuits.rst:230
+#: ../../modules/digital/digital_circuits.rst:247
 msgid ""
 "Circuits collect the symbolic parameters contributed by each gate. Beyond"
 " the quick examples above, you can query names, current values, and "
@@ -218,7 +237,7 @@ msgstr ""
 "Més enllà dels exemples ràpids anteriors, podeu consultar noms, valors "
 "actuals i límits, o actualitzar-los de manera selectiva:"
 
-#: ../../modules/digital/digital_circuits.rst:255
+#: ../../modules/digital/digital_circuits.rst:272
 msgid ""
 "These helpers make it straightforward to plug the circuit into classical "
 "optimization loops while keeping parameter metadata synchronized."
@@ -227,7 +246,7 @@ msgstr ""
 "d'optimització clàssics mantenint els metadades dels paràmetres "
 "sincronitzats."
 
-#: ../../modules/digital/digital_circuits.rst:260
+#: ../../modules/digital/digital_circuits.rst:277
 msgid ""
 "Parameterized gates and circuits expose parameter information through "
 "``get_parameter_names``, ``get_parameters``, ``get_parameter_values``, "

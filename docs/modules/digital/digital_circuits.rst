@@ -49,7 +49,24 @@ Circuits can be appended or prepended, and the ``+`` operator mirrors those beha
   extra = X(1)
   # Equivalent to left.insert(extra, index=0)
   left = extra + left
- 
+
+A smaller circuit can be written once and placed on any qubits of a larger one by passing ``qubits`` to
+:meth:`~qilisdk.digital.circuit.Circuit.append` or :meth:`~qilisdk.digital.circuit.Circuit.prepend`, where qubit
+``i`` of the smaller circuit lands on ``qubits[i]``. The ``+`` operator only combines circuits of the same size.
+Single gates and whole circuits can also be relabelled with ``remap_qubits``, which returns a copy:
+
+.. code-block:: python
+
+  block = Circuit(2)
+  block.add([H(0), CNOT(0, 1)])
+
+  big = Circuit(10)
+  big.append(block, qubits=[3, 7])   # H(3), CNOT(3, 7)
+  big.prepend(block, qubits=[7, 3])  # H(7), CNOT(7, 3) at the front
+
+  gate = CNOT(0, 1).remap_qubits({0: 4, 1: 2})  # CNOT(4, 2)
+  swapped = big.remap_qubits({0: 9, 9: 0})
+
 **Generating Random Circuits**
 
 You can also initialize a random circuit with a specified number of gates using the :meth:`~qilisdk.digital.circuit.Circuit.random` method:

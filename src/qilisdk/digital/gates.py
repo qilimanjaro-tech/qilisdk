@@ -14,8 +14,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, TypeVar
 
 import numpy as np
 from loguru import logger
@@ -39,11 +40,12 @@ from .exceptions import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
 
     from qilisdk.core.interpolator import ParameterizedNumber
 
 TBasicGate = TypeVar("TBasicGate", bound="BasicGate")
+TGate = TypeVar("TGate", bound="Gate")
 
 # Name used for this class in the error messages raised for analog objects.
 _REJECT_TARGET = "a Gate"
@@ -76,6 +78,43 @@ def _reject_analog_object(obj: object, target: str) -> None:
             "This usually means the analog Paulis were imported instead of the digital gates: "
             "did you mean to import X, Y, Z or I from qilisdk.digital rather than from qilisdk.analog?"
         )
+
+
+def _remap_gates(gates: Sequence[TGate], mapping: dict[int, int], share_parameters: bool = False) -> list[TGate]:
+    """Return copies of ``gates`` acting on remapped qubits.
+
+    The gates are copied together, so a parameter shared between several of them stays shared between the copies.
+
+    Args:
+        gates (Sequence[Gate]): The gates to copy.
+        mapping (dict[int, int]): Maps current qubit indices to new ones. Qubits missing from the mapping keep
+            their index.
+        share_parameters (bool, optional): Whether the copies use the same ``Parameter`` objects as ``gates`` for
+            the parameters the user named, rather than copies of them. Parameters made from plain numbers, whose label
+            is the gate's own parameter name, are always copied. Defaults to False.
+
+    Returns:
+        list[Gate]: The remapped copies, in the same order as ``gates``.
+
+    Raises:
+        ValueError: If the mapping sends two qubits of the same gate to the same index.
+    """
+    # A gate's matrix does not depend on which qubits it acts on, so share any cached matrix rather than copying it.
+    wrapped = [g for gate in gates for g in ((gate, gate.basic_gate) if isinstance(gate, Modified) else (gate,))]
+    memo: dict[int, Any] = {id(matrix): matrix for g in wrapped if (matrix := g.__dict__.get("matrix")) is not None}
+    if share_parameters:
+        memo.update(
+            (id(parameter), parameter)
+            for g in wrapped
+            for label, parameter in g._iter_parameter_items()  # ruff: ignore[private-member-access]
+            if parameter.label != label
+        )
+    remapped = deepcopy(list(gates), memo)
+    for gate in remapped:
+        gate._remap_qubits_inplace(mapping)  # ruff: ignore[private-member-access]
+        if len(set(gate.qubits)) != gate.nqubits:
+            raise ValueError(f"Remapping {gate.name} with {mapping} sends two of its qubits to the same index.")
+    return remapped
 
 
 class Gate(Parameterizable, ABC):
@@ -171,6 +210,40 @@ class Gate(Parameterizable, ABC):
             bool: True if the gate is parameterized; otherwise, False.
         """
         return self.nparameters != 0
+
+    def remap_qubits(self, mapping: dict[int, int]) -> Self:
+        """Return a copy of this gate acting on remapped qubits.
+
+        Example:
+            .. code-block:: python
+
+                CNOT(0, 1).remap_qubits({0: 4, 1: 2})  # CNOT(4, 2)
+
+        Args:
+            mapping (dict[int, int]): Maps current qubit indices to new ones. Qubits missing from the mapping keep
+                their index.
+
+        Returns:
+            Gate: An independent copy of this gate, with the same type and parameter values, on the remapped qubits.
+
+        Raises:
+            ValueError: If the mapping sends two of the gate's qubits to the same index.
+            NotImplementedError: If the gate type does not support qubit remapping.
+        """
+        return _remap_gates([self], mapping)[0]
+
+    def _remap_qubits_inplace(self, mapping: dict[int, int]) -> None:
+        """Rewrite the qubit indices stored by this gate, recursing into any wrapped gate.
+
+        Args:
+            mapping (dict[int, int]): Maps current qubit indices to new ones.
+
+        Raises:
+            NotImplementedError: If the gate type does not support qubit remapping.
+        """
+        raise NotImplementedError(
+            f"Qubit remapping not implemented for gate type {type(self).__name__} with arity {self.nqubits}"
+        )
 
     def get_parameters(
         self,
@@ -378,6 +451,9 @@ class BasicGate(Gate):
     def target_qubits(self) -> tuple[int, ...]:
         return self._target_qubits
 
+    def _remap_qubits_inplace(self, mapping: dict[int, int]) -> None:
+        self._target_qubits = tuple(mapping.get(qubit, qubit) for qubit in self._target_qubits)
+
     def _invalidate_matrix(self) -> None:
         self.__dict__.pop("matrix", None)
 
@@ -458,6 +534,9 @@ class Modified(Gate, Generic[TBasicGate]):
     @property
     def basic_gate(self) -> TBasicGate:
         return self._basic_gate
+
+    def _remap_qubits_inplace(self, mapping: dict[int, int]) -> None:
+        self._basic_gate._remap_qubits_inplace(mapping)  # ruff: ignore[private-member-access]
 
     @cached_property
     def matrix(self) -> QTensor:
@@ -568,6 +647,10 @@ class Controlled(Modified[TBasicGate]):
     def control_qubits(self) -> tuple[int, ...]:
         return self._control_qubits
 
+    def _remap_qubits_inplace(self, mapping: dict[int, int]) -> None:
+        self._control_qubits = tuple(mapping.get(qubit, qubit) for qubit in self._control_qubits)
+        super()._remap_qubits_inplace(mapping)
+
     @property
     def name(self) -> str:
         return "C" * len(self.control_qubits) + self.basic_gate.name
@@ -668,6 +751,9 @@ class M(Gate):
     @property
     def target_qubits(self) -> tuple[int, ...]:
         return self._target_qubits
+
+    def _remap_qubits_inplace(self, mapping: dict[int, int]) -> None:
+        self._target_qubits = tuple(mapping.get(qubit, qubit) for qubit in self._target_qubits)
 
 
 @yaml.register_class

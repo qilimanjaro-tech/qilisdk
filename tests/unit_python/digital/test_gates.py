@@ -1161,3 +1161,67 @@ def test_loosening_atol_merges_previously_distinct_hashes(monkeypatch):
     monkeypatch.setattr(get_settings(), "atol", 1e-4)
     assert gate1 == gate2
     assert hash(gate1) == hash(gate2)
+
+
+@pytest.mark.parametrize(
+    ("gate", "mapping", "expected_qubits"),
+    [
+        (RY(0, theta=0.2), {0: 2}, (2,)),
+        (U3(0, theta=0.4, phi=0.5, gamma=0.6), {0: 2}, (2,)),
+        (SWAP(0, 1), {0: 2, 1: 0}, (2, 0)),
+        (M(0, 1), {1: 5}, (0, 5)),
+        (CNOT(0, 1), {0: 4, 1: 2}, (4, 2)),
+        (Controlled(0, basic_gate=RX(1, theta=0.4)), {0: 1, 1: 0}, (1, 0)),
+        (Adjoint(S(0)), {0: 1}, (1,)),
+        (Exponential(X(0)), {0: 2}, (2,)),
+        (Adjoint(CNOT(0, 1)), {0: 3}, (3, 1)),
+    ],
+)
+def test_remap_qubits_supports_all_gate_kinds(gate: Gate, mapping, expected_qubits) -> None:
+    original_qubits = gate.qubits
+
+    remapped = gate.remap_qubits(mapping)
+
+    assert type(remapped) is type(gate)
+    assert remapped.name == gate.name
+    assert remapped.qubits == expected_qubits
+    assert remapped.get_parameter_values() == gate.get_parameter_values()
+    assert gate.qubits == original_qubits
+
+
+def test_remap_qubits_copies_parameters_and_shares_cached_matrix() -> None:
+    gate = Adjoint(RX(0, theta=0.4))
+    gate.matrix  # populate the cached matrix
+
+    remapped = gate.remap_qubits({0: 1})
+
+    assert remapped.matrix is gate.matrix
+    assert remapped.basic_gate.matrix is gate.basic_gate.matrix
+    assert remapped.basic_gate is not gate.basic_gate
+    remapped.set_parameters({"theta": 0.9})
+    assert gate.get_parameter_values() == [0.4]
+
+
+def test_remap_qubits_rejects_colliding_qubits() -> None:
+    gate = CNOT(0, 1)
+    with pytest.raises(ValueError, match="same index"):
+        gate.remap_qubits({0: 1})
+
+
+def test_remap_qubits_rejects_unsupported_type() -> None:
+    class UnsupportedGate(Gate):
+        @property
+        def name(self) -> str:
+            return "Unsupported"
+
+        @property
+        def matrix(self):
+            return None
+
+        @property
+        def target_qubits(self) -> tuple[int, ...]:
+            return (0,)
+
+    gate = UnsupportedGate()
+    with pytest.raises(NotImplementedError, match="UnsupportedGate"):
+        gate.remap_qubits({0: 1})

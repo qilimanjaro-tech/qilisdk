@@ -740,7 +740,8 @@ class SabreLayoutPass(CircuitTranspilerPass):
 
     # --------- retargeting to the chosen layout ---------
 
-    def _retarget_circuit(self, circuit: Circuit, layout: list[int], max_physical_label_plus_one: int) -> Circuit:
+    @staticmethod
+    def _retarget_circuit(circuit: Circuit, layout: list[int], max_physical_label_plus_one: int) -> Circuit:
         """Retarget all gates in ``circuit`` using a chosen layout.
 
         Args:
@@ -758,7 +759,6 @@ class SabreLayoutPass(CircuitTranspilerPass):
             max_physical_label_plus_one,
         )
         retargeted_circuit = Circuit(output_num_qubits)
-        for gate in circuit.gates:
-            mapped_qubits = tuple(layout[logical_qubit] for logical_qubit in gate.qubits)
-            retargeted_circuit.add(self._retarget_gate(gate, mapped_qubits))
+        mapping = dict(enumerate(layout))
+        retargeted_circuit.add(gate.remap_qubits(mapping) for gate in circuit.gates)
         return retargeted_circuit
