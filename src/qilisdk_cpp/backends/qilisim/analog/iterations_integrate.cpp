@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <atomic>
 #include <cmath>
 #include <initializer_list>
 #include <utility>
 
 #include "../../../libs/gpu.h"
+#include "../../../libs/logging.h"
 #include "../../../libs/pybind.h"
 #include "../utils/matrix_utils.h"
 #include "iterations.h"
@@ -31,6 +33,23 @@
 #endif
 
 // GCOV_EXCL_BR_START
+
+namespace {
+
+// Whether the inaccurate RK4 step warning has already been emitted in this process
+std::atomic<bool> rk4_accuracy_warning_emitted{false};
+
+// How far a state vector's squared norm may drift over one RK4 step before dt is reported as too large
+constexpr double kRk4NormDriftTolerance = 1e-2;
+
+}  // namespace
+
+void reset_rk4_warnings() {
+    /*
+    Re-arm the once-per-process inaccurate RK4 step warning. Only used by the tests.
+    */
+    rk4_accuracy_warning_emitted.store(false);
+}
 
 DenseMatrix iter_rk4_matrix(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector, bool normalize) {
     /*
@@ -224,17 +243,19 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
     // k1 at time t
     lindblad_rhs(k, rho_t, construct_current_hamiltonian(t_step, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
     const long rho_size = rho_t.size();
+    double old_squared_norm = 0.0;
     {
         Complex* rt_ptr = rho_t.data();
         Complex* ro_ptr = rho_old.data();
         Complex* rtmp_ptr = rho_tmp.data();
         const Complex* k_ptr = k.data();
 #if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static) reduction(+ : old_squared_norm)
 #endif
         for (long idx = 0; idx < rho_size; ++idx) {
             const Complex orig = rt_ptr[idx];
             const Complex kv = k_ptr[idx];
+            old_squared_norm += orig.real() * orig.real() + orig.imag() * orig.imag();
             ro_ptr[idx] = orig;
             rt_ptr[idx] = orig + dt_over_6 * kv;
             rtmp_ptr[idx] = orig + dt_over_2 * kv;
@@ -278,14 +299,17 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
 
     // k4 at time t + dt
     lindblad_rhs(k, rho_tmp, construct_current_hamiltonian(t_step + dt, step_list, hamiltonians, parameters_list), jump_operators, is_unitary_on_statevector, jump_drift);
+    double new_squared_norm = 0.0;
     {
         Complex* rt_ptr = rho_t.data();
         const Complex* k_ptr = k.data();
 #if defined(_OPENMP)
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static) reduction(+ : new_squared_norm)
 #endif
         for (long idx = 0; idx < rho_size; ++idx) {
-            rt_ptr[idx] += dt_over_6 * k_ptr[idx];
+            const Complex updated = rt_ptr[idx] + dt_over_6 * k_ptr[idx];
+            rt_ptr[idx] = updated;
+            new_squared_norm += updated.real() * updated.real() + updated.imag() * updated.imag();
         }
     }
 
@@ -294,6 +318,10 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
         return;
     }
     if (is_unitary_on_statevector) {
+        // Unitary evolution keeps the norm, so a step that grows or shrinks it by more than a little means dt is too large
+        if (rho_cols == 1 && std::abs(new_squared_norm - old_squared_norm) > kRk4NormDriftTolerance * old_squared_norm && !rk4_accuracy_warning_emitted.exchange(true)) {
+            qilisdk::log_warning("[QiliSim, C++] The schedule dt is too large for the fixed-step RK4 integrator to be accurate on this Hamiltonian, so the results might be wrong. Lower the schedule dt, or consider using a different simulation method. It is only reported once per process.");
+        }
         normalize_state(rho_t, true, rho_cols > 1);
     } else {
         Complex norm = 0;
