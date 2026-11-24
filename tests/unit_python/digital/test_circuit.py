@@ -25,8 +25,9 @@ from qilisdk.analog import Y as analog_Y
 from qilisdk.analog.hamiltonian import PauliX
 from qilisdk.core import Parameter, QTensor
 from qilisdk.core.comparison import LEQ
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X, Y
+from qilisdk.digital import CNOT, CZ, RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, M, S, X, Y
 from qilisdk.digital.circuit import _apply_gate_left
+from qilisdk.digital.circuit_transpiler import CircuitTranspiler
 from qilisdk.digital.exceptions import GateHasNoMatrixError, NotAGateError, QubitOutOfRangeError
 from qilisdk.digital.gates import Adjoint, BasicGate, Exponential, Gate
 
@@ -980,3 +981,130 @@ def test_gate_minus_analog_hamiltonian_raises_helpful_error():
     hamiltonian = analog_Y(0)
     with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
         _ = gate - hamiltonian
+
+
+def _single_gate_circuit(nqubits: int, gate: Gate) -> Circuit:
+    circuit = Circuit(nqubits)
+    circuit.add(gate)
+    return circuit
+
+
+def test_is_equivalent_to_allows_global_phase():
+    # RZ(phi) equals U1(phi) up to the global phase e^{-i phi / 2}.
+    rz = _single_gate_circuit(1, RZ(0, phi=0.7))
+    u1 = _single_gate_circuit(1, U1(0, phi=0.7))
+
+    assert rz.is_equivalent_to(u1)
+    assert u1.is_equivalent_to(rz)
+
+
+def test_is_equivalent_to_rejects_relative_phase():
+    # S is diagonal with unit-modulus entries, so a check that allowed any diagonal phase would accept it.
+    s = _single_gate_circuit(1, S(0))
+    empty = Circuit(1)
+
+    assert not s.is_equivalent_to(empty)
+
+
+def test_is_equivalent_to_rejects_different_unitaries():
+    x = _single_gate_circuit(1, X(0))
+    y_circuit = _single_gate_circuit(1, Y(0))
+
+    assert not x.is_equivalent_to(y_circuit)
+
+
+def test_is_equivalent_to_rejects_different_qubit_counts_without_layout():
+    small = Circuit(1)
+    large = Circuit(2)
+
+    assert not small.is_equivalent_to(large)
+
+
+def test_is_equivalent_to_raises_for_measurement():
+    measured = _single_gate_circuit(1, M(0))
+    empty = Circuit(1)
+
+    with pytest.raises(GateHasNoMatrixError):
+        measured.is_equivalent_to(empty)
+
+
+def _routing_example() -> Circuit:
+    circuit = Circuit(3)
+    circuit.add([H(0), CNOT(0, 2), RZ(2, phi=0.3), CNOT(2, 1)])
+    return circuit
+
+
+def test_is_equivalent_to_with_custom_layout():
+    logical = _routing_example()
+    result = CircuitTranspiler.default(topology=[(0, 1), (1, 2)], qubit_mapping={0: 2, 1: 0, 2: 1}).transpile(logical)
+
+    assert not result.circuit.is_equivalent_to(logical)
+    assert result.circuit.is_equivalent_to(logical, layout=result.initial_layout)
+    assert result.circuit.is_equivalent_to(logical, layout=result.initial_layout, final_layout=result.layout)
+
+
+@pytest.mark.parametrize("topology", [[(0, 1), (1, 2), (2, 3)], [(0, 1), (1, 2), (2, 3), (3, 4), (1, 5)]])
+@pytest.mark.parametrize("seed", range(5))
+def test_is_equivalent_to_with_sabre_layout(topology, seed):
+    logical = Circuit.random(4, {H, X, RZ}, {CNOT, CZ}, 25, seed=seed)
+    result = CircuitTranspiler.default(topology=topology).transpile(logical)
+
+    assert result.circuit.is_equivalent_to(logical, layout=result.initial_layout, final_layout=result.layout)
+
+
+def test_is_equivalent_to_tracks_qubits_moved_by_swaps():
+    logical = Circuit(2)
+    logical.add(X(0))
+    physical = Circuit(2)
+    physical.add([X(0), SWAP(0, 1)])
+
+    assert not physical.is_equivalent_to(logical, layout={0: 0, 1: 1})
+    assert physical.is_equivalent_to(logical, layout={0: 0, 1: 1}, final_layout={0: 1, 1: 0})
+
+
+def test_is_equivalent_to_with_ancilla_qubits():
+    logical = Circuit(1)
+    logical.add(X(0))
+    physical = Circuit(3)
+    physical.add(X(2))
+
+    assert physical.is_equivalent_to(logical, layout={0: 2})
+    assert not physical.is_equivalent_to(logical, layout={0: 1})
+
+
+def test_is_equivalent_to_rejects_disturbed_ancilla():
+    logical = Circuit(1)
+    physical = Circuit(2)
+    physical.add(X(1))
+
+    assert not physical.is_equivalent_to(logical, layout={0: 0})
+
+
+def test_is_equivalent_to_rejects_wrong_layout():
+    logical = _routing_example()
+    result = CircuitTranspiler.default(topology=[(0, 1), (1, 2)], qubit_mapping={0: 2, 1: 0, 2: 1}).transpile(logical)
+
+    assert not result.circuit.is_equivalent_to(logical, layout={0: 0, 1: 1, 2: 2})
+
+
+def test_is_equivalent_to_final_layout_requires_layout():
+    circuit = Circuit(1)
+    other = Circuit(1)
+    with pytest.raises(ValueError, match="final_layout requires layout"):
+        circuit.is_equivalent_to(other, final_layout={0: 0})
+
+
+@pytest.mark.parametrize(
+    ("layout", "match"),
+    [
+        ({0: 0}, "must map every qubit in range"),
+        ({0: 0, 1: 0}, "must map to distinct qubits"),
+        ({0: 0, 1: 2}, "must map to distinct qubits"),
+        ({0: 0, 1: -1}, "must map to distinct qubits"),
+    ],
+)
+def test_is_equivalent_to_rejects_invalid_layout(layout, match):
+    circuit = Circuit(2)
+    other = Circuit(2)
+    with pytest.raises(ValueError, match=match):
+        circuit.is_equivalent_to(other, layout=layout)

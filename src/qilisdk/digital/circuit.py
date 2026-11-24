@@ -34,6 +34,8 @@ from .gates import BasicGate, Gate, Modified, _reject_analog_object
 if TYPE_CHECKING:
     from qilisdk.core.types import RealNumber
 
+    from .types import LayoutMap
+
 # Name used for this class in the error messages raised for analog objects.
 _REJECT_TARGET = "a Circuit"
 
@@ -63,6 +65,13 @@ def _apply_gate_left(operator: np.ndarray, gate: Gate, nqubits: int) -> np.ndarr
     perm = perm_output + list(range(nqubits, 2 * nqubits))
 
     return np.transpose(contracted, axes=perm).reshape(operator.shape)
+
+
+def _equal_up_to_global_phase(first: np.ndarray, second: np.ndarray, atol: float) -> bool:
+    """Return whether ``second`` equals ``first`` times a single unit-modulus phase, within ``atol``."""
+    overlap = np.vdot(first, second)
+    phase = overlap / abs(overlap) if abs(overlap) > atol else 1.0
+    return bool(np.allclose(second, phase * first, rtol=0, atol=atol))
 
 
 @yaml.register_class
@@ -339,6 +348,82 @@ class Circuit(Parameterizable):
     def to_qtensor(self) -> QTensor:
         logger.trace("[Circuit] Converting circuit to QTensor.")
         return QTensor(self.to_matrix())
+
+    def is_equivalent_to(
+        self,
+        other: Circuit,
+        atol: float = 1e-9,
+        layout: LayoutMap | None = None,
+        final_layout: LayoutMap | None = None,
+    ) -> bool:
+        """Return whether ``other`` implements the same unitary as this circuit, up to a global phase.
+
+        Only one global phase is allowed: two circuits whose unitaries differ by a relative phase between basis
+        states (for example ``Z`` and the identity) are not equivalent.
+
+        To check a routed circuit against its logical original, call this method on the routed circuit and pass the
+        layouts reported by the transpiler. ``layout`` maps each qubit of ``other`` to the qubit of this circuit that
+        holds it at the start, and ``final_layout`` to the one that holds it at the end (it defaults to ``layout``).
+        Qubits of this circuit that are not in ``layout`` are treated as ancillas: they must start in ``|0>`` and be
+        returned to ``|0>``.
+
+        Example:
+            .. code-block:: python
+
+                result = CircuitTranspiler.default(topology=topology).transpile(circuit)
+                result.circuit.is_equivalent_to(circuit, layout=result.initial_layout, final_layout=result.layout)
+
+        Args:
+            other (Circuit): The circuit to compare against.
+            atol (float): Absolute tolerance used when comparing matrix entries.
+            layout (LayoutMap | None): Mapping from each qubit of ``other`` to a qubit of this circuit at the start.
+                If omitted, both circuits must have the same number of qubits and are compared qubit by qubit.
+            final_layout (LayoutMap | None): Mapping from each qubit of ``other`` to a qubit of this circuit at the
+                end. Defaults to ``layout``. Requires ``layout``.
+
+        Returns:
+            bool: True if the circuits are equivalent up to a global phase under the given layouts.
+
+        Raises:
+            ValueError: If ``final_layout`` is given without ``layout``, or if a layout does not map every qubit of
+                ``other`` to a distinct qubit of this circuit.
+            GateHasNoMatrixError: If either circuit contains a gate without a matrix (e.g., measurement).
+        """
+        if layout is None:
+            if final_layout is not None:
+                raise ValueError("final_layout requires layout to also be given.")
+            if self.nqubits != other.nqubits:
+                return False
+            return _equal_up_to_global_phase(other.to_matrix(), self.to_matrix(), atol)
+
+        final_layout = layout if final_layout is None else final_layout
+        initial = self._embedding_matrix(other.nqubits, layout, "layout")
+        final = self._embedding_matrix(other.nqubits, final_layout, "final_layout")
+        # Compare the two circuits as isometries from the qubits of ``other`` into this circuit.
+        return _equal_up_to_global_phase(final @ other.to_matrix(), self.to_matrix() @ initial, atol)
+
+    def _embedding_matrix(self, nqubits: int, layout: LayoutMap, name: str) -> np.ndarray:
+        """Return the isometry placing an ``nqubits`` state onto this circuit's qubits, with the rest in ``|0>``.
+
+        Raises:
+            ValueError: If ``layout`` does not map every qubit in ``range(nqubits)`` to a distinct qubit of this
+                circuit.
+        """
+        if set(layout) != set(range(nqubits)):
+            raise ValueError(
+                f"{name} must map every qubit in range({nqubits}) exactly once, got keys {sorted(layout)}."
+            )
+        targets = [layout[qubit] for qubit in range(nqubits)]
+        if len(set(targets)) != nqubits or any(not 0 <= target < self.nqubits for target in targets):
+            raise ValueError(f"{name} must map to distinct qubits in range({self.nqubits}), got {targets}.")
+        embedding = np.zeros((1 << self.nqubits, 1 << nqubits), dtype=_complex_dtype())
+        for column in range(1 << nqubits):
+            # Qubit 0 is the most significant bit, matching ``to_matrix``.
+            row = sum(
+                1 << (self.nqubits - 1 - target) for i, target in enumerate(targets) if column >> (nqubits - 1 - i) & 1
+            )
+            embedding[row, column] = 1.0
+        return embedding
 
     def __add__(self, other: Circuit | Gate) -> Circuit:
         """Return a new circuit with ``other`` composed at the end of this one.
