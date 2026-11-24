@@ -29,7 +29,7 @@ from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import QubitOutOfRangeError
-from .gates import CNOT, RY, RZ, BasicGate, Gate, _reject_analog_object
+from .gates import CNOT, RY, RZ, BasicGate, Gate, Modified, _reject_analog_object
 
 if TYPE_CHECKING:
     from qilisdk.core.types import RealNumber
@@ -223,9 +223,14 @@ class Circuit(Parameterizable):
         logger.trace("[Circuit] Parsing parameters for gate: {}", gate)
         if gate.is_parameterized:
             param_base_label = self.get_prefix() + f"{gate.name}({','.join(map(str, gate.qubits))})"
+            # Modified gates (Adjoint, Controlled, Exponential) inherit the empty Gate.PARAMETER_NAMES,
+            # so look through them to the wrapped gate to recognise its default parameter names.
+            inner_gate: Gate = gate
+            while isinstance(inner_gate, Modified):
+                inner_gate = inner_gate.basic_gate
             for label in gate.get_parameter_names():
                 _parameter_name = self._query_parameter_original_name(gate, label)
-                if label == _parameter_name and label in gate.PARAMETER_NAMES:
+                if label == _parameter_name and label in inner_gate.PARAMETER_NAMES:
                     parameter_label = param_base_label + f"_{label}_{len(self._parameters)}"
                 else:
                     parameter_label = _parameter_name

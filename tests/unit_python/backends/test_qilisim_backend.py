@@ -26,9 +26,9 @@ from qilisdk.analog.hamiltonian import Z as pauli_z
 from qilisdk.backends.backend_config import AnalogMethod, DigitalMethod, ExecutionConfig, MonteCarloConfig
 from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core import QTensor, ket
-from qilisdk.digital import CNOT, Circuit, H, M, S, X
+from qilisdk.digital import CNOT, RX, RY, Circuit, H, M, S, X
 from qilisdk.digital.gates import Adjoint, Controlled, Exponential
-from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir, ReservoirLayer
+from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.noise import Dephasing, LindbladGenerator, NoiseModel
 from qilisdk.readout import Readout
@@ -489,6 +489,38 @@ def test_execute_quantum_reservoir_resets_requested_qubit(qubit_to_reset, expect
     result = backend.execute(functional, Readout().with_expectation(observables=[pauli_z(0), pauli_z(1)]))
 
     assert result.get_expectation_values() == pytest.approx(expected)
+
+
+@pytest.mark.parametrize("matrix_free", [True, False])
+def test_execute_quantum_reservoir_with_circuit_dynamics(matrix_free):
+    dynamics = Circuit(2)
+    dynamics.add(RX(0, theta=ReservoirInput("x", 0.0)))
+    dynamics.add(CNOT(0, 1))
+    dynamics.add(RY(1, theta=0.7))
+    layer = ReservoirLayer(evolution_dynamics=dynamics, qubits_to_reset=[0])
+    inputs = [{"x": 0.3}, {"x": 1.1}, {"x": -0.6}]
+    observables = [pauli_z(0), pauli_z(1)]
+
+    # Reference: apply the circuit unitary to the density matrix, then reset qubit 0 (the leftmost one)
+    z_matrices = [np.kron(np.diag([1, -1]), np.eye(2)), np.kron(np.eye(2), np.diag([1, -1]))]
+    rho = ket(0, 0).to_density_matrix().dense()
+    expected = []
+    for layer_inputs in inputs:
+        dynamics.set_parameters(layer_inputs)
+        unitary = dynamics.to_qtensor().dense()
+        rho = unitary @ rho @ unitary.conj().T
+        expected.append([np.real(np.trace(z @ rho)) for z in z_matrices])
+        rho = np.kron(np.diag([1.0, 0.0]), np.einsum("aiaj->ij", rho.reshape(2, 2, 2, 2)))
+
+    functional = QuantumReservoir(initial_state=ket(0, 0), reservoir_layer=layer, input_per_layer=inputs)
+    backend = QiliSim(
+        digital_simulation_method=DigitalMethod.statevector(matrix_free=matrix_free),
+        execution_config=ExecutionConfig(seed=1, num_threads=1),
+    )
+    result = backend.execute(functional, Readout().with_expectation(observables=observables))
+
+    actual = [*result.get_intermediate_expectation_values(), result.get_expectation_values()]
+    assert np.allclose(actual, expected, atol=1e-10)
 
 
 def test_qilisim_repr():

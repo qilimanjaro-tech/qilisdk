@@ -16,6 +16,7 @@ import pytest
 from numpy import pi
 
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliI, PauliX, PauliY, PauliZ
+from qilisdk.digital import Circuit
 from qilisdk.digital.gates import CNOT, RX, RZ, H
 from qilisdk.utils.trotterization import trotter_evolution
 from qilisdk.utils.trotterization.trotterization import _commuting_trotter_evolution
@@ -42,6 +43,15 @@ def test_trotter_evolution_handles_y_basis_change():
     assert gates[0].theta == pytest.approx(pi / 2)
     assert gates[1].phi == pytest.approx(2.0)
     assert gates[2].theta == pytest.approx(-pi / 2)
+
+
+def test_trotter_evolution_y_basis_change_angles_are_not_trainable():
+    circuit = Circuit(1)
+    circuit.add(list(trotter_evolution(Hamiltonian({(PauliY(0),): 1.0}), time=0.5, trotter_steps=1)))
+
+    trainable = circuit.get_parameters(where=lambda parameter: parameter.is_trainable)
+    assert all(not name.startswith("fixed_") for name in trainable)
+    assert len(trainable) == 1
 
 
 def test_trotter_evolution_ignores_identity_terms():
