@@ -49,6 +49,7 @@ from openqasm3.ast import (
     IntType,
     IODeclaration,
     IOKeyword,
+    QuantumBarrier,
     QuantumGate,
     QuantumGateDefinition,
     QuantumMeasurementStatement,
@@ -77,6 +78,7 @@ from qilisdk.digital import (
     U2,
     U3,
     Adjoint,
+    Barrier,
     Circuit,
     Controlled,
     Gate,
@@ -157,7 +159,7 @@ class OpenQasmParser:
     ns/μs/us/ms/s/dt            ✅
     stretch expr.Stretch        🟡            1
     delay                       ❌
-    barrier                     ❌
+    barrier                     ✅
     box                         ❌
     Built-in U                  ✅
     gate                        🟡            1
@@ -1114,6 +1116,11 @@ class OpenQasmParser:
         elif isinstance(statement, QuantumMeasurementStatement):
             self._handle_statement_quantum_measurement(statement)
 
+        # Barriers, where no operands at all means every qubit
+        elif isinstance(statement, QuantumBarrier):
+            barrier_qubits = self._flatten([self._evaluate_register(qubit) for qubit in statement.qubits])
+            self.gates_to_add.append(Barrier(*dict.fromkeys(barrier_qubits)))
+
         # If it's an expression, evaluate it just in case there's a subroutine call inside
         elif isinstance(statement, ExpressionStatement):
             self._evaluate_expression(statement.expression)
@@ -1235,6 +1242,12 @@ class OpenQasmParser:
             logger.trace("[OpenQASM3] Exporting gate {} on qubits {}", gate.name, gate.qubits)
             if isinstance(gate, M):
                 qasm3 += "measure q[" + ",".join([str(qb) for qb in gate.qubits]) + "];\n"
+                continue
+            if isinstance(gate, Barrier):
+                if gate.qubits == tuple(range(circuit.nqubits)):
+                    qasm3 += "barrier q;\n"
+                else:
+                    qasm3 += "barrier " + ", ".join([f"q[{qb}]" for qb in gate.qubits]) + ";\n"
                 continue
             # Controls and adjoints are written out as OpenQASM 3.0 modifiers on the gate they wrap
             base_gate: Gate = gate

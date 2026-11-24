@@ -30,12 +30,30 @@ from .circuit_transpiler_passes import (
     TranspilationContext,
     TwoQubitGateBasis,
 )
+from .gates import Barrier
 from .topology import build_topology_graph
 
 if TYPE_CHECKING:
     from qilisdk.digital import Circuit
 
     from .types import LayoutMap, TopologyLike
+
+
+def _remove_barriers(circuit: Circuit) -> Circuit:
+    """Return ``circuit`` without its barriers, or ``circuit`` itself when it has none.
+
+    Args:
+        circuit (Circuit): The circuit to strip.
+
+    Returns:
+        Circuit: A circuit holding the same gates as ``circuit``, barriers excepted.
+    """
+    if not any(isinstance(gate, Barrier) for gate in circuit.gates):
+        return circuit
+    logger.debug("[CircuitTranspiler] Removing barriers before transpilation")
+    stripped = type(circuit)(circuit.nqubits)
+    stripped.add(gate for gate in circuit.gates if not isinstance(gate, Barrier))
+    return stripped
 
 
 class TranspilerPassResult:
@@ -184,6 +202,9 @@ class CircuitTranspiler:
     def transpile(self, circuit: Circuit) -> CircuitTranspilerResult:
         """Run the pipeline and return pass-by-pass transpilation diagnostics.
 
+        Barriers are only a drawing aid, so they are removed before the first pass runs and the
+        transpiled circuit never contains any.
+
         Args:
             circuit (Circuit): Input circuit to transpile.
         Returns:
@@ -193,7 +214,7 @@ class CircuitTranspiler:
 
         logger.info("[CircuitTranspiler] Transpiling circuit through {} passes", len(self._pipeline))
         pass_results: list[TranspilerPassResult] = []
-        transpiled_circuit = circuit
+        transpiled_circuit = _remove_barriers(circuit)
 
         for transpiler_pass in self._pipeline:
             pass_name = transpiler_pass.__class__.__name__

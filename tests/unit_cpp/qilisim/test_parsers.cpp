@@ -1419,6 +1419,58 @@ TEST(ParseGates, BasicGate) {
     EXPECT_EQ(result[0].get_target_qubits()[0], 0);
 }
 
+TEST(ParseGates, BarrierIsSkipped) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.digital import Barrier, Circuit, H
+
+        circuit_with_barrier = Circuit(2)
+        circuit_with_barrier.add([Barrier(), H(0), Barrier(1)])
+    )");
+
+    auto result = parse_gates(py::globals()["circuit_with_barrier"], 1e-10, py::none());
+
+    ASSERT_EQ(result.size(), 1u);
+    EXPECT_EQ(result[0].get_name(), "H");
+}
+
+TEST(ParseMeasurements, BarrierAfterFinalMeasurementsIsSkipped) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.digital import Barrier, Circuit, H, M
+
+        circuit_measure_then_barrier = Circuit(3)
+        circuit_measure_then_barrier.add([H(0), M(0, 2), Barrier()])
+    )");
+
+    auto result = parse_measurements(py::globals()["circuit_measure_then_barrier"]);
+
+    ASSERT_EQ(result.size(), 3u);
+    EXPECT_TRUE(result[0]);
+    EXPECT_FALSE(result[1]);
+    EXPECT_TRUE(result[2]);
+}
+
+TEST(ResolveGateDurations, BarrierHasNoDuration) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+        from qilisdk.digital import Barrier, Circuit, H
+
+        class FakeNoiseConfigDurations:
+            def get_gate_time(self, gate_type):
+                return 5e-6
+
+        circuit_durations_barrier = Circuit(2)
+        circuit_durations_barrier.add([H(0), Barrier()])
+        fake_noise_config_durations = FakeNoiseConfigDurations()
+    )");
+
+    auto result = resolve_gate_durations(py::globals()["circuit_durations_barrier"], py::globals()["fake_noise_config_durations"]);
+
+    ASSERT_EQ(result.size(), 1u);
+    EXPECT_TRUE(result.count("H"));
+}
+
 TEST(ParseGates, MeasurementGateIsNotSkipped) {
     py::gil_scoped_acquire gil;
     py::exec(R"(

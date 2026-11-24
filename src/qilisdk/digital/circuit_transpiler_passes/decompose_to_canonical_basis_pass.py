@@ -32,6 +32,7 @@ from qilisdk.digital.gates import (
     U2,
     U3,
     Adjoint,
+    Barrier,
     BasicGate,
     Controlled,
     Exponential,
@@ -288,7 +289,7 @@ def _invert_basis_gate(gate: Gate) -> list[Gate]:
         return [CZ(gate.control_qubits[0], gate.target_qubits[0])]
     if isinstance(gate, CNOT):
         return [CNOT(gate.control_qubits[0], gate.target_qubits[0])]
-    if isinstance(gate, M):
+    if isinstance(gate, (M, Barrier)):
         return [gate]
     if isinstance(gate, H):
         return _H_as_U3(gate.qubits[0])[::-1]
@@ -351,7 +352,7 @@ def _normalize_single_qubit_gate(gate: Gate, basis: SingleQubitGateBasis) -> lis
     Returns:
         list[Gate]: Equivalent sequence where one-qubit unitary gates are in ``basis``.
     """
-    if gate.nqubits != 1 or isinstance(gate, M):
+    if gate.nqubits != 1 or isinstance(gate, (M, Barrier)):
         return [gate]
 
     qubit = gate.qubits[0]
@@ -513,8 +514,8 @@ class DecomposeToCanonicalBasisPass(CircuitTranspilerPass):
         Raises:
             NotImplementedError: If no rewrite rule exists for ``gate``.
         """
-        # measurement passes through
-        if isinstance(gate, M):
+        # measurements and barriers pass through
+        if isinstance(gate, (M, Barrier)):
             return [gate]
 
         # already basis

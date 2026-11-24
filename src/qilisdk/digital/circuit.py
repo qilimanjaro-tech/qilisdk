@@ -29,7 +29,7 @@ from qilisdk.utils.visualization import CircuitStyle
 from qilisdk.yaml import yaml
 
 from .exceptions import QubitOutOfRangeError
-from .gates import BasicGate, Gate, Modified, _reject_analog_object
+from .gates import Barrier, BasicGate, Gate, Modified, _reject_analog_object
 
 if TYPE_CHECKING:
     from qilisdk.core.types import RealNumber
@@ -203,6 +203,9 @@ class Circuit(Parameterizable):
         """
         logger.trace("[Circuit] Adding gate: {}", gate)
         _reject_analog_object(gate, _REJECT_TARGET)
+        # A barrier created without any qubits spans every qubit of the circuit
+        if isinstance(gate, Barrier) and not gate.qubits:
+            gate = Barrier(*range(self.nqubits))
         if any(qubit < 0 or qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
 
@@ -239,6 +242,9 @@ class Circuit(Parameterizable):
             QubitOutOfRangeError: If any qubit index used by the gate is not within the circuit's qubit range.
         """
         _reject_analog_object(gate, _REJECT_TARGET)
+        # A barrier created without any qubits spans every qubit of the circuit
+        if isinstance(gate, Barrier) and not gate.qubits:
+            gate = Barrier(*range(self.nqubits))
         if any(qubit < 0 or qubit >= self.nqubits for qubit in gate.qubits):
             raise QubitOutOfRangeError
 
@@ -326,6 +332,8 @@ class Circuit(Parameterizable):
     def to_matrix(self) -> np.ndarray:
         """Return the full unitary matrix representation of the circuit.
 
+        Barriers have no effect on the state, so they are skipped.
+
         Raises:
             GateHasNoMatrixError: if any gate does not define a matrix (e.g., measurement).
         """
@@ -333,6 +341,8 @@ class Circuit(Parameterizable):
         logger.trace("[Circuit] Converting circuit to matrix with dimension: {}", dim)
         operator = np.eye(dim, dtype=_complex_dtype())
         for gate in self.gates:
+            if isinstance(gate, Barrier):
+                continue
             operator = _apply_gate_left(operator, gate, self.nqubits)
         return operator
 

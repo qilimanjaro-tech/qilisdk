@@ -42,6 +42,9 @@ Use these constructors to apply standard single- and two-qubit operations:
   Controlled-Z: applies Z on target if control is 1.
 - :class:`M(*qubits: int)<qilisdk.digital.gates.M>`
   Measures the listed qubits in the computational basis.
+- :class:`Barrier(*qubits: int)<qilisdk.digital.gates.Barrier>`
+  Draws a vertical line across the listed qubits, or across every qubit when none are given, to separate
+  sections of a circuit when it is drawn.
 
 Controlled Gates
 ^^^^^^^^^^^^^^^^

@@ -653,6 +653,10 @@ std::map<std::string, float> resolve_gate_durations(const py::object& circuit, c
         return durations;
     }
     for (auto py_gate : circuit.attr("gates")) {
+        // A barrier is only a drawing aid, so it takes no time and gets no noise
+        if (py_gate.attr("name").cast<std::string>() == "Barrier") {
+            continue;
+        }
         std::string base_name = normalize_gate_name(py_gate.attr("name").cast<std::string>());
         int num_controls = static_cast<int>(py::len(py_gate.attr("control_qubits")));
         std::string key = NoiseModelCpp::make_gate_key(base_name, num_controls);
@@ -1238,6 +1242,11 @@ std::vector<Gate> parse_gates(const py::object& circuit, double atol, const py::
         // Get the name
         std::string gate_type_str = py_gate.attr("name").cast<std::string>();
 
+        // A barrier is only a drawing aid, with no effect on the state
+        if (gate_type_str == "Barrier") {
+            continue;
+        }
+
         // If we have a noise model, check if this gate has parameter perturbation noise and apply if so
         if (!noise_model.is_none() && py_gate.attr("is_parameterized").cast<bool>()) {
             py_gate = py::module_::import("copy").attr("deepcopy")(py_gate);
@@ -1370,6 +1379,10 @@ std::vector<bool> parse_measurements(const py::object& circuit) {
     for (int gate_index = n_gates - 1; gate_index >= 0; --gate_index) {
         auto py_gate = py_gates[gate_index];
         std::string gate_type_str = py_gate.attr("name").cast<std::string>();
+        // Barriers among the final measurements do not make them any less final
+        if (gate_type_str == "Barrier") {
+            continue;
+        }
         if (gate_type_str == "M") {
             any_measurements = true;
             py::list py_targets = py_gate.attr("target_qubits");

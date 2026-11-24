@@ -52,6 +52,7 @@ from qilisdk.digital import (
     RZ,
     SWAP,
     Adjoint,
+    Barrier,
     Circuit,
     Gate,
     H,
@@ -163,6 +164,9 @@ def _produce_gate(
         if inner_cls is T:
             qis.t_adj(qubits[_qubit_index(gate.basic_gate)])
             return
+    # A barrier is only a drawing aid, and the QIR Base Profile has no intrinsic for it
+    if cls is Barrier:
+        return
     if cls is M:
         for q in gate.qubits:
             qis.mz(qubits[q], results[q])

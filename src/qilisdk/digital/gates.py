@@ -671,6 +671,58 @@ class M(Gate):
 
 
 @yaml.register_class
+class Barrier(Gate):
+    """
+    A visual separator between sections of a circuit, drawn as a vertical line across its qubits.
+
+    A barrier has no effect on the state: simulators skip it and the transpiler removes it, so it
+    is purely a drawing aid for now. In particular, it does not stop :class:`~qilisdk.digital.circuit_transpiler.CircuitTranspiler`
+    from optimizing across it, so ``X(0), Barrier(), X(0)`` may still be cancelled to nothing. Individual
+    transpiler passes run on their own leave barriers in place and do not optimize across them.
+
+    When created without any qubits, adding it to a circuit stores a new barrier spanning every qubit of
+    that circuit, rather than the object passed in, so the same ``Barrier()`` can be added to circuits of
+    different sizes.
+
+    Example:
+        .. code-block:: python
+
+            from qilisdk.digital import CNOT, Barrier, Circuit, H
+
+            circuit = Circuit(2)
+            circuit.add([H(0), Barrier(), CNOT(0, 1)])
+    """
+
+    def __init__(self, *qubits: int) -> None:
+        """
+        Initialize a barrier.
+
+        Args:
+            qubits (int): The qubit indices the barrier spans. Leave empty to span every qubit of
+                the circuit the barrier is added to.
+
+        Raises:
+            ValueError: If the same qubit is given more than once.
+        """
+        if len(set(qubits)) != len(qubits):
+            raise ValueError(f"A barrier cannot act on the same qubit more than once, got {qubits}.")
+        self._target_qubits = tuple(qubits)
+        super().__init__()
+
+    @property
+    def name(self) -> str:
+        return "Barrier"
+
+    @property
+    def matrix(self) -> QTensor:
+        raise GateHasNoMatrixError
+
+    @property
+    def target_qubits(self) -> tuple[int, ...]:
+        return self._target_qubits
+
+
+@yaml.register_class
 class I(BasicGate):
     """
     The Identity gate.
