@@ -73,6 +73,11 @@ class EnvironmentNoise(Noise):
     Example:
         .. code-block:: python
 
+            import numpy as np
+
+            from qilisdk.analog import PauliX, PauliZ
+            from qilisdk.noise import AmplitudeDamping, EnvironmentNoise, NoiseModel
+
             nm = NoiseModel()
             nm.add(
                 EnvironmentNoise(

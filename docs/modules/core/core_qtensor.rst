@@ -134,6 +134,7 @@ As well as some quantum-specific transformations:
 
 - :meth:`.entropy_von_neumann()<qilisdk.core.qtensor.QTensor.entropy_von_neumann>`: compute the von Neumann entropy of a density matrix
 - :meth:`.entropy_renyi(alpha)<qilisdk.core.qtensor.QTensor.entropy_renyi>`: compute the Rényi entropy of a density matrix for a given order alpha
+- :meth:`.entanglement_entropy(qubits, alpha)<qilisdk.core.qtensor.QTensor.entanglement_entropy>`: compute the entanglement entropy of a subsystem, i.e. the entropy of its reduced density matrix
 - :meth:`.magic(alpha)<qilisdk.core.qtensor.QTensor.magic>`: compute the magic (non-stabilizerness) of a pure state via the stabilizer Rényi entropy
 - :meth:`.commutator(other)<qilisdk.core.qtensor.QTensor.commutator>`: compute the commutator with another operator
 - :meth:`.anticommutator(other)<qilisdk.core.qtensor.QTensor.anticommutator>`: compute the anticommutator with another operator
