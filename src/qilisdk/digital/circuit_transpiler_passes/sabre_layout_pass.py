@@ -29,7 +29,7 @@ from .circuit_transpiler_pass import CircuitTranspilerPass
 if TYPE_CHECKING:
     from rustworkx import PyGraph
 
-    from qilisdk.digital.types import Topology
+    from qilisdk.digital.types import TopologyLike
 
 
 class SabreLayoutPass(CircuitTranspilerPass):
@@ -52,7 +52,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
 
     Parameters
     ----------
-    topology : Topology
+    topology : TopologyLike
         Coupling map provided either as an edge list or as an undirected
         ``PyGraph`` whose node indices represent *physical* qubits.
     num_trials : int
@@ -100,7 +100,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
 
     def __init__(
         self,
-        topology: Topology,
+        topology: TopologyLike,
         *,
         num_trials: int = 8,
         seed: int | None = None,
@@ -114,7 +114,7 @@ class SabreLayoutPass(CircuitTranspilerPass):
         """Initialize a SABRE layout pass.
 
         Args:
-            topology (Topology): Coupling map as an edge list or ``PyGraph``.
+            topology (TopologyLike): Coupling map as a ``TopologyPreset``, edge list or ``PyGraph``.
             num_trials (int): Number of randomized layout trials.
             seed (int | None): RNG seed for reproducible trials.
             lookahead_size (int): Maximum number of gates in the look-ahead set.
