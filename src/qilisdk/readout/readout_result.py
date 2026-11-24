@@ -543,7 +543,7 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
     state_tomography: T = None  # type: ignore[assignment]  # ty:ignore[invalid-assignment]
 
     @classmethod
-    def from_list(cls, results: list) -> ReadoutCompositeResults:
+    def from_list(cls: type[ReadoutCompositeResults[Any, Any, Any]], results: list) -> ReadoutCompositeResults:
         """Construct a :class:`ReadoutCompositeResults` from a flat list of readout results.
 
         Each element is matched by type to the appropriate field.
@@ -569,7 +569,7 @@ class ReadoutCompositeResults(Result, Generic[S, E, T]):
         return cls(sampling=sampling, expectation_values=expectation_values, state_tomography=state_tomography)
 
     @classmethod
-    def from_dict(cls, data: dict) -> ReadoutCompositeResults:
+    def from_dict(cls: type[ReadoutCompositeResults[Any, Any, Any]], data: dict) -> ReadoutCompositeResults:
         """Construct a :class:`ReadoutCompositeResults` from a plain dictionary.
 
         Args:
