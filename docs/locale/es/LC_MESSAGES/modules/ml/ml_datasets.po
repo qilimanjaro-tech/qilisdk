@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-07-29 11:09+0200\n"
+"POT-Creation-Date: 2026-11-12 13:03+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: es\n"
@@ -32,8 +32,8 @@ msgid ""
 ":meth:`~qilisdk.ml.datasets.dataset.Dataset.generate` method:"
 msgstr ""
 "El módulo :mod:`~qilisdk.ml.datasets` proporciona una familia de "
-"generadores basados en ecuaciones para diversos conjuntos de datos de uso "
-"habitual en la investigación en aprendizaje automático. Todos los "
+"generadores basados en ecuaciones para diversos conjuntos de datos de uso"
+" habitual en la investigación en aprendizaje automático. Todos los "
 "generadores derivan de :class:`~qilisdk.ml.datasets.dataset.Dataset` y "
 "exponen un método :meth:`~qilisdk.ml.datasets.dataset.Dataset.generate` "
 "común:"
@@ -43,8 +43,8 @@ msgid ""
 "The returned :class:`~qilisdk.ml.datasets.dataset.DatasetSample` is an "
 "``(inputs, targets)`` pair."
 msgstr ""
-"El :class:`~qilisdk.ml.datasets.dataset.DatasetSample` devuelto es un par "
-"``(inputs, targets)``."
+"El :class:`~qilisdk.ml.datasets.dataset.DatasetSample` devuelto es un par"
+" ``(inputs, targets)``."
 
 #: ../../modules/ml/ml_datasets.rst:19
 msgid ""
@@ -92,15 +92,17 @@ msgstr ":class:`~qilisdk.ml.datasets.henon.HenonMap` --- Mapa de Hénon."
 
 #: ../../modules/ml/ml_datasets.rst:37
 msgid ":class:`~qilisdk.ml.datasets.logistic_map.LogisticMap` --- Logistic map."
-msgstr ""
-":class:`~qilisdk.ml.datasets.logistic_map.LogisticMap` --- Mapa "
-"logístico."
+msgstr ":class:`~qilisdk.ml.datasets.logistic_map.LogisticMap` --- Mapa logístico."
 
-#: ../../modules/ml/ml_datasets.rst:40
+#: ../../modules/ml/ml_datasets.rst:38
+msgid ":class:`~qilisdk.ml.datasets.circle.Circle` --- Circle classification."
+msgstr ":class:`~qilisdk.ml.datasets.circle.Circle` --- Clasificación de círculo."
+
+#: ../../modules/ml/ml_datasets.rst:41
 msgid "NARMA"
 msgstr "NARMA"
 
-#: ../../modules/ml/ml_datasets.rst:42
+#: ../../modules/ml/ml_datasets.rst:43
 #, python-brace-format
 msgid ""
 "The Nonlinear Auto-Regressive Moving Average "
@@ -115,7 +117,7 @@ msgstr ""
 "\\sim \\mathcal{U}(0, 0.5)` excita una recurrencia no lineal de orden "
 ":math:`n` cuya salida :math:`y(t)` debe predecirse a partir de :math:`u`:"
 
-#: ../../modules/ml/ml_datasets.rst:46
+#: ../../modules/ml/ml_datasets.rst:47
 #, python-brace-format
 msgid ""
 "y(t+1) = \\alpha\\, y(t)\n"
@@ -123,10 +125,12 @@ msgid ""
 "         + \\gamma\\, u(t-n+1)\\, u(t)\n"
 "         + \\delta."
 msgstr ""
-"y(t+1) = \\alpha\\, y(t)\n         + \\beta\\, y(t) \\sum_{i=0}^{n-1} "
-"y(t-i)\n         + \\gamma\\, u(t-n+1)\\, u(t)\n         + \\delta."
+"y(t+1) = \\alpha\\, y(t)\n"
+"         + \\beta\\, y(t) \\sum_{i=0}^{n-1} y(t-i)\n"
+"         + \\gamma\\, u(t-n+1)\\, u(t)\n"
+"         + \\delta."
 
-#: ../../modules/ml/ml_datasets.rst:53
+#: ../../modules/ml/ml_datasets.rst:54
 msgid ""
 "The default coefficients :math:`(\\alpha, \\beta, \\gamma, \\delta) = "
 "(0.3, 0.05, 1.5, 0.1)` correspond to the ubiquitous ``NARMA10`` task "
@@ -135,19 +139,19 @@ msgid ""
 "are shaped ``(npoints, 1)``. Because the drive is random, a ``seed`` can "
 "be specified to ensure reproducibility."
 msgstr ""
-"Los coeficientes por defecto :math:`(\\alpha, \\beta, \\gamma, \\delta) = "
-"(0.3, 0.05, 1.5, 0.1)` corresponden a la omnipresente tarea ``NARMA10`` "
+"Los coeficientes por defecto :math:`(\\alpha, \\beta, \\gamma, \\delta) ="
+" (0.3, 0.05, 1.5, 0.1)` corresponden a la omnipresente tarea ``NARMA10`` "
 "(``order=10``). A diferencia de los demás generadores, ``inputs`` es la "
 "excitación aleatoria :math:`u` y ``targets`` es la respuesta del sistema "
 ":math:`y`; ambos tienen forma ``(npoints, 1)``. Como la excitación es "
 "aleatoria, se puede especificar una ``seed`` para garantizar la "
 "reproducibilidad."
 
-#: ../../modules/ml/ml_datasets.rst:65
+#: ../../modules/ml/ml_datasets.rst:66
 msgid "MackeyGlass"
 msgstr "MackeyGlass"
 
-#: ../../modules/ml/ml_datasets.rst:67
+#: ../../modules/ml/ml_datasets.rst:68
 msgid ""
 "The :class:`~qilisdk.ml.datasets.mackey_glass.MackeyGlass` system is a "
 "nonlinear delay differential equation that produces a chaotic attractor:"
@@ -156,15 +160,15 @@ msgstr ""
 "ecuación diferencial con retardo no lineal que produce un atractor "
 "caótico:"
 
-#: ../../modules/ml/ml_datasets.rst:70
+#: ../../modules/ml/ml_datasets.rst:71
 msgid ""
 "\\frac{dx}{dt} = \\beta\\, \\frac{x(t - \\tau)}{1 + x(t - \\tau)^{n}}\n"
 "                - \\gamma\\, x(t)."
 msgstr ""
-"\\frac{dx}{dt} = \\beta\\, \\frac{x(t - \\tau)}{1 + x(t - \\tau)^{n}}\n   "
-"             - \\gamma\\, x(t)."
+"\\frac{dx}{dt} = \\beta\\, \\frac{x(t - \\tau)}{1 + x(t - \\tau)^{n}}\n"
+"                - \\gamma\\, x(t)."
 
-#: ../../modules/ml/ml_datasets.rst:75
+#: ../../modules/ml/ml_datasets.rst:76
 msgid ""
 "With the standard parameters :math:`\\beta = 0.2`, :math:`\\gamma = 0.1`,"
 " :math:`n = 10`, the behaviour is set by the delay :math:`\\tau`: the "
@@ -180,11 +184,11 @@ msgstr ""
 "integra con un esquema RK4 de paso fijo con resolución ``dt`` y se "
 "submuestrea cada ``sample_every`` pasos."
 
-#: ../../modules/ml/ml_datasets.rst:88
+#: ../../modules/ml/ml_datasets.rst:89
 msgid "Lorenz"
 msgstr "Lorenz"
 
-#: ../../modules/ml/ml_datasets.rst:90
+#: ../../modules/ml/ml_datasets.rst:91
 msgid ""
 "The :class:`~qilisdk.ml.datasets.lorenz.Lorenz` attractor is a three-"
 "dimensional chaotic dynamical system:"
@@ -192,32 +196,33 @@ msgstr ""
 "El atractor :class:`~qilisdk.ml.datasets.lorenz.Lorenz` es un sistema "
 "dinámico caótico tridimensional:"
 
-#: ../../modules/ml/ml_datasets.rst:92
+#: ../../modules/ml/ml_datasets.rst:93
 #, python-brace-format
 msgid ""
 "\\dot{x} = \\sigma (y - x), \\quad\n"
 "\\dot{y} = x (\\rho - z) - y, \\quad\n"
 "\\dot{z} = x y - \\beta z."
 msgstr ""
-"\\dot{x} = \\sigma (y - x), \\quad\n\\dot{y} = x (\\rho - z) - y, "
-"\\quad\n\\dot{z} = x y - \\beta z."
+"\\dot{x} = \\sigma (y - x), \\quad\n"
+"\\dot{y} = x (\\rho - z) - y, \\quad\n"
+"\\dot{z} = x y - \\beta z."
 
-#: ../../modules/ml/ml_datasets.rst:98
+#: ../../modules/ml/ml_datasets.rst:99
 msgid ""
 "The trajectory is integrated with RK4 and sub-sampled, yielding a "
 "``horizon``-step-ahead prediction task over the three-dimensional state, "
 "so ``inputs`` and ``targets`` are both shaped ``(npoints, 3)``."
 msgstr ""
-"La trayectoria se integra con RK4 y se submuestrea, lo que da lugar a una "
-"tarea de predicción de ``horizon`` pasos por delante sobre el estado "
+"La trayectoria se integra con RK4 y se submuestrea, lo que da lugar a una"
+" tarea de predicción de ``horizon`` pasos por delante sobre el estado "
 "tridimensional, por lo que ``inputs`` y ``targets`` tienen ambos forma "
 "``(npoints, 3)``."
 
-#: ../../modules/ml/ml_datasets.rst:109
+#: ../../modules/ml/ml_datasets.rst:110
 msgid "SantaFeLaser"
 msgstr "SantaFeLaser"
 
-#: ../../modules/ml/ml_datasets.rst:111
+#: ../../modules/ml/ml_datasets.rst:112
 #, python-brace-format
 msgid ""
 "The original *Santa Fe Time Series Competition* Data Set A is a recording"
@@ -228,23 +233,24 @@ msgid ""
 "**Lorenz--Haken** laser equations:"
 msgstr ""
 "El conjunto de datos A original de la *Santa Fe Time Series Competition* "
-"es una grabación de las pulsaciones caóticas de intensidad de un láser de "
-":math:`\\mathrm{NH_3}` de infrarrojo lejano. En lugar de distribuir la "
+"es una grabación de las pulsaciones caóticas de intensidad de un láser de"
+" :math:`\\mathrm{NH_3}` de infrarrojo lejano. En lugar de distribuir la "
 "grabación, :class:`~qilisdk.ml.datasets.santa_fe_laser.SantaFeLaser` "
 "reproduce la misma dinámica cualitativa desde primeros principios "
 "mediante las ecuaciones de láser **Lorenz--Haken** de un solo modo:"
 
-#: ../../modules/ml/ml_datasets.rst:116
+#: ../../modules/ml/ml_datasets.rst:117
 #, python-brace-format
 msgid ""
 "\\dot{E} = \\sigma (P - E), \\quad\n"
 "\\dot{P} = E (\\rho - N) - P, \\quad\n"
 "\\dot{N} = E P - \\beta N,"
 msgstr ""
-"\\dot{E} = \\sigma (P - E), \\quad\n\\dot{P} = E (\\rho - N) - P, "
-"\\quad\n\\dot{N} = E P - \\beta N,"
+"\\dot{E} = \\sigma (P - E), \\quad\n"
+"\\dot{P} = E (\\rho - N) - P, \\quad\n"
+"\\dot{N} = E P - \\beta N,"
 
-#: ../../modules/ml/ml_datasets.rst:122
+#: ../../modules/ml/ml_datasets.rst:123
 msgid ""
 "where :math:`E` is the field amplitude, :math:`P` the polarization and "
 ":math:`N` the population inversion. The measured quantity is the laser "
@@ -255,14 +261,14 @@ msgstr ""
 "donde :math:`E` es la amplitud del campo, :math:`P` la polarización y "
 ":math:`N` la inversión de población. La magnitud medida es la "
 "**intensidad** del láser :math:`I \\propto E^2`, que es no negativa y "
-"reproduce el comportamiento de la grabación de Santa Fe. Tanto ``inputs`` "
-"como ``targets`` tienen forma ``(npoints, 1)``."
+"reproduce el comportamiento de la grabación de Santa Fe. Tanto ``inputs``"
+" como ``targets`` tienen forma ``(npoints, 1)``."
 
-#: ../../modules/ml/ml_datasets.rst:134
+#: ../../modules/ml/ml_datasets.rst:135
 msgid "HenonMap"
 msgstr "HenonMap"
 
-#: ../../modules/ml/ml_datasets.rst:136
+#: ../../modules/ml/ml_datasets.rst:137
 msgid ""
 "The :class:`~qilisdk.ml.datasets.henon.HenonMap` is a two-dimensional "
 "discrete chaotic system:"
@@ -270,15 +276,16 @@ msgstr ""
 "El :class:`~qilisdk.ml.datasets.henon.HenonMap` es un sistema caótico "
 "discreto bidimensional:"
 
-#: ../../modules/ml/ml_datasets.rst:138
+#: ../../modules/ml/ml_datasets.rst:139
 #, python-brace-format
 msgid ""
 "x_{n+1} = 1 - a\\, x_n^2 + y_n, \\qquad\n"
 "y_{n+1} = b\\, x_n,"
 msgstr ""
-"x_{n+1} = 1 - a\\, x_n^2 + y_n, \\qquad\ny_{n+1} = b\\, x_n,"
+"x_{n+1} = 1 - a\\, x_n^2 + y_n, \\qquad\n"
+"y_{n+1} = b\\, x_n,"
 
-#: ../../modules/ml/ml_datasets.rst:143
+#: ../../modules/ml/ml_datasets.rst:144
 msgid ""
 "which is chaotic for the parameters :math:`a = 1.4`, :math:`b = 0.3`. "
 ":meth:`generate` returns a ``horizon``-step-ahead prediction task over "
@@ -290,11 +297,11 @@ msgstr ""
 "por delante sobre el estado bidimensional, por lo que ``inputs`` y "
 "``targets`` tienen ambos forma ``(npoints, 2)``."
 
-#: ../../modules/ml/ml_datasets.rst:154
+#: ../../modules/ml/ml_datasets.rst:155
 msgid "LogisticMap"
 msgstr "LogisticMap"
 
-#: ../../modules/ml/ml_datasets.rst:156
+#: ../../modules/ml/ml_datasets.rst:157
 msgid ""
 "The :class:`~qilisdk.ml.datasets.logistic_map.LogisticMap` is a simple "
 "one-dimensional chaotic system:"
@@ -302,12 +309,12 @@ msgstr ""
 "El :class:`~qilisdk.ml.datasets.logistic_map.LogisticMap` es un sistema "
 "caótico unidimensional sencillo:"
 
-#: ../../modules/ml/ml_datasets.rst:158
+#: ../../modules/ml/ml_datasets.rst:159
 #, python-brace-format
 msgid "x_{n+1} = r\\, x_n (1 - x_n),"
 msgstr "x_{n+1} = r\\, x_n (1 - x_n),"
 
-#: ../../modules/ml/ml_datasets.rst:162
+#: ../../modules/ml/ml_datasets.rst:163
 msgid ""
 "which becomes chaotic as the growth rate :math:`r` approaches 4 (the "
 "default :math:`r = 3.9` sits well inside the chaotic regime). "
@@ -315,8 +322,38 @@ msgid ""
 "``inputs`` and ``targets`` are shaped ``(npoints, 1)``."
 msgstr ""
 "que se vuelve caótico a medida que la tasa de crecimiento :math:`r` se "
-"acerca a 4 (el valor por defecto :math:`r = 3.9` se sitúa bien dentro del "
-"régimen caótico). :meth:`generate` devuelve una tarea de predicción de "
-"``horizon`` pasos por delante, por lo que ``inputs`` y ``targets`` tienen "
-"forma ``(npoints, 1)``."
+"acerca a 4 (el valor por defecto :math:`r = 3.9` se sitúa bien dentro del"
+" régimen caótico). :meth:`generate` devuelve una tarea de predicción de "
+"``horizon`` pasos por delante, por lo que ``inputs`` y ``targets`` tienen"
+" forma ``(npoints, 1)``."
+
+#: ../../modules/ml/ml_datasets.rst:175
+msgid "Circle"
+msgstr "Circle"
+
+#: ../../modules/ml/ml_datasets.rst:177
+#, python-brace-format
+msgid ""
+"The :class:`~qilisdk.ml.datasets.circle.Circle` dataset is a two-"
+"dimensional binary classification task. Points :math:`(x, y)` are sampled"
+" uniformly from the unit square and labelled ``1`` if they lie inside a "
+"circle of radius :math:`r` centred at :math:`(0.5, 0.5)`, and ``0`` "
+"otherwise. The default radius :math:`r = 1 / \\sqrt{2\\pi}` makes the "
+"circle cover half of the square, so the two classes are balanced. A "
+"``margin`` leaves an empty band around the boundary, making the classes "
+"easier to separate. ``inputs`` are the points, shaped ``(npoints, 2)``, "
+"and ``targets`` are the labels, shaped ``(npoints, 1)``. When drawn, the "
+"points are coloured by class."
+msgstr ""
+"El conjunto de datos :class:`~qilisdk.ml.datasets.circle.Circle` es una "
+"tarea de clasificación binaria bidimensional. Los puntos :math:`(x, y)` "
+"se muestrean uniformemente en el cuadrado unidad y se etiquetan con ``1``"
+" si están dentro de un círculo de radio :math:`r` centrado en "
+":math:`(0.5, 0.5)`, y con ``0`` en caso contrario. El radio por defecto "
+":math:`r = 1 / \\sqrt{2\\pi}` hace que el círculo cubra la mitad del "
+"cuadrado, de modo que las dos clases están equilibradas. Un ``margin`` "
+"deja una franja vacía alrededor de la frontera, lo que facilita la "
+"separación de las clases. ``inputs`` son los puntos, con forma "
+"``(npoints, 2)``, y ``targets`` son las etiquetas, con forma ``(npoints, "
+"1)``. Al dibujarlos, los puntos se colorean según su clase."
 
