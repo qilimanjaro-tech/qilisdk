@@ -34,6 +34,23 @@
 
 // GCOV_EXCL_BR_START
 
+namespace {
+
+// Whether the inaccurate RK4 step warning has already been emitted in this process
+std::atomic<bool> rk4_accuracy_warning_emitted{false};
+
+// How far a state vector's squared norm may drift over one RK4 step before dt is reported as too large
+constexpr double kRk4NormDriftTolerance = 1e-2;
+
+}  // namespace
+
+void reset_rk4_warnings() {
+    /*
+    Re-arm the once-per-process inaccurate RK4 step warning. Only used by the tests.
+    */
+    rk4_accuracy_warning_emitted.store(false);
+}
+
 DenseMatrix iter_rk4_matrix(const DenseMatrix& rho_0, double dt, const SparseMatrix& currentH, const std::vector<SparseMatrix>& jump_operators, bool is_unitary_on_statevector, bool normalize) {
     /*
     4th-order Runge–Kutta integration of the Lindblad master equation
@@ -301,10 +318,9 @@ void iter_rk4(DenseMatrix& rho_t, double t, double dt, const std::vector<double>
         return;
     }
     if (is_unitary_on_statevector) {
-        // A stable RK4 step never grows a state vector's norm, so growth means dt is too large
-        static std::atomic<bool> instability_warning_emitted{false};
-        if (rho_cols == 1 && new_squared_norm > (1.0 + 1e-6) * old_squared_norm && !instability_warning_emitted.exchange(true)) {
-            qilisdk::log_warning("[QiliSim, C++] The schedule dt is too large for the fixed-step RK4 integrator to be stable on this Hamiltonian, so the results might be wrong. Lower the schedule dt, or consider using a different simulation method.");
+        // Unitary evolution keeps the norm, so a step that grows or shrinks it by more than a little means dt is too large
+        if (rho_cols == 1 && std::abs(new_squared_norm - old_squared_norm) > kRk4NormDriftTolerance * old_squared_norm && !rk4_accuracy_warning_emitted.exchange(true)) {
+            qilisdk::log_warning("[QiliSim, C++] The schedule dt is too large for the fixed-step RK4 integrator to be accurate on this Hamiltonian, so the results might be wrong. Lower the schedule dt, or consider using a different simulation method. It is only reported once per process.");
         }
         normalize_state(rho_t, true, rho_cols > 1);
     } else {

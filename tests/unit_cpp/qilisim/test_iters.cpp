@@ -973,19 +973,49 @@ TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, ZeroTimeStepReturnsInitial
     EXPECT_TRUE(psi.isApprox(psi_orig, kTol));
 }
 
-TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, UnstableStepWarnsToLowerDt) {
-    // A step of 10 puts |E| * dt = 5 beyond the RK4 stability limit, so the norm grows before renormalization
+static std::vector<std::string> capture_rk4_step_warnings(const MatrixFreeHamiltonian& hamiltonian, double dt) {
+    // Run one fixed-step RK4 step on |+> and return the warnings it logs
     py::list records;
     logger.attr("remove")();
     logger.attr("add")(py::cpp_function([records](py::object message) mutable { records.append(py::str(message)); }), py::arg("format") = "{message}", py::arg("level") = "WARNING");
     qilisdk::refresh_log_level();
     DenseMatrix psi(2, 1);
     psi << 1.0 / std::sqrt(2.0), 1.0 / std::sqrt(2.0);
-    iter_rk4(psi, 0.0, 10.0, {}, {H_mf}, {{1.0}}, {}, true);
+    iter_rk4(psi, 0.0, dt, {}, {hamiltonian}, {{1.0}}, {}, true);
     logger.attr("remove")();
     qilisdk::refresh_log_level();
-    ASSERT_EQ(py::len(records), 1u);
-    EXPECT_NE(records[0].cast<std::string>().find("Lower the schedule dt"), std::string::npos);
+    std::vector<std::string> warnings;
+    for (const auto& record : records) {
+        warnings.push_back(record.cast<std::string>());
+    }
+    return warnings;
+}
+
+TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, UnstableStepWarnsToLowerDt) {
+    // A step of 10 puts |E| * dt = 5 beyond the RK4 stability limit, so the norm grows before renormalization
+    reset_rk4_warnings();
+    const std::vector<std::string> warnings = capture_rk4_step_warnings(H_mf, 10.0);
+    ASSERT_EQ(warnings.size(), 1u);
+    EXPECT_NE(warnings[0].find("Lower the schedule dt"), std::string::npos);
+}
+
+TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, DampingStepWarnsToLowerDt) {
+    // A step of 4 puts |E| * dt = 2 inside the RK4 stability region, but the step still loses about 44% of the norm
+    reset_rk4_warnings();
+    const std::vector<std::string> warnings = capture_rk4_step_warnings(H_mf, 4.0);
+    ASSERT_EQ(warnings.size(), 1u);
+    EXPECT_NE(warnings[0].find("Lower the schedule dt"), std::string::npos);
+}
+
+TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, AccurateStepDoesNotWarn) {
+    reset_rk4_warnings();
+    EXPECT_TRUE(capture_rk4_step_warnings(H_mf, 0.1).empty());
+}
+
+TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, InaccurateStepWarnsOncePerProcess) {
+    reset_rk4_warnings();
+    EXPECT_EQ(capture_rk4_step_warnings(H_mf, 10.0).size(), 1u);
+    EXPECT_TRUE(capture_rk4_step_warnings(H_mf, 10.0).empty());
 }
 
 TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, MatchesSparseOverloadForShortTime) {
