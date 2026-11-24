@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <complex>
 #include <map>
@@ -24,6 +25,7 @@
 #include <string>
 
 #include "../../../src/qilisdk_cpp/backends/qilisim/digital/gate.h"
+#include "../../../src/qilisdk_cpp/backends/qilisim/representations/bp.h"
 #include "../../../src/qilisdk_cpp/backends/qilisim/representations/matrix_free_hamiltonian.h"
 #include "../../../src/qilisdk_cpp/backends/qilisim/representations/mps.h"
 #include "../../../src/qilisdk_cpp/backends/qilisim/representations/tensor.h"
@@ -195,6 +197,33 @@ TEST(TensorTest, PermuteMovesLegsAndRejectsNonPermutations) {
     EXPECT_THROW(cube.permute({0, 1}), std::invalid_argument);
     EXPECT_THROW(cube.permute({0, 1, 3}), std::invalid_argument);
     EXPECT_THROW(cube.permute({0, 1, 1}), std::invalid_argument);
+}
+
+TEST(TensorTest, PermuteMatchesTheIndexDefinitionForEveryPermutation) {
+    // Every permutation of four legs covers merged runs, a contiguous fastest leg and a strided one
+    const std::vector<int> shape = {2, 3, 4, 5};
+    Tensor t(shape);
+    for (int64_t flat = 0; flat < t.size(); ++flat) {
+        t.raw()(flat) = Complex(static_cast<double>(flat), -0.5 * static_cast<double>(flat));
+    }
+    std::vector<int> perm = {0, 1, 2, 3};
+    do {
+        Tensor permuted = t.permute(perm);
+        for (int i = 0; i < 2; ++i) {
+            for (int j = 0; j < 3; ++j) {
+                for (int k = 0; k < 4; ++k) {
+                    for (int l = 0; l < 5; ++l) {
+                        std::vector<int> index = {i, j, k, l};
+                        std::vector<int> moved(4);
+                        for (int leg = 0; leg < 4; ++leg) {
+                            moved[leg] = index[perm[leg]];
+                        }
+                        ASSERT_EQ(permuted(moved), t(index));
+                    }
+                }
+            }
+        }
+    } while (std::next_permutation(perm.begin(), perm.end()));
 }
 
 TEST(TensorTest, ReshapeIsMetadataOnly) {
@@ -961,6 +990,467 @@ TEST(MPSStateTest, StreamsASummary) {
     std::ostringstream entangled_os;
     entangled_os << chain;
     EXPECT_NE(entangled_os.str().find("bond_dimensions=[2, 1]"), std::string::npos);
+}
+
+// ---------------------------------------------------------------------------
+// BPState
+// ---------------------------------------------------------------------------
+
+namespace {
+
+// Apply a circuit to a fresh tensor network with no truncation
+BPState bp_state(const std::vector<Gate>& gates, int nqubits, int max_bond_dimension = 64) {
+    BPState state(nqubits);
+    state.set_max_bond_dimension(max_bond_dimension);
+    state.set_truncation_cutoff(0.0);
+    for (const Gate& gate : gates) {
+        state.apply_gate(gate);
+    }
+    state.run_belief_propagation();
+    return state;
+}
+
+// A layer of random one-qubit gates followed by a random two-qubit gate on every edge, repeated
+std::vector<Gate> random_graph_circuit(int nqubits, const std::vector<std::pair<int, int>>& edges, int layers, uint64_t seed) {
+    std::vector<Gate> gates;
+    for (int layer = 0; layer < layers; ++layer) {
+        for (int q = 0; q < nqubits; ++q) {
+            gates.push_back(make_gate("U1", random_unitary(2, seed++), {}, {q}));
+        }
+        for (const auto& edge : edges) {
+            gates.push_back(make_gate("U2", random_unitary(4, seed++), {}, {edge.first, edge.second}));
+        }
+    }
+    return gates;
+}
+
+// The dense matrix of a Pauli Hamiltonian, with qubit 0 the most significant
+DenseMatrix dense_hamiltonian(const MatrixFreeHamiltonian& h, int nqubits) {
+    DenseMatrix identity = DenseMatrix::Identity(2, 2);
+    DenseMatrix pauli_y = DenseMatrix::Zero(2, 2);
+    pauli_y(0, 1) = Complex(0.0, -1.0);
+    pauli_y(1, 0) = Complex(0.0, 1.0);
+    DenseMatrix dense = DenseMatrix::Zero(1 << nqubits, 1 << nqubits);
+    for (const auto& term : h.get_operators()) {
+        DenseMatrix full = DenseMatrix::Identity(1, 1);
+        for (int q = 0; q < nqubits; ++q) {
+            bool x = term.first.x_mask[q];
+            bool z = term.first.z_mask[q];
+            const DenseMatrix& factor = (x && z) ? pauli_y : (x ? pauli_x_matrix() : (z ? pauli_z_matrix() : identity));
+            full = DenseMatrix(Eigen::kroneckerProduct(full, factor).eval());
+        }
+        dense += term.second * full;
+    }
+    return dense;
+}
+
+// A Pauli string from a map of qubit to 'X', 'Y' or 'Z'
+PauliString pauli_string(int nqubits, const std::map<int, char>& factors) {
+    PauliString pauli(nqubits);
+    for (const auto& factor : factors) {
+        if (factor.second != 'Z') {
+            pauli.x_mask.set(factor.first);
+        }
+        if (factor.second != 'X') {
+            pauli.z_mask.set(factor.first);
+        }
+    }
+    return pauli;
+}
+
+Real exact_expectation(const DenseMatrix& state, const MatrixFreeHamiltonian& h, int nqubits) {
+    DenseMatrix normalized = state / state.norm();
+    return (normalized.adjoint() * dense_hamiltonian(h, nqubits) * normalized)(0, 0).real();
+}
+
+}  // namespace
+
+TEST(BPStateTest, ConstructsProductStates) {
+    BPState zero(3);
+    EXPECT_EQ(zero.get_nqubits(), 3);
+    EXPECT_EQ(zero.get_num_edges(), 0);
+    EXPECT_EQ(zero.get_max_bond_dimension_used(), 1);
+    DenseMatrix expected_zero = DenseMatrix::Zero(8, 1);
+    expected_zero(0, 0) = 1.0;
+    EXPECT_NEAR((zero.as_dense() - expected_zero).norm(), 0.0, 1e-14);
+
+    BPState bits(3, "101");
+    DenseMatrix expected_bits = DenseMatrix::Zero(8, 1);
+    expected_bits(5, 0) = 1.0;
+    EXPECT_NEAR((bits.as_dense() - expected_bits).norm(), 0.0, 1e-14);
+    EXPECT_EQ(bits.get_site_tensor(0).get_shape(), std::vector<int>({2}));
+
+    EXPECT_THROW(BPState(0), std::invalid_argument);
+    EXPECT_THROW(BPState(-2), std::invalid_argument);
+    EXPECT_THROW(BPState(2, "1"), std::invalid_argument);
+    EXPECT_THROW(BPState(2, "12"), std::invalid_argument);
+}
+
+TEST(BPStateTest, SettersValidateTheirArguments) {
+    BPState state(2);
+    EXPECT_NO_THROW(state.set_max_bond_dimension(3));
+    EXPECT_NO_THROW(state.set_truncation_cutoff(0.0));
+    EXPECT_NO_THROW(state.set_max_iterations(1));
+    EXPECT_NO_THROW(state.set_tolerance(1e-3));
+    EXPECT_THROW(state.set_max_bond_dimension(0), std::invalid_argument);
+    for (Real cutoff : {-1e-3, 1.0, std::nan("")}) {
+        EXPECT_THROW(state.set_truncation_cutoff(cutoff), std::invalid_argument) << "cutoff " << cutoff;
+    }
+    EXPECT_THROW(state.set_max_iterations(0), std::invalid_argument);
+    for (Real tolerance : {0.0, -1.0, std::nan("")}) {
+        EXPECT_THROW(state.set_tolerance(tolerance), std::invalid_argument) << "tolerance " << tolerance;
+    }
+}
+
+TEST(BPStateTest, ReproducesTheStatevectorOnATree) {
+    // A star with a branch, so qubit 0 has degree three and the gauge has several legs to handle
+    const int nqubits = 6;
+    std::vector<std::pair<int, int>> tree = {{0, 1}, {0, 2}, {0, 3}, {3, 4}, {4, 5}};
+    std::vector<Gate> gates = random_graph_circuit(nqubits, tree, 2, 100);
+    BPState state = bp_state(gates, nqubits);
+    EXPECT_EQ(state.get_num_edges(), 5);
+    EXPECT_NEAR(state.get_truncation_error(), 0.0, 1e-12);
+    EXPECT_GT(state.get_max_bond_dimension_used(), 1);
+    DenseMatrix exact = statevector(gates, nqubits);
+    EXPECT_NEAR(std::abs((state.as_dense().adjoint() * exact)(0, 0)), 1.0, 1e-10);
+}
+
+TEST(BPStateTest, ReproducesTheStatevectorOnLoopyGraphsWithoutTruncation) {
+    // Gauging and ungauging are exact, so even on loops an untruncated network holds the exact state
+    const int nqubits = 5;
+    std::vector<std::pair<int, int>> ring = {{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 0}};
+    std::vector<std::pair<int, int>> complete = {{0, 1}, {0, 2}, {0, 3}, {0, 4}, {1, 2}, {1, 3}, {1, 4}, {2, 3}, {2, 4}, {3, 4}};
+    for (const auto& edges : {ring, complete}) {
+        std::vector<Gate> gates = random_graph_circuit(nqubits, edges, 2, 200);
+        BPState state = bp_state(gates, nqubits);
+        DenseMatrix exact = statevector(gates, nqubits);
+        EXPECT_NEAR(std::abs((state.as_dense().adjoint() * exact)(0, 0)), 1.0, 1e-9);
+    }
+}
+
+TEST(BPStateTest, GateQubitOrderIsRespected) {
+    // A controlled gate whose control has the higher index, which the local matrix orders ascending
+    const int nqubits = 3;
+    std::vector<Gate> gates;
+    gates.push_back(make_gate("H", hadamard(), {}, {2}));
+    gates.push_back(make_gate("X", pauli_x_matrix(), {2}, {0}));
+    gates.push_back(make_gate("U2", random_unitary(4, 301), {}, {2, 1}));
+    gates.push_back(make_gate("U2", random_unitary(4, 302), {}, {1, 0}));
+    BPState state = bp_state(gates, nqubits);
+    DenseMatrix exact = statevector(gates, nqubits);
+    EXPECT_NEAR(std::abs((state.as_dense().adjoint() * exact)(0, 0)), 1.0, 1e-10);
+}
+
+TEST(BPStateTest, ExpectationValuesAreExactOnATree) {
+    const int nqubits = 6;
+    std::vector<std::pair<int, int>> tree = {{0, 1}, {1, 2}, {1, 3}, {3, 4}, {4, 5}};
+    std::vector<Gate> gates = random_graph_circuit(nqubits, tree, 2, 400);
+    BPState state = bp_state(gates, nqubits);
+    DenseMatrix exact = statevector(gates, nqubits);
+
+    // Single-site terms of every Pauli, a term on an edge, terms joined only through a path, and a three-body term
+    MatrixFreeHamiltonian h(nqubits);
+    h.add(0.5, pauli_string(nqubits, {{0, 'X'}}));
+    h.add(-1.25, pauli_string(nqubits, {{2, 'Y'}}));
+    h.add(2.0, pauli_string(nqubits, {{5, 'Z'}}));
+    h.add(0.75, pauli_string(nqubits, {{3, 'Z'}, {4, 'Z'}}));
+    h.add(0.6, pauli_string(nqubits, {{3, 'X'}, {4, 'Y'}}));
+    h.add(-0.4, pauli_string(nqubits, {{0, 'X'}, {5, 'Y'}}));
+    h.add(0.3, pauli_string(nqubits, {{2, 'Z'}, {4, 'X'}, {5, 'Z'}}));
+    h.add(1.5, PauliString(nqubits));
+    EXPECT_NEAR(state.expectation_value(h), exact_expectation(exact, h, nqubits), 1e-10);
+
+    // Each term on its own too, so a single failing cluster is visible
+    for (const auto& term : h.get_operators()) {
+        MatrixFreeHamiltonian single(nqubits);
+        single.add(1.0, term.first);
+        EXPECT_NEAR(state.expectation_value(term.first).real(), exact_expectation(exact, single, nqubits), 1e-10) << term.first;
+    }
+    EXPECT_NEAR(std::abs(state.expectation_value(PauliString(nqubits)) - Complex(1.0, 0.0)), 0.0, 1e-14);
+    EXPECT_THROW(state.expectation_value(MatrixFreeHamiltonian(nqubits + 1)), std::invalid_argument);
+
+    // The per-term estimates line up with the terms of the Hamiltonian
+    std::vector<Complex> values = state.expectation_values(h);
+    ASSERT_EQ(values.size(), h.get_operators().size());
+    size_t index = 0;
+    for (const auto& term : h.get_operators()) {
+        EXPECT_NEAR(std::abs(values[index++] - state.expectation_value(term.first)), 0.0, 1e-12) << term.first;
+    }
+}
+
+TEST(BPStateTest, ClusterPathsCanRunThroughLaterSupportQubits) {
+    // In the chain 0 - 2 - 1 the path joining qubit 1 to qubit 0 already covers qubit 2
+    const int nqubits = 3;
+    std::vector<Gate> gates = random_graph_circuit(nqubits, {{0, 2}, {2, 1}}, 2, 450);
+    BPState state = bp_state(gates, nqubits);
+    DenseMatrix exact = statevector(gates, nqubits);
+    MatrixFreeHamiltonian h(nqubits);
+    h.add(1.0, pauli_string(nqubits, {{0, 'Z'}, {1, 'X'}, {2, 'Y'}}));
+    EXPECT_NEAR(state.expectation_value(h), exact_expectation(exact, h, nqubits), 1e-10);
+}
+
+TEST(BPStateTest, ExpectationValuesFactorizeAcrossDisconnectedPieces) {
+    // Two Bell pairs that never interact, and a lone qubit, so clusters cannot be joined by a path
+    const int nqubits = 5;
+    std::vector<Gate> gates;
+    gates.push_back(make_gate("U2", random_unitary(4, 501), {}, {0, 1}));
+    gates.push_back(make_gate("U2", random_unitary(4, 502), {}, {2, 3}));
+    gates.push_back(make_gate("U1", random_unitary(2, 503), {}, {4}));
+    BPState state = bp_state(gates, nqubits);
+    DenseMatrix exact = statevector(gates, nqubits);
+    MatrixFreeHamiltonian h(nqubits);
+    h.add(1.0, pauli_string(nqubits, {{0, 'Z'}, {2, 'X'}, {4, 'Y'}}));
+    h.add(0.5, pauli_string(nqubits, {{1, 'Y'}, {3, 'Z'}}));
+    EXPECT_NEAR(state.expectation_value(h), exact_expectation(exact, h, nqubits), 1e-10);
+}
+
+TEST(BPStateTest, ExpectationValuesAreApproximateButCloseOnAWeaklyEntangledLoop) {
+    // Small rotations keep loop correlations weak, so belief propagation is close but not exact
+    const int nqubits = 6;
+    std::vector<Gate> gates;
+    DenseMatrix rx = DenseMatrix::Identity(2, 2) * std::cos(0.4) - Complex(0.0, std::sin(0.4)) * pauli_x_matrix();
+    DenseMatrix zz = DenseMatrix::Zero(4, 4);
+    for (int index = 0; index < 4; ++index) {
+        Real sign = (index == 0 || index == 3) ? 1.0 : -1.0;
+        zz(index, index) = std::exp(Complex(0.0, -0.3 * sign));
+    }
+    for (int step = 0; step < 3; ++step) {
+        for (int q = 0; q < nqubits; ++q) {
+            gates.push_back(make_gate("U1", rx, {}, {q}));
+        }
+        for (int q = 0; q < nqubits; ++q) {
+            gates.push_back(make_gate("U2", zz, {}, {q, (q + 1) % nqubits}));
+        }
+    }
+    BPState state = bp_state(gates, nqubits);
+    DenseMatrix exact = statevector(gates, nqubits);
+    MatrixFreeHamiltonian h(nqubits);
+    for (int q = 0; q < nqubits; ++q) {
+        h.add(1.0, pauli_string(nqubits, {{q, 'Z'}, {(q + 1) % nqubits, 'Z'}}));
+        h.add(1.0, pauli_string(nqubits, {{q, 'X'}}));
+    }
+    EXPECT_NEAR(state.expectation_value(h), exact_expectation(exact, h, nqubits), 5e-2);
+    EXPECT_TRUE(state.get_bp_converged());
+}
+
+TEST(BPStateTest, BeliefPropagationRunsOncePerLayerAndReportsConvergence) {
+    BPState state(4);
+    EXPECT_EQ(state.run_belief_propagation(), 0);
+
+    // Two gates on disjoint pairs form one layer, so the second needs no refresh
+    state.apply_two_site(random_unitary(4, 601), 0, 1);
+    state.apply_two_site(random_unitary(4, 602), 2, 3);
+    EXPECT_EQ(state.get_bp_runs(), 0);
+
+    // A gate on a qubit already used in the layer starts a new one
+    state.apply_two_site(random_unitary(4, 603), 1, 2);
+    EXPECT_EQ(state.get_bp_runs(), 1);
+    EXPECT_GE(state.get_bp_iterations(), 1);
+
+    // Unitary one-qubit gates leave the messages alone, so nothing needs refreshing
+    state.run_belief_propagation();
+    int runs = state.get_bp_runs();
+    int iterations = state.get_bp_iterations();
+    state.apply_one_site(random_unitary(2, 604), 0);
+    state.run_belief_propagation();
+    EXPECT_EQ(state.get_bp_runs(), runs + 1);
+    EXPECT_EQ(state.get_bp_iterations(), iterations + 1);
+    EXPECT_TRUE(state.get_bp_converged());
+
+    // On a loop a single sweep is not enough, which is remembered
+    BPState loop(3);
+    loop.set_max_iterations(1);
+    loop.set_tolerance(1e-15);
+    for (const Gate& gate : random_graph_circuit(3, {{0, 1}, {1, 2}, {2, 0}}, 2, 610)) {
+        loop.apply_gate(gate);
+    }
+    loop.run_belief_propagation();
+    EXPECT_FALSE(loop.get_bp_converged());
+}
+
+TEST(BPStateTest, TruncationIsReportedAndBounded) {
+    // A bond of one cannot hold a Bell pair, so half the weight is discarded
+    BPState state(2);
+    state.set_max_bond_dimension(1);
+    state.apply_one_site(hadamard(), 0);
+    Real error = state.apply_two_site(cnot_matrix(), 0, 1);
+    EXPECT_NEAR(error, 0.5, 1e-12);
+    EXPECT_NEAR(state.get_truncation_error(), 0.5, 1e-12);
+    EXPECT_EQ(state.get_max_bond_dimension_used(), 1);
+    EXPECT_NEAR(state.as_dense().norm(), 1.0, 1e-12);
+
+    // A tighter cap can only lose more, and a large enough one is exact
+    const int nqubits = 6;
+    std::vector<std::pair<int, int>> chain = {{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 5}};
+    std::vector<Gate> gates = random_graph_circuit(nqubits, chain, 3, 700);
+    DenseMatrix exact = statevector(gates, nqubits);
+    Real previous = 0.0;
+    for (int chi : {1, 2, 4, 8}) {
+        BPState capped = bp_state(gates, nqubits, chi);
+        Real fidelity = std::norm((capped.as_dense().adjoint() * exact)(0, 0));
+        EXPECT_GE(fidelity, previous - 1e-10) << "chi " << chi;
+        EXPECT_LE(capped.get_max_bond_dimension_used(), chi);
+        previous = fidelity;
+    }
+    EXPECT_NEAR(previous, 1.0, 1e-10);
+}
+
+TEST(BPStateTest, ApplyGateRejectsWhatItCannotDo) {
+    BPState state(3);
+    Gate three_qubit("X", to_sparse(pauli_x_matrix()), {0, 1}, {2}, {});
+    EXPECT_THROW(state.apply_gate(three_qubit), std::invalid_argument);
+    EXPECT_THROW(state.apply_one_site(cnot_matrix(), 0), std::invalid_argument);
+    EXPECT_THROW(state.apply_one_site(hadamard(), 3), std::out_of_range);
+    EXPECT_THROW(state.apply_one_site(hadamard(), -1), std::out_of_range);
+    EXPECT_THROW(state.apply_two_site(hadamard(), 0, 1), std::invalid_argument);
+    EXPECT_THROW(state.apply_two_site(cnot_matrix(), 0, 3), std::out_of_range);
+    EXPECT_THROW(state.apply_two_site(cnot_matrix(), -1, 0), std::out_of_range);
+    EXPECT_THROW(state.apply_two_site(cnot_matrix(), 1, 1), std::invalid_argument);
+    EXPECT_EQ(state.get_num_edges(), 0);
+}
+
+TEST(BPStateTest, NonUnitaryGatesMatchTheNormalizedStatevector) {
+    const int nqubits = 4;
+    DenseMatrix damping = DenseMatrix::Zero(2, 2);
+    damping(0, 0) = 1.0;
+    damping(1, 1) = 0.3;
+    std::vector<Gate> gates = random_graph_circuit(nqubits, {{0, 1}, {1, 2}, {2, 3}}, 1, 800);
+    gates.push_back(make_gate("D", damping, {}, {1}));
+    gates.push_back(make_gate("U2", random_unitary(4, 810), {}, {1, 2}));
+    gates.push_back(make_gate("D", damping, {}, {2}));
+    gates.push_back(make_gate("U2", random_unitary(4, 811), {}, {0, 1}));
+    BPState state = bp_state(gates, nqubits);
+    DenseMatrix exact = statevector(gates, nqubits);
+    EXPECT_NEAR(std::abs((state.as_dense().adjoint() * exact)(0, 0)) / exact.norm(), 1.0, 1e-10);
+    MatrixFreeHamiltonian h(nqubits);
+    h.add(1.0, pauli_string(nqubits, {{1, 'Z'}}));
+    h.add(1.0, pauli_string(nqubits, {{0, 'X'}, {3, 'X'}}));
+    EXPECT_NEAR(state.expectation_value(h), exact_expectation(exact, h, nqubits), 1e-10);
+}
+
+TEST(BPStateTest, ZeroStateHasNoExpectationValue) {
+    BPState state(2);
+    state.apply_one_site(DenseMatrix::Zero(2, 2), 1);
+    state.run_belief_propagation();
+    EXPECT_THROW(state.expectation_value(pauli_string(2, {{1, 'Z'}})), std::runtime_error);
+
+    // A gate that zeroes the whole bond leaves uniform messages rather than NaN ones
+    BPState bond(2);
+    bond.apply_two_site(DenseMatrix::Zero(4, 4), 0, 1);
+    bond.run_belief_propagation();
+    EXPECT_FALSE(bond.get_site_tensor(0).has_nan());
+    EXPECT_THROW(bond.expectation_value(pauli_string(2, {{0, 'Z'}})), std::runtime_error);
+
+    // Through a Hamiltonian the error comes out of the parallel loop over clusters
+    MatrixFreeHamiltonian h(2);
+    h.add(1.0, pauli_string(2, {{0, 'Z'}}));
+    h.add(1.0, pauli_string(2, {{1, 'Z'}}));
+    EXPECT_THROW(state.expectation_value(h), std::runtime_error);
+}
+
+TEST(BPStateTest, ExpectationValuesNeedFreshMessages) {
+    // After a two-qubit gate the messages around it are stale until belief propagation runs again
+    BPState state(3);
+    state.apply_two_site(cnot_matrix(), 0, 1);
+    EXPECT_THROW(state.expectation_value(pauli_string(3, {{0, 'Z'}})), std::logic_error);
+    state.run_belief_propagation();
+    EXPECT_NEAR(state.expectation_value(pauli_string(3, {{0, 'Z'}})).real(), 1.0, 1e-12);
+
+    // A unitary one-qubit gate leaves the messages valid, a non-unitary one does not
+    state.apply_one_site(hadamard(), 2);
+    EXPECT_NO_THROW(state.expectation_value(pauli_string(3, {{2, 'X'}})));
+    state.apply_one_site(DenseMatrix::Identity(2, 2) * 2.0, 2);
+    EXPECT_THROW(state.expectation_value(pauli_string(3, {{2, 'X'}})), std::logic_error);
+    MatrixFreeHamiltonian h(3);
+    h.add(1.0, pauli_string(3, {{2, 'X'}}));
+    EXPECT_THROW(state.expectation_value(h), std::logic_error);
+}
+
+TEST(BPStateTest, ContractionsRefuseHugeIntermediates) {
+    // Two hubs with seven leaves each: joining the hubs first leaves fourteen open double-layer bonds of dimension 4
+    const int nqubits = 16;
+    BPState state(nqubits);
+    state.apply_two_site(random_unitary(4, 900), 0, 1);
+    for (int leaf = 0; leaf < 7; ++leaf) {
+        state.apply_two_site(cnot_matrix(), 0, 2 + leaf);
+        state.apply_two_site(cnot_matrix(), 1, 9 + leaf);
+    }
+    state.run_belief_propagation();
+    ASSERT_EQ(state.get_max_bond_dimension_used(), 2);
+    std::map<int, char> factors;
+    for (int q = 0; q < nqubits; ++q) {
+        factors[q] = 'Z';
+    }
+    EXPECT_THROW(state.expectation_value(pauli_string(nqubits, factors)), std::runtime_error);
+    MatrixFreeHamiltonian h(nqubits);
+    h.add(1.0, pauli_string(nqubits, factors));
+    EXPECT_THROW(state.expectation_value(h), std::runtime_error);
+}
+
+TEST(BPStateTest, ClusterDoubleLayersRefuseHugeHubs) {
+    // A hub with fourteen leaves inside the cluster has a double layer of 4^14 entries, refused before it is built
+    const int nqubits = 15;
+    BPState state(nqubits);
+    state.apply_one_site(random_unitary(2, 949), 0);
+    for (int leaf = 1; leaf < nqubits; ++leaf) {
+        state.apply_two_site(cnot_matrix(), 0, leaf);
+        state.apply_one_site(random_unitary(2, 950 + leaf), leaf);
+    }
+    state.run_belief_propagation();
+    std::map<int, char> factors;
+    for (int q = 0; q < nqubits; ++q) {
+        factors[q] = 'Z';
+    }
+    EXPECT_THROW(state.expectation_value(pauli_string(nqubits, factors)), std::runtime_error);
+}
+
+TEST(BPStateTest, ClustersMayPassThroughQubitsBeyondThePauliLimit) {
+    // The chain 0 - q - 1 joins the support of Z0 Z1 through a qubit no Pauli string can act on
+    const int far = MAX_QUBITS_PAULI + 10;
+    BPState state(far + 1);
+    state.apply_one_site(random_unitary(2, 960), 0);
+    state.apply_two_site(cnot_matrix(), 0, far);
+    state.apply_two_site(cnot_matrix(), 1, far);
+    state.run_belief_propagation();
+    PauliString pauli(MAX_QUBITS_PAULI);
+    pauli.z_mask[0] = true;
+    pauli.z_mask[1] = true;
+    BPState small(3);
+    small.apply_one_site(random_unitary(2, 960), 0);
+    small.apply_two_site(cnot_matrix(), 0, 2);
+    small.apply_two_site(cnot_matrix(), 1, 2);
+    small.run_belief_propagation();
+    PauliString small_pauli(3);
+    small_pauli.z_mask[0] = true;
+    small_pauli.z_mask[1] = true;
+    EXPECT_NEAR(std::abs(state.expectation_value(pauli) - small.expectation_value(small_pauli)), 0.0, 1e-12);
+}
+
+TEST(BPStateTest, AsDenseRefusesHugeRegisters) {
+    BPState state(BPState::MAX_DENSE_QUBITS + 1);
+    EXPECT_THROW(state.as_dense(), std::runtime_error);
+}
+
+TEST(BPStateTest, NaNReachesTheSiteTensor) {
+    BPState state(2);
+    DenseMatrix poisoned = hadamard();
+    poisoned(0, 1) = Complex(std::nan(""), 0.0);
+    state.apply_one_site(poisoned, 0);
+    EXPECT_TRUE(state.get_site_tensor(0).has_nan());
+    EXPECT_FALSE(state.get_site_tensor(1).has_nan());
+}
+
+TEST(BPStateTest, StreamsASummary) {
+    BPState state(3);
+    state.apply_one_site(hadamard(), 0);
+    state.apply_two_site(cnot_matrix(), 0, 2);
+    std::ostringstream os;
+    os << state;
+    EXPECT_NE(os.str().find("nqubits=3"), std::string::npos);
+    EXPECT_NE(os.str().find("edges=1"), std::string::npos);
+    EXPECT_NE(os.str().find("max_bond_dimension_used=2"), std::string::npos);
+    EXPECT_NE(os.str().find("truncation_error="), std::string::npos);
+    EXPECT_NE(os.str().find("bp_runs=0"), std::string::npos);
 }
 
 // GCOV_EXCL_BR_STOP

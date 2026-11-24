@@ -108,6 +108,32 @@ _ro_mps = [SamplingReadout(nshots=10)]
     EXPECT_EQ(samples["11"].cast<int>(), 10);
 }
 
+TEST_F(ExecuteSamplingTest, BPMethod_ReportsMidCircuitAndFinalResults) {
+    py::gil_scoped_acquire gil;
+    py::exec(R"(
+from qilisdk.functionals.digital_propagation import DigitalPropagation
+from qilisdk.digital.circuit import Circuit
+from qilisdk.digital.gates import CNOT, H, M, X
+from qilisdk.readout import ExpectationReadout
+from qilisdk.analog.hamiltonian import Z
+
+_c_bp = Circuit(nqubits=3)
+_c_bp.add(X(0))
+_c_bp.add(M(0))
+_c_bp.add(H(1))
+_c_bp.add(CNOT(1, 2))
+_samp_bp = DigitalPropagation(circuit=_c_bp)
+_ro_bp = [ExpectationReadout(observables=[Z(0), Z(1) * Z(2)])]
+    )");
+    py::dict params;
+    params["digital_method"] = py::str("bp");
+    py::object result = sim.execute_digital_propagation(py::globals()["_samp_bp"], py::globals()["_ro_bp"], py::none(), py::none(), params);
+    EXPECT_EQ(py::len(result.attr("intermediate_results")), 1u);
+    py::list values = result.attr("get_expectation_values")();
+    EXPECT_NEAR(values[0].cast<std::complex<double>>().real(), -1.0, 1e-12);
+    EXPECT_NEAR(values[1].cast<std::complex<double>>().real(), 1.0, 1e-12);
+}
+
 TEST_F(ExecuteSamplingTest, StandardMethod_XGate_NoNoise_WithInitialState_Succeeds) {
     py::gil_scoped_acquire gil;
     py::exec(R"(
@@ -696,9 +722,11 @@ _pre_mps.add(X(0))
 _layer_mps = ReservoirLayer(evolution_dynamics=Schedule(hamiltonians={"h0": Z(0)}, dt=0.1, total_time=0.3), input_encoding=_pre_mps)
 _reservoir_mps = QuantumReservoir(initial_state=ket(0), reservoir_layer=_layer_mps, input_per_layer=[{}])
     )");
-    py::dict params;
-    params["digital_method"] = py::str("mps");
-    EXPECT_THROW(sim.execute_quantum_reservoir(py::globals()["_reservoir_mps"], py::list(), py::none(), params), py::value_error);
+    for (const char* method : {"mps", "bp"}) {
+        py::dict params;
+        params["digital_method"] = py::str(method);
+        EXPECT_THROW(sim.execute_quantum_reservoir(py::globals()["_reservoir_mps"], py::list(), py::none(), params), py::value_error) << method;
+    }
 }
 
 TEST_F(ExecuteReservoirTest, ReservoirRunsWithQubitReset) {

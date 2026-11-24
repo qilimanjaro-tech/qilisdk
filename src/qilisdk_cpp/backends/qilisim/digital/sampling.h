@@ -21,6 +21,7 @@
 #include "../config/qilisim_config.h"
 #include "../digital/gate.h"
 #include "../noise/noise_model.h"
+#include "../representations/bp.h"
 #include "../representations/matrix_free_operator.h"
 #include "../representations/mps.h"
 #include "../representations/stabilizer_state.h"
@@ -32,5 +33,6 @@ DenseMatrix collapse_state(const DenseMatrix& state, const std::vector<bool>& qu
 void sampling_stabilizer(const std::vector<Gate>& gates, int n_qubits, const StabilizerStateSum& initial_state, NoiseModelCpp& noise_model_cpp, StabilizerStateSum& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout);
 
 void sampling_mps(const std::vector<Gate>& gates, int n_qubits, const MPSState& initial_state, NoiseModelCpp& noise_model_cpp, MPSState& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout);
+void sampling_bp(const std::vector<Gate>& gates, int n_qubits, const BPState& initial_state, NoiseModelCpp& noise_model_cpp, BPState& state, std::vector<py::object>& intermediate_results, const QiliSimConfig& config, const py::object& readout);
 
 // GCOV_EXCL_BR_STOP
