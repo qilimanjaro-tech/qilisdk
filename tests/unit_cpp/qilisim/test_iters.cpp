@@ -1151,4 +1151,31 @@ TEST_F(IterRK4ExponentialAnsatzTest, TermCountUnchangedAfterStep) {
     EXPECT_EQ(rho.get_terms().size(), initial_terms);
 }
 
+TEST_F(IterIntegrateMatrixFreeUnitaryStatevectorTest, Rk45ErrorIgnoresGlobalPhase) {
+    // A global energy offset only rotates the phase, which the jump-free error ignores, whereas a (zero) jump drift selects the Frobenius error
+    MatrixFreeHamiltonian H_offset = make_matrix_free_H(0.5, 0, "X") + MatrixFreeHamiltonian(1, 20.0);
+    SparseMatrix zero_drift(2, 2);
+    auto count_accepted_steps = [&](const SparseMatrix* jump_drift, DenseMatrix& psi) {
+        DenseMatrix k_saved;
+        double t = 0.0;
+        double step = 0.01;
+        int accepted = 0;
+        while (t < 2.0 - 1e-12) {
+            step = std::min(step, 2.0 - t);
+            const double taken = iter_rk45(psi, t, step, {}, {H_offset}, {{1.0}}, {}, true, 1e-4, k_saved, true, jump_drift);
+            t += taken;
+            accepted += taken > 0 ? 1 : 0;
+        }
+        return accepted;
+    };
+    DenseMatrix psi_phase_invariant(2, 1);
+    psi_phase_invariant << 1, 0;
+    DenseMatrix psi_frobenius = psi_phase_invariant;
+    const int steps_phase_invariant = count_accepted_steps(nullptr, psi_phase_invariant);
+    const int steps_frobenius = count_accepted_steps(&zero_drift, psi_frobenius);
+    EXPECT_LT(steps_phase_invariant, steps_frobenius);
+    EXPECT_NEAR(std::norm(psi_phase_invariant(1, 0)), std::pow(std::sin(1.0), 2), 1e-2);
+    EXPECT_NEAR(std::norm(psi_frobenius(1, 0)), std::pow(std::sin(1.0), 2), 1e-3);
+}
+
 // GCOV_EXCL_BR_STOP

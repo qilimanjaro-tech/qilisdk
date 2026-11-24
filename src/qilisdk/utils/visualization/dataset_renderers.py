@@ -428,7 +428,7 @@ class MatplotlibDatasetRenderer:
         self.ax.tick_params(axis="y", labelsize=style.ytick_fontsize, colors=text_color)
 
         if self.mode == "3d":
-            self.ax.set_zlabel(  # ty:ignore[unresolved-attribute]
+            self.ax.set_zlabel(  # ty:ignore[missing-attribute]
                 self._zlabel, fontsize=style.label_fontsize, color=text_color, fontproperties=style.font
             )
             self.ax.tick_params(axis="z", labelsize=style.ytick_fontsize, colors=text_color)  # ty:ignore[invalid-argument-type]

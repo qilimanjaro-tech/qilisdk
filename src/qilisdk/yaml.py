@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ruff: file-ignore[missing-type-function-argument, missing-return-type-undocumented-public-function, docstring-missing-returns, suspicious-pickle-import]
+# ruff: file-ignore[missing-type-function-argument, missing-return-type-public-function, docstring-missing-returns, suspicious-pickle-import]
 
 import base64
 import types

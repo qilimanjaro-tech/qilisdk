@@ -332,7 +332,7 @@ class Expression(ABC):
         Returns:
             set[Parameter]: the free parameters.
         """
-        return {symbol for symbol in self.free_symbols() if symbol.is_parameter}  # ty:ignore[invalid-return-type]
+        return {symbol for symbol in self.free_symbols() if symbol.is_parameter}  # ty:ignore[invalid-explicit-return]
 
     def variables(self) -> list[BaseVariable]:
         """Collect the named leaves of the expression.
@@ -955,7 +955,7 @@ class Function(Expression, ABC):
 
     @classmethod
     def to_yaml(cls, representer, node):  # ruff: ignore[missing-type-function-argument, missing-return-type-class-method]
-        return representer.represent_mapping(cls.yaml_tag, {"arg": node.arg})  # ty:ignore[unresolved-attribute]
+        return representer.represent_mapping(cls.yaml_tag, {"arg": node.arg})  # ty:ignore[missing-attribute]
 
     @classmethod
     def from_yaml(cls, constructor, node):  # ruff: ignore[missing-type-function-argument, missing-return-type-class-method]
