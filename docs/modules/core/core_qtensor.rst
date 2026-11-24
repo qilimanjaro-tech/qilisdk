@@ -141,6 +141,7 @@ As well as some quantum-specific transformations:
 - :meth:`.probabilities()<qilisdk.core.qtensor.QTensor.probabilities>`: compute the probability distribution of each state in the computational basis
 - :meth:`.sample(nshots)<qilisdk.core.qtensor.QTensor.sample>`: draw measurement samples in the computational basis from a state or a density matrix
 - :meth:`.expectation_value(operator)<qilisdk.core.qtensor.QTensor.expectation_value>`: compute the expectation value of an operator on this state
+- :meth:`.otoc(w, v)<qilisdk.core.qtensor.QTensor.otoc>`: compute the out-of-time-ordered correlator (OTOC) for the evolution described by this unitary
 - :meth:`.partial_trace(keep)<qilisdk.core.qtensor.QTensor.ptrace>`: partial trace
 - :meth:`.reset_qubits(qubits)<qilisdk.core.qtensor.QTensor.reset_qubits>`: reset specified qubits to 0
 - :meth:`.permute(order)<qilisdk.core.qtensor.QTensor.permute>`: reorder the qubits, so that qubit ``i`` of the result is qubit ``order[i]`` of the original

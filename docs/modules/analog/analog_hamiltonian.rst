@@ -86,6 +86,7 @@ List of Operations
 - vector_norm: :meth:`H.vector_norm()<qilisdk.analog.hamiltonian.Hamiltonian.vector_norm>`
 - frobenius_norm: :meth:`H.frobenius_norm()<qilisdk.analog.hamiltonian.Hamiltonian.frobenius_norm>`
 - trace: :meth:`H.trace()<qilisdk.analog.hamiltonian.Hamiltonian.trace>`
+- OTOC: :meth:`H.otoc(w, v, t)<qilisdk.analog.hamiltonian.Hamiltonian.otoc>`
 
 **Exporting Hamiltonians**:
 

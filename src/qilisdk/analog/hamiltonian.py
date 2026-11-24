@@ -26,7 +26,7 @@ from scipy.sparse import csr_matrix, kron, spmatrix
 
 from qilisdk.core.expression import Expression
 from qilisdk.core.parameterizable import Parameterizable
-from qilisdk.core.qtensor import QTensor
+from qilisdk.core.qtensor import QTensor, _otoc_from_heisenberg, _otoc_operator, _otoc_state
 from qilisdk.core.types import Number
 from qilisdk.settings import get_settings
 from qilisdk.utils.hashing import hash as qili_hash
@@ -36,7 +36,7 @@ from qilisdk.yaml import yaml
 from .exceptions import InvalidHamiltonianOperation, NotAHamiltonianError
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Iterator
+    from collections.abc import Callable, Iterable, Iterator, Sequence
 
     from qilisdk.core.variables import Parameter
 
@@ -523,6 +523,75 @@ class Hamiltonian(Parameterizable):
         for coeff, term in self:
             result += coeff * self._apply_operator_on_qubit(term, padding=padding)
         return QTensor(result)
+
+    def otoc(
+        self,
+        w: QTensor | Hamiltonian,
+        v: QTensor | Hamiltonian,
+        t: float | Sequence[float] | np.ndarray,
+        state: QTensor | None = None,
+    ) -> complex | np.ndarray:
+        """
+        Compute the out-of-time-ordered correlator (OTOC) under time evolution by this Hamiltonian.
+
+        This Hamiltonian is the generator of the evolution :math:`U(t) = e^{-iHt}` (with :math:`\\hbar = 1`, so ``t``
+        is in inverse units of the coefficients), and the OTOC at time :math:`t` is
+
+        .. math::
+
+            F(t) = \\langle W(t)^\\dagger V^\\dagger W(t) V \\rangle, \\qquad W(t) = U(t)^\\dagger W U(t),
+
+        evaluated in ``state``, or at infinite temperature when ``state`` is None. See :meth:`QTensor.otoc
+        <qilisdk.core.qtensor.QTensor.otoc>` for the definition and interpretation.
+
+        The Hamiltonian is diagonalised once, after which each time point only applies a phase to :math:`W` in the
+        eigenbasis, so passing an array of times to get a whole :math:`F(t)` curve is much cheaper than computing each
+        point separately. The calculation is exact and uses dense matrices, so it is intended for small systems.
+
+        Example:
+            .. code-block:: python
+
+                import numpy as np
+                from qilisdk.analog import Hamiltonian, Z
+
+                H = Hamiltonian.ising_chain(nqubits=4, z_coefficient=0.5) + Hamiltonian.transverse_field(nqubits=4)
+                curve = H.otoc(w=Z(0), v=Z(3), t=np.linspace(0, 5, 100))
+
+        Args:
+            w (QTensor | Hamiltonian): The operator :math:`W` evolved in time.
+            v (QTensor | Hamiltonian): The static probe operator :math:`V`.
+            t (float | Sequence[float] | np.ndarray): The evolution time, or a 1D sequence of times.
+            state (QTensor | None): A ket or density matrix to evaluate the OTOC in. If None, the infinite-temperature
+                OTOC is returned.
+
+        Returns:
+            complex | np.ndarray: The OTOC value for a scalar ``t``, or a complex array with one value per time.
+
+        Raises:
+            ValueError: If this Hamiltonian is not Hermitian, or if ``w``, ``v`` or ``state`` do not fit on a common
+                number of qubits.
+        """
+        nqubits = max(self.nqubits, w.nqubits, v.nqubits, 0 if state is None else state.nqubits)
+        logger.debug("[Hamiltonian] Computing OTOC over {} qubits", nqubits)
+        hamiltonian = self.to_qtensor(nqubits)
+        if not hamiltonian.is_hermitian():
+            raise ValueError("The OTOC requires a Hermitian Hamiltonian to generate a unitary evolution")
+        energies, eigenvectors = np.linalg.eigh(np.asarray(hamiltonian.dense(), dtype=np.complex128))
+
+        # Every operand is rotated into the eigenbasis, where W(t)_kl = exp(i (E_k - E_l) t) W_kl
+        w_eigen = eigenvectors.conj().T @ _otoc_operator(w, nqubits, "w") @ eigenvectors
+        v_eigen = eigenvectors.conj().T @ _otoc_operator(v, nqubits, "v") @ eigenvectors
+        rho = _otoc_state(state, nqubits)
+        if rho is not None:
+            rho = eigenvectors.conj().T @ rho if rho.shape[1] == 1 else eigenvectors.conj().T @ rho @ eigenvectors
+        gaps = np.subtract.outer(energies, energies)
+
+        times = np.asarray(t, dtype=float)
+        values = np.array(
+            [_otoc_from_heisenberg(w_eigen * np.exp(1j * time * gaps), v_eigen, rho) for time in times.ravel()],
+            dtype=np.complex128,
+        )
+        return complex(values[0]) if times.ndim == 0 else values.reshape(times.shape)
 
     def get_static_hamiltonian(self) -> Hamiltonian:
         """Return a Hamiltonian containing only constant coefficients."""

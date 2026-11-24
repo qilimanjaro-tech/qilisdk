@@ -25,7 +25,7 @@ from qilisdk.analog import Y as analog_Y
 from qilisdk.analog.hamiltonian import PauliX
 from qilisdk.core import Parameter, QTensor
 from qilisdk.core.comparison import LEQ
-from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, M, S, X, Y
+from qilisdk.digital import CNOT, RX, RY, RZ, U1, U2, U3, Circuit, H, M, S, X, Y
 from qilisdk.digital.circuit import _apply_gate_left
 from qilisdk.digital.exceptions import GateHasNoMatrixError, NotAGateError, QubitOutOfRangeError
 from qilisdk.digital.gates import Adjoint, BasicGate, Exponential, Gate
@@ -980,3 +980,61 @@ def test_gate_minus_analog_hamiltonian_raises_helpful_error():
     hamiltonian = analog_Y(0)
     with pytest.raises(NotAGateError, match="did you mean to import X, Y, Z or I from qilisdk"):
         _ = gate - hamiltonian
+
+
+@pytest.mark.parametrize("state", [None, QTensor.ket(0, 1)])
+@pytest.mark.parametrize(("probe", "expected"), [("Z0", -1.0), ("X0", 1.0), ("Z1", 1.0)])
+def test_circuit_otoc_matches_heisenberg_picture_by_hand(probe, expected, state):
+    """H(0) then CNOT(0, 1) maps Z(1) to X(0) Z(1), so the OTOC is -1 against Z(0) and +1 against X(0) or Z(1)."""
+    from qilisdk.analog import Z as analog_Z  # ruff: ignore[import-outside-top-level]
+
+    circuit = Circuit(2)
+    circuit.add(H(0))
+    circuit.add(CNOT(0, 1))
+    v = {"Z0": analog_Z(0), "X0": analog_X(0), "Z1": analog_Z(1)}[probe]
+    assert np.isclose(circuit.otoc(analog_Z(1), v, state), expected)
+
+
+def test_circuit_otoc_uses_current_parameter_values():
+    """Changing a parameter after construction must change the evolution the OTOC is computed for."""
+    circuit = Circuit(1)
+    circuit.add(RY(0, theta=Parameter("theta", 0.0)))
+    assert np.isclose(circuit.otoc(analog_X(0), analog_X(0)), 1.0)
+    circuit.set_parameter_values([np.pi / 2])
+    # RY(pi/2) maps X to -Z, which anticommutes with X
+    assert np.isclose(circuit.otoc(analog_X(0), analog_X(0)), -1.0)
+
+
+def test_circuit_otoc_density_matrix_state_matches_ket():
+    from qilisdk.analog import Z as analog_Z  # ruff: ignore[import-outside-top-level]
+
+    circuit = Circuit(2)
+    circuit.add(RX(0, theta=0.7))
+    circuit.add(CNOT(0, 1))
+    circuit.add(RY(1, theta=0.3))
+    ket_state = QTensor.ket(1, 0)
+    density_matrix = ket_state @ ket_state.adjoint()
+    assert np.isclose(
+        circuit.otoc(analog_Z(0), analog_X(1), ket_state), circuit.otoc(analog_Z(0), analog_X(1), density_matrix)
+    )
+
+
+def test_circuit_otoc_without_entangling_gates_never_scrambles():
+    """Single-qubit gates keep W on its own qubit, so it always commutes with a probe on another qubit."""
+    from qilisdk.analog import Z as analog_Z  # ruff: ignore[import-outside-top-level]
+
+    circuit = Circuit(3)
+    circuit.add(RX(0, theta=0.9))
+    circuit.add(RY(1, theta=1.4))
+    circuit.add(H(2))
+    assert np.isclose(circuit.otoc(analog_Z(0), analog_X(2)), 1.0)
+
+
+def test_circuit_otoc_rejects_operator_outside_the_circuit():
+    from qilisdk.analog import Z as analog_Z  # ruff: ignore[import-outside-top-level]
+
+    circuit = Circuit(2)
+    out_of_range = analog_Z(3)
+    v = analog_X(0)
+    with pytest.raises(ValueError, match="w acts on 4 qubits, but the evolution only has 2 qubits"):
+        circuit.otoc(out_of_range, v)

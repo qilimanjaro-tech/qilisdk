@@ -1038,6 +1038,59 @@ class QTensor:
         # The C++ generator takes a 32-bit seed, so reduce larger or negative seeds into that range
         return self._qtensor_cpp.expectation_value_python(other, nshots, None if seed is None else seed % 2**32)
 
+    def otoc(self, w: QTensor | Hamiltonian, v: QTensor | Hamiltonian, state: QTensor | None = None) -> complex:
+        """
+        Compute the out-of-time-ordered correlator (OTOC) for the evolution described by this unitary.
+
+        With this QTensor as the evolution unitary :math:`U` and :math:`W(t) = U^\\dagger W U` the Heisenberg-evolved
+        :math:`W`, the OTOC is
+
+        .. math::
+
+            F = \\langle W(t)^\\dagger V^\\dagger W(t) V \\rangle,
+
+        evaluated in ``state`` (a ket or a density matrix), or at infinite temperature as
+        :math:`\\text{tr}(W(t)^\\dagger V^\\dagger W(t) V) / 2^n` when ``state`` is None. For unitary Hermitian
+        :math:`W` and :math:`V` (e.g. Pauli operators) the squared commutator is
+        :math:`\\langle |[W(t), V]|^2 \\rangle = 2(1 - \\text{Re}\\,F)`, so :math:`F` starts at 1 for operators on
+        different qubits and decays as :math:`W(t)` spreads onto the support of :math:`V` (information scrambling).
+
+        The calculation is exact and uses dense matrices, so it is intended for small systems. This QTensor is assumed
+        to be unitary and is not checked. To compute OTOCs directly from a circuit or a time-independent Hamiltonian,
+        see :meth:`~qilisdk.digital.circuit.Circuit.otoc` and :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.otoc`.
+
+        Example:
+            .. code-block:: python
+
+                from qilisdk.analog import Z
+                from qilisdk.digital import CNOT, H, Circuit
+
+                circuit = Circuit(2)
+                circuit.add(H(0))
+                circuit.add(CNOT(0, 1))
+                # W(t) = U† Z(1) U = X(0) Z(1) anticommutes with V = Z(0), so F = -1
+                F = circuit.to_qtensor().otoc(w=Z(1), v=Z(0))
+
+        Args:
+            w (QTensor | Hamiltonian): The operator :math:`W` evolved in time. A Hamiltonian is expanded to this QTensor's qubits.
+            v (QTensor | Hamiltonian): The static probe operator :math:`V`. A Hamiltonian is expanded to this QTensor's qubits.
+            state (QTensor | None): A ket or density matrix to evaluate the OTOC in. If None, the infinite-temperature
+                OTOC is returned.
+
+        Returns:
+            complex: The OTOC value.
+
+        Raises:
+            ValueError: If this QTensor is not a square operator, or if ``w``, ``v`` or ``state`` do not match its
+                number of qubits.
+        """
+        if not self.is_operator():
+            raise ValueError(f"The OTOC must be computed on a square evolution operator, got shape {self.shape}")
+        logger.trace("[QTensor] QTensor.otoc computing OTOC on {} qubits", self.nqubits)
+        unitary = np.asarray(self.dense(), dtype=np.complex128)
+        w_t = unitary.conj().T @ _otoc_operator(w, self.nqubits, "w") @ unitary
+        return _otoc_from_heisenberg(w_t, _otoc_operator(v, self.nqubits, "v"), _otoc_state(state, self.nqubits))
+
     def __getstate__(self) -> dict[str, csr_matrix]:
         """
         Get the state of the QTensor for pickling.
@@ -1083,6 +1136,74 @@ class QTensor:
         if filepath:
             renderer.save(filepath)
         renderer.show()
+
+
+def _otoc_operator(operator: QTensor | Hamiltonian, nqubits: int, name: str) -> np.ndarray:
+    """
+    Convert an OTOC operator to a dense matrix on ``nqubits`` qubits.
+
+    Args:
+        operator (QTensor | Hamiltonian): The operator; a Hamiltonian is expanded to ``nqubits`` qubits.
+        nqubits (int): The number of qubits of the evolution.
+        name (str): The argument name, used in error messages.
+
+    Returns:
+        np.ndarray: The dense complex128 matrix.
+
+    Raises:
+        ValueError: If the operator is not a square matrix on ``nqubits`` qubits.
+    """
+    if not isinstance(operator, QTensor) and operator.nqubits > nqubits:
+        raise ValueError(f"{name} acts on {operator.nqubits} qubits, but the evolution only has {nqubits} qubits")
+    tensor = operator if isinstance(operator, QTensor) else operator.to_qtensor(nqubits)
+    dim = 2**nqubits
+    if tensor.shape != (dim, dim):
+        raise ValueError(f"{name} must be a {dim}x{dim} operator on {nqubits} qubits, got shape {tensor.shape}")
+    return np.asarray(tensor.dense(), dtype=np.complex128)
+
+
+def _otoc_state(state: QTensor | None, nqubits: int) -> np.ndarray | None:
+    """
+    Convert an OTOC state to a dense ket or density matrix on ``nqubits`` qubits.
+
+    Args:
+        state (QTensor | None): A ket, a density matrix, or None for infinite temperature.
+        nqubits (int): The number of qubits of the evolution.
+
+    Returns:
+        np.ndarray | None: The dense complex128 state, or None.
+
+    Raises:
+        ValueError: If the state is not a ket or a density matrix on ``nqubits`` qubits.
+    """
+    if state is None:
+        return None
+    dim = 2**nqubits
+    if state.shape not in {(dim, 1), (dim, dim)}:
+        raise ValueError(f"The state must be a ket or a density matrix on {nqubits} qubits, got shape {state.shape}")
+    return np.asarray(state.dense(), dtype=np.complex128)
+
+
+def _otoc_from_heisenberg(w_t: np.ndarray, v: np.ndarray, state: np.ndarray | None) -> complex:
+    """
+    Evaluate :math:`\\langle W(t)^\\dagger V^\\dagger W(t) V \\rangle` from the Heisenberg-evolved ``w_t``.
+
+    The correlator operator equals :math:`B^\\dagger A` with :math:`A = W(t) V` and :math:`B = V W(t)`, so it is
+    evaluated as an inner product without forming the full product.
+
+    Args:
+        w_t (np.ndarray): The Heisenberg-evolved operator :math:`W(t)`, in the same basis as ``v`` and ``state``.
+        v (np.ndarray): The probe operator :math:`V`.
+        state (np.ndarray | None): A ket, a density matrix, or None for the infinite-temperature average.
+
+    Returns:
+        complex: The OTOC value.
+    """
+    if state is None:
+        return complex(np.vdot(v @ w_t, w_t @ v) / w_t.shape[0])
+    if state.shape[1] == 1:
+        return complex(np.vdot(v @ (w_t @ state), w_t @ (v @ state)))
+    return complex(np.vdot(v @ w_t, w_t @ v @ state))
 
 
 def ket(*state: int) -> QTensor:
