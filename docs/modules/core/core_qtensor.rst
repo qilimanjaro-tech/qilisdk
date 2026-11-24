@@ -134,6 +134,7 @@ As well as some quantum-specific transformations:
 
 - :meth:`.entropy_von_neumann()<qilisdk.core.qtensor.QTensor.entropy_von_neumann>`: compute the von Neumann entropy of a density matrix
 - :meth:`.entropy_renyi(alpha)<qilisdk.core.qtensor.QTensor.entropy_renyi>`: compute the Rényi entropy of a density matrix for a given order alpha
+- :meth:`.gap_ratio()<qilisdk.core.qtensor.QTensor.gap_ratio>`: compute the mean level spacing ratio of a Hermitian operator, a standard probe of quantum chaos
 - :meth:`.magic(alpha)<qilisdk.core.qtensor.QTensor.magic>`: compute the magic (non-stabilizerness) of a pure state via the stabilizer Rényi entropy
 - :meth:`.commutator(other)<qilisdk.core.qtensor.QTensor.commutator>`: compute the commutator with another operator
 - :meth:`.anticommutator(other)<qilisdk.core.qtensor.QTensor.anticommutator>`: compute the anticommutator with another operator

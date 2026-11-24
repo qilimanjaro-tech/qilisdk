@@ -2267,6 +2267,46 @@ double QTensorCpp::entropy_renyi(double alpha) {
     return (1.0 / (1.0 - alpha)) * std::log(sum);
 }
 
+double QTensorCpp::gap_ratio(double atol) {
+    /*
+    Compute the mean level spacing ratio <r> of a Hermitian operator, averaged over its whole spectrum.
+
+    With the distinct eigenvalues E_0 < E_1 < ... sorted in ascending order and the spacings s_n = E_{n+1} - E_n,
+    each ratio is r_n = min(s_n, s_{n-1}) / max(s_n, s_{n-1}), which lies in [0, 1]. Eigenvalues closer than atol to
+    the previous distinct one are merged into a single level, so exact degeneracies do not produce 0/0 ratios.
+
+    Args:
+        atol (double): The tolerance for the Hermiticity check and below which two eigenvalues count as degenerate.
+
+    Returns:
+        double: The mean of r_n over all consecutive pairs of spacings.
+
+    Raises:
+        py::value_error: If the QTensor is not a Hermitian operator, or if it has fewer than three distinct
+            eigenvalues.
+    */
+    if (!is_operator() || !is_self_adjoint(atol)) {
+        throw py::value_error("The gap ratio is only defined for Hermitian operators");
+    }
+    const Eigen::VectorXd eigenvalues = Eigen::SelfAdjointEigenSolver<DenseMatrix>(to_dense(), Eigen::EigenvaluesOnly).eigenvalues();
+    std::vector<double> levels;
+    for (Eigen::Index i = 0; i < eigenvalues.size(); ++i) {
+        if (levels.empty() || eigenvalues(i) - levels.back() > atol) {
+            levels.push_back(eigenvalues(i));
+        }
+    }
+    if (levels.size() < 3) {
+        throw py::value_error("The gap ratio needs at least three distinct eigenvalues");
+    }
+    double total = 0.0;
+    for (size_t n = 1; n + 1 < levels.size(); ++n) {
+        const double previous = levels[n] - levels[n - 1];
+        const double next = levels[n + 1] - levels[n];
+        total += std::min(previous, next) / std::max(previous, next);
+    }
+    return total / static_cast<double>(levels.size() - 2);
+}
+
 static void _fast_walsh_hadamard_transform(std::vector<Complex>& a) {
     /*
     Apply the unnormalized fast Walsh-Hadamard transform (H_2)^{tensor N} to a vector in place.

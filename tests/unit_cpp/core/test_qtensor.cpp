@@ -1770,6 +1770,44 @@ TEST(EntropyTest, Renyi_Alpha2_Succeeds) {
     EXPECT_NO_THROW(q.entropy_renyi(2.0));
 }
 
+static SparseMatrix make_diagonal(const std::vector<Complex>& diagonal) {
+    const Eigen::Index dim = static_cast<Eigen::Index>(diagonal.size());
+    SparseMatrix m(dim, dim);
+    for (Eigen::Index i = 0; i < dim; ++i) {
+        m.insert(i, i) = diagonal[i];
+    }
+    m.makeCompressed();
+    return m;
+}
+
+TEST(GapRatioTest, EquallySpaced_IsOne) {
+    QTensorCpp q(make_diagonal({3.0, 0.0, 2.0, 1.0}));
+    EXPECT_NEAR(q.gap_ratio(), 1.0, 1e-12);
+}
+
+TEST(GapRatioTest, DoublingSpacings_IsHalf) {
+    QTensorCpp q(make_diagonal({0.0, 1.0, 3.0, 7.0}));
+    EXPECT_NEAR(q.gap_ratio(), 0.5, 1e-12);
+}
+
+TEST(GapRatioTest, DegenerateLevels_AreMerged) {
+    QTensorCpp q(make_diagonal({0.0, 1.0, 1.0, 3.0}));
+    EXPECT_NEAR(q.gap_ratio(), 0.5, 1e-12);
+}
+
+TEST(GapRatioTest, NonHermitian_Throws) {
+    SparseMatrix m(2, 2);
+    m.insert(0, 1) = 1.0;
+    m.makeCompressed();
+    EXPECT_THROW(QTensorCpp(m).gap_ratio(), py::value_error);
+    EXPECT_THROW(QTensorCpp::ghz(2).gap_ratio(), py::value_error);
+}
+
+TEST(GapRatioTest, FewerThanThreeLevels_Throws) {
+    EXPECT_THROW(QTensorCpp(make_pauli_x()).gap_ratio(), py::value_error);
+    EXPECT_THROW(QTensorCpp(make_diagonal({0.0, 1.0, 1.0, 0.0})).gap_ratio(), py::value_error);
+}
+
 static SparseMatrix make_t_plus() {
     constexpr double pi = 3.14159265358979323846;
     SparseMatrix m(2, 1);
