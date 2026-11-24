@@ -64,12 +64,13 @@ class ReservoirLayer(Parameterizable):
 
     A reservoir layer can contain up to three ordered stages:
     ``input_encoding -> evolution_dynamics -> output_encoding``.
-    It also stores the observables measured after each layer and optional qubits to reset.
+    The evolution dynamics can be either an analog :class:`~qilisdk.analog.Schedule`
+    or a digital :class:`~qilisdk.digital.Circuit`. It also stores the observables measured after each layer and optional qubits to reset.
     """
 
     def __init__(
         self,
-        evolution_dynamics: Schedule,
+        evolution_dynamics: Schedule | Circuit,
         input_encoding: Circuit | None = None,
         output_encoding: Circuit | None = None,
         qubits_to_reset: list[int] | None = None,
@@ -77,8 +78,9 @@ class ReservoirLayer(Parameterizable):
         """Build a reservoir layer description.
 
         Args:
-            evolution_dynamics (Schedule): Main analog schedule block
-                driving the reservoir dynamics.
+            evolution_dynamics (Schedule | Circuit): Main block driving the
+                reservoir dynamics, either an analog schedule or a digital
+                circuit (which may contain multi-qubit gates).
             input_encoding (Circuit | None): Optional single-qubit
                 pre-processing circuit. Defaults to None.
             output_encoding (Circuit | None): Optional single-qubit
@@ -87,17 +89,21 @@ class ReservoirLayer(Parameterizable):
                 to reset between consecutive layers. Defaults to None.
 
         Raises:
-            ValueError: If the input or output encoding circuit contains
-                measurements, multi-qubit gates, or acts on more qubits
-                than the evolution dynamics.
+            ValueError: If the evolution dynamics is a circuit containing
+                measurements, or if the input or output encoding circuit
+                contains measurements, multi-qubit gates, or acts on more
+                qubits than the evolution dynamics.
         """
 
         super().__init__()
         self._input_encoding: Circuit | None = input_encoding
-        self._evolution_dynamics: Schedule = evolution_dynamics
+        self._evolution_dynamics: Schedule | Circuit = evolution_dynamics
         self._output_encoding: Circuit | None = output_encoding
         self._qubits_to_reset: list[int] | None = qubits_to_reset
         self._nqubits = self._evolution_dynamics.nqubits
+
+        if isinstance(evolution_dynamics, Circuit) and any(isinstance(g, M) for g in evolution_dynamics.gates):
+            raise ValueError("Evolution dynamics circuit can't contain measurements")
 
         if input_encoding:
             self._validate_input_encoding(input_encoding)
@@ -206,12 +212,12 @@ class ReservoirLayer(Parameterizable):
         return self._qubits_to_reset
 
     @property
-    def evolution_dynamics(self) -> Schedule:
-        """Main analog dynamics schedule for each layer."""
+    def evolution_dynamics(self) -> Schedule | Circuit:
+        """Main dynamics block (analog schedule or digital circuit) for each layer."""
         return self._evolution_dynamics
 
     @property
-    def reservoir_dynamics(self) -> Schedule:
+    def reservoir_dynamics(self) -> Schedule | Circuit:
         """Backward-compatible alias for :attr:`evolution_dynamics`."""
         return self._evolution_dynamics
 

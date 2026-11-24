@@ -29,7 +29,7 @@ from .circuit_transpiler_pass import CircuitTranspilerPass
 if TYPE_CHECKING:
     from rustworkx import PyGraph
 
-    from qilisdk.digital.types import LayoutMap, Topology
+    from qilisdk.digital.types import LayoutMap, TopologyLike
 
 
 class SabreSwapPass(CircuitTranspilerPass):
@@ -38,7 +38,7 @@ class SabreSwapPass(CircuitTranspilerPass):
 
     Inputs
     ------
-    topology : Topology
+    topology : TopologyLike
         Coupling map provided either as an edge list or as an undirected
         ``PyGraph`` whose node indices are physical qubits.
     initial_layout : list[int] | None
@@ -77,7 +77,7 @@ class SabreSwapPass(CircuitTranspilerPass):
 
     def __init__(
         self,
-        topology: Topology,
+        topology: TopologyLike,
         *,
         initial_layout: list[int] | None = None,
         seed: int | None = None,
@@ -91,7 +91,7 @@ class SabreSwapPass(CircuitTranspilerPass):
         """Configure SABRE swap routing behavior.
 
         Args:
-            topology (Topology): Coupling map as an edge list or ``PyGraph``.
+            topology (TopologyLike): Coupling map as a ``TopologyPreset``, edge list or ``PyGraph``.
             initial_layout (list[int] | None): Optional initial logical-to-physical mapping; uses identity-style mapping when omitted.
             seed (int | None): Base seed for stochastic swap scoring and retry attempts.
             lookahead_size (int): Number of future two-qubit gates used in the extended SABRE cost.

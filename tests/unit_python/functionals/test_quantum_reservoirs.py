@@ -473,3 +473,65 @@ def test_quantum_reservoir_result_is_functional_result():
     result = FunctionalResult(readout_results=ReadoutCompositeResults(sampling=r))
     assert result.get_samples() == {"0": 10}
     assert isinstance(result, FunctionalResult)
+
+
+def _circuit_dynamics() -> tuple[Circuit, ReservoirInput, Parameter]:
+    x = ReservoirInput("x", 0.0)
+    w = Parameter("w", 0.7, bounds=(0.0, 1.0))
+    dynamics = Circuit(2)
+    dynamics.add(RX(0, theta=x))
+    dynamics.add(CNOT(0, 1))
+    dynamics.add(RY(1, theta=w))
+    return dynamics, x, w
+
+
+def test_reservoir_layer_accepts_circuit_dynamics():
+    dynamics, _, _ = _circuit_dynamics()
+    encoding = Circuit(1)
+    encoding.add(RY(0, theta=ReservoirInput("e", 0.0)))
+    layer = ReservoirLayer(evolution_dynamics=dynamics, input_encoding=encoding, qubits_to_reset=[1])
+
+    assert layer.evolution_dynamics is dynamics
+    assert layer.reservoir_dynamics is dynamics
+    assert layer.nqubits == 2
+    assert list(layer) == [layer.input_encoding, dynamics]
+    assert set(layer.input_parameter_names) == {"x", "e"}
+    assert set(layer.get_parameter_names(where=lambda p: p.is_trainable)) == {"w"}
+
+
+def test_reservoir_layer_circuit_dynamics_parameter_sync():
+    dynamics, x, w = _circuit_dynamics()
+    layer = ReservoirLayer(evolution_dynamics=dynamics)
+
+    layer.set_parameters({"x": 0.4, "w": 0.2})
+    assert _isclose(x.value, 0.4)
+    assert _isclose(w.value, 0.2)
+
+    layer.set_parameter_bounds({"w": (0.1, 0.9)})
+    assert _isclose(dynamics.get_parameter_bounds()["w"][0], 0.1)
+    assert _isclose(dynamics.get_parameter_bounds()["w"][1], 0.9)
+
+
+def test_reservoir_layer_circuit_dynamics_rejects_measurements():
+    dynamics, _, _ = _circuit_dynamics()
+    dynamics.add(M(0))
+    with pytest.raises(ValueError, match="Evolution dynamics circuit can't contain measurements"):
+        ReservoirLayer(evolution_dynamics=dynamics)
+
+
+def test_reservoir_layer_circuit_dynamics_rejects_wider_encoding():
+    dynamics = Circuit(1)
+    dynamics.add(RX(0, theta=0.1))
+    encoding = Circuit(2)
+    encoding.add(RX(1, theta=0.2))
+    with pytest.raises(ValueError, match="acts on more qubits"):
+        ReservoirLayer(evolution_dynamics=dynamics, input_encoding=encoding)
+
+
+def test_reservoir_layer_copy_with_circuit_dynamics():
+    dynamics, _, _ = _circuit_dynamics()
+    layer = ReservoirLayer(evolution_dynamics=dynamics, qubits_to_reset=[0])
+    copied = copy(layer)
+    assert isinstance(copied.evolution_dynamics, Circuit)
+    assert copied.nqubits == 2
+    assert copied.get_parameter_names() == layer.get_parameter_names()
