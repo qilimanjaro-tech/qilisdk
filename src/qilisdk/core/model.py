@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import copy
 import itertools
+import math
 from typing import TYPE_CHECKING, Literal, Mapping, Type, cast
 
 import numpy as np
@@ -34,8 +35,8 @@ if TYPE_CHECKING:
 
 _EMPTY_GRAPH_MSG = "The graph must have at least one edge."
 
-# Used to prevent unbounded vars from expanding into infinite binary vars
-_MAX_ENCODING_SPAN = 2**32
+# Upper limit on the number of binary variables a single variable may be expanded into
+_MAX_BINARY_VARS = 32
 
 
 def _validate_undirected_edges(edges: list[tuple[int, int]]) -> None:
@@ -663,6 +664,7 @@ class Model:
         label: str = "Random Knapsack",
         seed: int = 1,
         lagrange_multiplier: float = 100,
+        integer: bool = False,
     ) -> Model:
         """
         Factory method to generate a random knapsack model.
@@ -670,6 +672,10 @@ class Model:
         Values and weights are drawn uniformly at random from the given ranges, and the capacity of
         the knapsack is set to ``capacity_ratio`` times the total weight of all items, so that the
         instance is neither trivially feasible nor infeasible.
+
+        With ``integer`` set, values and weights are integers drawn from the inclusive ranges and the
+        capacity is rounded down to an integer. Integer coefficients suit the QUBO conversion better, since the slack
+        variables of the weight constraint can then represent its gap exactly.
 
         Args:
             num_items (int): the number of items to generate.
@@ -679,6 +685,8 @@ class Model:
             label (str, optional): the model label. Defaults to "Random Knapsack".
             seed (int, optional): the seed for the random number generator. Defaults to 1.
             lagrange_multiplier (float, optional): penalty scale for the weight constraint when converting to QUBO. Defaults to 100.
+            integer (bool, optional): whether to generate integer values, weights and capacity rather than real
+                ones. Defaults to False.
 
         Returns:
             Model: a model of a random knapsack problem with the given parameters.
@@ -686,6 +694,7 @@ class Model:
         Raises:
             ValueError: if the number of items is not greater than zero.
             ValueError: if a range is not a well-ordered ``(low, high)`` pair.
+            ValueError: if ``integer`` is set and a range contains no integer.
             ValueError: if ``capacity_ratio`` is negative.
         """
         _validate_positive_count(num_items, "num_items")
@@ -694,13 +703,25 @@ class Model:
         if capacity_ratio < 0:
             raise ValueError(f"capacity_ratio must be non-negative, got {capacity_ratio}.")
 
+        if integer:
+            for bounds, name in ((value_range, "value_range"), (weight_range, "weight_range")):
+                if math.ceil(bounds[0]) > math.floor(bounds[1]):
+                    raise ValueError(f"{name} must contain an integer when integer is True, got {bounds}.")
+
         generator = np.random.default_rng(seed)
-        values = [float(generator.uniform(low=value_range[0], high=value_range[1])) for _ in range(num_items)]
-        weights = [float(generator.uniform(low=weight_range[0], high=weight_range[1])) for _ in range(num_items)]
+
+        def sample(low: float, high: float) -> float:
+            if integer:
+                return int(generator.integers(math.ceil(low), math.floor(high), endpoint=True))
+            return float(generator.uniform(low=low, high=high))
+
+        values = [sample(*value_range) for _ in range(num_items)]
+        weights = [sample(*weight_range) for _ in range(num_items)]
+        max_weight = capacity_ratio * sum(weights)
         return cls.knapsack(
             values=values,
             weights=weights,
-            max_weight=capacity_ratio * sum(weights),
+            max_weight=math.floor(round(max_weight, 9)) if integer else max_weight,
             label=label,
             lagrange_multiplier=lagrange_multiplier,
         )
@@ -1544,6 +1565,7 @@ class QUBO(Model):
                 slack = Variable(
                     f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=Bitwise
                 )
+                self._check_encodable_bounds(slack)
                 slack_terms = slack.to_binary()
                 out = h - slack_terms
                 return (out) ** 2
@@ -1571,6 +1593,7 @@ class QUBO(Model):
                 slack = Variable(
                     f"{label}_slack", domain=Domain.POSITIVE_INTEGER, bounds=(0, ub_slack), encoding=Bitwise
                 )
+                self._check_encodable_bounds(slack)
 
                 slack_terms = slack.to_binary()
                 out = h + slack_terms
@@ -1712,23 +1735,30 @@ class QUBO(Model):
 
     @staticmethod
     def _check_encodable_bounds(var: Variable) -> None:
-        """Check that ``var`` spans few enough values to be expanded into binary variables.
+        """Check that ``var`` expands into few enough binary variables to be encodable.
 
-        A variable that is left unbounded defaults to the full range of its domain, which no encoding can represent.
+        Encodings differ wildly in how many binary variables a given range of values needs, so the
+        size of the variable's actual encoding is what gets checked. A variable that is left
+        unbounded defaults to the full range of its domain, which needs more binary variables than
+        the limit allows under every encoding, and so is rejected here too.
 
         Args:
             var (Variable): the variable to check.
 
         Raises:
-            ValueError: if the variable's bounds span more values than ``_MAX_ENCODING_SPAN``.
+            ValueError: if the variable's encoding would expand into more than ``_MAX_BINARY_VARS``
+                binary variables.
         """
         span = float(var.upper_bound) - float(var.lower_bound)
         if var.domain is Domain.REAL:
             span /= var.precision
-        if span > _MAX_ENCODING_SPAN:
+        num_binary = var.num_binary_equivalent() if np.isfinite(span) else np.inf
+        if num_binary > _MAX_BINARY_VARS:
+            hint = "" if var.encoding is Bitwise else ", or use a more compact encoding such as Bitwise"
             raise ValueError(
-                f"Variable {var} spans too many values ({span:.3g}) to be encoded into binary variables."
-                " Set tighter bounds on the variable (or a coarser precision for real variables)."
+                f"Variable {var} expands into too many binary variables ({num_binary:.3g}) under the"
+                f" {var.encoding.name} encoding, the maximum supported being {_MAX_BINARY_VARS}."
+                f" Set tighter bounds on the variable (or a coarser precision for real variables){hint}."
             )
 
     def _check_variables(self, term: Expression | Comparison, lagrange_multiplier: RealNumber = 100) -> None:
@@ -1740,8 +1770,8 @@ class QUBO(Model):
 
         Raises:
             ValueError: if the constraint term contains a spin that is not a ``SpinVariable``.
-            ValueError: if the constraint term contains a variable whose bounds span too many values to be encoded
-                into binary variables.
+            ValueError: if the constraint term contains a variable whose encoding expands into too many binary
+                variables.
         """
         for v in term.variables():
             if v.domain is Domain.SPIN and not isinstance(v, SpinVariable):
@@ -1933,7 +1963,7 @@ class QUBO(Model):
             if isinstance(expr, Pow):
                 base = _parse_term(expr.base)
                 pow_acc: Number | Hamiltonian = 1.0
-                for _ in range(int(expr.exp.value)):  # ty:ignore[unresolved-attribute]
+                for _ in range(int(expr.exp.value)):  # ty:ignore[missing-attribute]
                     pow_acc *= base
                 return pow_acc
             raise ValueError(f"expression {expr} is not supported when building a Hamiltonian")

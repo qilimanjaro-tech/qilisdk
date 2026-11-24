@@ -43,6 +43,9 @@ typedef Eigen::Matrix<Real, Eigen::Dynamic, 1> RealVector;
 typedef Eigen::Triplet<Complex> Triplet;
 typedef std::vector<Triplet> Triplets;
 
+// Largest qubit count that can be expanded into a dense statevector, since shapes and sparse indices are ints
+const int MAX_QUBITS_DENSE = 30;
+
 inline void nan_error() {
     /*
     Raise an error indicating that the state has become invalid (NaN or Inf).

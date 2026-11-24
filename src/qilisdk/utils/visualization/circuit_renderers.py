@@ -330,7 +330,7 @@ class MatplotlibCircuitRenderer:
         """
         # What an equal aspect ratio with adjustable="box" will make of the axes
         position = self.axes.get_position(original=True)
-        figure_width, figure_height = self.axes.figure.get_size_inches()  # ty:ignore[unresolved-attribute]
+        figure_width, figure_height = self.axes.figure.get_size_inches()  # ty:ignore[missing-union-attribute]
         scale = min(
             position.width * figure_width / self.axes.viewLim.width,
             position.height * figure_height / self.axes.viewLim.height,
@@ -432,7 +432,7 @@ class MatplotlibCircuitRenderer:
             fontproperties=self.style.font,
         )
         self.axes.add_artist(t)
-        renderer = self.axes.figure.canvas.get_renderer()  # ty:ignore[unresolved-attribute]
+        renderer = self.axes.figure.canvas.get_renderer()  # ty:ignore[missing-attribute]
         extent = t.get_window_extent(renderer=renderer)
         dpi = self.axes.figure.dpi
         t.remove()
@@ -871,7 +871,7 @@ class MatplotlibCircuitRenderer:
 
         # The axes fills the figure, bar the band left on top for the title
         figure = self.axes.figure
-        figure.set_size_inches(width, height + self._title_band, forward=True)  # ty:ignore[unresolved-attribute]
+        figure.set_size_inches(width, height + self._title_band, forward=True)  # ty:ignore[missing-union-attribute]
         self.axes.set_position((0.0, 0.0, 1.0, height / (height + self._title_band)))
 
         # The limits above were set against the previous figure size, so the labels are

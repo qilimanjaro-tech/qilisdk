@@ -2498,6 +2498,85 @@ QTensorCpp QTensorCpp::uniform(int nqubits) {
     return result;
 }
 
+QTensorCpp QTensorCpp::w(int nqubits) {
+    /*
+    Create a W state for the specified number of qubits, returning a new QTensor as the result.
+    This is the equal superposition of all basis states with exactly one qubit in the |1> state.
+
+    Args:
+        nqubits (int): The number of qubits in the W state.
+
+    Returns:
+        QTensorCpp: A new QTensor that is the W state for the specified number of qubits.
+
+    Raises:
+        py::value_error: If the number of qubits is less than one or more than MAX_QUBITS_DENSE.
+    */
+    if (nqubits < 1) {
+        throw py::value_error("Number of qubits must be at least one");
+    }
+    if (nqubits > MAX_QUBITS_DENSE) {
+        throw py::value_error("Number of qubits must be at most " + std::to_string(MAX_QUBITS_DENSE));
+    }
+    Eigen::Index dim = Eigen::Index(1) << nqubits;
+    const Complex amplitude = 1.0 / std::sqrt(static_cast<double>(nqubits));
+    std::vector<std::pair<Eigen::Index, Complex>> entries;
+    entries.reserve(nqubits);
+    for (int i = 0; i < nqubits; ++i) {
+        entries.push_back({Eigen::Index(1) << i, amplitude});
+    }
+    return _col_ket_from_entries(dim, entries);
+}
+
+QTensorCpp QTensorCpp::random(int nqubits, std::uint32_t seed) {
+    /*
+    Create a random normalized state for the specified number of qubits, returning a new QTensor as the result.
+
+    The state is sampled uniformly over all pure states (i.e. from the Haar measure). This is done by
+    drawing the real and imaginary part of each amplitude from a standard normal distribution and then
+    normalizing, since this distribution is invariant under any unitary and so has no preferred direction.
+
+    The normal samples come from a Box-Muller transform of the raw generator output rather than from
+    std::normal_distribution, whose algorithm differs between standard libraries, so that the same seed
+    gives the same state on every platform.
+
+    Args:
+        nqubits (int): The number of qubits in the random state.
+        seed (std::uint32_t): The seed for the random generator.
+
+    Returns:
+        QTensorCpp: A new QTensor that is a random state for the specified number of qubits.
+
+    Raises:
+        py::value_error: If the number of qubits is negative or more than MAX_QUBITS_DENSE.
+    */
+    if (nqubits < 0) {
+        throw py::value_error("Number of qubits must be non-negative");
+    }
+    if (nqubits > MAX_QUBITS_DENSE) {
+        throw py::value_error("Number of qubits must be at most " + std::to_string(MAX_QUBITS_DENSE));
+    }
+    Eigen::Index dim = Eigen::Index(1) << nqubits;
+    std::mt19937 gen(seed);
+    // M_PI is not a standard C++ macro (undefined under MSVC without _USE_MATH_DEFINES), so use an explicit constant
+    constexpr double pi = 3.14159265358979323846;
+    const double inv_two_pow_32 = 1.0 / 4294967296.0;
+    DenseMatrix vec(dim, 1);
+    for (Eigen::Index i = 0; i < dim; ++i) {
+        // Separate statements since C++ doesn't specify the evaluation order of constructor arguments,
+        // and u1 is in (0, 1] so that the log is finite
+        double u1 = (static_cast<double>(gen()) + 1.0) * inv_two_pow_32;
+        double u2 = static_cast<double>(gen()) * inv_two_pow_32;
+        double radius = std::sqrt(-2.0 * std::log(u1));
+        vec(i, 0) = std::polar(radius, 2.0 * pi * u2);
+    }
+    vec.normalize();
+    QTensorCpp result;
+    result._data = std::move(vec);
+    result._format = StorageFormat::Dense;
+    return result;
+}
+
 QTensorCpp QTensorCpp::reset_qubits_python(const py::object& qubits) {
     /*
     Reset the specified qubits in this QTensor, returning a new QTensor as the result.
@@ -2543,77 +2622,23 @@ QTensorCpp QTensorCpp::reset_qubits(const std::set<int>& qubits) {
         }
     }
 
-    // Determine which qubits to keep and which to trace out
-    std::set<int> rest_qubits;
-    int nqubits = get_nqubits();
-    for (int q = 0; q < nqubits; ++q) {
-        if (qubits.find(q) == qubits.end()) {
-            rest_qubits.insert(q);
-        }
+    // Qubit 0 is the most significant bit, so qubit q is bit nqubits - 1 - q of a basis index
+    const int nqubits = get_nqubits();
+    int mask = 0;
+    for (int q : qubits) {
+        mask |= 1 << (nqubits - 1 - q);
     }
 
-    // Perform the partial trace over the qubits to be reset
-    QTensorCpp rest_state = partial_trace(rest_qubits);
-    int out_dim = 1 << nqubits;
-
-    // Now we need to embed the rest_state back into the full space of nqubits, filling in zeros for the reset qubits
-    if (!rest_qubits.empty()) {
-        std::vector<Eigen::Triplet<Complex>> triplets;
-        const SparseMatrix& rest_data = rest_state.get_data();
-        std::vector<int> rest_dims(rest_qubits.size(), 2);
-        std::vector<int> full_dims(nqubits, 2);
-        for (int k = 0; k < rest_data.outerSize(); ++k) {
-            for (typename SparseMatrix::InnerIterator it(rest_data, k); it; ++it) {
-                int row = int(it.row());
-                int col = int(it.col());
-                Complex val = it.value();
-
-                // Convert row and col to multi-dimensional indices in the rest subsystem
-                std::vector<int> row_digits_rest(rest_qubits.size());
-                std::vector<int> col_digits_rest(rest_qubits.size());
-                int temp_row = row;
-                int temp_col = col;
-                for (size_t i = 0; i < rest_qubits.size(); ++i) {
-                    row_digits_rest[i] = temp_row % 2;
-                    col_digits_rest[i] = temp_col % 2;
-                    temp_row /= 2;
-                    temp_col /= 2;
-                }
-
-                // Build full multi-dimensional indices with zeros for the reset qubits
-                std::vector<int> row_digits_full(nqubits, 0);
-                std::vector<int> col_digits_full(nqubits, 0);
-                size_t rest_idx = 0;
-                for (int q = 0; q < nqubits; ++q) {
-                    if (rest_qubits.find(q) != rest_qubits.end()) {
-                        row_digits_full[q] = row_digits_rest[rest_idx];
-                        col_digits_full[q] = col_digits_rest[rest_idx];
-                        rest_idx++;
-                    }
-                }
-
-                // Convert back to flat indices in the full space
-                int out_row = 0;
-                int out_col = 0;
-                for (int q = 0; q < nqubits; ++q) {
-                    out_row |= (row_digits_full[q] << q);
-                    out_col |= (col_digits_full[q] << q);
-                }
-
-                triplets.emplace_back(out_row, out_col, val);
-            }
+    // Tracing out the reset qubits keeps entries that agree on them, which then move to the block where they are 0
+    std::vector<Eigen::Triplet<Complex>> triplets;
+    triplets.reserve(nnz());
+    for_each_nonzero([&](int row, int col, Complex val) {
+        if (((row ^ col) & mask) == 0) {
+            triplets.emplace_back(row & ~mask, col & ~mask, val);
         }
-
-        // Construct the final sparse matrix in the full space
-        SparseMatrix result(out_dim, out_dim);
-        result.setFromTriplets(triplets.begin(), triplets.end());
-        return QTensorCpp(result);
-    }
-
-    // If all qubits are reset, we just return a state with a single entry of 1 at the (0, 0) position
-    SparseMatrix result(out_dim, out_dim);
-    result.insert(0, 0) = 1.0;
-    result.makeCompressed();
+    });
+    SparseMatrix result(rows(), cols());
+    result.setFromTriplets(triplets.begin(), triplets.end());
     return QTensorCpp(result);
 }
 

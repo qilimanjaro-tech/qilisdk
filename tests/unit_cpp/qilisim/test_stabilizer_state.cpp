@@ -1546,10 +1546,10 @@ TEST(StabilizerState, DroppedGlobalPhase_HighRankDefaultsToOne) {
 // ──────────────────────────────────────────────────────────────────────────────
 
 TEST(StabilizerDense, AsDenseRejectsTooManyQubits) {
-    StabilizerState s(MAX_QUBITS_DENSE_STABILIZER + 1);
+    StabilizerState s(MAX_QUBITS_DENSE + 1);
     EXPECT_THROW(s.as_dense(), std::invalid_argument);
 
-    StabilizerStateSum sum(MAX_QUBITS_DENSE_STABILIZER + 1);
+    StabilizerStateSum sum(MAX_QUBITS_DENSE + 1);
     EXPECT_THROW(sum.as_dense(), std::invalid_argument);
 }
 
