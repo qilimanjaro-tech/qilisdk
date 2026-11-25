@@ -282,6 +282,22 @@ TEST(MatrixConversion, ToSpmatrixNonZeroCount) {
     EXPECT_EQ(nnz, 4);
 }
 
+TEST(MatrixConversion, ToSpmatrixKeepsNanDropsStoredZero) {
+    py::gil_scoped_acquire gil;
+    SparseMatrix sparse(3, 3);
+    sparse.insert(0, 1) = std::complex<double>(0.0, 0.0);
+    sparse.insert(1, 2) = std::complex<double>(std::nan(""), 0.0);
+    sparse.insert(2, 0) = std::complex<double>(0.0, 5.0);
+    sparse.makeCompressed();
+    py::object sp_result = to_spmatrix(sparse);
+    EXPECT_EQ(sp_result.attr("nnz").cast<int>(), 2);
+    py::array_t<std::complex<double>> dense = sp_result.attr("toarray")();
+    auto view = dense.unchecked<2>();
+    EXPECT_TRUE(std::isnan(view(1, 2).real()));
+    EXPECT_EQ(view(2, 0), std::complex<double>(0.0, 5.0));
+    EXPECT_EQ(view(0, 1), std::complex<double>(0.0, 0.0));
+}
+
 TEST(MatrixConversion, ToSpmatrixShape) {
     py::gil_scoped_acquire gil;
     py::exec(R"(

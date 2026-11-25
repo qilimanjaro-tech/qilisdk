@@ -210,12 +210,15 @@ py::object to_spmatrix(const SparseMatrix& matrix) {
     std::vector<int> row_indices;
     std::vector<int> col_indices;
     std::vector<std::complex<double>> data_values;
-    for (int r = 0; r < rows; ++r) {
-        for (int c = 0; c < cols; ++c) {
-            std::complex<double> val = matrix.coeff(r, c);
+    row_indices.reserve(matrix.nonZeros());
+    col_indices.reserve(matrix.nonZeros());
+    data_values.reserve(matrix.nonZeros());
+    for (int r = 0; r < matrix.outerSize(); ++r) {
+        for (SparseMatrix::InnerIterator it(matrix, r); it; ++it) {
+            std::complex<double> val = it.value();
             if (std::abs(val) > 0.0 || !std::isfinite(val.real()) || !std::isfinite(val.imag())) {
-                row_indices.push_back(r);
-                col_indices.push_back(c);
+                row_indices.push_back(int(it.row()));
+                col_indices.push_back(int(it.col()));
                 data_values.push_back(val);
             }
         }

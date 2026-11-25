@@ -17,8 +17,11 @@ import math
 from copy import copy
 from typing import TYPE_CHECKING, Callable, Iterator, Mapping, overload
 
+import numpy as np
 from loguru import logger
 from numpy import linspace
+from scipy.optimize import minimize_scalar
+from scipy.sparse.linalg import eigsh
 
 from qilisdk.analog.hamiltonian import Hamiltonian, _reject_digital_object
 from qilisdk.core.expression import Cos, Expression
@@ -39,6 +42,9 @@ CoeffDict = dict[str, TimeDict]
 InterpDict = dict[str, "Interpolator"]
 
 _DEFAULT_DT = 0.1
+
+# Above this many qubits the minimum gap search switches from dense diagonalisation to sparse Lanczos.
+_MAX_QUBITS_FOR_DENSE_GAP = 8
 
 # Name used for this class in the error messages raised for digital objects.
 _REJECT_TARGET = "a Schedule"
@@ -770,6 +776,73 @@ class Schedule(Parameterizable):
             full_eigenstates.append(list(vecs[:levels]))
 
         return full_eigenvalues, full_eigenstates
+
+    def minimum_gap(self, samples: int = 21, tol: float = 1e-6) -> tuple[float, float]:
+        """
+        Find the minimum spectral gap between the ground and first excited state over the schedule.
+
+        Only the two lowest eigenvalues of the full Hamiltonian are computed at each probed time, using a dense
+        solver for small registers and a sparse Lanczos solver (warm-started from the previous ground state) for
+        larger ones. The gap is first evaluated on ``samples`` evenly spaced times over ``[0, T]``, then the time
+        interval around the smallest sample is refined with a bounded Brent search, so the full :attr:`tlist`
+        never has to be diagonalised. Since the gap need not be unimodal, a narrow avoided crossing that falls
+        entirely between two coarse samples can be missed; increase ``samples`` to guard against this.
+
+        A degenerate ground state gives a gap of zero at that time. If this happens at the start or end of the
+        schedule (e.g. a problem Hamiltonian with a symmetric ground state, such as an Ising model without linear
+        terms) the returned minimum is that trivial zero rather than the avoided crossing that limits the anneal,
+        and a warning is logged.
+
+        Args:
+            samples (int): Number of evenly spaced times over ``[0, T]`` used for the coarse scan. Must be at least 2.
+            tol (float): Absolute tolerance on the time of the minimum, relative to :attr:`T`.
+
+        Returns:
+            tuple[float, float]: The minimum gap and the time at which it occurs.
+
+        Raises:
+            ValueError: If ``samples`` is lower than 2 or the schedule acts on no qubits.
+        """
+        if samples < 2:  # ruff: ignore[magic-value-comparison]
+            raise ValueError("At least two samples are needed to search for the minimum gap.")
+        nqubits = self.nqubits
+        if nqubits == 0:
+            raise ValueError("Can't compute the gap of a schedule that acts on no qubits.")
+
+        matrices = {label: ham.to_qtensor(total_nqubits=nqubits).data for label, ham in self._hamiltonians.items()}
+        use_dense = nqubits <= _MAX_QUBITS_FOR_DENSE_GAP
+        ground_guess: list[np.ndarray | None] = [None]
+
+        def gap(t: float) -> float:
+            matrix = sum(self._coefficients[label][float(t)] * mat for label, mat in matrices.items())
+            if use_dense:
+                vals = np.linalg.eigvalsh(matrix.toarray())
+            else:
+                vals, vecs = eigsh(matrix, k=2, which="SA", v0=ground_guess[0])
+                order = np.argsort(vals)
+                vals = vals[order]
+                ground_guess[0] = vecs[:, order[0]]
+            return float(vals[1] - vals[0])
+
+        T = self.T
+        times = linspace(0, T, samples, dtype=float)
+        gaps = [gap(t) for t in times]
+        best = int(np.argmin(gaps))
+        best_gap, best_time = gaps[best], float(times[best])
+
+        lower, upper = float(times[max(best - 1, 0)]), float(times[min(best + 1, samples - 1)])
+        refined = minimize_scalar(gap, bounds=(lower, upper), method="bounded", options={"xatol": tol * T})
+        if refined.fun < best_gap:
+            best_gap, best_time = float(refined.fun), float(refined.x)
+
+        if best_gap < get_settings().atol and best_time in {0.0, float(T)}:
+            logger.warning(
+                "[Schedule] The ground state is degenerate at t = {}, so the minimum gap is zero there. This hides "
+                "any avoided crossing during the anneal.",
+                best_time,
+            )
+
+        return best_gap, best_time
 
     def __repr__(self) -> str:
         lines = [
