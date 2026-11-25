@@ -35,6 +35,8 @@ Alternatively, for the models that come up most often there are named constructo
      - :math:`\sum_{i<j} J Z_i Z_j + \sum_i h_x X_i + \sum_i h_z Z_i`
    * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.heisenberg`
      - :math:`\sum_{i<j} \left( J_x X_i X_j + J_y Y_i Y_j + J_z Z_i Z_j \right) + \sum_i h_z Z_i`
+   * - :meth:`~qilisdk.analog.hamiltonian.Hamiltonian.fermi_hubbard`
+     - :math:`-t \sum_{i, \sigma} \left( c^\dagger_{i\sigma} c_{i+1,\sigma} + \text{h.c.} \right) + U \sum_i n_{i\uparrow} n_{i\downarrow} - \mu \sum_{i, \sigma} n_{i\sigma}`, Jordan-Wigner mapped onto ``2 * nsites`` qubits
 
 .. code-block:: python
 
@@ -106,6 +108,7 @@ List of Operations
 - Ising grid: :meth:`Hamiltonian.ising_grid(rows, columns)<qilisdk.analog.hamiltonian.Hamiltonian.ising_grid>`
 - transverse-field Ising: :meth:`Hamiltonian.transverse_field_ising(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.transverse_field_ising>`
 - Heisenberg: :meth:`Hamiltonian.heisenberg(nqubits)<qilisdk.analog.hamiltonian.Hamiltonian.heisenberg>`
+- Fermi-Hubbard: :meth:`Hamiltonian.fermi_hubbard(nsites)<qilisdk.analog.hamiltonian.Hamiltonian.fermi_hubbard>`
 
 Example: Ising Hamiltonian
 ============================
