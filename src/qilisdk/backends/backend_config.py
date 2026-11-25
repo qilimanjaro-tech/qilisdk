@@ -385,8 +385,8 @@ class DigitalMethod(BaseSimulatorConfig):
 
     Args:
         max_cache_size (int): Maximum number of cached gate
-            representations used by the digital simulator. Defaults to
-            ``1000``.
+            representations used by the digital simulator, and separately of
+            cached noise operators. Defaults to ``1000``.
         normalize_after_each_gate (bool): Whether to normalize the
             statevector after each gate application to mitigate numerical
             errors at the cost of increased runtime. Defaults to ``True``.
@@ -419,7 +419,10 @@ class DigitalMethod(BaseSimulatorConfig):
         default=1000,
         ge=0,
         le=INT32_MAX,
-        description="Maximum number of cached gate representations used by the digital simulator.",
+        description=(
+            "Maximum number of cached gate representations used by the digital simulator, and separately of cached "
+            "noise operators."
+        ),
     )
     normalize_after_each_gate: bool = Field(
         default=False,
@@ -490,8 +493,8 @@ class DigitalMethod(BaseSimulatorConfig):
         """Build the standard statevector simulation configuration.
 
         Args:
-            max_cache_size (int): Maximum number of cached gate representations used by the digital simulator.
-                Defaults to ``1000``.
+            max_cache_size (int): Maximum number of cached gate representations used by the digital simulator, and
+                separately of cached noise operators. Defaults to ``1000``.
             normalize_after_each_gate (bool): Whether to normalize the statevector after each gate application to
                 mitigate numerical errors at the cost of increased runtime. Defaults to ``False``.
             matrix_free (bool): Whether to use the matrix-free implementation for statevector simulation.

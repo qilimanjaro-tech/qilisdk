@@ -318,14 +318,14 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
 
         // Apply any relevant Kraus operators
         if (has_noise) {
-            for (const auto& operator_set : noise_model_cpp.get_relevant_kraus_operators(gate.get_name(), static_cast<int>(gate.get_control_qubits().size()), gate.get_qubits(), n_qubits)) {
+            for (const auto* operator_set : noise_model_cpp.get_relevant_kraus_operators(gate.get_name(), static_cast<int>(gate.get_control_qubits().size()), gate.get_qubits(), n_qubits, config.get_max_cache_size())) {
                 if (state_is_trajectories) {
-                    unraveling.apply_kraus(state, operator_set);
+                    unraveling.apply_kraus(state, *operator_set);
                     continue;
                 }
                 DenseMatrix new_state(state.rows(), state.cols());
                 new_state.setZero();
-                for (const auto& K : operator_set) {
+                for (const auto& K : *operator_set) {
                     new_state += K * state * K.adjoint();
                 }
                 state = new_state;
@@ -520,14 +520,14 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseMod
 
         // Apply noise if we have it
         if (!noise_model_cpp.is_empty()) {
-            for (const auto& operator_set : noise_model_cpp.get_relevant_kraus_operators(gate.get_name(), static_cast<int>(gate.get_control_qubits().size()), gate.get_qubits(), n_qubits)) {
+            for (const auto* operator_set : noise_model_cpp.get_relevant_kraus_operators(gate.get_name(), static_cast<int>(gate.get_control_qubits().size()), gate.get_qubits(), n_qubits, config.get_max_cache_size())) {
                 if (state_is_trajectories) {
-                    unraveling.apply_kraus(state, operator_set);
+                    unraveling.apply_kraus(state, *operator_set);
                     continue;
                 }
                 DenseMatrix new_state(state.rows(), state.cols());
                 new_state.setZero();
-                for (const auto& K : operator_set) {
+                for (const auto& K : *operator_set) {
                     new_state += K * state * K.adjoint();
                 }
                 state = new_state;
