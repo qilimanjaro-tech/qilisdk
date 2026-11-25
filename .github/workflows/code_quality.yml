@@ -34,10 +34,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d  # v10.4.0
         with:
-          enable-cache: true
-          cache-dependency-glob: |
-            **/pyproject.toml
-            **/uv.lock
+          enable-cache: false
           python-version: "3.13"
 
       # Ruff takes its target version from pyproject.toml and never imports the
@@ -89,15 +86,12 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d  # v10.4.0
         with:
-          enable-cache: true
-          cache-dependency-glob: |
-            **/pyproject.toml
-            **/uv.lock
+          enable-cache: false
           python-version: "3.13"
 
       - name: Install the project
         run: |
-          uv sync --frozen --group dev --group backends --extra all-cu13 \
+          uv sync --locked --no-build --group dev --group backends --extra all-cu13 \
             -Ccmake.build-type=Debug \
             -Ccmake.define.CMAKE_CXX_FLAGS_DEBUG=-O0
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"

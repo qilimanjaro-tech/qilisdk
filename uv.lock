@@ -3258,7 +3258,7 @@ all = [
     { name = "nvidia-cusparse-cu12" },
     { name = "nvidia-nvjitlink-cu12" },
     { name = "openfermion" },
-    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all' or extra == 'extra-7-qilisdk-all-cu12' or extra != 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12') and extra == 'extra-7-qilisdk-cuda13'" },
     { name = "pyqir" },
     { name = "pyscipopt" },
 ]
@@ -3272,7 +3272,7 @@ all-cu12 = [
     { name = "nvidia-cusparse-cu12" },
     { name = "nvidia-nvjitlink-cu12" },
     { name = "openfermion" },
-    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all-cu12' or (extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13') or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all-cu12' or extra == 'extra-7-qilisdk-all' and extra == 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12') and extra == 'extra-7-qilisdk-cuda13'" },
     { name = "pyqir" },
     { name = "pyscipopt" },
 ]
@@ -3286,7 +3286,7 @@ all-cu13 = [
     { name = "nvidia-cusparse" },
     { name = "nvidia-nvjitlink" },
     { name = "openfermion" },
-    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-cuda' and extra == 'extra-7-qilisdk-cuda13') or (extra == 'extra-7-qilisdk-cuda12' and extra == 'extra-7-qilisdk-cuda13')" },
+    { name = "openqasm3", extra = ["parser"], marker = "extra == 'extra-7-qilisdk-all-cu13' or (extra == 'extra-7-qilisdk-cuda' or extra == 'extra-7-qilisdk-cuda12') and extra == 'extra-7-qilisdk-cuda13'" },
     { name = "pyqir" },
     { name = "pyscipopt" },
 ]
@@ -3447,7 +3447,7 @@ docs = [
     { name = "sphinx-design", specifier = ">=0.7.0" },
     { name = "sphinx-intl" },
     { name = "sphinx-mdinclude", specifier = ">=0.6.2" },
-    { name = "sphinx-multiversion", git = "https://github.com/sphinx-contrib/multiversion?branch=main" },
+    { name = "sphinx-multiversion", git = "https://github.com/sphinx-contrib/multiversion?rev=cd4c0db66473f04d7e037188f5f13444574b4b0e" },
     { name = "sphinx-tabs", specifier = ">=3.5.0" },
     { name = "sphinxawesome-theme", specifier = "==6.0.6" },
 ]
@@ -4049,7 +4049,7 @@ wheels = [
 [[package]]
 name = "sphinx-multiversion"
 version = "0.2.5"
-source = { git = "https://github.com/sphinx-contrib/multiversion?branch=main#cd4c0db66473f04d7e037188f5f13444574b4b0e" }
+source = { git = "https://github.com/sphinx-contrib/multiversion?rev=cd4c0db66473f04d7e037188f5f13444574b4b0e#cd4c0db66473f04d7e037188f5f13444574b4b0e" }
 dependencies = [
     { name = "sphinx" },
 ]

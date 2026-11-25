@@ -19,15 +19,13 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d  # v10.4.0
         with:
-          enable-cache: true
-          cache-dependency-glob: |
-            **/pyproject.toml
-            **/uv.lock
+          enable-cache: false
           python-version: "3.13"
 
       - name: Install the requirements
         run: |
-          uv sync --frozen --group docs
+          # sphinx-multiversion is the sole source exception, pinned by rev in pyproject.toml.
+          uv sync --locked --no-build --no-binary-package sphinx-multiversion --group docs
           echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 

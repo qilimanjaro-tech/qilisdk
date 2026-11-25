@@ -47,10 +47,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d  # v10.4.0
         with:
-          enable-cache: true
-          cache-dependency-glob: |
-            **/pyproject.toml
-            **/uv.lock
+          enable-cache: false
           python-version: ${{ matrix.python-version }}
 
       # No extras, so this is also the only place we check that the core install
@@ -58,7 +55,7 @@ jobs:
       - name: Install qilisdk
         shell: bash
         run: |
-          uv sync --frozen --reinstall
+          uv sync --locked --no-build --reinstall
           if [ -d .venv/bin ]; then
             VENV_BIN="$PWD/.venv/bin"
           else
