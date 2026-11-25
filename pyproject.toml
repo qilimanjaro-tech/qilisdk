@@ -146,6 +146,11 @@ docs = [
     "sphinx-tabs>=3.5.0",
 ]
 
+publish = [
+    "twine>=7.0.0",
+    "uv>=0.13.7",
+]
+
 [tool.uv]
 # openfermion 1.7.1 caps requests~=2.32.2; override until upstream loosens.
 override-dependencies = ["nbconvert >= 7.17.0", "requests>=2.33.0"]
