@@ -14,7 +14,7 @@
 
 from solvers_module import solve_with_simulated_annealing  # ty:ignore[import-not-found]
 
-from qilisdk.core import Model
+from qilisdk.core import QUBO, Model
 
 from .base_solver import ClassicalSolver, ClassicalSolverResult
 
@@ -22,7 +22,7 @@ from .base_solver import ClassicalSolver, ClassicalSolverResult
 class SimulatedAnnealingSolver(ClassicalSolver):
     """
     Classical solver that uses simulated annealing, implemented in C++.
-    This solves a :class:`~qilisdk.core.model.QUBO` model and rejects others.
+    This solves a :class:`~qilisdk.core.model.QUBO` model, converting any other model with ``to_qubo()`` first.
 
     Example:
         .. code-block:: python
@@ -31,7 +31,7 @@ class SimulatedAnnealingSolver(ClassicalSolver):
             from qilisdk.utils.classical_solvers import SimulatedAnnealingSolver
 
             model = Model.knapsack(values=[5, 4], weights=[3, 2], max_weight=3)
-            result = SimulatedAnnealingSolver(num_reads=100).solve(model.to_qubo())
+            result = SimulatedAnnealingSolver(num_reads=100).solve(model)
     """
 
     def __init__(
@@ -64,19 +64,21 @@ class SimulatedAnnealingSolver(ClassicalSolver):
         self.num_threads = num_threads
 
     def solve(self, model: Model) -> ClassicalSolverResult:
-        """Solve the given QUBO by annealing it in C++.
+        """Solve the given model by annealing its QUBO form in C++.
 
         Args:
-            model: The ``QUBO`` instance to solve. Typed as ``Model`` to keep the
-                :class:`ClassicalSolver` interface, but anything other than a ``QUBO`` is rejected, so
-                a general ``Model`` must be converted with ``to_qubo()`` first.
+            model: The model to solve. A model that is not already a ``QUBO`` is converted with
+                ``to_qubo()`` using its default settings, so call ``to_qubo()`` yourself to control
+                the penalization or Lagrange multipliers.
 
         Returns:
             ClassicalSolverResult: the results of the optimization, including the objective value and best solution.
 
         Raises:
-            ValueError: if the given model is not a QUBO, or if the annealing settings are invalid.
+            ValueError: if the given model cannot be converted to a QUBO, or if the annealing settings are invalid.
         """
+        if not isinstance(model, QUBO):
+            model = model.to_qubo()
         beta_min, beta_max = self.beta_range if self.beta_range is not None else (0.0, 0.0)
         results, sample = solve_with_simulated_annealing(
             qubo=model,
