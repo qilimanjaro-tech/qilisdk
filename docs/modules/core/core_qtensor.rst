@@ -63,6 +63,7 @@ There are also several constructors for common quantum objects:
  - :func:`~qilisdk.core.qtensor.bra` for computational basis bras
  - :func:`~qilisdk.core.qtensor.basis_state` for N-dimensional basis states with a single 1 at the specified index
  - :func:`~qilisdk.core.qtensor.identity` for identity operators of specified dimension
+ - :meth:`~qilisdk.core.qtensor.QTensor.diag` for diagonal operators with the given diagonal entries
  - :func:`~qilisdk.core.qtensor.zero` for generating statevectors in the all-zero state.
  - :func:`~qilisdk.core.qtensor.one` for generating statevectors in the all-one state.
  - :func:`~qilisdk.core.qtensor.ghz` for generating GHZ states of specified number of qubits
