@@ -28,6 +28,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from qilisdk.algorithms import QuantumReservoir, ReservoirLayer
+from qilisdk.algorithms.variational_program import VariationalProgram
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliX, PauliZ
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Y as pauli_y
@@ -43,12 +45,11 @@ from qilisdk.cost_functions.model_cost_function import ModelCostFunction
 from qilisdk.digital import RX, RY, RZ, SWAP, U1, U2, U3, Circuit, H, I, M, S, T, X, Y, Z
 from qilisdk.digital.ansatz import HardwareEfficientAnsatz, TrotterizedSchedule
 from qilisdk.digital.gates import CNOT, Controlled
-from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult, QuantumReservoir, ReservoirLayer
-from qilisdk.functionals.variational_program import VariationalProgram
+from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
 from qilisdk.noise import LindbladGenerator, NoiseModel
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
-from qilisdk.readout import Readout, StateTomographyReadout
+from qilisdk.readout import Readout
 
 pytest.importorskip(
     "cudaq",
@@ -521,9 +522,7 @@ def test_time_dependent_hamiltonian_density_mat(backend):
 def test_execute_quantum_reservoir_qutip():
     backend = QutipBackend()
     functional = _build_quantum_reservoir_functional()
-    readout = [StateTomographyReadout()]
-
-    result = backend._execute_quantum_reservoir(functional, readout)
+    result = backend.execute(functional, Readout().with_state_tomography())
 
     assert result.get_state() is not None
     assert len(result) >= 2

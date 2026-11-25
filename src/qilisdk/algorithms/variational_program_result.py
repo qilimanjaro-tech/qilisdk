@@ -1,0 +1,78 @@
+# Copyright 2025 Qilimanjaro Quantum Tech
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+from pprint import pformat
+from typing import Any, Generic, TypeVar
+
+from loguru import logger
+
+from qilisdk.core.result import Result
+from qilisdk.functionals.functional_result import FunctionalResult
+from qilisdk.optimizers.optimizer_result import OptimizerIntermediateResult, OptimizerResult
+from qilisdk.yaml import yaml
+
+TFunctionalResult_co = TypeVar("TFunctionalResult_co", bound=FunctionalResult[Any, Any, Any], covariant=True)
+
+
+@yaml.register_class
+class VariationalProgramResult(Result, Generic[TFunctionalResult_co]):
+    """Aggregate the optimizer summary and best functional result from a variational run.
+
+    The type parameter is the concrete :class:`~qilisdk.functionals.FunctionalResult` produced by evaluating the inner
+    functional at the optimal parameters, so ``result.optimal_execution_results`` keeps the readout typing of the
+    :class:`~qilisdk.readout.Readout` used at execution time.
+    """
+
+    def __init__(self, optimizer_result: OptimizerResult, result: TFunctionalResult_co) -> None:
+        """
+        Args:
+            optimizer_result (OptimizerResult): Summary produced by the optimiser.
+            result (TFunctionalResult_co): Functional result evaluated at the final parameters.
+        """
+        super().__init__()
+        self._optimizer_result = optimizer_result
+        self._result = result
+        logger.debug("[VariationalProgramResult] Created VariationalProgramResult")
+
+    @property
+    def optimal_cost(self) -> float:
+        """Best cost value reported by the optimiser."""
+        return self._optimizer_result.optimal_cost
+
+    @property
+    def optimal_execution_results(self) -> TFunctionalResult_co:
+        """Functional result evaluated at the optimal parameters."""
+        return self._result
+
+    @property
+    def optimal_parameters(self) -> list[float]:
+        """Optimised parameter values found by the optimiser."""
+        return self._optimizer_result.optimal_parameters
+
+    @property
+    def intermediate_results(self) -> list[OptimizerIntermediateResult]:
+        """Sequence of intermediate optimiser snapshots recorded during the run."""
+        return self._optimizer_result.intermediate_results
+
+    def __repr__(self) -> str:
+        class_name = self.__class__.__name__
+        execution_time = f"  Execution Time={self.execution_time:.6g} s,\n" if self.execution_time is not None else ""
+        return (
+            f"{class_name}(\n"
+            f"{execution_time}"
+            f"  Optimal Cost={self.optimal_cost},\n"
+            f"  Optimal Parameters={pformat(self.optimal_parameters)},\n"
+            f"  Intermediate Results={pformat(self.intermediate_results)},\n"
+            f"  Optimal Results={pformat(self.optimal_execution_results)}\n"
+            ")"
+        )

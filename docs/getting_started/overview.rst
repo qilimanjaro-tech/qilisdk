@@ -20,6 +20,8 @@ user wants samples, expectations values, or even a full statevector.
 Then, the user defines the job using one of our Functionals:
  - DigitalPropagation for circuit simulation
  - AnalogEvolution for analog simulation
+
+or one of our Algorithms, which are built on top of the Functionals:
  - QuantumReservoirs for quantum reservoir computing
  - VariationalProgram, which can be combined with any of the above to create a variational workflow
 

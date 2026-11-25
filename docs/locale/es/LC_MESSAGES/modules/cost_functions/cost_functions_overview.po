@@ -47,10 +47,10 @@ msgstr "Las funciones de coste se utilizan para:"
 #: ../../modules/cost_functions/cost_functions_overview.rst:11
 msgid ""
 "score intermediate iterations inside a "
-":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+":class:`~qilisdk.algorithms.variational_program.VariationalProgram`"
 msgstr ""
 "puntuar iteraciones intermedias dentro de un "
-":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+":class:`~qilisdk.algorithms.variational_program.VariationalProgram`"
 
 #: ../../modules/cost_functions/cost_functions_overview.rst:12
 msgid ""

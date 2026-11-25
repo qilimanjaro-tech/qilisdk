@@ -110,8 +110,8 @@ msgstr ""
 ":class:`~qilisdk.backends.backend_config.AnalogMethod`."
 
 #: ../../modules/backends/backends_qilisim.rst:66
-msgid ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
-msgstr ":class:`~qilisdk.functionals.quantum_reservoirs.QuantumReservoir`"
+msgid ":class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`"
+msgstr ":class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`"
 
 #: ../../modules/backends/backends_qilisim.rst:68
 msgid ""
@@ -122,8 +122,8 @@ msgstr ""
 " reservori."
 
 #: ../../modules/backends/backends_qilisim.rst:69
-msgid ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
-msgstr ":class:`~qilisdk.functionals.variational_program.VariationalProgram`"
+msgid ":class:`~qilisdk.algorithms.variational_program.VariationalProgram`"
+msgstr ":class:`~qilisdk.algorithms.variational_program.VariationalProgram`"
 
 #: ../../modules/backends/backends_qilisim.rst:71
 msgid "Reuses the primitive functional handlers above for each optimization step."

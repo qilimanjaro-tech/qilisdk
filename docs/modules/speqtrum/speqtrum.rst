@@ -167,7 +167,7 @@ must supply a ``device`` argument with the device code obtained from :meth:`~qil
 Variational Programs
 --------------------
 
-Hybrid optimization is handled through the same :class:`~qilisdk.functionals.variational_program.VariationalProgram`
+Hybrid optimization is handled through the same :class:`~qilisdk.algorithms.variational_program.VariationalProgram`
 functional used with local backends. Serialize the fully-configured variational program (ansatz, optimizer, cost
 function) and submit it as any other functional.
 
@@ -180,7 +180,7 @@ function) and submit it as any other functional.
     from qilisdk.cost_functions import ModelCostFunction
     from qilisdk.digital import CNOT, HardwareEfficientAnsatz, U2
     from qilisdk.functionals import DigitalPropagation
-    from qilisdk.functionals.variational_program import VariationalProgram
+    from qilisdk.algorithms.variational_program import VariationalProgram
     from qilisdk.readout import Readout
     from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
     from qilisdk.speqtrum import SpeQtrum

@@ -16,8 +16,10 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+from loguru import logger
 from qutip import Qobj
 
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliX, PauliZ
 from qilisdk.analog.schedule import Schedule
 from qilisdk.backends.qutip_backend import QutipBackend
@@ -26,7 +28,6 @@ from qilisdk.core.interpolator import Interpolation
 from qilisdk.core.qtensor import InitialState, QTensor, tensor_prod
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
 from qilisdk.noise import (
     AmplitudeDamping,
     Dephasing,
@@ -35,7 +36,7 @@ from qilisdk.noise import (
     LindbladGenerator,
     NoiseModel,
 )
-from qilisdk.readout import Readout, SamplingReadout
+from qilisdk.readout import Readout
 
 pytest.importorskip("qutip", reason="QuTiP backend tests require the 'qutip' optional dependency", exc_type=ImportError)
 pytest.importorskip(
@@ -47,6 +48,7 @@ pytest.importorskip(
 
 from qutip_qip.circuit import CircuitSimulator
 
+from qilisdk.algorithms.variational_program import VariationalProgram
 from qilisdk.backends.qutip_backend import QutipI
 from qilisdk.core import bra
 from qilisdk.core.model import Constraint, Model, Objective
@@ -57,7 +59,6 @@ from qilisdk.digital.ansatz import HardwareEfficientAnsatz
 from qilisdk.digital.exceptions import UnsupportedGateError
 from qilisdk.digital.gates import Adjoint, BasicGate, Controlled
 from qilisdk.functionals.digital_propagation import DigitalPropagation
-from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 
 
@@ -434,24 +435,39 @@ def test_time_evolution_bad_observable():
         backend.execute(func, Readout().with_expectation(observables=[ob]))
 
 
-def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(monkeypatch):
+def test_execute_quantum_reservoir_raises_if_time_evolution_returns_invalid_state(monkeypatch):
     backend = QutipBackend()
     functional = _build_quantum_reservoir_functional()
+    invalid_state = QTensor(np.diag([1.0, -5.0]))
 
     def _mock_execute_analog_evolution(self, f, readout):
-        # Return a FunctionalResult with a StateTomographyReadoutResult containing final_state=None
-        # This simulates the case where the evolution returns no valid state
-        raise ValueError("Reservoir Runtime Error: state repair failed before expectation value computation.")
+        return FunctionalResult(readout_results=self.readout_state(invalid_state, readout))
 
     monkeypatch.setattr(
         "qilisdk.backends.qutip_backend.QutipBackend._execute_analog_evolution",
         _mock_execute_analog_evolution,
     )
 
-    with pytest.raises(ValueError, match="Reservoir Runtime Error"):
-        backend._execute_quantum_reservoir(
-            functional, readout=[SamplingReadout(nshots=10)]
-        )  # internal method takes list
+    readout = Readout().with_sampling(nshots=10)
+    with pytest.raises(ValueError, match="Reservoir Runtime Error: state repair failed"):
+        backend.execute(functional, readout)
+
+
+def test_execute_quantum_reservoir_warns_about_noise_once_per_backend():
+    nm = NoiseModel()
+    nm.add(AmplitudeDamping(t1=10.0))
+    backend = QutipBackend(noise_model=nm)
+    functional = _build_quantum_reservoir_functional()
+    readout = Readout().with_expectation(observables=[PauliZ(0).to_hamiltonian()])
+    messages: list[str] = []
+    sink_id = logger.add(lambda message: messages.append(message.record["message"]), level="WARNING")
+    try:
+        backend.execute(functional, readout)
+        backend.execute(functional, readout)
+    finally:
+        logger.remove(sink_id)
+
+    assert sum("noise model is only applied to the Schedule steps" in m for m in messages) == 1
 
 
 def test_get_qutip_observable_qtensor(monkeypatch):

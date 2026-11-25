@@ -19,13 +19,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../modules/functionals/functionals_variational.rst:2
+#: ../../modules/algorithms/algorithms_variational.rst:2
 msgid "Variational Programs"
 msgstr "Programas variacionales"
 
-#: ../../modules/functionals/functionals_variational.rst:4
+#: ../../modules/algorithms/algorithms_variational.rst:4
 msgid ""
-"The :class:`~qilisdk.functionals.variational_program.VariationalProgram` "
+"The :class:`~qilisdk.algorithms.variational_program.VariationalProgram` "
 "functional gathers the pieces required for a variational quantum "
 "algorithm. It accepts a parameterized primitive functional, an optimizer,"
 " and a cost function. When you call "
@@ -33,7 +33,7 @@ msgid ""
 "functional repeatedly with updated parameters, feeds the resulting "
 ":class:`~qilisdk.functionals.functional_result.FunctionalResult` into the"
 " supplied cost function, and finally returns a "
-":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`."
+":class:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult`."
 " Parameter constraints (inequalities/equalities on parameters) are "
 "attached at this level via the ``parameter_constraints`` argument; this "
 "is the place to enforce relations like ``theta >= phi`` or cross-"
@@ -41,7 +41,7 @@ msgid ""
 "as trainable are optimized during this loop."
 msgstr ""
 "El funcional "
-":class:`~qilisdk.functionals.variational_program.VariationalProgram` "
+":class:`~qilisdk.algorithms.variational_program.VariationalProgram` "
 "reúne los componentes necesarios para un algoritmo cuántico variacional. "
 "Acepta un functional primitivo parametrizado, un optimizador y una "
 "función de coste. Al llamar a "
@@ -49,7 +49,7 @@ msgstr ""
 "repetidamente con parámetros actualizados, alimenta el "
 ":class:`~qilisdk.functionals.functional_result.FunctionalResult` "
 "resultante en la función de coste suministrada y finalmente devuelve un "
-":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`."
+":class:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult`."
 " Las restricciones de parámetros (desigualdades/igualdades sobre "
 "parámetros) se adjuntan en este nivel mediante el argumento "
 "``parameter_constraints``; este es el lugar para imponer relaciones como "
@@ -57,11 +57,11 @@ msgstr ""
 "QiliSDK. Solo los parámetros marcados como entrenables se optimizan "
 "durante este bucle."
 
-#: ../../modules/functionals/functionals_variational.rst:14
+#: ../../modules/algorithms/algorithms_variational.rst:14
 msgid "**Parameters**"
 msgstr "**Parámetros**"
 
-#: ../../modules/functionals/functionals_variational.rst:16
+#: ../../modules/algorithms/algorithms_variational.rst:16
 msgid ""
 "**functional** "
 "(:class:`~qilisdk.functionals.functional.PrimitiveFunctional`): "
@@ -78,7 +78,7 @@ msgstr ""
 ":class:`AnalogEvolution "
 "<qilisdk.functionals.analog_evolution.AnalogEvolution>`)."
 
-#: ../../modules/functionals/functionals_variational.rst:19
+#: ../../modules/algorithms/algorithms_variational.rst:19
 msgid ""
 "**optimizer** (:class:`~qilisdk.optimizers.optimizer.Optimizer`): "
 "Classical optimizer that proposes new parameter values and optionally "
@@ -88,7 +88,7 @@ msgstr ""
 "Optimizador clásico que propone nuevos valores de parámetros y "
 "opcionalmente almacena los iterados intermedios."
 
-#: ../../modules/functionals/functionals_variational.rst:21
+#: ../../modules/algorithms/algorithms_variational.rst:21
 msgid ""
 "**cost_function** "
 "(:class:`~qilisdk.cost_functions.cost_function.CostFunction`): Object "
@@ -101,17 +101,17 @@ msgstr ""
 "frecuentemente construido a partir de un "
 ":class:`~qilisdk.core.model.Model`."
 
-#: ../../modules/functionals/functionals_variational.rst:23
+#: ../../modules/algorithms/algorithms_variational.rst:23
 msgid ""
 "**store_intermediate_results** (bool, optional): When True, the optimizer"
 " keeps the intermediate steps, which are exposed through "
-":attr:`~qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results`."
+":attr:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult.intermediate_results`."
 msgstr ""
 "**store_intermediate_results** (bool, opcional): Cuando es True, el "
 "optimizador conserva los pasos intermedios, que se exponen mediante "
-":attr:`~qilisdk.functionals.variational_program_result.VariationalProgramResult.intermediate_results`."
+":attr:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult.intermediate_results`."
 
-#: ../../modules/functionals/functionals_variational.rst:25
+#: ../../modules/algorithms/algorithms_variational.rst:25
 msgid ""
 "**parameter_constraints** "
 "(list[:class:`~qilisdk.core.comparison.Comparison`], optional): "
@@ -126,39 +126,39 @@ msgstr ""
 "punto de entrada admitido para imponer relaciones entre parámetros en "
 "QiliSDK."
 
-#: ../../modules/functionals/functionals_variational.rst:29
+#: ../../modules/algorithms/algorithms_variational.rst:29
 msgid "**Returns**"
 msgstr "**Retorna**"
 
-#: ../../modules/functionals/functionals_variational.rst:31
+#: ../../modules/algorithms/algorithms_variational.rst:31
 msgid ""
-":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`:"
+":class:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult`:"
 " Retrieve :attr:`optimal_cost "
-"<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_cost>`,"
+"<qilisdk.algorithms.variational_program_result.VariationalProgramResult.optimal_cost>`,"
 " :attr:`optimal_parameters "
-"<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_parameters>`,"
+"<qilisdk.algorithms.variational_program_result.VariationalProgramResult.optimal_parameters>`,"
 " and the final functional output packaged in "
 ":attr:`optimal_execution_results "
-"<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_execution_results>`."
+"<qilisdk.algorithms.variational_program_result.VariationalProgramResult.optimal_execution_results>`."
 msgstr ""
-":class:`~qilisdk.functionals.variational_program_result.VariationalProgramResult`:"
+":class:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult`:"
 " Recupera :attr:`optimal_cost "
-"<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_cost>`,"
+"<qilisdk.algorithms.variational_program_result.VariationalProgramResult.optimal_cost>`,"
 " :attr:`optimal_parameters "
-"<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_parameters>`,"
+"<qilisdk.algorithms.variational_program_result.VariationalProgramResult.optimal_parameters>`,"
 " y la salida final del functional empaquetada en "
 ":attr:`optimal_execution_results "
-"<qilisdk.functionals.variational_program_result.VariationalProgramResult.optimal_execution_results>`."
+"<qilisdk.algorithms.variational_program_result.VariationalProgramResult.optimal_execution_results>`."
 
-#: ../../modules/functionals/functionals_variational.rst:37
+#: ../../modules/algorithms/algorithms_variational.rst:37
 msgid "**Usage Example (Using QiliSim Backend)**"
 msgstr "**Ejemplo de uso (con el backend QiliSim)**"
 
-#: ../../modules/functionals/functionals_variational.rst:85
+#: ../../modules/algorithms/algorithms_variational.rst:85
 msgid "**Output**"
 msgstr "**Salida**"
 
-#: ../../modules/functionals/functionals_variational.rst:104
+#: ../../modules/algorithms/algorithms_variational.rst:104
 msgid ""
 "**Usage Example 2 (Using QiliSim Backend)** This example optimizes a "
 "variational schedule under some parameter constraints."

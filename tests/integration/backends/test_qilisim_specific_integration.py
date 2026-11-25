@@ -20,6 +20,7 @@ pytest.importorskip("qilisim_module", reason="QiliSim integration tests require 
 import itertools
 import random
 
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Y as pauli_y
 from qilisdk.analog.hamiltonian import Z as pauli_z
@@ -48,7 +49,6 @@ from qilisdk.digital import (
     Z,
 )
 from qilisdk.functionals import AnalogEvolution, DigitalPropagation, FunctionalResult
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.noise import (
     AmplitudeDamping,
     BitFlip,

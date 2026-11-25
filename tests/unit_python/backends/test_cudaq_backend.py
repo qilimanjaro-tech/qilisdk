@@ -26,6 +26,8 @@ pytest.importorskip(
     exc_type=ImportError,
 )
 
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
+from qilisdk.algorithms.variational_program import VariationalProgram
 from qilisdk.analog import I as pauli_i
 from qilisdk.analog import Schedule
 from qilisdk.analog import X as pauli_x
@@ -52,8 +54,6 @@ from qilisdk.digital.gates import RX, RY, RZ, SWAP, U1, U2, U3, Adjoint, BasicGa
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_propagation import DigitalPropagation
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirLayer
-from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.noise import AmplitudeDamping, BitFlip, Dephasing, LindbladGenerator, NoiseModel
 from qilisdk.noise.offset_perturbation import OffsetPerturbation
 from qilisdk.optimizers.optimizer_result import OptimizerResult
@@ -819,21 +819,22 @@ def test_get_cuda_hamiltonian_raises_with_empty_schedule():
         backend._get_cuda_hamiltonian(schedule)
 
 
-def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(monkeypatch):
+def test_execute_quantum_reservoir_raises_if_time_evolution_returns_invalid_state(monkeypatch):
     backend = CudaqBackend()
     functional = _build_quantum_reservoir_functional()
+    invalid_state = QTensor(np.diag([1.0, -5.0]))
 
     def _mock_execute_analog_evolution(self, f, readout):
-        raise ValueError("Reservoir Runtime Error: state repair failed before expectation value computation.")
+        return FunctionalResult(readout_results=self.readout_state(invalid_state, readout))
 
     monkeypatch.setattr(
         "qilisdk.backends.cudaq_backend.CudaqBackend._execute_analog_evolution",
         _mock_execute_analog_evolution,
     )
 
-    read = SamplingReadout(nshots=10)
-    with pytest.raises(ValueError, match="Reservoir Runtime Error"):
-        backend._execute_quantum_reservoir(functional, [read])
+    readout = Readout().with_sampling(nshots=10)
+    with pytest.raises(ValueError, match="Reservoir Runtime Error: state repair failed"):
+        backend.execute(functional, readout)
 
 
 def test_cudaq_to_standard_reorders_statevector():

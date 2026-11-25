@@ -33,13 +33,13 @@ from typing import Any
 import pytest
 from loguru_caplog import loguru_caplog as caplog  # ruff: ignore[unused-import]
 
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir
+from qilisdk.algorithms.variational_program import VariationalProgram
 from qilisdk.core.qtensor import InitialState
 from qilisdk.experiments.experiment_functional import ExperimentFunctional
 from qilisdk.experiments.experiment_result import ExperimentResult
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_propagation import DigitalPropagation
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir
-from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.readout import Readout
 
 pytest.importorskip("httpx", reason="SpeQtrum tests require the 'speqtrum' optional dependency", exc_type=ImportError)
@@ -52,8 +52,8 @@ pytest.importorskip(
 import httpx
 
 import qilisdk.speqtrum.speqtrum as speqtrum
+from qilisdk.algorithms.variational_program_result import VariationalProgramResult
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.functionals.variational_program_result import VariationalProgramResult
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult
 from qilisdk.speqtrum.speqtrum_models import ExecuteResult

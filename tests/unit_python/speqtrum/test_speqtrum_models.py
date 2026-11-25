@@ -25,6 +25,7 @@ from datetime import datetime, timezone
 
 import pytest
 
+from qilisdk.algorithms.variational_program import VariationalProgram
 from qilisdk.analog.hamiltonian import Hamiltonian, PauliZ
 from qilisdk.analog.schedule import Schedule
 from qilisdk.core.qtensor import ket
@@ -33,7 +34,6 @@ from qilisdk.experiments.experiment_functional import ExperimentFunctional
 from qilisdk.experiments.experiment_result import ExperimentResult
 from qilisdk.functionals.analog_evolution import AnalogEvolution
 from qilisdk.functionals.digital_propagation import DigitalPropagation
-from qilisdk.functionals.variational_program import VariationalProgram
 from qilisdk.optimizers.scipy_optimizer import SciPyOptimizer
 from qilisdk.speqtrum.speqtrum_models import (
     ExecuteType,
@@ -53,10 +53,10 @@ pytest.importorskip(
 
 from unittest.mock import MagicMock
 
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
+from qilisdk.algorithms.variational_program_result import VariationalProgramResult
 from qilisdk.digital import RY, Circuit
 from qilisdk.functionals.functional_result import FunctionalResult
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
-from qilisdk.functionals.variational_program_result import VariationalProgramResult
 from qilisdk.optimizers.optimizer_result import OptimizerResult
 from qilisdk.readout import Readout
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult, StateTomographyReadoutResult

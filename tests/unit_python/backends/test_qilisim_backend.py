@@ -20,6 +20,7 @@ import pytest
 from pydantic import ValidationError
 
 import qilisdk
+from qilisdk.algorithms import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.analog import Schedule
 from qilisdk.analog.hamiltonian import X as pauli_x
 from qilisdk.analog.hamiltonian import Z as pauli_z
@@ -28,7 +29,7 @@ from qilisdk.backends.qilisim import QiliSim
 from qilisdk.core import QTensor, ket
 from qilisdk.digital import CNOT, RX, RY, Circuit, H, M, S, X
 from qilisdk.digital.gates import Adjoint, Controlled, Exponential
-from qilisdk.functionals import AnalogEvolution, DigitalPropagation, QuantumReservoir, ReservoirInput, ReservoirLayer
+from qilisdk.functionals import AnalogEvolution, DigitalPropagation
 from qilisdk.functionals.functional_result import FunctionalResult
 from qilisdk.noise import Dephasing, LindbladGenerator, NoiseModel
 from qilisdk.readout import Readout

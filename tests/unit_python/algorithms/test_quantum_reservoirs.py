@@ -16,11 +16,11 @@ from copy import copy
 import numpy as np
 import pytest
 
+from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.analog import Schedule, Z
 from qilisdk.core import Parameter, QTensor, ket
 from qilisdk.digital import CNOT, RX, RY, Circuit, M
 from qilisdk.functionals import FunctionalResult
-from qilisdk.functionals.quantum_reservoirs import QuantumReservoir, ReservoirInput, ReservoirLayer
 from qilisdk.readout.readout_result import ReadoutCompositeResults, SamplingReadoutResult
 from qilisdk.settings import get_settings
 

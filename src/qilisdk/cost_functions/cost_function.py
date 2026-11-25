@@ -27,7 +27,7 @@ class CostFunction(ABC):
     Subclasses must implement :meth:`compute_cost` to define how a
     ``FunctionalResult`` is reduced to a single numeric value. This value is
     typically consumed by an optimiser inside a
-    :class:`~qilisdk.functionals.variational_program.VariationalProgram`.
+    :class:`~qilisdk.algorithms.variational_program.VariationalProgram`.
     """
 
     @abstractmethod
