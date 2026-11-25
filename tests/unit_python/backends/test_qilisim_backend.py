@@ -44,7 +44,7 @@ def test_qilisim_init():
     assert config["monte_carlo"] is False
     assert config["num_monte_carlo_trajectories"] == 100
     assert config["max_cache_size"] == 1000
-    assert config["num_threads"] >= 1
+    assert config["num_threads"] == 0
     assert isinstance(config["seed"], int)
     assert config["atol"] > 0
 
@@ -290,6 +290,19 @@ def test_qilisim_time_evolution_dummy(monkeypatch):
     func = AnalogEvolution(schedule=schedule, initial_state=initial_state)
     backend = QiliSim()
     assert backend.execute(func, Readout().with_expectation(observables=[pauli_z(0)])) == "mocked_time_evolution_result"
+
+
+@pytest.mark.parametrize(
+    ("num_threads", "expected_num_threads", "expected_config_num_threads"),
+    [(None, None, 0), (0, 8, 8), (3, 3, 3)],
+)
+def test_execution_config_num_threads(monkeypatch, num_threads, expected_num_threads, expected_config_num_threads):
+    # Mock the core count so the resolved values don't depend on the runner
+    monkeypatch.setattr(qilisdk.backends.backend_config.psutil, "cpu_count", lambda logical: 8)
+    execution_config = ExecutionConfig(num_threads=num_threads)
+    config = execution_config.get_config()
+    assert execution_config.num_threads == expected_num_threads
+    assert config["num_threads"] == expected_config_num_threads
 
 
 @pytest.mark.parametrize("gate", [Adjoint(Controlled(2, basic_gate=S(0))), Exponential(CNOT(2, 0))])

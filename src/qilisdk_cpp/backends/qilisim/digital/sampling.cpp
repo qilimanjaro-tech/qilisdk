@@ -33,6 +33,9 @@
 
 // GCOV_EXCL_BR_START
 
+// Below this many state elements (a 12-qubit statevector) a circuit is slowed down by the threading overhead
+constexpr long min_parallel_state_size = 1L << 12;
+
 #pragma GCC visibility push(default)
 
 DenseMatrix collapse_state(const DenseMatrix& state, const std::vector<bool>& qubits_measured) {
@@ -203,6 +206,13 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
         *output_is_trajectories = false;
     }
 
+    // Small states run on a single thread, unless they are trajectories which are run in parallel
+    int num_threads = state_is_trajectories ? config.get_num_threads() : config.get_num_threads_for_state(state.size(), min_parallel_state_size);
+#if defined(_OPENMP)
+    omp_set_num_threads(num_threads);
+    Eigen::setNbThreads(num_threads);
+#endif
+
     // Combine single-qubit gates for speed if not using noise models
     std::vector<Gate> optimized_gates = gates;
     if (!has_noise && config.get_combine_single_qubit_gates()) {
@@ -227,7 +237,7 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
     std::vector<std::pair<std::string, SparseMatrix>> precomputed_gates(initial_cache_size);
 #if defined(_OPENMP)
     Eigen::setNbThreads(1);
-    omp_set_num_threads(config.get_num_threads());
+    omp_set_num_threads(num_threads);
 #pragma omp parallel for
 #endif
     for (int i = 0; i < initial_cache_size; ++i) {
@@ -237,8 +247,8 @@ void sampling(const std::vector<Gate>& gates, int n_qubits, NoiseModelCpp& noise
         precomputed_gates[i] = std::make_pair(gate_id, gate_matrix);
     }
 #if defined(_OPENMP)
-    Eigen::setNbThreads(config.get_num_threads());
-    omp_set_num_threads(config.get_num_threads());
+    Eigen::setNbThreads(num_threads);
+    omp_set_num_threads(num_threads);
 #endif
 
     // Convert pre-cached gates to a map for easier access (in serial)
@@ -442,9 +452,20 @@ void sampling_matrix_free(const std::vector<Gate>& gates, int n_qubits, NoiseMod
         *output_is_trajectories = false;
     }
 
+    // Small states run on a single thread, unless they are trajectories which are run in parallel
+    int num_threads = state_is_trajectories ? config.get_num_threads() : config.get_num_threads_for_state(state.size(), min_parallel_state_size);
+#if defined(_OPENMP)
+    omp_set_num_threads(num_threads);
+    Eigen::setNbThreads(num_threads);
+#endif
+
     // Fuse gates for speed if not using noise models, either in groups of single-qubit gates or multi-qubit gates (up to a limit)
     const int min_threads_for_fusion = 4;
-    bool use_fusion = !has_noise && config.get_fuse_gates() && (is_statevector || monte_carlo) && config.get_num_threads() >= min_threads_for_fusion;
+    bool can_fuse = !has_noise && config.get_fuse_gates() && (is_statevector || monte_carlo);
+    bool use_fusion = can_fuse && num_threads >= min_threads_for_fusion;
+    if (can_fuse && !use_fusion) {
+        qilisdk::log_debug("[Sampling, C++] Not fusing gates, since only " + std::to_string(num_threads) + " threads are used and fusion needs at least " + std::to_string(min_threads_for_fusion));
+    }
     std::vector<Gate> optimized_gates = gates;
     if (use_fusion) {
         // A configured value of <= 0 means auto pick the depth from the qubit count

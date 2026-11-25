@@ -1,0 +1,83 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-04 14:00+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../getting_started/overview.rst:2
+msgid "Overview"
+msgstr "Visión general"
+
+#: ../../getting_started/overview.rst:4
+msgid ""
+"Welcome to **QiliSDK**, a unified Python framework for developing and "
+"running a variety of quantum algorithms (digital, analog and hybrid) "
+"across a variety of backends (CPU, GPU, and QPU)."
+msgstr "Bienvenido a **QiliSDK**, un framework unificado de Python para desarrollar y ejecutar una variedad de algoritmos cuánticos (digitales, analógicos e híbridos) en una variedad de backends (CPU, GPU y QPU)."
+
+#: ../../getting_started/overview.rst:8
+msgid ""
+"QiliSDK is split into several modules, which is easiest to visualize via "
+"the following diagram:"
+msgstr "QiliSDK se divide en varios módulos, que se visualizan más fácilmente mediante el siguiente diagrama:"
+
+#: ../../getting_started/overview.rst:14
+msgid ""
+"First, users define the things from the top row: their Circuit and Gates "
+"(for digital jobs) or their Hamiltonian and Schedule (for analog jobs). "
+"Both of these can be combined with the things from the Core module, like "
+"QTensors, Variables and Expressions to create Parameterized Circuits and "
+"Hamiltonians. A Readout should also be specified: whether the user wants "
+"samples, expectations values, or even a full statevector."
+msgstr "Primero, los usuarios definen los elementos de la fila superior: su Circuit y sus Gates (para trabajos digitales) o su Hamiltonian y su Schedule (para trabajos analógicos). Ambos pueden combinarse con los elementos del módulo Core, como QTensors, Variables y Expressions, para crear Circuits y Hamiltonians parametrizados. También debe especificarse un Readout: si el usuario quiere muestras, valores esperados o incluso un vector de estado completo."
+
+#: ../../getting_started/overview.rst:20
+msgid "Then, the user defines the job using one of our Functionals:"
+msgstr "Después, el usuario define el trabajo usando uno de nuestros Funcionales:"
+
+#: ../../getting_started/overview.rst:21
+msgid "DigitalPropagation for circuit simulation"
+msgstr "DigitalPropagation para la simulación de circuitos"
+
+#: ../../getting_started/overview.rst:22
+msgid "AnalogEvolution for analog simulation"
+msgstr "AnalogEvolution para la simulación analógica"
+
+#: ../../getting_started/overview.rst:23
+msgid "QuantumReservoirs for quantum reservoir computing"
+msgstr "QuantumReservoirs para la computación con reservorios cuánticos"
+
+#: ../../getting_started/overview.rst:24
+msgid ""
+"VariationalProgram, which can be combined with any of the above to create"
+" a variational workflow"
+msgstr "VariationalProgram, que puede combinarse con cualquiera de los anteriores para crear un flujo de trabajo variacional"
+
+#: ../../getting_started/overview.rst:26
+msgid ""
+"Finally, the user chooses the Backend to run the job on, which can be for"
+" CPU (QiliSim), GPU (QiliSim or CudaqBackend), or QPU (SpeQtrum)."
+msgstr "Por último, el usuario elige el Backend en el que ejecutar el trabajo, que puede ser para CPU (QiliSim), GPU (QiliSim o CudaqBackend) o QPU (SpeQtrum)."
+
+#: ../../getting_started/overview.rst:29
+msgid ""
+"To get started, first check out the :doc:`/getting_started/installation` "
+"guide to install QiliSDK, then the :doc:`/getting_started/quickstart` "
+"guide to jump straight in to some examples."
+msgstr "Para empezar, consulte primero la guía :doc:`/getting_started/installation` para instalar QiliSDK y después la guía :doc:`/getting_started/quickstart` para pasar directamente a algunos ejemplos."
+
