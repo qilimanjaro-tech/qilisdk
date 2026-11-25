@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: QiliSDK \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-16 12:04+0200\n"
+"POT-Creation-Date: 2026-11-25 11:06+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ca\n"
@@ -51,37 +51,21 @@ msgstr ""
 ":doc:`functionals_analog`: Simula l'evolució temporal analog d'un o més "
 "Hamiltonians d'acord amb un esquema dependent del temps."
 
-#: ../../modules/functionals/functionals_overview.rst:9
+#: ../../modules/functionals/functionals_overview.rst:10
 msgid ""
-":doc:`functionals_reservoirs`: Runs a quantum reservoir pipeline (pre-"
-"processing, reservoir dynamics, post-processing) across multiple input "
-"layers."
+"Higher-level procedures built on top of these functionals, such as "
+"variational programs and quantum reservoirs, live in the :doc:`algorithms"
+" </modules/algorithms/algorithms>` module."
 msgstr ""
-":doc:`functionals_reservoirs`: Executa un pipeline de reservoir quàntic "
-"(preprocessament, dinàmica del reservoir, postprocessament) a través de "
-"múltiples capes d'entrada."
+"Els procediments d'alt nivell construïts sobre aquests functionals, com "
+"ara els programes variacionals i els reservoris quàntics, es troben al "
+"mòdul :doc:`algorithms </modules/algorithms/algorithms>`."
 
-#: ../../modules/functionals/functionals_overview.rst:11
-msgid ""
-"Moreover, it provides more complex functionals that are used to execute "
-"more complex algorithms:"
-msgstr ""
-"A més, proporciona funcionals més complexos que s'utilitzen per executar "
-"algorismes més complexos:"
-
-#: ../../modules/functionals/functionals_overview.rst:13
-msgid ""
-":doc:`functionals_variational`: Builds a parameterized program to be "
-"optimized in a hybrid quantum-classical environment."
-msgstr ""
-":doc:`functionals_variational`: Construeix un programa parametritzat per "
-"ser optimitzat en un entorn híbrid quàntic-clàssic."
-
-#: ../../modules/functionals/functionals_overview.rst:16
+#: ../../modules/functionals/functionals_overview.rst:14
 msgid "Architecture Overview"
 msgstr "Visió general de l'arquitectura"
 
-#: ../../modules/functionals/functionals_overview.rst:18
+#: ../../modules/functionals/functionals_overview.rst:16
 msgid ""
 "Every functional conforms to the abstract "
 ":class:`~qilisdk.functionals.functional.Functional` interface. Primitive "
@@ -105,7 +89,7 @@ msgstr ""
 "backends consultar i actualitzar paràmetres simbòlics de manera "
 "consistent abans de l'execució."
 
-#: ../../modules/functionals/functionals_overview.rst:25
+#: ../../modules/functionals/functionals_overview.rst:23
 msgid ""
 "Readout is decoupled from functionals: measurement details (shots, "
 "observables, state tomography) are specified via :mod:`~qilisdk.readout` "
@@ -122,15 +106,15 @@ msgstr ""
 ":class:`~qilisdk.functionals.functional_result.FunctionalResult` "
 "unificat."
 
-#: ../../modules/functionals/functionals_overview.rst:30
+#: ../../modules/functionals/functionals_overview.rst:28
 msgid "Result Objects"
 msgstr "Objectes de resultat"
 
-#: ../../modules/functionals/functionals_overview.rst:32
+#: ../../modules/functionals/functionals_overview.rst:30
 msgid ":class:`~qilisdk.functionals.functional_result.FunctionalResult`"
 msgstr ":class:`~qilisdk.functionals.functional_result.FunctionalResult`"
 
-#: ../../modules/functionals/functionals_overview.rst:33
+#: ../../modules/functionals/functionals_overview.rst:31
 msgid ""
 "The unified result type for all primitive functionals. Access results "
 "through: ``samples`` for shot counts, ``probabilities`` for measurement "
@@ -155,20 +139,7 @@ msgstr ""
 "disponibles mitjançant ``intermediate_states``, ``intermediate_samples``,"
 " ``intermediate_probabilities`` i ``intermediate_expectation_values``."
 
-#: ../../modules/functionals/functionals_overview.rst:40
-msgid ":class:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult`"
-msgstr ":class:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult`"
-
-#: ../../modules/functionals/functionals_overview.rst:41
-msgid ""
-"bundles the optimizer trajectory (optimal cost, parameters, intermediate "
-"steps) together with the functional result obtained at convergence."
-msgstr ""
-"agrupa la trajectòria de l'optimitzador (cost òptim, paràmetres, passos "
-"intermedis) juntament amb el resultat funcional obtingut en la "
-"convergència."
-
-#: ../../modules/functionals/functionals_overview.rst:44
+#: ../../modules/functionals/functionals_overview.rst:39
 msgid ""
 "These objects make post-processing workflows ergonomic. For example, "
 "after a digital propagation you can surface the most likely bitstrings:"
@@ -176,4 +147,47 @@ msgstr ""
 "Aquests objectes fan que els fluxos de treball de postprocessament siguin"
 " ergonòmics. Per exemple, després d'una propagació digital podeu obtenir "
 "les cadenes de bits més probables:"
+
+#~ msgid ""
+#~ ":doc:`functionals_reservoirs`: Runs a quantum "
+#~ "reservoir pipeline (pre-processing, reservoir"
+#~ " dynamics, post-processing) across multiple"
+#~ " input layers."
+#~ msgstr ""
+#~ ":doc:`functionals_reservoirs`: Executa un pipeline"
+#~ " de reservoir quàntic (preprocessament, "
+#~ "dinàmica del reservoir, postprocessament) a"
+#~ " través de múltiples capes d'entrada."
+
+#~ msgid ""
+#~ "Moreover, it provides more complex "
+#~ "functionals that are used to execute "
+#~ "more complex algorithms:"
+#~ msgstr ""
+#~ "A més, proporciona funcionals més "
+#~ "complexos que s'utilitzen per executar "
+#~ "algorismes més complexos:"
+
+#~ msgid ""
+#~ ":doc:`functionals_variational`: Builds a "
+#~ "parameterized program to be optimized in"
+#~ " a hybrid quantum-classical environment."
+#~ msgstr ""
+#~ ":doc:`functionals_variational`: Construeix un "
+#~ "programa parametritzat per ser optimitzat "
+#~ "en un entorn híbrid quàntic-clàssic."
+
+#~ msgid ":class:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult`"
+#~ msgstr ":class:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult`"
+
+#~ msgid ""
+#~ "bundles the optimizer trajectory (optimal "
+#~ "cost, parameters, intermediate steps) together"
+#~ " with the functional result obtained "
+#~ "at convergence."
+#~ msgstr ""
+#~ "agrupa la trajectòria de l'optimitzador "
+#~ "(cost òptim, paràmetres, passos intermedis)"
+#~ " juntament amb el resultat funcional "
+#~ "obtingut en la convergència."
 

@@ -679,6 +679,7 @@ class SpeQtrum:
         * :class:`~qilisdk.functionals.digital_propagation.DigitalPropagation`
         * :class:`~qilisdk.functionals.analog_evolution.AnalogEvolution`
         * :class:`~qilisdk.algorithms.variational_program.VariationalProgram`
+        * :class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`
         * :class:`~qilisdk.experiments.experiment_functional.ExperimentFunctional`
             (e.g. those provided by the ``qili-experiments`` plugin library)
 
@@ -686,7 +687,8 @@ class SpeQtrum:
             functional: A fully configured functional instance that defines the quantum workload.
             device: Device code returned by :py:meth:`list_devices`.
             readout: Readout method(s) specifying how results should be measured.
-                Required for ``DigitalPropagation``, ``AnalogEvolution``, and ``VariationalProgram``.
+                Required for ``DigitalPropagation``, ``AnalogEvolution``, ``VariationalProgram``, and
+                ``QuantumReservoir``.
             job_name (optional): The name of the job. Default: None.
 
         Returns:

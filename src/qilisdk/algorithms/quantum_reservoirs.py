@@ -13,6 +13,7 @@
 # limitations under the License.
 from __future__ import annotations
 
+import weakref
 from copy import copy
 from typing import TYPE_CHECKING, Iterator
 
@@ -33,6 +34,9 @@ if TYPE_CHECKING:
     from qilisdk.backends.backend import Backend
     from qilisdk.core.types import RealNumber
     from qilisdk.readout.readout_result import ReadoutCompositeResults
+
+# Noisy backends already warned that reservoir circuit steps ignore their noise model
+_NOISE_WARNED_BACKENDS: weakref.WeakSet[Backend] = weakref.WeakSet()
 
 
 @yaml.register_class
@@ -114,8 +118,6 @@ class ReservoirLayer(Parameterizable):
 
         if output_encoding:
             self._validate_output_encoding(output_encoding)
-
-        self._qtensor_observables: list[QTensor] = []
 
     def _validate_input_encoding(self, pre_processing: Circuit) -> None:
         """Validate and normalize the optional pre-processing circuit.
@@ -204,11 +206,6 @@ class ReservoirLayer(Parameterizable):
     def output_encoding(self) -> Circuit | None:
         """Optional post-processing circuit, or ``None`` if not set."""
         return self._output_encoding
-
-    @property
-    def observables_as_qtensor(self) -> list[QTensor]:
-        """Measured observables converted to qubit-sized ``QTensor`` operators."""
-        return self._qtensor_observables
 
     @property
     def qubits_to_reset(self) -> list[int] | None:
@@ -423,7 +420,8 @@ class QuantumReservoir(Parameterizable, Algorithm):
             ValueError: If throughout the execution the state becomes invalid due to numerical instabilities.
         """
         logger.info("[QuantumReservoir] Executing Quantum Reservoir")
-        if backend.noise_model:
+        if backend.noise_model and backend not in _NOISE_WARNED_BACKENDS:
+            _NOISE_WARNED_BACKENDS.add(backend)
             logger.warning(
                 "[QuantumReservoir] The noise model is only applied to the Schedule steps of a Quantum Reservoir, "
                 "its Circuit steps are simulated without noise."

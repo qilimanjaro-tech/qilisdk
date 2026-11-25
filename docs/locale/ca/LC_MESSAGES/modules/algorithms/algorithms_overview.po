@@ -1,0 +1,116 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2026, Qilimanjaro Quantum Tech
+# This file is distributed under the same license as the QiliSDK package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: QiliSDK \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-25 11:06+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ca\n"
+"Language-Team: ca <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: ../../modules/algorithms/algorithms_overview.rst:2
+msgid "Overview"
+msgstr "Visió general"
+
+#: ../../modules/algorithms/algorithms_overview.rst:4
+msgid ""
+"The :mod:`~qilisdk.algorithms` module provides higher-level procedures "
+"built on top of the primitive :mod:`~qilisdk.functionals`. Currently, it "
+"includes the following algorithms:"
+msgstr ""
+"El mòdul :mod:`~qilisdk.algorithms` proporciona procediments d'alt nivell"
+" construïts sobre els :mod:`~qilisdk.functionals` primitius. Actualment, "
+"inclou els algorismes següents:"
+
+#: ../../modules/algorithms/algorithms_overview.rst:7
+msgid ""
+":doc:`algorithms_variational`: Builds a parameterized program to be "
+"optimized in a hybrid quantum-classical environment."
+msgstr ""
+":doc:`algorithms_variational`: Construeix un programa parametritzat per "
+"ser optimitzat en un entorn híbrid quàntic-clàssic."
+
+#: ../../modules/algorithms/algorithms_overview.rst:8
+msgid ""
+":doc:`algorithms_reservoirs`: Runs a quantum reservoir pipeline (pre-"
+"processing, reservoir dynamics, post-processing) across multiple input "
+"layers."
+msgstr ""
+":doc:`algorithms_reservoirs`: Executa un pipeline de reservoir quàntic "
+"(preprocessament, dinàmica del reservoir, postprocessament) a través de "
+"múltiples capes d'entrada."
+
+#: ../../modules/algorithms/algorithms_overview.rst:11
+msgid "Architecture Overview"
+msgstr "Visió general de l'arquitectura"
+
+#: ../../modules/algorithms/algorithms_overview.rst:13
+msgid ""
+"Every algorithm inherits from "
+":class:`~qilisdk.algorithms.algorithm.Algorithm`, which is itself a "
+":class:`~qilisdk.functionals.functional.Functional`, so algorithms are "
+"run with the same :meth:`~qilisdk.backends.backend.Backend.execute` call "
+"as any other functional. Unlike the primitive functionals, which every "
+"backend should support natively, an algorithm defines its own execution "
+"in terms of primitive functionals. This means any backend supporting the "
+"required primitive functionals can run any algorithm. A backend may still"
+" provide its own native implementation of an algorithm, as "
+":class:`~qilisdk.backends.qilisim.QiliSim` does for quantum reservoirs."
+msgstr ""
+"Tots els algorismes hereten de "
+":class:`~qilisdk.algorithms.algorithm.Algorithm`, que és en si mateix un "
+":class:`~qilisdk.functionals.functional.Functional`, de manera que els "
+"algorismes s'executen amb la mateixa crida "
+":meth:`~qilisdk.backends.backend.Backend.execute` que qualsevol altre "
+"functional. A diferència dels functionals primitius, que tots els "
+"backends haurien de suportar de manera nativa, un algorisme defineix la "
+"seva pròpia execució en termes de functionals primitius. Això vol dir que"
+" qualsevol backend que suporti els functionals primitius necessaris pot "
+"executar qualsevol algorisme. Un backend encara pot proporcionar la seva "
+"pròpia implementació nativa d'un algorisme, com fa "
+":class:`~qilisdk.backends.qilisim.QiliSim` per als reservoris quàntics."
+
+#: ../../modules/algorithms/algorithms_overview.rst:21
+msgid "Result Objects"
+msgstr "Objectes de resultat"
+
+#: ../../modules/algorithms/algorithms_overview.rst:23
+msgid ":class:`~qilisdk.functionals.functional_result.FunctionalResult`"
+msgstr ":class:`~qilisdk.functionals.functional_result.FunctionalResult`"
+
+#: ../../modules/algorithms/algorithms_overview.rst:24
+msgid ""
+"Returned by "
+":class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`, holding"
+" the readout after the last layer, with the readouts of the previous "
+"layers as intermediate results."
+msgstr ""
+"Retornat per "
+":class:`~qilisdk.algorithms.quantum_reservoirs.QuantumReservoir`, conté "
+"el readout després de l'última capa, amb els readouts de les capes "
+"anteriors com a resultats intermedis."
+
+#: ../../modules/algorithms/algorithms_overview.rst:26
+msgid ":class:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult`"
+msgstr ":class:`~qilisdk.algorithms.variational_program_result.VariationalProgramResult`"
+
+#: ../../modules/algorithms/algorithms_overview.rst:27
+msgid ""
+"bundles the optimizer trajectory (optimal cost, parameters, intermediate "
+"steps) together with the functional result obtained at convergence."
+msgstr ""
+"agrupa la trajectòria de l'optimitzador (cost òptim, paràmetres, passos "
+"intermedis) juntament amb el resultat funcional obtingut en la "
+"convergència."
+

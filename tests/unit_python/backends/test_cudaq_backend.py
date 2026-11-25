@@ -819,12 +819,13 @@ def test_get_cuda_hamiltonian_raises_with_empty_schedule():
         backend._get_cuda_hamiltonian(schedule)
 
 
-def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(monkeypatch):
+def test_execute_quantum_reservoir_raises_if_time_evolution_returns_invalid_state(monkeypatch):
     backend = CudaqBackend()
     functional = _build_quantum_reservoir_functional()
+    invalid_state = QTensor(np.diag([1.0, -5.0]))
 
     def _mock_execute_analog_evolution(self, f, readout):
-        raise ValueError("Reservoir Runtime Error: state repair failed before expectation value computation.")
+        return FunctionalResult(readout_results=self.readout_state(invalid_state, readout))
 
     monkeypatch.setattr(
         "qilisdk.backends.cudaq_backend.CudaqBackend._execute_analog_evolution",
@@ -832,7 +833,7 @@ def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(mon
     )
 
     readout = Readout().with_sampling(nshots=10)
-    with pytest.raises(ValueError, match="Reservoir Runtime Error"):
+    with pytest.raises(ValueError, match="Reservoir Runtime Error: state repair failed"):
         backend.execute(functional, readout)
 
 

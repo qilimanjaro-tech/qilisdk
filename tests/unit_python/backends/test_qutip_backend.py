@@ -16,6 +16,7 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+from loguru import logger
 from qutip import Qobj
 
 from qilisdk.algorithms.quantum_reservoirs import QuantumReservoir, ReservoirLayer
@@ -434,22 +435,39 @@ def test_time_evolution_bad_observable():
         backend.execute(func, Readout().with_expectation(observables=[ob]))
 
 
-def test_execute_quantum_reservoir_raises_if_time_evolution_returns_no_state(monkeypatch):
+def test_execute_quantum_reservoir_raises_if_time_evolution_returns_invalid_state(monkeypatch):
     backend = QutipBackend()
     functional = _build_quantum_reservoir_functional()
+    invalid_state = QTensor(np.diag([1.0, -5.0]))
 
     def _mock_execute_analog_evolution(self, f, readout):
-        # Return a FunctionalResult with a StateTomographyReadoutResult containing final_state=None
-        # This simulates the case where the evolution returns no valid state
-        raise ValueError("Reservoir Runtime Error: state repair failed before expectation value computation.")
+        return FunctionalResult(readout_results=self.readout_state(invalid_state, readout))
 
     monkeypatch.setattr(
         "qilisdk.backends.qutip_backend.QutipBackend._execute_analog_evolution",
         _mock_execute_analog_evolution,
     )
 
-    with pytest.raises(ValueError, match="Reservoir Runtime Error"):
-        backend.execute(functional, Readout().with_sampling(nshots=10))
+    readout = Readout().with_sampling(nshots=10)
+    with pytest.raises(ValueError, match="Reservoir Runtime Error: state repair failed"):
+        backend.execute(functional, readout)
+
+
+def test_execute_quantum_reservoir_warns_about_noise_once_per_backend():
+    nm = NoiseModel()
+    nm.add(AmplitudeDamping(t1=10.0))
+    backend = QutipBackend(noise_model=nm)
+    functional = _build_quantum_reservoir_functional()
+    readout = Readout().with_expectation(observables=[PauliZ(0).to_hamiltonian()])
+    messages: list[str] = []
+    sink_id = logger.add(lambda message: messages.append(message.record["message"]), level="WARNING")
+    try:
+        backend.execute(functional, readout)
+        backend.execute(functional, readout)
+    finally:
+        logger.remove(sink_id)
+
+    assert sum("noise model is only applied to the Schedule steps" in m for m in messages) == 1
 
 
 def test_get_qutip_observable_qtensor(monkeypatch):
